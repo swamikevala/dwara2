@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Script to allow dwara user to change file permissions
+# dwara needs to be allowed to run this command in sudoers file
+
+# Directory needs to have write access for the group so that dwara user can move directories
+# (Assuming dwara is a member of the group) 
+DIR_PERMS=0775
+FILE_PERMS=0644
+
+USER=$1
+CONTENT_GROUP=$2
+MEDIA_LIBRARY=$3
+
+if [[ $USER == *"/"* ]];
+then
+  printf "%s\n" "Error: user name cannot contain '/'"
+  exit 1
+fi
+
+if [[ $CONTENT_GROUP == *"/"* ]];
+then
+  printf "%s\n" "Error: content group name cannot contain '/'"
+  exit 1
+fi
+
+if [[ $MEDIA_LIBRARY == *"/"* ]];
+then
+  printf "%s\n" "Error: media library name cannot contain '/'"
+  exit 1
+fi
+
+find /data/user/$USER/ingest/$CONTENT_GROUP/$MEDIA_LIBRARY -type d -exec chmod $DIR_PERMS {} \;
+find /data/user/$USER/ingest/$CONTENT_GROUP/$MEDIA_LIBRARY -type f -exec chmod $FILE_PERMS {} \;
+

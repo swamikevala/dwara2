@@ -1,0 +1,152 @@
+[
+  {
+    "libraryclassId": 5001,
+    "name": "V5",
+    "sequenceId": 11001,
+    "source": true,
+    "filetypeId": 4001,
+    "chainId": 1001,
+    "noFileRecords": false,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5002,
+    "name": "U",
+    "sequenceId": 11002,
+    "source": true,
+    "filetypeId": 4002,
+    "chainId": 1002,
+    "noFileRecords": false,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5003,
+    "name": "P1V",
+    "sequenceId": 0,
+    "source": true,
+    "filetypeId": 4001,
+    "chainId": 1001,
+    "noFileRecords": false,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5004,
+    "name": "P2V",
+    "sequenceId": 0,
+    "source": true,
+    "filetypeId": 4001,
+    "chainId": 1001,
+    "noFileRecords": false,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5005,
+    "name": "P3V",
+    "sequenceId": 0,
+    "source": true,
+    "filetypeId": 4001,
+    "chainId": 1001,
+    "noFileRecords": false,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5006,
+    "name": "P1U",
+    "sequenceId": 0,
+    "source": true,
+    "filetypeId": 4002,
+    "chainId": 1001,
+    "noFileRecords": false,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5007,
+    "name": "LV?",
+    "sequenceId": 11007,
+    "source": false,
+    "filetypeId": 0,
+    "chainId": 0,
+    "noFileRecords": true,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5008,
+    "name": "MV?",
+    "sequenceId": 11008,
+    "source": false,
+    "filetypeId": 0,
+    "chainId": 0,
+    "noFileRecords": false,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5009,
+    "name": "LPV",
+    "sequenceId": 11007,
+    "source": false,
+    "filetypeId": 0,
+    "chainId": 0,
+    "noFileRecords": true,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5010,
+    "name": "MPV",
+    "sequenceId": 11008,
+    "source": false,
+    "filetypeId": 0,
+    "chainId": 0,
+    "noFileRecords": false,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5011,
+    "name": "LPU",
+    "sequenceId": 11007,
+    "source": false,
+    "filetypeId": 0,
+    "chainId": 0,
+    "noFileRecords": true,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5012,
+    "name": "MPU",
+    "sequenceId": 11008,
+    "source": false,
+    "filetypeId": 0,
+    "chainId": 0,
+    "noFileRecords": false,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5013,
+    "name": "LP2V",
+    "sequenceId": 11007,
+    "source": false,
+    "filetypeId": 0,
+    "chainId": 0,
+    "noFileRecords": true,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5014,
+    "name": "EncP2V - needed?",
+    "sequenceId": 0,
+    "source": true,
+    "filetypeId": 4001,
+    "chainId": 1001,
+    "noFileRecords": false,
+    "concurrentCopies": false
+  },
+  {
+    "libraryclassId": 5015,
+    "name": "LEP2V - needed?",
+    "sequenceId": 11007,
+    "source": false,
+    "filetypeId": 0,
+    "chainId": 0,
+    "noFileRecords": true,
+    "concurrentCopies": false
+  }
+]

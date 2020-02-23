@@ -1,0 +1,38 @@
+[
+  {
+    "propertyId": 7001,
+    "name": "event",
+    "regex": "[a-zA-Z0-9-]+",
+    "replaceCharSpace": "_"
+  },
+  {
+    "propertyId": 7002,
+    "name": "event2",
+    "regex": "[a-zA-Z0-9-]+",
+    "replaceCharSpace": "_"
+  },
+  {
+    "propertyId": 7003,
+    "name": "location",
+    "regex": "[a-zA-Z0-9-]+",
+    "replaceCharSpace": "_"
+  },
+  {
+    "propertyId": 7004,
+    "name": "date",
+    "regex": "(?:0[1-9]|[12][0-9]|3[01])-(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec])-(?:19|20)\\d\\d)",
+    "replaceCharSpace": "_"
+  },
+  {
+    "propertyId": 7005,
+    "name": "deviceinfo1",
+    "regex": "[a-zA-Z0-9-]+",
+    "replaceCharSpace": "_"
+  },
+  {
+    "propertyId": 7006,
+    "name": "deviceinfo2",
+    "regex": "[a-zA-Z0-9-]+",
+    "replaceCharSpace": "_"
+  }
+]

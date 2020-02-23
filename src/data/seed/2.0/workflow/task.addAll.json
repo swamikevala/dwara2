@@ -1,0 +1,121 @@
+[
+  {
+    "taskId": 18001,
+    "name": "V5 Raw Copy 1",
+    "processId": 0,
+    "maxErrors": 0,
+    "filetypeId": 0
+  },
+  {
+    "taskId": 18002,
+    "name": "V5 Raw Copy 2",
+    "processId": 0,
+    "maxErrors": 0,
+    "filetypeId": 0
+  },
+  {
+    "taskId": 18003,
+    "name": "V5 Raw Copy 3",
+    "processId": 0,
+    "maxErrors": 0,
+    "filetypeId": 0
+  },
+  {
+    "taskId": 18004,
+    "name": "Video Transcoding",
+    "processId": 2001,
+    "maxErrors": 0,
+    "filetypeId": 4001
+  },
+  {
+    "taskId": 18005,
+    "name": "MAM Update",
+    "processId": 2002,
+    "maxErrors": 20,
+    "filetypeId": 4001
+  },
+  {
+    "taskId": 18006,
+    "name": "Preview Proxy Copy 1",
+    "processId": 0,
+    "maxErrors": 0,
+    "filetypeId": 0
+  },
+  {
+    "taskId": 18007,
+    "name": "Mezz Proxy Copy 1",
+    "processId": 0,
+    "maxErrors": 0,
+    "filetypeId": 0
+  },
+  {
+    "taskId": 18008,
+    "name": "U Raw Copy 1",
+    "processId": 0,
+    "maxErrors": 0,
+    "filetypeId": 0
+  },
+  {
+    "taskId": 18009,
+    "name": "U Raw Copy 2",
+    "processId": 0,
+    "maxErrors": 0,
+    "filetypeId": 0
+  },
+  {
+    "taskId": 18010,
+    "name": "Audio Transcoding",
+    "processId": 2001,
+    "maxErrors": 0,
+    "filetypeId": 4002
+  },
+  {
+    "taskId": 18011,
+    "name": "Copy Transcoded Files to Transcript server",
+    "processId": 2002,
+    "maxErrors": 0,
+    "filetypeId": 4002
+  },
+  {
+    "taskId": 18012,
+    "name": "Restore",
+    "processId": 0,
+    "maxErrors": 0,
+    "filetypeId": 0
+  },
+  {
+    "taskId": 18013,
+    "name": "P2 Raw Copy 1",
+    "processId": 0,
+    "maxErrors": 0,
+    "filetypeId": 0
+  },
+  {
+    "taskId": 18014,
+    "name": "P2 Raw Copy 2 Encrypted",
+    "processId": 0,
+    "maxErrors": 0,
+    "filetypeId": 0
+  },
+  {
+    "taskId": 18015,
+    "name": "P2 Preview Proxy Copy 1",
+    "processId": 0,
+    "maxErrors": 0,
+    "filetypeId": 0
+  },
+  {
+    "taskId": 18016,
+    "name": "P2 Preview Proxy Copy 2 Encrypted",
+    "processId": 0,
+    "maxErrors": 0,
+    "filetypeId": 0
+  },
+  {
+    "taskId": 18017,
+    "name": "Video Transcoding Medium Resolution",
+    "processId": 2001,
+    "maxErrors": 0,
+    "filetypeId": 4001
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "chainId": 1001,
+    "name": "Video ingest workflow"
+  },
+  {
+    "chainId": 1002,
+    "name": "Audio ingest workflow"
+  },
+  {
+    "chainId": 1003,
+    "name": "Private2 Video ingest workflow"
+  }
+]

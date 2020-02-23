@@ -1,0 +1,82 @@
+[
+  {
+    "tapeId": 13001,
+    "tapesetId": 15001,
+    "tapetypeId": 16002,
+    "barcode": "V5A001",
+    "finalized": true,
+    "blocksize": 256000
+  },
+  {
+    "tapeId": 13002,
+    "tapesetId": 15001,
+    "tapetypeId": 16002,
+    "barcode": "V5A002",
+    "finalized": false,
+    "blocksize": 256000
+  },
+  {
+    "tapeId": 13003,
+    "tapesetId": 15002,
+    "tapetypeId": 16002,
+    "barcode": "V5B001",
+    "finalized": false,
+    "blocksize": 256000
+  },
+  {
+    "tapeId": 13004,
+    "tapesetId": 15003,
+    "tapetypeId": 16002,
+    "barcode": "V5C001",
+    "finalized": false,
+    "blocksize": 256000
+  },
+  {
+    "tapeId": 13005,
+    "tapesetId": 15004,
+    "tapetypeId": 16002,
+    "barcode": "UA001",
+    "finalized": false,
+    "blocksize": 256000
+  },
+  {
+    "tapeId": 13006,
+    "tapesetId": 15005,
+    "tapetypeId": 16002,
+    "barcode": "UB001",
+    "finalized": false,
+    "blocksize": 256000
+  },
+  {
+    "tapeId": 13007,
+    "tapesetId": 15006,
+    "tapetypeId": 16002,
+    "barcode": "UC001",
+    "finalized": false,
+    "blocksize": 256000
+  },
+  {
+    "tapeId": 13008,
+    "tapesetId": 15007,
+    "tapetypeId": 16002,
+    "barcode": "PVA001",
+    "finalized": false,
+    "blocksize": 256000
+  },
+  {
+    "tapeId": 13009,
+    "tapesetId": 15010,
+    "tapetypeId": 16002,
+    "barcode": "VLA001",
+    "finalized": false,
+    "blocksize": 256000
+  },
+  {
+    "tapeId": 13010,
+    "tapesetId": 15012,
+    "tapetypeId": 16002,
+    "barcode": "VMA001",
+    "finalized": false,
+    "blocksize": 256000
+  }
+]

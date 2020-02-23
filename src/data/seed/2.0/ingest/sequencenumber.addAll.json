@@ -1,0 +1,58 @@
+[
+  {
+    "sequenceId": 11001,
+    "lastNumber": 24533,
+    "prefix": null,
+    "extractionRegex": null,
+    "keepExtractedCode": false
+  },
+  {
+    "sequenceId": 11002,
+    "lastNumber": 999,
+    "prefix": "A",
+    "extractionRegex": "^[A-Z]{1,2}[\\\\d]{1,4}",
+    "keepExtractedCode": false
+  },
+  {
+    "sequenceId": 11003,
+    "lastNumber": 555,
+    "prefix": "Z",
+    "extractionRegex": null,
+    "keepExtractedCode": false
+  },
+  {
+    "sequenceId": 11004,
+    "lastNumber": 333,
+    "prefix": null,
+    "extractionRegex": "^[A-Z]{1,2}[\\\\d]{1,4}",
+    "keepExtractedCode": false
+  },
+  {
+    "sequenceId": 11005,
+    "lastNumber": 0,
+    "prefix": null,
+    "extractionRegex": "^[\\\\d]{1,5}",
+    "keepExtractedCode": true
+  },
+  {
+    "sequenceId": 11006,
+    "lastNumber": 0,
+    "prefix": null,
+    "extractionRegex": "^[Z\\\\d]{1,6}",
+    "keepExtractedCode": true
+  },
+  {
+    "sequenceId": 11007,
+    "lastNumber": 0,
+    "prefix": "L",
+    "extractionRegex": null,
+    "keepExtractedCode": false
+  },
+  {
+    "sequenceId": 11008,
+    "lastNumber": 0,
+    "prefix": "M",
+    "extractionRegex": null,
+    "keepExtractedCode": false
+  }
+]

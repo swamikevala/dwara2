@@ -1,0 +1,14 @@
+[
+  {
+    "filetypeId": 4001,
+    "name": "VIDEO"
+  },
+  {
+    "filetypeId": 4002,
+    "name": "AUDIO"
+  },
+  {
+    "filetypeId": 4003,
+    "name": "PHOTO"
+  }
+]

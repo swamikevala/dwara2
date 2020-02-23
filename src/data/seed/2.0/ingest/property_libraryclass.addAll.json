@@ -1,0 +1,72 @@
+[
+  {
+    "propertyLibraryclassId": 8001,
+    "propertyId": 7001,
+    "libraryclassId": 5001,
+    "position": 1,
+    "optional": false
+  },
+  {
+    "propertyLibraryclassId": 8002,
+    "propertyId": 7002,
+    "libraryclassId": 5001,
+    "position": 2,
+    "optional": true
+  },
+  {
+    "propertyLibraryclassId": 8003,
+    "propertyId": 7003,
+    "libraryclassId": 5001,
+    "position": 3,
+    "optional": false
+  },
+  {
+    "propertyLibraryclassId": 8004,
+    "propertyId": 7004,
+    "libraryclassId": 5001,
+    "position": 4,
+    "optional": false
+  },
+  {
+    "propertyLibraryclassId": 8005,
+    "propertyId": 7005,
+    "libraryclassId": 5001,
+    "position": 5,
+    "optional": true
+  },
+  {
+    "propertyLibraryclassId": 8006,
+    "propertyId": 7006,
+    "libraryclassId": 5001,
+    "position": 5,
+    "optional": false
+  },
+  {
+    "propertyLibraryclassId": 8007,
+    "propertyId": 7001,
+    "libraryclassId": 5002,
+    "position": 1,
+    "optional": false
+  },
+  {
+    "propertyLibraryclassId": 8008,
+    "propertyId": 7002,
+    "libraryclassId": 5002,
+    "position": 2,
+    "optional": true
+  },
+  {
+    "propertyLibraryclassId": 8009,
+    "propertyId": 7003,
+    "libraryclassId": 5002,
+    "position": 3,
+    "optional": false
+  },
+  {
+    "propertyLibraryclassId": 8010,
+    "propertyId": 7004,
+    "libraryclassId": 5002,
+    "position": 4,
+    "optional": false
+  }
+]

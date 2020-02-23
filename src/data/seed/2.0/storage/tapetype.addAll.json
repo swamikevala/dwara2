@@ -1,0 +1,12 @@
+[
+  {
+    "tapetypeId": 16001,
+    "name": "LTO 6",
+    "capacity": 60000000000
+  },
+  {
+    "tapetypeId": 16002,
+    "name": "LTO 7",
+    "capacity": 70000000000
+  }
+]

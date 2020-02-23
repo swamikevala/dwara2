@@ -1,0 +1,42 @@
+[
+  {
+    "libraryclassScanfolderId": 6001,
+    "scanfolderId": 10001,
+    "libraryclassId": 5001
+  },
+  {
+    "libraryclassScanfolderId": 6002,
+    "scanfolderId": 10001,
+    "libraryclassId": 5002
+  },
+  {
+    "libraryclassScanfolderId": 6003,
+    "scanfolderId": 10001,
+    "libraryclassId": 5003
+  },
+  {
+    "libraryclassScanfolderId": 6004,
+    "scanfolderId": 10001,
+    "libraryclassId": 5004
+  },
+  {
+    "libraryclassScanfolderId": 6005,
+    "scanfolderId": 10001,
+    "libraryclassId": 5005
+  },
+  {
+    "libraryclassScanfolderId": 6006,
+    "scanfolderId": 10001,
+    "libraryclassId": 5006
+  },
+  {
+    "libraryclassScanfolderId": 6007,
+    "scanfolderId": 10002,
+    "libraryclassId": 5001
+  },
+  {
+    "libraryclassScanfolderId": 6008,
+    "scanfolderId": 10002,
+    "libraryclassId": 5002
+  }
+]

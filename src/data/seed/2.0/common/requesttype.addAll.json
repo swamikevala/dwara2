@@ -1,0 +1,37 @@
+[
+  {
+    "requesttypeId": 9001,
+    "name": "CANCELLATION",
+    "taskId": 0
+  },
+  {
+    "requesttypeId": 9002,
+    "name": "RENAME",
+    "taskId": 0
+  },
+  {
+    "requesttypeId": 9003,
+    "name": "DELETE",
+    "taskId": 0
+  },
+  {
+    "requesttypeId": 9004,
+    "name": "WRITE_BAD_TAPE",
+    "taskId": 0
+  },
+  {
+    "requesttypeId": 9005,
+    "name": "DIAGNOSTICS_AND_REPAIR",
+    "taskId": 0
+  },
+  {
+    "requesttypeId": 9006,
+    "name": "RERUN",
+    "taskId": 0
+  },
+  {
+    "requesttypeId": 9007,
+    "name": "RESTORE",
+    "taskId": 18010
+  }
+]

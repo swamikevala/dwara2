@@ -1,0 +1,110 @@
+[
+  {
+    "taskChainId": 17001,
+    "chainId": 1001,
+    "taskId": 18001,
+    "preTasks": null
+  },
+  {
+    "taskChainId": 17002,
+    "chainId": 1001,
+    "taskId": 18002,
+    "preTasks": null
+  },
+  {
+    "taskChainId": 17003,
+    "chainId": 1001,
+    "taskId": 18003,
+    "preTasks": null
+  },
+  {
+    "taskChainId": 17004,
+    "chainId": 1001,
+    "taskId": 18004,
+    "preTasks": null
+  },
+  {
+    "taskChainId": 17005,
+    "chainId": 1001,
+    "taskId": 18005,
+    "preTasks": "18004"
+  },
+  {
+    "taskChainId": 17006,
+    "chainId": 1001,
+    "taskId": 18006,
+    "preTasks": "18004"
+  },
+  {
+    "taskChainId": 17007,
+    "chainId": 1002,
+    "taskId": 18001,
+    "preTasks": null
+  },
+  {
+    "taskChainId": 17008,
+    "chainId": 1002,
+    "taskId": 18002,
+    "preTasks": null
+  },
+  {
+    "taskChainId": 17009,
+    "chainId": 1002,
+    "taskId": 18003,
+    "preTasks": null
+  },
+  {
+    "taskChainId": 17010,
+    "chainId": 1002,
+    "taskId": 18007,
+    "preTasks": null
+  },
+  {
+    "taskChainId": 17011,
+    "chainId": 1002,
+    "taskId": 18008,
+    "preTasks": "18007"
+  },
+  {
+    "taskChainId": 17012,
+    "chainId": 1002,
+    "taskId": 18006,
+    "preTasks": "18007"
+  },
+  {
+    "taskChainId": 17013,
+    "chainId": 1003,
+    "taskId": 18001,
+    "preTasks": null
+  },
+  {
+    "taskChainId": 17014,
+    "chainId": 1003,
+    "taskId": 18002,
+    "preTasks": null
+  },
+  {
+    "taskChainId": 17015,
+    "chainId": 1003,
+    "taskId": 18003,
+    "preTasks": null
+  },
+  {
+    "taskChainId": 17016,
+    "chainId": 1003,
+    "taskId": 18004,
+    "preTasks": null
+  },
+  {
+    "taskChainId": 17017,
+    "chainId": 1003,
+    "taskId": 18005,
+    "preTasks": "18004"
+  },
+  {
+    "taskChainId": 17018,
+    "chainId": 1003,
+    "taskId": 18006,
+    "preTasks": "18004"
+  }
+]

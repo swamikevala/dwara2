@@ -1,0 +1,68 @@
+[
+  {
+    "tapesetId": 15001,
+    "name": "V5 Copy1 Tape pool with Bru format",
+    "barcodePrefix": "V5A",
+    "storageformatId": 12001
+  },
+  {
+    "tapesetId": 15002,
+    "name": "V5 Copy2 Tape pool with Zip format",
+    "barcodePrefix": "V5B",
+    "storageformatId": 12002
+  },
+  {
+    "tapesetId": 15003,
+    "name": "V5 Copy3 Tape pool with LTFS format",
+    "barcodePrefix": "V5C",
+    "storageformatId": 12003
+  },
+  {
+    "tapesetId": 15004,
+    "name": "U Copy1 Tape pool with Bru format",
+    "barcodePrefix": "UA",
+    "storageformatId": 12001
+  },
+  {
+    "tapesetId": 15005,
+    "name": "U Copy2 Tape pool with Zip format",
+    "barcodePrefix": "UB",
+    "storageformatId": 12002
+  },
+  {
+    "tapesetId": 15006,
+    "name": "U Copy3 Tape pool with LTFS format",
+    "barcodePrefix": "UC",
+    "storageformatId": 12003
+  },
+  {
+    "tapesetId": 15007,
+    "name": "PV Copy1 Tape pool with Bru format",
+    "barcodePrefix": "PVA",
+    "storageformatId": 12001
+  },
+  {
+    "tapesetId": 15008,
+    "name": "PV Copy2 Tape pool with Zip format",
+    "barcodePrefix": "PVB",
+    "storageformatId": 12002
+  },
+  {
+    "tapesetId": 15009,
+    "name": "PV Copy3 Tape pool with LTFS format",
+    "barcodePrefix": "PVC",
+    "storageformatId": 12003
+  },
+  {
+    "tapesetId": 15010,
+    "name": "V Prev proxy Copy1 Tape pool",
+    "barcodePrefix": "VLA",
+    "storageformatId": 12001
+  },
+  {
+    "tapesetId": 15012,
+    "name": "V Mezz proxy Copy1 Tape pool",
+    "barcodePrefix": "VMA",
+    "storageformatId": 12001
+  }
+]

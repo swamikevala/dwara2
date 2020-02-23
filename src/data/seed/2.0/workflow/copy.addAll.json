@@ -1,0 +1,90 @@
+[
+  {
+    "copyId": 2001,
+    "libraryclassId": 5001,
+    "tapesetId": 15001,
+    "copyNumber": 1,
+    "taskId": 18001,
+    "encrypted": false
+  },
+  {
+    "copyId": 2002,
+    "libraryclassId": 5001,
+    "tapesetId": 15002,
+    "copyNumber": 2,
+    "taskId": 18002,
+    "encrypted": false
+  },
+  {
+    "copyId": 2003,
+    "libraryclassId": 5001,
+    "tapesetId": 15003,
+    "copyNumber": 3,
+    "taskId": 18003,
+    "encrypted": false
+  },
+  {
+    "copyId": 2004,
+    "libraryclassId": 5007,
+    "tapesetId": 15010,
+    "copyNumber": 1,
+    "taskId": 18006,
+    "encrypted": false
+  },
+  {
+    "copyId": 2005,
+    "libraryclassId": 5008,
+    "tapesetId": 15010,
+    "copyNumber": 1,
+    "taskId": 18009,
+    "encrypted": false
+  },
+  {
+    "copyId": 2006,
+    "libraryclassId": 5002,
+    "tapesetId": 15004,
+    "copyNumber": 1,
+    "taskId": 18001,
+    "encrypted": false
+  },
+  {
+    "copyId": 2007,
+    "libraryclassId": 5002,
+    "tapesetId": 15005,
+    "copyNumber": 2,
+    "taskId": 18002,
+    "encrypted": false
+  },
+  {
+    "copyId": 2008,
+    "libraryclassId": 5004,
+    "tapesetId": 15007,
+    "copyNumber": 1,
+    "taskId": 18001,
+    "encrypted": false
+  },
+  {
+    "copyId": 2009,
+    "libraryclassId": 5013,
+    "tapesetId": 15007,
+    "copyNumber": 1,
+    "taskId": 18006,
+    "encrypted": false
+  },
+  {
+    "copyId": 2010,
+    "libraryclassId": 5014,
+    "tapesetId": 15008,
+    "copyNumber": 1,
+    "taskId": 18001,
+    "encrypted": true
+  },
+  {
+    "copyId": 2011,
+    "libraryclassId": 5015,
+    "tapesetId": 15008,
+    "copyNumber": 1,
+    "taskId": 18006,
+    "encrypted": true
+  }
+]

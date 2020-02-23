@@ -1,0 +1,20 @@
+[
+  {
+    "extensionId": 3001,
+    "name": "MTS",
+    "description": "MTS Container",
+    "filetypeId": 4001
+  },
+  {
+    "extensionId": 3002,
+    "name": "MP4",
+    "description": "MP4 format",
+    "filetypeId": 4001
+  },
+  {
+    "extensionId": 3003,
+    "name": "MP3",
+    "description": "Audio codec",
+    "filetypeId": 4002
+  }
+]

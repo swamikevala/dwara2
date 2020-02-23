@@ -1,0 +1,58 @@
+[
+  {
+    "taskId": 18001,
+    "name": "Copy",
+    "maxErrors": 0,
+    "filetypeId": 0,
+    "fileLevel": false
+  },
+  {
+    "taskId": 18004,
+    "name": "Video Transcoding",
+    "maxErrors": 0,
+    "filetypeId": 4001,
+    "fileLevel": true
+  },
+  {
+    "taskId": 18005,
+    "name": "MAM Update",
+    "maxErrors": 20,
+    "filetypeId": 4001,
+    "fileLevel": true
+  },
+  {
+    "taskId": 18006,
+    "name": "Preview Proxy Copy",
+    "maxErrors": 0,
+    "filetypeId": 0,
+    "fileLevel": false
+  },
+  {
+    "taskId": 18007,
+    "name": "Audio Transcoding",
+    "maxErrors": 0,
+    "filetypeId": 4002,
+    "fileLevel": true
+  },
+  {
+    "taskId": 18008,
+    "name": "Copy Transcoded Files to Transcript server",
+    "maxErrors": 0,
+    "filetypeId": 4002,
+    "fileLevel": true
+  },
+  {
+    "taskId": 18009,
+    "name": "Mezz Proxy Copy",
+    "maxErrors": 0,
+    "filetypeId": 0,
+    "fileLevel": false
+  },
+  {
+    "taskId": 18010,
+    "name": "Restore",
+    "maxErrors": 0,
+    "filetypeId": 0,
+    "fileLevel": true
+  }
+]

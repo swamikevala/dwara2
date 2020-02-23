@@ -1,0 +1,14 @@
+[
+  {
+    "storageformatId": 12001,
+    "name": "BRU"
+  },
+  {
+    "storageformatId": 12002,
+    "name": "ZIP"
+  },
+  {
+    "storageformatId": 12003,
+    "name": "LTFS"
+  }
+]
