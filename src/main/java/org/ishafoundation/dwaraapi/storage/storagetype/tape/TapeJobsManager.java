@@ -44,31 +44,45 @@ public class TapeJobsManager extends ArchiveJobsManager{
 		// TODO : Should we use the DB to get the drive list or from mtx
 		// My bet is mtx as it would have the most latest status...
 		List<DriveStatusDetails> driveList = TapeLibraryManager.getAvailableDrivesList();
+		if(tapeStorageJobsList.size() <= 0) {
+			logger.trace("No tape jobs in queue to be processed");
+			return;
+		}
 		if(driveList.size() > 0) { // means drive(s) available
-			logger.trace("no. of drives available "+ driveList.size());
+			logger.trace("No. of drives available "+ driveList.size());
 			// we need to allocate as many jobs for processing
 			for (Iterator<DriveStatusDetails> driveStatusDetailsIterator = driveList.iterator(); driveStatusDetailsIterator.hasNext();) {
-				if(tapeStorageJobsList.size() > 0) {
-					DriveStatusDetails driveStatusDetails = (DriveStatusDetails) driveStatusDetailsIterator.next();
-					
-					// STEP 2a
-					StorageJob storageJob = tapeJobSelector.getJob(tapeStorageJobsList, driveStatusDetails);
-					logger.trace("job selected");
-					
-					// STEP 2b
-					if(storageJob != null) {
-						TapeTask tapeTask = applicationContext.getBean(TapeTask.class); 
-						tapeTask.setArchiveJob(storageJob);
-						tapeTaskThreadPoolExecutor.getExecutor().execute(tapeTask);
-						logger.trace("job launched on a thread");
-					}
+				DriveStatusDetails driveStatusDetails = (DriveStatusDetails) driveStatusDetailsIterator.next();
+				logger.trace("Now selecting job for drive - " + driveStatusDetails.getDriveSNo());
+				
+				// STEP 2a
+				StorageJob storageJob = tapeJobSelector.getJob(tapeStorageJobsList, driveStatusDetails);
+				
+				// STEP 2b
+				if(storageJob == null) {
+					logger.trace("No tape jobs in queue are eligible to be processed. So skipping the loop");
+					break;
+				}
+				else if(storageJob != null) {
+					logger.trace("Job selected " + storageJob.getJob().getJobId() + " for " + driveStatusDetails.getDriveSNo());
+					TapeTask tapeTask = applicationContext.getBean(TapeTask.class); 
+					tapeTask.setStorageJob(storageJob);
+					tapeTaskThreadPoolExecutor.getExecutor().execute(tapeTask);
+					logger.trace("Job launched on a thread");
 					
 					// STEP 3 filter the job from the next iteration
 					tapeStorageJobsList.remove(storageJob);
 				}
+				
+
+				if(tapeStorageJobsList.size() <= 0) {
+					logger.trace("No tape jobs in queue anymore. So skipping the loop");
+					break;
+				}
 			}
 		}
-		else 
-			System.out.println("do nothing");
+		else {
+			logger.trace("All drives busy");
+		}
 	}
 }

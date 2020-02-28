@@ -17,15 +17,15 @@ public class TapeTask implements Runnable{
 	@Autowired
 	private TapeJobProcessor tapeJobProcessor;	
 	
-	private StorageJob archiveJob;
+	private StorageJob storageJob;
 
 
-	public StorageJob getArchiveJob() {
-		return archiveJob;
+	public StorageJob getStorageJob() {
+		return storageJob;
 	}
 
-	public void setArchiveJob(StorageJob archiveJob) {
-		this.archiveJob = archiveJob;
+	public void setStorageJob(StorageJob storageJob) {
+		this.storageJob = storageJob;
 	}
 
 	@Override
@@ -34,23 +34,23 @@ public class TapeTask implements Runnable{
 		// TapeLibraryManager.load(tapeLibraryName, seSNo, driveSNo)
 		logger.trace("TLM loaded volume on to drive");
 		
-		int archiveOperationId = archiveJob.getStorageOperation().getStorageOperationId();
+		int storageOperationId = storageJob.getStorageOperation().getStorageOperationId();
 		try {
-			if(StorageOperation.WRITE.getStorageOperationId() == archiveOperationId) {
+			if(StorageOperation.WRITE.getStorageOperationId() == storageOperationId) {
 				
 				// TapeDriveManager.setTapeHeadPositionForWriting()
 				logger.trace("TDM Tape Head positioned for writing");
 				
-				tapeJobProcessor.write(archiveJob);
+				tapeJobProcessor.write(storageJob);
 			}
-			else if(StorageOperation.READ.getStorageOperationId() == archiveOperationId) {
+			else if(StorageOperation.READ.getStorageOperationId() == storageOperationId) {
 				// TapeDriveManager.setTapeHeadPositionForReading()
-				tapeJobProcessor.read(archiveJob);
+				tapeJobProcessor.read(storageJob);
 			}
 		} catch (Throwable e) {
 			// TODO: handle exception
 			e.printStackTrace();
-			System.err.println("Unable to copy" + archiveJob.toString());
+			System.err.println("Unable to copy" + storageJob.toString());
 		}
 	}	
 }

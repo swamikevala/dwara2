@@ -1,0 +1,12 @@
+{
+  "time": 0.08,
+  "orientation": 0,
+  "timecode": {
+    "frm": 0,
+    "fmt": 25,
+    "secs": 0,
+    "txt": "0:00:00.0"
+  } ,
+    "mediaFrame": 10,
+    "image":"URLBase64EncodedJPGData"
+}

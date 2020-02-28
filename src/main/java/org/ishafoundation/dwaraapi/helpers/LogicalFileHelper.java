@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.ishafoundation.dwaraapi.model.LogicalFile;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +19,13 @@ public class LogicalFileHelper {
 	
 	public Collection<LogicalFile> getFiles(String libraryPath, String[] extensions, boolean needSidecarFiles, String[] sidecarExtensions){
 		List<LogicalFile> outputList = new ArrayList<LogicalFile>();
-		Collection<File> sourceFilesList = FileUtils.listFiles(new File(libraryPath), extensions, true);
+		List<String> sourceExtensionsList = new ArrayList<String>();
+		for (int i = 0; i < extensions.length; i++) {
+			sourceExtensionsList.add(extensions[i].toUpperCase());
+			sourceExtensionsList.add(extensions[i].toLowerCase());
+		}
+		
+		Collection<File> sourceFilesList = FileUtils.listFiles(new File(libraryPath), ArrayUtils.toStringArray(sourceExtensionsList.toArray()), true);
 		
 		if(needSidecarFiles) {
 		
@@ -37,8 +44,13 @@ public class LogicalFileHelper {
 				name_To_File.put(keyName, logicalFile);
 			}	
 	
+			List<String> sidecarExtensionsList = new ArrayList<String>();
+			for (int i = 0; i < sidecarExtensions.length; i++) {
+				sidecarExtensionsList.add(sidecarExtensions[i].toUpperCase());
+				sidecarExtensionsList.add(sidecarExtensions[i].toLowerCase());
+			}
 			
-			Collection<File> allSidecarFilesList = FileUtils.listFiles(new File(libraryPath), sidecarExtensions, true);
+			Collection<File> allSidecarFilesList = FileUtils.listFiles(new File(libraryPath),  ArrayUtils.toStringArray(sidecarExtensionsList.toArray()), true);
 				
 			for (Iterator<File> iterator = allSidecarFilesList.iterator(); iterator.hasNext();) {
 				File file = (File) iterator.next();

@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.process.thread.task.transcoding.ffmpeg;
 
+import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.model.LogicalFile;
 import org.ishafoundation.dwaraapi.model.ProxyGenCommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.process.factory.ProcessFactory;
@@ -24,7 +25,7 @@ public class TranscodingProcessor implements IProcessor {
 
 
 	@Override
-	public ProxyGenCommandLineExecutionResponse process(String taskName, int fileId, LogicalFile logicalFile,
+	public CommandLineExecutionResponse process(String taskName, String libraryName, int fileId, LogicalFile logicalFile, String category,
 			String destinationFilePath) throws Exception {
 		ITranscoder transcoder = TranscoderFactory.getInstance(applicationContext, taskName);
 		String sourceFilePathname = logicalFile.getAbsolutePath();

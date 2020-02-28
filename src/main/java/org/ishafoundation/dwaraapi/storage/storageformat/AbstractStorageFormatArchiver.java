@@ -25,14 +25,19 @@ public abstract class AbstractStorageFormatArchiver {
 		List<File> fileList = new ArrayList<File>();
 		
 		File file1 = new File();
-		file1.setFileName("99999_Shivanga-Ladies_Sharing_English_Avinashi_10-Dec-2017_Panasonic-AG90A\\1 CD\\00018.MTS");
+		file1.setFileName("99999_Shivanga-Ladies_Sharing_English_Avinashi_10-Dec-2017_Panasonic-AG90A\\1 CD\\DJI_0001.MOV");
 		file1.setBlockNumber(100);
 		fileList.add(file1);
 		
 		File file2 = new File();
-		file2.setFileName("99999_Shivanga-Ladies_Sharing_English_Avinashi_10-Dec-2017_Panasonic-AG90A\\2 CD\\00017.MTS");
+		file2.setFileName("99999_Shivanga-Ladies_Sharing_English_Avinashi_10-Dec-2017_Panasonic-AG90A\\2 CD\\IMG_0277.MOV");
 		file2.setBlockNumber(200);
 		fileList.add(file2);
+		
+		File file3 = new File();
+		file3.setFileName("99999_Shivanga-Ladies_Sharing_English_Avinashi_10-Dec-2017_Panasonic-AG90A\\2 CD\\Sadhguru Playing Cricket in Chennai.mp4");
+		file3.setBlockNumber(300);
+		fileList.add(file3);
 		
 		ar.setFileList(fileList);
 		// dbupdates using the ArchiveResponse recd..

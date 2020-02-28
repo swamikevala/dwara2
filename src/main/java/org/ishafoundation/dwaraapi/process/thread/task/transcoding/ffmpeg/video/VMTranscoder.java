@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.process.thread.task.transcoding.ffmpeg.video;
 
+import java.io.File;
+
 import org.ishafoundation.dwaraapi.model.ProxyGenCommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.process.factory.TranscoderFactory;
 import org.ishafoundation.dwaraapi.process.thread.task.transcoding.ffmpeg.MediaTask;
@@ -19,8 +21,13 @@ public class VMTranscoder extends MediaTask implements ITranscoder{
 	@Override
 	public ProxyGenCommandLineExecutionResponse transcode(String taskName, int fileId, String sourceFilePathname,
 			String destinationPath) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		
+		// TODO 
+		logger.trace("Hardcoded VM response...");
+		ProxyGenCommandLineExecutionResponse proxyGenCommandLineExecutionResponse = new ProxyGenCommandLineExecutionResponse();
+		proxyGenCommandLineExecutionResponse.setDestinationPathname(destinationPath + File.separator + new File(sourceFilePathname).getName());
+		proxyGenCommandLineExecutionResponse.setIsComplete(true);
+		return proxyGenCommandLineExecutionResponse;
 	}
 
 

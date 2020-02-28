@@ -91,13 +91,14 @@ public class ProcessJobManager_ThreadTask implements Runnable{
 
 	@Override
     public void run() {
-		System.out.println("jobid - " + job.getJobId());
+		logger.trace("managing process job - " + job.getJobId());
 		int libraryId = job.getInputLibraryId();
 		Library library = libraryDao.findById(libraryId).get();
 		String libraryName = library.getName();
 		Libraryclass libraryclass = libraryclassDao.findById(library.getLibraryclassId()).get();
-		String inputLibraryPath = libraryclass.getPathPrefix() + java.io.File.separator + libraryName;
-
+		String category = libraryclass.getCategory();
+		String inputLibraryPath = libraryclass.getPathWithLibrary(libraryName);
+		
 //			String inputLibraryPath = null;
 //			if(libraryclass.isSource()) {
 //				inputLibraryPath = libraryPathPrefix;
@@ -111,7 +112,8 @@ public class ProcessJobManager_ThreadTask implements Runnable{
 		// 2) and is responsible for generating a libraryclass
 		
 		// then it possibly means the output of the current task is the input for the dependent task
-		String outputLibraryPath = getOutputLibraryPath(job, libraryName);
+
+		String outputLibraryPath = getOutputLibraryPath(job, libraryName, category);
 
 		HashMap<String, Integer> filePathToId = getFilePathToId(libraryId);
 		
@@ -119,95 +121,43 @@ public class ProcessJobManager_ThreadTask implements Runnable{
 		
 		for (Iterator<LogicalFile> iterator = selectedFileList.iterator(); iterator.hasNext();) {
 			LogicalFile logicalFile = (LogicalFile) iterator.next();
-			logger.info("Now processing - " + job.getJobId() + " " + logicalFile.getAbsolutePath() + " task " + job.getTaskId());
-			String path = logicalFile.getAbsolutePath().replace(inputLibraryPath + File.separator, libraryName + File.separator);
+			logger.info("Now kicking off - " + job.getJobId() + " " + logicalFile.getAbsolutePath() + " task " + job.getTaskId());
+			String pathWithoutLibraryName = logicalFile.getAbsolutePath().replace(inputLibraryPath + File.separator, "");
+			String pathWithLibraryName = logicalFile.getAbsolutePath().replace(inputLibraryPath + File.separator, libraryName + File.separator);
 //				if(path.contains(configuration.getJunkFilesStagedDirName())) // skipping junk files
 //					continue;			
 			
 			//logger.info("Now processing - " + path);
 			int fileId = 0;
-			if(filePathToId.containsKey(path))
-				fileId = filePathToId.get(path);
+			if(filePathToId.containsKey(pathWithLibraryName))
+				fileId = filePathToId.get(pathWithLibraryName);
 			
 			String outputFilePath = null;
 			if(outputLibraryPath != null)
-				outputFilePath = outputLibraryPath + File.separator + FilenameUtils.getFullPathNoEndSeparator(path); 
+				outputFilePath = outputLibraryPath + File.separator + FilenameUtils.getFullPathNoEndSeparator(pathWithoutLibraryName); 
 				
 			org.ishafoundation.dwaraapi.db.model.master.workflow.Process processDBEntity = processCacheUtil.getProcess(processId);
 			String processName = processDBEntity.getName().toUpperCase();
 
 			Process_ThreadTask process = applicationContext.getBean(Process_ThreadTask.class);
 			process.setLibraryId(libraryId);
+			process.setLibraryName(libraryName);
 			process.setJobId(job.getJobId());
 			process.setFileId(fileId);
 			process.setLogicalFile(logicalFile);
+			process.setCategory(category);
 			process.setOutputLibraryPath(outputLibraryPath);
 			process.setDestinationFilePath(outputFilePath);
 			
 			Executor executor = DwaraApiApplication.processName_executor_map.get(processName.toLowerCase());
 			executor.execute(process);
-			// TODO : create threadpools on processes on bootstrap and make use of them here
-//			ProcessThreadPoolExecutor threadExecutorInstance = ProcessThreadPoolExecutorFactory.getInstance(applicationContext, processName);
-//			threadExecutorInstance.getExecutor().execute(process);
-
 		}
-		
-		
-//		//*** TODO : @Swami 
-//		// TODO if no. of errors in the process reach the configured max_errors threshold then we stop further processing.... count(*) on failures for the job_id...
-//		FilesSelector fileSelector = FilesSelectorFactory.getInstance(applicationContext, filetypeName);
-//		if(libraryclass.isSource()){ 
-//			@SuppressWarnings("unchecked")
-//			Collection<File> selectedFileList = (Collection<File>) fileSelector.getFiles(inputLibraryPath);
-//			
-//			for (Iterator<File> iterator = selectedFileList.iterator(); iterator.hasNext();) {
-//				File nthToBeProcessedFile = (File) iterator.next();
-//				
-//				String path = nthToBeProcessedFile.getAbsolutePath();
-////					if(path.contains(configuration.getJunkFilesStagedDirName())) // skipping junk files
-////						continue;			
-//				
-//				path = path.replace(inputLibraryPath + File.separator, "");
-//				logger.info("Now processing - " + path);
-//
-//				int fileId = 0;
-//				if(filePathToId.containsKey(path))
-//					fileId = filePathToId.get(path);
-//				
-//				String outputFilePath = outputLibraryPath + File.separator + FilenameUtils.getFullPathNoEndSeparator(path); 
-//				
-//				process(libraryId, fileId, nthToBeProcessedFile, outputFilePath);
-//			}
-//		}else {
-//			@SuppressWarnings("unchecked")
-//
-////				HashMap<String, ProxyFileCollection> filepathName_to_proxyFileCollection = (HashMap<String, ProxyFileCollection>) fileSelector.getFiles(inputLibraryPath);
-////				Set<String> keySet = filepathName_to_proxyFileCollection.keySet();
-////				for (Iterator<String> iterator = keySet.iterator(); iterator.hasNext();) {
-////					String key = (String) iterator.next();
-////					ProxyFileCollection proxyFileCollection = filepathName_to_proxyFileCollection.get(key);
-////					
-////					process(libraryId, fileId, nthToBeProcessedFileSet, outputFilePath);
-////				}
-//			HashMap<String, Set<File>> filepathName_to_proxyFileSet = (HashMap<String, Set<File>>)  fileSelector.getFiles(inputLibraryPath);
-//			Set<String> keySet = filepathName_to_proxyFileSet.keySet();
-//			for (Iterator<String> iterator = keySet.iterator(); iterator.hasNext();) {
-//				String keyName = (String) iterator.next();
-//				Set<File> nthToBeProcessedFileSet = filepathName_to_proxyFileSet.get(keyName);
-//				
-//				process(libraryId, -9999, nthToBeProcessedFileSet, null); // TODO : fileId will not be available for proxygen step as the noFileRecords is set to true
-//			}	
-//				
-//		}
-			
-		// TODO Where to create these Library and file entries???
-		// If here in the framework means We are trying to create a library entry even before the items are processed in their threads at their own pace. Tighten up...
-		int outputLibraryId = 0;
+		// TODO if no. of errors in the process reach the configured max_errors threshold then we stop further processing.... count(*) on failures for the job_id...
+
 
 	}
 
-	
-	private String getOutputLibraryPath(Job job, String libraryName) {
+	private String getOutputLibraryPath(Job job, String libraryName, String category) {
 		int taskId = job.getTaskId();
 		Libraryclass outputLibraryclass = libraryclassDao.findByTaskId(taskId); //  the task output's resultant libraryclass
 		
@@ -216,8 +166,9 @@ public class ProcessJobManager_ThreadTask implements Runnable{
 		if(outputLibraryclass != null) {
 			int outputLibraryClassSequenceId = outputLibraryclass.getSequenceId();
 			String outputLibraryNamePrefix = sequenceDao.findById(outputLibraryClassSequenceId).get().getPrefix();
-			outputLibraryPath = outputLibraryclass.getPathPrefix() + java.io.File.separator + outputLibraryNamePrefix + libraryName;
+			outputLibraryPath = outputLibraryclass.getPathPrefix() + java.io.File.separator + category + File.separator + outputLibraryNamePrefix + libraryName;
 		}
+
 		return outputLibraryPath;
 	}
 	

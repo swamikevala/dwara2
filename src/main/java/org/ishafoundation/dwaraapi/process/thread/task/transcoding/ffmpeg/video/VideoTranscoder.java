@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.model.ProxyGenCommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.process.factory.TranscoderFactory;
 import org.ishafoundation.dwaraapi.process.thread.task.transcoding.ffmpeg.ITranscoder;
 import org.ishafoundation.dwaraapi.process.thread.task.transcoding.ffmpeg.MediaTask;
 import org.ishafoundation.dwaraapi.process.transcoding.ffmpeg.utils.M01XmlFileHandler;
@@ -18,7 +19,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class VideoTranscoder extends MediaTask implements ITranscoder{
-
+    static {
+    	TranscoderFactory.register("Video Transcoding Low Resolution", VideoTranscoder.class);
+    }
+    
     private static final Logger logger = LoggerFactory.getLogger(VideoTranscoder.class);
     
 	@Autowired
@@ -38,7 +42,7 @@ public class VideoTranscoder extends MediaTask implements ITranscoder{
 		String m01FileLocPath = sourceFilePathname.replace("." + FilenameUtils.getExtension(sourceFilePathname), "M01.XML");
 
 		String thumbnailTargetLocation = destinationPath + File.separator + FilenameUtils.getBaseName(sourceFilePathname) + ".jpg";
-		String thumbnailStdErrFileLoc = thumbnailTargetLocation.replace(".jpg", ".jpg.ffmpeg.log");
+		String thumbnailStdErrFileLoc = thumbnailTargetLocation.replace(".jpg", ".jpg_ffmpeg_log");
 
 		/*************** THUMBNAIL GENERATION ***************/
 		long thumbnailStartTime = System.currentTimeMillis();
@@ -65,10 +69,10 @@ public class VideoTranscoder extends MediaTask implements ITranscoder{
 		 * 
 		 */
 		String proxyTargetLocation = destinationPath + File.separator + FilenameUtils.getBaseName(sourceFilePathname) + ".mp4";		
-		String proxyStdErrFileLoc = proxyTargetLocation.replace(".mp4", ".mp4.ffmpeg.log");
+		String proxyStdErrFileLoc = proxyTargetLocation.replace(".mp4", ".mp4_ffmpeg_log");
 		
-		String highResMetaTargetLocation = proxyTargetLocation.replace(".mp4", ".mp4.ffprobe.out");
-		String metaStdErrFileLoc = proxyTargetLocation.replace(".mp4", ".mp4.ffprobe.log");
+		String highResMetaTargetLocation = proxyTargetLocation.replace(".mp4", ".mp4_ffprobe_out");
+		String metaStdErrFileLoc = proxyTargetLocation.replace(".mp4", ".mp4_ffprobe_log");
 		
 		/*************** METADATA EXTRACTION ***************/
 		long metaStartTime = System.currentTimeMillis();

@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 
 @Entity
@@ -37,8 +38,10 @@ public class Libraryclass {
 
 	@Column(name="concurrent_copies")
 	private boolean concurrentCopies;
-
-		
+//
+//	@Transient
+//	private String path;
+	
 	public int getLibraryclassId() {
 		return libraryclassId;
 	}
@@ -111,4 +114,22 @@ public class Libraryclass {
 		this.concurrentCopies = concurrentCopies;
 	}
 
+	public String getCategory() {
+		String category = "public";
+		// TODO : should this be private1/2/3 
+		if(getName().toLowerCase().startsWith("private")) {
+			category = "private";
+		}
+		return category;
+	}
+	
+	public String getPathWithLibrary(String libraryName) {
+		String pathWithLibrary = null;
+		if(isSource())
+			pathWithLibrary = getPathPrefix() + java.io.File.separator + libraryName;
+		else
+			pathWithLibrary = getPathPrefix() + java.io.File.separator + getCategory() + java.io.File.separator + libraryName;
+
+		return pathWithLibrary;
+	}
 }

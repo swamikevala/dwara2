@@ -37,7 +37,7 @@ public class ScheduledStatusUpdaterController {
 			boolean hasFailures = false;
 			boolean hasAnyCompleted = false;
 			boolean isAllComplete = true;
-			List<JobFile> jobFileList = jobFileDao.findAllByJobId(job.getJobId());
+			List<JobFile> jobFileList = jobFileDao.findAllByJobId(job.getJobId()); // TODO : should this be only process jobs...
 			for (Iterator<JobFile> iterator2 = jobFileList.iterator(); iterator2.hasNext();) {
 				JobFile jobFile = (JobFile) iterator2.next();
 				int statusId = jobFile.getStatusId();

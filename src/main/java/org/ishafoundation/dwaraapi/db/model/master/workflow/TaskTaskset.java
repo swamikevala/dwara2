@@ -55,4 +55,9 @@ public class TaskTaskset {
 	public void setPreTaskId(int preTaskId) {
 		this.preTaskId = preTaskId;
 	}
+	
+	@Override
+	public String toString() {
+		return "taskTasksetId - " + taskTasksetId + "tasksetId - " + tasksetId + "taskId - " + taskId + "preTaskId - " + preTaskId;
+	}
 }

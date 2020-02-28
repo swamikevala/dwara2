@@ -85,9 +85,11 @@ public class Process_ThreadTask implements Runnable{
 	private ProcessCacheUtil processCacheUtil;		
 	
 	protected int libraryId;
+	protected String libraryName;
 	protected int jobId;
 	protected int fileId;
 	protected LogicalFile logicalFile;
+	protected String category;
 	protected String outputLibraryPath;
 	protected String destinationFilePath;
 	
@@ -98,6 +100,14 @@ public class Process_ThreadTask implements Runnable{
 
 	public void setLibraryId(int libraryId) {
 		this.libraryId = libraryId;
+	}
+
+	public String getLibraryName() {
+		return libraryName;
+	}
+
+	public void setLibraryName(String libraryName) {
+		this.libraryName = libraryName;
 	}
 
 	public int getJobId() {
@@ -124,6 +134,14 @@ public class Process_ThreadTask implements Runnable{
 		this.logicalFile = logicalFile;
 	}
 
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
+	}
+
 	public String getOutputLibraryPath() {
 		return outputLibraryPath;
 	}
@@ -143,7 +161,7 @@ public class Process_ThreadTask implements Runnable{
 	@Override
 	public void run(){
 		String identifierSuffix = "";//mediaFileId+"";//  +  "-" + VideoProcessingSteps.PROXY_GENERATION.toString();
-		System.out.println("jobId - " + jobId);
+		logger.trace("running jobId - " + jobId);
 		String containerName = identifierSuffix;	
 		
 		ThreadNameHelper threadNameHelper = new ThreadNameHelper();
@@ -184,15 +202,15 @@ public class Process_ThreadTask implements Runnable{
 				int taskId = job.getTaskId();
 				Task task = taskDao.findById(taskId).get();
 				taskName = task.getName();
-				System.out.println(jobId + taskName);
+				logger.trace(jobId + " " + taskName);
 				// call the process methods...
 				
 				org.ishafoundation.dwaraapi.db.model.master.workflow.Process processDBEntity = processCacheUtil.getProcess(task.getProcessId());
 				String processName = processDBEntity.getName().toUpperCase();
 				
 				IProcessor processor = ProcessFactory.getInstance(applicationContext, processName);
-				CommandLineExecutionResponse commandLineExecutionResponse = processor.process(taskName, fileId, logicalFile, destinationFilePath);
-				if(commandLineExecutionResponse == null)
+				CommandLineExecutionResponse commandLineExecutionResponse = processor.process(taskName, libraryName, fileId, logicalFile, category, destinationFilePath);
+				if(commandLineExecutionResponse == null) // TODO : Handle this...
 					return;
 				boolean isCancelInitiated = commandLineExecutionResponse.isCancelled();
 				
@@ -285,7 +303,7 @@ public class Process_ThreadTask implements Runnable{
 			int statusId = Status.valueOf(status).getStatusId();
 			long startedOn = Calendar.getInstance().getTimeInMillis();
 			
-			String logMsgPrefix = "";//"DB Job - " + job.getJobTypeName() + "(" + jobId + ") - Update - status to " + status;
+			String logMsgPrefix = "DB Job - " + "(" + jobId + ") - Update - status to " + status;
 			logger.debug(logMsgPrefix);	
 			job.setStatusId(statusId);
 			job.setStartedAt(startedOn);

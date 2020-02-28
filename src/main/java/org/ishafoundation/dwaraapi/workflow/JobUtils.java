@@ -4,12 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.dao.master.common.RequesttypeDao;
-import org.ishafoundation.dwaraapi.db.dao.master.ingest.RequesttypeLibraryclassDao;
 import org.ishafoundation.dwaraapi.db.dao.master.workflow.TaskTasksetDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.model.master.common.Requesttype;
-import org.ishafoundation.dwaraapi.db.model.master.ingest.RequesttypeLibraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.workflow.TaskTaskset;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -19,12 +15,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JobUtils {
-	
-	@Autowired
-	private RequesttypeLibraryclassDao requesttypeLibraryclassDao;
 
 	@Autowired
-	private RequesttypeDao requesttypeDao;
+	private TaskUtils taskUtils;
 	
 	@Autowired
 	private TaskTasksetDao taskTasksetDao;	
@@ -38,7 +31,7 @@ public class JobUtils {
 		int taskId = job.getTaskId();
 		int requestId = request.getRequestId();
 		
-		TaskOrTasksetDetails taskOrTasksetDetails = getTaskOrTasksetDetails(request);
+		TaskOrTasksetDetails taskOrTasksetDetails = taskUtils.getTaskOrTasksetDetails(request);
 		int tasksetId = taskOrTasksetDetails.getTasksetId();	
 	
 		if(tasksetId > 0) {// means a taskset involving multiple tasks
@@ -54,7 +47,7 @@ public class JobUtils {
 	
 	public List<Job> getDependentJobs(Job job, Request request){
 		List<Job> dependentJobsList = new ArrayList<Job>();
-		TaskOrTasksetDetails taskOrTasksetDetails = getTaskOrTasksetDetails(request);
+		TaskOrTasksetDetails taskOrTasksetDetails = taskUtils.getTaskOrTasksetDetails(request);
 		int tasksetId = taskOrTasksetDetails.getTasksetId();	
 	
 		if(tasksetId > 0) {// means a taskset involving multiple tasks
@@ -72,28 +65,5 @@ public class JobUtils {
 			}
 		}
 		return dependentJobsList;
-	}
-
-	// TODO Move this to taskUtils...
-	public TaskOrTasksetDetails getTaskOrTasksetDetails(Request request) {
-		int requesttypeId = request.getRequesttypeId();
-		int libraryclassId = request.getLibraryclassId();
-		
-		int tasksetId = 0;
-		int taskId = 0;
-		RequesttypeLibraryclass requesttypeLibraryclass = requesttypeLibraryclassDao.findByRequesttypeIdAndLibraryclassId(requesttypeId, libraryclassId);
-		if(requesttypeLibraryclass != null) { // means library class specific workflow
-			tasksetId = requesttypeLibraryclass.getTasksetId();
-			taskId = requesttypeLibraryclass.getTaskId();
-		}else { // means default ingest workflow or restore
-			Requesttype requesttype = requesttypeDao.findById(requesttypeId).get();
-			tasksetId = requesttype.getTasksetId();
-			taskId = requesttype.getTaskId();
-		}
-		
-		TaskOrTasksetDetails taskOrTasksetDetails = new TaskOrTasksetDetails();
-		taskOrTasksetDetails.setTasksetId(tasksetId);
-		taskOrTasksetDetails.setTaskId(taskId);
-		return taskOrTasksetDetails; // if both tasksetId and taskId are 0 it means no job need to be created... 
 	}
 }

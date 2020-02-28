@@ -62,9 +62,11 @@ public class TapeDriveManager{
 	private static String getHardcodedMtStatus(String driveName) {
 		String mtStatusResponse = null;
 		String filePath = null;
-		if(driveName.equals(drive0Name))
-			filePath = "C:\\Users\\prakash\\projects\\videoarchives\\bru\\POC\\BRU002\\test\\mtResponses\\mt_status_busy.txt";
-		else if(driveName.equals(drive1Name) || driveName.equals(drive2Name))
+//		if(driveName.equals(drive0Name))
+//			filePath = "C:\\Users\\prakash\\projects\\videoarchives\\bru\\POC\\BRU002\\test\\mtResponses\\mt_status_busy.txt";
+//		else if(driveName.equals(drive1Name) || driveName.equals(drive2Name))
+//			filePath = "C:\\Users\\prakash\\projects\\videoarchives\\bru\\POC\\BRU002\\test\\mtResponses\\mt_status_no_tape_loaded.txt";
+		if(!driveName.equals(""))
 			filePath = "C:\\Users\\prakash\\projects\\videoarchives\\bru\\POC\\BRU002\\test\\mtResponses\\mt_status_no_tape_loaded.txt";
 		else if(driveName.equals(""))
 			filePath = "C:\\Users\\prakash\\projects\\videoarchives\\bru\\POC\\BRU002\\test\\mtResponses\\mt_status_tape_loaded.txt";

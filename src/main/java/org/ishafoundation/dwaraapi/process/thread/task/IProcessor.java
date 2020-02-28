@@ -1,13 +1,13 @@
 package org.ishafoundation.dwaraapi.process.thread.task;
 
+import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.model.LogicalFile;
-import org.ishafoundation.dwaraapi.model.ProxyGenCommandLineExecutionResponse;
 
 public interface IProcessor {
 
 	/*
 	 * @args 
 	 */
-	public ProxyGenCommandLineExecutionResponse process(String taskName, int fileId, LogicalFile logicalFile, String destinationFilePath) throws Exception;
+	public CommandLineExecutionResponse process(String taskName, String libraryName, int fileId, LogicalFile logicalFile, String category, String destinationFilePath) throws Exception;
 	
 }

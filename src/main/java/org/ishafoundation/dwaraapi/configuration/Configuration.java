@@ -9,11 +9,22 @@ public class Configuration {
 
 	private String stagingSrcDirRoot;
 
+	private String sshPrvKeyFileLocation;
+
+
 	public String getStagingSrcDirRoot() {
 		return stagingSrcDirRoot;
 	}
 
 	public void setStagingSrcDirRoot(String stagingSrcDirRoot) {
 		this.stagingSrcDirRoot = stagingSrcDirRoot;
+	}
+
+	public String getSshPrvKeyFileLocation() {
+		return sshPrvKeyFileLocation;
+	}
+
+	public void setSshPrvKeyFileLocation(String sshPrvKeyFileLocation) {
+		this.sshPrvKeyFileLocation = sshPrvKeyFileLocation;
 	}
 }

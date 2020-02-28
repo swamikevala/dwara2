@@ -38,7 +38,7 @@ public class DwaraApiApplication {
 	}
 
 	@EventListener(ApplicationReadyEvent.class)
-	public void doSomethingAfterStartup() {
+	public void createThreadPoolsForProcess() {
 		
 		List<Process> processList = processCacheUtil.getProcessList();
 		for (Iterator<Process> iterator = processList.iterator(); iterator.hasNext();) {

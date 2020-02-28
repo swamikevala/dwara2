@@ -11,15 +11,14 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class VLTranscoder extends MediaTask implements ITranscoder{
-    static {
-    	TranscoderFactory.register("Video Transcoding Low Resolution", VLTranscoder.class);
-    }
+
 
     private static final Logger logger = LoggerFactory.getLogger(VLTranscoder.class);
     
 	@Override
 	public ProxyGenCommandLineExecutionResponse transcode(String taskName, int fileId, String sourceFilePathname,
 			String destinationPath) throws Exception {
+		logger.trace("destinationPath " + destinationPath);
 		String clipExtn = FilenameUtils.getExtension(sourceFilePathname);
 
 		String proxyTargetLocation = destinationPath.replace(clipExtn, ".mp4");		

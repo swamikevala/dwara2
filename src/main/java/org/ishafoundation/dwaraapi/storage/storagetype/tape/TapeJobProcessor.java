@@ -46,17 +46,17 @@ public class TapeJobProcessor extends StorageTypeJobProcessor {
 	// now check on the format
 	// call the formatmanager accordingly and run the write/read command
 	@Override
-	public ArchiveResponse write(StorageJob archiveJob) throws Throwable {
+	public ArchiveResponse write(StorageJob storageJob) throws Throwable {
 		// Delegate the format specific archiving to AbstractStorageFormatArchiver
-		ArchiveResponse archiveResponse = super.write(archiveJob);
+		ArchiveResponse archiveResponse = super.write(storageJob);
 		
 		logger.trace("Processing job using storage type - TAPE. DB updates specific to Tape goes in here");
 
 		// Update tape specific DB - File_Tape...
-		if(!archiveJob.isNoFileRecords()) { // For prev proxy copy there isnt any entry to file_tape
+		if(!storageJob.isNoFileRecords()) { // For prev proxy copy there isnt any entry to file_tape
 			// TODO : Check If for Mezz copy libraryId = MezzLibraryId coming from input...
-			int libraryId = archiveJob.getLibraryId();
-			int tapeId = archiveJob.getVolume().getTape().getTapeId();
+			int libraryId = storageJob.getLibraryId();
+			int tapeId = storageJob.getVolume().getTape().getTapeId();
 			// Get a map of Paths and their File Ids
 			List<org.ishafoundation.dwaraapi.db.model.transactional.File> libraryFileList = fileDao.findAllByLibraryId(libraryId);
 			
@@ -89,23 +89,26 @@ public class TapeJobProcessor extends StorageTypeJobProcessor {
 			}
 			
 		    if(toBeAddedFileTapeTableEntries.size() > 0) {
-		    	//logger.debug("DB File entries Creation");   
+		    	logger.debug("DB FileTape entries Creation");   
 		    	fileTapeDao.saveAll(toBeAddedFileTapeTableEntries);
-		    	//logger.debug("DB File entries Creation - Success");
+		    	logger.debug("DB FileTape entries Creation - Success");
 		    }
 		    
 		    LibraryTape libraryTape = new LibraryTape();
 		    libraryTape.setTapeId(tapeId);
 		    libraryTape.setLibraryId(libraryId);
-		    libraryTape.setEncrypted(archiveJob.isEncrypted());
-		    libraryTape.setCopyNumber(archiveJob.getCopyNumber());
+		    libraryTape.setEncrypted(storageJob.isEncrypted());
+		    libraryTape.setCopyNumber(storageJob.getCopyNumber());
+		    logger.debug("DB LibraryTape Creation");
 		    libraryTapeDao.save(libraryTape);
-		    
+		    logger.debug("DB LibraryTape Creation - Success");
 		}
 
-		Tapedrive tapedrive = tapedriveDao.findByElementAddress(archiveJob.getDriveNo());
+		Tapedrive tapedrive = tapedriveDao.findByElementAddress(storageJob.getDriveNo());
 		tapedrive.setStatus(TapedriveStatus.AVAILABLE.toString());
+		logger.debug("DB Tapedrive Updation " + tapedrive.getStatus());
 		tapedriveDao.save(tapedrive);
+		logger.debug("DB Tapedrive Updation - Success");
 
 		
 		return archiveResponse;

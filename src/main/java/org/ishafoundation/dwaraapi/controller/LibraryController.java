@@ -10,16 +10,19 @@ import java.util.List;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.constants.Status;
+import org.ishafoundation.dwaraapi.db.cacheutil.Extns_FiletypeCacheUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.model.master.process.Filetype;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -37,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("ingest")
 public class LibraryController {
 
-	Logger logger = LoggerFactory.getLogger(LibraryController.class);
+	private static final Logger logger = LoggerFactory.getLogger(LibraryController.class);
 	
 	@Autowired
 	private RequestDao requestDao;
@@ -56,6 +59,9 @@ public class LibraryController {
 	
 	@Autowired
 	private Configuration configuration;
+	
+	@Autowired
+	private Extns_FiletypeCacheUtil extns_FiletypeCacheUtil;
 	
 	
 //    @PostMapping("/multi-ingest")
@@ -104,7 +110,7 @@ public class LibraryController {
         if(StringUtils.isNotBlank(modifiedFileName) && !originalFileName.equals(modifiedFileName)){
         	mediaLibraryFileName = modifiedFileName;
         }
-    	
+    	logger.trace("Now ingesting - " + mediaLibraryFileName);
     	File mediaLibraryFileInReadyToIngestDir = FileUtils.getFile(ingestPath, originalFileName);
 
         // TODO : For now hardcoded...
@@ -144,16 +150,19 @@ public class LibraryController {
     	ir.setRequesttypeId(requestTypeId);
     	ir.setSourcePath(ingestPath);
     	ir.setStatusId(statusId);
-    	ir.setOptimizeTapeAccess(false); // TODO Hardcoded...
-    	requestDao.save(ir);
-
+    	ir.setOptimizeTapeAccess(true); // TODO Hardcoded for now... is it not possible to have this set to false for ingest???
+    	logger.debug("DB Request Creation");
+    	ir = requestDao.save(ir);
+    	logger.debug("DB Request Creation - Success " + ir.getRequestId());
+    	
     	Library lib = new Library();
     	lib.setFileCount(555);
     	lib.setFileStructureMd5("someFileStructureMd5Value");
     	lib.setLibraryclassId(libraryclassId);
     	lib.setName(modifiedFileName);
+    	logger.debug("DB Library Creation");  
     	lib = libraryDao.save(lib);
-    	
+    	logger.debug("DB Library Creation - Success " + lib.getLibraryId());
     	int libraryId = lib.getLibraryId();
 
     	
@@ -165,7 +174,7 @@ public class LibraryController {
 			org.ishafoundation.dwaraapi.db.model.transactional.File nthFileRowToBeInserted = new org.ishafoundation.dwaraapi.db.model.transactional.File();
 			nthFileRowToBeInserted.setPathname(filePath);
 			nthFileRowToBeInserted.setCrc(getCrc(file));
-			nthFileRowToBeInserted.setFiletypeId(getMediatypeId(file));
+			nthFileRowToBeInserted.setFiletypeId(getFiletypeId(file));
 			nthFileRowToBeInserted.setSize(size);
 			
 			
@@ -174,13 +183,15 @@ public class LibraryController {
 		}
 	    
 	    if(toBeAddedFileTableEntries.size() > 0) {
-	    	logger.debug("DB File entries Creation");   
+	    	logger.debug("DB File rows Creation");   
 	    	fileDao.saveAll(toBeAddedFileTableEntries);
-	    	logger.debug("DB File entries Creation - Success");
+	    	logger.debug("DB File rows Creation - Success");
 	    }
 
     	ir.setLibraryId(libraryId);
+    	logger.debug("DB Request Updation");
     	requestDao.save(ir);
+    	logger.debug("DB Request Updation - Success");
     	
     	setAttributes();
 	    
@@ -191,21 +202,26 @@ public class LibraryController {
     
     private void createJobTableEntries(Request ingestrequest, Library library) {
     	List<Job> jobList = workflowManager.createJobsForIngest(ingestrequest, library);
-    	
+    	logger.debug("DB Job rows Creation");   
     	jobDao.saveAll(jobList);
+    	logger.debug("DB Job rows Creation - Success");
     }
 
 	private String getUserFromContext() {
 		return "";//SecurityContextHolder.getContext().getAuthentication().getName();
 	}
 	
-	private int getMediatypeId(File file) {
-		int mediaTypeId = 0;
+	private int getFiletypeId(File file) {
+		int filetypeId = 0;
 		if(file.isFile()) {
-			if(file.getName().endsWith(".MTS")) // TODO : hardcoded
-				mediaTypeId = 18001;
+			String extn = FilenameUtils.getExtension(file.getName()).toUpperCase();
+			
+			Filetype filetype = extns_FiletypeCacheUtil.getExtns_FiletypeMap().get(extn);
+			if(filetype != null) {
+				filetypeId = filetype.getFiletypeId();				
+			}
 		}
-		return mediaTypeId;
+		return filetypeId;
 	}
 	
 	private String getCrc(File file) {
