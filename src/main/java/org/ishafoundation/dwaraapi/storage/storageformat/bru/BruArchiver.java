@@ -75,10 +75,15 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 	
 
 	private List<String> getBruCopyCommand(String volumeLabel, int blockSizeInKB, String dataTransferElementName, String libraryPrefixPath, String libraryToBeWritten) {
+		
+		String bruCopyCommand = "bru -B -clOjvvvvvvvvv -QX -b " + blockSizeInKB + "K -f " + dataTransferElementName + " " + libraryToBeWritten;
+		//String bruCopyCommand = "bru -B -clOjvvvvvvvvv -L " + volumeLabel + " -QX -b " + blockSizeInKB + "K -f " + dataTransferElementName + " " + libraryToBeWritten;
+		
 		List<String> commandList = new ArrayList<String>();
 		commandList.add("sh");
 		commandList.add("-c");
-		commandList.add("cd " + libraryPrefixPath + " ; " );		
+		commandList.add("cd " + libraryPrefixPath + " ; " + bruCopyCommand);
+		/*
 		commandList.add("bru");
 		commandList.add("-clOjvvvvvvvvv");
 		commandList.add("-L");
@@ -88,7 +93,7 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 		commandList.add(blockSizeInKB + "K");
 		commandList.add("-f");
 		commandList.add(dataTransferElementName);
-		commandList.add(libraryToBeWritten);
+		commandList.add(libraryToBeWritten);*/
 		
 		return commandList;
 	}
@@ -96,10 +101,14 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 	
 
 	private List<String> getBruRestoreCommand(String filePathNameToBeRestored,  int blockSizeInKB, String destinationPath) {
+		String bruRestoreCommand = "bru -B -xvvvvvvvvv -f " + filePathNameToBeRestored + " -b " + blockSizeInKB + "K -QV -C";
+		
 		List<String> commandList = new ArrayList<String>();
 		commandList.add("sh");
 		commandList.add("-c");
-		commandList.add("cd " + destinationPath + " ; " );
+		commandList.add("cd " + destinationPath + " ; " + bruRestoreCommand);
+		
+		/*
 		commandList.add("bru");
 		commandList.add("-xvvvvvvvvv");
 		commandList.add("-f");
@@ -108,7 +117,7 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 		commandList.add(blockSizeInKB + "K");
 		commandList.add("-QV");
 		commandList.add("-C");
-		
+		*/
 		return commandList;
 	}	
 	
