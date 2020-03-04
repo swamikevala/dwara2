@@ -35,9 +35,10 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 		String tapeLabel = storageJob.getVolume().getTape().getBarcode();
 		int blockSizeInKB = storageJob.getVolume().getTape().getBlocksize()/1000;
 		String dataTransferElementName = storageJob.getDeviceWwid();
-		String fileToBeWritten = storageJob.getLibrarypathToBeCopied();
+		String libraryPrefixPath = storageJob.getLibraryPrefixPath();
+		String libraryToBeWritten = storageJob.getLibraryToBeCopied();
 		// frames bru command
-		List<String> bruCopyCommandParamsList = getBruCopyCommand(tapeLabel, blockSizeInKB, dataTransferElementName, fileToBeWritten);		
+		List<String> bruCopyCommandParamsList = getBruCopyCommand(tapeLabel, blockSizeInKB, dataTransferElementName, libraryPrefixPath, libraryToBeWritten);		
 		// executes the command and parsesitsresponse
 		// TODO Handle both success and error scenarios
 		return executeCommand(bruCopyCommandParamsList);
@@ -73,8 +74,11 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 	}
 	
 
-	private List<String> getBruCopyCommand(String volumeLabel, int blockSizeInKB, String dataTransferElementName, String fileToBeWritten) {
+	private List<String> getBruCopyCommand(String volumeLabel, int blockSizeInKB, String dataTransferElementName, String libraryPrefixPath, String libraryToBeWritten) {
 		List<String> commandList = new ArrayList<String>();
+		commandList.add("sh");
+		commandList.add("-c");
+		commandList.add("cd " + libraryPrefixPath + " ; " );		
 		commandList.add("bru");
 		commandList.add("-clOjvvvvvvvvv");
 		commandList.add("-L");
@@ -84,7 +88,7 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 		commandList.add(blockSizeInKB + "K");
 		commandList.add("-f");
 		commandList.add(dataTransferElementName);
-		commandList.add(fileToBeWritten);
+		commandList.add(libraryToBeWritten);
 		
 		return commandList;
 	}

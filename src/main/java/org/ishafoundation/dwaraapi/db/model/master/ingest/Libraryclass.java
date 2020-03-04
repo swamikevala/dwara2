@@ -4,7 +4,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 
 @Entity
@@ -110,6 +109,16 @@ public class Libraryclass {
 			category = "private";
 		}
 		return category;
+	}
+
+	public String getPath() {
+		String pathWithOutLibrary = null;
+		if(isSource())
+			pathWithOutLibrary = getPathPrefix();
+		else
+			pathWithOutLibrary = getPathPrefix() + java.io.File.separator + getCategory();
+
+		return pathWithOutLibrary;
 	}
 	
 	public String getPathWithLibrary(String libraryName) {

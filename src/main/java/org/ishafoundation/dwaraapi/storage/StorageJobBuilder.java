@@ -106,6 +106,7 @@ public class StorageJobBuilder {
 				String libraryName = library.getName();			
 				int libraryclassId = library.getLibraryclassId();
 				Libraryclass copyTaskLibraryclass = libraryclassDao.findById(libraryclassId).get();	
+				
 				String librarypathToBeCopied = copyTaskLibraryclass.getPathWithLibrary(libraryName);
 
 				
@@ -119,7 +120,8 @@ public class StorageJobBuilder {
 				
 				// what needs to be copied
 				storageJob.setLibraryId(libraryId);
-				storageJob.setLibrarypathToBeCopied(librarypathToBeCopied);
+				storageJob.setLibraryPrefixPath(copyTaskLibraryclass.getPath());
+				storageJob.setLibraryToBeCopied(libraryName);
 
 				// to where
 				storageJob.setStoragetype(getStoragetype());

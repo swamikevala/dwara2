@@ -9,8 +9,11 @@ import org.ishafoundation.dwaraapi.storage.constants.StorageOperation;
 public class StorageJob {
 	
 	private StorageOperation storageOperation; // Ingest or Restore
+	
+	// Ingest stuff
 	private int libraryId;
-	private String librarypathToBeCopied;
+	private String libraryToBeCopied;
+	private String libraryPrefixPath;
 	private Job job; 
 	
 	private Storagetype storagetype;
@@ -31,6 +34,7 @@ public class StorageJob {
 	
 	private boolean concurrentCopies;
 
+	// Restore stuff
 	private int fileId;
 	private String filePathname;
 	private String destinationPath;
@@ -49,11 +53,17 @@ public class StorageJob {
 	public void setLibraryId(int libraryId) {
 		this.libraryId = libraryId;
 	}
-	public String getLibrarypathToBeCopied() {
-		return librarypathToBeCopied;
+	public String getLibraryToBeCopied() {
+		return libraryToBeCopied;
 	}
-	public void setLibrarypathToBeCopied(String librarypathToBeCopied) {
-		this.librarypathToBeCopied = librarypathToBeCopied;
+	public void setLibraryToBeCopied(String libraryToBeCopied) {
+		this.libraryToBeCopied = libraryToBeCopied;
+	}
+	public String getLibraryPrefixPath() {
+		return libraryPrefixPath;
+	}
+	public void setLibraryPrefixPath(String libraryPrefixPath) {
+		this.libraryPrefixPath = libraryPrefixPath;
 	}
 	public Job getJob() {
 		return job;

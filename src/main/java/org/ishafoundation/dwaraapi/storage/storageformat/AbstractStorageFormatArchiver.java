@@ -9,7 +9,7 @@ public abstract class AbstractStorageFormatArchiver {
 	private static final Logger logger = LoggerFactory.getLogger(AbstractStorageFormatArchiver.class);
 	
 	public ArchiveResponse write(StorageJob storageJob){
-		logger.trace("will be writing " + storageJob.getLibrarypathToBeCopied());
+		logger.trace("will be writing " + storageJob.getLibraryPrefixPath() + "!-!" + storageJob.getLibraryToBeCopied());
 		// dbUpdates
 		ArchiveResponse ar = archive(storageJob);
 		
