@@ -32,8 +32,8 @@ public class Job {
 	@Column(name="created_at")
 	private long createdAt;
 
-	@Column(name="request_id")
-	private int requestId;
+	@Column(name="subrequest_id")
+	private int subrequestId;
 
 	@Column(name="started_at")
 	private long startedAt;
@@ -90,12 +90,12 @@ public class Job {
 		this.createdAt = createdAt;
 	}
 	
-	public int getRequestId() {
-		return requestId;
+	public int getSubrequestId() {
+		return subrequestId;
 	}
 
-	public void setRequestId(int requestId) {
-		this.requestId = requestId;
+	public void setSubrequestId(int subrequestId) {
+		this.subrequestId = subrequestId;
 	}
 	
 	public long getStartedAt() {

@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.storage.storageformat.ltfs;
 
 import org.ishafoundation.dwaraapi.storage.StorageFormatFactory;
+import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storageformat.AbstractStorageFormatArchiver;
 import org.ishafoundation.dwaraapi.storage.storageformat.ArchiveResponse;
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ public class LTFSArchiver extends AbstractStorageFormatArchiver {
     
     private static final Logger logger = LoggerFactory.getLogger(LTFSArchiver.class);
 	@Override
-	protected ArchiveResponse archive() {
+	protected ArchiveResponse archive(StorageJob storageJob) {
 		// TODO frames LTFS command, executes, parsesitsresponse and returns it back
 		executeCommand();
 		// TODO Handle both success and error scenarios
@@ -23,7 +24,7 @@ public class LTFSArchiver extends AbstractStorageFormatArchiver {
 	}
 
 	@Override
-	protected ArchiveResponse restore() {
+	protected ArchiveResponse restore(StorageJob storageJob) {
 		// TODO frames LTFS command for restore, executes, parsesitsresponse and returns it back
 		executeCommand();
 		// TODO Handle both success and error scenarios

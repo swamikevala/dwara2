@@ -5,5 +5,6 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface RequesttypeDao extends CrudRepository<Requesttype,Integer> {
 	
-
+	Requesttype findByName(String name);
+	
 }

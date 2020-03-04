@@ -1,21 +1,31 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape.thread.task;
 
+import org.ishafoundation.dwaraapi.db.model.master.storage.Tape;
 import org.ishafoundation.dwaraapi.storage.constants.StorageOperation;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeJobProcessor;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeJobsManager;
+import org.ishafoundation.dwaraapi.tape.drive.TapeDriveManager;
+import org.ishafoundation.dwaraapi.tape.library.TapeLibraryManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
+@Scope("prototype")
 public class TapeTask implements Runnable{
 	
 	private static final Logger logger = LoggerFactory.getLogger(TapeTask.class);
 	
 	@Autowired
 	private TapeJobProcessor tapeJobProcessor;	
+	
+	@Autowired
+	private TapeLibraryManager tapeLibraryManager;
+	
+	@Autowired
+	private TapeDriveManager tapeDriveManager;
 	
 	private StorageJob storageJob;
 
@@ -30,21 +40,32 @@ public class TapeTask implements Runnable{
 
 	@Override
 	public void run() {
-		
-		// TapeLibraryManager.load(tapeLibraryName, seSNo, driveSNo)
-		logger.trace("TLM loaded volume on to drive");
+		Tape tapeToBeUsed = storageJob.getVolume().getTape();
+		int driveSNo = storageJob.getDriveNo();
+		if(storageJob.isDriveAlreadyLoadedWithTape()) {
+			logger.trace("Tape " + tapeToBeUsed.getBarcode() + " is already loaded on to drive " + driveSNo);
+		}
+		else {
+			try {
+				tapeLibraryManager.loadTapeOnToDrive(tapeToBeUsed, driveSNo);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		
 		int storageOperationId = storageJob.getStorageOperation().getStorageOperationId();
 		try {
 			if(StorageOperation.WRITE.getStorageOperationId() == storageOperationId) {
 				
-				// TapeDriveManager.setTapeHeadPositionForWriting()
+				tapeDriveManager.setTapeHeadPositionForWriting(driveSNo); // FIXME - check on this
 				logger.trace("TDM Tape Head positioned for writing");
 				
 				tapeJobProcessor.write(storageJob);
 			}
 			else if(StorageOperation.READ.getStorageOperationId() == storageOperationId) {
-				// TapeDriveManager.setTapeHeadPositionForReading()
+				tapeDriveManager.setTapeHeadPositionForReading(driveSNo, storageJob.getBlock());// FIXME - Need to offset...
+				logger.trace("TDM Tape Head positioned for reading");
 				tapeJobProcessor.read(storageJob);
 			}
 		} catch (Throwable e) {

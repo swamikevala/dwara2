@@ -17,6 +17,7 @@ import org.ishafoundation.dwaraapi.db.dao.master.workflow.CopyDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.Tapedrive;
 import org.ishafoundation.dwaraapi.db.model.master.common.Requesttype;
 import org.ishafoundation.dwaraapi.db.model.master.storage.Tape;
@@ -24,6 +25,7 @@ import org.ishafoundation.dwaraapi.db.model.master.workflow.Copy;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
 import org.ishafoundation.dwaraapi.model.Volume;
 import org.ishafoundation.dwaraapi.storage.constants.StorageOperation;
 import org.ishafoundation.dwaraapi.storage.model.GroupedJobsCollection;
@@ -50,6 +52,9 @@ public class TapeJobSelector {
 	
 	@Autowired
 	private RequestDao requestDao;
+	
+	@Autowired
+	private SubrequestDao subrequestDao;
 	
 	@Autowired
 	private CopyDao copyDao;
@@ -101,8 +106,8 @@ public class TapeJobSelector {
 			tapedriveDao.save(tapedrive);
 			logger.debug("DB Tapedrive Updation - Success");
 			
-			// TODO : need to ensure that the drive no is set back to the archivejob...		
-			tapeJob.setDriveNo(driveStatusDetails.getDriveSNo());			
+			tapeJob.setDriveNo(driveStatusDetails.getDriveSNo());
+			tapeJob.setDeviceWwid(tapedrive.getDeviceWwid());
 		}
 		return tapeJob;
 	}
@@ -154,6 +159,7 @@ public class TapeJobSelector {
 					// if yes group and order the jobs...
 					List<StorageJob> groupedAndOrderedJobsOnVolumeTagList = groupAndOrderJobsBasedOnVolumeTag(tapeJobsList, toBeUsedVolumeCode);
 					chosenTapeJob = chooseAJob(groupedAndOrderedJobsOnVolumeTagList); // pick a job by checking if another job is not using the tape and also verify if there is not a concurrent overlap
+					chosenTapeJob.setDriveAlreadyLoadedWithTape(true);
 					return chosenTapeJob;
 				}
 				// else continue checking with the next job...
@@ -578,9 +584,10 @@ public class TapeJobSelector {
 			logger.trace(jobId + " currently running in " + tapedrive.getElementAddress());
 			Job job = jobDao.findById(jobId).get();
 			tapeJob.setJob(job);
-			
-			int requestId = job.getRequestId();
-			Request request = requestDao.findById(requestId).get();
+
+			int subrequestId = job.getSubrequestId();
+			Subrequest subrequest = subrequestDao.findById(subrequestId).get(); // TODO : Cache the call...
+			Request request = requestDao.findById(subrequest.getRequestId()).get(); // TODO : Cache the call...
 			int requestTypeId = request.getRequesttypeId();
 			Requesttype requesttype = requesttypeDao.findById(requestTypeId).get();
 			if(requesttype.getName().equals("INGEST")) {

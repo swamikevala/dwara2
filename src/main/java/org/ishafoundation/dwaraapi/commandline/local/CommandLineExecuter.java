@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.commandline.local;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -33,6 +34,24 @@ public class CommandLineExecuter {
 			logger.error("Unable to create process " + commandList + " : " + ee.getMessage(), ee);
 		}
 		return proc;
+	}
+	
+	public CommandLineExecutionResponse executeCommand(String command){
+		String filename = command.replace(" ", "_").replace("/", "_");
+		return executeCommand(command, "/data/tmp/" + filename + ".err");
+	}
+	
+	public CommandLineExecutionResponse executeCommand(String command, String outputFilePath){
+		String[] commandArgs = command.split(" ");
+		List<String> commandList = Arrays.asList(commandArgs);
+
+		CommandLineExecutionResponse commandLineExecutionResponse = executeCommand(commandList, outputFilePath);
+		if(commandLineExecutionResponse.isComplete()) {
+			System.out.println(command + " executed successfully " + commandLineExecutionResponse.getStdOutResponse());
+		}
+		else
+			System.err.println(" execution failed " + commandLineExecutionResponse.getFailureReason() + ". Check " + outputFilePath);
+		return commandLineExecutionResponse;
 	}
 	
 	public CommandLineExecutionResponse executeCommand(List<String> commandList, String commandOutputFilePath) {

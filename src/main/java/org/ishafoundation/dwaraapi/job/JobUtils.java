@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.workflow;
+package org.ishafoundation.dwaraapi.job;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -26,28 +26,27 @@ public class JobUtils {
 	private JobDao jobDao;	
 
 
-	public Job getPrerequisiteJob(Job job, Request request){
+	public Job getPrerequisiteJob(Job job, int requesttypeId, int libraryclassId){
 		Job parentJob = null;
 		int taskId = job.getTaskId();
-		int requestId = request.getRequestId();
 		
-		TaskOrTasksetDetails taskOrTasksetDetails = taskUtils.getTaskOrTasksetDetails(request);
+		TaskOrTasksetDetails taskOrTasksetDetails = taskUtils.getTaskOrTasksetDetails(requesttypeId, libraryclassId);
 		int tasksetId = taskOrTasksetDetails.getTasksetId();	
 	
 		if(tasksetId > 0) {// means a taskset involving multiple tasks
 			TaskTaskset taskTaskset = taskTasksetDao.findByTasksetIdAndTaskId(tasksetId, taskId);
 			int preRequisiteTaskId = taskTaskset.getPreTaskId();
 			if(preRequisiteTaskId > 0) {
-				parentJob = jobDao.findByTaskIdAndRequestId(preRequisiteTaskId, requestId);
+				parentJob = jobDao.findByTaskIdAndSubrequestId(preRequisiteTaskId, job.getSubrequestId());
 			}
 		}
 		
 		return parentJob;
 	}
 	
-	public List<Job> getDependentJobs(Job job, Request request){
+	public List<Job> getDependentJobs(Job job, int requesttypeId, int libraryclassId){
 		List<Job> dependentJobsList = new ArrayList<Job>();
-		TaskOrTasksetDetails taskOrTasksetDetails = taskUtils.getTaskOrTasksetDetails(request);
+		TaskOrTasksetDetails taskOrTasksetDetails = taskUtils.getTaskOrTasksetDetails(requesttypeId, libraryclassId);
 		int tasksetId = taskOrTasksetDetails.getTasksetId();	
 	
 		if(tasksetId > 0) {// means a taskset involving multiple tasks
@@ -60,7 +59,7 @@ public class JobUtils {
 				
 				int nthDependentTaskId = taskTaskset.getTaskId();
 				
-				Job nthDependentJob = jobDao.findByTaskIdAndRequestId(nthDependentTaskId, request.getRequestId());
+				Job nthDependentJob = jobDao.findByTaskIdAndSubrequestId(nthDependentTaskId, job.getSubrequestId());
 				dependentJobsList.add(nthDependentJob);
 			}
 		}

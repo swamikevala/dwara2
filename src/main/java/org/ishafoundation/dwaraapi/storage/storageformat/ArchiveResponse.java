@@ -3,17 +3,17 @@ package org.ishafoundation.dwaraapi.storage.storageformat;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.storage.storageformat.bru.response.components.File;
+import org.ishafoundation.dwaraapi.storage.storageformat.ArchivedFile;
 
 public class ArchiveResponse {
-	private List<File> fileList = new ArrayList<File>();
+	private List<ArchivedFile> archivedFileList = new ArrayList<ArchivedFile>();
 
-	public List<File> getFileList() {
-		return fileList;
+	public List<ArchivedFile> getArchivedFileList() {
+		return archivedFileList;
 	}
 
-	public void setFileList(List<File> fileList) {
-		this.fileList = fileList;
+	public void setArchivedFileList(List<ArchivedFile> archivedFileList) {
+		this.archivedFileList = archivedFileList;
 	}
 	
 }

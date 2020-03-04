@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.storage.storageformat.zip;
 
 import org.ishafoundation.dwaraapi.storage.StorageFormatFactory;
+import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storageformat.AbstractStorageFormatArchiver;
 import org.ishafoundation.dwaraapi.storage.storageformat.ArchiveResponse;
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ public class ZipArchiver extends AbstractStorageFormatArchiver {
     private static final Logger logger = LoggerFactory.getLogger(ZipArchiver.class);
     
 	@Override
-	protected ArchiveResponse archive() {
+	protected ArchiveResponse archive(StorageJob storageJob) {
 		// TODO frames zip command, executes, parsesitsresponse and returns it back
 		executeCommand();
 		// TODO Handle both success and error scenarios
@@ -23,7 +24,7 @@ public class ZipArchiver extends AbstractStorageFormatArchiver {
 	}
 
 	@Override
-	protected ArchiveResponse restore() {
+	protected ArchiveResponse restore(StorageJob storageJob) {
 		// TODO frames zip command for restore, executes, parsesitsresponse and returns it back
 		executeCommand();
 		// TODO Handle both success and error scenarios

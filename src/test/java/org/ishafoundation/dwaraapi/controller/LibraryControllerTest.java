@@ -11,13 +11,15 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class LibraryControllerTest {
 
 	@Autowired 
-	LibraryController libraryController;
+	IngestController libraryController;
 	
 	@Test
 	public void ingest() {
 		//libraryController.ingest(14001, "C:\\data\\user\\pgurumurthy\\ingest\\pub-video", "14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A", "14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A", "", -1, -1, -1);
 		String libraryNameToBeIngested = "99999_Shivanga-Ladies_Sharing_English_Avinashi_10-Dec-2017_Panasonic-AG90A";
-		libraryController.ingest(5001, "C:\\data\\ingested", libraryNameToBeIngested, libraryNameToBeIngested, "", 9008, 0, 0);
+		org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest = new org.ishafoundation.dwaraapi.api.req.ingest.UserRequest();
+		
+		libraryController.ingest(userRequest);
 	}
 
 }

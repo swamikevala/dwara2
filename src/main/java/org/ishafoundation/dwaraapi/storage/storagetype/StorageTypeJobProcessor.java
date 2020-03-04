@@ -28,6 +28,14 @@ public class StorageTypeJobProcessor {
     }
 	
     public ArchiveResponse write(StorageJob storageJob) throws Throwable{
+    	return service(storageJob, true); 
+    }
+    
+    public ArchiveResponse read(StorageJob storageJob) throws Throwable{
+		return service(storageJob, false);    	
+    }
+    
+    public ArchiveResponse service(StorageJob storageJob, boolean isWrite) throws Throwable{
     	// some common code goes in here... 
 		Job job = (Job) storageJob.getJob();
 		job.setStartedAt(System.currentTimeMillis());
@@ -39,32 +47,18 @@ public class StorageTypeJobProcessor {
     	// based on format
 		String storageformat = storageJob.getStorageformat().getName();
 		AbstractStorageFormatArchiver storageFormatter = StorageFormatFactory.getInstance(applicationContext, storageformat);
-		ArchiveResponse archiveResponse = storageFormatter.write(storageJob); // tapeJobProcessor.write(tapeJob); // go on a seperate thread... create a task and allocate it to the thread
-    	
+		ArchiveResponse archiveResponse = null;
+		if(isWrite)
+			archiveResponse = storageFormatter.write(storageJob); // tapeJobProcessor.write(tapeJob); // go on a seperate thread... create a task and allocate it to the thread
+		else
+			archiveResponse = storageFormatter.read(storageJob);
+		
 		job.setStatusId(Status.COMPLETED.getStatusId());
 		job.setCompletedAt(System.currentTimeMillis());
 		logger.debug("DB Job Updation " + Status.COMPLETED);
 		jobDao.save(job);
 		logger.debug("DB Job Updation - Success");
 		return archiveResponse;
-    }
-    
-    public ArchiveResponse read(StorageJob storageJob) throws Throwable{
-    	// some common code goes in here... 
-		Job job = (Job) storageJob.getJob();
-		job.setStatusId(Status.IN_PROGRESS.getStatusId());
-		jobDao.save(job);
-
-    	// based on format
-		String format = storageJob.getStorageformat().getName();
-		AbstractStorageFormatArchiver storageFormatArchiver = StorageFormatFactory.getInstance(applicationContext, format);
-		ArchiveResponse archiveResponse = storageFormatArchiver.read(storageJob); // tapeJobProcessor.write(tapeJob); // go on a seperate thread... create a task and allocate it to the thread
-    	
-		
-		job.setStatusId(Status.COMPLETED.getStatusId());
-		jobDao.save(job);
-		// some common code here...
-		return archiveResponse;    	
     }
     
     public boolean cancel(Job job){

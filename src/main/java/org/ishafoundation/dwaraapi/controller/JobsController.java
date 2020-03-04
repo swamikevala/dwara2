@@ -1,6 +1,6 @@
 package org.ishafoundation.dwaraapi.controller;
 
-import org.ishafoundation.dwaraapi.workflow.JobManager;
+import org.ishafoundation.dwaraapi.job.JobManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -1,10 +1,9 @@
-package org.ishafoundation.dwaraapi.workflow;
+package org.ishafoundation.dwaraapi.job;
 
 import org.ishafoundation.dwaraapi.db.dao.master.common.RequesttypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.ingest.RequesttypeLibraryclassDao;
 import org.ishafoundation.dwaraapi.db.model.master.common.Requesttype;
 import org.ishafoundation.dwaraapi.db.model.master.ingest.RequesttypeLibraryclass;
-import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.model.TaskOrTasksetDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,10 +18,7 @@ public class TaskUtils {
 	private RequesttypeDao requesttypeDao;
 
 
-	public TaskOrTasksetDetails getTaskOrTasksetDetails(Request request) {
-		int requesttypeId = request.getRequesttypeId();
-		int libraryclassId = request.getLibraryclassId();
-		
+	public TaskOrTasksetDetails getTaskOrTasksetDetails(int requesttypeId, int libraryclassId) {
 		int tasksetId = 0;
 		int taskId = 0;
 		RequesttypeLibraryclass requesttypeLibraryclass = requesttypeLibraryclassDao.findByRequesttypeIdAndLibraryclassId(requesttypeId, libraryclassId);

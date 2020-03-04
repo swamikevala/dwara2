@@ -33,9 +33,6 @@ public class Libraryclass {
 	@Column(name="task_id")
 	private int taskId;
 
-	@Column(name="no_file_records")
-	private boolean noFileRecords;
-
 	@Column(name="concurrent_copies")
 	private boolean concurrentCopies;
 //
@@ -96,14 +93,6 @@ public class Libraryclass {
 
 	public void setTaskId(int taskId) {
 		this.taskId = taskId;
-	}
-
-	public boolean isNoFileRecords() {
-		return noFileRecords;
-	}
-
-	public void setNoFileRecords(boolean noFileRecords) {
-		this.noFileRecords = noFileRecords;
 	}
 	
 	public boolean isConcurrentCopies() {

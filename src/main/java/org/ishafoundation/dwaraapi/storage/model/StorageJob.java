@@ -17,18 +17,22 @@ public class StorageJob {
 	private boolean optimizeTapeAccess; // TODO is an attribute of storagetype. Should fit this in storagetype
 	
 	private int driveNo; // TODO is an attribute of storagetype. Should fit this in storagetype
+	private String deviceWwid;
+	
 	
 	private Volume volume; // Archive Operation determines choosing the volume - For Ingest a volume from pool of volumes fitting library size - Restore based on fileId and copyNumber...
 	private Storageformat storageformat;
+	
+	private boolean driveAlreadyLoadedWithTape;
 	
 	private int priority;
 	private boolean encrypted;
 	private int copyNumber;
 	
 	private boolean concurrentCopies;
-	private boolean noFileRecords;
-	
+
 	private int fileId;
+	private String filePathname;
 	private String destinationPath;
 	private int block;
 	private int offset;
@@ -75,6 +79,12 @@ public class StorageJob {
 	public void setDriveNo(int driveNo) {
 		this.driveNo = driveNo;
 	}
+	public String getDeviceWwid() {
+		return deviceWwid;
+	}
+	public void setDeviceWwid(String deviceWwid) {
+		this.deviceWwid = deviceWwid;
+	}
 	public Volume getVolume() {
 		return volume;
 	}
@@ -86,6 +96,12 @@ public class StorageJob {
 	}
 	public void setStorageformat(Storageformat storageformat) {
 		this.storageformat = storageformat;
+	}
+	public boolean isDriveAlreadyLoadedWithTape() {
+		return driveAlreadyLoadedWithTape;
+	}
+	public void setDriveAlreadyLoadedWithTape(boolean driveAlreadyLoadedWithTape) {
+		this.driveAlreadyLoadedWithTape = driveAlreadyLoadedWithTape;
 	}
 	public int getPriority() {
 		return priority;
@@ -111,17 +127,17 @@ public class StorageJob {
 	public void setConcurrentCopies(boolean concurrentCopies) {
 		this.concurrentCopies = concurrentCopies;
 	}
-	public boolean isNoFileRecords() {
-		return noFileRecords;
-	}
-	public void setNoFileRecords(boolean noFileRecords) {
-		this.noFileRecords = noFileRecords;
-	}
 	public int getFileId() {
 		return fileId;
 	}
 	public void setFileId(int fileId) {
 		this.fileId = fileId;
+	}
+	public String getFilePathname() {
+		return filePathname;
+	}
+	public void setFilePathname(String filePathname) {
+		this.filePathname = filePathname;
 	}
 	public String getDestinationPath() {
 		return destinationPath;

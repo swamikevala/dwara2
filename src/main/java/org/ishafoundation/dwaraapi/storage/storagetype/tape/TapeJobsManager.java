@@ -29,6 +29,8 @@ public class TapeJobsManager extends ArchiveJobsManager{
 	@Autowired
 	private TapeJobSelector tapeJobSelector;
 	
+	@Autowired
+	private TapeLibraryManager tapeLibraryManager;	
 	/**
 	 * 
   		1) Get Available(Non busy) Drive list - We need to Dequeue as many jobs and Spawn as many threads For eg., If 2 free drives are available then we need to allocate 2 jobs to these drives on their own threads
@@ -43,7 +45,7 @@ public class TapeJobsManager extends ArchiveJobsManager{
 		// STEP 1
 		// TODO : Should we use the DB to get the drive list or from mtx
 		// My bet is mtx as it would have the most latest status...
-		List<DriveStatusDetails> driveList = TapeLibraryManager.getAvailableDrivesList();
+		List<DriveStatusDetails> driveList = tapeLibraryManager.getAvailableDrivesList();
 		if(tapeStorageJobsList.size() <= 0) {
 			logger.trace("No tape jobs in queue to be processed");
 			return;

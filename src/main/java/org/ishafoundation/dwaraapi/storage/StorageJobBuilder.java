@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.common.RequesttypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.ingest.LibraryclassDao;
+import org.ishafoundation.dwaraapi.db.dao.master.restore.TargetvolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.storage.StorageformatDao;
 import org.ishafoundation.dwaraapi.db.dao.master.storage.TapeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.storage.TapesetDao;
@@ -15,7 +16,9 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.FileTapeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryTapeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.common.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.common.Targetvolume;
 import org.ishafoundation.dwaraapi.db.model.master.ingest.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.storage.Storageformat;
 import org.ishafoundation.dwaraapi.db.model.master.storage.Tape;
@@ -27,6 +30,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.LibraryTape;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
 import org.ishafoundation.dwaraapi.model.Storagetype;
 import org.ishafoundation.dwaraapi.model.Volume;
 import org.ishafoundation.dwaraapi.storage.constants.StorageOperation;
@@ -50,6 +54,9 @@ public class StorageJobBuilder {
 	private RequestDao requestDao;
 
 	@Autowired
+	private SubrequestDao subrequestDao;
+	
+	@Autowired
 	private LibraryDao libraryDao;
 
 	@Autowired
@@ -70,12 +77,18 @@ public class StorageJobBuilder {
 	@Autowired
 	private LibraryTapeDao libraryTapeDao;
 	
+	@Autowired
+	private TargetvolumeDao targetvolumeDao;
+	
 	
 	public StorageJob buildStorageJob(Job job) {
 		StorageJob storageJob = null;
 		int taskId = job.getTaskId();
 		
-		int requestId = job.getRequestId();
+		int subrequestId = job.getSubrequestId();
+		Subrequest subrequest = subrequestDao.findById(subrequestId).get();
+		
+		int requestId = subrequest.getRequestId();
 		Request request = requestDao.findById(requestId).get(); // TODO : Cache the call...
 
 		int requesttypeId = request.getRequesttypeId();
@@ -117,9 +130,9 @@ public class StorageJobBuilder {
 				// how
 				storageJob.setConcurrentCopies(copyTaskLibraryclass.isConcurrentCopies());
 				storageJob.setEncrypted(copy.isEncrypted());
-				storageJob.setOptimizeTapeAccess(request.isOptimizeTapeAccess()); // TODO : For ingest will this come from request?
-				storageJob.setPriority(request.getPriority());
-				storageJob.setNoFileRecords(copyTaskLibraryclass.isNoFileRecords());
+				storageJob.setOptimizeTapeAccess(subrequest.isOptimizeTapeAccess()); // TODO : For ingest will this come from request?
+				storageJob.setPriority(subrequest.getPriority());
+				//storageJob.setNoFileRecords(copyTaskLibraryclass.isNoFileRecords());
 			}
 		}
 		else if(requesttypeName.equals("RESTORE")) { // TODO Hardcoded
@@ -130,18 +143,20 @@ public class StorageJobBuilder {
 			storageJob.setStorageOperation(StorageOperation.READ);
 
 			// what
-			int fileIdToBeRestored = request.getFileId();
+			int fileIdToBeRestored = subrequest.getFileId();
 			storageJob.setFileId(fileIdToBeRestored);
 			
 			// From where
 			int copyNumber = request.getCopyNumber(); 
 			File file = fileDao.findById(fileIdToBeRestored).get();
+			storageJob.setFilePathname(file.getPathname());
 			int libraryId = file.getLibraryId(); 
 
 			// TODO : Assumes storagetype as tape. Need to revisit....
 			LibraryTape libraryTape = libraryTapeDao.findByLibraryIdAndCopyNumber(libraryId, copyNumber);
 			int tapeId = libraryTape.getTapeId();
 			Tape tape = tapeDao.findById(tapeId).get();
+			
 			Volume volume = new Volume();
 			volume.setTape(tape);
 			storageJob.setVolume(volume);
@@ -152,12 +167,14 @@ public class StorageJobBuilder {
 			storageJob.setOffset(offset);
 
 			// to where
-			storageJob.setDestinationPath(request.getDestinationPath());
+			Targetvolume targetvolume = targetvolumeDao.findById(request.getTargetvolumeId()).get();
+			String targetLocation = targetvolume.getName();
+			storageJob.setDestinationPath(targetLocation + java.io.File.separator + request.getOutputFolder());
 			
 			// how
-			storageJob.setOptimizeTapeAccess(request.isOptimizeTapeAccess());
+			storageJob.setOptimizeTapeAccess(subrequest.isOptimizeTapeAccess());
 			storageJob.setEncrypted(libraryTape.isEncrypted());				
-			storageJob.setPriority(request.getPriority());
+			storageJob.setPriority(subrequest.getPriority());
 			int tapesetId = tape.getTapesetId();
 			Tapeset tapeset = tapesetDao.findById(tapesetId).get();
 			Storageformat storageformat = storageformatDao.findById(tapeset.getStorageformatId()).get();

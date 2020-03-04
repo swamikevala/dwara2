@@ -5,9 +5,9 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.JobFileDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TmpJobFileDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
-import org.ishafoundation.dwaraapi.db.model.transactional.JobFile;
+import org.ishafoundation.dwaraapi.db.model.transactional.TmpJobFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,7 +24,7 @@ public class ScheduledStatusUpdaterController {
 	private JobDao jobDao;
 
 	@Autowired
-	private JobFileDao jobFileDao;
+	private TmpJobFileDao jobFileDao;
 	
     @PostMapping("/updateStatus")
     public ResponseEntity<String> updateStatus(){
@@ -37,9 +37,9 @@ public class ScheduledStatusUpdaterController {
 			boolean hasFailures = false;
 			boolean hasAnyCompleted = false;
 			boolean isAllComplete = true;
-			List<JobFile> jobFileList = jobFileDao.findAllByJobId(job.getJobId()); // TODO : should this be only process jobs...
-			for (Iterator<JobFile> iterator2 = jobFileList.iterator(); iterator2.hasNext();) {
-				JobFile jobFile = (JobFile) iterator2.next();
+			List<TmpJobFile> jobFileList = jobFileDao.findAllByJobId(job.getJobId()); // TODO : should this be only process jobs...
+			for (Iterator<TmpJobFile> iterator2 = jobFileList.iterator(); iterator2.hasNext();) {
+				TmpJobFile jobFile = (TmpJobFile) iterator2.next();
 				int statusId = jobFile.getStatusId();
 				if(statusId == Status.IN_PROGRESS.getStatusId()) {
 					inProgress = true;

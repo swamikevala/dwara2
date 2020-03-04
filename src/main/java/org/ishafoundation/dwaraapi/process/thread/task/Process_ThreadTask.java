@@ -14,21 +14,23 @@ import org.ishafoundation.dwaraapi.db.dao.master.workflow.TaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.JobFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TmpJobFileDao;
 import org.ishafoundation.dwaraapi.db.model.master.ingest.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.workflow.Task;
 import org.ishafoundation.dwaraapi.db.model.transactional.Failure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
-import org.ishafoundation.dwaraapi.db.model.transactional.JobFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
+import org.ishafoundation.dwaraapi.db.model.transactional.TmpJobFile;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
+import org.ishafoundation.dwaraapi.job.JobUtils;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.model.LogicalFile;
 import org.ishafoundation.dwaraapi.process.factory.ProcessFactory;
-import org.ishafoundation.dwaraapi.workflow.JobUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,9 +58,12 @@ public class Process_ThreadTask implements Runnable{
 	
 	@Autowired
     private LibraryDao libraryDao;
-	
+
 	@Autowired
 	private RequestDao requestDao;
+
+	@Autowired
+	private SubrequestDao subrequestDao;
 	
 	@Autowired
 	private JobDao jobDao;	
@@ -70,7 +75,7 @@ public class Process_ThreadTask implements Runnable{
 	private FileDao fileDao;
 	
 	@Autowired
-	private JobFileDao jobFileDao;
+	private TmpJobFileDao tmpJobFileDao;
 	
 	@Autowired
 	private TaskDao taskDao;	
@@ -174,14 +179,15 @@ public class Process_ThreadTask implements Runnable{
 
 		// For every file process call we had to make a DB call just to ensure the job is not cancelled...
 		// Its pretty expensive to make a DB call for every process to be run, but its worth to cancel a job than run an expensive process say like transcoding
-		JobFile jobFile = null;
+		TmpJobFile tmpJobFile = null;
 		String taskName = null;
 		try {
 
 			// if the current status of the job is queued - update it to inprogress and do so with the library status and request status...
 			Job job = jobDao.findById(jobId).get();
-			Request currentRequest = requestDao.findById(job.getRequestId()).get();
-			job = checkAndUpdateStatusToInProgress(job, currentRequest); // synchronous method so only one thread can access this at a time
+			Subrequest systemGeneratedRequest = subrequestDao.findById(job.getSubrequestId()).get();
+			Request request = requestDao.findById(systemGeneratedRequest.getRequestId()).get();
+			job = checkAndUpdateStatusToInProgress(job, systemGeneratedRequest); // synchronous method so only one thread can access this at a time
 			
 			// If the job is QUEUED or IN_PROGRESS and cancellation is initiated ...
 			if(job.getStatusId() == Status.CANCELLED.getStatusId() || job.getStatusId() == Status.ABORTED.getStatusId()) { 	
@@ -190,14 +196,15 @@ public class Process_ThreadTask implements Runnable{
 			else {
 				startms = System.currentTimeMillis();
 				
-				jobFile = new JobFile();
-				jobFile.setFileId(fileId);
-				jobFile.setJobId(jobId);
-				jobFile.setLibraryId(libraryId);
-				jobFile.setStatusId(Status.IN_PROGRESS.getStatusId());
-				jobFile.setStartedAt(System.currentTimeMillis());
-				jobFileDao.save(jobFile);
-				
+				tmpJobFile = new TmpJobFile();
+				tmpJobFile.setFileId(fileId);
+				tmpJobFile.setJobId(jobId);
+				tmpJobFile.setLibraryId(libraryId);
+				tmpJobFile.setStatusId(Status.IN_PROGRESS.getStatusId());
+				tmpJobFile.setStartedAt(System.currentTimeMillis());
+				logger.debug("DB TmpJobFile Creation");
+				tmpJobFileDao.save(tmpJobFile);
+				logger.debug("DB TmpJobFile Creation - Success");
 
 				int taskId = job.getTaskId();
 				Task task = taskDao.findById(taskId).get();
@@ -229,38 +236,45 @@ public class Process_ThreadTask implements Runnable{
 						    outputLibrary.setFileStructureMd5("not needed");
 						    outputLibrary.setLibraryclassId(outputLibraryclass.getLibraryclassId());
 						    outputLibrary.setName(outputLibraryName);
+						    
 						    outputLibrary = libraryDao.save(outputLibrary);
 			
 						    // setting the current jobs output libraryid
+							String logMsgPrefix = "DB Job - " + "(" + jobId + ") - Updation - OutputLibraryId " + outputLibrary.getLibraryId();
+							logger.debug(logMsgPrefix);	
 						    job.setOutputLibraryId(outputLibrary.getLibraryId());
 						    jobDao.save(job);
+						    logger.debug(logMsgPrefix + " - Success");	
 						    
 						    // Now setting all the dependentjobs with the process generated output libraryid
-						    List<Job> jobList = jobUtils.getDependentJobs(job, currentRequest);
+						    List<Job> jobList = jobUtils.getDependentJobs(job, request.getRequesttypeId(), request.getLibraryclassId());
 					
 							for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
 								Job nthDependentJob = (Job) iterator.next();
 	
 								nthDependentJob.setInputLibraryId(outputLibrary.getLibraryId());
+								String logMsgPrefix2 = "DB Job - " + "(" + nthDependentJob.getJobId() + ") - Updation - InputLibraryId " + outputLibrary.getLibraryId();
+								logger.debug(logMsgPrefix2);	
 							    jobDao.save(nthDependentJob);
+							    logger.debug(logMsgPrefix2 + " - Success");
 							}	    		
 						}	    
 
 					    int outputLibraryId = outputLibrary.getLibraryId();
 						    
-						// Update it only when NoFileRecords is set to false
-						if(!outputLibraryclass.isNoFileRecords()) {					    
-							org.ishafoundation.dwaraapi.db.model.transactional.File nthFileRowToBeInserted = new org.ishafoundation.dwaraapi.db.model.transactional.File();
-							nthFileRowToBeInserted.setFileIdRef(fileId);
-							nthFileRowToBeInserted.setLibraryId(outputLibraryId);
-							//nthFileRowToBeInserted.setFiletypeId(filetypeId); // TODO How?
-							nthFileRowToBeInserted.setPathname(destinationFilePath + FilenameUtils.getName(logicalFile.getAbsolutePath()));
-							
-							// TODO need to be done and set after proxy file is generated
-							nthFileRowToBeInserted.setCrc("crc_for_proxy"); 
-							nthFileRowToBeInserted.setSize(9999);// TODO Hardcoded...
-							fileDao.save(nthFileRowToBeInserted);
-						}
+				    
+						org.ishafoundation.dwaraapi.db.model.transactional.File nthFileRowToBeInserted = new org.ishafoundation.dwaraapi.db.model.transactional.File();
+						nthFileRowToBeInserted.setFileIdRef(fileId);
+						nthFileRowToBeInserted.setLibraryId(outputLibraryId);
+						//nthFileRowToBeInserted.setFiletypeId(filetypeId); // TODO How?
+						nthFileRowToBeInserted.setPathname(destinationFilePath + FilenameUtils.getName(logicalFile.getAbsolutePath()));
+						
+						// TODO need to be done and set after proxy file is generated
+						nthFileRowToBeInserted.setCrc("crc_for_proxy"); 
+						nthFileRowToBeInserted.setSize(9999);// TODO Hardcoded...
+				    	logger.debug("DB File Creation");   
+						fileDao.save(nthFileRowToBeInserted);
+						logger.debug("DB File Creation - Success");
 					}
 					processStatus = Status.COMPLETED;
 					//logger.info("Proxy for " + containerName + " created successfully in " + ((proxyEndTime - proxyStartTime)/1000) + " seconds - " +  generatedProxyFilePathname);
@@ -281,29 +295,31 @@ public class Process_ThreadTask implements Runnable{
 			
 			// TODO : Work on the threshold failures...
 			// create failed_media_file_run table
-			logger.debug("DB FailedMediaFileRun Creation");
+			logger.debug("DB Failure Creation");
 			Failure failure = new Failure();
 			failure.setFileId(fileId);
 			failure.setJobId(jobId);
 			failure = failureDao.save(failure);	
-			logger.debug("DB FailedMediaFileRun Creation - " + failure.getFailureId());   
+			logger.debug("DB Failure Creation - " + failure.getFailureId());   
 		}
 		finally {
-			if(jobFile != null) {
-				jobFile.setStatusId(processStatus.getStatusId());
-				jobFileDao.save(jobFile);
+			if(tmpJobFile != null) {
+				tmpJobFile.setStatusId(processStatus.getStatusId());
+				logger.debug("DB TmpJobFile Updation - status to " + processStatus.toString());
+				tmpJobFileDao.save(tmpJobFile);
+				logger.debug("DB TmpJobFile Updation - Success");
 			}
 			threadNameHelper.resetThreadName();
 		}
 	}
 	
-	protected synchronized Job checkAndUpdateStatusToInProgress(Job job, Request currentRequest){
+	protected synchronized Job checkAndUpdateStatusToInProgress(Job job, Subrequest systemGeneratedRequest){
 		if(job.getStatusId() == Status.QUEUED.getStatusId()) {
 			String status = Status.IN_PROGRESS.toString();
 			int statusId = Status.valueOf(status).getStatusId();
 			long startedOn = Calendar.getInstance().getTimeInMillis();
 			
-			String logMsgPrefix = "DB Job - " + "(" + jobId + ") - Update - status to " + status;
+			String logMsgPrefix = "DB Job - " + "(" + jobId + ") - Updation - status to " + status;
 			logger.debug(logMsgPrefix);	
 			job.setStatusId(statusId);
 			job.setStartedAt(startedOn);
@@ -311,11 +327,11 @@ public class Process_ThreadTask implements Runnable{
 			logger.debug(logMsgPrefix + " - Success");					
 
 
-			if(currentRequest.getStatusId() != statusId) {
-				String logMsg = "DB Request - " + currentRequest.getRequestId() + " - Update - status to " + status;
+			if(systemGeneratedRequest.getStatusId() != statusId) {
+				String logMsg = "DB Subrequest - " + systemGeneratedRequest.getSubrequestId() + " - Update - status to " + status;
 				logger.debug(logMsg);
-		        currentRequest.setStatusId(statusId);
-		        currentRequest = requestDao.save(currentRequest);
+		        systemGeneratedRequest.setStatusId(statusId);
+		        systemGeneratedRequest = subrequestDao.save(systemGeneratedRequest);
 		        logger.debug(logMsg + " - Success");
 			}			
 		}
