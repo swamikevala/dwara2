@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.tape.library;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.tape.library.components.DataTransferElement;
@@ -80,6 +81,17 @@ public class MtxStatus {
 	}
 	public void setDteList(List<DataTransferElement> dteList) {
 		this.dteList = dteList;
+	}
+	public DataTransferElement getDte(int dataTransferElementSNo) {
+		List<DataTransferElement> dteList = getDteList();
+		for (Iterator<DataTransferElement> iterator = dteList.iterator(); iterator.hasNext();) {
+			DataTransferElement nthDataTransferElement = (DataTransferElement) iterator.next();
+			int nthDataTransferElementSNo = nthDataTransferElement.getsNo(); 
+			if(nthDataTransferElementSNo == dataTransferElementSNo) {
+				return nthDataTransferElement;
+			}
+		}
+		return null;
 	}
 	public List<StorageElement> getSeList() {
 		return seList;

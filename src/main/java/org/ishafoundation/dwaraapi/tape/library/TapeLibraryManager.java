@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
+import org.ishafoundation.dwaraapi.db.dao.master.storage.TapelibraryDao;
 import org.ishafoundation.dwaraapi.db.model.master.storage.Tape;
+import org.ishafoundation.dwaraapi.db.model.master.storage.Tapelibrary;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.tape.drive.DriveStatusDetails;
 import org.ishafoundation.dwaraapi.tape.drive.TapeDriveManager;
@@ -19,16 +23,26 @@ import org.springframework.stereotype.Component;
 @Component
 public class TapeLibraryManager{
 	
-	 // FIXME : Hardcoded LibraryName
-	String tapeLibraryName = "/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400";
+	private static Logger logger = LoggerFactory.getLogger(TapeLibraryManager.class);
 	
-	static Logger logger = LoggerFactory.getLogger(TapeLibraryManager.class);
+	@Autowired
+	private TapelibraryDao tapelibraryDao;
 	
 	@Autowired
 	private CommandLineExecuter commandLineExecuter;
 	
 	@Autowired
 	private TapeDriveManager tapeDriveManager;
+	
+	private String tapeLibraryName = null;
+	
+	@PostConstruct
+	private void setTapeLibraryName() {
+		Iterable<Tapelibrary> tapeLibraries = tapelibraryDao.findAll();
+		for (Tapelibrary tapelibrary : tapeLibraries) {
+			tapeLibraryName = tapelibrary.getName();  // FIXME : Cant handle multipe tape libraries...
+		}
+	}
 	
 	public MtxStatus getMtxStatus(String tapeLibraryName){
 		String mtxStatusResponse = callMtxStatus(tapeLibraryName);
@@ -96,13 +110,14 @@ public class TapeLibraryManager{
 	public synchronized boolean loadTapeOnToDrive(Tape toBeUsedTape, int toBeUsedDataTransferElementSNo) throws Exception{
 		boolean isSuccess = false;
 		try {
+			MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
 			DriveStatusDetails driveStatusDetails = tapeDriveManager.getDriveDetails(toBeUsedDataTransferElementSNo);
 			
 			if(driveStatusDetails.getMtStatus().isDriveReady()){ // means drive is not empty and has another tape - so we need to unload the other tape
 				System.out.println(toBeUsedDataTransferElementSNo + " is not empty and has another tape - so we need to unload the other tape");
 				if(!driveStatusDetails.getMtStatus().isBusy()) {
 					System.out.println("Unloading ");
-					unload(tapeLibraryName, driveStatusDetails.getDte().getStorageElementNo(), driveStatusDetails.getDte().getsNo());
+					unload(tapeLibraryName, mtxStatus.getDte(toBeUsedDataTransferElementSNo).getStorageElementNo(), toBeUsedDataTransferElementSNo);
 					System.out.println("Unload successful ");
 				}else {
 					System.out.println("Something wrong with the logic. Drive is not supposed to be busy, but seems busy");
@@ -110,13 +125,12 @@ public class TapeLibraryManager{
 			}
 	
 			// locate in which slot the volume is...
-			MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
 			List<StorageElement> seList = mtxStatus.getSeList();
-			System.out.println("Now locating in which slot the volume is from the list ..." + seList);
+			System.out.println("Now locating in which slot the volume to be used is ..." + seList);
 			int storageElementNo = locateTheTapesStorageElement(seList, toBeUsedTape);
 	
 			// load the volume in the passed slot to the passed dte
-			System.out.println("now loading " + toBeUsedTape.getBarcode() + " from " + storageElementNo + " and loading into drive " + toBeUsedDataTransferElementSNo);
+			System.out.println("Now loading " + toBeUsedTape.getBarcode() + " from " + storageElementNo + " and loading into drive " + toBeUsedDataTransferElementSNo);
 			load(tapeLibraryName, storageElementNo, toBeUsedDataTransferElementSNo);
 			isSuccess = true;
 		}
@@ -127,6 +141,7 @@ public class TapeLibraryManager{
 		}
 		return isSuccess;
 	}
+	
 	private int locateTheTapesStorageElement(List<StorageElement> seList, Tape toBeUsedTape){
 		int storageElementNo = -9;
 		System.out.println("seList " + seList);

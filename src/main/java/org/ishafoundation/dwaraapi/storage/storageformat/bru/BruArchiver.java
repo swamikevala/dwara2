@@ -33,7 +33,7 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 	@Override
 	protected ArchiveResponse archive(StorageJob storageJob) {
 		String tapeLabel = storageJob.getVolume().getTape().getBarcode();
-		int blockSizeInKB = storageJob.getVolume().getTape().getBlocksize();
+		int blockSizeInKB = storageJob.getVolume().getTape().getBlocksize()/1000;
 		String dataTransferElementName = storageJob.getDeviceWwid();
 		String fileToBeWritten = storageJob.getLibrarypathToBeCopied();
 		// frames bru command
