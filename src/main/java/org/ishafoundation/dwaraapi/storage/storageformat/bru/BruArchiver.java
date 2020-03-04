@@ -65,10 +65,10 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 		// executes the command, parses the response and returns it back..
 
 		CommandLineExecutionResponse bruCopyCommandLineExecutionResponse = commandLineExecuter.executeCommand(bruCommandParamsList, "/data/tmp/777.out");
-		
+		logger.trace("b4 brp - " + bruCopyCommandLineExecutionResponse.getStdOutResponse());
 		BruResponseParser brp = new BruResponseParser();
 		BruResponse br = brp.parseBruResponse(bruCopyCommandLineExecutionResponse.getStdOutResponse());
-		
+		logger.trace("br - " + br);
 		return convertBruResponseToArchiveResponse(br);
 	}
 	

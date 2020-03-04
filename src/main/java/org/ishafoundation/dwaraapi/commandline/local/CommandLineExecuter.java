@@ -47,10 +47,10 @@ public class CommandLineExecuter {
 
 		CommandLineExecutionResponse commandLineExecutionResponse = executeCommand(commandList, outputFilePath);
 		if(commandLineExecutionResponse.isComplete()) {
-			System.out.println(command + " executed successfully " + commandLineExecutionResponse.getStdOutResponse());
+			logger.trace(command + " executed successfully " + commandLineExecutionResponse.getStdOutResponse());
 		}
 		else
-			System.err.println(" execution failed " + commandLineExecutionResponse.getFailureReason() + ". Check " + outputFilePath);
+			logger.error(" execution failed " + commandLineExecutionResponse.getFailureReason() + ". Check " + outputFilePath);
 		return commandLineExecutionResponse;
 	}
 	

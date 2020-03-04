@@ -76,7 +76,7 @@ public class TapeLibraryManager{
 	public List<DriveStatusDetails> getAvailableDrivesList(MtxStatus mtxStatus){
 		List<DriveStatusDetails> availablDriveDetailsList = new ArrayList<DriveStatusDetails>();
 		List<DataTransferElement> dteList = mtxStatus.getDteList();
-		System.out.println("dteList " +  dteList);
+		logger.trace("dteList " +  dteList);
 		for (Iterator<DataTransferElement> iterator = dteList.iterator(); iterator.hasNext();) {
 			DataTransferElement nthDataTransferElement = (DataTransferElement) iterator.next();
 			int dataTransferElementSNo = nthDataTransferElement.getsNo(); 
@@ -114,29 +114,29 @@ public class TapeLibraryManager{
 			DriveStatusDetails driveStatusDetails = tapeDriveManager.getDriveDetails(toBeUsedDataTransferElementSNo);
 			
 			if(driveStatusDetails.getMtStatus().isDriveReady()){ // means drive is not empty and has another tape - so we need to unload the other tape
-				System.out.println(toBeUsedDataTransferElementSNo + " is not empty and has another tape - so we need to unload the other tape");
+				logger.trace(toBeUsedDataTransferElementSNo + " is not empty and has another tape - so we need to unload the other tape");
 				if(!driveStatusDetails.getMtStatus().isBusy()) {
-					System.out.println("Unloading ");
+					logger.trace("Unloading ");
 					unload(tapeLibraryName, mtxStatus.getDte(toBeUsedDataTransferElementSNo).getStorageElementNo(), toBeUsedDataTransferElementSNo);
-					System.out.println("Unload successful ");
+					logger.trace("Unload successful ");
 				}else {
-					System.out.println("Something wrong with the logic. Drive is not supposed to be busy, but seems busy");
+					logger.trace("Something wrong with the logic. Drive is not supposed to be busy, but seems busy");
 				}
 			}
 	
 			// locate in which slot the volume is...
 			List<StorageElement> seList = mtxStatus.getSeList();
-			System.out.println("Now locating in which slot the volume to be used is ..." + seList);
+			logger.trace("Now locating in which slot the volume to be used is ..." + seList);
 			int storageElementNo = locateTheTapesStorageElement(seList, toBeUsedTape);
 	
 			// load the volume in the passed slot to the passed dte
-			System.out.println("Now loading " + toBeUsedTape.getBarcode() + " from " + storageElementNo + " and loading into drive " + toBeUsedDataTransferElementSNo);
+			logger.trace("Now loading " + toBeUsedTape.getBarcode() + " from " + storageElementNo + " and loading into drive " + toBeUsedDataTransferElementSNo);
 			load(tapeLibraryName, storageElementNo, toBeUsedDataTransferElementSNo);
 			isSuccess = true;
 		}
 		catch (Exception e) {
 			isSuccess = false;
-			System.err.println(e.getMessage());e.printStackTrace();
+			logger.error(e.getMessage());e.printStackTrace();
 			throw e;
 		}
 		return isSuccess;
@@ -144,22 +144,22 @@ public class TapeLibraryManager{
 	
 	private int locateTheTapesStorageElement(List<StorageElement> seList, Tape toBeUsedTape){
 		int storageElementNo = -9;
-		System.out.println("seList " + seList);
-		System.out.println("toBeUsedVolume.getCode() " + toBeUsedTape.getBarcode());
+		logger.trace("seList " + seList);
+		logger.trace("toBeUsedVolume.getCode() " + toBeUsedTape.getBarcode());
 		for (Iterator<StorageElement> iterator = seList.iterator(); iterator.hasNext();) {
 			StorageElement nthStorageElement = (StorageElement) iterator.next();
-			System.out.println("nthStorageElement.getVolumeTag() " + nthStorageElement.getVolumeTag());
+			logger.trace("nthStorageElement.getVolumeTag() " + nthStorageElement.getVolumeTag());
 			if(nthStorageElement.getVolumeTag() != null && nthStorageElement.getVolumeTag().equals(toBeUsedTape.getBarcode())) {
 				storageElementNo = nthStorageElement.getsNo();
-				System.out.println("storageElementNo " + storageElementNo);
+				logger.trace("storageElementNo " + storageElementNo);
 			}
 		}
 
 		if(storageElementNo == -9) {
-			System.err.println("Tape not inside the library");
+			logger.error("Tape not inside the library");
 			// TODO : Handle this...
 		}
-		System.out.println(toBeUsedTape.getBarcode() + " is in " +  storageElementNo);
+		logger.trace(toBeUsedTape.getBarcode() + " is in " +  storageElementNo);
 		return storageElementNo;
 	}
 }

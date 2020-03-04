@@ -87,7 +87,7 @@ public class TapeDriveManager{
 			MtStatus mtStatus = getMtStatus(dataTransferElementName);
 			int currentFileNumberTapeHeadPointingTo = mtStatus.getFileNumber();
 			int currentBlockNoTapeHeadPointingTo = mtStatus.getBlockNumber();
-			System.out.println("b4 setTapeHeadPosition - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
+			logger.trace("b4 setTapeHeadPosition - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
 		
 		
 			eod(dataTransferElementName);
@@ -95,7 +95,7 @@ public class TapeDriveManager{
 			mtStatus = getMtStatus(dataTransferElementName);
 			currentFileNumberTapeHeadPointingTo = mtStatus.getFileNumber();
 			currentBlockNoTapeHeadPointingTo = mtStatus.getBlockNumber();
-			System.out.println("after eod - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
+			logger.trace("after eod - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
 
 			if(currentFileNumberTapeHeadPointingTo > 0) {
 				bsf(dataTransferElementName, 1);
@@ -108,14 +108,14 @@ public class TapeDriveManager{
 			mtStatus = getMtStatus(dataTransferElementName);
 			currentFileNumberTapeHeadPointingTo = mtStatus.getFileNumber();
 			currentBlockNoTapeHeadPointingTo = mtStatus.getBlockNumber();
-			System.out.println("after setTapeHeadPosition - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
+			logger.trace("after setTapeHeadPosition - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
 	
 			
 			dsd = new DriveStatusDetails();
 			dsd.setDriveSNo(dataTransferElementNo);
 			dsd.setMtStatus(mtStatus);
 		}catch (Exception e) {
-			System.err.println("Unable to setTapeHeadPositionForWriting " + e.getMessage()); e.printStackTrace();
+			logger.error("Unable to setTapeHeadPositionForWriting " + e.getMessage()); e.printStackTrace();
 		}
 		return dsd;
 	}
@@ -148,7 +148,7 @@ public class TapeDriveManager{
 			return dsd;		
 		}
 		catch (Exception e) {
-			System.err.println("Unable to setTapeHeadPositionForReading " + e.getMessage()); e.printStackTrace();
+			logger.error("Unable to setTapeHeadPositionForReading " + e.getMessage()); e.printStackTrace();
 			
 		}
 
