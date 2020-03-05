@@ -48,6 +48,7 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 
 	@Override
 	protected ArchiveResponse restore(StorageJob storageJob) {
+		String dataTransferElementName = storageJob.getDeviceWwid();
 		String filePathNameToBeRestored = storageJob.getFilePathname();
 		String destinationPath = storageJob.getDestinationPath();
 		int blockSizeInKB = storageJob.getVolume().getTape().getBlocksize()/1000;
@@ -58,7 +59,7 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		List<String> bruCopyCommandParamsList = getBruRestoreCommand(filePathNameToBeRestored, blockSizeInKB, destinationPath);
+		List<String> bruCopyCommandParamsList = getBruRestoreCommand(dataTransferElementName, filePathNameToBeRestored, blockSizeInKB, destinationPath);
 		// TODO frames bru command for restore, executes, parsesitsresponse and returns it back
 
 		// TODO Handle both success and error scenarios
@@ -112,8 +113,8 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 	
 	
 
-	private List<String> getBruRestoreCommand(String filePathNameToBeRestored,  int blockSizeInKB, String destinationPath) {
-		String bruRestoreCommand = "bru -B -xvvvvvvvvv -f " + filePathNameToBeRestored + " -b " + blockSizeInKB + "K -QV -C";
+	private List<String> getBruRestoreCommand(String dataTransferElementName, String filePathNameToBeRestored,  int blockSizeInKB, String destinationPath) {
+		String bruRestoreCommand = "bru -B -xvvvvvvvvv -f " + dataTransferElementName + " " + filePathNameToBeRestored + " -b " + blockSizeInKB + "K -QV -C";
 		
 		List<String> commandList = new ArrayList<String>();
 		commandList.add("sh");
