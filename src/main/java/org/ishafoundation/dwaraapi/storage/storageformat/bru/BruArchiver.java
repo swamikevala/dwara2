@@ -50,7 +50,7 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 	protected ArchiveResponse restore(StorageJob storageJob) {
 		String filePathNameToBeRestored = storageJob.getFilePathname();
 		String destinationPath = storageJob.getDestinationPath();
-		int blockSizeInKB = storageJob.getVolume().getTape().getBlocksize();
+		int blockSizeInKB = storageJob.getVolume().getTape().getBlocksize()/1000;
 
 		try {
 			FileUtils.forceMkdir(new java.io.File(destinationPath));
