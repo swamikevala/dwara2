@@ -40,13 +40,16 @@ public class TapeTask implements Runnable{
 
 	@Override
 	public void run() {
-		Tape tapeToBeUsed = storageJob.getVolume().getTape();
 		int driveSNo = storageJob.getDriveNo();
+		logger.trace("Now running storagejob " + storageJob.getJob().getJobId() + " on drive " + driveSNo);
+		Tape tapeToBeUsed = storageJob.getVolume().getTape();
+		logger.trace("Checking if drive " + driveSNo + " is already loaded with any tape");
 		if(storageJob.isDriveAlreadyLoadedWithTape()) {
 			logger.trace("Tape " + tapeToBeUsed.getBarcode() + " is already loaded on to drive " + driveSNo);
 		}
 		else {
 			try {
+				logger.trace("Now loading tape " + tapeToBeUsed + " on to drive " + driveSNo);
 				tapeLibraryManager.loadTapeOnToDrive(tapeToBeUsed, driveSNo);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block

@@ -45,6 +45,8 @@ public class TapeJobsManager extends ArchiveJobsManager{
 		// STEP 1
 		// TODO : Should we use the DB to get the drive list or from mtx
 		// My bet is mtx as it would have the most latest status...
+		// Should we validate it against DB...
+		logger.trace("getting Available Drives List");
 		List<DriveStatusDetails> driveList = tapeLibraryManager.getAvailableDrivesList();
 		if(tapeStorageJobsList.size() <= 0) {
 			logger.trace("No tape jobs in queue to be processed");

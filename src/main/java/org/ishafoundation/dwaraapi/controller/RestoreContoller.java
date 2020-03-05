@@ -135,6 +135,7 @@ public class RestoreContoller {
 	    	String requestedBy = getUserFromContext();
 	    	
 			Request request = new Request();
+			request.setRequesttypeId(requesttypeId);
 	    	request.setCopyNumber(userRequest.getCopyNumber());
 	    	request.setTargetvolumeId(userRequest.getTargetvolumeId());
 	    	request.setOutputFolder(userRequest.getOutputFolder());

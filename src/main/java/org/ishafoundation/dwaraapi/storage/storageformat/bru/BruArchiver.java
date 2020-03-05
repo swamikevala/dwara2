@@ -1,9 +1,11 @@
 package org.ishafoundation.dwaraapi.storage.storageformat.bru;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.storage.StorageFormatFactory;
@@ -50,7 +52,12 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 		String destinationPath = storageJob.getDestinationPath();
 		int blockSizeInKB = storageJob.getVolume().getTape().getBlocksize();
 
-
+		try {
+			FileUtils.forceMkdir(new java.io.File(destinationPath));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		List<String> bruCopyCommandParamsList = getBruRestoreCommand(filePathNameToBeRestored, blockSizeInKB, destinationPath);
 		// TODO frames bru command for restore, executes, parsesitsresponse and returns it back
 
@@ -66,11 +73,16 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 		// executes the command, parses the response and returns it back..
 
 		CommandLineExecutionResponse bruCopyCommandLineExecutionResponse = commandLineExecuter.executeCommand(bruCommandParamsList, "/data/tmp/777.out");
-		logger.trace("b4 brp - " + bruCopyCommandLineExecutionResponse.getStdOutResponse());
-		BruResponseParser brp = new BruResponseParser();
-		BruResponse br = brp.parseBruResponse(bruCopyCommandLineExecutionResponse.getStdOutResponse());
-		logger.trace("br - " + br);
-		return convertBruResponseToArchiveResponse(br);
+		if(bruCopyCommandLineExecutionResponse.isComplete()) {
+			logger.trace("b4 brp - " + bruCopyCommandLineExecutionResponse.getStdOutResponse());
+			BruResponseParser brp = new BruResponseParser();
+			BruResponse br = brp.parseBruResponse(bruCopyCommandLineExecutionResponse.getStdOutResponse());
+			logger.trace("br - " + br);
+			return convertBruResponseToArchiveResponse(br);
+		}else {
+			logger.trace("command failed - TODO better this comment");
+			return null;
+		}
 	}
 	
 

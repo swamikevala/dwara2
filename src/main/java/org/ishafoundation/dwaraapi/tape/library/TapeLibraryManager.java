@@ -111,6 +111,7 @@ public class TapeLibraryManager{
 		boolean isSuccess = false;
 		try {
 			MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
+			logger.trace("getting details of drive " + toBeUsedDataTransferElementSNo);
 			DriveStatusDetails driveStatusDetails = tapeDriveManager.getDriveDetails(toBeUsedDataTransferElementSNo);
 			
 			if(driveStatusDetails.getMtStatus().isDriveReady()){ // means drive is not empty and has another tape - so we need to unload the other tape
