@@ -121,13 +121,16 @@ public class Libraryclass {
 		return pathWithOutLibrary;
 	}
 	
+	/*
 	public String getPathWithLibrary(String libraryName) {
 		String pathWithLibrary = null;
-		if(isSource())
+		if(isSource()) {
 			pathWithLibrary = getPathPrefix() + java.io.File.separator + libraryName;
-		else
-			pathWithLibrary = getPathPrefix() + java.io.File.separator + getCategory() + java.io.File.separator + libraryName;
-
+		}
+		else {
+			String libraryNamePrefix = sequenceDao.findById(getSequenceId()).get().getPrefix();
+			pathWithLibrary = getPathPrefix() + java.io.File.separator + getCategory() + java.io.File.separator + libraryNamePrefix + libraryName;
+		}
 		return pathWithLibrary;
-	}
+	}*/
 }

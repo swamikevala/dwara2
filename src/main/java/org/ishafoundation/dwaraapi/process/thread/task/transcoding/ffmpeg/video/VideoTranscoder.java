@@ -30,7 +30,7 @@ public class VideoTranscoder extends MediaTask implements ITranscoder{
 	
 	@Override
 	public ProxyGenCommandLineExecutionResponse transcode(String taskName, int fileId, String sourceFilePathname,
-			String destinationPath) throws Exception {
+			String destinationDirPath) throws Exception {
 		String clipName = FilenameUtils.getName(sourceFilePathname);
 		
 		String identifierSuffix = "";//mediaFileId+"";//  +  "-" + VideoProcessingSteps.PROXY_GENERATION.toString();
@@ -41,7 +41,7 @@ public class VideoTranscoder extends MediaTask implements ITranscoder{
 		
 		String m01FileLocPath = sourceFilePathname.replace("." + FilenameUtils.getExtension(sourceFilePathname), "M01.XML");
 
-		String thumbnailTargetLocation = destinationPath + File.separator + FilenameUtils.getBaseName(sourceFilePathname) + ".jpg";
+		String thumbnailTargetLocation = destinationDirPath + File.separator + FilenameUtils.getBaseName(sourceFilePathname) + ".jpg";
 		String thumbnailStdErrFileLoc = thumbnailTargetLocation.replace(".jpg", ".jpg_ffmpeg_log");
 
 		/*************** THUMBNAIL GENERATION ***************/
@@ -68,7 +68,7 @@ public class VideoTranscoder extends MediaTask implements ITranscoder{
 		 * we had to add the containerName(mlID-cardId-processName say e.g., something like 123-345-PROXYGENERATION) as XAVC file names across card folders are same...
 		 * 
 		 */
-		String proxyTargetLocation = destinationPath + File.separator + FilenameUtils.getBaseName(sourceFilePathname) + ".mp4";		
+		String proxyTargetLocation = destinationDirPath + File.separator + FilenameUtils.getBaseName(sourceFilePathname) + ".mp4";		
 		String proxyStdErrFileLoc = proxyTargetLocation.replace(".mp4", ".mp4_ffmpeg_log");
 		
 		String highResMetaTargetLocation = proxyTargetLocation.replace(".mp4", ".mp4_ffprobe_out");

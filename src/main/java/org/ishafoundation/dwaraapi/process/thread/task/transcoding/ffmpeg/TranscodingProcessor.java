@@ -26,10 +26,10 @@ public class TranscodingProcessor implements IProcessor {
 
 	@Override
 	public CommandLineExecutionResponse process(String taskName, String libraryName, int fileId, LogicalFile logicalFile, String category,
-			String destinationFilePath) throws Exception {
+			String destinationDirPath) throws Exception {
 		ITranscoder transcoder = TranscoderFactory.getInstance(applicationContext, taskName);
 		String sourceFilePathname = logicalFile.getAbsolutePath();
-		ProxyGenCommandLineExecutionResponse proxyGenCommandLineExecutionResponse = transcoder.transcode(taskName, fileId, sourceFilePathname, destinationFilePath);
+		ProxyGenCommandLineExecutionResponse proxyGenCommandLineExecutionResponse = transcoder.transcode(taskName, fileId, sourceFilePathname, destinationDirPath);
 		return proxyGenCommandLineExecutionResponse;
 	}
 }

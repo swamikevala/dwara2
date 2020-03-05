@@ -78,7 +78,7 @@ public class MamUpdateProcessor implements IProcessor {
 	
 	@Override
 	public CommandLineExecutionResponse process(String taskName, String libraryName, int fileId, LogicalFile logicalFile, String category,
-			String destinationFilePath) throws Exception {
+			String destinationDirPath) throws Exception {
 		
 		CommandLineExecutionResponse commandLineExecutionResponse = new CommandLineExecutionResponse();
 		String catdvSessionId = null;
@@ -90,7 +90,7 @@ public class MamUpdateProcessor implements IProcessor {
 		// Use case 4 - missed out extn
 		// Check is simple if catdv reference is available in mediafile table then it means the mediafile is already inserted into catdv
 		try {		
-			// TODO : get groupId using category
+			// TODO : get groupId using libraryCategory
 			int groupId = catDVConfiguration.getPublicGroupId();	
 			if(category.equals("private")) { // TODO: private1/2/3?
 				groupId = catDVConfiguration.getPrivateGroupId();

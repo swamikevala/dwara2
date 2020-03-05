@@ -107,8 +107,7 @@ public class StorageJobBuilder {
 				int libraryclassId = library.getLibraryclassId();
 				Libraryclass copyTaskLibraryclass = libraryclassDao.findById(libraryclassId).get();	
 				
-				String librarypathToBeCopied = copyTaskLibraryclass.getPathWithLibrary(libraryName);
-
+				String librarypathToBeCopied = copyTaskLibraryclass.getPath() + java.io.File.separator + libraryName;
 				
 				double sizeOfTheLibraryToBeWritten = FileUtils.sizeOfDirectory(new java.io.File(librarypathToBeCopied)); 
 				

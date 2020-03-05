@@ -97,7 +97,7 @@ public class ProcessJobManager_ThreadTask implements Runnable{
 		String libraryName = library.getName();
 		Libraryclass libraryclass = libraryclassDao.findById(library.getLibraryclassId()).get();
 		String category = libraryclass.getCategory();
-		String inputLibraryPath = libraryclass.getPathWithLibrary(libraryName);
+		String inputLibraryPath = libraryclass.getPath() + File.separator + libraryName;
 		
 //			String inputLibraryPath = null;
 //			if(libraryclass.isSource()) {
@@ -112,42 +112,59 @@ public class ProcessJobManager_ThreadTask implements Runnable{
 		// 2) and is responsible for generating a libraryclass
 		
 		// then it possibly means the output of the current task is the input for the dependent task
-
-		String outputLibraryPath = getOutputLibraryPath(job, libraryName, category);
-
+		
+		
+		String outputLibraryName = null;
+		String outputLibraryPathname = null; // holds where to generate the files in the physical system...
+		int taskId = job.getTaskId();
+		Libraryclass outputLibraryclass = libraryclassDao.findByTaskId(taskId); //  the task output's resultant libraryclass
+		if(outputLibraryclass != null) {
+			outputLibraryName = getOutputLibraryName(outputLibraryclass, libraryName);
+			outputLibraryPathname = getOutputLibraryPathname(outputLibraryclass, outputLibraryName);
+		}
+		
 		HashMap<String, Integer> filePathToId = getFilePathToId(libraryId);
 		
 		Collection<LogicalFile> selectedFileList = getLogicalFileList(libraryclass, inputLibraryPath);
 		
 		for (Iterator<LogicalFile> iterator = selectedFileList.iterator(); iterator.hasNext();) {
-			LogicalFile logicalFile = (LogicalFile) iterator.next();
+			LogicalFile logicalFile = (LogicalFile) iterator.next(); // would have an absolute file like C:\data\ingested\14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS and its sidecar files
 			logger.info("Now kicking off - " + job.getJobId() + " " + logicalFile.getAbsolutePath() + " task " + job.getTaskId());
-			String pathWithoutLibraryName = logicalFile.getAbsolutePath().replace(inputLibraryPath + File.separator, "");
-			String pathWithLibraryName = logicalFile.getAbsolutePath().replace(inputLibraryPath + File.separator, libraryName + File.separator);
+			// TODO - Need to work on this for Audio where its just file..
+			String x = FilenameUtils.getFullPath(logicalFile.getAbsolutePath()) + FilenameUtils.getBaseName(logicalFile.getAbsolutePath());
+			if(logicalFile.getAbsolutePath().equals(x)) { 
+				// means input library is a file and not a directory
+				
+			}
+			String filePathnameWithoutLibraryNamePrefixed = logicalFile.getAbsolutePath().replace(inputLibraryPath + File.separator, ""); // would hold 1 CD\00018.MTS
+			String libraryNamePrefixedFilePathname = logicalFile.getAbsolutePath().replace(inputLibraryPath + File.separator, libraryName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
 //				if(path.contains(configuration.getJunkFilesStagedDirName())) // skipping junk files
 //					continue;			
 			
 			//logger.info("Now processing - " + path);
 			int fileId = 0;
-			if(filePathToId.containsKey(pathWithLibraryName))
-				fileId = filePathToId.get(pathWithLibraryName);
+			if(filePathToId.containsKey(libraryNamePrefixedFilePathname))
+				fileId = filePathToId.get(libraryNamePrefixedFilePathname);
 			
 			String outputFilePath = null;
-			if(outputLibraryPath != null)
-				outputFilePath = outputLibraryPath + File.separator + FilenameUtils.getFullPathNoEndSeparator(pathWithoutLibraryName); 
+			if(outputLibraryPathname != null)
+				outputFilePath = outputLibraryPathname + File.separator + FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutLibraryNamePrefixed); 
 				
 			org.ishafoundation.dwaraapi.db.model.master.workflow.Process processDBEntity = processCacheUtil.getProcess(processId);
 			String processName = processDBEntity.getName().toUpperCase();
 
 			Process_ThreadTask process = applicationContext.getBean(Process_ThreadTask.class);
-			process.setLibraryId(libraryId);
-			process.setLibraryName(libraryName);
 			process.setJobId(job.getJobId());
 			process.setFileId(fileId);
 			process.setLogicalFile(logicalFile);
-			process.setCategory(category);
-			process.setOutputLibraryPath(outputLibraryPath);
-			process.setDestinationFilePath(outputFilePath);
+			
+			process.setInputLibraryId(libraryId);
+			process.setInputLibraryName(libraryName);
+			process.setLibraryCategory(category);
+
+			process.setOutputLibraryName(outputLibraryName);
+			process.setOutputLibraryPathname(outputLibraryPathname);
+			process.setDestinationDirPath(outputFilePath);
 			
 			Executor executor = DwaraApiApplication.processName_executor_map.get(processName.toLowerCase());
 			executor.execute(process);
@@ -157,19 +174,15 @@ public class ProcessJobManager_ThreadTask implements Runnable{
 
 	}
 
-	private String getOutputLibraryPath(Job job, String libraryName, String category) {
-		int taskId = job.getTaskId();
-		Libraryclass outputLibraryclass = libraryclassDao.findByTaskId(taskId); //  the task output's resultant libraryclass
-		
-		// frames where to generate the files in the physical system...
-		String outputLibraryPath = null;
-		if(outputLibraryclass != null) {
-			int outputLibraryClassSequenceId = outputLibraryclass.getSequenceId();
-			String outputLibraryNamePrefix = sequenceDao.findById(outputLibraryClassSequenceId).get().getPrefix();
-			outputLibraryPath = outputLibraryclass.getPathPrefix() + java.io.File.separator + category + File.separator + outputLibraryNamePrefix + libraryName;
-		}
 
-		return outputLibraryPath;
+	private String getOutputLibraryName(Libraryclass outputLibraryclass, String inputLibraryName){
+		int outputLibraryClassSequenceId = outputLibraryclass.getSequenceId();
+		String outputLibraryNamePrefix = sequenceDao.findById(outputLibraryClassSequenceId).get().getPrefix();
+		return outputLibraryNamePrefix + inputLibraryName;
+	}
+
+	private String getOutputLibraryPathname(Libraryclass outputLibraryclass, String outputLibraryName) {
+		return outputLibraryclass.getPath() + java.io.File.separator + outputLibraryName;
 	}
 	
 	private HashMap<String, Integer> getFilePathToId(int libraryId) {

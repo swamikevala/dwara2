@@ -89,31 +89,19 @@ public class Process_ThreadTask implements Runnable{
 	@Autowired
 	private ProcessCacheUtil processCacheUtil;		
 	
-	protected int libraryId;
-	protected String libraryName;
+
 	protected int jobId;
 	protected int fileId;
 	protected LogicalFile logicalFile;
-	protected String category;
-	protected String outputLibraryPath;
-	protected String destinationFilePath;
+		
+	protected int inputLibraryId;
+	protected String inputLibraryName;
+	protected String libraryCategory;
 	
-
-	public int getLibraryId() {
-		return libraryId;
-	}
-
-	public void setLibraryId(int libraryId) {
-		this.libraryId = libraryId;
-	}
-
-	public String getLibraryName() {
-		return libraryName;
-	}
-
-	public void setLibraryName(String libraryName) {
-		this.libraryName = libraryName;
-	}
+	protected String outputLibraryName;
+	protected String outputLibraryPathname;
+	protected String destinationDirPath;
+	
 
 	public int getJobId() {
 		return jobId;
@@ -139,28 +127,52 @@ public class Process_ThreadTask implements Runnable{
 		this.logicalFile = logicalFile;
 	}
 
-	public String getCategory() {
-		return category;
+	public int getInputLibraryId() {
+		return inputLibraryId;
 	}
 
-	public void setCategory(String category) {
-		this.category = category;
+	public void setInputLibraryId(int inputLibraryId) {
+		this.inputLibraryId = inputLibraryId;
 	}
 
-	public String getOutputLibraryPath() {
-		return outputLibraryPath;
+	public String getInputLibraryName() {
+		return inputLibraryName;
 	}
 
-	public void setOutputLibraryPath(String outputLibraryPath) {
-		this.outputLibraryPath = outputLibraryPath;
+	public void setInputLibraryName(String inputLibraryName) {
+		this.inputLibraryName = inputLibraryName;
 	}
 
-	public String getDestinationFilePath() {
-		return destinationFilePath;
+	public String getLibraryCategory() {
+		return libraryCategory;
 	}
 
-	public void setDestinationFilePath(String destinationFilePath) {
-		this.destinationFilePath = destinationFilePath;
+	public void setLibraryCategory(String libraryCategory) {
+		this.libraryCategory = libraryCategory;
+	}
+
+	public String getOutputLibraryName() {
+		return outputLibraryName;
+	}
+
+	public void setOutputLibraryName(String outputLibraryName) {
+		this.outputLibraryName = outputLibraryName;
+	}
+
+	public String getOutputLibraryPathname() {
+		return outputLibraryPathname;
+	}
+
+	public void setOutputLibraryPathname(String outputLibraryPathname) {
+		this.outputLibraryPathname = outputLibraryPathname;
+	}
+
+	public String getDestinationDirPath() {
+		return destinationDirPath;
+	}
+
+	public void setDestinationDirPath(String destinationDirPath) {
+		this.destinationDirPath = destinationDirPath;
 	}
 
 	@Override
@@ -199,7 +211,7 @@ public class Process_ThreadTask implements Runnable{
 				tmpJobFile = new TmpJobFile();
 				tmpJobFile.setFileId(fileId);
 				tmpJobFile.setJobId(jobId);
-				tmpJobFile.setLibraryId(libraryId);
+				tmpJobFile.setLibraryId(inputLibraryId);
 				tmpJobFile.setStatusId(Status.IN_PROGRESS.getStatusId());
 				tmpJobFile.setStartedAt(System.currentTimeMillis());
 				logger.debug("DB TmpJobFile Creation");
@@ -216,7 +228,7 @@ public class Process_ThreadTask implements Runnable{
 				String processName = processDBEntity.getName().toUpperCase();
 				
 				IProcessor processor = ProcessFactory.getInstance(applicationContext, processName);
-				CommandLineExecutionResponse commandLineExecutionResponse = processor.process(taskName, libraryName, fileId, logicalFile, category, destinationFilePath);
+				CommandLineExecutionResponse commandLineExecutionResponse = processor.process(taskName, inputLibraryName, fileId, logicalFile, libraryCategory, destinationDirPath);
 				if(commandLineExecutionResponse == null) // TODO : Handle this...
 					return;
 				boolean isCancelInitiated = commandLineExecutionResponse.isCancelled();
@@ -225,15 +237,16 @@ public class Process_ThreadTask implements Runnable{
 				boolean isComplete = commandLineExecutionResponse.isComplete();
 				if(isComplete) {
 					endms = System.currentTimeMillis();
-					Libraryclass outputLibraryclass = libraryclassDao.findByTaskId(taskId); //  the task output's resultant libraryclass
-					String outputLibraryName = StringUtils.substringAfterLast(outputLibraryPath, File.separator);
-					if(outputLibraryclass != null) {
+					
+					if(outputLibraryName != null) {
 						Library outputLibrary = libraryDao.findByName(outputLibraryName); 
 						if(outputLibrary == null) {// not already created.
 						    outputLibrary = new Library();
-						    outputLibrary.setLibraryIdRef(libraryId); //sourceLibraryId
+						    outputLibrary.setLibraryIdRef(inputLibraryId); //sourceLibraryId
 						    outputLibrary.setFileCount(111);
 						    outputLibrary.setFileStructureMd5("not needed");
+						    // TODO : try avoiding this call...
+						    Libraryclass outputLibraryclass = libraryclassDao.findByTaskId(taskId); //  the task output's resultant libraryclass
 						    outputLibrary.setLibraryclassId(outputLibraryclass.getLibraryclassId());
 						    outputLibrary.setName(outputLibraryName);
 						    
@@ -267,7 +280,10 @@ public class Process_ThreadTask implements Runnable{
 						nthFileRowToBeInserted.setFileIdRef(fileId);
 						nthFileRowToBeInserted.setLibraryId(outputLibraryId);
 						//nthFileRowToBeInserted.setFiletypeId(filetypeId); // TODO How?
-						nthFileRowToBeInserted.setPathname(destinationFilePath + FilenameUtils.getName(logicalFile.getAbsolutePath()));
+						
+						nthFileRowToBeInserted.setPathname(destinationDirPath.replace(outputLibraryPathname, outputLibraryName) + FilenameUtils.getName(logicalFile.getAbsolutePath()));
+						
+						//(destinationFilePath + FilenameUtils.getName(logicalFile.getAbsolutePath()));
 						
 						// TODO need to be done and set after proxy file is generated
 						nthFileRowToBeInserted.setCrc("crc_for_proxy"); 
