@@ -131,7 +131,7 @@ public class TapeDriveManager{
 			dsd = new DriveStatusDetails();
 			dsd.setDriveSNo(dataTransferElementNo);
 			
-			seek(dataTransferElementName, (blockNumberToSeek - 1));
+			seek(dataTransferElementName, blockNumberToSeek);
 			
 			// after seeking mt status responds with fileNo = -1 and blockNo = -1, so we had to do this...
 			CommandLineExecutionResponse  cler = tell(dataTransferElementName);

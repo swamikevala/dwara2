@@ -67,7 +67,7 @@ public class TapeTask implements Runnable{
 				tapeJobProcessor.write(storageJob);
 			}
 			else if(StorageOperation.READ.getStorageOperationId() == storageOperationId) {
-				tapeDriveManager.setTapeHeadPositionForReading(driveSNo, storageJob.getBlock());// FIXME - Need to offset...
+				tapeDriveManager.setTapeHeadPositionForReading(driveSNo, storageJob.getBlock());// FIXME - Need to offset???...
 				logger.trace("TDM Tape Head positioned for reading");
 				tapeJobProcessor.read(storageJob);
 			}

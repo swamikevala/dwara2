@@ -39,10 +39,13 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 		String dataTransferElementName = storageJob.getDeviceWwid();
 		String libraryPrefixPath = storageJob.getLibraryPrefixPath();
 		String libraryToBeWritten = storageJob.getLibraryToBeCopied();
+		
+		logger.trace("Framing bru copy command");
 		// frames bru command
 		List<String> bruCopyCommandParamsList = getBruCopyCommand(tapeLabel, blockSizeInKB, dataTransferElementName, libraryPrefixPath, libraryToBeWritten);		
 		// executes the command and parsesitsresponse
 		// TODO Handle both success and error scenarios
+		logger.trace("Executing the framed bru copy command");
 		return executeCommand(bruCopyCommandParamsList);
 	}
 
@@ -54,16 +57,18 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 		int blockSizeInKB = storageJob.getVolume().getTape().getBlocksize()/1000;
 
 		try {
+			logger.trace("Creating the directory " + destinationPath + ", if not already present");
 			FileUtils.forceMkdir(new java.io.File(destinationPath));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		List<String> bruCopyCommandParamsList = getBruRestoreCommand(dataTransferElementName, filePathNameToBeRestored, blockSizeInKB, destinationPath);
-		// TODO frames bru command for restore, executes, parsesitsresponse and returns it back
+		// frames bru command for restore, executes, parses its implementation specific response and returns back common archived response
+		List<String> bruRestoreCommandParamsList = getBruRestoreCommand(dataTransferElementName, filePathNameToBeRestored, blockSizeInKB, destinationPath);
 
 		// TODO Handle both success and error scenarios
-		return executeCommand(bruCopyCommandParamsList);
+		logger.trace("Executing the framed bru restore command");
+		return executeCommand(bruRestoreCommandParamsList);
 	}
 
 	protected ArchiveResponse executeCommand(List<String> bruCommandParamsList){
@@ -114,7 +119,8 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 	
 
 	private List<String> getBruRestoreCommand(String dataTransferElementName, String filePathNameToBeRestored,  int blockSizeInKB, String destinationPath) {
-		String bruRestoreCommand = "bru -B -xvvvvvvvvv -f " + dataTransferElementName + " " + filePathNameToBeRestored + " -b " + blockSizeInKB + "K -QV -C";
+
+		String bruRestoreCommand = "bru -B -xvvvvvvvvv -QV -b " + blockSizeInKB + "K -f " + dataTransferElementName + " " + filePathNameToBeRestored;
 		
 		List<String> commandList = new ArrayList<String>();
 		commandList.add("sh");
@@ -141,7 +147,7 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 		for (Iterator<File> iterator = bruedFileList.iterator(); iterator.hasNext();) {
 			File bruedFile = (File) iterator.next();
 			ArchivedFile af = new ArchivedFile();
-			af.setBlockNumber(bruedFile.getBlockNumber());
+			af.setBlockNumber(bruedFile.getBlockNumber() + 1); // +1, because for some reason bru "copy" responds with -1 block for BOT, while bru "t - table of contents"/"x - extraction" shows the block as 0 for same. Also while seek +1 followed by t/x returns faster results...
 			af.setFilePathName(bruedFile.getFileName());
 			
 			archivedFileList.add(af);
