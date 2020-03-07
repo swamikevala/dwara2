@@ -46,10 +46,10 @@ public class TapeJobsManager extends ArchiveJobsManager{
 		// TODO : Should we use the DB to get the drive list or from mtx
 		// My bet is mtx as it would have the most latest status...
 		// Should we validate it against DB...
-		logger.trace("getting Available Drives List");
+		logger.trace("Getting Available Drives List");
 		List<DriveStatusDetails> driveList = tapeLibraryManager.getAvailableDrivesList();
 		if(tapeStorageJobsList.size() <= 0) {
-			logger.trace("No tape jobs in queue to be processed");
+			logger.debug("No tape jobs in queue to be processed");
 			return;
 		}
 		if(driveList.size() > 0) { // means drive(s) available
@@ -57,18 +57,18 @@ public class TapeJobsManager extends ArchiveJobsManager{
 			// we need to allocate as many jobs for processing
 			for (Iterator<DriveStatusDetails> driveStatusDetailsIterator = driveList.iterator(); driveStatusDetailsIterator.hasNext();) {
 				DriveStatusDetails driveStatusDetails = (DriveStatusDetails) driveStatusDetailsIterator.next();
-				logger.trace("Now selecting job for drive - " + driveStatusDetails.getDriveSNo());
+				logger.debug("Now selecting job for drive - " + driveStatusDetails.getDriveSNo());
 				
 				// STEP 2a
 				StorageJob storageJob = tapeJobSelector.getJob(tapeStorageJobsList, driveStatusDetails);
 				
 				// STEP 2b
 				if(storageJob == null) {
-					logger.trace("No tape jobs in queue are eligible to be processed. So skipping the loop");
+					logger.debug("No tape jobs in queue are eligible to be processed. So skipping the loop");
 					break;
 				}
 				else if(storageJob != null) {
-					logger.trace("Job selected " + storageJob.getJob().getJobId() + " for " + driveStatusDetails.getDriveSNo());
+					logger.info("Job selected " + storageJob.getJob().getJobId() + " for " + driveStatusDetails.getDriveSNo());
 					TapeTask tapeTask = applicationContext.getBean(TapeTask.class); 
 					tapeTask.setStorageJob(storageJob);
 					tapeTaskThreadPoolExecutor.getExecutor().execute(tapeTask);
@@ -80,13 +80,13 @@ public class TapeJobsManager extends ArchiveJobsManager{
 				
 
 				if(tapeStorageJobsList.size() <= 0) {
-					logger.trace("No tape jobs in queue anymore. So skipping the loop");
+					logger.debug("No tape jobs in queue anymore. So skipping the loop");
 					break;
 				}
 			}
 		}
 		else {
-			logger.trace("All drives busy");
+			logger.info("All drives busy");
 		}
 	}
 }

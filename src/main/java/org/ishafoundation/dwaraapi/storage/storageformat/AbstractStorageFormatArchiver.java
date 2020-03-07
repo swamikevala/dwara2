@@ -8,7 +8,7 @@ public abstract class AbstractStorageFormatArchiver {
 	
 	private static final Logger logger = LoggerFactory.getLogger(AbstractStorageFormatArchiver.class);
 	
-	public ArchiveResponse write(StorageJob storageJob){
+	public ArchiveResponse write(StorageJob storageJob) throws Exception{
 		logger.trace("will be writing " + storageJob.getLibraryPrefixPath() + "!-!" + storageJob.getLibraryToBeCopied());
 		// dbUpdates
 		ArchiveResponse ar = archive(storageJob);
@@ -17,7 +17,7 @@ public abstract class AbstractStorageFormatArchiver {
 		return ar;
 	}
 	
-	public ArchiveResponse read(StorageJob storageJob){
+	public ArchiveResponse read(StorageJob storageJob) throws Exception{
 		logger.trace("will be reading " + storageJob.getFilePathname());
 		// dbUpdates
 		ArchiveResponse ar = restore(storageJob);
@@ -25,7 +25,7 @@ public abstract class AbstractStorageFormatArchiver {
 		return ar;
 	}
 	
-	protected abstract ArchiveResponse archive(StorageJob storageJob);
+	protected abstract ArchiveResponse archive(StorageJob storageJob) throws Exception;
 	
-	protected abstract ArchiveResponse restore(StorageJob storageJob);
+	protected abstract ArchiveResponse restore(StorageJob storageJob) throws Exception;
 }

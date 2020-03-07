@@ -52,29 +52,27 @@ public class TapeTask implements Runnable{
 				logger.trace("Now loading tape " + tapeToBeUsed + " on to drive " + driveSNo);
 				tapeLibraryManager.loadTapeOnToDrive(tapeToBeUsed, driveSNo);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.error("Unable to load tape " + tapeToBeUsed + " on to drive " + driveSNo, e);
+				return;
 			}
 		}
 		
 		int storageOperationId = storageJob.getStorageOperation().getStorageOperationId();
 		try {
 			if(StorageOperation.WRITE.getStorageOperationId() == storageOperationId) {
-				
-				tapeDriveManager.setTapeHeadPositionForWriting(driveSNo); // FIXME - check on this
-				logger.trace("TDM Tape Head positioned for writing");
-				
+				logger.trace("Now positioning tape head for writing");
+				tapeDriveManager.setTapeHeadPositionForWriting(driveSNo); // FIXME - check on this, using eod, bsf 1 and fsf 1
+				logger.trace("Tape Head positioned for writing");
 				tapeJobProcessor.write(storageJob);
 			}
 			else if(StorageOperation.READ.getStorageOperationId() == storageOperationId) {
-				tapeDriveManager.setTapeHeadPositionForReading(driveSNo, storageJob.getBlock());// FIXME - Need to offset???...
-				logger.trace("TDM Tape Head positioned for reading");
+				logger.trace("Now positioning tape head for reading");
+				tapeDriveManager.setTapeHeadPositionForReading(driveSNo, storageJob.getBlock());// FIXME - Need offset???...
+				logger.trace("Tape Head positioned for reading");
 				tapeJobProcessor.read(storageJob);
 			}
 		} catch (Throwable e) {
-			// TODO: handle exception
-			e.printStackTrace();
-			System.err.println("Unable to copy" + storageJob.toString());
+			logger.error("Unable to complete tape task " + storageJob.toString(), e);
 		}
 	}	
 }

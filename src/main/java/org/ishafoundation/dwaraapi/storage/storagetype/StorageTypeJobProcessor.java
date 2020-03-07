@@ -36,11 +36,13 @@ public class StorageTypeJobProcessor {
     }
     
     public ArchiveResponse service(StorageJob storageJob, boolean isWrite) throws Throwable{
+    	
+    	Status status = Status.IN_PROGRESS;
     	// some common code goes in here... 
 		Job job = (Job) storageJob.getJob();
 		job.setStartedAt(System.currentTimeMillis());
-		job.setStatusId(Status.IN_PROGRESS.getStatusId());
-		logger.debug("DB Job Updation " + Status.IN_PROGRESS);
+		job.setStatusId(status.getStatusId());
+		logger.debug("DB Job Updation " + status);
 		jobDao.save(job);
 		logger.debug("DB Job Updation - Success");
 		
@@ -48,14 +50,19 @@ public class StorageTypeJobProcessor {
 		String storageformat = storageJob.getStorageformat().getName();
 		AbstractStorageFormatArchiver storageFormatter = StorageFormatFactory.getInstance(applicationContext, storageformat);
 		ArchiveResponse archiveResponse = null;
-		if(isWrite)
-			archiveResponse = storageFormatter.write(storageJob); // tapeJobProcessor.write(tapeJob); // go on a seperate thread... create a task and allocate it to the thread
-		else
-			archiveResponse = storageFormatter.read(storageJob);
-		
-		job.setStatusId(Status.COMPLETED.getStatusId());
+		try {
+			if(isWrite)
+				archiveResponse = storageFormatter.write(storageJob); // tapeJobProcessor.write(tapeJob); // go on a seperate thread... create a task and allocate it to the thread
+			else
+				archiveResponse = storageFormatter.read(storageJob);
+			status = Status.COMPLETED;
+		}catch (Exception e) {
+			logger.error("Storage type implementation responded with error");
+			status = Status.FAILED;
+		}
+		job.setStatusId(status.getStatusId());
 		job.setCompletedAt(System.currentTimeMillis());
-		logger.debug("DB Job Updation " + Status.COMPLETED);
+		logger.debug("DB Job Updation " + status);
 		jobDao.save(job);
 		logger.debug("DB Job Updation - Success");
 		return archiveResponse;

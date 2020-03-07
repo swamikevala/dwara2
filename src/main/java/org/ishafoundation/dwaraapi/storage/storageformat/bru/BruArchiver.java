@@ -1,6 +1,5 @@
 package org.ishafoundation.dwaraapi.storage.storageformat.bru;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -30,10 +29,10 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
     private static final Logger logger = LoggerFactory.getLogger(BruArchiver.class);
 	
 	@Autowired
-	protected CommandLineExecuter commandLineExecuter;	    
+	protected CommandLineExecuter commandLineExecuter;	 
     
 	@Override
-	protected ArchiveResponse archive(StorageJob storageJob) {
+	protected ArchiveResponse archive(StorageJob storageJob) throws Exception {
 		String tapeLabel = storageJob.getVolume().getTape().getBarcode();
 		int blockSizeInKB = storageJob.getVolume().getTape().getBlocksize()/1000;
 		String dataTransferElementName = storageJob.getDeviceWwid();
@@ -46,49 +45,47 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 		// executes the command and parsesitsresponse
 		// TODO Handle both success and error scenarios
 		logger.trace("Executing the framed bru copy command");
-		return executeCommand(bruCopyCommandParamsList);
+		return executeCommandAndFormatResponse(bruCopyCommandParamsList, storageJob.getJob().getJobId()+"");
 	}
 
 	@Override
-	protected ArchiveResponse restore(StorageJob storageJob) {
+	protected ArchiveResponse restore(StorageJob storageJob) throws Exception {
 		String dataTransferElementName = storageJob.getDeviceWwid();
 		String filePathNameToBeRestored = storageJob.getFilePathname();
 		String destinationPath = storageJob.getDestinationPath();
 		int blockSizeInKB = storageJob.getVolume().getTape().getBlocksize()/1000;
 
-		try {
-			logger.trace("Creating the directory " + destinationPath + ", if not already present");
-			FileUtils.forceMkdir(new java.io.File(destinationPath));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
+		logger.trace("Creating the directory " + destinationPath + ", if not already present");
+		FileUtils.forceMkdir(new java.io.File(destinationPath));
+
 		// frames bru command for restore, executes, parses its implementation specific response and returns back common archived response
 		List<String> bruRestoreCommandParamsList = getBruRestoreCommand(dataTransferElementName, filePathNameToBeRestored, blockSizeInKB, destinationPath);
 
 		// TODO Handle both success and error scenarios
 		logger.trace("Executing the framed bru restore command");
-		return executeCommand(bruRestoreCommandParamsList);
+		return executeCommandAndFormatResponse(bruRestoreCommandParamsList, storageJob.getJob().getJobId()+"");
 	}
 
-	protected ArchiveResponse executeCommand(List<String> bruCommandParamsList){
-		
+	protected ArchiveResponse executeCommandAndFormatResponse(List<String> bruCommandParamsList, String commandlineExecutorErrorResponseTemporaryFilename) throws Exception{
+		ArchiveResponse archiveResponse = null;
 		// common method for both ingest and restore
-		logger.trace("Archiving using BruArchiver");
+		logger.trace("Executing using BruArchiver");
 		// the methods frame the command and delegate it to this method
 		// executes the command, parses the response and returns it back..
 
-		CommandLineExecutionResponse bruCopyCommandLineExecutionResponse = commandLineExecuter.executeCommand(bruCommandParamsList, "/data/tmp/777.out");
+		CommandLineExecutionResponse bruCopyCommandLineExecutionResponse = commandLineExecuter.executeCommand(bruCommandParamsList, commandlineExecutorErrorResponseTemporaryFilename + ".err"); // TODO Fix this output file...
 		if(bruCopyCommandLineExecutionResponse.isComplete()) {
-			logger.trace("b4 brp - " + bruCopyCommandLineExecutionResponse.getStdOutResponse());
+			logger.trace("Before parsing bru response - " + bruCopyCommandLineExecutionResponse.getStdOutResponse());
 			BruResponseParser brp = new BruResponseParser();
 			BruResponse br = brp.parseBruResponse(bruCopyCommandLineExecutionResponse.getStdOutResponse());
-			logger.trace("br - " + br);
-			return convertBruResponseToArchiveResponse(br);
+			logger.trace("Parsed bru response object - " + br);
+			 archiveResponse = convertBruResponseToArchiveResponse(br);
 		}else {
-			logger.trace("command failed - TODO better this comment");
-			return null;
+			logger.error("Bru command execution failed " + bruCopyCommandLineExecutionResponse.getFailureReason());
+			throw new Exception("Unable to execute bru command successfully");
 		}
+		return archiveResponse;
 	}
 	
 

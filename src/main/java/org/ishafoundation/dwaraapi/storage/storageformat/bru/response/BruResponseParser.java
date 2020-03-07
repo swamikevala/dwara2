@@ -131,7 +131,7 @@ public class BruResponseParser {
 		while (scanner.hasNextLine()) {
 			String line = scanner.nextLine().trim();
 
-			String fileAndAttributesRegEx = "VL:(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)";
+			String fileAndAttributesRegEx = "VL:(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)"; // VL:c|75008|1|1105188303|20154|99999_Daily-Mystic-Quote_Le-Meridien-Chennai_21-Dec-2019_FS7_4K/Clip/LMA122789_01.MP4
 			String errorDescriptionRegEx = "bru: \\[([A-Z][0-9]{3})\\](.*)";
 			String startedRegEx = "Started: *(.*)";
 			String completedRegEx = "Completed: *(.*)";

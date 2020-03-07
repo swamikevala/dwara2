@@ -1,7 +1,5 @@
 package org.ishafoundation.dwaraapi.tape.drive;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -63,15 +61,10 @@ public class TapeDriveManager{
 
 	private String callMtStatus(String driveName) {
 		String mtStatusResponse = null;
-		String mtStatusResponseFileName = "/data/tmp/" + driveName + "_status.err";
-		CommandLineExecutionResponse cler = null;
-		try {
-			cler = commandLineExecuter.executeCommand("mt -f " + driveName + " status", mtStatusResponseFileName);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		mtStatusResponse = cler.getStdOutResponse();
+		String mtStatusResponseFileName = driveName.replace("/", "_") + "_status.err";
+		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("mt -f " + driveName + " status", mtStatusResponseFileName);
+		if(cler.isComplete())
+			mtStatusResponse = cler.getStdOutResponse();
 		return mtStatusResponse;
 	}
 

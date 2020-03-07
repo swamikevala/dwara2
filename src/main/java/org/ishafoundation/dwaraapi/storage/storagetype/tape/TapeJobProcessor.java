@@ -47,76 +47,89 @@ public class TapeJobProcessor extends StorageTypeJobProcessor {
 	// call the formatmanager accordingly and run the write/read command
 	@Override
 	public ArchiveResponse write(StorageJob storageJob) throws Throwable {
-		// Delegate the format specific archiving to AbstractStorageFormatArchiver
-		ArchiveResponse archiveResponse = super.write(storageJob);
+		try {
+			// Delegate the format specific archiving to AbstractStorageFormatArchiver
+			ArchiveResponse archiveResponse = super.write(storageJob);
 		
-		logger.trace("Processing job using storage type - TAPE. DB updates specific to Tape goes in here");
-
-		// Update tape specific DB - File_Tape...
-		// TODO : Check If for Mezz copy libraryId = MezzLibraryId coming from input...
-		int libraryId = storageJob.getLibraryId();
-		int tapeId = storageJob.getVolume().getTape().getTapeId();
-		// Get a map of Paths and their File Ids
-		List<org.ishafoundation.dwaraapi.db.model.transactional.File> libraryFileList = fileDao.findAllByLibraryId(libraryId);
-		
-		HashMap<Integer, String> fileIdToPath = new HashMap<Integer, String>();
-		HashMap<String, Integer> filePathToId = new HashMap<String, Integer>();
-		for (Iterator<org.ishafoundation.dwaraapi.db.model.transactional.File> iterator = libraryFileList.iterator(); iterator.hasNext();) {
-			org.ishafoundation.dwaraapi.db.model.transactional.File nthFile = iterator.next();
-			filePathToId.put(nthFile.getPathname(), nthFile.getFileId());
-			fileIdToPath.put(nthFile.getFileId(), nthFile.getPathname());
-		}
-		
-		//  some tape specific code like updating db file_tape and tapedrive...
-		List<ArchivedFile> archivedFileList = archiveResponse.getArchivedFileList();
-		List<FileTape> toBeAddedFileTapeTableEntries = new ArrayList<FileTape>();
-		for (Iterator<ArchivedFile> iterator = archivedFileList.iterator(); iterator.hasNext();) {
-			ArchivedFile archivedFile = (ArchivedFile) iterator.next();
-
+			logger.trace("Processing job using storage type - TAPE. DB updates specific to Tape goes in here");
+	
+			// Update tape specific DB - File_Tape...
+			// TODO : Check If for Mezz copy libraryId = MezzLibraryId coming from input...
+			int libraryId = storageJob.getLibraryId();
+			int tapeId = storageJob.getVolume().getTape().getTapeId();
+			// Get a map of Paths and their File Ids
+			List<org.ishafoundation.dwaraapi.db.model.transactional.File> libraryFileList = fileDao.findAllByLibraryId(libraryId);
 			
-			FileTape ft = new FileTape();
-			ft.setBlock(archivedFile.getBlockNumber());
-
-			String fileName = archivedFile.getFilePathName(); 
-			// TODO get the file id from File table using this fileName...
-			int fileId = 0;
-			if(filePathToId != null)
-				fileId = filePathToId.get(fileName) != null ? filePathToId.get(fileName) : 0;
-			ft.setFileId(fileId);
-			//ft.setOffset(offset); // TODO ?? How
-			ft.setTapeId(tapeId);
+			HashMap<Integer, String> fileIdToPath = new HashMap<Integer, String>();
+			HashMap<String, Integer> filePathToId = new HashMap<String, Integer>();
+			for (Iterator<org.ishafoundation.dwaraapi.db.model.transactional.File> iterator = libraryFileList.iterator(); iterator.hasNext();) {
+				org.ishafoundation.dwaraapi.db.model.transactional.File nthFile = iterator.next();
+				filePathToId.put(nthFile.getPathname(), nthFile.getFileId());
+				fileIdToPath.put(nthFile.getFileId(), nthFile.getPathname());
+			}
 			
-			toBeAddedFileTapeTableEntries.add(ft);
+			//  some tape specific code like updating db file_tape and tapedrive...
+			List<ArchivedFile> archivedFileList = archiveResponse.getArchivedFileList();
+			List<FileTape> toBeAddedFileTapeTableEntries = new ArrayList<FileTape>();
+			for (Iterator<ArchivedFile> iterator = archivedFileList.iterator(); iterator.hasNext();) {
+				ArchivedFile archivedFile = (ArchivedFile) iterator.next();
+	
+				
+				FileTape ft = new FileTape();
+				ft.setBlock(archivedFile.getBlockNumber());
+	
+				String fileName = archivedFile.getFilePathName(); 
+				// TODO get the file id from File table using this fileName...
+				int fileId = 0;
+				if(filePathToId != null)
+					fileId = filePathToId.get(fileName) != null ? filePathToId.get(fileName) : 0;
+				ft.setFileId(fileId);
+				//ft.setOffset(offset); // TODO ?? How
+				ft.setTapeId(tapeId);
+				
+				toBeAddedFileTapeTableEntries.add(ft);
+			}
+			
+		    if(toBeAddedFileTapeTableEntries.size() > 0) {
+		    	logger.debug("DB FileTape entries Creation");   
+		    	fileTapeDao.saveAll(toBeAddedFileTapeTableEntries);
+		    	logger.debug("DB FileTape entries Creation - Success");
+		    }
+		    
+		    LibraryTape libraryTape = new LibraryTape();
+		    libraryTape.setTapeId(tapeId);
+		    libraryTape.setLibraryId(libraryId);
+		    libraryTape.setEncrypted(storageJob.isEncrypted());
+		    libraryTape.setCopyNumber(storageJob.getCopyNumber());
+		    logger.debug("DB LibraryTape Creation");
+		    libraryTapeDao.save(libraryTape);
+		    logger.debug("DB LibraryTape Creation - Success");
+		    return archiveResponse;
 		}
-		
-	    if(toBeAddedFileTapeTableEntries.size() > 0) {
-	    	logger.debug("DB FileTape entries Creation");   
-	    	fileTapeDao.saveAll(toBeAddedFileTapeTableEntries);
-	    	logger.debug("DB FileTape entries Creation - Success");
-	    }
-	    
-	    LibraryTape libraryTape = new LibraryTape();
-	    libraryTape.setTapeId(tapeId);
-	    libraryTape.setLibraryId(libraryId);
-	    libraryTape.setEncrypted(storageJob.isEncrypted());
-	    libraryTape.setCopyNumber(storageJob.getCopyNumber());
-	    logger.debug("DB LibraryTape Creation");
-	    libraryTapeDao.save(libraryTape);
-	    logger.debug("DB LibraryTape Creation - Success");
-
+		finally {
+			updateTapeDriveTable(storageJob);
+		}
+	}
+	
+	@Override
+	public ArchiveResponse read(StorageJob storageJob) throws Throwable {
+		try {
+			ArchiveResponse archiveResponse = super.read(storageJob);
+			return archiveResponse;
+		}
+		finally {
+			updateTapeDriveTable(storageJob);
+		}
+	}
+	
+	private void updateTapeDriveTable(StorageJob storageJob) {
 		Tapedrive tapedrive = tapedriveDao.findByElementAddress(storageJob.getDriveNo());
 		tapedrive.setStatus(TapedriveStatus.AVAILABLE.toString());
 		logger.debug("DB Tapedrive Updation " + tapedrive.getStatus());
 		tapedriveDao.save(tapedrive);
 		logger.debug("DB Tapedrive Updation - Success");
-
-		
-		return archiveResponse;
 	}
+	
 
-	@Override
-	public ArchiveResponse read(StorageJob archiveJob) throws Throwable {
-		ArchiveResponse archiveResponse = super.read(archiveJob);
-		return archiveResponse;
-	}
+	
 }

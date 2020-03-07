@@ -52,7 +52,7 @@ public class TapeLibraryManager{
 	
 	private String callMtxStatus(String tapeLibraryName) {
 		String mtxStatusResponse = null;
-		String mtxStatusResponseFileName = "/data/tmp/" + tapeLibraryName.replace("/", "_") + "_status.err";
+		String mtxStatusResponseFileName = tapeLibraryName.replace("/", "_") + "_status.err";
 		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("mtx -f " + tapeLibraryName + " status", mtxStatusResponseFileName);
 		mtxStatusResponse = cler.getStdOutResponse();
 		return mtxStatusResponse;

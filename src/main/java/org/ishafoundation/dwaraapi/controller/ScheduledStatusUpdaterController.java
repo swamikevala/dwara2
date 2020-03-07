@@ -10,14 +10,13 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TmpJobFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-// mimicks the scheduler
-
 @RestController
-@RequestMapping("scheduledStatusCtrller")
+@RequestMapping("scheduledStatusUpdaterController")
 public class ScheduledStatusUpdaterController {
 	
 	@Autowired
@@ -25,7 +24,8 @@ public class ScheduledStatusUpdaterController {
 
 	@Autowired
 	private TmpJobFileDao jobFileDao;
-	
+
+	@Scheduled(fixedDelay = 60000)
     @PostMapping("/updateStatus")
     public ResponseEntity<String> updateStatus(){
     	
