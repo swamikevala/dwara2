@@ -56,8 +56,10 @@ public class ScheduledStatusUpdaterController {
 			}
 			
 			if(!inProgress) {
-				if(isAllComplete)
+				if(isAllComplete) {
+					job.setCompletedAt(System.currentTimeMillis()); // Just can only give some rough completed times... 
 					job.setStatusId(Status.COMPLETED.getStatusId());
+				}
 				if(hasFailures && hasAnyCompleted)
 					job.setStatusId(Status.COMPLETED_WITH_FAILURE.getStatusId());
 				

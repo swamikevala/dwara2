@@ -70,7 +70,7 @@ public class TapeJobsManager extends ArchiveJobsManager{
 					//break;
 				}
 				else if(storageJob != null) {
-					logger.info("Job selected " + storageJob.getJob().getJobId() + " for " + driveStatusDetails.getDriveSNo());
+					logger.info("Job " + storageJob.getJob().getJobId() + " selected for " + driveStatusDetails.getDriveSNo());
 					TapeTask tapeTask = applicationContext.getBean(TapeTask.class); 
 					tapeTask.setStorageJob(storageJob);
 					tapeTaskThreadPoolExecutor.getExecutor().execute(tapeTask);

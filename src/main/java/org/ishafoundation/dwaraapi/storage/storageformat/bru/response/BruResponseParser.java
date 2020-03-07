@@ -272,17 +272,18 @@ public class BruResponseParser {
 	}
 	
 	private long parseDate(String dateToBeParsed) {
+		dateToBeParsed = dateToBeParsed.trim();
 		Date date = null;
 		try {
 			date = formatWithSingleDigitDate.parse(dateToBeParsed);
 			logger.trace("formatWithSingleDigitDate : " + date.toString());
 		} catch (ParseException e) {
-			logger.error("unable to parse date using formatWithSingleDigitDate. Falling back to formatWithDoubleDigitDate", e);
+			logger.warn("unable to parse date using formatWithSingleDigitDate. Falling back to formatWithDoubleDigitDate");
 			try {
 				date = formatWithDoubleDigitDate.parse(dateToBeParsed);
 				logger.trace("formatWithDoubleDigitDate : " + date.toString());
 			} catch (ParseException e1) {
-				logger.error("unable to parse date ", e1);
+				logger.warn("unable to parse date ");
 			}
 		} 
 		return date != null ? date.getTime() : 0;

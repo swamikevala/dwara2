@@ -487,12 +487,20 @@ public class TapeJobSelector {
 			// checking if there are jobs that all need to use the same tape as a currently running job... if yes remove them from the candidate list...
 			for (Iterator<StorageJob> iterator = currentlyRunningTapeJobsList.iterator(); iterator.hasNext();) {
 				StorageJob runningTapeJob = (StorageJob) iterator.next();
+				
+				int storageOperationId = runningTapeJob.getStorageOperation().getStorageOperationId();
+				if(storageOperationId == StorageOperation.WRITE.getStorageOperationId()) {
+					isWriteJobsOn = true;
+					currentlyRunningWriteJobsList.add(runningTapeJob);
+				}
+
+				
 				String alreadyInUseTapeBarCode = runningTapeJob.getVolume().getTape().getBarcode();
 				logger.debug("Tape " + alreadyInUseTapeBarCode + " is already in use by " + runningTapeJob.getJob().getJobId());
 				
-				// The jobs needing a tape thats already been used by another running job are removed as we cant run 2 jobs on a same tape at a time....
+				// The jobs needing the same tape thats already been used by another running job are removed as we cant run 2 jobs on a same tape at a time....
 				if(volumeTag_volumeTagGroupedJobs.containsKey(alreadyInUseTapeBarCode)) {
-					logger.trace("Jobs in the list need the same tape.");
+					logger.trace("Queued jobs need the same tape.");
 					List<StorageJob> toBeIgnoredVolumeTagList = volumeTag_volumeTagGroupedJobs.get(alreadyInUseTapeBarCode);
 					// Iterating just for the log statement for greater visibility on whats going on...
 					for (Iterator<StorageJob> iterator2 = toBeIgnoredVolumeTagList.iterator(); iterator2.hasNext();) {
@@ -504,12 +512,8 @@ public class TapeJobSelector {
 				}
 				else {
 					logger.trace("No queued job need the same tape.");
-					int storageOperationId= runningTapeJob.getStorageOperation().getStorageOperationId();
-					if(storageOperationId == StorageOperation.WRITE.getStorageOperationId()) {
-						isWriteJobsOn = true;
-						currentlyRunningWriteJobsList.add(runningTapeJob);
-					}
 				}
+				
 			}
 
 			// Should we check the nonconcurrentwrites only against running ***write*** jobs and not ***read*** jobs??? 
@@ -521,7 +525,7 @@ public class TapeJobSelector {
 			if(isWriteJobsOn) {
 				logger.trace("There are write jobs running.");
 				logger.debug("Checking and filtering concurrent overlapping writes");
-				List<StorageJob> revisedTapeJobsList = new ArrayList<StorageJob>();
+				List<StorageJob> revisedTapeJobsList = new ArrayList<StorageJob>(); //  jobs list that holds the exhaustive tapejobs but subsequently gets removed of the concurrent overlapping write jobs
 				revisedTapeJobsList.addAll(tapeJobsList);
 				// NOTE that archiveJobsList now contains entries after removing the jobs that all need to use the same tape as a currently running job...
 				for (Iterator<StorageJob> iterator = tapeJobsList.iterator(); iterator.hasNext();) {
