@@ -90,11 +90,13 @@ public class TapeLibraryManager{
 			dsd.setDte(nthDataTransferElement);
 			if(!dsd.getMtStatus().isBusy()) { // only not busy drives are candidates
 				logger.trace("Drive " + dataTransferElementSNo + " is available");
-				logger.trace("Double verifying if the drive is not been used");
+				logger.trace("Double verifying if the drive is not been used indeed");
+				// we flag a tapedrive as busy after job is selected for the drive even before the job deals with the drive... The below is take care of such usecase...
 				Tapedrive tapedrive = tapedriveDao.findByElementAddress(dataTransferElementSNo);
 				String tapedriveStatus = tapedrive.getStatus();
 				if(!tapedriveStatus.equals(TapedriveStatus.AVAILABLE.toString())){
-					logger.info("tapedrive table's status for element address " + dataTransferElementSNo + " seems to be out of sync with the physical drive. Something unexpected must have happened. Please check out and sync the table manually with the physical drive's status");
+					logger.info("Tapedrive table's status for element address " + dataTransferElementSNo + " is flagged as being used by " + tapedrive.getJobId());
+					//logger.trace("If the job " + tapedrive.getJobId() + " is already complete/failed, then table seems to be out of sync with the physical drive. Something unexpected must have happened. Please check out and sync the table manually with the physical drive's status");
 					continue;
 				}
 				logger.trace("Drive " + dataTransferElementSNo + " is added to the available drives list");

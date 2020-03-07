@@ -40,6 +40,6 @@ public class DataTransferElement {
 	
 	@Override
 	public String toString() {
-		return "sNo : " + sNo + "isEmpty : " + isEmpty + " sen : " + storageElementNo + " vt : " + volumeTag;
+		return "sNo : " + sNo + " isEmpty : " + isEmpty + " sen : " + storageElementNo + " vt : " + volumeTag;
 	}
 }

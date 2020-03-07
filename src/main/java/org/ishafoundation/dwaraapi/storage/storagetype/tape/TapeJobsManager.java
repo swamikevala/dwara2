@@ -62,7 +62,7 @@ public class TapeJobsManager extends ArchiveJobsManager{
 				logger.debug("Now selecting job for drive - " + driveStatusDetails.getDriveSNo());
 
 				// STEP 2a
-				StorageJob storageJob = tapeJobSelector.getJob(tapeStorageJobsList, driveStatusDetails, availableDrivesList);
+				StorageJob storageJob = tapeJobSelector.getJob(tapeStorageJobsList, driveStatusDetails);
 				
 				// STEP 2b
 				if(storageJob == null) {

@@ -14,10 +14,10 @@ public class Tapedrive {
 	@Column(name="tapedrive_id")
 	private int tapedriveId;
 	
-	@Column(name="device_wwid")
+	@Column(name="device_wwid", unique=true)
 	private String deviceWwid;
 
-	@Column(name="element_address")
+	@Column(name="element_address", unique=true)
 	private int elementAddress;
 
 	@Column(name="tapelibrary_id")
@@ -26,13 +26,13 @@ public class Tapedrive {
 	@Column(name="status")
 	private String status;
 
-	@Column(name="job_id")
+	@Column(name="job_id", unique=true)
 	private int jobId;
 
-	@Column(name="tape_id")
+	@Column(name="tape_id", unique=true)
 	private int tapeId;
 
-	@Column(name="serial_number")
+	@Column(name="serial_number", unique=true)
 	private String serialNumber;
 
 		
