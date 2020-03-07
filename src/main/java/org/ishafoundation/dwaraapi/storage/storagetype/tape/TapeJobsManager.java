@@ -66,8 +66,8 @@ public class TapeJobsManager extends ArchiveJobsManager{
 				
 				// STEP 2b
 				if(storageJob == null) {
-					logger.debug("No tape jobs in queue are eligible to be processed. So skipping the loop");
-					break;
+					logger.debug("No tape jobs in queue are eligible to be processed for the drive");
+					//break;
 				}
 				else if(storageJob != null) {
 					logger.info("Job selected " + storageJob.getJob().getJobId() + " for " + driveStatusDetails.getDriveSNo());
