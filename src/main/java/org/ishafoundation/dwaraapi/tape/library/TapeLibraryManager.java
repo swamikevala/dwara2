@@ -7,7 +7,10 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
+import org.ishafoundation.dwaraapi.constants.TapedriveStatus;
+import org.ishafoundation.dwaraapi.db.dao.TapedriveDao;
 import org.ishafoundation.dwaraapi.db.dao.master.storage.TapelibraryDao;
+import org.ishafoundation.dwaraapi.db.model.Tapedrive;
 import org.ishafoundation.dwaraapi.db.model.master.storage.Tape;
 import org.ishafoundation.dwaraapi.db.model.master.storage.Tapelibrary;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
@@ -33,6 +36,9 @@ public class TapeLibraryManager{
 	
 	@Autowired
 	private TapeDriveManager tapeDriveManager;
+		
+	@Autowired
+	private TapedriveDao tapedriveDao;		
 	
 	private String tapeLibraryName = null;
 	
@@ -76,18 +82,28 @@ public class TapeLibraryManager{
 	public List<DriveStatusDetails> getAvailableDrivesList(MtxStatus mtxStatus){
 		List<DriveStatusDetails> availablDriveDetailsList = new ArrayList<DriveStatusDetails>();
 		List<DataTransferElement> dteList = mtxStatus.getDteList();
-		logger.trace("dteList " +  dteList);
+		logger.trace("All drives list " +  dteList);
 		for (Iterator<DataTransferElement> iterator = dteList.iterator(); iterator.hasNext();) {
 			DataTransferElement nthDataTransferElement = (DataTransferElement) iterator.next();
 			int dataTransferElementSNo = nthDataTransferElement.getsNo(); 
 			DriveStatusDetails dsd = tapeDriveManager.getDriveDetails(dataTransferElementSNo);
 			dsd.setDte(nthDataTransferElement);
 			if(!dsd.getMtStatus().isBusy()) { // only not busy drives are candidates
+				logger.trace("Drive " + dataTransferElementSNo + " is available");
+				logger.trace("Double verifying if the drive is not been used");
+				Tapedrive tapedrive = tapedriveDao.findByElementAddress(dataTransferElementSNo);
+				String tapedriveStatus = tapedrive.getStatus();
+				if(!tapedriveStatus.equals(TapedriveStatus.AVAILABLE.toString())){
+					logger.info("tapedrive table's status for element address " + dataTransferElementSNo + " seems to be out of sync with the physical drive. Something unexpected must have happened. Please check out and sync the table manually with the physical drive's status");
+					continue;
+				}
+				logger.trace("Drive " + dataTransferElementSNo + " is added to the available drives list");
 				availablDriveDetailsList.add(dsd);
 			} else {
 				
 			}
 		}
+		logger.debug("Available drives list " +  dteList);
 		return availablDriveDetailsList;
 	}
 	

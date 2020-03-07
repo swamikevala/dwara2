@@ -31,6 +31,7 @@ public class TapeJobsManager extends ArchiveJobsManager{
 	
 	@Autowired
 	private TapeLibraryManager tapeLibraryManager;	
+
 	/**
 	 * 
   		1) Get Available(Non busy) Drive list - We need to Dequeue as many jobs and Spawn as many threads For eg., If 2 free drives are available then we need to allocate 2 jobs to these drives on their own threads
@@ -42,25 +43,26 @@ public class TapeJobsManager extends ArchiveJobsManager{
 	 */
 	@Override
 	public void manage(List<StorageJob> tapeStorageJobsList) {
+		if(tapeStorageJobsList.size() <= 0) {
+			logger.debug("No tape jobs in queue to be processed");
+			return;
+		}
+
 		// STEP 1
 		// TODO : Should we use the DB to get the drive list or from mtx
 		// My bet is mtx as it would have the most latest status...
 		// Should we validate it against DB...
 		logger.trace("Getting Available Drives List");
-		List<DriveStatusDetails> driveList = tapeLibraryManager.getAvailableDrivesList();
-		if(tapeStorageJobsList.size() <= 0) {
-			logger.debug("No tape jobs in queue to be processed");
-			return;
-		}
-		if(driveList.size() > 0) { // means drive(s) available
-			logger.trace("No. of drives available "+ driveList.size());
+		List<DriveStatusDetails> availableDrivesList = tapeLibraryManager.getAvailableDrivesList();
+		if(availableDrivesList.size() > 0) { // means drive(s) available
+			logger.trace("No. of drives available "+ availableDrivesList.size());
 			// we need to allocate as many jobs for processing
-			for (Iterator<DriveStatusDetails> driveStatusDetailsIterator = driveList.iterator(); driveStatusDetailsIterator.hasNext();) {
+			for (Iterator<DriveStatusDetails> driveStatusDetailsIterator = availableDrivesList.iterator(); driveStatusDetailsIterator.hasNext();) {
 				DriveStatusDetails driveStatusDetails = (DriveStatusDetails) driveStatusDetailsIterator.next();
 				logger.debug("Now selecting job for drive - " + driveStatusDetails.getDriveSNo());
-				
+
 				// STEP 2a
-				StorageJob storageJob = tapeJobSelector.getJob(tapeStorageJobsList, driveStatusDetails);
+				StorageJob storageJob = tapeJobSelector.getJob(tapeStorageJobsList, driveStatusDetails, availableDrivesList);
 				
 				// STEP 2b
 				if(storageJob == null) {
