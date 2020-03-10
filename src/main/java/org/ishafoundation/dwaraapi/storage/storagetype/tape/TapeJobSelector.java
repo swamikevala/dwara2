@@ -378,17 +378,31 @@ public class TapeJobSelector {
 			StorageJob tapeJob = (StorageJob) iterator.next();
 			int storageOperationId = tapeJob.getStorageOperation().getStorageOperationId();
 			if(storageOperationId_storageOperationIdGroupedJobs.containsKey(storageOperationId)) {
-				List<StorageJob> groupedOnArchiveFunctionJobsList = storageOperationId_storageOperationIdGroupedJobs.get(storageOperationId);
-				groupedOnArchiveFunctionJobsList.add(tapeJob);
-				storageOperationId_storageOperationIdGroupedJobs.put(storageOperationId, groupedOnArchiveFunctionJobsList);
+				List<StorageJob> groupedOnStorageOperationJobsList = storageOperationId_storageOperationIdGroupedJobs.get(storageOperationId);
+				groupedOnStorageOperationJobsList.add(tapeJob);
+				storageOperationId_storageOperationIdGroupedJobs.put(storageOperationId, groupedOnStorageOperationJobsList);
 			}
 			else {
-				List<StorageJob> groupedOnArchiveFunctionJobsList = new ArrayList<StorageJob>();
-				groupedOnArchiveFunctionJobsList.add(tapeJob);
-				storageOperationId_storageOperationIdGroupedJobs.put(storageOperationId, groupedOnArchiveFunctionJobsList);
+				List<StorageJob> groupedOnStorageOperationJobsList = new ArrayList<StorageJob>();
+				groupedOnStorageOperationJobsList.add(tapeJob);
+				storageOperationId_storageOperationIdGroupedJobs.put(storageOperationId, groupedOnStorageOperationJobsList);
 			}			
 		}
-
+		logger.trace("Completed first step");
+		if(logger.isTraceEnabled()) {
+			logger.trace("The jobs are grouped like below");
+			Set<Integer> storageOperationIdGroupedJobsKeySet = storageOperationId_storageOperationIdGroupedJobs.keySet();
+			for (Iterator<Integer> iterator = storageOperationIdGroupedJobsKeySet.iterator(); iterator.hasNext();) {
+				Integer storageOperationId = (Integer) iterator.next();
+				logger.trace("Grouped job list for storage operation - " + storageOperationId);
+				List<StorageJob> storageOperationIdGroupedJobsList = storageOperationId_storageOperationIdGroupedJobs.get(storageOperationId);
+				for (StorageJob storageJob : storageOperationIdGroupedJobsList) {
+					logger.trace(""+storageJob.getJob().getJobId());
+				}
+				logger.trace("--------------------------------------");
+			}
+		}
+		
 		logger.trace("Second step - Ordering the read and write jobs within tapes");
 		Set<Integer> storageOperationIdGroupedJobsKeySet = storageOperationId_storageOperationIdGroupedJobs.keySet();
 		for (Iterator<Integer> iterator = storageOperationIdGroupedJobsKeySet.iterator(); iterator.hasNext();) {
@@ -426,6 +440,7 @@ public class TapeJobSelector {
 					List<StorageJob> seqBlockGroupedJobsList = seqBlock_seqBlockGroupedJobs.get(seqBlock);
 					orderedJobsList.addAll(seqBlockGroupedJobsList);
 				}
+				logger.trace("Completed ordering the read jobs using blocknumber");
 			}
 			else if(storageOperationId == StorageOperation.WRITE.getStorageOperationId()) { // WRITE/INGEST - ordered based on seqId of the library...
 				// V5A005 - readjobs = [Job2] and writejobs = [Job6, Job7], retains the same order
@@ -447,6 +462,13 @@ public class TapeJobSelector {
 					StorageJob tapeJob = libraryName_TapeJob.get(libraryName);
 					orderedJobsList.add(tapeJob);
 				}				
+				logger.trace("Completed ordering the write jobs based on library seqId");
+			}
+		}
+		if(logger.isTraceEnabled()) {
+			logger.trace("Completed second step. Ordered job list ");
+			for (StorageJob storageJob : orderedJobsList) {
+				logger.trace(""+storageJob.getJob().getJobId());
 			}
 		}
 		return orderedJobsList;

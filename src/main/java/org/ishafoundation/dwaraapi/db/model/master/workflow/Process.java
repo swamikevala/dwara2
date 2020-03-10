@@ -17,9 +17,6 @@ public class Process {
 	@Column(name="name")
 	private String name;
 
-	@Column(name="file_level")
-	private boolean fileLevel;
-
 		
 	public int getProcessId() {
 		return processId;
@@ -36,13 +33,4 @@ public class Process {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
-	public boolean isFileLevel() {
-		return fileLevel;
-	}
-
-	public void setFileLevel(boolean fileLevel) {
-		this.fileLevel = fileLevel;
-	}
-
 }

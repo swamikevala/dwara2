@@ -2,7 +2,7 @@ package org.ishafoundation.dwaraapi.api.resp.ingest;
 
 import java.util.List;
 
-public class Request {
+public class RequestWithWrappedSubrequest {
 	
 	private int requestId;
 	
@@ -14,7 +14,7 @@ public class Request {
 
 	private long requestedAt;
 	
-	private List<Subrequest> subrequestList;
+	private List<ResponseHeaderWrappedSubrequest> subrequestResp;
 	
 
 	public int getRequestId() {
@@ -57,13 +57,11 @@ public class Request {
 		this.requestedAt = requestedAt;
 	}
 
-	public List<Subrequest> getSubrequestList() {
-		return subrequestList;
+	public List<ResponseHeaderWrappedSubrequest> getSubrequestResp() {
+		return subrequestResp;
 	}
 
-	public void setSubrequestList(List<Subrequest> subrequestList) {
-		this.subrequestList = subrequestList;
+	public void setSubrequestResp(List<ResponseHeaderWrappedSubrequest> subrequestResp) {
+		this.subrequestResp = subrequestResp;
 	}
-
-
 }

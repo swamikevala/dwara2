@@ -67,4 +67,11 @@ public class Sequence {
 		this.keepExtractedCode = keepExtractedCode;
 	}
 
+	public void incrementLastNumber() {
+		this.lastNumber += 1;
+	}
+	
+	public void decrementLastNumber() {
+		this.lastNumber -= 1;
+	}
 }

@@ -2,12 +2,10 @@ package org.ishafoundation.dwaraapi.controller;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -15,34 +13,62 @@ import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.api.resp.ingest.IngestFile;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.cacheutil.Extns_FiletypeCacheUtil;
 import org.ishafoundation.dwaraapi.db.dao.master.common.RequesttypeDao;
+import org.ishafoundation.dwaraapi.db.dao.master.common.UserDao;
+import org.ishafoundation.dwaraapi.db.dao.master.ingest.LibraryclassDao;
+import org.ishafoundation.dwaraapi.db.dao.master.ingest.LibraryclassUserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.common.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.common.User;
+import org.ishafoundation.dwaraapi.db.model.master.ingest.Libraryclass;
+import org.ishafoundation.dwaraapi.db.model.master.ingest.LibraryclassUser;
 import org.ishafoundation.dwaraapi.db.model.master.process.Filetype;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
+import org.ishafoundation.dwaraapi.ingest.scan.SourceDirScanner;
 import org.ishafoundation.dwaraapi.job.JobManager;
+import org.ishafoundation.dwaraapi.utils.ResponseRequestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+
 @RestController
 public class IngestController {
 
 	private static final Logger logger = LoggerFactory.getLogger(IngestController.class);
+
+	@Autowired
+	private LibraryclassDao libraryclassDao;
+	
+	@Autowired
+	private UserDao userDao;
+	
+	@Autowired
+	private LibraryclassUserDao libraryclassUserDao;
+	
+	@Autowired
+	private SourceDirScanner sourceDirScanner;
 	
 	@Autowired
 	private RequestDao requestDao;
@@ -64,6 +90,9 @@ public class IngestController {
 
 	@Autowired
 	private JobManager jobManager;
+
+	@Autowired
+	private ResponseRequestUtils requestUtils;
 	
 	@Autowired
 	private Configuration configuration;
@@ -71,8 +100,46 @@ public class IngestController {
 	@Autowired
 	private Extns_FiletypeCacheUtil extns_FiletypeCacheUtil;
 	
-	@PostMapping("ingest")
-    public org.ishafoundation.dwaraapi.api.resp.ingest.Response ingest(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest){	
+	@ApiOperation(value = "Scans the selected directory path chosen in the dropdown and lists all candidate folders for users to ingest it.", response = List.class)
+	@ApiResponses(value = { 
+		    @ApiResponse(code = 200, message = "Ok"),
+		    @ApiResponse(code = 204, message = "No folders found to be ingested"),
+		    @ApiResponse(code = 401, message = "Unauthorized"),
+		    @ApiResponse(code = 403, message = "Forbidden"),
+		    @ApiResponse(code = 404, message = "Not Found")
+	})
+	@GetMapping("/ingest/library")
+	public ResponseEntity<List<IngestFile>> getAllIngestableFiles(@RequestParam int libraryclassId) {
+		List<IngestFile> ingestFileList = new ArrayList<IngestFile>();
+		
+		Libraryclass toBeIngestedLibraryclass = libraryclassDao.findById(libraryclassId).get();
+		String pathPrefix = toBeIngestedLibraryclass.getPathPrefix();
+		
+		// gets all users upfront and holds it in memory thus avoiding as many db calls inside the loop
+		HashMap<Integer, User> userId_User_Map = new HashMap<Integer, User>();
+		Iterable<User> userList = userDao.findAll();
+		for (User nthUser : userList) {
+			userId_User_Map.put(nthUser.getUserId(), nthUser);
+		}
+		
+		List<String> scanFolderBasePathList = new ArrayList<String>();
+		List<LibraryclassUser> libraryclassUserList = libraryclassUserDao.findAllByLibraryclassId(libraryclassId);
+		for (LibraryclassUser nthLibraryclassUser : libraryclassUserList) {
+			User nthUser = userId_User_Map.get(nthLibraryclassUser.getUserId());
+			scanFolderBasePathList.add(pathPrefix + File.separator + nthUser.getName());
+		}
+		
+		ingestFileList = sourceDirScanner.scanSourceDir(toBeIngestedLibraryclass, scanFolderBasePathList);
+		
+		if (ingestFileList.size() > 0) {
+			return ResponseEntity.ok(ingestFileList);
+		} else {
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+		}
+	}
+	
+	@PostMapping("/ingest")
+    public org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedRequest ingest(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest){	
     	boolean isAllValid = true;
     	
     	// TODO After validation and other related code ported
@@ -92,32 +159,23 @@ public class IngestController {
     	int requestId = request.getRequestId();
     	logger.debug("DB Request Creation - Success " + requestId);
 
-    	// Updating the Response subrequest
-    	List<org.ishafoundation.dwaraapi.api.resp.ingest.SubrequestResp> subrequestRespListForResponse = new ArrayList<org.ishafoundation.dwaraapi.api.resp.ingest.SubrequestResp>();
+    	// Updating the ResponseHeaderWrappedRequest subrequest
+    	List<org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest> responseHeaderWrappedSubrequest = new ArrayList<org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest>();
 
     	// Iterating the request - LibraryParams
     	List<org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams> subrequestList = userRequest.getSubrequest();
     	for (Iterator<org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams> iterator = subrequestList.iterator(); iterator.hasNext();) {
     		org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams nthSubrequest = iterator.next();
 			
-			org.ishafoundation.dwaraapi.api.resp.ingest.SubrequestResp subrequestResp = ingest(requesttypeId, requestId, libraryclassId, nthSubrequest);
-			subrequestRespListForResponse.add(subrequestResp);
+			org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest subrequestResp = ingest_internal(request, nthSubrequest);
+			responseHeaderWrappedSubrequest.add(subrequestResp);
 		}
-    	org.ishafoundation.dwaraapi.api.resp.ingest.Request requestForResponse = new org.ishafoundation.dwaraapi.api.resp.ingest.Request();
-    	requestForResponse.setLibraryclassId(libraryclassId);
-    	requestForResponse.setRequestedAt(requestedAt);
-    	requestForResponse.setRequestedBy(requestedBy);
-    	requestForResponse.setRequestId(requestId);
-    	requestForResponse.setRequesttypeId(requesttypeId);
-    	requestForResponse.setSubrequestResp(subrequestRespListForResponse);
     	
-    	org.ishafoundation.dwaraapi.api.resp.ingest.Response response = new org.ishafoundation.dwaraapi.api.resp.ingest.Response();
-    	response.setResponseCode(200);
-    	response.setResponseMessage("Som message");
-    	response.setResponseType("some responseType");
-    	response.setRequest(requestForResponse);
+    	org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedRequest response = requestUtils.frameWrappedRequestObjectForResponse(request, responseHeaderWrappedSubrequest);
     	return response;
     }
+	
+
 	
 	/*
 	 * This method is responsible for the following
@@ -134,11 +192,7 @@ public class IngestController {
 	 * 10) Then Responds with the created medialibrary DB entries ID.
 	 * 
 	 */
-    private org.ishafoundation.dwaraapi.api.resp.ingest.SubrequestResp ingest(
-    		@NotNull @RequestParam int requesttypeId,
-    		@NotNull @RequestParam int requestId,
-    		@NotNull @RequestParam int libraryclassId,
-    		@NotNull @RequestParam org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams systemGenRequest){
+    private org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest ingest_internal(Request request, org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams systemGenRequest){
     	
     	String originalFileName = systemGenRequest.getOldFilename();
     	String modifiedFileName = systemGenRequest.getNewFilename();
@@ -174,8 +228,8 @@ public class IngestController {
 	    }
         double size = FileUtils.sizeOf(mediaLibraryFileInStagingDir);
     	
-    	long requestedAt = Calendar.getInstance().getTimeInMillis();
-    	String requestedBy = getUserFromContext();
+    	long requestedAt = request.getRequestedAt();
+    	String requestedBy = request.getRequestedBy();
     	int statusId = Status.QUEUED.getStatusId();
     	
     	Subrequest subrequest = new Subrequest();
@@ -184,7 +238,7 @@ public class IngestController {
     	subrequest.setOptimizeTapeAccess(true); // TODO Hardcoded for now... is it not possible to have this set to false for ingest???
     	subrequest.setPrevSequenceCode(systemGenRequest.getPrevSequenceCode());
     	subrequest.setPriority(systemGenRequest.getPriority());
-    	subrequest.setRequestId(requestId);
+    	subrequest.setRequestId(request.getRequestId());
     	subrequest.setRerun(systemGenRequest.isRerun());
     	// TODO - Hardcoded
     	int rerunNo = 0;
@@ -200,7 +254,7 @@ public class IngestController {
     	Library library = new Library();
     	library.setFileCount(555); // TODO : hardcoded
     	library.setFileStructureMd5("someFileStructureMd5Value");
-    	library.setLibraryclassId(libraryclassId);
+    	library.setLibraryclassId(request.getLibraryclassId());
     	library.setName(modifiedFileName);
     	logger.debug("DB Library Creation");  
     	library = libraryDao.save(library);
@@ -237,39 +291,14 @@ public class IngestController {
     	
     	setAttributes();
 	    
-    	createJobTableEntries(requesttypeId, libraryclassId, subrequest, library);
+    	createJobTableEntries(request.getRequesttypeId(), request.getLibraryclassId(), subrequest, library);
     	
-    	// TODO _ Check on the 
-    	// http://eloquentdeveloper.com/2016/09/28/automatically-mapping-java-objects/
-    	// https://www.baeldung.com/mapstruct
-    	// https://www.baeldung.com/java-performance-mapping-frameworks
-    	org.ishafoundation.dwaraapi.api.resp.ingest.Subrequest systemGeneratedSubRequestForResponse = new org.ishafoundation.dwaraapi.api.resp.ingest.Subrequest();
-    	systemGeneratedSubRequestForResponse.setLibrary(library);
-    	systemGeneratedSubRequestForResponse.setSubrequestId(subrequest.getSubrequestId());
-    	systemGeneratedSubRequestForResponse.setNewFilename(systemGenRequest.getNewFilename());
-    	systemGeneratedSubRequestForResponse.setOldFilename(systemGenRequest.getOldFilename());
-    	systemGeneratedSubRequestForResponse.setOptimizeTapeAccess(systemGenRequest.isOptimizeTapeAccess());
-    	systemGeneratedSubRequestForResponse.setPrevSequenceCode(systemGenRequest.getPrevSequenceCode());
-    	systemGeneratedSubRequestForResponse.setPriority(systemGenRequest.getPriority());
-    	systemGeneratedSubRequestForResponse.setRequestId(requestId);
-    	systemGeneratedSubRequestForResponse.setRerun(systemGenRequest.isRerun());
-    	systemGeneratedSubRequestForResponse.setRerunNo(rerunNo);
-    	systemGeneratedSubRequestForResponse.setSkipTasks(systemGenRequest.getSkipTasks());
-    	systemGeneratedSubRequestForResponse.setSourcePath(systemGenRequest.getSourcePath());
-    	systemGeneratedSubRequestForResponse.setStatusId(Status.QUEUED.getStatusId());
-    	
-    	org.ishafoundation.dwaraapi.api.resp.ingest.SubrequestResp systemGeneratedSubRequestRespForResponse = new org.ishafoundation.dwaraapi.api.resp.ingest.SubrequestResp();
-    	
-    	systemGeneratedSubRequestRespForResponse.setResponseCode(200);
-    	systemGeneratedSubRequestRespForResponse.setResponseMessage("Resp message");
-    	systemGeneratedSubRequestRespForResponse.setResponseType("Resp type");
-    	systemGeneratedSubRequestRespForResponse.setSubrequest(systemGeneratedSubRequestForResponse);
-    	
-    	logger.trace(systemGeneratedSubRequestRespForResponse.toString());
     	// TODO Handle failures - systemGeneratedSubRequestRespForResponse.setResponseCode(500);
-    	return systemGeneratedSubRequestRespForResponse;
+    	return requestUtils.frameWrappedSubrequestObjectForResponse(subrequest, library);
     }
-    
+	
+
+	
     private void createJobTableEntries(int requesttypeId, int libraryclassId, Subrequest subrequest, Library library) {
     	List<Job> jobList = jobManager.createJobs(requesttypeId, libraryclassId, subrequest, library);
     	logger.debug("DB Job rows Creation");   

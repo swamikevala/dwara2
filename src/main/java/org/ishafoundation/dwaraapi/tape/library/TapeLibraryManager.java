@@ -50,6 +50,11 @@ public class TapeLibraryManager{
 		}
 	}
 	
+	public MtxStatus getMtxStatus(){
+		return getMtxStatus(tapeLibraryName);
+	}
+	
+	
 	public MtxStatus getMtxStatus(String tapeLibraryName){
 		String mtxStatusResponse = callMtxStatus(tapeLibraryName);
 		MtxStatus mtxStatus = MtxStatusResponseParser.parseMtxStatusResponse(mtxStatusResponse);

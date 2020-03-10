@@ -1,28 +1,49 @@
 package org.ishafoundation.dwaraapi.controller;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.ishafoundation.dwaraapi.api.req.restore.FileParams;
-import org.ishafoundation.dwaraapi.api.resp.restore.SubrequestResp;
+import org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedSubrequest;
 import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.master.common.RequesttypeDao;
+import org.ishafoundation.dwaraapi.db.dao.master.restore.TargetvolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.master.storage.TapeDao;
+import org.ishafoundation.dwaraapi.db.dao.master.workflow.CopyDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileTapeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.common.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.common.Targetvolume;
+import org.ishafoundation.dwaraapi.db.model.master.storage.Tape;
+import org.ishafoundation.dwaraapi.db.model.master.workflow.Copy;
+import org.ishafoundation.dwaraapi.db.model.transactional.FileTape;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
 import org.ishafoundation.dwaraapi.job.JobManager;
+import org.ishafoundation.dwaraapi.tape.library.MtxStatus;
+import org.ishafoundation.dwaraapi.tape.library.TapeLibraryManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.ApiOperation;
@@ -34,6 +55,18 @@ public class RestoreContoller {
 
 	@Autowired
 	private FileDao fileDao;
+
+	@Autowired
+	private LibraryDao libraryDao;
+	
+	@Autowired
+	private CopyDao copyDao;
+	
+	@Autowired
+	private TapeDao tapeDao;
+	
+	@Autowired
+	private FileTapeDao fileTapeDao;
 	
 	@Autowired
 	private RequestDao requestDao;	
@@ -46,87 +79,114 @@ public class RestoreContoller {
 	
 	@Autowired
 	private JobDao jobDao;	
-
+	
+	@Autowired
+	private TargetvolumeDao targetvolumeDao;	
+	
 	@Autowired
 	private JobManager jobManager;
 	
 	@Autowired
 	private ApplicationContext applicationContext;
+	
+	@Autowired
+	private TapeLibraryManager tapeLibraryManager;	
+	
+	@ApiOperation(value = "Lists all the target volumes", response = List.class)
+	@GetMapping("/targetvolume")
+	public ResponseEntity<List<Targetvolume>> getAllTargetVolumes() {
+		List<Targetvolume> targetvolumeList = (List<Targetvolume>) targetvolumeDao.findAll();
+		if (targetvolumeList.size() > 0) {
+			return ResponseEntity.ok(targetvolumeList);
+		} else {
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+		}
+	}
 
+	@ApiOperation(value = "Gets the details of all the files requested in fileIdsListAsCSV")
+	@GetMapping("/file")
+	public List<org.ishafoundation.dwaraapi.api.resp.restore.File> getFiles(@RequestParam String ids, @RequestParam int copyNumber) {
+		List<org.ishafoundation.dwaraapi.api.resp.restore.File> fileListForResponse = new ArrayList<org.ishafoundation.dwaraapi.api.resp.restore.File>();
+		List<String> fileIdsList = Arrays.asList(ids.split(","));
+		for (Iterator<String> iterator = fileIdsList.iterator(); iterator.hasNext();) {
+			String fileIdAsString = (String) iterator.next();
+			int fileId = Integer.parseInt(fileIdAsString);
+		
+			fileListForResponse.add(getFile(fileId, copyNumber));
+		}
+		return fileListForResponse;
+	}
 	
-//	@ApiOperation(value = "Lists all the mount points", response = List.class)
-//	@GetMapping("/getAllMountPoints")
-//	public ResponseEntity<List<String>> getAllMountPoints() {
-//		List<String> mountPointsList = nodeumConfiguration.getRestoreMounts();
-//		if (mountPointsList.size() > 0) {
-//			return ResponseEntity.ok(mountPointsList);
-//		} else {
-//			return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
-//		}
-//	}
+	
+	@ApiOperation(value = "Gets the details of the particular file")
+	@GetMapping("/file/{fileId}")
+	public org.ishafoundation.dwaraapi.api.resp.restore.File getFile(@PathVariable int fileId, @RequestParam int copyNumber) {
 
-//	@ApiOperation(value = "Gets the details of all the files requested in fileIdsListAsCSV")
-//	@GetMapping("/getFileDetails")
-//	public ResponseEntity<List<MediaLibraryFile>> getFileDetails(@RequestParam String fileIdsListAsCSV) {
-//		List<MediaLibraryFile> mediaLibraryFileList = new ArrayList<MediaLibraryFile>();
-//		List<String> fileIdsList = Arrays.asList(fileIdsListAsCSV.split(","));
-//		for (Iterator<String> iterator = fileIdsList.iterator(); iterator.hasNext();) {
-//			String fileId = (String) iterator.next();
-//			MediaLibraryFile mediaLibraryFile = new MediaLibraryFile();
-//			mediaLibraryFile.setFileId(Integer.parseInt(fileId));
-//
-//			try {
-//				org.ishafoundation.dwaraapi.db.model.File file = fileDao.findById(Integer.parseInt(fileId)).get();
-//				MediaLibrary mediaLibrary = mediaLibDao.findById(file.getMediaLibraryId()).get();
-//				
-//				mediaLibraryFile.setMediaLibraryFolderName(mediaLibrary.getFolderName());
-//				mediaLibraryFile.setMediaLibrarysize(mediaLibrary.getTotalSizeBytes());
-//
-//			} catch (Throwable e) {
-//				mediaLibraryFile.setMediaLibraryFolderName("Invalid file Id");
-//				logger.error("Unable to load file for file Id " + fileId + " : " + e.getMessage());
-//			}
-//			mediaLibraryFileList.add(mediaLibraryFile);					
-//		}
-//
-//		return ResponseEntity.ok(mediaLibraryFileList);
-//	}
+		org.ishafoundation.dwaraapi.db.model.transactional.File archivedFile = fileDao.findById(fileId).get();
+		
+		boolean isWarningOnMissingTapeNeeded = true;
+		String warning = null;
+		if(isWarningOnMissingTapeNeeded) {
 
+			MtxStatus mtxStatus = tapeLibraryManager.getMtxStatus();
+			List<String> loadedTapeList = mtxStatus.getAllLoadedTapesInTheLibrary();
+
+			// We have to get the tapeId/Name for the file
+			int libraryId = archivedFile.getLibraryId();
+			Library library = libraryDao.findById(libraryId).get();
+			int libraryclassId = library.getLibraryclassId();
+			
+			Copy copy = copyDao.findByLibraryclassIdAndCopyNumber(libraryclassId, copyNumber);
+			int tapesetId = copy.getTapesetId();
+			
+			
+			Map<Integer, Tape> tapeId_Tape_Map = new HashMap<Integer, Tape>();
+			List<Tape> tapeList = tapeDao.findAllByTapesetId(tapesetId);
+			for (Tape nthTape : tapeList) {
+				tapeId_Tape_Map.put(nthTape.getTapeId(), nthTape);
+			}
+			Set<Integer> tapeIdSet = tapeId_Tape_Map.keySet();
+			
+			
+			
+			List<FileTape> fileTapeList = fileTapeDao.findAllByFileId(fileId); // Would return all copies on tape for that File 
+			
+			Tape neededTape = null;
+			for (Iterator<FileTape> iterator = fileTapeList.iterator(); iterator.hasNext();) {
+				FileTape nthFileTape = (FileTape) iterator.next();
+				int tapeId = nthFileTape.getTapeId();
+				if(tapeIdSet.contains(tapeId)) {// the exact tape in the tapeset
+					neededTape = tapeId_Tape_Map.get(tapeId);
+					continue;
+				}
+			}
+
+			boolean isTapeAvailableInLibrary = false;
+			String barcode = null;
+			if(neededTape != null) {
+				barcode = neededTape.getBarcode();
+				
+				if(loadedTapeList.contains(barcode))
+					isTapeAvailableInLibrary = true;
+			}
+
+
+			if(!isTapeAvailableInLibrary)
+				warning = "Tape " + barcode + " is not available in tape library. Please let Archives Admin know to load it";
+		}
+		
+		org.ishafoundation.dwaraapi.api.resp.restore.File nthFile = new org.ishafoundation.dwaraapi.api.resp.restore.File();
+		nthFile.setId(archivedFile.getFileId());
+		nthFile.setName(archivedFile.getPathname());
+		nthFile.setSize(archivedFile.getSize());
+		nthFile.setWarning(warning);
+		return nthFile;
+	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	/**
-	 * 
-	 * @param mountPoint
-	 * @param folderNameToGroupRestoredFiles
-	 * @param fileIdsListAsCSV
-	 * @param copyNumber - We can choose one of the three copies 1/2/3. By default we restore it from 1. 
-	 * If 1 tape is corrupted, we dont have to wait for 1 to be written first to have it used for restoration. 
-	 * @return
-	 */
-	@ApiOperation(value = "Restores the list of files requested in folderIdsListAsCSV into the mountPoint grouped under the dir folderNameToGroupRestoredFiles")
+	@ApiOperation(value = "Restores the list of files requested from copy 1 into the target volume location grouped under the output dir")
 	@PostMapping("/restore")
-	public org.ishafoundation.dwaraapi.api.resp.restore.Response restore(@RequestBody org.ishafoundation.dwaraapi.api.req.restore.UserRequest userRequest){
-    	org.ishafoundation.dwaraapi.api.resp.restore.Response response = new org.ishafoundation.dwaraapi.api.resp.restore.Response();
+	public org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedRequest restore(@RequestBody org.ishafoundation.dwaraapi.api.req.restore.UserRequest userRequest){
+    	org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedRequest response = new org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedRequest();
 		try {
 	    	Requesttype requesttype = requesttypeDao.findByName("RESTORE");
 	    	int requesttypeId = requesttype.getRequesttypeId();
@@ -146,7 +206,7 @@ public class RestoreContoller {
 	    	int requestId = request.getRequestId();
 	    	logger.debug("DB Request Creation - Success " + requestId);
 
-	    	List<SubrequestResp> subrequestRespList = new ArrayList<SubrequestResp>();
+	    	List<ResponseHeaderWrappedSubrequest> responseHeaderWrappedSubrequestList = new ArrayList<ResponseHeaderWrappedSubrequest>();
 	    	
 	    	List<FileParams> fileParamsList = userRequest.getFileParams();
 	    	for (Iterator<FileParams> iterator2 = fileParamsList.iterator(); iterator2.hasNext();) {
@@ -178,25 +238,25 @@ public class RestoreContoller {
 		    	systemGeneratedSubRequestForResponse.setRequestId(requestId);
 		    	systemGeneratedSubRequestForResponse.setStatusId(Status.QUEUED.getStatusId());
 		    	
-		    	org.ishafoundation.dwaraapi.api.resp.restore.SubrequestResp systemGeneratedSubRequestRespForResponse = new org.ishafoundation.dwaraapi.api.resp.restore.SubrequestResp();
+		    	org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedSubrequest responseHeaderWrappedSubrequest = new org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedSubrequest();
 		    	
-		    	systemGeneratedSubRequestRespForResponse.setResponseCode(200);
-		    	systemGeneratedSubRequestRespForResponse.setResponseMessage("Resp message");
-		    	systemGeneratedSubRequestRespForResponse.setResponseType("Resp type");
-		    	systemGeneratedSubRequestRespForResponse.setSubrequest(systemGeneratedSubRequestForResponse);
+		    	responseHeaderWrappedSubrequest.setResponseCode(200);
+		    	responseHeaderWrappedSubrequest.setResponseMessage("Resp message");
+		    	responseHeaderWrappedSubrequest.setResponseType("Resp type");
+		    	responseHeaderWrappedSubrequest.setSubrequest(systemGeneratedSubRequestForResponse);
 				
 				
-		    	subrequestRespList.add(systemGeneratedSubRequestRespForResponse);
+		    	responseHeaderWrappedSubrequestList.add(responseHeaderWrappedSubrequest);
 			}
 	    	
-	    	org.ishafoundation.dwaraapi.api.resp.restore.Request requestForResponse = new org.ishafoundation.dwaraapi.api.resp.restore.Request();
+	    	org.ishafoundation.dwaraapi.api.resp.restore.RequestWithWrappedSubrequest requestForResponse = new org.ishafoundation.dwaraapi.api.resp.restore.RequestWithWrappedSubrequest();
 	    	requestForResponse.setCopyNumber(userRequest.getCopyNumber());
 	    	requestForResponse.setOutputFolder(userRequest.getOutputFolder());
 	    	requestForResponse.setRequestedAt(requestedAt);
 	    	requestForResponse.setRequestedBy(requestedBy);
 	    	requestForResponse.setRequestId(requestId);
 	    	requestForResponse.setRequesttypeId(requesttypeId);
-	    	requestForResponse.setSubrequestResp(subrequestRespList);
+	    	requestForResponse.setResponseHeaderWrappedSubrequestList(responseHeaderWrappedSubrequestList);
 	    	requestForResponse.setTargetvolumeId(userRequest.getTargetvolumeId());
 	    	
 	    	response.setRequest(requestForResponse);

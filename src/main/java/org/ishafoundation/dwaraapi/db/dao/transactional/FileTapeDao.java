@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.db.dao.transactional;
 
+import java.util.List;
+
 import org.ishafoundation.dwaraapi.db.model.transactional.FileTape;
 import org.springframework.data.repository.CrudRepository;
 
@@ -11,4 +13,6 @@ public interface FileTapeDao extends CrudRepository<FileTape,Integer> {
 	//FileTape findByFileId(int fileIdToBeRestored);
 	
 	FileTape findByFileIdAndTapeId(int fileIdToBeRestored, int tapeId);
+	
+	List<FileTape> findAllByFileId(int fileIdToBeRestored);
 }

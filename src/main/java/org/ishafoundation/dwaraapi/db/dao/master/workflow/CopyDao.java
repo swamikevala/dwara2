@@ -6,4 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 public interface CopyDao extends CrudRepository<Copy,Integer> {
 	
 	Copy findByTaskId(int taskId);
+	
+	Copy findByLibraryclassIdAndCopyNumber(int libraryclassId, int copyNumber);
+	
 }

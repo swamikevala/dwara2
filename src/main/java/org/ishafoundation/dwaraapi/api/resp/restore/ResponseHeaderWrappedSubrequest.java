@@ -1,8 +1,8 @@
-package org.ishafoundation.dwaraapi.api.resp.ingest;
+package org.ishafoundation.dwaraapi.api.resp.restore;
 
 import org.ishafoundation.dwaraapi.api.resp.CommonResponse;
 
-public class SubrequestResp extends CommonResponse{
+public class ResponseHeaderWrappedSubrequest extends CommonResponse{
 
 	private Subrequest subrequest;
 

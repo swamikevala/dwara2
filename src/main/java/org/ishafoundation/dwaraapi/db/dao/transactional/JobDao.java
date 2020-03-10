@@ -12,5 +12,7 @@ public interface JobDao extends CrudRepository<Job,Integer> {
 
 	List<Job> findAllByStatusIdOrderByJobId(int statusId);
 	
+	List<Job> findAllBySubrequestIdOrderByJobId(int subrequestId);
+	
 	Job findByTaskIdAndSubrequestId(int taskId, int subrequestId);
 }

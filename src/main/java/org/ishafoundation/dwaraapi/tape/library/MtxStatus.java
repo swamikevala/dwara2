@@ -99,6 +99,26 @@ public class MtxStatus {
 	public void setSeList(List<StorageElement> seList) {
 		this.seList = seList;
 	}
+	public List<String> getAllLoadedTapesInTheLibrary(){
+		List<String> tapeList = new ArrayList<String>();
+		
+		List<DataTransferElement> dteList = getDteList();
+		for (DataTransferElement nthDataTransferElement : dteList) {
+			String vt = nthDataTransferElement.getVolumeTag();
+			if(vt != null)
+				tapeList.add(vt);
+		}
+		
+		List<StorageElement> seList = getSeList();
+		for (StorageElement nthStorageElement : seList) {
+			String vt = nthStorageElement.getVolumeTag();
+			if(vt != null)
+				tapeList.add(vt);
+		}
+		
+		return tapeList;
+	}
+	
 	@Override
 	public String toString() {
 		return "storageChangerName : " + storageChangerName + " noOfDrives : " + noOfDrives + " noOfSlots : " + noOfSlots + " noOfIESlots : " + noOfIESlots + " dteList : " + dteList.toString() + " seList : " + seList.toString();
