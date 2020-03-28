@@ -1,11 +1,28 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 		
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
+
+import org.ishafoundation.dwaraapi.db.model.master.Filetype;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ApplicationFile;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileTape;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
 @Entity
@@ -14,11 +31,11 @@ public class File {
 
 	@Id
 	@GeneratedValue(strategy=GenerationType.SEQUENCE)
-	@Column(name="file_id")
-	private int fileId;
+	@Column(name="id")
+	private int id;
 	
-	@Column(name="library_id")
-	private int libraryId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	private Library library;
 	
 	@Column(name="pathname")
 	private String pathname;
@@ -35,27 +52,42 @@ public class File {
 	@Column(name="external_id")
 	private String externalId;
 
-	@Column(name="file_id_ref")
-	private int fileIdRef;
+	@OneToOne
+	@JoinColumn(name="file_ref_id")
+	private File fileRef;
 
-	@Column(name="filetype_id")
-	private int filetypeId;
+	@OneToOne
+	private Filetype filetype;
+    
+	@OneToMany(mappedBy = "file",
+            cascade = CascadeType.MERGE,
+            orphanRemoval = true)
+    private List<ApplicationFile> applicationFile = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "file",
+            cascade = CascadeType.MERGE,
+            orphanRemoval = true)
+    private List<FileTape> fileTape = new ArrayList<>();
 
-		
-	public int getFileId() {
-		return fileId;
+    @OneToMany(mappedBy = "file",
+            cascade = CascadeType.MERGE,
+            orphanRemoval = true)
+    private List<TFileJob> tFileJob = new ArrayList<>();
+    
+	public int getId() {
+		return id;
 	}
 
-	public void setFileId(int fileId) {
-		this.fileId = fileId;
-	}
-	
-	public int getLibraryId() {
-		return libraryId;
+	public void setId(int id) {
+		this.id = id;
 	}
 
-	public void setLibraryId(int libraryId) {
-		this.libraryId = libraryId;
+	public Library getLibrary() {
+		return library;
+	}
+
+	public void setLibrary(Library library) {
+		this.library = library;
 	}
 
 	public String getPathname() {
@@ -65,7 +97,7 @@ public class File {
 	public void setPathname(String pathname) {
 		this.pathname = pathname;
 	}
-	
+
 	public String getCrc() {
 		return crc;
 	}
@@ -73,7 +105,7 @@ public class File {
 	public void setCrc(String crc) {
 		this.crc = crc;
 	}
-	
+
 	public double getSize() {
 		return size;
 	}
@@ -81,7 +113,7 @@ public class File {
 	public void setSize(double size) {
 		this.size = size;
 	}
-	
+
 	public boolean isDeleted() {
 		return deleted;
 	}
@@ -89,7 +121,7 @@ public class File {
 	public void setDeleted(boolean deleted) {
 		this.deleted = deleted;
 	}
-	
+
 	public String getExternalId() {
 		return externalId;
 	}
@@ -97,21 +129,63 @@ public class File {
 	public void setExternalId(String externalId) {
 		this.externalId = externalId;
 	}
+
+	public File getFileRef() {
+		return fileRef;
+	}
+
+	public void setFileRef(File fileRef) {
+		this.fileRef = fileRef;
+	}
+
+	public Filetype getFiletype() {
+		return filetype;
+	}
+
+	public void setFiletype(Filetype filetype) {
+		this.filetype = filetype;
+	}
 	
-	public int getFileIdRef() {
-		return fileIdRef;
+	@JsonIgnore
+	public List<ApplicationFile> getApplicationFile() {
+		return applicationFile;
 	}
 
-	public void setFileIdRef(int fileIdRef) {
-		this.fileIdRef = fileIdRef;
+	@JsonIgnore
+	public void setApplicationFile(List<ApplicationFile> applicationFile) {
+		this.applicationFile = applicationFile;
+	}
+
+	@JsonIgnore
+	public List<FileTape> getFileTape() {
+		return fileTape;
+	}
+
+	@JsonIgnore
+	public void setFileTape(List<FileTape> fileTape) {
+		this.fileTape = fileTape;
 	}
 	
-	public int getFiletypeId() {
-		return filetypeId;
+	@JsonIgnore
+	public List<TFileJob> gettFileJob() {
+		return tFileJob;
 	}
 
-	public void setFiletypeId(int filetypeId) {
-		this.filetypeId = filetypeId;
+	@JsonIgnore
+	public void settFileJob(List<TFileJob> tFileJob) {
+		this.tFileJob = tFileJob;
 	}
-
+	
+	@Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        File file = (File) o;
+        return Objects.equals(pathname, file.pathname);
+    }
+ 
+    @Override
+    public int hashCode() {
+        return Objects.hash(pathname);
+    }
 }

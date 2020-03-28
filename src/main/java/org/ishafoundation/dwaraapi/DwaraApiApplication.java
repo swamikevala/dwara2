@@ -8,8 +8,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.ishafoundation.dwaraapi.db.cacheutil.ProcessCacheUtil;
-import org.ishafoundation.dwaraapi.db.model.master.workflow.Process;
+import org.ishafoundation.dwaraapi.db.cacheutil.TasktypeCacheUtil;
+import org.ishafoundation.dwaraapi.db.model.master.Tasktype;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -29,24 +29,27 @@ public class DwaraApiApplication {
 	private Environment env;
 	
 	@Autowired
-	private ProcessCacheUtil processCacheUtil;		
+	private TasktypeCacheUtil tasktypeCacheUtil;		
 	
-	public static HashMap<String, Executor> processName_executor_map = new HashMap<String, Executor>();
+	public static HashMap<String, Executor> tasktypeName_executor_map = new HashMap<String, Executor>();
 			
 	public static void main(String[] args) {
 		SpringApplication.run(DwaraApiApplication.class, args);
 	}
 
+	/*
+	 * On bootstraping the app we need to create as many thread pools for as many tasktypes configured...
+	 */
 	@EventListener(ApplicationReadyEvent.class)
-	public void createThreadPoolsForProcess() {
+	public void createThreadPoolsForTasktype() {
 		
-		List<Process> processList = processCacheUtil.getProcessList();
-		for (Iterator<Process> iterator = processList.iterator(); iterator.hasNext();) {
-			Process process = (Process) iterator.next();
+		List<Tasktype> tasktypeList = tasktypeCacheUtil.getTasktypeList();
+		for (Iterator<Tasktype> iterator = tasktypeList.iterator(); iterator.hasNext();) {
+			Tasktype tasktype = (Tasktype) iterator.next();
 			
-			String processName = process.getName().toLowerCase();
+			String tasktypeName = tasktype.getName().toLowerCase();
 			
-			String propertyNamePrefix = "threadpoolexecutor."+processName;	
+			String propertyNamePrefix = "threadpoolexecutor."+tasktypeName;	
 			String corePoolSizePropName = propertyNamePrefix + ".corePoolSize";
 			String maxPoolSizePropName = propertyNamePrefix + ".maxPoolSize";
 			
@@ -54,7 +57,7 @@ public class DwaraApiApplication {
 			int maxPoolSize = Integer.parseInt(env.getProperty(maxPoolSizePropName));
 			
 			Executor executor = new ThreadPoolExecutor(corePoolSize, maxPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
-			processName_executor_map.put(processName, executor);
+			tasktypeName_executor_map.put(tasktypeName, executor);
 		}
 	}
 }

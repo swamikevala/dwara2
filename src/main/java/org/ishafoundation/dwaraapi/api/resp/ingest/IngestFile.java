@@ -6,10 +6,11 @@ public class IngestFile {
 	private String oldFilename;// Holds the folder name that the user named the folder with
 	private String newFilename;// Holds the suggested folder name by the system
 	private int fileCount;
-	private double fileSizeInBytes;
+	private double totalSize;
 	private String prevSequenceCode;
 	private boolean prevSequenceCodeExpected = false;
-	private String warning;
+	private String errorType;
+	private String errorMessage;
 	
 	
 	public String getSourcePath() {
@@ -36,11 +37,11 @@ public class IngestFile {
 	public void setFileCount(int fileCount) {
 		this.fileCount = fileCount;
 	}
-	public double getFileSizeInBytes() {
-		return fileSizeInBytes;
+	public double getTotalSize() {
+		return totalSize;
 	}
-	public void setFileSizeInBytes(double fileSizeInBytes) {
-		this.fileSizeInBytes = fileSizeInBytes;
+	public void setTotalSize(double totalSize) {
+		this.totalSize = totalSize;
 	}
 	public String getPrevSequenceCode() {
 		return prevSequenceCode;
@@ -54,10 +55,16 @@ public class IngestFile {
 	public void setPrevSequenceCodeExpected(boolean prevSequenceCodeExpected) {
 		this.prevSequenceCodeExpected = prevSequenceCodeExpected;
 	}
-	public String getWarning() {
-		return warning;
+	public String getErrorType() {
+		return errorType;
 	}
-	public void setWarning(String warning) {
-		this.warning = warning;
+	public void setErrorType(String errorType) {
+		this.errorType = errorType;
+	}
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+	public void setErrorMessage(String errorMessage) {
+		this.errorMessage = errorMessage;
 	}
 }

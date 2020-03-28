@@ -2,9 +2,11 @@ package org.ishafoundation.dwaraapi.db.model.transactional;
 		
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 
@@ -14,38 +16,39 @@ public class Failure {
 
 	@Id
 	@GeneratedValue(strategy=GenerationType.SEQUENCE)
-	@Column(name="failure_id")
-	private int failureId;
+	@Column(name="id")
+	private int id;
 	
-	@Column(name="file_id")
-	private int fileId;
-
-	@Column(name="job_id")
-	private int jobId;
-
-		
-	public int getFailureId() {
-		return failureId;
-	}
-
-	public void setFailureId(int failureId) {
-		this.failureId = failureId;
-	}
+	// Many failures on the same file from different jobs
+	@ManyToOne(fetch = FetchType.LAZY)
+	private File file;
 	
-	public int getFileId() {
-		return fileId;
-	}
-
-	public void setFileId(int fileId) {
-		this.fileId = fileId;
-	}
+	// Many files failures from the same job
+	@ManyToOne(fetch = FetchType.LAZY)
+	private Job job;
 	
-	public int getJobId() {
-		return jobId;
+			
+	public int getId() {
+		return id;
 	}
 
-	public void setJobId(int jobId) {
-		this.jobId = jobId;
+	public void setId(int id) {
+		this.id = id;
 	}
 
+	public File getFile() {
+		return file;
+	}
+
+	public void setFile(File file) {
+		this.file = file;
+	}
+
+	public Job getJob() {
+		return job;
+	}
+
+	public void setJob(Job job) {
+		this.job = job;
+	}
 }

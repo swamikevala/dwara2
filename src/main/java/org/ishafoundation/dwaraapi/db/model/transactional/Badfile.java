@@ -5,6 +5,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 
@@ -14,32 +15,32 @@ public class Badfile {
 
 	@Id
 	@GeneratedValue(strategy=GenerationType.SEQUENCE)
-	@Column(name="badfile_id")
-	private int badfileId;
+	@Column(name="id")
+	private int id;
 	
-	@Column(name="file_id")
-	private int fileId;
+	@OneToOne
+	private File file;
 
 	@Column(name="reason")
 	private String reason;
 
 		
-	public int getBadfileId() {
-		return badfileId;
+	public int getId() {
+		return id;
 	}
 
-	public void setBadfileId(int badfileId) {
-		this.badfileId = badfileId;
+	public void setId(int id) {
+		this.id = id;
 	}
 	
-	public int getFileId() {
-		return fileId;
+	public File getFile() {
+		return file;
 	}
 
-	public void setFileId(int fileId) {
-		this.fileId = fileId;
+	public void setFile(File file) {
+		this.file = file;
 	}
-	
+
 	public String getReason() {
 		return reason;
 	}

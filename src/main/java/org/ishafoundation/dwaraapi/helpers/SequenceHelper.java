@@ -1,10 +1,10 @@
 package org.ishafoundation.dwaraapi.helpers;
 
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.db.dao.master.ingest.LibraryclassDao;
-import org.ishafoundation.dwaraapi.db.dao.master.ingest.SequenceDao;
-import org.ishafoundation.dwaraapi.db.model.master.ingest.Libraryclass;
-import org.ishafoundation.dwaraapi.db.model.master.ingest.Sequence;
+import org.ishafoundation.dwaraapi.db.dao.master.LibraryclassDao;
+import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
+import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
+import org.ishafoundation.dwaraapi.db.model.master.Sequence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

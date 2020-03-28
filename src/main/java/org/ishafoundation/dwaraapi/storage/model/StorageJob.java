@@ -1,6 +1,6 @@
 package org.ishafoundation.dwaraapi.storage.model;
 
-import org.ishafoundation.dwaraapi.db.model.master.storage.Storageformat;
+import org.ishafoundation.dwaraapi.db.model.master.Storageformat;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.model.Storagetype;
 import org.ishafoundation.dwaraapi.model.Volume;

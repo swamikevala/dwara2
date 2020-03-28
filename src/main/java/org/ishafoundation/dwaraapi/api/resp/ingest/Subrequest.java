@@ -30,7 +30,9 @@ public class Subrequest{
 
 	private Library library;
 	
-	private int statusId;
+	private Integer[] permittedRequestTypeIds;
+	
+	private String status;
 	
 
 	public int getSubrequestId() {
@@ -137,11 +139,19 @@ public class Subrequest{
 		this.library = library;
 	}
 
-	public int getStatusId() {
-		return statusId;
+	public Integer[] getPermittedRequestTypeIds() {
+		return permittedRequestTypeIds;
 	}
 
-	public void setStatusId(int statusId) {
-		this.statusId = statusId;
+	public void setPermittedRequestTypeIds(Integer[] permittedRequestTypeIds) {
+		this.permittedRequestTypeIds = permittedRequestTypeIds;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	}
 }

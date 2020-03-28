@@ -45,7 +45,7 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 		// executes the command and parsesitsresponse
 		// TODO Handle both success and error scenarios
 		logger.trace("Executing the framed bru copy command");
-		return executeCommandAndFormatResponse(bruCopyCommandParamsList, storageJob.getJob().getJobId()+"");
+		return executeCommandAndFormatResponse(bruCopyCommandParamsList, storageJob.getJob().getId()+"");
 	}
 
 	@Override
@@ -64,7 +64,7 @@ public class BruArchiver extends AbstractStorageFormatArchiver {
 
 		// TODO Handle both success and error scenarios
 		logger.trace("Executing the framed bru restore command");
-		return executeCommandAndFormatResponse(bruRestoreCommandParamsList, storageJob.getJob().getJobId()+"");
+		return executeCommandAndFormatResponse(bruRestoreCommandParamsList, storageJob.getJob().getId()+"");
 	}
 
 	protected ArchiveResponse executeCommandAndFormatResponse(List<String> bruCommandParamsList, String commandlineExecutorErrorResponseTemporaryFilename) throws Exception{

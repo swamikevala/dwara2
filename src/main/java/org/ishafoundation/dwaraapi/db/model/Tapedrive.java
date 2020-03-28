@@ -3,16 +3,21 @@ package org.ishafoundation.dwaraapi.db.model;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import org.ishafoundation.dwaraapi.db.model.master.Tape;
+import org.ishafoundation.dwaraapi.db.model.master.Tapelibrary;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 
 @Entity
 @Table(name="tapedrive")
 public class Tapedrive {
 
 	@Id
-	@Column(name="tapedrive_id")
-	private int tapedriveId;
+	@Column(name="id")
+	private int id;
 	
 	@Column(name="device_wwid", unique=true)
 	private String deviceWwid;
@@ -20,30 +25,34 @@ public class Tapedrive {
 	@Column(name="element_address", unique=true)
 	private int elementAddress;
 
-	@Column(name="tapelibrary_id")
-	private int tapelibraryId;
+	// unidirectional reference on client side is enough
+	@ManyToOne
+	private Tapelibrary tapelibrary;
 
 	@Column(name="status")
 	private String status;
-
-	@Column(name="job_id", unique=true)
-	private int jobId;
-
-	@Column(name="tape_id", unique=true)
-	private int tapeId;
-
+	
+	// unidirectional reference is enough
+	@OneToOne(optional=true)
+	private Job job;
+	
+	// unidirectional reference is enough
+	@OneToOne(optional=true)
+	private Tape tape;
+	
 	@Column(name="serial_number", unique=true)
 	private String serialNumber;
-
-		
-	public int getTapedriveId() {
-		return tapedriveId;
-	}
-
-	public void setTapedriveId(int tapedriveId) {
-		this.tapedriveId = tapedriveId;
-	}
 	
+	
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
 	public String getDeviceWwid() {
 		return deviceWwid;
 	}
@@ -51,7 +60,7 @@ public class Tapedrive {
 	public void setDeviceWwid(String deviceWwid) {
 		this.deviceWwid = deviceWwid;
 	}
-	
+
 	public int getElementAddress() {
 		return elementAddress;
 	}
@@ -59,15 +68,15 @@ public class Tapedrive {
 	public void setElementAddress(int elementAddress) {
 		this.elementAddress = elementAddress;
 	}
-	
-	public int getTapelibraryId() {
-		return tapelibraryId;
+
+	public Tapelibrary getTapelibrary() {
+		return tapelibrary;
 	}
 
-	public void setTapelibraryId(int tapelibraryId) {
-		this.tapelibraryId = tapelibraryId;
+	public void setTapelibrary(Tapelibrary tapelibrary) {
+		this.tapelibrary = tapelibrary;
 	}
-	
+
 	public String getStatus() {
 		return status;
 	}
@@ -75,23 +84,23 @@ public class Tapedrive {
 	public void setStatus(String status) {
 		this.status = status;
 	}
-	
-	public int getJobId() {
-		return jobId;
+
+	public Job getJob() {
+		return job;
 	}
 
-	public void setJobId(int jobId) {
-		this.jobId = jobId;
-	}
-	
-	public int getTapeId() {
-		return tapeId;
+	public void setJob(Job job) {
+		this.job = job;
 	}
 
-	public void setTapeId(int tapeId) {
-		this.tapeId = tapeId;
+	public Tape getTape() {
+		return tape;
 	}
-	
+
+	public void setTape(Tape tape) {
+		this.tape = tape;
+	}
+
 	public String getSerialNumber() {
 		return serialNumber;
 	}
@@ -99,5 +108,4 @@ public class Tapedrive {
 	public void setSerialNumber(String serialNumber) {
 		this.serialNumber = serialNumber;
 	}
-
 }

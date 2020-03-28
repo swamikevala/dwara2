@@ -37,11 +37,11 @@ public class StorageTypeJobProcessor {
     
     public ArchiveResponse service(StorageJob storageJob, boolean isWrite) throws Throwable{
     	
-    	Status status = Status.IN_PROGRESS;
+    	Status status = Status.in_progress;
     	// some common code goes in here... 
 		Job job = (Job) storageJob.getJob();
 		job.setStartedAt(System.currentTimeMillis());
-		job.setStatusId(status.getStatusId());
+		job.setStatus(status);
 		logger.debug("DB Job Updation " + status);
 		jobDao.save(job);
 		logger.debug("DB Job Updation - Success");
@@ -55,12 +55,12 @@ public class StorageTypeJobProcessor {
 				archiveResponse = storageFormatter.write(storageJob); // tapeJobProcessor.write(tapeJob); // go on a seperate thread... create a task and allocate it to the thread
 			else
 				archiveResponse = storageFormatter.read(storageJob);
-			status = Status.COMPLETED;
+			status = Status.completed;
 		}catch (Exception e) {
 			logger.error("Storage type implementation responded with error");
-			status = Status.FAILED;
+			status = Status.failed;
 		}
-		job.setStatusId(status.getStatusId());
+		job.setStatus(status);
 		job.setCompletedAt(System.currentTimeMillis());
 		logger.debug("DB Job Updation " + status);
 		jobDao.save(job);

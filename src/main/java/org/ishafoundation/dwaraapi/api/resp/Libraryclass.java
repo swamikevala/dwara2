@@ -5,7 +5,9 @@ public class Libraryclass {
 	
 	private String name;
 	
-	private int displayOrder;
+	private Integer[] targetVolumeIds; 
+	
+	private Integer displayOrder;
 	
 
 	public int getLibraryclassId() {
@@ -24,11 +26,19 @@ public class Libraryclass {
 		this.name = name;
 	}
 
-	public int getDisplayOrder() {
+	public Integer[] getTargetVolumeIds() {
+		return targetVolumeIds;
+	}
+
+	public void setTargetVolumeIds(Integer[] targetVolumeIds) {
+		this.targetVolumeIds = targetVolumeIds;
+	}
+
+	public Integer getDisplayOrder() {
 		return displayOrder;
 	}
 
-	public void setDisplayOrder(int displayOrder) {
+	public void setDisplayOrder(Integer displayOrder) {
 		this.displayOrder = displayOrder;
 	}
 }

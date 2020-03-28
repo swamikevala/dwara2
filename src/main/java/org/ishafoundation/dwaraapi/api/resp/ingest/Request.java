@@ -14,6 +14,8 @@ public class Request {
 
 	private long requestedAt;
 	
+	private Integer[] permittedRequestTypeIds;
+	
 	private List<Subrequest> subrequestList;
 	
 
@@ -55,6 +57,14 @@ public class Request {
 
 	public void setRequestedAt(long requestedAt) {
 		this.requestedAt = requestedAt;
+	}
+
+	public Integer[] getPermittedRequestTypeIds() {
+		return permittedRequestTypeIds;
+	}
+
+	public void setPermittedRequestTypeIds(Integer[] permittedRequestTypeIds) {
+		this.permittedRequestTypeIds = permittedRequestTypeIds;
 	}
 
 	public List<Subrequest> getSubrequestList() {

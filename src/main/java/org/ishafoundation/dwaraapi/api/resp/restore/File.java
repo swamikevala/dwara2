@@ -8,6 +8,7 @@ public class File {
 	
 	private double size;
 	
+	// TODO  remove this 
 	private String warning;
 	
 	public int getId() {

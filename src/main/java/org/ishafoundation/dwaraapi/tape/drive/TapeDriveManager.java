@@ -4,7 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
-import org.ishafoundation.dwaraapi.db.dao.TapedriveDao;
+import org.ishafoundation.dwaraapi.db.dao.master.TapedriveDao;
 import org.ishafoundation.dwaraapi.db.model.Tapedrive;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
 import org.slf4j.Logger;

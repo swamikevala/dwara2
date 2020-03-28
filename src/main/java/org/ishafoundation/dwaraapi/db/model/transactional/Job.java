@@ -1,12 +1,27 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 		
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import org.ishafoundation.dwaraapi.constants.Status;
+import org.ishafoundation.dwaraapi.constants.StatusAttributeConverter;
+import org.ishafoundation.dwaraapi.db.model.master.Task;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name="job")
@@ -14,17 +29,19 @@ public class Job {
 
 	@Id
 	@GeneratedValue(strategy=GenerationType.SEQUENCE)
-	@Column(name="job_id")
-	private int jobId;
+	@Column(name="id")
+	private int id;
 	
-	@Column(name="task_id")
-	private int taskId;
+	@OneToOne
+	private Task task;
 
-	@Column(name="input_library_id")
-	private int inputLibraryId;
+	@OneToOne
+	@JoinColumn(name="input_library_id")
+	private Library inputLibrary;
 
-	@Column(name="output_library_id")
-	private int outputLibraryId;
+	@OneToOne(optional = true)
+	@JoinColumn(name="output_library_id")
+	private Library outputLibrary;
 	
 	@Column(name="completed_at")
 	private long completedAt;
@@ -32,46 +49,50 @@ public class Job {
 	@Column(name="created_at")
 	private long createdAt;
 
-	@Column(name="subrequest_id")
-	private int subrequestId;
+	@OneToOne
+	private Subrequest subrequest;
 
 	@Column(name="started_at")
 	private long startedAt;
 
-	@Column(name="status_id")
-	private int statusId;
-
-		
-	public int getJobId() {
-		return jobId;
-	}
-
-	public void setJobId(int jobId) {
-		this.jobId = jobId;
-	}
+	@Convert(converter = StatusAttributeConverter.class)
+	private Status status;
 	
-	public int getTaskId() {
-		return taskId;
+    @OneToMany(mappedBy = "job",
+            cascade = CascadeType.MERGE,
+            orphanRemoval = true)
+    private List<TFileJob> tFileJob = new ArrayList<>();
+
+	public int getId() {
+		return id;
 	}
 
-	public void setTaskId(int taskId) {
-		this.taskId = taskId;
-	}
-	
-	public int getInputLibraryId() {
-		return inputLibraryId;
+	public void setId(int id) {
+		this.id = id;
 	}
 
-	public void setInputLibraryId(int inputLibraryId) {
-		this.inputLibraryId = inputLibraryId;
+	public Task getTask() {
+		return task;
 	}
 
-	public int getOutputLibraryId() {
-		return outputLibraryId;
+	public void setTask(Task task) {
+		this.task = task;
 	}
 
-	public void setOutputLibraryId(int outputLibraryId) {
-		this.outputLibraryId = outputLibraryId;
+	public Library getInputLibrary() {
+		return inputLibrary;
+	}
+
+	public void setInputLibrary(Library inputLibrary) {
+		this.inputLibrary = inputLibrary;
+	}
+
+	public Library getOutputLibrary() {
+		return outputLibrary;
+	}
+
+	public void setOutputLibrary(Library outputLibrary) {
+		this.outputLibrary = outputLibrary;
 	}
 
 	public long getCompletedAt() {
@@ -81,7 +102,7 @@ public class Job {
 	public void setCompletedAt(long completedAt) {
 		this.completedAt = completedAt;
 	}
-	
+
 	public long getCreatedAt() {
 		return createdAt;
 	}
@@ -89,15 +110,15 @@ public class Job {
 	public void setCreatedAt(long createdAt) {
 		this.createdAt = createdAt;
 	}
-	
-	public int getSubrequestId() {
-		return subrequestId;
+
+	public Subrequest getSubrequest() {
+		return subrequest;
 	}
 
-	public void setSubrequestId(int subrequestId) {
-		this.subrequestId = subrequestId;
+	public void setSubrequest(Subrequest subrequest) {
+		this.subrequest = subrequest;
 	}
-	
+
 	public long getStartedAt() {
 		return startedAt;
 	}
@@ -105,13 +126,35 @@ public class Job {
 	public void setStartedAt(long startedAt) {
 		this.startedAt = startedAt;
 	}
+
+	public Status getStatus() {
+		return status;
+	}
+
+	public void setStatus(Status status) {
+		this.status = status;
+	}
+
+	@JsonIgnore
+	public List<TFileJob> gettFileJob() {
+		return tFileJob;
+	}
 	
-	public int getStatusId() {
-		return statusId;
+	@JsonIgnore
+	public void settFileJob(List<TFileJob> tFileJob) {
+		this.tFileJob = tFileJob;
 	}
-
-	public void setStatusId(int statusId) {
-		this.statusId = statusId;
-	}
-
+	
+	@Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Job job = (Job) o;
+        return Objects.equals(id, job.id);
+    }
+ 
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

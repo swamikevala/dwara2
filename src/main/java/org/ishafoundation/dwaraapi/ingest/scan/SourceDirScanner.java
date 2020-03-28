@@ -13,9 +13,9 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.ingest.IngestFile;
 import org.ishafoundation.dwaraapi.constants.Status;
-import org.ishafoundation.dwaraapi.db.dao.master.ingest.SequenceDao;
-import org.ishafoundation.dwaraapi.db.model.master.ingest.Libraryclass;
-import org.ishafoundation.dwaraapi.db.model.master.ingest.Sequence;
+import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
+import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
+import org.ishafoundation.dwaraapi.db.model.master.Sequence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +36,7 @@ public class SourceDirScanner {
     private Pattern folderNameWithoutPrevSeqCodePattern = Pattern.compile("([_-]?)(.*)");
 
 	public List<IngestFile> scanSourceDir(Libraryclass libraryclass, List<String> scanFolderBasePathList) {
-		int libraryclassId = libraryclass.getLibraryclassId();
+		//int libraryclassId = libraryclass.getId();
     	String libraryclassName = libraryclass.getName();
         int sequenceId = libraryclass.getSequenceId(); // getting the primary key of the Sequence table which holds the lastsequencenumber for this group...
         Sequence sequence = null;
@@ -55,12 +55,12 @@ public class SourceDirScanner {
 			String sourcePath = nthScanFolderBasePath + File.separator + "ingest" + File.separator + libraryclassName;
 			
 			IOFileFilter dirFilter = FileFilterUtils.directoryFileFilter();
-			IOFileFilter notCancelledFolderFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(Status.CANCELLED.toString()));
-			IOFileFilter notDeletedFolderFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(Status.DELETED.toString()));
+			IOFileFilter notCancelledFolderFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(Status.cancelled.toString()));
+			IOFileFilter notDeletedFolderFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(Status.deleted.toString()));
 			
 			//FileFilter allDirectoriesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(dirFilter, notCancelledFolderFilter, notDeletedFolderFilter);
 			FileFilter allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(dirFilter, notCancelledFolderFilter, notDeletedFolderFilter);
-			if(libraryclassId == 6)
+			if(libraryclass.getFiletype().getName().toLowerCase().equals("audio"))
 				allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(notCancelledFolderFilter, notDeletedFolderFilter);
 	    	File[] ingestableFiles = new File(sourcePath).listFiles(allFilesExcludingCancelledAndDeletedDirectoryFilter);
 	    	if(ingestableFiles != null) {
@@ -69,7 +69,7 @@ public class SourceDirScanner {
 	    	}
 	    	
 	    	// All cancelled medialibrary...
-	    	String cancelledOriginSourceDir = sourcePath + File.separator + Status.CANCELLED.toString();
+	    	String cancelledOriginSourceDir = sourcePath + File.separator + Status.cancelled.toString();
 	    	File[] cancelledIngestableFiles = new File(cancelledOriginSourceDir).listFiles();
 	    	if(cancelledIngestableFiles != null) {
 	    		List<IngestFile> nthScanFolderBaseCancelledDirectoryIngestFileList = scanForIngestableFiles(sequence, extractionRegex, isKeepExtractedCode, cancelledOriginSourceDir, cancelledIngestableFiles);
@@ -77,7 +77,7 @@ public class SourceDirScanner {
 	    	}	
 	    	
 	    	// All deleted medialibrary...
-	    	String deletedOriginSourceDir = sourcePath + File.separator + Status.DELETED.toString();
+	    	String deletedOriginSourceDir = sourcePath + File.separator + Status.deleted.toString();
 	    	File[] deletedIngestableFiles = new File(deletedOriginSourceDir).listFiles();
 	    	if(deletedIngestableFiles != null) {
 	    		List<IngestFile> nthScanFolderBaseDeletedDirectoryIngestFileList = scanForIngestableFiles(sequence, extractionRegex, isKeepExtractedCode, deletedOriginSourceDir, deletedIngestableFiles);
@@ -139,14 +139,18 @@ public class SourceDirScanner {
 			
 			nthIngestFile.setSourcePath(sourcePath);
 			nthIngestFile.setFileCount(fileCount);
-			nthIngestFile.setFileSizeInBytes(size);
+			nthIngestFile.setTotalSize(size);
 			//nthIngestDirectory.setFileSizeInMBytes(totalSizeInMB);
 			nthIngestFile.setPrevSequenceCode(prevSeqCode);
 			if(StringUtils.isNotBlank(extractionRegex) && isKeepExtractedCode) // if regex present and useExtractCode is true but prevSeqCode is null then throw error...
 				nthIngestFile.setPrevSequenceCodeExpected(true);
 			nthIngestFile.setOldFilename(fileName);
 			nthIngestFile.setNewFilename(customFolderName);
-			nthIngestFile.setWarning(warning);
+			String errorType = null;
+			if(warning != null)
+				errorType = "Warning";// TODO hardcoded for now - fetch it from error type table...
+			nthIngestFile.setErrorType(errorType);
+			nthIngestFile.setErrorMessage(warning);
 			ingestFileList.add(nthIngestFile);
 		}
     	return ingestFileList;

@@ -10,9 +10,11 @@ public interface JobDao extends CrudRepository<Job,Integer> {
 //	@Query(value="SELECT * FROM job where status_id = 1 order by job_id", nativeQuery=true)
 //	List<Job> getAllJobsToBeProcessed();
 
-	List<Job> findAllByStatusIdOrderByJobId(int statusId);
+//	List<Job> findAllByStatusIdOrderByJobId(int statusId);
+//	
+//	List<Job> findAllBySubrequestIdOrderByJobId(int subrequestId);
+//	
+//	Job findByTaskIdAndSubrequestId(int taskId, int subrequestId);
 	
-	List<Job> findAllBySubrequestIdOrderByJobId(int subrequestId);
-	
-	Job findByTaskIdAndSubrequestId(int taskId, int subrequestId);
+	//Job findById(int jobId);
 }

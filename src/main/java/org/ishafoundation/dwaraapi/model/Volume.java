@@ -1,6 +1,6 @@
 package org.ishafoundation.dwaraapi.model;
 
-import org.ishafoundation.dwaraapi.db.model.master.storage.Tape;
+import org.ishafoundation.dwaraapi.db.model.master.Tape;
 
 public class Volume {
 

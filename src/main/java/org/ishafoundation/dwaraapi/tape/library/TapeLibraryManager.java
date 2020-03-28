@@ -8,11 +8,11 @@ import javax.annotation.PostConstruct;
 
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.constants.TapedriveStatus;
-import org.ishafoundation.dwaraapi.db.dao.TapedriveDao;
-import org.ishafoundation.dwaraapi.db.dao.master.storage.TapelibraryDao;
+import org.ishafoundation.dwaraapi.db.dao.master.TapedriveDao;
+import org.ishafoundation.dwaraapi.db.dao.master.TapelibraryDao;
 import org.ishafoundation.dwaraapi.db.model.Tapedrive;
-import org.ishafoundation.dwaraapi.db.model.master.storage.Tape;
-import org.ishafoundation.dwaraapi.db.model.master.storage.Tapelibrary;
+import org.ishafoundation.dwaraapi.db.model.master.Tape;
+import org.ishafoundation.dwaraapi.db.model.master.Tapelibrary;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.tape.drive.DriveStatusDetails;
 import org.ishafoundation.dwaraapi.tape.drive.TapeDriveManager;
@@ -100,8 +100,8 @@ public class TapeLibraryManager{
 				Tapedrive tapedrive = tapedriveDao.findByElementAddress(dataTransferElementSNo);
 				String tapedriveStatus = tapedrive.getStatus();
 				if(!tapedriveStatus.equals(TapedriveStatus.AVAILABLE.toString())){
-					logger.info("Tapedrive table's status for element address " + dataTransferElementSNo + " is flagged as being used by " + tapedrive.getJobId());
-					//logger.trace("If the job " + tapedrive.getJobId() + " is already complete/failed, then table seems to be out of sync with the physical drive. Something unexpected must have happened. Please check out and sync the table manually with the physical drive's status");
+					logger.info("Tapedrive table's status for element address " + dataTransferElementSNo + " is flagged as being used by " + tapedrive.getId());
+					//logger.trace("If the job " + tapedrive.getId() + " is already complete/failed, then table seems to be out of sync with the physical drive. Something unexpected must have happened. Please check out and sync the table manually with the physical drive's status");
 					continue;
 				}
 				logger.trace("Drive " + dataTransferElementSNo + " is added to the available drives list");

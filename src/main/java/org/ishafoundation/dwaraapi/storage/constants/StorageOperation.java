@@ -1,7 +1,8 @@
 package org.ishafoundation.dwaraapi.storage.constants;
 
 public enum StorageOperation {
-	WRITE(1), 
+	// TODO Avoid this....
+	WRITE(10000), 
 	READ(2);
 	
 	private int storageOperationId;

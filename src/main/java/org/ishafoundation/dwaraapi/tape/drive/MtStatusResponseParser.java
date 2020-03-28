@@ -85,7 +85,7 @@ public class MtStatusResponseParser {
 						String extractedMatch = statusCodeRegExMatcher.group();
 						if(StringUtils.isBlank(extractedMatch) || extractedMatch.equals("IM_REP_EN"))
 							continue;
-						StatusCode statusCode = StatusCode.valueOf(extractedMatch);
+						TapeDriveStatusCode statusCode = TapeDriveStatusCode.valueOf(extractedMatch);
 
 						switch (statusCode) {
 						case ONLINE:

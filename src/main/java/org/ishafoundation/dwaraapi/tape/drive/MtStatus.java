@@ -7,7 +7,7 @@ public class MtStatus {
 	private int blockNumber;
 	private int softErrorCount;
 	private boolean isDriveReady; // if ONLINE isDriveReady = true, if DR_OPEN isDriveReady = false
-	private StatusCode statusCode;
+	private TapeDriveStatusCode statusCode;
 	private boolean isWriteProtected;
 	
 	public boolean isBusy() {
@@ -40,10 +40,10 @@ public class MtStatus {
 	public void setDriveReady(boolean isDriveReady) {
 		this.isDriveReady = isDriveReady;
 	}
-	public StatusCode getStatusCode() {
+	public TapeDriveStatusCode getStatusCode() {
 		return statusCode;
 	}
-	public void setStatusCode(StatusCode statusCode) {
+	public void setStatusCode(TapeDriveStatusCode statusCode) {
 		this.statusCode = statusCode;
 	}
 	public boolean isWriteProtected() {
