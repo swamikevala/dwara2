@@ -28,6 +28,11 @@ public class Subrequest {
 	@ManyToOne(fetch = FetchType.LAZY)
     private Request request;
 	
+	/*
+	@Transient
+	private int requestId;
+	*/
+	
 	@Column(name="file_id")
 	private int fileId;
 
@@ -73,14 +78,21 @@ public class Subrequest {
 		this.id = id;
 	}
 
+	//@JsonIgnore
 	public Request getRequest() {
 		return request;
 	}
 
+	//@JsonIgnore
 	public void setRequest(Request request) {
 		this.request = request;
 	}
-
+	
+	/*
+	public int getRequestId() {
+		return requestId = this.request.getId();
+	}
+	*/
 	public int getFileId() {
 		return fileId;
 	}

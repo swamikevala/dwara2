@@ -8,10 +8,12 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -49,9 +51,14 @@ public class Job {
 	@Column(name="created_at")
 	private long createdAt;
 
-	@OneToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Subrequest subrequest;
-
+	
+	/*
+	@Transient
+	private int subrequestId;
+	*/
+	
 	@Column(name="started_at")
 	private long startedAt;
 
@@ -111,14 +118,21 @@ public class Job {
 		this.createdAt = createdAt;
 	}
 
+	//@JsonIgnore
 	public Subrequest getSubrequest() {
 		return subrequest;
 	}
-
+	
+	//@JsonIgnore
 	public void setSubrequest(Subrequest subrequest) {
 		this.subrequest = subrequest;
 	}
-
+	
+	/*
+	public int getSubrequestId() {
+		return subrequestId = this.subrequest.getId();
+	}
+	*/
 	public long getStartedAt() {
 		return startedAt;
 	}

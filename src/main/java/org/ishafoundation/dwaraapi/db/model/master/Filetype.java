@@ -22,7 +22,7 @@ public class Filetype {
 
 	@Id
 	@Column(name="id")
-	private int id;
+	private Integer id; // is Integer and hence value can be null - "Copy Tasks" in task table has no relevance/meaning for filetype
 	
 	@Column(name="name")
 	private String name;
@@ -36,16 +36,16 @@ public class Filetype {
     	
     }
     
-    public Filetype(int id, String name) {
+    public Filetype(Integer id, String name) {
     	this.id = id;
     	this.name = name;
     }
     
-	public int getId() {
+	public Integer getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 

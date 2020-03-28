@@ -194,7 +194,8 @@ public class IngestController {
 		}
     	
     	//org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedRequest response = requestResponseUtils.frameWrappedRequestObjectForResponse(request, responseSubrequestList);
-    	org.ishafoundation.dwaraapi.api.resp.ingest.Request response = requestResponseUtils.frameRequestObjectForResponse(request, responseSubrequestList);
+    	org.ishafoundation.dwaraapi.api.resp.ingest.Request response = requestResponseUtils.frameRequestObjectForResponse(request);
+    	response.setSubrequestList(responseSubrequestList);
     	return response;
     }
 	
@@ -280,6 +281,7 @@ public class IngestController {
     	library.setFileStructureMd5("someFileStructureMd5Value");
     	library.setLibraryclass(request.getLibraryclass());
     	library.setName(modifiedFileName);
+    	library.setqLatestSubrequestId(subrequest.getId());
     	logger.debug("DB Library Creation");  
     	library = libraryDao.save(library);
     	int libraryId = library.getId();
@@ -311,7 +313,7 @@ public class IngestController {
 
     	subrequest.setLibrary(library);
     	logger.debug("DB Subrequest Updation");
-    	subrequestDao.save(subrequest);
+    	subrequest = subrequestDao.save(subrequest);
     	logger.debug("DB Subrequest Updation - Success");
     	
     	setAttributes();
@@ -320,7 +322,7 @@ public class IngestController {
     	
     	// TODO Handle failures - systemGeneratedSubRequestRespForResponse.setResponseCode(500);
     	//return requestResponseUtils.frameWrappedSubrequestObjectForResponse(subrequest, library);
-    	return requestResponseUtils.frameSubrequestObjectForResponse(subrequest, library);
+    	return requestResponseUtils.frameSubrequestObjectForResponse(subrequest);
     }
 	
 

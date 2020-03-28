@@ -24,7 +24,7 @@ public class Task {
 
 	@Id
 	@Column(name="id")
-	private Integer id;
+	private Integer id; // Is Integer so compatibe with - field in library class (only applicable where source = false)
 	
 	@Column(name="name")
 	private String name;

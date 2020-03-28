@@ -12,18 +12,18 @@ public class Tasktype {
 
 	@Id
 	@Column(name="id")
-	private int id;
+	private Integer id; // is Integer and hence value can be null - "Copy Tasks" in task table are defaulted tasktype
 	
 	@Column(name="name")
 	private String name;
 
 		
 	
-	public int getId() {
+	public Integer getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 	

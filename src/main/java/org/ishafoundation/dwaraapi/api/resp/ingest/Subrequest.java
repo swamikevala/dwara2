@@ -4,7 +4,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 
 public class Subrequest{
 
-	private int subrequestId;
+	private int id;
 	
 	private int requestId;
 	
@@ -35,12 +35,12 @@ public class Subrequest{
 	private String status;
 	
 
-	public int getSubrequestId() {
-		return subrequestId;
+	public int getId() {
+		return id;
 	}
 
-	public void setSubrequestId(int subrequestId) {
-		this.subrequestId = subrequestId;
+	public void setId(int id) {
+		this.id = id;
 	}
 
 	public int getRequestId() {
