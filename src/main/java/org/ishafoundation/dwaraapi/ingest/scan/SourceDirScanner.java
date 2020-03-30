@@ -12,6 +12,7 @@ import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.ingest.IngestFile;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
@@ -19,7 +20,6 @@ import org.ishafoundation.dwaraapi.db.model.master.Sequence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -30,8 +30,10 @@ public class SourceDirScanner {
 	@Autowired
     private SequenceDao sequenceDao;
     
-    @Value("${regexAllowedChrsInFileName}")
-    private String regexAllowedChrsInFileName;	
+	@Autowired
+    private Configuration configuration;
+//    @Value("${regexAllowedChrsInFileName}")
+//    private String regexAllowedChrsInFileName;	
 	
     private Pattern folderNameWithoutPrevSeqCodePattern = Pattern.compile("([_-]?)(.*)");
 
@@ -91,6 +93,7 @@ public class SourceDirScanner {
 	private List<IngestFile> scanForIngestableFiles(Sequence sequence, String extractionRegex, boolean isKeepExtractedCode, String sourcePath, File[] ingestableFiles) {
 		// NOTE : Not able to make this global as the value from properties file was just not set
 		// Un comment this for testing using main class Pattern allowedChrsInFolderNamePattern = Pattern.compile("[\\w-]*");
+		String regexAllowedChrsInFileName = configuration.getRegexAllowedChrsInFileName();
 		Pattern allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
 		
 		List<IngestFile> ingestFileList = new ArrayList<IngestFile>();

@@ -6,7 +6,7 @@ public class UserRequest {
 	
 	private int libraryclassId;
 
-	private List<LibraryParams> subrequest;
+	private List<LibraryParams> libraryParamsList;
 
 	
 	public int getLibraryclassId() {
@@ -17,11 +17,11 @@ public class UserRequest {
 		this.libraryclassId = libraryclassId;
 	}
 
-	public List<LibraryParams> getSubrequest() {
-		return subrequest;
+	public List<LibraryParams> getLibraryParamsList() {
+		return libraryParamsList;
 	}
 
-	public void setSubrequest(List<LibraryParams> subrequest) {
-		this.subrequest = subrequest;
+	public void setLibraryParamsList(List<LibraryParams> libraryParamsList) {
+		this.libraryParamsList = libraryParamsList;
 	}
 }

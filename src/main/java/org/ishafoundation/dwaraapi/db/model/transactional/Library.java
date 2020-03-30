@@ -92,11 +92,13 @@ public class Library {
 	public void setLibraryclass(Libraryclass libraryclass) {
 		this.libraryclass = libraryclass;
 	}
-
+	
+	//@JsonIgnore
 	public int getLibraryclassId() {
 		return this.libraryclass.getId();
 	}
 	
+	//@JsonIgnore
 	public String getLibraryclassName() {
 		return this.libraryclass.getName();
 	}

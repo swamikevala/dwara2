@@ -86,7 +86,6 @@ public class JobManager {
 			job.setStatus(Status.queued);
 			jobList.add(job);
 		}
-
 		
 		return jobList;
 	}

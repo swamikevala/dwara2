@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.api.resp.ingest;
 
 import org.ishafoundation.dwaraapi.api.resp.CommonResponse;
+import org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest;
 
 public class ResponseHeaderWrappedSubrequest extends CommonResponse{
 

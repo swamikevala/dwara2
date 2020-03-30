@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.controller;
+package org.ishafoundation.dwaraapi.entrypoint.resource.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;

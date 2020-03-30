@@ -10,6 +10,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 
+// TODO : Phase this out and move to global Spring security's CrossOrigin global configuration
 public class CorsFilter implements Filter {
 
     @Override

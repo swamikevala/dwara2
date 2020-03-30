@@ -2,6 +2,8 @@ package org.ishafoundation.dwaraapi.api.resp.ingest;
 
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest;
+
 public class Request {
 	
 	private int requestId;

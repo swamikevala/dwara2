@@ -26,12 +26,12 @@ public class SetupExtenstionFiletypeController {
 		
     @PostMapping("/insertExtensionFiletype")
     public boolean insertExtensionFiletype(){
-    	//Filetype video_old = filetypeDao.findById(4003).get();
-    	
+    	Filetype video = filetypeDao.findById(4001).get();
+    	/*
     	Filetype video = new Filetype(4001, "Video");
     	video = filetypeDao.save(video);
-    	
-    	Extension mp4 = new Extension(3001, "MP4", "Some MP4 description");
+    	*/
+    	Extension mp4 = new Extension(3050, "MTS", "Some MTS description");
 //    	Extension mp4 = new Extension();
 //    	mp4.setId((long) 1);
 //    	mp4.setName("MP4");
@@ -39,10 +39,11 @@ public class SetupExtenstionFiletypeController {
     	mp4.addFiletype(video);
     	mp4 = extensionDao.save(mp4);
     	
+    	/*
     	Extension mov = new Extension(3002, "MOV", "Some MOV description");
     	mov.addFiletype(video);
     	mov = extensionDao.save(mov);
-
+*/
 
 //    	Filetype audio = new Filetype(4006, "Audioooo");
 //    	audio = filetypeDao.save(audio);

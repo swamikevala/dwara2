@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.api.resp.ingest;
+package org.ishafoundation.dwaraapi.entrypoint.resource;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 

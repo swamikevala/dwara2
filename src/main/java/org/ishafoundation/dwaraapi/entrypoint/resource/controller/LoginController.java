@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.controller;
+package org.ishafoundation.dwaraapi.entrypoint.resource.controller;
 
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.springframework.beans.factory.annotation.Autowired;

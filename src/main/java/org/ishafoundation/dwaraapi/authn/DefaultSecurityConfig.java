@@ -74,14 +74,14 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
     // http://www.masterspringboot.com/security/authentication/configuring-spring-boot-authentication-using-in-memory-and-database-providers
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-    	// TODO Brief swami on
-    	// a) default user table structure
-    	// b) enabled field
-    	// c) authorities table...
+    	// TODO Brief swami on default schema from spring security
+    	// a) its user table structure and the enabled field/column in the table
+    	// b) and authorities table...
 
     	
-    	// JdbcUserDetailsManagerConfigurer accepts only 3 columns like select
-    	// username,password,enabled from users where username = ?
+    	// JdbcUserDetailsManagerConfigurer accepts only 3 columns defined in the default spring security schema like 
+    	// select username,password,enabled from users where username = ?
+    	// using the app specific custom schema here 
     	auth.jdbcAuthentication().dataSource(dataSource)
     	.usersByUsernameQuery("select name, hash, true " + " from user where name=?")
     	.authoritiesByUsernameQuery("select name, 'ROLE_ADMIN' from user where name=?")

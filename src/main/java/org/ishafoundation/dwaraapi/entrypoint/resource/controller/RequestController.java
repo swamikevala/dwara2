@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.controller;
+package org.ishafoundation.dwaraapi.entrypoint.resource.controller;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,16 +12,18 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
-import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
+import org.ishafoundation.dwaraapi.utils.EntityToResourceMappingUtils;
 import org.ishafoundation.dwaraapi.utils.RequestResponseUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@CrossOrigin
 @RestController
 public class RequestController {
 
@@ -38,7 +40,10 @@ public class RequestController {
 	private JobDao jobDao;	
 	
 	@Autowired
-	private RequestResponseUtils requestUtils;
+	private RequestResponseUtils requestResponseUtils;
+	
+	@Autowired
+	private EntityToResourceMappingUtils entityToResourceMappingUtils;
 	
 	@Autowired
 	private RequesttypeCacheUtil requesttypeCacheUtil;
@@ -74,7 +79,7 @@ public class RequestController {
 		}	
 
 		Request request = requestDao.findById(requestId).get();
-		org.ishafoundation.dwaraapi.api.resp.ingest.Request requestForResponse = requestUtils.frameRequestObjectForResponse(request, subrequestList);
+		org.ishafoundation.dwaraapi.api.resp.ingest.Request requestForResponse = requestResponseUtils.frameRequestObjectForResponse(request, subrequestList);
 
 		return requestForResponse;
 	}
@@ -91,8 +96,8 @@ public class RequestController {
 	 * @args[3] - showJobs
 	 */
 	@GetMapping("/subrequest")
-	public List<org.ishafoundation.dwaraapi.api.resp.ingest.SubrequestWithJobDetails> getSubrequestList(@RequestParam(required=false) String requestType, @RequestParam(required=false) String statusIds, @RequestParam(required=false) boolean latest, @RequestParam(required=false) boolean showJobs) {
-		List<org.ishafoundation.dwaraapi.api.resp.ingest.SubrequestWithJobDetails> subrequestListForResponse = new ArrayList<org.ishafoundation.dwaraapi.api.resp.ingest.SubrequestWithJobDetails>();
+	public List<org.ishafoundation.dwaraapi.entrypoint.resource.SubrequestWithJobDetails> getSubrequestList(@RequestParam(required=false) String requestType, @RequestParam(required=false) String statusIds, @RequestParam(required=false) boolean latest, @RequestParam(required=false) boolean showJobs) {
+		List<org.ishafoundation.dwaraapi.entrypoint.resource.SubrequestWithJobDetails> subrequestListForResponse = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.SubrequestWithJobDetails>();
 		
 		String[] statusIdArrAsString = statusIds.split(",");
 		
@@ -119,31 +124,25 @@ public class RequestController {
 			
 			org.ishafoundation.dwaraapi.api.resp.ingest.Subrequest subrequestForResponse = requestUtils.frameSubrequestObjectForResponse(nthSubrequest, library);
 			*/
-			org.ishafoundation.dwaraapi.api.resp.ingest.SubrequestWithJobDetails subrequestForResponse = getSubrequestDetails(nthSubrequest, showJobs);
+			org.ishafoundation.dwaraapi.entrypoint.resource.SubrequestWithJobDetails subrequestForResponse = getSubrequestDetails(nthSubrequest, showJobs);
 			subrequestListForResponse.add(subrequestForResponse);		
 		}
 		return subrequestListForResponse;
 	}
 	
 	@GetMapping("/subrequest/{subrequestId}")
-	public org.ishafoundation.dwaraapi.api.resp.ingest.SubrequestWithJobDetails getSubrequestDetails(@PathVariable("subrequestId") int subrequestId, @RequestParam(required=false) boolean showJobs) {
+	public org.ishafoundation.dwaraapi.entrypoint.resource.SubrequestWithJobDetails getSubrequestDetails(@PathVariable("subrequestId") int subrequestId, @RequestParam(required=false) boolean showJobs) {
 		Subrequest subrequest = subrequestDao.findById(subrequestId).get();
 		return getSubrequestDetails(subrequest, showJobs);
 	}
 	
-	private org.ishafoundation.dwaraapi.api.resp.ingest.SubrequestWithJobDetails getSubrequestDetails(Subrequest subrequest, boolean showJobs){
-		/*
-		int libraryId = subrequest.getLibrary().getId();
-		Library library = libraryDao.findById(libraryId).get();
-		*/
-		
-		Library library = subrequest.getLibrary();
+	private org.ishafoundation.dwaraapi.entrypoint.resource.SubrequestWithJobDetails getSubrequestDetails(Subrequest subrequest, boolean showJobs){
 		
 		List<Job> jobList = null;
 		if(showJobs)
 			jobList = jobDao.findAllBySubrequestIdOrderById(subrequest.getId());
 		
-		org.ishafoundation.dwaraapi.api.resp.ingest.SubrequestWithJobDetails subrequestForResponse = requestUtils.frameSubrequestObjectWithJobDetailsForResponse(subrequest, jobList);
+		org.ishafoundation.dwaraapi.entrypoint.resource.SubrequestWithJobDetails subrequestForResponse = entityToResourceMappingUtils.frameSubrequestObjectWithJobDetailsForResponse(subrequest, jobList);
 
 		return subrequestForResponse;
 	}
