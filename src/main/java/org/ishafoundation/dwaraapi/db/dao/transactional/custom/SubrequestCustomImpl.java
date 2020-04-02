@@ -18,6 +18,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
 import org.ishafoundation.dwaraapi.model.WrappedSubrequestList;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class SubrequestCustomImpl implements SubrequestCustom {
 
     @PersistenceContext
@@ -48,7 +50,7 @@ public class SubrequestCustomImpl implements SubrequestCustom {
         Join<Subrequest, Request> requestJoin = frameJoin(subrequestRoot, cb, requesttypeId, statusIds);
 
 		query.select(requestJoin.getParent());	
-		
+		query.orderBy(cb.desc(subrequestRoot.get("id")));
         List<Subrequest> subrequestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
         
         WrappedSubrequestList wrappedSubrequestList = new WrappedSubrequestList();

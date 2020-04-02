@@ -111,9 +111,6 @@ public class IngestController {
 	private JobDao jobDao;
 	
 	@Autowired
-	private RequesttypeDao requesttypeDao;	
-	
-	@Autowired
 	private ExtensionDao extensionDao;
 
 	@Autowired

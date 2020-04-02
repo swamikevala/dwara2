@@ -54,7 +54,7 @@ public class RequestCustomImpl implements RequestCustom {
         
         List<Predicate> predicates = getFramedPredicates(requestRoot, cb, requesttypeId, userId, fromDate, toDate);
        	query.select(requestRoot).where(cb.and(predicates.toArray(new Predicate[0])));
-		
+       	query.orderBy(cb.desc(requestRoot.get("id")));
         List<Request> requestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
         
         WrappedRequestList wrappedRequestList = new WrappedRequestList();

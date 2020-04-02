@@ -60,11 +60,13 @@ public class Requesttype {
 	public void setName(String name) {
 		this.name = name;
 	}
-
+	
+	@JsonIgnore
 	public List<RequesttypeUser> getUsers() {
 		return users;
 	}
-
+	
+	@JsonIgnore
 	public void setUsers(List<RequesttypeUser> users) {
 		this.users = users;
 	}
