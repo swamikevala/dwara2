@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.constants;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
-@Converter
+@Converter(autoApply = true)
 public class RequesttypeAttributeConverter implements AttributeConverter<Requesttype, Integer> {
 
 	@Override
@@ -13,29 +13,29 @@ public class RequesttypeAttributeConverter implements AttributeConverter<Request
 
 		switch (attribute) {
 		case ingest:
-			return 1;
+			return 8001;
 		case restore:
-			return 2;
+			return 8002;
 		case scan:
-			return 3;
+			return 8003;
 		case list:
-			return 4;
+			return 8004;
 		case rename:
-			return 5;
+			return 8005;
 		case hold:
-			return 6;
+			return 8006;
 		case release:
-			return 7;
+			return 8007;
 		case cancel:
-			return 8;
+			return 8008;
 		case abort:
-			return 9;
+			return 8009;
 		case delete:
-			return 10;
+			return 8010;
 		case rewrite:
-			return 11;
+			return 8011;
 		case diagnostics:
-			return 12;
+			return 8012;
 
 		default:
 			throw new IllegalArgumentException(attribute + " not supported.");
@@ -48,29 +48,29 @@ public class RequesttypeAttributeConverter implements AttributeConverter<Request
 			return null;
 
 		switch (dbData) {
-		case 1:
+		case 8001:
 			return Requesttype.ingest;
-		case 2:
+		case 8002:
 			return Requesttype.restore;
-		case 3:
+		case 8003:
 			return Requesttype.scan;
-		case 4:
+		case 8004:
 			return Requesttype.list;
-		case 5:
+		case 8005:
 			return Requesttype.rename;
-		case 6:
+		case 8006:
 			return Requesttype.hold;
-		case 7:
+		case 8007:
 			return Requesttype.release;
-		case 8:
+		case 8008:
 			return Requesttype.cancel;
-		case 9:
+		case 8009:
 			return Requesttype.abort;
-		case 10:
+		case 8010:
 			return Requesttype.delete;
-		case 11:
+		case 8011:
 			return Requesttype.rewrite;
-		case 12:
+		case 8012:
 			return Requesttype.diagnostics;
 
 		default:

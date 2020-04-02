@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.storage.storagetype;
 
+import java.time.LocalDateTime;
+
 import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
@@ -40,7 +42,7 @@ public class StorageTypeJobProcessor {
     	Status status = Status.in_progress;
     	// some common code goes in here... 
 		Job job = (Job) storageJob.getJob();
-		job.setStartedAt(System.currentTimeMillis());
+		job.setStartedAt(LocalDateTime.now());
 		job.setStatus(status);
 		logger.debug("DB Job Updation " + status);
 		jobDao.save(job);
@@ -61,7 +63,7 @@ public class StorageTypeJobProcessor {
 			status = Status.failed;
 		}
 		job.setStatus(status);
-		job.setCompletedAt(System.currentTimeMillis());
+		job.setCompletedAt(LocalDateTime.now());
 		logger.debug("DB Job Updation " + status);
 		jobDao.save(job);
 		logger.debug("DB Job Updation - Success");

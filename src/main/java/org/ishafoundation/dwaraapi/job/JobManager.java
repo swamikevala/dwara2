@@ -1,7 +1,7 @@
 package org.ishafoundation.dwaraapi.job;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,7 +17,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
-import org.ishafoundation.dwaraapi.model.TaskOrTasksetDetails;
 import org.ishafoundation.dwaraapi.process.thread.executor.ProcessSingleThreadExecutor;
 import org.ishafoundation.dwaraapi.process.thread.executor.StorageSingleThreadExecutor;
 import org.slf4j.Logger;
@@ -82,7 +81,7 @@ public class JobManager {
 					job.setInputLibrary(library);
 			}
 			job.setSubrequest(subrequest);				
-			job.setCreatedAt(Calendar.getInstance().getTimeInMillis());
+			job.setCreatedAt(LocalDateTime.now());
 			job.setStatus(Status.queued);
 			jobList.add(job);
 		}

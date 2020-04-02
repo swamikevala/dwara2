@@ -7,6 +7,7 @@ import java.util.Objects;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -28,12 +29,12 @@ public class Tape {
 	
 	// Many tapes in one tapeset
 	// unidirectional reference is enough
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Tapeset tapeset;
 
 	// Many tapes of one tapetype
 	// unidirectional reference is enough
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Tapetype tapetype;
 
 	@Column(name="barcode")

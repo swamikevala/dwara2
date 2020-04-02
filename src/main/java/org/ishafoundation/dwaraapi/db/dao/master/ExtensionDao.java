@@ -13,7 +13,7 @@ public interface ExtensionDao extends CrudRepository<Extension, Integer> {
 			join filetype on extension_filetype.filetype_id = filetype.id 
 			where filetype.id = 4001;
 	*/
-	List<Extension> findAllByFiletypesFiletypeId(int filetypeId);
+	List<Extension> findAllByTaskfiletypesTaskfiletypeId(int taskfiletypeId);
 	
 	/*
 	 * we might also need sidecar along with the list of extensions. 

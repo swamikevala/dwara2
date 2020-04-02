@@ -1,12 +1,12 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 		
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -19,7 +19,6 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.constants.Status;
-import org.ishafoundation.dwaraapi.constants.StatusAttributeConverter;
 import org.ishafoundation.dwaraapi.db.model.master.Task;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 
@@ -46,23 +45,19 @@ public class Job {
 	private Library outputLibrary;
 	
 	@Column(name="completed_at")
-	private long completedAt;
+	private LocalDateTime completedAt;
 
 	@Column(name="created_at")
-	private long createdAt;
+	private LocalDateTime createdAt;
 
+	// Many jobs are possible for a subrequest
 	@ManyToOne(fetch = FetchType.LAZY)
 	private Subrequest subrequest;
 	
-	/*
-	@Transient
-	private int subrequestId;
-	*/
-	
 	@Column(name="started_at")
-	private long startedAt;
+	private LocalDateTime startedAt;
 
-	@Convert(converter = StatusAttributeConverter.class)
+	@Column(name="status_id")
 	private Status status;
 	
     @OneToMany(mappedBy = "job",
@@ -102,42 +97,35 @@ public class Job {
 		this.outputLibrary = outputLibrary;
 	}
 
-	public long getCompletedAt() {
+	public LocalDateTime getCompletedAt() {
 		return completedAt;
 	}
 
-	public void setCompletedAt(long completedAt) {
+	public void setCompletedAt(LocalDateTime completedAt) {
 		this.completedAt = completedAt;
 	}
 
-	public long getCreatedAt() {
+	public LocalDateTime getCreatedAt() {
 		return createdAt;
 	}
 
-	public void setCreatedAt(long createdAt) {
+	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
 
-	//@JsonIgnore
 	public Subrequest getSubrequest() {
 		return subrequest;
 	}
-	
-	//@JsonIgnore
+
 	public void setSubrequest(Subrequest subrequest) {
 		this.subrequest = subrequest;
 	}
-	
-	/*
-	public int getSubrequestId() {
-		return subrequestId = this.subrequest.getId();
-	}
-	*/
-	public long getStartedAt() {
+
+	public LocalDateTime getStartedAt() {
 		return startedAt;
 	}
 
-	public void setStartedAt(long startedAt) {
+	public void setStartedAt(LocalDateTime startedAt) {
 		this.startedAt = startedAt;
 	}
 

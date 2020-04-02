@@ -6,7 +6,7 @@ public class UserRequest {
 	
 	private int libraryclassId;
 
-	private List<LibraryParams> libraryParamsList;
+	private List<LibraryParams> library;
 
 	
 	public int getLibraryclassId() {
@@ -17,11 +17,11 @@ public class UserRequest {
 		this.libraryclassId = libraryclassId;
 	}
 
-	public List<LibraryParams> getLibraryParamsList() {
-		return libraryParamsList;
+	public List<LibraryParams> getLibrary() {
+		return library;
 	}
 
-	public void setLibraryParamsList(List<LibraryParams> libraryParamsList) {
-		this.libraryParamsList = libraryParamsList;
+	public void setLibrary(List<LibraryParams> library) {
+		this.library = library;
 	}
 }

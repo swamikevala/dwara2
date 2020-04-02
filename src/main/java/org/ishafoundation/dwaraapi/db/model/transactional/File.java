@@ -17,7 +17,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.master.Filetype;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ApplicationFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileTape;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
@@ -34,6 +33,7 @@ public class File {
 	@Column(name="id")
 	private int id;
 	
+	// Many files from the same library
 	@ManyToOne(fetch = FetchType.LAZY)
 	private Library library;
 	
@@ -49,16 +49,10 @@ public class File {
 	@Column(name="deleted")
 	private boolean deleted;
 
-	@Column(name="external_id")
-	private String externalId;
-
 	@OneToOne
 	@JoinColumn(name="file_ref_id")
 	private File fileRef;
 
-	@OneToOne
-	private Filetype filetype;
-    
 	@OneToMany(mappedBy = "file",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
@@ -122,28 +116,12 @@ public class File {
 		this.deleted = deleted;
 	}
 
-	public String getExternalId() {
-		return externalId;
-	}
-
-	public void setExternalId(String externalId) {
-		this.externalId = externalId;
-	}
-
 	public File getFileRef() {
 		return fileRef;
 	}
 
 	public void setFileRef(File fileRef) {
 		this.fileRef = fileRef;
-	}
-
-	public Filetype getFiletype() {
-		return filetype;
-	}
-
-	public void setFiletype(Filetype filetype) {
-		this.filetype = filetype;
 	}
 	
 	@JsonIgnore

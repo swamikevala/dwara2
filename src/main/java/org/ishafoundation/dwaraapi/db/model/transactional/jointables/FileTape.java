@@ -14,6 +14,8 @@ import org.ishafoundation.dwaraapi.db.keys.FileTapeKey;
 import org.ishafoundation.dwaraapi.db.model.master.Tape;
 import org.ishafoundation.dwaraapi.db.model.transactional.File;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /*
  * 
  * References - 
@@ -60,10 +62,12 @@ public class FileTape {
 		this.id = new FileTapeKey(file.getId(), tape.getId());
 	}
 	
+	@JsonIgnore
     public FileTapeKey getId() {
 		return id;
 	}
 
+	@JsonIgnore
 	public void setId(FileTapeKey id) {
 		this.id = id;
 	}

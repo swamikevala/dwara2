@@ -3,9 +3,9 @@ package org.ishafoundation.dwaraapi.controller.master.test;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
-import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
+import org.ishafoundation.dwaraapi.db.dao.master.TaskfiletypeDao;
 import org.ishafoundation.dwaraapi.db.model.master.Extension;
-import org.ishafoundation.dwaraapi.db.model.master.Filetype;
+import org.ishafoundation.dwaraapi.db.model.master.Taskfiletype;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,11 +22,11 @@ public class SetupExtenstionFiletypeController {
 	private ExtensionDao extensionDao;
 
 	@Autowired
-	private FiletypeDao filetypeDao;
+	private TaskfiletypeDao filetypeDao;
 		
     @PostMapping("/insertExtensionFiletype")
     public boolean insertExtensionFiletype(){
-    	Filetype video = filetypeDao.findById(4001).get();
+    	Taskfiletype video = filetypeDao.findById(4001).get();
     	/*
     	Filetype video = new Filetype(4001, "Video");
     	video = filetypeDao.save(video);
@@ -36,7 +36,7 @@ public class SetupExtenstionFiletypeController {
 //    	mp4.setId((long) 1);
 //    	mp4.setName("MP4");
 //    	mp4.setDescription("Some MP4 Description");
-    	mp4.addFiletype(video);
+    	mp4.addTaskfiletype(video);
     	mp4 = extensionDao.save(mp4);
     	
     	/*
@@ -55,17 +55,16 @@ public class SetupExtenstionFiletypeController {
     }    	
     
     @GetMapping("/retrieveExtensionListForAFiletype")
-    public ResponseEntity<List<Extension>> retrieveExtensionListForAFiletype(int filetypeId){
+    public ResponseEntity<List<Extension>> retrieveExtensionListForAFiletype(int taskfiletypeId){
     	// now trying to retrieve all extensions
-    	List<Extension> extensionList = extensionDao.findAllByFiletypesFiletypeId(filetypeId);
-
+    	List<Extension> extensionList = extensionDao.findAllByTaskfiletypesTaskfiletypeId(taskfiletypeId);
     	return ResponseEntity.status(HttpStatus.OK).body(extensionList); 
     }
     
     @GetMapping("/retrieveFiletypeOfAnExtension")
     public ResponseEntity<String> retrieveFiletypeOfAnExtension(String extnAsString){
     	// now trying to retrieve all extensions
-    	Filetype filetype = filetypeDao.findByExtensionsExtensionName(extnAsString);
+    	Taskfiletype filetype = filetypeDao.findByExtensionsExtensionName(extnAsString);
 
     	return ResponseEntity.status(HttpStatus.OK).body(filetype.getName()); 
     } 

@@ -19,6 +19,8 @@ public class Configuration {
 	
 	private String stagingSrcDirRoot;
 
+	private int pageSize;
+	
 	private String sshPrvKeyFileLocation;
 
 	
@@ -68,6 +70,14 @@ public class Configuration {
 
 	public void setStagingSrcDirRoot(String stagingSrcDirRoot) {
 		this.stagingSrcDirRoot = stagingSrcDirRoot;
+	}
+
+	public int getPageSize() {
+		return pageSize;
+	}
+
+	public void setPageSize(int pageSize) {
+		this.pageSize = pageSize;
 	}
 
 	public String getSshPrvKeyFileLocation() {

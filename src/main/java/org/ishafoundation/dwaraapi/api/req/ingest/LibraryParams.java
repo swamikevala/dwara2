@@ -8,10 +8,6 @@ public class LibraryParams{
 
 	private boolean rerun;
 
-	private boolean optimizeTapeAccess;
-
-	private int priority;
-
 	private String oldFilename;
 	
 	private String newFilename;
@@ -41,22 +37,6 @@ public class LibraryParams{
 
 	public void setRerun(boolean rerun) {
 		this.rerun = rerun;
-	}
-
-	public boolean isOptimizeTapeAccess() {
-		return optimizeTapeAccess;
-	}
-
-	public void setOptimizeTapeAccess(boolean optimizeTapeAccess) {
-		this.optimizeTapeAccess = optimizeTapeAccess;
-	}
-
-	public int getPriority() {
-		return priority;
-	}
-
-	public void setPriority(int priority) {
-		this.priority = priority;
 	}
 
 	public String getOldFilename() {

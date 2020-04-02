@@ -7,23 +7,23 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 @Embeddable
-public class ExtensionFiletypeKey implements Serializable {
+public class ExtensionTaskfiletypeKey implements Serializable {
  
 	private static final long serialVersionUID = -620517854806310403L;
 
 	@Column(name = "extension_id")
     private int extensionId;
  
-    @Column(name = "filetype_id")
-    private int filetypeId;
+    @Column(name = "taskfiletype_id")
+    private int taskfiletypeId;
  
-    public ExtensionFiletypeKey() {}
+    public ExtensionTaskfiletypeKey() {}
     
-    public ExtensionFiletypeKey(
+    public ExtensionTaskfiletypeKey(
         int extensionId,
-        int filetypeId) {
+        int taskfiletypeId) {
         this.extensionId = extensionId;
-        this.filetypeId = filetypeId;
+        this.taskfiletypeId = taskfiletypeId;
     }
  
     public int getExtensionId() {
@@ -34,12 +34,12 @@ public class ExtensionFiletypeKey implements Serializable {
 		this.extensionId = extensionId;
 	}
 
-	public int getFiletypeId() {
-		return filetypeId;
+	public int getTaskfiletypeId() {
+		return taskfiletypeId;
 	}
 
-	public void setFiletypeId(int filetypeId) {
-		this.filetypeId = filetypeId;
+	public void setTaskfiletypeId(int taskfiletypeId) {
+		this.taskfiletypeId = taskfiletypeId;
 	}
 
 	@Override
@@ -49,13 +49,13 @@ public class ExtensionFiletypeKey implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        ExtensionFiletypeKey that = (ExtensionFiletypeKey) o;
+        ExtensionTaskfiletypeKey that = (ExtensionTaskfiletypeKey) o;
         return Objects.equals(extensionId, that.extensionId) &&
-               Objects.equals(filetypeId, that.filetypeId);
+               Objects.equals(taskfiletypeId, that.taskfiletypeId);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(extensionId, filetypeId);
+        return Objects.hash(extensionId, taskfiletypeId);
     }
 }

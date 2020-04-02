@@ -30,13 +30,13 @@ public class ObjectMappingTestController {
 
 	@GetMapping
 	@RequestMapping({ "/testMapping" })
-	public ResponseEntity<List<org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest>> testMapping() throws JsonParseException, JsonMappingException, IOException {
-		List<org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest> resourceSubrequestList = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest>();
+	public ResponseEntity<List<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest>> testMapping() throws JsonParseException, JsonMappingException, IOException {
+		List<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest> resourceSubrequestList = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest>();
 		List<Subrequest> subrequestList = subrequestDao.findAllByRequestId(1);
     	for (Iterator<Subrequest> iterator = subrequestList.iterator(); iterator.hasNext();) {
 			Subrequest subrequest = (Subrequest) iterator.next();
 			
-			org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest resourceSubrequest = subrequestEntityResourceMapper.entityToResource(subrequest);
+			org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest resourceSubrequest = subrequestEntityResourceMapper.entityToResource(subrequest);
 			resourceSubrequestList.add(resourceSubrequest);
 
 		}

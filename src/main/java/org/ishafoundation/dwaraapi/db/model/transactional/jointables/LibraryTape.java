@@ -6,13 +6,11 @@ import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.keys.LibraryTapeKey;
-import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.Tape;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 
@@ -39,11 +37,12 @@ public class LibraryTape {
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("tapeId")
 	private Tape tape;
-
+	/*
+	 * TODO - Swami seems to have removed this in confluence or missed out addding it - Verify 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "q_libraryclass_id")
 	private Libraryclass libraryclass;
-	
+	*/
 	@Column(name="block")
 	private int block;
 
@@ -83,7 +82,7 @@ public class LibraryTape {
 	public void setTape(Tape tape) {
 		this.tape = tape;
 	}
-	
+	/*
 	public Libraryclass getLibraryclass() {
 		return libraryclass;
 	}
@@ -91,7 +90,7 @@ public class LibraryTape {
 	public void setLibraryclass(Libraryclass libraryclass) {
 		this.libraryclass = libraryclass;
 	}
-	
+	*/
 	public int getBlock() {
 		return block;
 	}

@@ -12,7 +12,7 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionTaskfiletype;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -34,7 +34,7 @@ public class Extension {
     @OneToMany(mappedBy = "extension",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
-    private List<ExtensionFiletype> filetypes = new ArrayList<>();
+    private List<ExtensionTaskfiletype> taskfiletypes = new ArrayList<>();
 
     public Extension() {
     }
@@ -70,32 +70,32 @@ public class Extension {
 	}
 
 	@JsonIgnore
- 	public List<ExtensionFiletype> getFiletypes() {
-		return filetypes;
+    public List<ExtensionTaskfiletype> getTaskfiletypes() {
+		return taskfiletypes;
 	}
 
 	@JsonIgnore
-	public void setFiletypes(List<ExtensionFiletype> filetypes) {
-		this.filetypes = filetypes;
+	public void setTaskfiletypes(List<ExtensionTaskfiletype> taskfiletypes) {
+		this.taskfiletypes = taskfiletypes;
 	}
-	
-    public void addFiletype(Filetype filetype) {
-        ExtensionFiletype extensionFiletype = new ExtensionFiletype(this, filetype);
-        filetypes.add(extensionFiletype);
-        filetype.getExtensions().add(extensionFiletype);
+
+	public void addTaskfiletype(Taskfiletype taskfiletype) {
+        ExtensionTaskfiletype extensionTaskfiletype = new ExtensionTaskfiletype(this, taskfiletype);
+        taskfiletypes.add(extensionTaskfiletype);
+        taskfiletype.getExtensions().add(extensionTaskfiletype);
     }
     
-    public void removeFiletype(Filetype filetype) {
-        for (Iterator<ExtensionFiletype> iterator = filetypes.iterator();
+    public void removeTaskfiletype(Taskfiletype taskfiletype) {
+        for (Iterator<ExtensionTaskfiletype> iterator = taskfiletypes.iterator();
              iterator.hasNext(); ) {
-            ExtensionFiletype extensionFiletype = iterator.next();
+            ExtensionTaskfiletype extensionTaskfiletype = iterator.next();
  
-            if (extensionFiletype.getExtension().equals(this) &&
-                    extensionFiletype.getFiletype().equals(filetype)) {
+            if (extensionTaskfiletype.getExtension().equals(this) &&
+                    extensionTaskfiletype.getTaskfiletype().equals(taskfiletype)) {
                 iterator.remove();
-                extensionFiletype.getFiletype().getExtensions().remove(extensionFiletype);
-                extensionFiletype.setFiletype(null);
-                extensionFiletype.setExtension(null);
+                extensionTaskfiletype.getTaskfiletype().getExtensions().remove(extensionTaskfiletype);
+                extensionTaskfiletype.setTaskfiletype(null);
+                extensionTaskfiletype.setExtension(null);
             }
         }
     }

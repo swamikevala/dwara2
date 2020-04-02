@@ -1,6 +1,4 @@
-package org.ishafoundation.dwaraapi.entrypoint.resource;
-
-import org.ishafoundation.dwaraapi.db.model.transactional.Library;
+package org.ishafoundation.dwaraapi.entrypoint.resource.ingest;
 
 public class Subrequest{
 

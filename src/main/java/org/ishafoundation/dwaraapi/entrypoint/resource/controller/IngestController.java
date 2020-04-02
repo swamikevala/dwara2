@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.entrypoint.resource.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -29,9 +30,9 @@ import org.ishafoundation.dwaraapi.db.cacheutil.Extns_FiletypeCacheUtil;
 import org.ishafoundation.dwaraapi.db.cacheutil.LibraryclassCacheUtil;
 import org.ishafoundation.dwaraapi.db.cacheutil.RequesttypeCacheUtil;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
-import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.LibraryclassDao;
 import org.ishafoundation.dwaraapi.db.dao.master.RequesttypeDao;
+import org.ishafoundation.dwaraapi.db.dao.master.TaskfiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryclassRequesttypeUserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
@@ -40,7 +41,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.Extension;
-import org.ishafoundation.dwaraapi.db.model.master.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassRequesttypeUser;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
@@ -51,14 +51,14 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
 import org.ishafoundation.dwaraapi.ingest.scan.SourceDirScanner;
 import org.ishafoundation.dwaraapi.job.JobManager;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
-import org.ishafoundation.dwaraapi.utils.EntityToResourceMappingUtils;
 import org.ishafoundation.dwaraapi.utils.JunkFilesMover;
-import org.ishafoundation.dwaraapi.utils.RequestResponseUtils;
+import org.ishafoundation.dwaraapi.utils.ObjectMappingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -105,7 +105,7 @@ public class IngestController {
 	private FileDao fileDao;
 
 	@Autowired
-	private FiletypeDao filetypeDao;
+	private TaskfiletypeDao taskfiletypeDao;
 	
 	@Autowired
 	private JobDao jobDao;
@@ -121,9 +121,6 @@ public class IngestController {
 	
 	@Autowired
 	private JobManager jobManager;
-
-	@Autowired
-	private RequestResponseUtils requestResponseUtils;
 	
 	@Autowired
 	private Configuration configuration;
@@ -138,7 +135,7 @@ public class IngestController {
 	private LibraryclassCacheUtil libraryclassCacheUtil;
 
 	@Autowired
-	private EntityToResourceMappingUtils entityToResourceMappingUtils;
+	private ObjectMappingUtil objectMappingUtil;
 	
     @Autowired
 	private JunkFilesMover junkFilesMover;
@@ -161,15 +158,16 @@ public class IngestController {
 		    @ApiResponse(code = 404, message = "Not Found")
 	})
 	@GetMapping("/ingest/library")
-	public ResponseEntity<List<IngestFile>> getAllIngestableFiles(@RequestParam int libraryclassId) {
+	public ResponseEntity<List<IngestFile>> getAllIngestableFiles(@RequestParam String libraryclass) {
 		List<IngestFile> ingestFileList = new ArrayList<IngestFile>();
 		
-		Libraryclass toBeIngestedLibraryclass = libraryclassDao.findById(libraryclassId).get();
+		Libraryclass toBeIngestedLibraryclass = libraryclassDao.findByName(libraryclass);
+		Requesttype requesttypeObj = requesttypeCacheUtil.getRequesttype(DEFAULT_REQUESTTYPE);
 		String pathPrefix = toBeIngestedLibraryclass.getPathPrefix();
 
 		List<String> scanFolderBasePathList = new ArrayList<String>();
-		Requesttype requesttypeObj = requesttypeCacheUtil.getRequesttype(DEFAULT_REQUESTTYPE);
-		List<LibraryclassRequesttypeUser> libraryclassUserList = libraryclassRequesttypeUserDao.findAllByLibraryclassIdAndRequesttypeId(libraryclassId, requesttypeObj.getId());
+		
+		List<LibraryclassRequesttypeUser> libraryclassUserList = libraryclassRequesttypeUserDao.findAllByLibraryclassIdAndRequesttypeId(toBeIngestedLibraryclass.getId(), requesttypeObj.getId());
 		for (LibraryclassRequesttypeUser libraryclassRequesttypeUser : libraryclassUserList) {
 			scanFolderBasePathList.add(pathPrefix + File.separator + libraryclassRequesttypeUser.getUser().getName());
 		}
@@ -190,24 +188,24 @@ public class IngestController {
 	})
 	@PostMapping("/ingest")
 	//public org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedRequest ingest(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest){
-    public org.ishafoundation.dwaraapi.api.resp.ingest.Request ingest(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest){	
+    public org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request ingest(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest){	
     	boolean isAllValid = true;
-    	org.ishafoundation.dwaraapi.api.resp.ingest.Request response = null;	
+    	org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request response = null;	
     	try {
 	    	 // TODO get this from errortype DB
 	    	String errorType = "Error";
 	    	
 	    	int libraryclassId = userRequest.getLibraryclassId();
 	    	Libraryclass libraryclass = libraryclassCacheUtil.getLibraryclass(libraryclassId);
-	    	int filetypeId = libraryclass.getFiletypeId();
+	    	int filetypeId = libraryclass.getTaskfiletypeId();
 	
 	    	List<IngestFile> ingestFileList = new ArrayList<IngestFile>();
 	    	// Iterating the request - LibraryParams
-	    	List<LibraryParams> libraryParamsList = userRequest.getLibraryParamsList();
+	    	List<LibraryParams> libraryParamsList = userRequest.getLibrary();
 	    	for (Iterator<LibraryParams> iterator = libraryParamsList.iterator(); iterator.hasNext();) {
 	    		LibraryParams nthLibraryParams = iterator.next();
 	    		boolean isExtnSupported = true;
-	    		IngestFile ingestFile = entityToResourceMappingUtils.frameIngestFileObject(nthLibraryParams);
+	    		IngestFile ingestFile = objectMappingUtil.frameIngestFileObject(nthLibraryParams);
 	    		try {
 	    			checkExtensionSupport(nthLibraryParams, filetypeId);
 				} catch (Exception e) {
@@ -238,15 +236,15 @@ public class IngestController {
 	    	}
 	    	
 			if(isAllValid) {
-		    	Requesttype requesttype = requesttypeCacheUtil.getRequesttype(DEFAULT_REQUESTTYPE);
+		    	//Requesttype requesttype = requesttypeCacheUtil.getRequesttype(DEFAULT_REQUESTTYPE);
 	    	
-		    	long requestedAt = System.currentTimeMillis();
 		    	String requestedBy = getUserFromContext();
+		    	
 		    	Request request = new Request();
-		    	request.setRequesttype(requesttype);
+		    	request.setRequesttype(org.ishafoundation.dwaraapi.constants.Requesttype.valueOf(DEFAULT_REQUESTTYPE));
 		    	request.setLibraryclass(libraryclass);
-		    	request.setRequestedAt(requestedAt);
-		    	request.setRequestedBy(requestedBy);
+		    	request.setRequestedAt(LocalDateTime.now());
+		    	request.setUser(userDao.findByName(requestedBy));
 		    	logger.debug("DB Request Creation");
 		    	request = requestDao.save(request);
 		    	int requestId = request.getId();
@@ -254,17 +252,17 @@ public class IngestController {
 	
 		    	// Updating the ResponseHeaderWrappedRequest subrequest
 		    	//List<org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest> responseHeaderWrappedSubrequest = new ArrayList<org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest>();
-		    	List<org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest> responseSubrequestList = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest>();
+		    	List<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest> responseSubrequestList = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest>();
 	
 		    	for (Iterator<LibraryParams> subrequestListIterator = libraryParamsList.iterator(); subrequestListIterator.hasNext();) {
 		    		LibraryParams nthLibraryParams = subrequestListIterator.next();
 					//org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest subrequestResp = ingest_internal(request, nthSubrequest);
-					org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest subrequestResp = ingest_internal(request, nthLibraryParams);
+					org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest subrequestResp = ingest_internal(request, nthLibraryParams);
 					responseSubrequestList.add(subrequestResp);
 		    	}
 	
 		    	//org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedRequest response = requestResponseUtils.frameWrappedRequestObjectForResponse(request, responseSubrequestList);
-		    	response = requestResponseUtils.frameRequestObjectForResponse(request);
+		    	response = objectMappingUtil.frameRequestObjectForResponse(request);
 		    	response.setSubrequestList(responseSubrequestList);
 			}
 			else {
@@ -295,7 +293,7 @@ public class IngestController {
      * @return
      * @throws Exception with the list of unsupported extensions...
      */
-    private void checkExtensionSupport(LibraryParams ingestRequestParams, int filetypeId) throws Exception{
+    private void checkExtensionSupport(LibraryParams ingestRequestParams, int taskfiletypeId) throws Exception{
     	// Step 0 - Exclude the junk files...
 		List<Pattern> excludedFileNamesRegexList = new ArrayList<Pattern>();
 		for (int i = 0; i < configuration.getJunkFilesFinderRegexPatternList().length; i++) {
@@ -304,7 +302,7 @@ public class IngestController {
 		}
     	
     	// Step 1 - get all supported extensions in the system
-		List<Extension> extensionList = extensionDao.findAllByFiletypesFiletypeId(filetypeId);
+		List<Extension> extensionList = extensionDao.findAllByTaskfiletypesTaskfiletypeId(taskfiletypeId);
 		Set<String> supportedExtns =  new TreeSet<String>();
 		for (Extension extension : extensionList) {
 			supportedExtns.add(extension.getName().toUpperCase());
@@ -394,12 +392,12 @@ public class IngestController {
 	 * 
 	 */
 	//private org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest ingest_internal(Request request, org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams systemGenRequest){
-    private org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest ingest_internal(Request request, org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams systemGenRequest){
+    private org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest ingest_internal(Request request, org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams libraryParams){
     	
-    	String oldFileName = systemGenRequest.getOldFilename();
-    	String newFileName = systemGenRequest.getNewFilename();
+    	String oldFileName = libraryParams.getOldFilename();
+    	String newFileName = libraryParams.getNewFilename();
     	
-    	String sourcePath = systemGenRequest.getSourcePath();
+    	String sourcePath = libraryParams.getSourcePath();
     	String libraryFileName = oldFileName;
         if(StringUtils.isNotBlank(newFileName) && !oldFileName.equals(newFileName)){
         	libraryFileName = newFileName;
@@ -409,7 +407,7 @@ public class IngestController {
     	// STEP 1 - Moves the file from ReadyToIngest directory to Staging directory
     	File libraryFileInStagingDir = null;
     	try {
-    		libraryFileInStagingDir = moveFileToStaging(sourcePath, oldFileName, libraryFileName, systemGenRequest.isRerun());
+    		libraryFileInStagingDir = moveFileToStaging(sourcePath, oldFileName, libraryFileName, libraryParams.isRerun());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -429,14 +427,12 @@ public class IngestController {
     	Subrequest subrequest = new Subrequest();
     	subrequest.setNewFilename(newFileName);
     	subrequest.setOldFilename(oldFileName);
-    	subrequest.setOptimizeTapeAccess(true); // TODO Hardcoded for now... is it not possible to have this set to false for ingest???
-    	subrequest.setPrevSequenceCode(systemGenRequest.getPrevSequenceCode());
-    	subrequest.setPriority(systemGenRequest.getPriority());
+    	subrequest.setPrevSequenceCode(libraryParams.getPrevSequenceCode());
     	subrequest.setRequest(request);
-    	subrequest.setRerun(systemGenRequest.isRerun());
+    	subrequest.setRerun(libraryParams.isRerun());
     	int rerunNo = 0; // TODO : Hardcoded for now
     	subrequest.setRerunNo(rerunNo);
-    	subrequest.setSkipTasks(systemGenRequest.getSkipTasks());
+    	subrequest.setSkipTasks(libraryParams.getSkipTasks());
     	subrequest.setSourcePath(sourcePath);
     	subrequest.setStatus(status);
 
@@ -449,7 +445,7 @@ public class IngestController {
     	library.setFileStructureMd5("someFileStructureMd5Value"); // TODO : Hardcoded for now
     	library.setLibraryclass(request.getLibraryclass());
     	library.setName(newFileName);
-    	library.setqLatestSubrequestId(subrequest.getId());
+    	library.setqLatestSubrequest(subrequest);
     	logger.debug("DB Library Creation");  
     	library = libraryDao.save(library);
     	int libraryId = library.getId();
@@ -465,7 +461,6 @@ public class IngestController {
 			org.ishafoundation.dwaraapi.db.model.transactional.File nthFileRowToBeInserted = new org.ishafoundation.dwaraapi.db.model.transactional.File();
 			nthFileRowToBeInserted.setPathname(filePath);
 			nthFileRowToBeInserted.setCrc(getCrc(file));
-			nthFileRowToBeInserted.setFiletype(getFiletype(file));
 			nthFileRowToBeInserted.setSize(size);
 			nthFileRowToBeInserted.setLibrary(library);
 			toBeAddedFileTableEntries.add(nthFileRowToBeInserted);			
@@ -488,7 +483,7 @@ public class IngestController {
     	
     	// TODO Handle failures - systemGeneratedSubRequestRespForResponse.setResponseCode(500);
     	//return requestResponseUtils.frameWrappedSubrequestObjectForResponse(subrequest, library);
-    	return requestResponseUtils.frameSubrequestObjectForResponse(subrequest);
+    	return objectMappingUtil.frameSubrequestObjectForResponse(subrequest);
     }
 	
 
@@ -537,18 +532,18 @@ public class IngestController {
     }
 
 	private String getUserFromContext() {
-		return "";//SecurityContextHolder.getContext().getAuthentication().getName();
+		return SecurityContextHolder.getContext().getAuthentication().getName();
 	}
 	
-	private Filetype getFiletype(File file) {
-		Filetype filetype = null;
-		if(file.isFile()) {
-			String extn = FilenameUtils.getExtension(file.getName()).toUpperCase();
-			
-			filetype = filetypeDao.findByExtensionsExtensionName(extn); // TODO : extns_FiletypeCacheUtil.getExtns_FiletypeMap().get(extn);
-		}
-		return filetype;
-	}
+//	private Taskfiletype getTaskfiletype(File file) {
+//		Taskfiletype taskfiletype = null;
+//		if(file.isFile()) {
+//			String extn = FilenameUtils.getExtension(file.getName()).toUpperCase();
+//			
+//			taskfiletype = taskfiletypeDao.findByExtensionsExtensionName(extn); // TODO : extns_FiletypeCacheUtil.getExtns_FiletypeMap().get(extn);
+//		}
+//		return taskfiletype;
+//	}
 	
 	private String getCrc(File file) {
 		return "crc:TODO";

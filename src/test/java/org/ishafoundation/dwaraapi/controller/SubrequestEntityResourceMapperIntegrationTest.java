@@ -33,7 +33,7 @@ public class SubrequestEntityResourceMapperIntegrationTest {
     	for (Iterator<Subrequest> iterator = subrequestList.iterator(); iterator.hasNext();) {
 			Subrequest subrequest = (Subrequest) iterator.next();
 			
-			org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest resourceSubrequest = subrequestEntityResourceMapper.entityToResource(subrequest);
+			org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest resourceSubrequest = subrequestEntityResourceMapper.entityToResource(subrequest);
 			
 			ObjectMapper mapper = new ObjectMapper(); 
 			mapper.enable(SerializationFeature.INDENT_OUTPUT); 

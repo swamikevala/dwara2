@@ -10,9 +10,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.keys.ExtensionFiletypeKey;
+import org.ishafoundation.dwaraapi.db.keys.ExtensionTaskfiletypeKey;
 import org.ishafoundation.dwaraapi.db.model.master.Extension;
-import org.ishafoundation.dwaraapi.db.model.master.Filetype;
+import org.ishafoundation.dwaraapi.db.model.master.Taskfiletype;
 
 /*
  * 
@@ -23,39 +23,39 @@ import org.ishafoundation.dwaraapi.db.model.master.Filetype;
  * 
  * 
 */
-@Entity(name = "ExtensionFiletype")
-@Table(name="extension_filetype")
-public class ExtensionFiletype {
+@Entity(name = "ExtensionTaskfiletype")
+@Table(name="extension_taskfiletype")
+public class ExtensionTaskfiletype {
 
 	@EmbeddedId
-	private ExtensionFiletypeKey id;
+	private ExtensionTaskfiletypeKey id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("extensionId")
 	private Extension extension;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("filetypeId")
-	private Filetype filetype;
+    @MapsId("taskfiletypeId")
+	private Taskfiletype taskfiletype;
 	
 	@Column(name="sidecar")
 	private boolean sidecar;
 
-	public ExtensionFiletype() {
+	public ExtensionTaskfiletype() {
 		
 	}
 	
-	public ExtensionFiletype(Extension extension, Filetype filetype) {
+	public ExtensionTaskfiletype(Extension extension, Taskfiletype taskfiletype) {
 		this.extension = extension;
-		this.filetype = filetype;
-		this.id = new ExtensionFiletypeKey(extension.getId(), filetype.getId());
+		this.taskfiletype = taskfiletype;
+		this.id = new ExtensionTaskfiletypeKey(extension.getId(), taskfiletype.getId());
 	}
 	
-    public ExtensionFiletypeKey getId() {
+    public ExtensionTaskfiletypeKey getId() {
 		return id;
 	}
 
-	public void setId(ExtensionFiletypeKey id) {
+	public void setId(ExtensionTaskfiletypeKey id) {
 		this.id = id;
 	}
 
@@ -67,12 +67,12 @@ public class ExtensionFiletype {
 		this.extension = extension;
 	}
 
-	public Filetype getFiletype() {
-		return filetype;
+	public Taskfiletype getTaskfiletype() {
+		return taskfiletype;
 	}
 
-	public void setFiletype(Filetype filetype) {
-		this.filetype = filetype;
+	public void setTaskfiletype(Taskfiletype taskfiletype) {
+		this.taskfiletype = taskfiletype;
 	}
 
 	public boolean isSidecar() {
@@ -90,13 +90,13 @@ public class ExtensionFiletype {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        ExtensionFiletype that = (ExtensionFiletype) o;
+        ExtensionTaskfiletype that = (ExtensionTaskfiletype) o;
         return Objects.equals(extension, that.extension) &&
-               Objects.equals(filetype, that.filetype);
+               Objects.equals(taskfiletype, that.taskfiletype);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(extension, filetype);
+        return Objects.hash(extension, taskfiletype);
     }
 }

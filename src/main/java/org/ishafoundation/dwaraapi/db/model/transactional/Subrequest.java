@@ -1,7 +1,6 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 		
 import javax.persistence.Column;
-import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -12,7 +11,6 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.constants.Status;
-import org.ishafoundation.dwaraapi.constants.StatusAttributeConverter;
 
 
 
@@ -25,13 +23,9 @@ public class Subrequest {
 	@Column(name="id")
 	private int id;
 	
+	// Many Subrequests in a request
 	@ManyToOne(fetch = FetchType.LAZY)
     private Request request;
-	
-	/*
-	@Transient
-	private int requestId;
-	*/
 	
 	@Column(name="file_id")
 	private int fileId;
@@ -39,7 +33,7 @@ public class Subrequest {
 	@Column(name="source_path")
 	private String sourcePath;
 
-	@Convert(converter = StatusAttributeConverter.class)
+	@Column(name="status_id")
 	private Status status;
 
 	@Column(name="skip_tasks")
@@ -50,9 +44,6 @@ public class Subrequest {
 
 	@Column(name="rerun_no")
 	private int rerunNo;
-
-	@Column(name="optimize_tape_access")
-	private boolean optimizeTapeAccess;
 
 	@Column(name="priority")
 	private int priority;
@@ -139,14 +130,6 @@ public class Subrequest {
 
 	public void setRerunNo(int rerunNo) {
 		this.rerunNo = rerunNo;
-	}
-
-	public boolean isOptimizeTapeAccess() {
-		return optimizeTapeAccess;
-	}
-
-	public void setOptimizeTapeAccess(boolean optimizeTapeAccess) {
-		this.optimizeTapeAccess = optimizeTapeAccess;
 	}
 
 	public int getPriority() {

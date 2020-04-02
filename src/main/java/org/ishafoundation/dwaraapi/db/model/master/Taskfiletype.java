@@ -11,14 +11,14 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionTaskfiletype;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
-@Entity(name="Filetype")
-@Table(name="filetype")
-public class Filetype {
+@Entity(name="Taskfiletype")
+@Table(name="taskfiletype")
+public class Taskfiletype {
 
 	@Id
 	@Column(name="id")
@@ -27,16 +27,16 @@ public class Filetype {
 	@Column(name="name")
 	private String name;
 
-    @OneToMany(mappedBy = "filetype",
+    @OneToMany(mappedBy = "taskfiletype",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
-    private List<ExtensionFiletype> extensions = new ArrayList<>();
+    private List<ExtensionTaskfiletype> extensions = new ArrayList<>();
 	
-    public Filetype() {
+    public Taskfiletype() {
     	
     }
     
-    public Filetype(Integer id, String name) {
+    public Taskfiletype(Integer id, String name) {
     	this.id = id;
     	this.name = name;
     }
@@ -58,12 +58,12 @@ public class Filetype {
 	}
 
 	@JsonIgnore
-	public List<ExtensionFiletype> getExtensions() {
+	public List<ExtensionTaskfiletype> getExtensions() {
 		return extensions;
 	}
 
 	@JsonIgnore
-	public void setExtensions(List<ExtensionFiletype> extensions) {
+	public void setExtensions(List<ExtensionTaskfiletype> extensions) {
 		this.extensions = extensions;
 	}
 	/*
@@ -95,7 +95,7 @@ public class Filetype {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        Filetype filetype = (Filetype) o;
+        Taskfiletype filetype = (Taskfiletype) o;
         return Objects.equals(name, filetype.name);
     }
  

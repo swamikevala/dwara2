@@ -41,7 +41,7 @@ public class Task {
 	// Pubvideo - video
 	// Privvideo - video
 	@ManyToOne(fetch = FetchType.LAZY)
-	private Filetype filetype;
+	private Taskfiletype taskfiletype;
 	
     @OneToMany(mappedBy = "task",
             cascade = CascadeType.MERGE,
@@ -80,12 +80,12 @@ public class Task {
 		this.maxErrors = maxErrors;
 	}
 
-	public Filetype getFiletype() {
-		return filetype;
+	public Taskfiletype getTaskfiletype() {
+		return taskfiletype;
 	}
 
-	public void setFiletype(Filetype filetype) {
-		this.filetype = filetype;
+	public void setTaskfiletype(Taskfiletype taskfiletype) {
+		this.taskfiletype = taskfiletype;
 	}
 
 	@JsonIgnore

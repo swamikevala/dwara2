@@ -8,6 +8,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.keys.LibraryclassTapesetKey;
@@ -33,7 +34,8 @@ public class LibraryclassTapeset {
 	@Column(name="copy_number")
 	private int copyNumber;
 
-	@ManyToOne(fetch = FetchType.LAZY)
+	//associated task that does the copy - one combination of LibraryclassTapeset to one task - so OnetoOne
+	@OneToOne(fetch = FetchType.LAZY)
 	private Task task;
 
 	@Column(name="encrypted")

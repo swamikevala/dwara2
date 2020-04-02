@@ -2,7 +2,7 @@ package org.ishafoundation.dwaraapi.controller.master.test;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
+import org.ishafoundation.dwaraapi.db.dao.master.TaskfiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.LibraryclassDao;
 import org.ishafoundation.dwaraapi.db.dao.master.PrioritybandDao;
 import org.ishafoundation.dwaraapi.db.dao.master.PropertyDao;
@@ -17,7 +17,7 @@ import org.ishafoundation.dwaraapi.db.dao.master.TasktypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.RequesttypeUserDao;
 import org.ishafoundation.dwaraapi.db.keys.RequesttypeUserKey;
-import org.ishafoundation.dwaraapi.db.model.master.Filetype;
+import org.ishafoundation.dwaraapi.db.model.master.Taskfiletype;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.Priorityband;
 import org.ishafoundation.dwaraapi.db.model.master.Property;
@@ -48,7 +48,7 @@ public class DBTestController extends SetupExtenstionFiletypeController{
 
 
 	@Autowired
-	private FiletypeDao filetypeDao;
+	private TaskfiletypeDao filetypeDao;
 	
 	@Autowired
 	private TargetvolumeDao targetvolumeDao;
@@ -92,7 +92,7 @@ public class DBTestController extends SetupExtenstionFiletypeController{
     
 	@PostMapping("/insertLibraryclass")
 	public ResponseEntity<Libraryclass> insertLibraryclass() throws Exception{
-		Filetype filetype = filetypeDao.findById(4001).get();
+		Taskfiletype filetype = filetypeDao.findById(4001).get();
 		
 		
 		Libraryclass libraryclass = createLibraryclass(filetype);
@@ -169,9 +169,9 @@ public class DBTestController extends SetupExtenstionFiletypeController{
 		//return 
 	}
 	
-	private Task createTask(Filetype filetype) {
+	private Task createTask(Taskfiletype filetype) {
 		Task task = new Task();
-		task.setFiletype(filetype);
+		task.setTaskfiletype(filetype);
 		task.setId(18001);
 		task.setMaxErrors(2);
 		task.setName("Task 1");
@@ -185,9 +185,9 @@ public class DBTestController extends SetupExtenstionFiletypeController{
 		//return taskDao.save(task);
 	}
 	
-	private Task createDependentTask(Filetype filetype) {
+	private Task createDependentTask(Taskfiletype filetype) {
 		Task task = new Task();
-		task.setFiletype(filetype);
+		task.setTaskfiletype(filetype);
 		task.setId(18002);
 		task.setMaxErrors(2);
 		task.setName("Dependent Task on Task 1");
@@ -225,7 +225,7 @@ public class DBTestController extends SetupExtenstionFiletypeController{
 		return taskset;
 	}
 
-	protected Libraryclass createLibraryclass(Filetype filetype){
+	protected Libraryclass createLibraryclass(Taskfiletype filetype){
 		Libraryclass libraryclass = new Libraryclass();
 		libraryclass.setId(5001);
 		//libraryclass.setLibraryclassTargetvolume(libraryclassTargetvolume);
@@ -239,11 +239,11 @@ public class DBTestController extends SetupExtenstionFiletypeController{
 		
 		libraryclass.setSource(true);
 
-		libraryclass.setFiletype(filetype);
+		libraryclass.setTaskfiletype(filetype);
 		Task task = createTask(filetype);
 		Task dependentTask = createDependentTask(filetype);
 		
-		libraryclass.setTask(task);
+		libraryclass.setGeneratorTask(task);
 	
 		Taskset taskset = createTaskset();
 		taskset.addTask(task, null);
@@ -412,7 +412,7 @@ public class DBTestController extends SetupExtenstionFiletypeController{
 //    	extensionFiletype1.setId(extensionFiletypeKey1);
 //    	extensionFiletype1.setSidecar(true);
 //    	extensionFiletype1.setExtension(extension1);
-//    	extensionFiletype1.setFiletype(filetype1);
+//    	extensionFiletype1.setTaskfiletype(filetype1);
 //    	extensionFiletypeDao.save(extensionFiletype1);
 //    	
 //    	

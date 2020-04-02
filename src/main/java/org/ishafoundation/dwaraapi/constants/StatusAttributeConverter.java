@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.constants;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
-@Converter
+@Converter(autoApply = true)
 public class StatusAttributeConverter implements AttributeConverter<Status, Integer> {
 
 	@Override
@@ -13,29 +13,29 @@ public class StatusAttributeConverter implements AttributeConverter<Status, Inte
 
 		switch (attribute) {
 		case queued:
-			return 1;
+			return 10001;
 		case in_progress:
-			return 2;
+			return 10002;
 		case completed:
-			return 3;
+			return 10003;
 		case partially_completed:
-			return 4;
+			return 10004;
 		case completed_with_failures:
-			return 5;
+			return 10005;
 		case on_hold:
-			return 6;
+			return 10006;
 		case skipped:
-			return 7;
+			return 10007;
 		case cancelled:
-			return 8;
+			return 10008;
 		case aborted:
-			return 9;
+			return 10009;
 		case deleted:
-			return 10;
+			return 10010;
 		case failed:
-			return 11;
+			return 10011;
 		case marked_completed:
-			return 12;
+			return 10012;
 
 		default:
 			throw new IllegalArgumentException(attribute + " not supported.");
@@ -48,29 +48,29 @@ public class StatusAttributeConverter implements AttributeConverter<Status, Inte
 			return null;
 
 		switch (dbData) {
-		case 1:
+		case 10001:
 			return Status.queued;
-		case 2:
+		case 10002:
 			return Status.in_progress;
-		case 3:
+		case 10003:
 			return Status.completed;
-		case 4:
+		case 10004:
 			return Status.partially_completed;
-		case 5:
+		case 10005:
 			return Status.completed_with_failures;
-		case 6:
+		case 10006:
 			return Status.on_hold;
-		case 7:
+		case 10007:
 			return Status.skipped;
-		case 8:
+		case 10008:
 			return Status.cancelled;
-		case 9:
+		case 10009:
 			return Status.aborted;
-		case 10:
+		case 10010:
 			return Status.deleted;
-		case 11:
+		case 10011:
 			return Status.failed;
-		case 12:
+		case 10012:
 			return Status.marked_completed;
 
 		default:

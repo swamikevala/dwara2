@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.entrypoint.resource;
+package org.ishafoundation.dwaraapi.entrypoint.resource.ingest;
 
 import java.util.List;
 

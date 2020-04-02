@@ -3,10 +3,14 @@ package org.ishafoundation.dwaraapi.utils;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams;
+import org.ishafoundation.dwaraapi.api.resp.ingest.IngestFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
-import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
+import org.ishafoundation.dwaraapi.entrypoint.resource.mapper.MiscObjectMapper;
+import org.ishafoundation.dwaraapi.entrypoint.resource.mapper.Subrequest_EntityToWithJobDetailsResource_Mapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 // TODO _ Check on the 
@@ -14,25 +18,19 @@ import org.springframework.stereotype.Component;
 // https://www.baeldung.com/mapstruct
 // https://www.baeldung.com/java-performance-mapping-frameworks
 @Component
-public class RequestResponseUtils {
-
-//	public org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedRequest frameWrappedRequestObjectForResponse(Request request, List<org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest> subrequestRespListForResponse){
-//		org.ishafoundation.dwaraapi.api.resp.ingest.RequestWithWrappedSubrequest requestForResponse = new org.ishafoundation.dwaraapi.api.resp.ingest.RequestWithWrappedSubrequest();
-//
-//		requestForResponse.setRequestId(request.getId());
-//		requestForResponse.setRequesttypeId(request.getRequesttype().getId());
-//		requestForResponse.setRequestedAt(request.getRequestedAt());
-//		requestForResponse.setRequestedBy(request.getRequestedBy());
-//		requestForResponse.setLibraryclassId(request.getLibraryclass().getId());		
-//		requestForResponse.setSubrequestResp(subrequestRespListForResponse);
-//		
-//		org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedRequest response = new org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedRequest();
-//		response.setResponseCode(200);
-//		response.setResponseMessage("Som message");
-//		response.setResponseType("some responseType");
-//		response.setRequest(requestForResponse);
-//		return response;
-//	}
+public class ObjectMappingUtil {
+	
+    @Autowired
+    Subrequest_EntityToWithJobDetailsResource_Mapper subrequest_EntityToWithJobDetailsResource_Mapper;
+    
+    @Autowired
+    MiscObjectMapper miscObjectMapper; 
+    
+	
+	public IngestFile frameIngestFileObject(LibraryParams libraryParams) {
+		IngestFile ingestFile = miscObjectMapper.libraryParamsToIngestFile(libraryParams);
+		return ingestFile;
+	}
 	
 	public org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request frameRequestObjectForResponse(Request request){
 		org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request requestForResponse = new org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request();
@@ -63,20 +61,6 @@ public class RequestResponseUtils {
 		return requestForResponse;
 	}
 	
-//	public org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest frameWrappedSubrequestObjectForResponse(Subrequest subrequest, Library library){
-//
-//
-//		org.ishafoundation.dwaraapi.api.resp.ingest.Subrequest subRequestForResponse = frameSubrequestObjectForResponse(subrequest, library);
-//				
-//		org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest subRequestWrapperRespForResponse = new org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest();
-//		
-//		subRequestWrapperRespForResponse.setResponseCode(200);
-//		subRequestWrapperRespForResponse.setResponseMessage("Resp message");
-//		subRequestWrapperRespForResponse.setResponseType("Resp type");
-//		subRequestWrapperRespForResponse.setSubrequest(subRequestForResponse);
-//		return subRequestWrapperRespForResponse;
-//	}
-	
 	public org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest frameSubrequestObjectForResponse(Subrequest subrequest){
 		
 		org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest subRequestForResponse = frameSubrequestObjectWithJobDetailsForResponse(subrequest, null);
@@ -86,26 +70,8 @@ public class RequestResponseUtils {
 	
 	public org.ishafoundation.dwaraapi.entrypoint.resource.ingest.SubrequestWithJobDetails frameSubrequestObjectWithJobDetailsForResponse(Subrequest subrequest,  List<Job> jobList){
 
-		org.ishafoundation.dwaraapi.entrypoint.resource.ingest.SubrequestWithJobDetails subRequestForResponse = new org.ishafoundation.dwaraapi.entrypoint.resource.ingest.SubrequestWithJobDetails();
-
-
+		org.ishafoundation.dwaraapi.entrypoint.resource.ingest.SubrequestWithJobDetails subRequestForResponse = subrequest_EntityToWithJobDetailsResource_Mapper.entityToResource(subrequest);
 		
-//		Library library = subrequest.getLibrary();
-//		subRequestForResponse.setLibrary(library);
-		
-		subRequestForResponse.setId(subrequest.getId());
-		subRequestForResponse.setNewFilename(subrequest.getNewFilename());
-		subRequestForResponse.setOldFilename(subrequest.getOldFilename());
-		//subRequestForResponse.setOptimizeTapeAccess(subrequest.isOptimizeTapeAccess());
-		subRequestForResponse.setPrevSequenceCode(subrequest.getPrevSequenceCode());
-		subRequestForResponse.setPriority(subrequest.getPriority());
-		subRequestForResponse.setRequestId(subrequest.getRequest().getId());
-		subRequestForResponse.setRerun(subrequest.isRerun());
-		subRequestForResponse.setRerunNo(subrequest.getRerunNo());
-		subRequestForResponse.setSkipTasks(subrequest.getSkipTasks());
-		subRequestForResponse.setSourcePath(subrequest.getSourcePath());
-		subRequestForResponse.setStatus(subrequest.getStatus().toString());
-
 		if(jobList != null) {
 			List<org.ishafoundation.dwaraapi.api.resp.ingest.Job> jobListForResponse = new ArrayList<org.ishafoundation.dwaraapi.api.resp.ingest.Job>();
 			for (Job job : jobList) {

@@ -8,7 +8,7 @@ import java.util.List;
 import org.ishafoundation.dwaraapi.api.exception.DwaraException;
 import org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams;
 import org.ishafoundation.dwaraapi.api.resp.ingest.IngestFile;
-import org.ishafoundation.dwaraapi.utils.EntityToResourceMappingUtils;
+import org.ishafoundation.dwaraapi.utils.ObjectMappingUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,13 +24,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ExceptionHandlingTestController {
 	
 	@Autowired
-	private EntityToResourceMappingUtils entityToResourceMappingUtils;
+	private ObjectMappingUtil entityToResourceMappingUtils;
 	
 	@PostMapping("/dryyyThis")
-    public org.ishafoundation.dwaraapi.api.resp.ingest.Request dryyyThis(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest) throws IOException{	
+    public org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request dryyyThis(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest) throws IOException{	
 		
 		List<IngestFile> ingestFileList = new ArrayList<IngestFile>();
-    	List<LibraryParams> libraryParamsList = userRequest.getLibraryParamsList();
+    	List<LibraryParams> libraryParamsList = userRequest.getLibrary();
     	for (Iterator<LibraryParams> iterator = libraryParamsList.iterator(); iterator.hasNext();) {
     		LibraryParams nthLibraryParams = iterator.next();
     		IngestFile ingestFile = entityToResourceMappingUtils.frameIngestFileObject(nthLibraryParams);

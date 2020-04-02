@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 		
+import java.time.LocalDateTime;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -10,9 +12,12 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import org.ishafoundation.dwaraapi.constants.Requesttype;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.Targetvolume;
-import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.User;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
 @Entity
@@ -24,17 +29,18 @@ public class Request {
 	@Column(name="id")
 	private int id;
 	
-	@OneToOne
+	@Column(name="requesttype_id")
 	private Requesttype requesttype;
 
 	@OneToOne(optional = true)
 	private Libraryclass libraryclass;
 
-	@Column(name="requested_by")
-	private String requestedBy;
-
+	// One request can be raised by only one user
+	@OneToOne(fetch = FetchType.LAZY)
+	private User user;
+	
 	@Column(name="requested_at")
-	private long requestedAt;
+	private LocalDateTime requestedAt;
 
 	@OneToOne(optional = true)
 	private Targetvolume targetvolume;
@@ -45,25 +51,25 @@ public class Request {
 	@Column(name="copy_number")
 	private int copyNumber;	
 
-	// request_ref_id (fk)
+	
 	// Many Requests like hold and release can all be referencing the same parent request
-	// TODO or we act only on the previous subrequest always?
+	// holds the parent request that needs to be actioned(secondary actions like cancel etc.,)
+	//@Column(name="request_ref_id")
 	@ManyToOne(fetch = FetchType.LAZY)
     private Request requestRef;
 
-	// when a primary/secondary subrequest is requested to be canceled/held/release
-	// subrequest_id (fk)
-	// TODO for now its many to one - need to revisit
-	@ManyToOne(fetch = FetchType.LAZY)
+	// Many Requests on a subrequest like deleted/cancelled etc., are possible - Hence ManyToOne
+	// holds the primary subrequest that is requested to be canceled/held/release
+	@ManyToOne(fetch = FetchType.LAZY) 
     private Subrequest subrequest;
 	
 	//library_id (fk)
-	// Eg. rename requested on a library
-	@OneToOne
+	// Eg. Many rename requests could have been requested on the same library
+	@ManyToOne(fetch = FetchType.LAZY) 
 	private Library library;
 	
 	//job_id (fk)
-	// Eg. job aborted
+	// Eg. job abortion - only one job per request...
 	@OneToOne
 	private Job job;
 	
@@ -92,19 +98,25 @@ public class Request {
 		this.libraryclass = libraryclass;
 	}
 
-	public String getRequestedBy() {
-		return requestedBy;
+	@JsonIgnore
+	public User getUser() {
+		return user;
 	}
 
-	public void setRequestedBy(String requestedBy) {
-		this.requestedBy = requestedBy;
+	@JsonIgnore
+	public void setUser(User user) {
+		this.user = user;
 	}
 
-	public long getRequestedAt() {
+	public int getUserId() {
+		return user.getId();
+	}
+	
+	public LocalDateTime getRequestedAt() {
 		return requestedAt;
 	}
 
-	public void setRequestedAt(long requestedAt) {
+	public void setRequestedAt(LocalDateTime requestedAt) {
 		this.requestedAt = requestedAt;
 	}
 

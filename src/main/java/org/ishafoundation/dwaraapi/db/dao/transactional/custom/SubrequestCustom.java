@@ -1,13 +1,12 @@
 package org.ishafoundation.dwaraapi.db.dao.transactional.custom;
 
-import java.util.List;
 import java.util.Set;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
+import org.ishafoundation.dwaraapi.model.WrappedSubrequestList;
 
 public interface SubrequestCustom {
 
-	List<Subrequest> findAllByRequesttypeAndStatusIds(int requesttypeId, Set<Integer> statusId);
+	WrappedSubrequestList findAllByRequesttypeIdAndStatusIds(Integer requesttypeId, Set<Integer> statusIds, int pageNumber, int pageSize);
 	
-	List<Subrequest> findAllLatestByRequesttypeAndStatusIds(int requesttypeId, Set<Integer> statusId);
+	WrappedSubrequestList findAllLatestByRequesttypeAndStatusIds(int requesttypeId, Set<Integer> statusIds, int pageNumber, int pageSize);
 }

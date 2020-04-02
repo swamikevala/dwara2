@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.api.resp;
+package org.ishafoundation.dwaraapi.entrypoint.resource;
 
 public class CommonResponse {
 	

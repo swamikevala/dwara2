@@ -1,20 +1,19 @@
-package org.ishafoundation.dwaraapi.api.resp.ingest;
+package org.ishafoundation.dwaraapi.entrypoint.resource.ingest;
 
+import java.time.LocalDateTime;
 import java.util.List;
-
-import org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest;
 
 public class Request {
 	
 	private int requestId;
 	
-	private int requesttypeId;
+	private String requesttype;
 
-	private int libraryclassId;
+	private String libraryclassName;
 
 	private String requestedBy;
 
-	private long requestedAt;
+	private LocalDateTime requestedAt;
 	
 	private Integer[] permittedRequestTypeIds;
 	
@@ -29,20 +28,20 @@ public class Request {
 		this.requestId = requestId;
 	}
 
-	public int getRequesttypeId() {
-		return requesttypeId;
+	public String getRequesttype() {
+		return requesttype;
 	}
 
-	public void setRequesttypeId(int requesttypeId) {
-		this.requesttypeId = requesttypeId;
+	public void setRequesttype(String requesttype) {
+		this.requesttype = requesttype;
 	}
 
-	public int getLibraryclassId() {
-		return libraryclassId;
+	public String getLibraryclassName() {
+		return libraryclassName;
 	}
 
-	public void setLibraryclassId(int libraryclassId) {
-		this.libraryclassId = libraryclassId;
+	public void setLibraryclassName(String libraryclassName) {
+		this.libraryclassName = libraryclassName;
 	}
 
 	public String getRequestedBy() {
@@ -53,11 +52,11 @@ public class Request {
 		this.requestedBy = requestedBy;
 	}
 
-	public long getRequestedAt() {
+	public LocalDateTime getRequestedAt() {
 		return requestedAt;
 	}
 
-	public void setRequestedAt(long requestedAt) {
+	public void setRequestedAt(LocalDateTime requestedAt) {
 		this.requestedAt = requestedAt;
 	}
 

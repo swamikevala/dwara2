@@ -8,6 +8,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -50,15 +51,15 @@ public class Libraryclass {
 	// Pubvideo - video
 	// Privvideo - video
 	@ManyToOne(fetch = FetchType.LAZY)
-	private Filetype filetype;
+	private Taskfiletype taskfiletype;
 
 	// unidirectional reference
 	// task resposible for generating the library class (only applicable where source = false)
 	// Can one task like proxy gen - can generate multiple library classes like mezz and preview - No tasks are separate now...
 	// One libraryclass to one task only
 	@OneToOne(optional = true)
-	//@JoinColumn(name="task_id")
-	private Task task;
+	@JoinColumn(name="task_id")
+	private Task generatorTask;
 
 	@Column(name="concurrent_copies")
 	private boolean concurrentCopies;
@@ -137,38 +138,38 @@ public class Libraryclass {
 	public void setSource(boolean source) {
 		this.source = source;
 	}
+	
+	@JsonIgnore
+	public Taskfiletype getTaskfiletype() {
+		return taskfiletype;
+	}
 
 	@JsonIgnore
-	public Filetype getFiletype() {
-		return filetype;
-	}
-	
-	@JsonIgnore
-	public void setFiletype(Filetype filetype) {
-		this.filetype = filetype;
+	public void setTaskfiletype(Taskfiletype taskfiletype) {
+		this.taskfiletype = taskfiletype;
 	}
 
-	public int getFiletypeId() {
-		return filetype.getId();
+	public int getTaskfiletypeId() {
+		return taskfiletype.getId();
 	}
 	
 	@JsonIgnore
-	public Task getTask() {
-		return task;
-	}
-	
-	@JsonIgnore
-	public void setTask(Task task) {
-		this.task = task;
-	}
-	
-	public Integer getTaskId() {
-		Integer taskId = null;
-		if(task != null)
-			taskId = task.getId();
-		return taskId;
+	public Task getGeneratorTask() {
+		return generatorTask;
 	}
 
+	@JsonIgnore
+	public void setGeneratorTask(Task generatorTask) {
+		this.generatorTask = generatorTask;
+	}
+	
+	public Integer getGeneratorTaskId() {
+		Integer generatorTaskId = null;
+		if(generatorTask != null)
+			generatorTaskId = generatorTask.getId();
+		return generatorTaskId;
+	}
+	
 	public boolean isConcurrentCopies() {
 		return concurrentCopies;
 	}

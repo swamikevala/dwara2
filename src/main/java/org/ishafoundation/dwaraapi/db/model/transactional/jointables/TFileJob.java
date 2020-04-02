@@ -1,9 +1,9 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.jointables;
 		
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 import javax.persistence.Column;
-import javax.persistence.Convert;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -12,7 +12,6 @@ import javax.persistence.MapsId;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.constants.Status;
-import org.ishafoundation.dwaraapi.constants.StatusAttributeConverter;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
@@ -33,17 +32,21 @@ public class TFileJob {
     @MapsId("jobId")
 	private Job job;
 
+	// Many files on a job referring to the same library
+	// Many jobs on a particular file referring to the same library
+	// So Many Filejob combination to one library
 	@ManyToOne(fetch = FetchType.LAZY)
+	@MapsId("libraryId")
 	private Library library;
 	
 	@Column(name="pid")
 	private int pid;
 
-	@Convert(converter = StatusAttributeConverter.class)
+	@Column(name="status_id")
 	private Status status;
 
 	@Column(name="started_at")
-	private long startedAt;
+	private LocalDateTime startedAt;
 	
 	public TFileJob() {
 		
@@ -103,11 +106,11 @@ public class TFileJob {
 		this.status = status;
 	}
 
-	public long getStartedAt() {
+	public LocalDateTime getStartedAt() {
 		return startedAt;
 	}
 
-	public void setStartedAt(long startedAt) {
+	public void setStartedAt(LocalDateTime startedAt) {
 		this.startedAt = startedAt;
 	}
 

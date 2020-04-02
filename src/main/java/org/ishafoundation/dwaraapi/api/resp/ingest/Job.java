@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.api.resp.ingest;
 
+import java.time.LocalDateTime;
+
 public class Job {
 	private int id;
 	
@@ -9,13 +11,13 @@ public class Job {
 
 	private Integer outputLibraryId; // can be null
 	
-	private long completedAt;
+	private LocalDateTime completedAt;
 
-	private long createdAt;
+	private LocalDateTime createdAt;
 
 	private int subrequestId;
 	
-	private long startedAt;
+	private LocalDateTime startedAt;
 
 	private String status;
 
@@ -51,19 +53,19 @@ public class Job {
 		this.outputLibraryId = outputLibraryId;
 	}
 
-	public long getCompletedAt() {
+	public LocalDateTime getCompletedAt() {
 		return completedAt;
 	}
 
-	public void setCompletedAt(long completedAt) {
+	public void setCompletedAt(LocalDateTime completedAt) {
 		this.completedAt = completedAt;
 	}
 
-	public long getCreatedAt() {
+	public LocalDateTime getCreatedAt() {
 		return createdAt;
 	}
 
-	public void setCreatedAt(long createdAt) {
+	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
 
@@ -75,11 +77,11 @@ public class Job {
 		this.subrequestId = subrequestId;
 	}
 
-	public long getStartedAt() {
+	public LocalDateTime getStartedAt() {
 		return startedAt;
 	}
 
-	public void setStartedAt(long startedAt) {
+	public void setStartedAt(LocalDateTime startedAt) {
 		this.startedAt = startedAt;
 	}
 

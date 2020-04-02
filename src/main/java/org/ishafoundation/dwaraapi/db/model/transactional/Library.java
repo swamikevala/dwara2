@@ -10,6 +10,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -48,22 +50,17 @@ public class Library {
 	@Column(name="file_structure_md5")
 	private String fileStructureMd5;
 
-	/* leaves a cyclic association with itself and not able to drop the table  
-	@ManyToOne
-	@JoinColumn(name="library_id_ref")
+	// Causes cyclic associations 
+	// Many derived library reference the same parent library - Hence many to one
+ 	@ManyToOne
+	@JoinColumn(name="library_ref_id")
 	private Library libraryRef;
-	*/
-	@Column(name="library_id_ref") 
-	private Integer library_id_ref;
 	
-	/* leaves a cyclic association with both subreq pointing to Library and viceversa and so just using it as an Integer to store the latest Id
+ 	// Causes cyclic associations 
+ 	// Many subrequest could have happened on the same library. Like rerun etc., But this holds the most recent subrequest so that it can be queried easily
 	@OneToOne
 	@JoinColumn(name="q_latest_subrequest_id") 
 	private Subrequest qLatestSubrequest;
-	*/
-	
-	@Column(name="q_latest_subrequest_id") 
-	private int qLatestSubrequestId;
 	
     @OneToMany(mappedBy = "library",
             cascade = CascadeType.MERGE,
@@ -83,12 +80,12 @@ public class Library {
 		this.id = id;
 	}
 
-	//@JsonIgnore
+	@JsonIgnore
 	public Libraryclass getLibraryclass() {
 		return libraryclass;
 	}
 
-	//@JsonIgnore
+	@JsonIgnore
 	public void setLibraryclass(Libraryclass libraryclass) {
 		this.libraryclass = libraryclass;
 	}
@@ -143,39 +140,32 @@ public class Library {
 		this.fileStructureMd5 = fileStructureMd5;
 	}
 
-	/*
+	@JsonIgnore
 	public Library getLibraryRef() {
 		return libraryRef;
 	}
 
+	@JsonIgnore
 	public void setLibraryRef(Library libraryRef) {
 		this.libraryRef = libraryRef;
 	}
 
+	public int getLibraryRefId() {
+		return this.libraryRef != null ? this.libraryRef.getId() : 0;
+	}
 	
+	@JsonIgnore
 	public Subrequest getqLatestSubrequest() {
 		return qLatestSubrequest;
 	}
 
+	@JsonIgnore
 	public void setqLatestSubrequest(Subrequest qLatestSubrequest) {
 		this.qLatestSubrequest = qLatestSubrequest;
 	}	
-	*/
 	
-	public Integer getLibrary_id_ref() {
-		return library_id_ref;
-	}
-
-	public void setLibrary_id_ref(Integer library_id_ref) {
-		this.library_id_ref = library_id_ref;
-	}
-
 	public int getqLatestSubrequestId() {
-		return qLatestSubrequestId;
-	}
-
-	public void setqLatestSubrequestId(int qLatestSubrequestId) {
-		this.qLatestSubrequestId = qLatestSubrequestId;
+		return this.qLatestSubrequest.getId();
 	}
 
 	@JsonIgnore
