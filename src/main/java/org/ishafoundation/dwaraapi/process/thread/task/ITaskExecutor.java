@@ -1,9 +1,9 @@
 package org.ishafoundation.dwaraapi.process.thread.task;
 
 import org.ishafoundation.dwaraapi.model.LogicalFile;
-import org.ishafoundation.dwaraapi.model.TasktypeResponse;
+import org.ishafoundation.dwaraapi.model.TaskResponse;
 
-public interface ITasktypeExecutor {
+public interface ITaskExecutor {
 
 	/*
 	 * @args[0] taskName - name of the task, the attributes that define the process (refer task table)
@@ -13,6 +13,6 @@ public interface ITasktypeExecutor {
 	 * @args[4] libraryCategory - is it public or private
 	 * @args[5] destinationDirPath - the destination directory. if the process has an output libraryclass configured then the output library's files go in here.
 	 */
-	public TasktypeResponse execute(String taskName, String libraryName, int fileId, LogicalFile logicalFile, String category, String destinationDirPath) throws Exception;
+	public TaskResponse execute(String taskName, String libraryName, int fileId, LogicalFile logicalFile, String category, String destinationDirPath) throws Exception;
 	
 }

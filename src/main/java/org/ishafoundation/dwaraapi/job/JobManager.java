@@ -6,19 +6,17 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.constants.Status;
-import org.ishafoundation.dwaraapi.db.cacheutil.StatusCacheUtil;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.TaskTasksetDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.master.Task;
-import org.ishafoundation.dwaraapi.db.model.master.Tasktype;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.TaskTaskset;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
 import org.ishafoundation.dwaraapi.process.thread.executor.StorageSingleThreadExecutor;
-import org.ishafoundation.dwaraapi.process.thread.executor.TasktypeSingleThreadExecutor;
-import org.ishafoundation.dwaraapi.process.thread.task.TasktypeJobManager_ThreadTask;
+import org.ishafoundation.dwaraapi.process.thread.executor.TaskSingleThreadExecutor;
+import org.ishafoundation.dwaraapi.process.thread.task.TaskJobManager_ThreadTask;
 import org.ishafoundation.dwaraapi.storage.thread.task.StorageJobsManager_ThreadTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,15 +34,15 @@ public class JobManager {
 	
 	@Autowired
 	private JobDao jobDao;	
-	
-	@Autowired
-	private StatusCacheUtil statusCacheUtil;
-	
+		
 	@Autowired
 	private JobUtils jobUtils;	
 	
 	@Autowired
-	private TasktypeSingleThreadExecutor tasktypeSingleThreadExecutor;
+	private TaskUtils taskUtils;
+	
+	@Autowired
+	private TaskSingleThreadExecutor taskSingleThreadExecutor;
 	
 	@Autowired
 	private StorageSingleThreadExecutor storageSingleThreadExecutor;
@@ -92,12 +90,12 @@ public class JobManager {
 			boolean isJobReadyToBeProcessed = isJobReadyToBeProcessed(job);
 			logger.info("isJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
 			if(isJobReadyToBeProcessed) {
-				Tasktype tasktype = task.getTasktype();
-				if(tasktype != null) { // a non-storage process job
+				// TODO : we were doing this on tasktype, but now that there is no tasktype how to differentiate? Check with Swami
+				if(!taskUtils.isTaskStorage(task)) { // a non-storage process job
 					logger.trace("process job");
-					TasktypeJobManager_ThreadTask tasktypeJobManager_ThreadTask = applicationContext.getBean(TasktypeJobManager_ThreadTask.class);
-					tasktypeJobManager_ThreadTask.setJob(job);
-					tasktypeSingleThreadExecutor.getExecutor().execute(tasktypeJobManager_ThreadTask);
+					TaskJobManager_ThreadTask taskJobManager_ThreadTask = applicationContext.getBean(TaskJobManager_ThreadTask.class);
+					taskJobManager_ThreadTask.setJob(job);
+					taskSingleThreadExecutor.getExecutor().execute(taskJobManager_ThreadTask);
 				}else {
 					logger.trace("added to storagejob collection");
 					// all storage jobs need to be grouped for some optimisation...

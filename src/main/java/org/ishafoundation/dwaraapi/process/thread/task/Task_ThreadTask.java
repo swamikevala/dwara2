@@ -20,7 +20,6 @@ import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.Application;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.Task;
-import org.ishafoundation.dwaraapi.db.model.master.Tasktype;
 import org.ishafoundation.dwaraapi.db.model.transactional.Failure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
@@ -31,9 +30,9 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
 import org.ishafoundation.dwaraapi.job.JobUtils;
 import org.ishafoundation.dwaraapi.model.LogicalFile;
-import org.ishafoundation.dwaraapi.model.TasktypeResponse;
-import org.ishafoundation.dwaraapi.process.factory.TasktypeFactory;
-import org.ishafoundation.dwaraapi.process.thread.task.mam.MamUpdateTasktypeExecutor;
+import org.ishafoundation.dwaraapi.model.TaskResponse;
+import org.ishafoundation.dwaraapi.process.factory.TaskFactory;
+import org.ishafoundation.dwaraapi.process.thread.task.mam.MamUpdateTaskExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,10 +51,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Scope("prototype")
-public class Tasktype_ThreadTask implements Runnable{
+public class Task_ThreadTask implements Runnable{
 
 
-	private static final Logger logger = LoggerFactory.getLogger(Tasktype_ThreadTask.class);
+	private static final Logger logger = LoggerFactory.getLogger(Task_ThreadTask.class);
 	
 	@Autowired
     private LibraryclassDao libraryclassDao;
@@ -195,15 +194,11 @@ public class Tasktype_ThreadTask implements Runnable{
 				int taskId = task.getId();
 				taskName = task.getName();
 				logger.trace(job.getId() + " " + taskName);
-				// call the tasktype methods...
 				
-				Tasktype tasktypeDBEntity = task.getTasktype();
-				String tasktypeName = tasktypeDBEntity.getName().toUpperCase();
-				
-				ITasktypeExecutor executor = TasktypeFactory.getInstance(applicationContext, tasktypeName);
+				ITaskExecutor taskExecutor = TaskFactory.getInstance(applicationContext, taskName);
 				String inputLibraryName = job.getInputLibrary().getName();
 				String libraryCategory = job.getInputLibrary().getLibraryclass().getCategory();
-				TasktypeResponse tasktypeResponse = executor.execute(taskName, inputLibraryName, file.getId(), logicalFile, libraryCategory, destinationDirPath);
+				TaskResponse tasktypeResponse = taskExecutor.execute(taskName, inputLibraryName, file.getId(), logicalFile, libraryCategory, destinationDirPath);
 				if(tasktypeResponse == null) // TODO : Handle this...
 					return;
 				boolean isCancelInitiated = tasktypeResponse.isCancelled();
@@ -271,7 +266,7 @@ public class Tasktype_ThreadTask implements Runnable{
 					
 					// TODO - missing connection/link in db schema between tasktype(mamupdate) and applciation(mam). We dont know in framework should the application_file be updated or not...
 					// TODO - Replace this hardcoded part with appropriate logic
-					if(executor instanceof MamUpdateTasktypeExecutor || tasktypeResponse.needDbUpdate()) {
+					if(taskExecutor instanceof MamUpdateTaskExecutor || tasktypeResponse.needDbUpdate()) {
 						int applicationId = 1001; // TODO hardcoded need revisit...
 						Application application = applicationDao.findById(applicationId).get();
 						ApplicationFile applicationFile = new ApplicationFile(application, file);

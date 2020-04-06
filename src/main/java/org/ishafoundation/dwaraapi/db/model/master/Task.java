@@ -11,6 +11,7 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.model.master.jointables.TaskTaskset;
@@ -29,9 +30,8 @@ public class Task {
 	@Column(name="name")
 	private String name;
 
-	// Many tasks can be configured for the same tasktype - infact task is a flavour(with different attributes) of tasktype
-	@ManyToOne(fetch = FetchType.LAZY)
-	private Tasktype tasktype;
+	@Column(name="description")
+	private String description;
 	
 	@Column(name="max_errors")
 	private int maxErrors;
@@ -42,13 +42,17 @@ public class Task {
 	// Privvideo - video
 	@ManyToOne(fetch = FetchType.LAZY)
 	private Taskfiletype taskfiletype;
+
+	@OneToOne(fetch = FetchType.LAZY)
+	private Application application;
 	
     @OneToMany(mappedBy = "task",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
     private List<TaskTaskset> tasksets = new ArrayList<>();
 	
-	public Integer getId() {
+
+    public Integer getId() {
 		return id;
 	}
 
@@ -64,12 +68,12 @@ public class Task {
 		this.name = name;
 	}
 
-	public Tasktype getTasktype() {
-		return tasktype;
+	public String getDescription() {
+		return description;
 	}
 
-	public void setTasktype(Tasktype tasktype) {
-		this.tasktype = tasktype;
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 	public int getMaxErrors() {
@@ -86,6 +90,14 @@ public class Task {
 
 	public void setTaskfiletype(Taskfiletype taskfiletype) {
 		this.taskfiletype = taskfiletype;
+	}
+
+	public Application getApplication() {
+		return application;
+	}
+
+	public void setApplication(Application application) {
+		this.application = application;
 	}
 
 	@JsonIgnore

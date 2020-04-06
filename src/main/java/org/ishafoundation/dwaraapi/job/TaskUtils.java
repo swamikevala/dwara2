@@ -1,9 +1,18 @@
 package org.ishafoundation.dwaraapi.job;
 
+import org.ishafoundation.dwaraapi.db.model.master.Task;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TaskUtils {
+	
+	public boolean isTaskStorage(Task task) {
+		boolean isTaskStorage = true;
+		if(task.getTaskfiletype() != null)
+			isTaskStorage = false;
+		
+		return isTaskStorage;
+	}
 //	
 //	@Autowired
 //	private RequesttypeLibraryclassDao requesttypeLibraryclassDao;

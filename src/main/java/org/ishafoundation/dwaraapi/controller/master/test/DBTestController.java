@@ -2,7 +2,6 @@ package org.ishafoundation.dwaraapi.controller.master.test;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.dao.master.TaskfiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.LibraryclassDao;
 import org.ishafoundation.dwaraapi.db.dao.master.PrioritybandDao;
 import org.ishafoundation.dwaraapi.db.dao.master.PropertyDao;
@@ -12,12 +11,11 @@ import org.ishafoundation.dwaraapi.db.dao.master.StorageformatDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TapesetDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TargetvolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TaskDao;
+import org.ishafoundation.dwaraapi.db.dao.master.TaskfiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TasksetDao;
-import org.ishafoundation.dwaraapi.db.dao.master.TasktypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.RequesttypeUserDao;
 import org.ishafoundation.dwaraapi.db.keys.RequesttypeUserKey;
-import org.ishafoundation.dwaraapi.db.model.master.Taskfiletype;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.Priorityband;
 import org.ishafoundation.dwaraapi.db.model.master.Property;
@@ -26,8 +24,8 @@ import org.ishafoundation.dwaraapi.db.model.master.Storageformat;
 import org.ishafoundation.dwaraapi.db.model.master.Tapeset;
 import org.ishafoundation.dwaraapi.db.model.master.Targetvolume;
 import org.ishafoundation.dwaraapi.db.model.master.Task;
+import org.ishafoundation.dwaraapi.db.model.master.Taskfiletype;
 import org.ishafoundation.dwaraapi.db.model.master.Taskset;
-import org.ishafoundation.dwaraapi.db.model.master.Tasktype;
 import org.ishafoundation.dwaraapi.db.model.master.User;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.RequesttypeUser;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
@@ -61,9 +59,6 @@ public class DBTestController extends SetupExtenstionFiletypeController{
 
 	@Autowired
 	private SequenceDao sequenceDao;
-	
-	@Autowired
-	private TasktypeDao tasktypeDao;
 	
 	@Autowired
 	private TaskDao taskDao;
@@ -176,9 +171,9 @@ public class DBTestController extends SetupExtenstionFiletypeController{
 		task.setMaxErrors(2);
 		task.setName("Task 1");
 		
-		Tasktype tasktype = createTasktype();
-		
-		task.setTasktype(tasktype);
+//		Tasktype tasktype = createTasktype();
+//		
+//		task.setTasktype(tasktype);
 		task = taskDao.save(task);
 		
 		return task;
@@ -192,31 +187,31 @@ public class DBTestController extends SetupExtenstionFiletypeController{
 		task.setMaxErrors(2);
 		task.setName("Dependent Task on Task 1");
 		
-		Tasktype tasktype = createDependentTasktype();
-		
-		task.setTasktype(tasktype);
+//		Tasktype tasktype = createDependentTasktype();
+//		
+//		task.setTasktype(tasktype);
 		task = taskDao.save(task);
 		return task;
 		//return taskDao.save(task);
 	}
 	
-	private Tasktype createTasktype() {
-		Tasktype tasktype = new Tasktype();
-		tasktype.setId(20001);
-		tasktype.setName("Tasktype name 1");
-		tasktype = tasktypeDao.save(tasktype);
-		return tasktype;
-		//return tasktypeDao.save(tasktype);
-	}
-	
-	private Tasktype createDependentTasktype() {
-		Tasktype tasktype = new Tasktype();
-		tasktype.setId(20002);
-		tasktype.setName("Tasktype name 2");
-		tasktype = tasktypeDao.save(tasktype);
-		return tasktype;
-		//return tasktypeDao.save(tasktype);
-	}	
+//	private Tasktype createTasktype() {
+//		Tasktype tasktype = new Tasktype();
+//		tasktype.setId(20001);
+//		tasktype.setName("Tasktype name 1");
+//		tasktype = tasktypeDao.save(tasktype);
+//		return tasktype;
+//		//return tasktypeDao.save(tasktype);
+//	}
+//	
+//	private Tasktype createDependentTasktype() {
+//		Tasktype tasktype = new Tasktype();
+//		tasktype.setId(20002);
+//		tasktype.setName("Tasktype name 2");
+//		tasktype = tasktypeDao.save(tasktype);
+//		return tasktype;
+//		//return tasktypeDao.save(tasktype);
+//	}	
 	private Taskset createTaskset(){
 		Taskset taskset = new Taskset();
 		taskset.setId(19001);

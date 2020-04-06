@@ -7,9 +7,10 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.model.LogicalFile;
 import org.ishafoundation.dwaraapi.model.TaskResponse;
-import org.ishafoundation.dwaraapi.process.factory.TranscoderFactory;
-import org.ishafoundation.dwaraapi.process.thread.task.transcoding.ffmpeg.ITranscoder;
+import org.ishafoundation.dwaraapi.process.factory.TaskFactory;
+import org.ishafoundation.dwaraapi.process.thread.task.ITaskExecutor;
 import org.ishafoundation.dwaraapi.process.thread.task.transcoding.ffmpeg.MediaTask;
 import org.ishafoundation.dwaraapi.process.transcoding.ffmpeg.utils.M01XmlFileHandler;
 import org.slf4j.Logger;
@@ -18,41 +19,42 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class VideoTranscoder extends MediaTask implements ITranscoder{
+public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask implements ITaskExecutor{
     static {
-    	TranscoderFactory.register("Video Transcoding Low Resolution", VideoTranscoder.class);
+    	TaskFactory.register("video_low_resolution_transcoding", Video_LowResolution_Transcoding_TaskExecutor.class);
     }
     
-    private static final Logger logger = LoggerFactory.getLogger(VideoTranscoder.class);
+    private static final Logger logger = LoggerFactory.getLogger(Video_LowResolution_Transcoding_TaskExecutor.class);
     
 	@Autowired
 	private M01XmlFileHandler m01xfh;	
-	
+
 	@Override
-	public TaskResponse transcode(String taskName, int fileId, String sourceFilePathname,
+	public TaskResponse execute(String taskName, String libraryName, int fileId, LogicalFile logicalFile, String category,
 			String destinationDirPath) throws Exception {
+		String sourceFilePathname = logicalFile.getAbsolutePath();
 		String clipName = FilenameUtils.getName(sourceFilePathname);
 		
 		String identifierSuffix = "";//mediaFileId+"";//  +  "-" + VideoProcessingSteps.PROXY_GENERATION.toString();
 		String containerName = identifierSuffix;	
 		
-
+	
 		long startms = System.currentTimeMillis();
 		
 		String m01FileLocPath = sourceFilePathname.replace("." + FilenameUtils.getExtension(sourceFilePathname), "M01.XML");
-
+	
 		String thumbnailTargetLocation = destinationDirPath + File.separator + FilenameUtils.getBaseName(sourceFilePathname) + ".jpg";
 		String thumbnailStdErrFileLoc = thumbnailTargetLocation.replace(".jpg", ".jpg_ffmpeg_log");
-
+	
 		/*************** THUMBNAIL GENERATION ***************/
 		long thumbnailStartTime = System.currentTimeMillis();
 		logger.info("Thumbnail Generation start for " + containerName + " - targetLocation is - " + thumbnailTargetLocation);
 		
 		createFileInIngestServer(thumbnailStdErrFileLoc);
 		
-//			String cmd = "ffmpeg -y -i \"" + sourceFilePathname + "\" -ss 0 -vframes 1 -s 192x108 \""+ thumbnailTargetLocation + "\"";
-//			CommandLineExecutionResponse thumbnailCommandLineExecutionResponse = commandLineExecuter.executeCommand(cmd, thumbnailStdErrFileLoc);
-
+	//		String cmd = "ffmpeg -y -i \"" + sourceFilePathname + "\" -ss 0 -vframes 1 -s 192x108 \""+ thumbnailTargetLocation + "\"";
+	//		CommandLineExecutionResponse thumbnailCommandLineExecutionResponse = commandLineExecuter.executeCommand(cmd, thumbnailStdErrFileLoc);
+	
 		List<String> thumbnailGenerationCommandParamsList = getThumbnailGenerationCommand(sourceFilePathname, thumbnailTargetLocation);
 		CommandLineExecutionResponse thumbnailCommandLineExecutionResponse = commandLineExecuter.executeCommand(thumbnailGenerationCommandParamsList, thumbnailStdErrFileLoc);
 		
@@ -81,8 +83,8 @@ public class VideoTranscoder extends MediaTask implements ITranscoder{
 		createFileInIngestServer(proxyStdErrFileLoc);
 		createFileInIngestServer(metaStdErrFileLoc);
 		
-//			String metaDataExtractionCmd = "ffprobe -i \"" + sourceFilePathname + "\" -hide_banner -v quiet -print_format json -show_format -show_streams";
-//			CommandLineExecutionResponse metaCommandLineExecutionResponse = commandLineExecuter.executeCommand(metaDataExtractionCmd, metaStdErrFileLoc);
+	//		String metaDataExtractionCmd = "ffprobe -i \"" + sourceFilePathname + "\" -hide_banner -v quiet -print_format json -show_format -show_streams";
+	//		CommandLineExecutionResponse metaCommandLineExecutionResponse = commandLineExecuter.executeCommand(metaDataExtractionCmd, metaStdErrFileLoc);
 		List<String> metaDataExtractionCommandParamsList = getMetaDataExtractionCommand(sourceFilePathname);
 		CommandLineExecutionResponse metaCommandLineExecutionResponse = commandLineExecuter.executeCommand(metaDataExtractionCommandParamsList, metaStdErrFileLoc);
 		
@@ -103,7 +105,7 @@ public class VideoTranscoder extends MediaTask implements ITranscoder{
 		/*************** PROXY GENERATION ***************/
 		long proxyStartTime = System.currentTimeMillis();
 		logger.info("Proxy Generation start for " + containerName + " - targetLocation is - " + proxyTargetLocation);
-
+	
 		String timeCode = "00000000";
 		if(m01FileLocPath != null && new File(m01FileLocPath).exists()) {
 			try {
@@ -114,23 +116,24 @@ public class VideoTranscoder extends MediaTask implements ITranscoder{
 		}
 		String reversedTimeCode = getReversedTimeCode(timeCode);
 		
-//			String proxyGenerationCmd = "ffmpeg -y -i \"" + sourceFilePathname + "\" -preset slow -strict -2 -f mp4 -timecode " + reversedTimeCode + " -vcodec libx264 \"-b:v\" 520000 -r 25.0 -pix_fmt yuv420p -crf 18 -vf \"[in]scale=640x360[scaled]\" -acodec aac -ar 16000 \"-b:a\" 80000 -ac 2 \"" + proxyTargetLocation + "\"";
-//			CommandLineExecutionResponse proxyCommandLineExecutionResponse = commandLineExecuter.executeCommand(proxyGenerationCmd, proxyStdErrFileLoc);
-
+	//		String proxyGenerationCmd = "ffmpeg -y -i \"" + sourceFilePathname + "\" -preset slow -strict -2 -f mp4 -timecode " + reversedTimeCode + " -vcodec libx264 \"-b:v\" 520000 -r 25.0 -pix_fmt yuv420p -crf 18 -vf \"[in]scale=640x360[scaled]\" -acodec aac -ar 16000 \"-b:a\" 80000 -ac 2 \"" + proxyTargetLocation + "\"";
+	//		CommandLineExecutionResponse proxyCommandLineExecutionResponse = commandLineExecuter.executeCommand(proxyGenerationCmd, proxyStdErrFileLoc);
+	
 		// Doing this command creation and execution in 2 steps so that the process can be referenced in memory and so if cancel command for a specific medialibrary is issued the specific process(es) can be destroyed/killed referencing this...
 		// mapping only for proxy generation commands which are slightly heavy and time consuming than the thumbnail and metadata extraction...
 		List<String> proxyGenerationCommandParamsList = getProxyGenCommand(sourceFilePathname, reversedTimeCode, proxyTargetLocation);
 		CommandLineExecutionResponse proxyCommandLineExecutionResponse = createProcessAndExecuteCommand(fileId+"~"+taskName , proxyGenerationCommandParamsList, proxyStdErrFileLoc);
 		long proxyEndTime = System.currentTimeMillis();
-
+	
 		// TODO : better this...
-		TaskResponse proxyGenCommandLineExecutionResponse = new TaskResponse();
-		proxyGenCommandLineExecutionResponse.setDestinationPathname(proxyTargetLocation);
-		proxyGenCommandLineExecutionResponse.setIsComplete(proxyCommandLineExecutionResponse.isComplete());
-		proxyGenCommandLineExecutionResponse.setIsCancelled(proxyCommandLineExecutionResponse.isCancelled());
-		proxyGenCommandLineExecutionResponse.setStdOutResponse(proxyCommandLineExecutionResponse.getStdOutResponse());
-		proxyGenCommandLineExecutionResponse.setFailureReason(proxyCommandLineExecutionResponse.getFailureReason());
-		return proxyGenCommandLineExecutionResponse;
+		TaskResponse tasktypeResponse = new TaskResponse();
+		tasktypeResponse.setDestinationPathname(proxyTargetLocation);
+		tasktypeResponse.setIsComplete(proxyCommandLineExecutionResponse.isComplete());
+		tasktypeResponse.setIsCancelled(proxyCommandLineExecutionResponse.isCancelled());
+		tasktypeResponse.setStdOutResponse(proxyCommandLineExecutionResponse.getStdOutResponse());
+		tasktypeResponse.setFailureReason(proxyCommandLineExecutionResponse.getFailureReason());
+
+		return tasktypeResponse;
 	}
 	
 	private List<String> getThumbnailGenerationCommand(String sourceFilePathname, String thumbnailTargetLocation) {
@@ -201,7 +204,7 @@ public class VideoTranscoder extends MediaTask implements ITranscoder{
 		proxyGenerationCommandParamsList.add("-ac");
 		proxyGenerationCommandParamsList.add("2");
 		proxyGenerationCommandParamsList.add(proxyTargetLocation);
-
+	
 		return proxyGenerationCommandParamsList;
 	}
 	
@@ -215,6 +218,5 @@ public class VideoTranscoder extends MediaTask implements ITranscoder{
 	    String reversedTimeCode = timeCode7thN8thDigit + ":" + timeCode5thN6thDigit + ":" + timeCode3rdN4thDigit + ":" + timeCode1stN2ndDigit;
 	    return reversedTimeCode;
 	}
-
 
 }

@@ -8,7 +8,7 @@ import javax.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
 @Component
-public class TasktypeSingleThreadExecutor{
+public class TaskSingleThreadExecutor{
 
 	private Executor executor;
 

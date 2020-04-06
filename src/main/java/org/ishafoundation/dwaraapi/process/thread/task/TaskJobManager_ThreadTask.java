@@ -13,12 +13,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.ishafoundation.dwaraapi.DwaraApiApplication;
 import org.ishafoundation.dwaraapi.db.dao.master.LibraryclassDao;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ExtensionTaskfiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.Task;
 import org.ishafoundation.dwaraapi.db.model.master.Taskfiletype;
-import org.ishafoundation.dwaraapi.db.model.master.Tasktype;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionTaskfiletype;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
@@ -42,9 +40,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Scope("prototype")
-public class TasktypeJobManager_ThreadTask implements Runnable{
+public class TaskJobManager_ThreadTask implements Runnable{
 
-	private static final Logger logger = LoggerFactory.getLogger(TasktypeJobManager_ThreadTask.class);
+	private static final Logger logger = LoggerFactory.getLogger(TaskJobManager_ThreadTask.class);
 	
 	
 	@Autowired
@@ -128,11 +126,8 @@ public class TasktypeJobManager_ThreadTask implements Runnable{
 			String outputFilePath = null;
 			if(outputLibraryPathname != null)
 				outputFilePath = outputLibraryPathname + File.separator + FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutLibraryNamePrefixed); 
-				
-			Tasktype tasktypeDBEntity = task.getTasktype();
-			String tasktypeName = tasktypeDBEntity.getName().toUpperCase();
 
-			Tasktype_ThreadTask tasktype = applicationContext.getBean(Tasktype_ThreadTask.class);
+			Task_ThreadTask tasktype = applicationContext.getBean(Task_ThreadTask.class);
 			tasktype.setJob(job);
 			tasktype.setFile(file);
 			tasktype.setLogicalFile(logicalFile);
@@ -141,7 +136,7 @@ public class TasktypeJobManager_ThreadTask implements Runnable{
 			tasktype.setOutputLibraryPathname(outputLibraryPathname);
 			tasktype.setDestinationDirPath(outputFilePath);
 			
-			Executor executor = DwaraApiApplication.tasktypeName_executor_map.get(tasktypeName.toLowerCase());
+			Executor executor = DwaraApiApplication.taskName_executor_map.get(task.getName().toLowerCase());
 			executor.execute(tasktype);
 		}
 		// TODO if no. of errors in the tasktype reach the configured max_errors threshold then we stop further processing.... count(*) on failures for the job_id...

@@ -14,17 +14,16 @@ import org.ishafoundation.dwaraapi.commandline.remote.sch.CatdvSshSessionHelper;
 import org.ishafoundation.dwaraapi.commandline.remote.sch.RemoteCommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.remote.scp.SecuredCopier;
 import org.ishafoundation.dwaraapi.configuration.CatDVConfiguration;
-import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.model.LogicalFile;
-import org.ishafoundation.dwaraapi.model.TasktypeResponse;
-import org.ishafoundation.dwaraapi.process.factory.TasktypeFactory;
+import org.ishafoundation.dwaraapi.model.TaskResponse;
+import org.ishafoundation.dwaraapi.process.factory.TaskFactory;
 import org.ishafoundation.dwaraapi.process.mam.authn.Authenticator;
 import org.ishafoundation.dwaraapi.process.mam.ingest.CatalogChecker;
 import org.ishafoundation.dwaraapi.process.mam.ingest.CatalogCreator;
 import org.ishafoundation.dwaraapi.process.mam.ingest.ClipInserter;
 import org.ishafoundation.dwaraapi.process.mam.ingest.ClipUpdater;
 import org.ishafoundation.dwaraapi.process.mam.ingest.ThumbnailInserter;
-import org.ishafoundation.dwaraapi.process.thread.task.ITasktypeExecutor;
+import org.ishafoundation.dwaraapi.process.thread.task.ITaskExecutor;
 import org.ishafoundation.dwaraapi.utils.DateAndTimeUtil;
 import org.ishafoundation.dwaraapi.utils.JsonPathUtil;
 import org.slf4j.Logger;
@@ -36,12 +35,12 @@ import org.springframework.stereotype.Component;
 import com.jcraft.jsch.Session;
 
 @Component
-public class MamUpdateTasktypeExecutor implements ITasktypeExecutor {
+public class MamUpdateTaskExecutor implements ITaskExecutor {
     static {
-    	TasktypeFactory.register("MAM_UPDATE", MamUpdateTasktypeExecutor.class);
+    	TaskFactory.register("mam_update", MamUpdateTaskExecutor.class);
     }
     
-    private static final Logger logger = LoggerFactory.getLogger(MamUpdateTasktypeExecutor.class);
+    private static final Logger logger = LoggerFactory.getLogger(MamUpdateTaskExecutor.class);
 
 	@Autowired
 	private CatDVConfiguration catDVConfiguration;
@@ -78,10 +77,10 @@ public class MamUpdateTasktypeExecutor implements ITasktypeExecutor {
 	
 	
 	@Override
-	public TasktypeResponse execute(String taskName, String libraryName, int fileId, LogicalFile logicalFile, String category,
+	public TaskResponse execute(String taskName, String libraryName, int fileId, LogicalFile logicalFile, String category,
 			String destinationDirPath) throws Exception {
 		
-		TasktypeResponse tasktypeResponse = new TasktypeResponse();
+		TaskResponse taskResponse = new TaskResponse();
 		String catdvSessionId = null;
 		Session jSchSession = null;
 		
@@ -143,14 +142,14 @@ public class MamUpdateTasktypeExecutor implements ITasktypeExecutor {
 			logger.info("Now inserting the clip into catdv server");
 
 			int catdvClipId = insertClip(catdvSessionId, fileId, catalogId, generatedProxyMetaDataFilePath, proxyFilePathOnMamServer, generatedThumbnailPath); //(proxyGenerationCompletedEvent.getMediaLibraryId(), StorageType.PRIMARY_COPY);
-			tasktypeResponse.setIsComplete(true); 
-			tasktypeResponse.setStdOutResponse("catdvClipId - " + catdvClipId);// TODO : where/how do we update externalrefid in db ...
-			tasktypeResponse.setNeedDbUpdate(true);
-			tasktypeResponse.setAppId(catdvClipId + ""); 
+			taskResponse.setIsComplete(true); 
+			taskResponse.setStdOutResponse("catdvClipId - " + catdvClipId);// TODO : where/how do we update externalrefid in db ...
+			taskResponse.setNeedDbUpdate(true);
+			taskResponse.setAppId(catdvClipId + ""); 
 		} catch (Throwable e) {
 			String failureReason = "insert Clip failed - " + e.getMessage();
-			tasktypeResponse.setFailureReason(failureReason);
-			tasktypeResponse.setIsComplete(false);
+			taskResponse.setFailureReason(failureReason);
+			taskResponse.setIsComplete(false);
 			logger.error(failureReason, e);
 		}finally {
 			if (jSchSession != null) 
@@ -158,7 +157,7 @@ public class MamUpdateTasktypeExecutor implements ITasktypeExecutor {
 			if(catdvSessionId != null)
 				deleteSession(catdvSessionId);
 		}
-		return tasktypeResponse;		
+		return taskResponse;		
 	}
 
 	private int insertClip(String jsessionId, int fileId, int catalogId, String metaDataFilePath, String videoFilePath, String thumbnailPath) throws Exception {
