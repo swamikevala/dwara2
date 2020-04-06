@@ -1,6 +1,5 @@
 package org.ishafoundation.dwaraapi.db.dao.transactional.custom;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,28 +32,21 @@ public class RequestCustomImpl implements RequestCustom {
 		
 		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 		
-		//TODO - default orderby most recent first ??
-		
-		
 		Long count = null;
-		if(pageNumber == 1) { // calling only the first time...
-			CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
-			Root<Request> requestRootForCount = countQuery.from(Request.class);
-			
-			List<Predicate> predicates = getFramedPredicates(requestRootForCount, cb, requesttypeId, userId, fromDate, toDate);
-			//if(predicates != null && predicates.size() > 0)
-				countQuery.select(cb.count(requestRootForCount)).where(cb.and(predicates.toArray(new Predicate[0])));
-			
-			count = entityManager.createQuery(countQuery).getSingleResult();
-			System.out.println("count - " + count);
-		}
+		CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+		Root<Request> requestRootForCount = countQuery.from(Request.class);
+		
+		List<Predicate> predicates = getFramedPredicates(requestRootForCount, cb, requesttypeId, userId, fromDate, toDate);
+		countQuery.select(cb.count(requestRootForCount)).where(cb.and(predicates.toArray(new Predicate[0])));
+		
+		count = entityManager.createQuery(countQuery).getSingleResult();
 		
         CriteriaQuery<Request> query = cb.createQuery(Request.class);
         Root<Request> requestRoot = query.from(Request.class);
         
-        List<Predicate> predicates = getFramedPredicates(requestRoot, cb, requesttypeId, userId, fromDate, toDate);
+        predicates = getFramedPredicates(requestRoot, cb, requesttypeId, userId, fromDate, toDate);
        	query.select(requestRoot).where(cb.and(predicates.toArray(new Predicate[0])));
-       	query.orderBy(cb.desc(requestRoot.get("id")));
+       	query.orderBy(cb.desc(requestRoot.get("id"))); // default orderby most recent first
         List<Request> requestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
         
         WrappedRequestList wrappedRequestList = new WrappedRequestList();

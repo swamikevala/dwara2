@@ -18,8 +18,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
 import org.ishafoundation.dwaraapi.model.WrappedSubrequestList;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 public class SubrequestCustomImpl implements SubrequestCustom {
 
     @PersistenceContext
@@ -34,16 +32,11 @@ public class SubrequestCustomImpl implements SubrequestCustom {
         
 		
 		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-		Long count = null;
-		if(pageNumber == 1) { // TODO - Check with Dong anna calling only the first time...
-			CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
-			Root<Subrequest> subrequestRoot2 = countQuery.from(Subrequest.class);
-			Join<Subrequest, Request> requestJoin2 = frameJoin(subrequestRoot2, cb, requesttypeId, statusIds);
-			countQuery.select(cb.count(requestJoin2.getParent()));
-			
-			count = entityManager.createQuery(countQuery).getSingleResult();
-			System.out.println("count - " + count);
-		}
+		CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+		Root<Subrequest> subrequestRoot2 = countQuery.from(Subrequest.class);
+		Join<Subrequest, Request> requestJoin2 = frameJoin(subrequestRoot2, cb, requesttypeId, statusIds);
+		countQuery.select(cb.count(requestJoin2.getParent()));
+		Long count = entityManager.createQuery(countQuery).getSingleResult();
 		
         CriteriaQuery<Subrequest> query = cb.createQuery(Subrequest.class);
         Root<Subrequest> subrequestRoot = query.from(Subrequest.class);

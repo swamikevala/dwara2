@@ -7,7 +7,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
-import org.ishafoundation.dwaraapi.model.ProxyGenCommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.model.TaskResponse;
 import org.ishafoundation.dwaraapi.process.factory.TranscoderFactory;
 import org.ishafoundation.dwaraapi.process.thread.task.transcoding.ffmpeg.ITranscoder;
 import org.ishafoundation.dwaraapi.process.thread.task.transcoding.ffmpeg.MediaTask;
@@ -29,7 +29,7 @@ public class VideoTranscoder extends MediaTask implements ITranscoder{
 	private M01XmlFileHandler m01xfh;	
 	
 	@Override
-	public ProxyGenCommandLineExecutionResponse transcode(String taskName, int fileId, String sourceFilePathname,
+	public TaskResponse transcode(String taskName, int fileId, String sourceFilePathname,
 			String destinationDirPath) throws Exception {
 		String clipName = FilenameUtils.getName(sourceFilePathname);
 		
@@ -124,7 +124,7 @@ public class VideoTranscoder extends MediaTask implements ITranscoder{
 		long proxyEndTime = System.currentTimeMillis();
 
 		// TODO : better this...
-		ProxyGenCommandLineExecutionResponse proxyGenCommandLineExecutionResponse = new ProxyGenCommandLineExecutionResponse();
+		TaskResponse proxyGenCommandLineExecutionResponse = new TaskResponse();
 		proxyGenCommandLineExecutionResponse.setDestinationPathname(proxyTargetLocation);
 		proxyGenCommandLineExecutionResponse.setIsComplete(proxyCommandLineExecutionResponse.isComplete());
 		proxyGenCommandLineExecutionResponse.setIsCancelled(proxyCommandLineExecutionResponse.isCancelled());

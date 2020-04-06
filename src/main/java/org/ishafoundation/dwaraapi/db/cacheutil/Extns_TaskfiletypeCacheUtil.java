@@ -12,27 +12,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Extns_FiletypeCacheUtil {
+public class Extns_TaskfiletypeCacheUtil {
 	@Autowired
-	private TaskfiletypeDao filetypeDao;
+	private TaskfiletypeDao taskfiletypeDao;
 	
-	private List<Taskfiletype> filetypeList = null;
-	private Map<String, Taskfiletype> extns_FiletypeMap = new HashMap<String, Taskfiletype>(); 
+	private List<Taskfiletype> taskfiletypeList = null;
+	private Map<String, Taskfiletype> extns_TaskfiletypeMap = new HashMap<String, Taskfiletype>(); 
 
 	@PostConstruct
 	private void loadExtns_FiletypeMap() {
-		filetypeList = (List<Taskfiletype>) filetypeDao.findAll();
-		for (Taskfiletype filetype : filetypeList) {
+		taskfiletypeList = (List<Taskfiletype>) taskfiletypeDao.findAll();
+		for (Taskfiletype taskfiletype : taskfiletypeList) {
 			String[] filetypeExtns = {};// TODO : commentiong out for now filetype.getExtensions().split(",");
 			for (int i = 0; i < filetypeExtns.length; i++) {
 				String nthExtn = filetypeExtns[i].trim().toUpperCase();
-				if(extns_FiletypeMap.get(nthExtn) == null) // if the extn is not already mapped to a file type...
-					extns_FiletypeMap.put(nthExtn, filetype);
+				if(extns_TaskfiletypeMap.get(nthExtn) == null) // if the extn is not already mapped to a file type...
+					extns_TaskfiletypeMap.put(nthExtn, taskfiletype);
 			}
 		}
 	}
 	
 	public Map<String, Taskfiletype> getExtns_FiletypeMap() {
-		return extns_FiletypeMap;
+		return extns_TaskfiletypeMap;
 	}
 }

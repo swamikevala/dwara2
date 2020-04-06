@@ -6,5 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface LibraryclassTapesetDao extends CrudRepository<LibraryclassTapeset,LibraryclassTapesetKey> {
 	
+	LibraryclassTapeset findByTaskId(int taskId);
 	
+	LibraryclassTapeset findByLibraryclassIdAndCopyNumber(int libraryclassId, int copyNumber);
 }

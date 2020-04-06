@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.constants.Status;
@@ -35,8 +36,8 @@ public class TFileJob {
 	// Many files on a job referring to the same library
 	// Many jobs on a particular file referring to the same library
 	// So Many Filejob combination to one library
-	@ManyToOne(fetch = FetchType.LAZY)
-	@MapsId("libraryId")
+	// but the combination is just one on one
+	@OneToOne(fetch = FetchType.LAZY)
 	private Library library;
 	
 	@Column(name="pid")

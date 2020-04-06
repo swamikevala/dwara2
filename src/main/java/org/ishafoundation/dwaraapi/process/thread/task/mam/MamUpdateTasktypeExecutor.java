@@ -16,14 +16,15 @@ import org.ishafoundation.dwaraapi.commandline.remote.scp.SecuredCopier;
 import org.ishafoundation.dwaraapi.configuration.CatDVConfiguration;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.model.LogicalFile;
-import org.ishafoundation.dwaraapi.process.factory.ProcessFactory;
+import org.ishafoundation.dwaraapi.model.TasktypeResponse;
+import org.ishafoundation.dwaraapi.process.factory.TasktypeFactory;
 import org.ishafoundation.dwaraapi.process.mam.authn.Authenticator;
 import org.ishafoundation.dwaraapi.process.mam.ingest.CatalogChecker;
 import org.ishafoundation.dwaraapi.process.mam.ingest.CatalogCreator;
 import org.ishafoundation.dwaraapi.process.mam.ingest.ClipInserter;
 import org.ishafoundation.dwaraapi.process.mam.ingest.ClipUpdater;
 import org.ishafoundation.dwaraapi.process.mam.ingest.ThumbnailInserter;
-import org.ishafoundation.dwaraapi.process.thread.task.IProcessor;
+import org.ishafoundation.dwaraapi.process.thread.task.ITasktypeExecutor;
 import org.ishafoundation.dwaraapi.utils.DateAndTimeUtil;
 import org.ishafoundation.dwaraapi.utils.JsonPathUtil;
 import org.slf4j.Logger;
@@ -35,12 +36,12 @@ import org.springframework.stereotype.Component;
 import com.jcraft.jsch.Session;
 
 @Component
-public class MamUpdateProcessor implements IProcessor {
+public class MamUpdateTasktypeExecutor implements ITasktypeExecutor {
     static {
-    	ProcessFactory.register("MAM_UPDATE", MamUpdateProcessor.class);
+    	TasktypeFactory.register("MAM_UPDATE", MamUpdateTasktypeExecutor.class);
     }
     
-    private static final Logger logger = LoggerFactory.getLogger(MamUpdateProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(MamUpdateTasktypeExecutor.class);
 
 	@Autowired
 	private CatDVConfiguration catDVConfiguration;
@@ -77,10 +78,10 @@ public class MamUpdateProcessor implements IProcessor {
 	
 	
 	@Override
-	public CommandLineExecutionResponse process(String taskName, String libraryName, int fileId, LogicalFile logicalFile, String category,
+	public TasktypeResponse execute(String taskName, String libraryName, int fileId, LogicalFile logicalFile, String category,
 			String destinationDirPath) throws Exception {
 		
-		CommandLineExecutionResponse commandLineExecutionResponse = new CommandLineExecutionResponse();
+		TasktypeResponse tasktypeResponse = new TasktypeResponse();
 		String catdvSessionId = null;
 		Session jSchSession = null;
 		
@@ -142,12 +143,14 @@ public class MamUpdateProcessor implements IProcessor {
 			logger.info("Now inserting the clip into catdv server");
 
 			int catdvClipId = insertClip(catdvSessionId, fileId, catalogId, generatedProxyMetaDataFilePath, proxyFilePathOnMamServer, generatedThumbnailPath); //(proxyGenerationCompletedEvent.getMediaLibraryId(), StorageType.PRIMARY_COPY);
-			commandLineExecutionResponse.setStdOutResponse("catdvClipId - " + catdvClipId);// TODO : where/how do we update externalrefid in db ...
-			commandLineExecutionResponse.setIsComplete(true); 
+			tasktypeResponse.setIsComplete(true); 
+			tasktypeResponse.setStdOutResponse("catdvClipId - " + catdvClipId);// TODO : where/how do we update externalrefid in db ...
+			tasktypeResponse.setNeedDbUpdate(true);
+			tasktypeResponse.setAppId(catdvClipId + ""); 
 		} catch (Throwable e) {
 			String failureReason = "insert Clip failed - " + e.getMessage();
-			commandLineExecutionResponse.setFailureReason(failureReason);
-			commandLineExecutionResponse.setIsComplete(false);
+			tasktypeResponse.setFailureReason(failureReason);
+			tasktypeResponse.setIsComplete(false);
 			logger.error(failureReason, e);
 		}finally {
 			if (jSchSession != null) 
@@ -155,7 +158,7 @@ public class MamUpdateProcessor implements IProcessor {
 			if(catdvSessionId != null)
 				deleteSession(catdvSessionId);
 		}
-		return commandLineExecutionResponse;		
+		return tasktypeResponse;		
 	}
 
 	private int insertClip(String jsessionId, int fileId, int catalogId, String metaDataFilePath, String videoFilePath, String thumbnailPath) throws Exception {

@@ -10,5 +10,8 @@ public interface LibraryclassDao extends CrudRepository<Libraryclass,Integer> {
 	Libraryclass findByName(String name);
 	
 	List<Libraryclass> findAllByLibraryclassTargetvolumeTargetvolumeId(int targetvolumeId);
+	
+	Libraryclass findByGeneratorTaskId(int generatorTaskId);
 
+	//Libraryclass findByTaskId(int generatorTaskId);
 }

@@ -243,6 +243,7 @@ public class DBTestController extends SetupExtenstionFiletypeController{
 		Task task = createTask(filetype);
 		Task dependentTask = createDependentTask(filetype);
 		
+		//libraryclass.setTask(task);
 		libraryclass.setGeneratorTask(task);
 	
 		Taskset taskset = createTaskset();

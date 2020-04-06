@@ -26,7 +26,7 @@ import org.ishafoundation.dwaraapi.api.resp.ingest.IngestFile;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.constants.Status;
-import org.ishafoundation.dwaraapi.db.cacheutil.Extns_FiletypeCacheUtil;
+import org.ishafoundation.dwaraapi.db.cacheutil.Extns_TaskfiletypeCacheUtil;
 import org.ishafoundation.dwaraapi.db.cacheutil.LibraryclassCacheUtil;
 import org.ishafoundation.dwaraapi.db.cacheutil.RequesttypeCacheUtil;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
@@ -123,7 +123,7 @@ public class IngestController {
 	private Configuration configuration;
 	
 	@Autowired
-	private Extns_FiletypeCacheUtil extns_FiletypeCacheUtil;
+	private Extns_TaskfiletypeCacheUtil extns_FiletypeCacheUtil;
 	
 	@Autowired
 	private RequesttypeCacheUtil requesttypeCacheUtil;
@@ -138,6 +138,7 @@ public class IngestController {
 	private JunkFilesMover junkFilesMover;
 	
 	private static final String DEFAULT_REQUESTTYPE = "ingest";
+	// TODO : do we even need this or can we just use libraryclass.pathprefix
 	private String stagingSrcDirRoot = null;
 	
 	@PostConstruct
@@ -454,7 +455,7 @@ public class IngestController {
 	    for (Iterator<File> iterator = libraryFileAndDirsList.iterator(); iterator.hasNext();) {
 			File file = (File) iterator.next();
 			String filePath = file.getAbsolutePath();
-			filePath = filePath.replace(stagingSrcDirRoot + File.separator, "");
+			filePath = filePath.replace(request.getLibraryclass().getPathPrefix() + File.separator, ""); //filePath = filePath.replace(stagingSrcDirRoot + File.separator, "");
 			org.ishafoundation.dwaraapi.db.model.transactional.File nthFileRowToBeInserted = new org.ishafoundation.dwaraapi.db.model.transactional.File();
 			nthFileRowToBeInserted.setPathname(filePath);
 			nthFileRowToBeInserted.setCrc(getCrc(file));
@@ -486,7 +487,7 @@ public class IngestController {
 
     private File moveFileToStaging(String sourcePath, String oldFileName, String libraryFileName, boolean isRerun) throws Exception {
     	File libraryFileInReadyToIngestDir = FileUtils.getFile(sourcePath, oldFileName);
-    	String libraryFilePathInStagingDir = stagingSrcDirRoot + File.separator + libraryFileName;
+    	String libraryFilePathInStagingDir = stagingSrcDirRoot + File.separator + libraryFileName; // TODO remove stagingSrcDirRoot - request.getLibraryclass().getPathPrefix() + File.separator + libraryFileName;
     	File libraryFileInStagingDir = FileUtils.getFile(libraryFilePathInStagingDir);
     	if(isRerun) {
     		logger.info("Skipped setting permissions and moving medialibrary directory from RTI to Staging area");

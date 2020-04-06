@@ -9,6 +9,7 @@ import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.model.master.Tape;
 import org.ishafoundation.dwaraapi.db.model.master.Tapelibrary;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 
 @Entity
 @Table(name="tapedrive")
@@ -32,12 +33,11 @@ public class Tapedrive {
 	@Column(name="drive_status")
 	private String status;
 
-	/*
-	// TODO : Swami has removed this in the confluence. Verify if this is needed 
+
+	// TODO : Swami has removed this in the confluence. This is needed to getTheCurrentlyRunningTapeJobs
 	// unidirectional reference is enough
 	@OneToOne(optional=true)
 	private Job job;
-	*/
 	
 	// unidirectional reference is enough
 	@OneToOne(optional=true)
@@ -88,7 +88,6 @@ public class Tapedrive {
 		this.status = status;
 	}
 
-	/*
 	public Job getJob() {
 		return job;
 	}
@@ -96,7 +95,7 @@ public class Tapedrive {
 	public void setJob(Job job) {
 		this.job = job;
 	}
-	*/
+
 	public Tape getTape() {
 		return tape;
 	}

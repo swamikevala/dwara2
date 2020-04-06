@@ -58,8 +58,9 @@ public class Libraryclass {
 	// Can one task like proxy gen - can generate multiple library classes like mezz and preview - No tasks are separate now...
 	// One libraryclass to one task only
 	@OneToOne(optional = true)
-	@JoinColumn(name="task_id")
+	@JoinColumn(name="generator_task_id")
 	private Task generatorTask;
+
 
 	@Column(name="concurrent_copies")
 	private boolean concurrentCopies;
@@ -152,6 +153,24 @@ public class Libraryclass {
 	public int getTaskfiletypeId() {
 		return taskfiletype.getId();
 	}
+	/*
+	@JsonIgnore
+	public Task getTask() {
+		return task;
+	}
+
+	@JsonIgnore
+	public void setTask(Task task) {
+		this.task = task;
+	}
+
+	public Integer getTaskId() {
+		Integer taskId = null;
+		if(task != null)
+			taskId = task.getId();
+		return taskId;
+	}*/
+
 	
 	@JsonIgnore
 	public Task getGeneratorTask() {
@@ -163,12 +182,13 @@ public class Libraryclass {
 		this.generatorTask = generatorTask;
 	}
 	
+	/*
 	public Integer getGeneratorTaskId() {
 		Integer generatorTaskId = null;
 		if(generatorTask != null)
 			generatorTaskId = generatorTask.getId();
 		return generatorTaskId;
-	}
+	}*/
 	
 	public boolean isConcurrentCopies() {
 		return concurrentCopies;

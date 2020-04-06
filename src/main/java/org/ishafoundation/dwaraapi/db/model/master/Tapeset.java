@@ -31,8 +31,10 @@ public class Tapeset {
 
 	// unidirectional reference is enough. .
 	@OneToOne
-	//@J  --oinColumn(name="storageformat_id")
 	private Storageformat storageformat;
+	
+	@Column(name="copy_number")
+	private int copyNumber;
 	
     @OneToMany(mappedBy = "tapeset",
             cascade = CascadeType.MERGE,
@@ -77,6 +79,14 @@ public class Tapeset {
 
 	public void setStorageformat(Storageformat storageformat) {
 		this.storageformat = storageformat;
+	}
+
+	public int getCopyNumber() {
+		return copyNumber;
+	}
+
+	public void setCopyNumber(int copyNumber) {
+		this.copyNumber = copyNumber;
 	}
 
 	public List<LibraryclassTapeset> getLibraryclassTapeset() {

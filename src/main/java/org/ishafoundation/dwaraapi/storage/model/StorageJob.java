@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.storage.model;
 
 import org.ishafoundation.dwaraapi.db.model.master.Storageformat;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.model.Storagetype;
 import org.ishafoundation.dwaraapi.model.Volume;
 import org.ishafoundation.dwaraapi.storage.constants.StorageOperation;
@@ -11,13 +12,13 @@ public class StorageJob {
 	private StorageOperation storageOperation; // Ingest or Restore
 	
 	// Ingest stuff
-	private int libraryId;
+	private Library library;
 	private String libraryToBeCopied;
 	private String libraryPrefixPath;
 	private Job job; 
 	
 	private Storagetype storagetype;
-	private boolean optimizeTapeAccess; // TODO is an attribute of storagetype. Should fit this in storagetype
+	private boolean optimizeTapeAccess = true; // by default we need tape optimisation // TODO is an attribute of storagetype. Should fit this in storagetype
 	
 	private int driveNo; // TODO is an attribute of storagetype. Should fit this in storagetype
 	private String deviceWwid;
@@ -28,7 +29,7 @@ public class StorageJob {
 	
 	private boolean driveAlreadyLoadedWithTape;
 	
-	private int priority;
+	private int priority = 0; // TODO Hardcoded for phase1
 	private boolean encrypted;
 	private int copyNumber;
 	
@@ -47,11 +48,11 @@ public class StorageJob {
 	public void setStorageOperation(StorageOperation storageOperation) {
 		this.storageOperation = storageOperation;
 	}
-	public int getLibraryId() {
-		return libraryId;
+	public Library getLibrary() {
+		return library;
 	}
-	public void setLibraryId(int libraryId) {
-		this.libraryId = libraryId;
+	public void setLibrary(Library library) {
+		this.library = library;
 	}
 	public String getLibraryToBeCopied() {
 		return libraryToBeCopied;
