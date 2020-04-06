@@ -264,11 +264,8 @@ public class Task_ThreadTask implements Runnable{
 						logger.debug("DB File Creation - Success");
 					}
 					
-					// TODO - missing connection/link in db schema between tasktype(mamupdate) and applciation(mam). We dont know in framework should the application_file be updated or not...
-					// TODO - Replace this hardcoded part with appropriate logic
-					if(taskExecutor instanceof MamUpdateTaskExecutor || tasktypeResponse.needDbUpdate()) {
-						int applicationId = 1001; // TODO hardcoded need revisit...
-						Application application = applicationDao.findById(applicationId).get();
+					if(task.getApplication() != null) {
+						Application application = task.getApplication();
 						ApplicationFile applicationFile = new ApplicationFile(application, file);
 						applicationFile.setIdentifier(tasktypeResponse.getAppId());
 						applicationFileDao.save(applicationFile);
