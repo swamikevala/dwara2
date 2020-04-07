@@ -95,9 +95,7 @@ public class TapeJobProcessor extends StorageTypeJobProcessor {
 		    	logger.debug("DB FileTape entries Creation - Success");
 		    }
 		    
-		    LibraryTape libraryTape = new LibraryTape();
-		    libraryTape.setTape(tape);
-		    libraryTape.setLibrary(library);
+		    LibraryTape libraryTape = new LibraryTape(library, tape);
 		    libraryTape.setBlock(0); // TODO Hardcoded
 		    libraryTape.setEncrypted(storageJob.isEncrypted());
 		    logger.debug("DB LibraryTape Creation");
