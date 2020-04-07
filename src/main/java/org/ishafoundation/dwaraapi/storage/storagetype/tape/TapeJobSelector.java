@@ -676,9 +676,10 @@ public class TapeJobSelector {
 
 			StorageJob tapeJob = new StorageJob();
 
-			int jobId = tapedrive.getId();
+			Job job = tapedrive.getJob();
+			int jobId = job.getId();
 			logger.trace(jobId + " currently running in " + tapedrive.getElementAddress());
-			Job job = jobDao.findById(jobId).get();
+			
 			tapeJob.setJob(job);
 
 			org.ishafoundation.dwaraapi.constants.Requesttype requestType = job.getSubrequest().getRequest().getRequesttype();
