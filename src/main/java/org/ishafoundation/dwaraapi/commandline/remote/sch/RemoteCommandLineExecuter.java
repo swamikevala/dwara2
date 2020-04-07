@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.jcraft.jsch.Channel;
@@ -28,12 +29,16 @@ public class RemoteCommandLineExecuter {
 
 	private static Logger logger = LoggerFactory.getLogger(RemoteCommandLineExecuter.class);
 	
-	public CommandLineExecutionResponse executeCommandRemotelyOnServer(Session session, String command, String commandOutputFilePath) {
+	@Value("${commandlineExecutor.errorResponseTemporaryLocation}")
+	private String commandlineExecutorErrorResponseTemporaryLocation;
+	
+	public CommandLineExecutionResponse executeCommandRemotelyOnServer(Session session, String command, String commandOutputFilePathName) {
 		logger.debug("executing command remotely - " + command);
 		boolean isComplete = false;
 		String failureReason = null;
 		StringBuffer stdOutRespBuffer = new StringBuffer();
-		
+		if(!commandOutputFilePathName.contains(File.separator))
+			commandOutputFilePathName = commandlineExecutorErrorResponseTemporaryLocation + File.separator + commandOutputFilePathName;
 		CommandLineExecutionResponse commandLineExecutionResponse = new CommandLineExecutionResponse();
 		
 		try {
@@ -41,7 +46,7 @@ public class RemoteCommandLineExecuter {
 			((ChannelExec) channel).setCommand(command);
 			channel.setInputStream(null);
 
-			((ChannelExec) channel).setErrStream(new FileOutputStream(commandOutputFilePath));
+			((ChannelExec) channel).setErrStream(new FileOutputStream(commandOutputFilePathName));
 
 			InputStream in = channel.getInputStream(); // data that we can read.
 			// An OutputStream is one where you write data to. Nothing to be written unlike scp... so no need for an OutputStream...
@@ -72,7 +77,7 @@ public class RemoteCommandLineExecuter {
 				commandLineExecutionResponse.setStdOutResponse(stdOutRespBuffer.toString());	
 			} else {
 				isComplete = false;
-				List<String> nLInes = FileUtils.readLines(new File(commandOutputFilePath));
+				List<String> nLInes = FileUtils.readLines(new File(commandOutputFilePathName));
 				failureReason = nLInes.get(nLInes.size() - 1);
 				commandLineExecutionResponse.setFailureReason(failureReason);
 			}

@@ -113,7 +113,7 @@ public class MamUpdateTaskExecutor implements ITaskExecutor {
 			String generatedThumbnailPath = logicalFile.getSidecarFile("jpg").getAbsolutePath(); // Thumbnails will be something like - /data/transcode/13491_HYTT_Yogasanas-Demo_AYA-IYC_02-Nov-2017_EX1_Mod11/1533/VIVA0985_01.jpg
 			String generatedProxyMetaDataFilePath = logicalFile.getSidecarFile("mp4_ffprobe_out").getAbsolutePath();				
 			
-			String proxyFilePathOnMamServer = generatedProxyFilePath.replace(StringUtils.substringBefore(generatedProxyFilePath, File.separator + category + File.separator), catDVConfiguration.getSshProxiesRootLocation() + File.separator);
+			String proxyFilePathOnMamServer = generatedProxyFilePath.replace(StringUtils.substringBefore(generatedProxyFilePath, File.separator + category + File.separator), catDVConfiguration.getSshProxiesRootLocation());
 			if(ArrayUtils.contains(env.getActiveProfiles(), "dev")) {
 				logger.info("Now Copying the Proxy file " + generatedProxyFilePath + " over to " + proxyFilePathOnMamServer);
 				FileUtils.copyFile(new File(generatedProxyFilePath), new File(proxyFilePathOnMamServer));
@@ -121,7 +121,7 @@ public class MamUpdateTaskExecutor implements ITaskExecutor {
 				jSchSession = catdvSshSessionHelper.getSession();
 				String parentDir = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathOnMamServer);
 				String command1 = "mkdir -p " + parentDir;
-				remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, "/data/" + libraryName + ".out_mkdir_mamErr");
+				remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, libraryName + ".out_mkdir_mamErr");
 				
 				logger.info("Now Copying the Proxy file " + generatedProxyFilePath + " over to catdv server location " + proxyFilePathOnMamServer);
 				securedCopier.copyTo(jSchSession, generatedProxyFilePath, proxyFilePathOnMamServer);

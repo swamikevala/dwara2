@@ -206,6 +206,7 @@ public class Task_ThreadTask implements Runnable{
 				long proxyEndTime = System.currentTimeMillis();
 				boolean isComplete = tasktypeResponse.isComplete();
 				if(isComplete) {
+					logger.trace("Task " + taskName + " execution completed for job " + job.getId());
 					endms = System.currentTimeMillis();
 					
 					if(outputLibraryName != null) {
@@ -279,7 +280,7 @@ public class Task_ThreadTask implements Runnable{
 						logger.info("Tasktype for " + containerName + " aborted");
 					} 
 					else
-						throw new Exception("Unable to tasktype" + FilenameUtils.getBaseName(logicalFile.getAbsolutePath()) + " : because : " + tasktypeResponse.getFailureReason());
+						throw new Exception("Unable to process " + FilenameUtils.getBaseName(logicalFile.getAbsolutePath()) + " : because : " + tasktypeResponse.getFailureReason());
 				}
 			}
 		} catch (Exception e) {

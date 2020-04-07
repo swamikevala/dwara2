@@ -105,7 +105,7 @@ public class TapeJobSelector {
 			tapedrive.setStatus(TapedriveStatus.BUSY.toString());
 			tapedrive.setTape(tapeJob.getVolume().getTape());
 			tapedrive.setJob(tapeJob.getJob()); //TODO : Swami has removed this in confluence. This is used in getTheCurrentlyRunningTapeJobs. Clarify this...
-			logger.debug("DB Tapedrive Updation " + tapedrive.getStatus() + ":" + tapedrive.getTape().getId() + ":" + tapedrive.getId());   
+			logger.debug("DB Tapedrive Updation " + tapedrive.getId() + ":" + tapedrive.getStatus() + "-" + tapedrive.getTape().getId() + "-" + tapedrive.getJob().getId());   
 			tapedriveDao.save(tapedrive);
 			logger.debug("DB Tapedrive Updation - Success");
 			
