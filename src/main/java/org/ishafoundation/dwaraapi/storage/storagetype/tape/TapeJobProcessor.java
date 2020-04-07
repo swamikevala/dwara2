@@ -75,20 +75,17 @@ public class TapeJobProcessor extends StorageTypeJobProcessor {
 			List<FileTape> toBeAddedFileTapeTableEntries = new ArrayList<FileTape>();
 			for (Iterator<ArchivedFile> iterator = archivedFileList.iterator(); iterator.hasNext();) {
 				ArchivedFile archivedFile = (ArchivedFile) iterator.next();
-	
-				
-				FileTape ft = new FileTape();
-				ft.setBlock(archivedFile.getBlockNumber());
-	
 				String fileName = archivedFile.getFilePathName(); 
 				// TODO get the file id from File table using this fileName...
 				org.ishafoundation.dwaraapi.db.model.transactional.File file = null;
 				if(filePathNameTofileObj != null)
 					file = filePathNameTofileObj.get(fileName);
-				ft.setFile(file);
+
+				logger.trace(filePathNameTofileObj.toString());
+				logger.trace(fileName);
+				FileTape ft = new FileTape(file, tape);
+				ft.setBlock(archivedFile.getBlockNumber());
 				//ft.setOffset(offset); // TODO ?? How
-				ft.setTape(tape);
-				
 				toBeAddedFileTapeTableEntries.add(ft);
 			}
 			
