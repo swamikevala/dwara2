@@ -130,6 +130,7 @@ public class DBTestController extends SetupExtenstionFiletypeController{
 		
 		Tapeset tapeset = new Tapeset(15001, "pub-video" , "V5A");
 		tapeset.setStorageformat(storageformat);
+		tapeset.setCopyNumber(1);
 		return tapeset = tapesetDao.save(tapeset);
 	}
 	

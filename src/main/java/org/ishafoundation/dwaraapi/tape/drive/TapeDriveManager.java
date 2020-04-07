@@ -1,8 +1,12 @@
 package org.ishafoundation.dwaraapi.tape.drive;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.db.dao.master.TapedriveDao;
 import org.ishafoundation.dwaraapi.db.model.Tapedrive;
@@ -10,6 +14,7 @@ import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,6 +24,9 @@ public class TapeDriveManager{
 
 	@Autowired
 	private TapedriveDao tapedriveDao;
+	
+	@Autowired
+	private Environment env;
 	
 	@Autowired
 	private CommandLineExecuter commandLineExecuter;
@@ -53,8 +61,12 @@ public class TapeDriveManager{
 	}
 
 	public MtStatus getMtStatus(String driveName){
-		String mtStatusResponse = callMtStatus(driveName);
-		//String mtStatusResponse = getHardcodedMtStatus(driveName);
+		String mtStatusResponse = null;
+		if(ArrayUtils.contains(env.getActiveProfiles(), "dev")) {
+			mtStatusResponse = getHardcodedMtStatus(driveName);
+		}else {
+			mtStatusResponse = callMtStatus(driveName);
+		}
 		MtStatus mtStatus = MtStatusResponseParser.parseMtStatusResponse(mtStatusResponse);
 		return mtStatus;
 	}
@@ -66,6 +78,29 @@ public class TapeDriveManager{
 		if(cler.isComplete())
 			mtStatusResponse = cler.getStdOutResponse();
 		return mtStatusResponse;
+	}
+	
+	private String getHardcodedMtStatus(String driveName) {
+		String mtStatusResponse = null;
+		String filePath = null;
+		String drive0Name = "/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst";
+		String drive1Name = "/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1684087499-nst";
+		String drive2Name = "/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1970448833-nst";
+		if(driveName.equals(drive0Name))
+			filePath = "C:\\Users\\prakash\\projects\\videoarchives\\bru\\POC\\BRU002\\test\\mtResponses\\mt_status_busy.txt";
+		else if(driveName.equals(drive1Name) || driveName.equals(drive2Name))
+			filePath = "C:\\Users\\prakash\\projects\\videoarchives\\bru\\POC\\BRU002\\test\\mtResponses\\mt_status_no_tape_loaded.txt";
+		else if(driveName.equals(""))
+			filePath = "C:\\Users\\prakash\\projects\\videoarchives\\bru\\POC\\BRU002\\test\\mtResponses\\mt_status_tape_loaded.txt";
+		
+		try {
+			mtStatusResponse = FileUtils.readFileToString(new File(filePath));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} // will make a call to mtx and get the status realtime...
+		return mtStatusResponse;
+		
 	}
 
 	// To write Nth medialibrary the tape head should be pointing at file Number N

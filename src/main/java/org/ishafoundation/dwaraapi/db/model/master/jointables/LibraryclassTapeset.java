@@ -31,9 +31,6 @@ public class LibraryclassTapeset {
     @MapsId("tapesetId")
 	private Tapeset tapeset;
 
-	@Column(name="copy_number")
-	private int copyNumber;
-
 	//associated task that does the copy - one combination of LibraryclassTapeset to one task - so OnetoOne
 	@OneToOne(fetch = FetchType.LAZY)
 	private Task task;
@@ -73,14 +70,6 @@ public class LibraryclassTapeset {
 
 	public void setTapeset(Tapeset tapeset) {
 		this.tapeset = tapeset;
-	}
-
-	public int getCopyNumber() {
-		return copyNumber;
-	}
-
-	public void setCopyNumber(int copyNumber) {
-		this.copyNumber = copyNumber;
 	}
 
 	public Task getTask() {

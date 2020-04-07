@@ -1,11 +1,15 @@
 package org.ishafoundation.dwaraapi.tape.library;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.constants.TapedriveStatus;
 import org.ishafoundation.dwaraapi.db.dao.master.TapedriveDao;
@@ -21,6 +25,7 @@ import org.ishafoundation.dwaraapi.tape.library.components.StorageElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -32,13 +37,16 @@ public class TapeLibraryManager{
 	private TapelibraryDao tapelibraryDao;
 	
 	@Autowired
+	private TapedriveDao tapedriveDao;		
+
+	@Autowired
 	private CommandLineExecuter commandLineExecuter;
 	
 	@Autowired
 	private TapeDriveManager tapeDriveManager;
-		
+	
 	@Autowired
-	private TapedriveDao tapedriveDao;		
+	private Environment env;
 	
 	private String tapeLibraryName = null;
 	
@@ -115,18 +123,21 @@ public class TapeLibraryManager{
 	}
 	
 	public List<DriveStatusDetails> getAvailableDrivesList(){
-		MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
-		/*
-		String mtxStatusResponse = null;
-	
-		try {
-			mtxStatusResponse = FileUtils.readFileToString(new File("C:\\Users\\prakash\\projects\\videoarchives\\bru\\POC\\BRU002\\test\\mtxResponses\\mtx_status_all_drives_available.txt"));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} // will make a call to mtx and get the status realtime...
-		
-		mtxStatus = MtxStatusResponseParser.parseMtxStatusResponse(mtxStatusResponse);*/
+		MtxStatus mtxStatus = null;
+		if(ArrayUtils.contains(env.getActiveProfiles(), "dev")) {
+			String mtxStatusResponse = null;
+			
+			try {
+				mtxStatusResponse = FileUtils.readFileToString(new File("C:\\Users\\prakash\\projects\\videoarchives\\bru\\POC\\BRU002\\test\\mtxResponses\\mtx_status_all_drives_available.txt"));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} // will make a call to mtx and get the status realtime...
+			
+			mtxStatus = MtxStatusResponseParser.parseMtxStatusResponse(mtxStatusResponse);
+		}else {
+			mtxStatus = getMtxStatus(tapeLibraryName);
+		}
 		return getAvailableDrivesList(mtxStatus);
 	}	
 	

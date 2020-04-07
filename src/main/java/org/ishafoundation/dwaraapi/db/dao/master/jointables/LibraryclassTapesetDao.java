@@ -8,5 +8,4 @@ public interface LibraryclassTapesetDao extends CrudRepository<LibraryclassTapes
 	
 	LibraryclassTapeset findByTaskId(int taskId);
 	
-	LibraryclassTapeset findByLibraryclassIdAndCopyNumber(int libraryclassId, int copyNumber);
 }

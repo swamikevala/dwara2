@@ -294,7 +294,6 @@ public class Libraryclass {
     	// linking the join table entry to this owning object
     	LibraryclassTapeset libraryclassTapeset = new LibraryclassTapeset(this, tapeset);
     	libraryclassTapeset.setTask(task);
-    	libraryclassTapeset.setCopyNumber(copyNumber);
     	libraryclassTapeset.setEncrypted(encrypted);
     	this.libraryclassTapeset.add(libraryclassTapeset);
 

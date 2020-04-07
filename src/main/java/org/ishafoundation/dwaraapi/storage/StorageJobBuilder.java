@@ -88,7 +88,7 @@ public class StorageJobBuilder {
 		org.ishafoundation.dwaraapi.constants.Requesttype requestType = request.getRequesttype();
 		if(requestType == org.ishafoundation.dwaraapi.constants.Requesttype.ingest) {
 			LibraryclassTapeset libraryclassTapeset = libraryclassTapesetDao.findByTaskId(taskId);
-			if (libraryclassTapeset != null) { // means its a libraryclassTapeset job...
+			if (libraryclassTapeset != null) { // means its a copy job...
 				// TODO - Lazy loading of archivejob... just get all the information only when the job is picked for processing. Why load all info upfront only to get discarded.
 				
 				// for a dependent libraryclassTapeset job - the source to libraryclassTapeset is different and the input library id comes from the prerequisite task
@@ -114,7 +114,7 @@ public class StorageJobBuilder {
 				storageJob.setStoragetype(getStoragetype());
 				storageJob.setVolume(getVolume(libraryclassTapeset, sizeOfTheLibraryToBeWritten));
 				storageJob.setStorageformat(getStorageformat(libraryclassTapeset));
-				storageJob.setCopyNumber(libraryclassTapeset.getCopyNumber());
+				storageJob.setCopyNumber(libraryclassTapeset.getTapeset().getCopyNumber());
 				
 				// how
 				storageJob.setConcurrentCopies(libraryclassTapesetTaskLibraryclass.isConcurrentCopies());

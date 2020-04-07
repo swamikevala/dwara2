@@ -252,7 +252,7 @@ public class Task_ThreadTask implements Runnable{
 						nthFileRowToBeInserted.setLibrary(outputLibrary);
 						//nthFileRowToBeInserted.setFiletypeId(filetypeId); // TODO How?
 						
-						nthFileRowToBeInserted.setPathname(destinationDirPath.replace(outputLibraryPathname, outputLibraryName) + File.separator + FilenameUtils.getName(logicalFile.getAbsolutePath()));
+						nthFileRowToBeInserted.setPathname(destinationDirPath.replace(outputLibraryPathname, outputLibraryName) + File.separator + FilenameUtils.getBaseName(logicalFile.getAbsolutePath()) + ".mp4");
 						
 						//(destinationFilePath + FilenameUtils.getName(logicalFile.getAbsolutePath()));
 						
