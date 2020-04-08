@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.constants.Requesttype;
 import org.ishafoundation.dwaraapi.db.dao.master.RequesttypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TapeDao;
@@ -98,14 +99,14 @@ public class RestoreContoller {
 
 	@ApiOperation(value = "Gets the details of all the files requested in fileIdsListAsCSV")
 	@GetMapping("/file")
-	public List<org.ishafoundation.dwaraapi.api.resp.restore.File> getFiles(@RequestParam String ids, @RequestParam int copyNumber) {
+	public List<org.ishafoundation.dwaraapi.api.resp.restore.File> getFiles(@RequestParam String ids, @RequestParam(required=false, defaultValue="1") int copyNumber, @RequestParam(defaultValue="false") boolean showDeleted) {
 		List<org.ishafoundation.dwaraapi.api.resp.restore.File> fileListForResponse = new ArrayList<org.ishafoundation.dwaraapi.api.resp.restore.File>();
 		List<String> fileIdsList = Arrays.asList(ids.split(","));
 		for (Iterator<String> iterator = fileIdsList.iterator(); iterator.hasNext();) {
 			String fileIdAsString = (String) iterator.next();
 			int fileId = Integer.parseInt(fileIdAsString);
 		
-			fileListForResponse.add(getFile(fileId, copyNumber));
+			fileListForResponse.add(getFile(fileId, copyNumber, showDeleted));
 		}
 		return fileListForResponse;
 	}
@@ -113,7 +114,7 @@ public class RestoreContoller {
 	
 	@ApiOperation(value = "Gets the details of the particular file")
 	@GetMapping("/file/{fileId}")
-	public org.ishafoundation.dwaraapi.api.resp.restore.File getFile(@PathVariable int fileId, @RequestParam int copyNumber) {
+	public org.ishafoundation.dwaraapi.api.resp.restore.File getFile(@PathVariable int fileId, @RequestParam(required=false, defaultValue="1") int copyNumber, @RequestParam(defaultValue="false") boolean showDeleted) {
 
 		
 		MtxStatus mtxStatus = tapeLibraryManager.getMtxStatus();
@@ -127,23 +128,26 @@ public class RestoreContoller {
 		int userId = userDao.findByName(requestedBy).getId();
 		
 		List<V_RestoreFile> v_RestoreFileList = v_RestoreFileDao.findAllByTapesetCopyNumberAndFileIdAndRequesttypeInAndUserId(copyNumber, fileId, requesttypeList, userId);
-		org.ishafoundation.dwaraapi.api.resp.restore.File nthFile = null;
 		
+
+		int id = 0;
+		String filePathname = null;
+		double fileSize = 0;
+		int libraryclassId = 0;
+		String barcode = null;
+		boolean isDeleted = false;
 		boolean listPermitted = false;
 		boolean restorePermitted = false;
 		boolean targetVolumePermitted = false;
 		boolean online = false;
 		
 		for (V_RestoreFile v_RestoreFile : v_RestoreFileList) {
-			String barcode = v_RestoreFile.getTapeBarcode();
-			if(nthFile == null) {
-				nthFile = new org.ishafoundation.dwaraapi.api.resp.restore.File();
-				nthFile.setId(v_RestoreFile.getFileId());
-				nthFile.setName(v_RestoreFile.getFilePathname());
-				nthFile.setSize(v_RestoreFile.getFileSize());
-				nthFile.setLibraryclassId(v_RestoreFile.getLibraryLibraryclassId());
-				nthFile.setBarcode(barcode);
-			}
+			barcode = StringUtils.isBlank(barcode) ? v_RestoreFile.getTapeBarcode() : barcode;
+			id = v_RestoreFile.getFileId();
+			filePathname = StringUtils.isBlank(filePathname) ? v_RestoreFile.getFilePathname() : filePathname;
+			fileSize = v_RestoreFile.getFileSize();
+			libraryclassId = v_RestoreFile.getLibraryLibraryclassId();
+			isDeleted = v_RestoreFile.isFileTapeDeleted();
 			if(v_RestoreFile.getRequesttype() == Requesttype.list)
 				listPermitted = true;
 			if(v_RestoreFile.getRequesttype() == Requesttype.restore)
@@ -152,10 +156,24 @@ public class RestoreContoller {
 			if(loadedTapeList.contains(barcode))
 				online = true;				
 		}
-		nthFile.setListPermitted(listPermitted);
-		nthFile.setRestorePermitted(restorePermitted);
-		nthFile.setTargetVolumePermitted(targetVolumePermitted);
-		nthFile.setOnline(online);
+		org.ishafoundation.dwaraapi.api.resp.restore.File nthFile = null;
+		if(!isDeleted || showDeleted) {
+			nthFile = new org.ishafoundation.dwaraapi.api.resp.restore.File();
+			nthFile.setListPermitted(listPermitted);
+			if(listPermitted) {
+				nthFile.setId(id);
+				nthFile.setName(filePathname);
+				nthFile.setSize(fileSize);
+				nthFile.setLibraryclassId(libraryclassId);
+				nthFile.setBarcode(barcode);
+				if(restorePermitted)
+					nthFile.setRestorePermitted(restorePermitted);
+				if(restorePermitted && targetVolumePermitted)
+					nthFile.setTargetVolumePermitted(targetVolumePermitted);
+				nthFile.setOnline(online);
+			}
+		}
+
 		return nthFile;
 	}
 	

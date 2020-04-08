@@ -79,7 +79,7 @@ public class V_RestoreFile {
 	private boolean tapeFinalized;
 
 	@Column(name="tapeset_copy_number")
-	private boolean tapesetCopyNumber;
+	private int tapesetCopyNumber;
 
 	@Column(name="tapeset_storageformat_id")
 	private int tapesetStorageformatId;
@@ -169,11 +169,11 @@ public class V_RestoreFile {
 		this.tapeFinalized = tapeFinalized;
 	}
 
-	public boolean isTapesetCopyNumber() {
+	public int getTapesetCopyNumber() {
 		return tapesetCopyNumber;
 	}
 
-	public void setTapesetCopyNumber(boolean tapesetCopyNumber) {
+	public void setTapesetCopyNumber(int tapesetCopyNumber) {
 		this.tapesetCopyNumber = tapesetCopyNumber;
 	}
 
