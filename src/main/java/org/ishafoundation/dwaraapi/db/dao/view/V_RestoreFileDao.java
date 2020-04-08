@@ -10,8 +10,8 @@ public interface V_RestoreFileDao extends CrudRepository<V_RestoreFile,Integer> 
 
 	/*
 We need to arrive at 
-select file.id, file.name, file.size, library.libraryclass_id, tape.barcode, libraryclass_requesttype_user.requesttype_id, from v_restore_file 
-where copy_number = 2 and file_id=123 and requesttype_id in (2,10) and user_id = 1234;
+select * from v_restore_file 
+where tapeset_copy_number = 2 and file_id=255 and requesttype_id in (8002,8004) and user_id = 21001;
 	 */
-	List<V_RestoreFile> findAllByCopyNumberAndFileIdAndRequesttypeInAndUserId(int copyNumber, int fileId, List<Requesttype> requesttype, int userId);
+	List<V_RestoreFile> findAllByTapesetCopyNumberAndFileIdAndRequesttypeInAndUserId(int copyNumber, int fileId, List<Requesttype> requesttype, int userId);
 }

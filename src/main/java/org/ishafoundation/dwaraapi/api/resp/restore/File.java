@@ -8,8 +8,17 @@ public class File {
 	
 	private double size;
 	
-	// TODO  remove this 
-	private String warning;
+	private int libraryclassId;
+	
+	private String barcode;
+	
+	private boolean online;
+	
+	private boolean listPermitted;
+	
+	private boolean restorePermitted;
+	
+	private boolean targetVolumePermitted;
 	
 	public int getId() {
 		return id;
@@ -35,11 +44,52 @@ public class File {
 		this.size = size;
 	}
 
-	public String getWarning() {
-		return warning;
+	public int getLibraryclassId() {
+		return libraryclassId;
 	}
 
-	public void setWarning(String warning) {
-		this.warning = warning;
+	public void setLibraryclassId(int libraryclassId) {
+		this.libraryclassId = libraryclassId;
 	}
+
+	public String getBarcode() {
+		return barcode;
+	}
+
+	public void setBarcode(String barcode) {
+		this.barcode = barcode;
+	}
+
+	public boolean isOnline() {
+		return online;
+	}
+
+	public void setOnline(boolean online) {
+		this.online = online;
+	}
+
+	public boolean isListPermitted() {
+		return listPermitted;
+	}
+
+	public void setListPermitted(boolean listPermitted) {
+		this.listPermitted = listPermitted;
+	}
+
+	public boolean isRestorePermitted() {
+		return restorePermitted;
+	}
+
+	public void setRestorePermitted(boolean restorePermitted) {
+		this.restorePermitted = restorePermitted;
+	}
+
+	public boolean isTargetVolumePermitted() {
+		return targetVolumePermitted;
+	}
+
+	public void setTargetVolumePermitted(boolean targetVolumePermitted) {
+		this.targetVolumePermitted = targetVolumePermitted;
+	}
+
 }
