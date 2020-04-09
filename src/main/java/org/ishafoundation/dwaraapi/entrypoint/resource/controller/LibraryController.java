@@ -12,6 +12,8 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
@@ -133,6 +135,11 @@ public class LibraryController {
 	
 	private static final String DEFAULT_REQUESTTYPE = "ingest";
 	
+    private String readyToIngestSrcDirRoot = null;
+	@PostConstruct
+	private void loadConfigEntries() {
+		readyToIngestSrcDirRoot = configuration.getReadyToIngestSrcDirRoot();
+	}
 	
 	@ApiOperation(value = "Scans the selected libraryclass passed and lists all candidate folders from across all users to ingest", response = List.class)
 	@ApiResponses(value = { 
@@ -145,13 +152,12 @@ public class LibraryController {
 		
 		Libraryclass toBeIngestedLibraryclass = libraryclassDao.findByName(libraryclass);
 		Action actionObj = actionCacheUtil.getAction(DEFAULT_REQUESTTYPE);
-		String pathPrefix = toBeIngestedLibraryclass.getPathPrefix();
 
 		List<String> scanFolderBasePathList = new ArrayList<String>();
 		
 		List<LibraryclassActionUser> libraryclassUserList = libraryclassActionUserDao.findAllByLibraryclassIdAndActionId(toBeIngestedLibraryclass.getId(), actionObj.getId());
 		for (LibraryclassActionUser libraryclassActionUser : libraryclassUserList) {
-			scanFolderBasePathList.add(pathPrefix + File.separator + libraryclassActionUser.getUser().getName());
+			scanFolderBasePathList.add(readyToIngestSrcDirRoot + File.separator + libraryclassActionUser.getUser().getName());
 		}
 		
 		ingestFileList = sourceDirScanner.scanSourceDir(toBeIngestedLibraryclass, scanFolderBasePathList);

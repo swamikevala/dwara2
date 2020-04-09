@@ -36,6 +36,7 @@ CREATE TABLE `action` (
 
 LOCK TABLES `action` WRITE;
 /*!40000 ALTER TABLE `action` DISABLE KEYS */;
+INSERT INTO `action` VALUES (8001,'','ingest'),(8002,'','restore'),(8003,'','list'),(8004,'','rename'),(8005,'','hold'),(8006,'','release'),(8007,'','cancel'),(8008,'','abort'),(8009,'','delete'),(8010,'','rewrite'),(8011,'','diagnostics');
 /*!40000 ALTER TABLE `action` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -63,6 +64,7 @@ CREATE TABLE `action_user` (
 
 LOCK TABLES `action_user` WRITE;
 /*!40000 ALTER TABLE `action_user` DISABLE KEYS */;
+INSERT INTO `action_user` VALUES (2,8003,21001);
 /*!40000 ALTER TABLE `action_user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -198,7 +200,7 @@ CREATE TABLE `hibernate_sequence` (
 
 LOCK TABLES `hibernate_sequence` WRITE;
 /*!40000 ALTER TABLE `hibernate_sequence` DISABLE KEYS */;
-INSERT INTO `hibernate_sequence` VALUES (1),(1),(1),(1),(1),(1),(1);
+INSERT INTO `hibernate_sequence` VALUES (269),(269),(269),(269),(269),(269),(269);
 /*!40000 ALTER TABLE `hibernate_sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -238,7 +240,7 @@ CREATE TABLE `libraryclass` (
 
 LOCK TABLES `libraryclass` WRITE;
 /*!40000 ALTER TABLE `libraryclass` DISABLE KEYS */;
-INSERT INTO `libraryclass` VALUES (5001,'\0',0,'pub-video','/data/ingested','',4001,9001,NULL,19001),(5002,'\0',0,'pub-audio','/data/ingested','',4002,9002,NULL,19001),(5003,'\0',0,'private1-video','/data/ingested','',4001,0,NULL,19001),(5004,'\0',0,'Private2-Video','/data/ingested','',4001,0,NULL,19001),(5005,'\0',0,'Private3-Video','/data/ingested','',4001,0,NULL,19001),(5006,'\0',0,'Private1-Audio','/data/ingested','',4002,0,NULL,19001),(5007,'\0',0,'PreviewProxy-Video','/data/transcoded','\0',4004,9007,18004,19001),(5008,'\0',0,'MezzanineProxy-Video','/data/transcoded','\0',0,9008,18017,19001),(5009,'\0',0,'Private(ALL)PreviewProxy-Video - common private libclass for all ???','/data/transcoded','\0',0,9007,NULL,19001),(5010,'\0',0,'Private(ALL)MezzanineProxy-Video','/data/transcoded','\0',0,9008,NULL,19001),(5011,'\0',0,'Private(ALL)PreviewProxy-Audio','/data/transcoded','\0',0,9007,NULL,19001),(5012,'\0',0,'Private(ALL)MezzanineProxy-Audio','/data/transcoded','\0',0,9008,NULL,19001),(5013,'\0',0,'Private2PreviewProxy-Video','/data/transcoded','\0',0,9007,NULL,19001);
+INSERT INTO `libraryclass` VALUES (5001,'\0',0,'pub-video','C:\\data\\user','',4001,9001,NULL,19001),(5002,'\0',0,'pub-audio','C:\\data\\user','',4002,9002,NULL,19001),(5003,'\0',0,'private1-video','C:\\data\\user','',4001,0,NULL,19001),(5004,'\0',0,'Private2-Video','C:\\data\\user','',4001,0,NULL,19001),(5005,'\0',0,'Private3-Video','C:\\data\\user','',4001,0,NULL,19001),(5006,'\0',0,'Private1-Audio','C:\\data\\user','',4002,0,NULL,19001),(5007,'\0',0,'PreviewProxy-Video','C:\\data\\transcoded','\0',4004,9007,18004,19001),(5008,'\0',0,'MezzanineProxy-Video','C:\\data\\transcoded','\0',0,9008,18017,19001),(5009,'\0',0,'Private(ALL)PreviewProxy-Video - common private libclass for all ???','C:\\data\\transcoded','\0',0,9007,NULL,19001),(5010,'\0',0,'Private(ALL)MezzanineProxy-Video','C:\\data\\transcoded','\0',0,9008,NULL,19001),(5011,'\0',0,'Private(ALL)PreviewProxy-Audio','C:\\data\\transcoded','\0',0,9007,NULL,19001),(5012,'\0',0,'Private(ALL)MezzanineProxy-Audio','C:\\data\\transcoded','\0',0,9008,NULL,19001),(5013,'\0',0,'Private2PreviewProxy-Video','C:\\data\\transcoded','\0',0,9007,NULL,19001);
 /*!40000 ALTER TABLE `libraryclass` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -268,7 +270,7 @@ CREATE TABLE `libraryclass_action_user` (
 
 LOCK TABLES `libraryclass_action_user` WRITE;
 /*!40000 ALTER TABLE `libraryclass_action_user` DISABLE KEYS */;
-INSERT INTO `libraryclass_action_user` VALUES (5001,8001,21001);
+INSERT INTO `libraryclass_action_user` VALUES (8001,5001,21001),(8002,5001,21001),(8003,5001,21001);
 /*!40000 ALTER TABLE `libraryclass_action_user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -691,7 +693,7 @@ CREATE TABLE `task` (
 
 LOCK TABLES `task` WRITE;
 /*!40000 ALTER TABLE `task` DISABLE KEYS */;
-INSERT INTO `task` VALUES (18001,0,'V5 Raw Copy 1',NULL,NULL,NULL,NULL),(18002,0,'V5 Raw Copy 2',NULL,NULL,NULL,NULL),(18003,0,'V5 Raw Copy 3',NULL,NULL,NULL,NULL),(18004,0,'video_low_resolution_transcoding',4001,NULL,NULL,NULL),(18005,20,'mam_update',4001,NULL,1001,NULL),(18006,0,'Preview Proxy Copy 1',NULL,NULL,NULL,NULL),(18007,0,'Mezz Proxy Copy 1',NULL,NULL,NULL,NULL),(18008,0,'U Raw Copy 1',NULL,NULL,NULL,NULL),(18009,0,'U Raw Copy 2',NULL,NULL,NULL,NULL),(18010,0,'audio_transcoding',4002,NULL,NULL,NULL),(18011,0,'copy_to_transcript_server',4002,NULL,NULL,NULL),(18012,0,'Restore',NULL,NULL,NULL,NULL),(18013,0,'P2 Raw Copy 1',NULL,NULL,NULL,NULL),(18014,0,'P2 Raw Copy 2 Encrypted',NULL,NULL,NULL,NULL),(18015,0,'P2 Preview Proxy Copy 1',NULL,NULL,NULL,NULL),(18016,0,'P2 Preview Proxy Copy 2 Encrypted',NULL,NULL,NULL,NULL),(18017,0,'video_medium_resolution_transcoding',4001,NULL,NULL,NULL);
+INSERT INTO `task` VALUES (18001,0,'V5 Raw Copy 1',NULL,NULL,NULL,''),(18002,0,'V5 Raw Copy 2',NULL,NULL,NULL,''),(18003,0,'V5 Raw Copy 3',NULL,NULL,NULL,''),(18004,0,'video_low_resolution_transcoding',4001,NULL,NULL,'\0'),(18005,20,'mam_update',4001,NULL,1001,'\0'),(18006,0,'Preview Proxy Copy 1',NULL,NULL,NULL,''),(18007,0,'Mezz Proxy Copy 1',NULL,NULL,NULL,''),(18008,0,'U Raw Copy 1',NULL,NULL,NULL,''),(18009,0,'U Raw Copy 2',NULL,NULL,NULL,''),(18010,0,'audio_transcoding',4002,NULL,NULL,'\0'),(18011,0,'copy_to_transcript_server',4002,NULL,NULL,'\0'),(18012,0,'Restore',NULL,NULL,NULL,''),(18013,0,'P2 Raw Copy 1',NULL,NULL,NULL,''),(18014,0,'P2 Raw Copy 2 Encrypted',NULL,NULL,NULL,''),(18015,0,'P2 Preview Proxy Copy 1',NULL,NULL,NULL,''),(18016,0,'P2 Preview Proxy Copy 2 Encrypted',NULL,NULL,NULL,''),(18017,0,'video_medium_resolution_transcoding',4001,NULL,NULL,'\0');
 /*!40000 ALTER TABLE `task` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -853,31 +855,3 @@ SET character_set_client = @saved_cs_client;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
 
---
--- Final view structure for view `v_restore_file`
---
-
-/*!50001 DROP VIEW IF EXISTS `v_restore_file`*/;
-/*!50001 SET @saved_cs_client          = @@character_set_client */;
-/*!50001 SET @saved_cs_results         = @@character_set_results */;
-/*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8 */;
-/*!50001 SET character_set_results     = utf8 */;
-/*!50001 SET collation_connection      = utf8_general_ci */;
-/*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `v_restore_file` AS select `tape`.`id` AS `tape_id`,`tapeset`.`id` AS `tapeset_id`,`file`.`id` AS `file_id`,`library`.`id` AS `library_id`,`libraryclass_targetvolume`.`targetvolume_id` AS `targetvolume_id`,`libraryclass_requesttype_user`.`requesttype_id` AS `requesttype_id`,`libraryclass_requesttype_user`.`user_id` AS `user_id`,`libraryclass`.`id` AS `libraryclass_id`,`libraryclass`.`name` AS `libraryclass_name`,`file`.`pathname` AS `file_pathname`,`file`.`size` AS `file_size`,`file`.`crc` AS `file_crc`,`tape`.`barcode` AS `tape_barcode`,`tape`.`blocksize` AS `tape_blocksize`,`tape`.`finalized` AS `tape_finalized`,`tapeset`.`copy_number` AS `tapeset_copy_number`,`storageformat`.`id` AS `storageformat_id`,`storageformat`.`name` AS `storageformat_name`,`file_tape`.`block` AS `file_tape_block`,`file_tape`.`offset` AS `file_tape_offset`,`file_tape`.`encrypted` AS `file_tape_encrypted`,`file_tape`.`deleted` AS `file_tape_deleted` from ((((((((`file_tape` join `tape` on((`file_tape`.`tape_id` = `tape`.`id`))) join `tapeset` on((`tape`.`tapeset_id` = `tapeset`.`id`))) join `file` on((`file`.`id` = `file_tape`.`file_id`))) join `library` on((`file`.`library_id` = `library`.`id`))) join `storageformat` on((`storageformat`.`id` = `tapeset`.`storageformat_id`))) join `libraryclass` on((`libraryclass`.`id` = `library`.`libraryclass_id`))) join `libraryclass_targetvolume` on((`libraryclass_targetvolume`.`libraryclass_id` = `library`.`libraryclass_id`))) join `libraryclass_requesttype_user` on((`libraryclass_requesttype_user`.`libraryclass_id` = `library`.`libraryclass_id`))) */;
-/*!50001 SET character_set_client      = @saved_cs_client */;
-/*!50001 SET character_set_results     = @saved_cs_results */;
-/*!50001 SET collation_connection      = @saved_col_connection */;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2020-04-09 21:32:33

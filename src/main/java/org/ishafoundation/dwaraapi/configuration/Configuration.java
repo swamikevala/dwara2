@@ -17,7 +17,7 @@ public class Configuration {
 
 	private String junkFilesStagedDirName;
 	
-	private String stagingSrcDirRoot;
+	private String readyToIngestSrcDirRoot;
 
 	private int pageSize;
 	
@@ -63,13 +63,13 @@ public class Configuration {
 	public void setJunkFilesStagedDirName(String junkFilesStagedDirName) {
 		this.junkFilesStagedDirName = junkFilesStagedDirName;
 	}
-	
-	public String getStagingSrcDirRoot() {
-		return stagingSrcDirRoot;
+
+	public String getReadyToIngestSrcDirRoot() {
+		return readyToIngestSrcDirRoot;
 	}
 
-	public void setStagingSrcDirRoot(String stagingSrcDirRoot) {
-		this.stagingSrcDirRoot = stagingSrcDirRoot;
+	public void setReadyToIngestSrcDirRoot(String readyToIngestSrcDirRoot) {
+		this.readyToIngestSrcDirRoot = readyToIngestSrcDirRoot;
 	}
 
 	public int getPageSize() {

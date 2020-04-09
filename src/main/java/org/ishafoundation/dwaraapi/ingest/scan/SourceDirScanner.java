@@ -36,8 +36,6 @@ public class SourceDirScanner {
     
 	@Autowired
     private Configuration configuration;
-//    @Value("${regexAllowedChrsInFileName}")
-//    private String regexAllowedChrsInFileName;
 	
 	@Autowired
 	private TFilerenameDao tFilerenameDao;
@@ -49,7 +47,7 @@ public class SourceDirScanner {
     private String regexAllowedChrsInFileName = null;
 	Pattern allowedChrsInFileNamePattern = null;
 	@PostConstruct
-	private void loadTasktypeList() {
+	private void loadConfigEntries() {
 		regexAllowedChrsInFileName = configuration.getRegexAllowedChrsInFileName();
 		allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
 	}
