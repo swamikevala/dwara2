@@ -8,7 +8,7 @@ public class File {
 	
 	private double size;
 	
-	private int libraryclassId;
+	private String libraryclass;
 	
 	private String barcode;
 	
@@ -44,12 +44,12 @@ public class File {
 		this.size = size;
 	}
 
-	public int getLibraryclassId() {
-		return libraryclassId;
+	public String getLibraryclass() {
+		return libraryclass;
 	}
 
-	public void setLibraryclassId(int libraryclassId) {
-		this.libraryclassId = libraryclassId;
+	public void setLibraryclass(String libraryclass) {
+		this.libraryclass = libraryclass;
 	}
 
 	public String getBarcode() {

@@ -1,11 +1,11 @@
 package org.ishafoundation.dwaraapi.db.model.view;
 		
 import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
-import javax.persistence.Id;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.constants.Requesttype;
+import org.ishafoundation.dwaraapi.db.keys.V_RestoreFileKey;
 
 
 /*
@@ -53,9 +53,8 @@ select * has lot of id conflicts hence just choosing the fields needed upfront..
 @Table(name="v_restore_file")
 public class V_RestoreFile {
 
-	@Id
-	@Column(name="file_id")
-	private int fileId;
+	@EmbeddedId
+	private V_RestoreFileKey id;
 	
 	@Column(name="file_pathname")
 	private String filePathname;
@@ -66,8 +65,8 @@ public class V_RestoreFile {
 	@Column(name="file_crc")
 	private String fileCrc;
 	
-	@Column(name="library_libraryclass_id")
-	private int libraryLibraryclassId;
+	@Column(name="libraryclass_name")
+	private String libraryclassName;
 	
 	@Column(name="tape_barcode")
 	private String tapeBarcode;
@@ -81,8 +80,8 @@ public class V_RestoreFile {
 	@Column(name="tapeset_copy_number")
 	private int tapesetCopyNumber;
 
-	@Column(name="tapeset_storageformat_id")
-	private int tapesetStorageformatId;
+	@Column(name="storageformat_name")
+	private String storageformatName;
 
 	@Column(name="file_tape_block")
 	private int fileTapeBlock;
@@ -96,21 +95,13 @@ public class V_RestoreFile {
 	@Column(name="file_tape_deleted")
 	private boolean fileTapeDeleted;
 
-	@Column(name="targetvolume_id")
-	private int targetvolumeId;
 	
-	@Column(name="requesttype_id")
-	private Requesttype requesttype;
-	
-	@Column(name="user_id")
-	private int userId;
-
-	public int getFileId() {
-		return fileId;
+	public V_RestoreFileKey getId() {
+		return id;
 	}
 
-	public void setFileId(int fileId) {
-		this.fileId = fileId;
+	public void setId(V_RestoreFileKey id) {
+		this.id = id;
 	}
 
 	public String getFilePathname() {
@@ -137,12 +128,12 @@ public class V_RestoreFile {
 		this.fileCrc = fileCrc;
 	}
 
-	public int getLibraryLibraryclassId() {
-		return libraryLibraryclassId;
+	public String getLibraryclassName() {
+		return libraryclassName;
 	}
 
-	public void setLibraryLibraryclassId(int libraryLibraryclassId) {
-		this.libraryLibraryclassId = libraryLibraryclassId;
+	public void setLibraryclassName(String libraryclassName) {
+		this.libraryclassName = libraryclassName;
 	}
 
 	public String getTapeBarcode() {
@@ -177,14 +168,14 @@ public class V_RestoreFile {
 		this.tapesetCopyNumber = tapesetCopyNumber;
 	}
 
-	public int getTapesetStorageformatId() {
-		return tapesetStorageformatId;
+	public String getStorageformatName() {
+		return storageformatName;
 	}
 
-	public void setTapesetStorageformatId(int tapesetStorageformatId) {
-		this.tapesetStorageformatId = tapesetStorageformatId;
+	public void setStorageformatName(String storageformatName) {
+		this.storageformatName = storageformatName;
 	}
-
+	
 	public int getFileTapeBlock() {
 		return fileTapeBlock;
 	}
@@ -215,30 +206,6 @@ public class V_RestoreFile {
 
 	public void setFileTapeDeleted(boolean fileTapeDeleted) {
 		this.fileTapeDeleted = fileTapeDeleted;
-	}
-	
-	public int getTargetvolumeId() {
-		return targetvolumeId;
-	}
-
-	public void setTargetvolumeId(int targetvolumeId) {
-		this.targetvolumeId = targetvolumeId;
-	}
-
-	public Requesttype getRequesttype() {
-		return requesttype;
-	}
-
-	public void setRequesttype(Requesttype requesttype) {
-		this.requesttype = requesttype;
-	}
-
-	public int getUserId() {
-		return userId;
-	}
-
-	public void setUserId(int userId) {
-		this.userId = userId;
 	}
 
 }

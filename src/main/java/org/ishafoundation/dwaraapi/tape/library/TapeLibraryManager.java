@@ -71,9 +71,20 @@ public class TapeLibraryManager{
 	
 	private String callMtxStatus(String tapeLibraryName) {
 		String mtxStatusResponse = null;
-		String mtxStatusResponseFileName = tapeLibraryName.replace("/", "_") + "_status.err";
-		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("mtx -f " + tapeLibraryName + " status", mtxStatusResponseFileName);
-		mtxStatusResponse = cler.getStdOutResponse();
+		
+		if(ArrayUtils.contains(env.getActiveProfiles(), "dev")) {
+			try {
+				mtxStatusResponse = FileUtils.readFileToString(new File("C:\\Users\\prakash\\projects\\videoarchives\\bru\\POC\\BRU002\\test\\mtxResponses\\mtx_status_all_drives_available.txt"));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+		}else {
+			// will make a call to mtx and get the status realtime...
+			String mtxStatusResponseFileName = tapeLibraryName.replace("/", "_") + "_status.err";
+			CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("mtx -f " + tapeLibraryName + " status", mtxStatusResponseFileName);
+			mtxStatusResponse = cler.getStdOutResponse();
+		}
 		return mtxStatusResponse;
 	}	
 	
@@ -123,21 +134,7 @@ public class TapeLibraryManager{
 	}
 	
 	public List<DriveStatusDetails> getAvailableDrivesList(){
-		MtxStatus mtxStatus = null;
-		if(ArrayUtils.contains(env.getActiveProfiles(), "dev")) {
-			String mtxStatusResponse = null;
-			
-			try {
-				mtxStatusResponse = FileUtils.readFileToString(new File("C:\\Users\\prakash\\projects\\videoarchives\\bru\\POC\\BRU002\\test\\mtxResponses\\mtx_status_all_drives_available.txt"));
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} // will make a call to mtx and get the status realtime...
-			
-			mtxStatus = MtxStatusResponseParser.parseMtxStatusResponse(mtxStatusResponse);
-		}else {
-			mtxStatus = getMtxStatus(tapeLibraryName);
-		}
+		MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
 		return getAvailableDrivesList(mtxStatus);
 	}	
 	

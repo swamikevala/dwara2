@@ -18,9 +18,8 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.dao.view.V_RestoreFileDao;
-import org.ishafoundation.dwaraapi.db.model.master.Tape;
+import org.ishafoundation.dwaraapi.db.keys.V_RestoreFileKey;
 import org.ishafoundation.dwaraapi.db.model.master.Targetvolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileTape;
 import org.ishafoundation.dwaraapi.db.model.view.V_RestoreFile;
 import org.ishafoundation.dwaraapi.job.JobManager;
 import org.ishafoundation.dwaraapi.tape.library.MtxStatus;
@@ -127,13 +126,13 @@ public class RestoreContoller {
 		String requestedBy = getUserFromContext();
 		int userId = userDao.findByName(requestedBy).getId();
 		
-		List<V_RestoreFile> v_RestoreFileList = v_RestoreFileDao.findAllByTapesetCopyNumberAndFileIdAndRequesttypeInAndUserId(copyNumber, fileId, requesttypeList, userId);
+		List<V_RestoreFile> v_RestoreFileList = v_RestoreFileDao.findAllByTapesetCopyNumberAndIdFileIdAndIdRequesttypeInAndIdUserId(copyNumber, fileId, requesttypeList, userId);
 		
 
 		int id = 0;
 		String filePathname = null;
 		double fileSize = 0;
-		int libraryclassId = 0;
+		String libraryclass = null;
 		String barcode = null;
 		boolean isDeleted = false;
 		boolean listPermitted = false;
@@ -143,14 +142,15 @@ public class RestoreContoller {
 		
 		for (V_RestoreFile v_RestoreFile : v_RestoreFileList) {
 			barcode = StringUtils.isBlank(barcode) ? v_RestoreFile.getTapeBarcode() : barcode;
-			id = v_RestoreFile.getFileId();
+			V_RestoreFileKey v_RestoreFileKey = v_RestoreFile.getId();
+			id = v_RestoreFileKey.getFileId();
 			filePathname = StringUtils.isBlank(filePathname) ? v_RestoreFile.getFilePathname() : filePathname;
 			fileSize = v_RestoreFile.getFileSize();
-			libraryclassId = v_RestoreFile.getLibraryLibraryclassId();
+			libraryclass = v_RestoreFile.getLibraryclassName();
 			isDeleted = v_RestoreFile.isFileTapeDeleted();
-			if(v_RestoreFile.getRequesttype() == Requesttype.list)
+			if(v_RestoreFileKey.getRequesttype() == Requesttype.list)
 				listPermitted = true;
-			if(v_RestoreFile.getRequesttype() == Requesttype.restore)
+			if(v_RestoreFileKey.getRequesttype() == Requesttype.restore)
 				restorePermitted = true;
 			// TODO - how to arrive at targetVolumePermitted
 			if(loadedTapeList.contains(barcode))
@@ -164,7 +164,7 @@ public class RestoreContoller {
 				nthFile.setId(id);
 				nthFile.setName(filePathname);
 				nthFile.setSize(fileSize);
-				nthFile.setLibraryclassId(libraryclassId);
+				nthFile.setLibraryclass(libraryclass);
 				nthFile.setBarcode(barcode);
 				if(restorePermitted)
 					nthFile.setRestorePermitted(restorePermitted);
