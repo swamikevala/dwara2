@@ -13,7 +13,6 @@ public enum Status {
 	skipped,
 	cancelled,
 	aborted,
-	deleted,
 	failed,
 	marked_completed
 }

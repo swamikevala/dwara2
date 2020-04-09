@@ -23,7 +23,7 @@ public class TaskUtils {
 		return isTaskStorage;
 	}
 	
-	public boolean isTaskStorage(Task task) {
+	public boolean isTaskStorageV1(Task task) {
 
 		boolean isTaskStorage = true;		if(task.getTaskfiletype() != null)
 
@@ -31,25 +31,29 @@ public class TaskUtils {
 		
 		return isTaskStorage;
 	}
+	
+	public boolean isTaskStorage(Task task) {
+		return task.isStorage();
+	}
 //	
 //	@Autowired
-//	private RequesttypeLibraryclassDao requesttypeLibraryclassDao;
+//	private ActionLibraryclassDao actionLibraryclassDao;
 //
 //	@Autowired
-//	private RequesttypeDao requesttypeDao;
+//	private ActionDao actionDao;
 //
 //
-//	public TaskOrTasksetDetails getTaskOrTasksetDetails(int requesttypeId, int libraryclassId) {
+//	public TaskOrTasksetDetails getTaskOrTasksetDetails(int actionId, int libraryclassId) {
 //		int tasksetId = 0;
 //		int taskId = 0;
-//		RequesttypeLibraryclass requesttypeLibraryclass = requesttypeLibraryclassDao.findByRequesttypeIdAndLibraryclassId(requesttypeId, libraryclassId);
-//		if(requesttypeLibraryclass != null) { // means library class specific workflow
-//			tasksetId = requesttypeLibraryclass.getTasksetId();
-//			taskId = requesttypeLibraryclass.getTaskId();
+//		ActionLibraryclass actionLibraryclass = actionLibraryclassDao.findByActionIdAndLibraryclassId(actionId, libraryclassId);
+//		if(actionLibraryclass != null) { // means library class specific workflow
+//			tasksetId = actionLibraryclass.getTasksetId();
+//			taskId = actionLibraryclass.getTaskId();
 //		}else { // means default ingest workflow or restore
-//			Requesttype requesttype = requesttypeDao.findById(requesttypeId).get();
-//			tasksetId = requesttype.getTasksetId();
-//			taskId = requesttype.getTaskId();
+//			Action action = actionDao.findById(actionId).get();
+//			tasksetId = action.getTasksetId();
+//			taskId = action.getTaskId();
 //		}
 //		
 //		TaskOrTasksetDetails taskOrTasksetDetails = new TaskOrTasksetDetails();

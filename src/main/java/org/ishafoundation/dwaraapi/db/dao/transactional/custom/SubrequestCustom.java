@@ -6,7 +6,7 @@ import org.ishafoundation.dwaraapi.model.WrappedSubrequestList;
 
 public interface SubrequestCustom {
 
-	WrappedSubrequestList findAllByRequesttypeIdAndStatusIds(Integer requesttypeId, Set<Integer> statusIds, int pageNumber, int pageSize);
+	WrappedSubrequestList findAllByActionIdAndStatusIds(Integer actionId, Set<Integer> statusIds, int pageNumber, int pageSize);
 	
-	WrappedSubrequestList findAllLatestByRequesttypeAndStatusIds(int requesttypeId, Set<Integer> statusIds, int pageNumber, int pageSize);
+	WrappedSubrequestList findAllLatestByActionAndStatusIds(int actionId, Set<Integer> statusIds, int pageNumber, int pageSize);
 }

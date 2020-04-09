@@ -11,15 +11,15 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassRequesttypeUser;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.RequesttypeUser;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassActionUser;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionUser;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
 @Entity
-@Table(name="requesttype")
-public class Requesttype {
+@Table(name="action")
+public class Action {
 
 	@Id
 	@Column(name="id")
@@ -28,19 +28,22 @@ public class Requesttype {
 	@Column(name="name")
 	private String name;
 	
-    @OneToMany(mappedBy = "requesttype",
-            cascade = CascadeType.MERGE,
-            orphanRemoval = true)
-    private List<RequesttypeUser> users = new ArrayList<>();
-    
-    @OneToMany(mappedBy = "requesttype",
-            cascade = CascadeType.MERGE,
-            orphanRemoval = true)
-    private List<LibraryclassRequesttypeUser> libraryclassRequesttypeUser = new ArrayList<>();     
-
-	public Requesttype() {}
+	@Column(name="description")
+	private String description;
 	
-	public Requesttype(int id, String name) {
+    @OneToMany(mappedBy = "action",
+            cascade = CascadeType.MERGE,
+            orphanRemoval = true)
+    private List<ActionUser> users = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "action",
+            cascade = CascadeType.MERGE,
+            orphanRemoval = true)
+    private List<LibraryclassActionUser> libraryclassActionUser = new ArrayList<>();     
+
+	public Action() {}
+	
+	public Action(int id, String name) {
 		this.id = id;
 		this.name = name;
 	}
@@ -61,32 +64,40 @@ public class Requesttype {
 		this.name = name;
 	}
 	
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
 	@JsonIgnore
-	public List<RequesttypeUser> getUsers() {
+	public List<ActionUser> getUsers() {
 		return users;
 	}
 	
 	@JsonIgnore
-	public void setUsers(List<RequesttypeUser> users) {
+	public void setUsers(List<ActionUser> users) {
 		this.users = users;
 	}
 	
 	@JsonIgnore
-	public List<LibraryclassRequesttypeUser> getLibraryclassRequesttypeUser() {
-		return libraryclassRequesttypeUser;
+	public List<LibraryclassActionUser> getLibraryclassActionUser() {
+		return libraryclassActionUser;
 	}
 
 	@JsonIgnore
-	public void setLibraryclassRequesttypeUser(List<LibraryclassRequesttypeUser> libraryclassRequesttypeUser) {
-		this.libraryclassRequesttypeUser = libraryclassRequesttypeUser;
+	public void setLibraryclassActionUser(List<LibraryclassActionUser> libraryclassActionUser) {
+		this.libraryclassActionUser = libraryclassActionUser;
 	}
 	
 	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Requesttype requesttype = (Requesttype) o;
-        return Objects.equals(name, requesttype.name);
+        Action action = (Action) o;
+        return Objects.equals(name, action.name);
     }
  
     @Override

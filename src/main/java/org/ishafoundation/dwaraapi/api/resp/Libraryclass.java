@@ -1,13 +1,16 @@
 package org.ishafoundation.dwaraapi.api.resp;
 
 public class Libraryclass {
+	
 	private int libraryclassId;
 	
 	private String name;
 	
-	private Integer[] targetVolumeIds; 
+	private String[] targetVolumes; 
 	
 	private Integer displayOrder;
+	
+	private String[] permittedActions;
 	
 
 	public int getLibraryclassId() {
@@ -26,12 +29,12 @@ public class Libraryclass {
 		this.name = name;
 	}
 
-	public Integer[] getTargetVolumeIds() {
-		return targetVolumeIds;
+	public String[] getTargetVolumes() {
+		return targetVolumes;
 	}
 
-	public void setTargetVolumeIds(Integer[] targetVolumeIds) {
-		this.targetVolumeIds = targetVolumeIds;
+	public void setTargetVolumes(String[] targetVolumes) {
+		this.targetVolumes = targetVolumes;
 	}
 
 	public Integer getDisplayOrder() {
@@ -41,4 +44,13 @@ public class Libraryclass {
 	public void setDisplayOrder(Integer displayOrder) {
 		this.displayOrder = displayOrder;
 	}
+
+	public String[] getPermittedActions() {
+		return permittedActions;
+	}
+
+	public void setPermittedActions(String[] permittedActions) {
+		this.permittedActions = permittedActions;
+	}
+	
 }

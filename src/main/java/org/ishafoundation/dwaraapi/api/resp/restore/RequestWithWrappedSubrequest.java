@@ -5,7 +5,7 @@ import java.util.List;
 public class RequestWithWrappedSubrequest {
 	private int requestId;
 	
-	private int requesttypeId;
+	private int actionId;
 
 	private String requestedBy;
 
@@ -28,12 +28,12 @@ public class RequestWithWrappedSubrequest {
 		this.requestId = requestId;
 	}
 
-	public int getRequesttypeId() {
-		return requesttypeId;
+	public int getActionId() {
+		return actionId;
 	}
 
-	public void setRequesttypeId(int requesttypeId) {
-		this.requesttypeId = requesttypeId;
+	public void setActionId(int actionId) {
+		this.actionId = actionId;
 	}
 
 	public String getRequestedBy() {

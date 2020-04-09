@@ -9,6 +9,6 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface RequestDao extends CrudRepository<Request,Integer>, RequestCustom {
 	
-	//List<Request> findAllByRequesttypeIdAndUserIdAndRequestedAtOrderByRequestedAtDesc(int requesttypeId, int userId, String startDate, Pageable pageable);
+	//List<Request> findAllByActionIdAndUserIdAndRequestedAtOrderByRequestedAtDesc(int actionId, int userId, String startDate, Pageable pageable);
 	
 }

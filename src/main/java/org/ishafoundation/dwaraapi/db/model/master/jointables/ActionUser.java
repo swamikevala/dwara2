@@ -10,9 +10,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.keys.RequesttypeUserKey;
+import org.ishafoundation.dwaraapi.db.keys.ActionUserKey;
 import org.ishafoundation.dwaraapi.db.model.master.User;
-import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 
 /*
  * 
@@ -23,16 +23,16 @@ import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
  * 
  * 
 */
-@Entity(name = "RequesttypeUser")
-@Table(name="requesttype_user")
-public class RequesttypeUser {
+@Entity(name = "ActionUser")
+@Table(name="action_user")
+public class ActionUser {
 
 	@EmbeddedId
-	private RequesttypeUserKey id;
+	private ActionUserKey id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("requesttypeId")
-	private Requesttype requesttype;
+    @MapsId("actionId")
+	private Action action;
 
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("userId")
@@ -41,35 +41,35 @@ public class RequesttypeUser {
 	@Column(name="permission_level")
 	private int permissionLevel;
 
-	public RequesttypeUser() {
+	public ActionUser() {
 		
 	}
 	
-	public RequesttypeUser(Requesttype requesttype, User user) {
-		this.requesttype = requesttype;
+	public ActionUser(Action action, User user) {
+		this.action = action;
 		this.user = user;
-		this.id = new RequesttypeUserKey(requesttype.getId(), user.getId());
+		this.id = new ActionUserKey(action.getId(), user.getId());
 	}
 	
-	public RequesttypeUser(Requesttype requesttype, User user, int permissionLevel) {
-		this(requesttype, user);
+	public ActionUser(Action action, User user, int permissionLevel) {
+		this(action, user);
 		this.permissionLevel = permissionLevel;
 	}
 	
-    public RequesttypeUserKey getId() {
+    public ActionUserKey getId() {
 		return id;
 	}
 
-	public void setId(RequesttypeUserKey id) {
+	public void setId(ActionUserKey id) {
 		this.id = id;
 	}
 
-	public Requesttype getRequesttype() {
-		return requesttype;
+	public Action getAction() {
+		return action;
 	}
 
-	public void setRequesttype(Requesttype requesttype) {
-		this.requesttype = requesttype;
+	public void setAction(Action action) {
+		this.action = action;
 	}
 
 	public User getUser() {
@@ -95,13 +95,13 @@ public class RequesttypeUser {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        RequesttypeUser that = (RequesttypeUser) o;
-        return Objects.equals(requesttype, that.requesttype) &&
+        ActionUser that = (ActionUser) o;
+        return Objects.equals(action, that.action) &&
                Objects.equals(user, that.user);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(requesttype, user);
+        return Objects.hash(action, user);
     }
 }

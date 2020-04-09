@@ -19,8 +19,8 @@ public class FileController {
 	@Autowired
 	FileDao fileDao;
 	
-	@GetMapping("/file")
-	public ResponseEntity<List<File>>  getAllFiles() {
+	@GetMapping("/filee")
+	public ResponseEntity<List<File>> getAllFiles() {
 		List<File> fileList = new ArrayList<File>();
 		
 		fileList = (List<File>) fileDao.findAll();

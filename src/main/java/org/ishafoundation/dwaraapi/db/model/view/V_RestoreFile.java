@@ -16,8 +16,8 @@ inner join tape on file_tape.tape_id = tape.id
 inner join tapeset on tape.tapeset_id = tapeset.id
 inner join file on file.id = file_tape.file_id
 inner join library on file.library_id = library.id
-inner join libraryclass_requesttype_user on
-    libraryclass_requesttype_user.libraryclass_id = library.libraryclass_id "
+inner join libraryclass_action_user on
+    libraryclass_action_user.libraryclass_id = library.libraryclass_id "
 
 select * has lot of id conflicts hence just choosing the fields needed upfront...
 
@@ -37,8 +37,8 @@ select * has lot of id conflicts hence just choosing the fields needed upfront..
         `file_tape`.`encrypted` AS `file_tape_encrypted`,
         `file_tape`.`deleted` AS `file_tape_deleted`,
         `libraryclass_targetvolume`.`targetvolume_id` AS `targetvolume_id`,
-        `libraryclass_requesttype_user`.`requesttype_id` AS `requesttype_id`,
-        `libraryclass_requesttype_user`.`user_id` AS `user_id`
+        `libraryclass_action_user`.`action_id` AS `action_id`,
+        `libraryclass_action_user`.`user_id` AS `user_id`
     FROM
         ((((((`file_tape`
         JOIN `tape` ON ((`file_tape`.`tape_id` = `tape`.`id`)))
@@ -46,7 +46,7 @@ select * has lot of id conflicts hence just choosing the fields needed upfront..
         JOIN `file` ON ((`file`.`id` = `file_tape`.`file_id`)))
         JOIN `library` ON ((`file`.`library_id` = `library`.`id`)))
         JOIN `libraryclass_targetvolume` ON ((`libraryclass_targetvolume`.`libraryclass_id` = `library`.`libraryclass_id`)))
-        JOIN `libraryclass_requesttype_user` ON ((`libraryclass_requesttype_user`.`libraryclass_id` = `library`.`libraryclass_id`)))
+        JOIN `libraryclass_action_user` ON ((`libraryclass_action_user`.`libraryclass_id` = `library`.`libraryclass_id`)))
  */
 
 @Entity

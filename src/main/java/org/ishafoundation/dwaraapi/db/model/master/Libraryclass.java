@@ -15,10 +15,10 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassProperty;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassRequesttypeUser;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassActionUser;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassTapeset;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassTargetvolume;
-import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -91,7 +91,7 @@ public class Libraryclass {
     @OneToMany(mappedBy = "libraryclass",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
-    private List<LibraryclassRequesttypeUser> libraryclassRequesttypeUser = new ArrayList<>();   
+    private List<LibraryclassActionUser> libraryclassActionUser = new ArrayList<>();   
     
 	public int getId() {
 		return id;
@@ -251,13 +251,13 @@ public class Libraryclass {
 	}
 	
 	@JsonIgnore
-	public List<LibraryclassRequesttypeUser> getLibraryclassRequesttypeUser() {
-		return libraryclassRequesttypeUser;
+	public List<LibraryclassActionUser> getLibraryclassActionUser() {
+		return libraryclassActionUser;
 	}
 
 	@JsonIgnore
-	public void setLibraryclassRequesttypeUser(List<LibraryclassRequesttypeUser> libraryclassRequesttypeUser) {
-		this.libraryclassRequesttypeUser = libraryclassRequesttypeUser;
+	public void setLibraryclassActionUser(List<LibraryclassActionUser> libraryclassActionUser) {
+		this.libraryclassActionUser = libraryclassActionUser;
 	}
 
 	//@JsonIgnore
@@ -312,14 +312,14 @@ public class Libraryclass {
         property.getLibraryclassProperty().add(libraryclassProperty);
     }
     
-    public void addRequesttypeUser(Requesttype requesttype, User user) {
+    public void addActionUser(Action action, User user) {
     	// linking the join table entry to this owning object
-    	LibraryclassRequesttypeUser libraryclassRequesttypeUser = new LibraryclassRequesttypeUser(this, requesttype, user);
-    	this.libraryclassRequesttypeUser.add(libraryclassRequesttypeUser);
+    	LibraryclassActionUser libraryclassActionUser = new LibraryclassActionUser(this, action, user);
+    	this.libraryclassActionUser.add(libraryclassActionUser);
 
     	// inversing linking the join table entry to the target object
-    	requesttype.getLibraryclassRequesttypeUser().add(libraryclassRequesttypeUser);
-    	user.getLibraryclassRequesttypeUser().add(libraryclassRequesttypeUser);
+    	action.getLibraryclassActionUser().add(libraryclassActionUser);
+    	user.getLibraryclassActionUser().add(libraryclassActionUser);
     }
     
     // TODO remove utility methods(){}

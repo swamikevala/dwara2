@@ -28,6 +28,12 @@ public class TFilerename {
 	@Column(name="renamed_at")
 	private LocalDateTime renamedAt;
 	
+	public TFilerename() {}
+	
+	public TFilerename(String sourcePath, String oldFilename) {
+		this.tFilerenameKey = new TFilerenameKey(sourcePath, oldFilename);
+	}
+	
 	public String getNewFilename() {
 		return newFilename;
 	}

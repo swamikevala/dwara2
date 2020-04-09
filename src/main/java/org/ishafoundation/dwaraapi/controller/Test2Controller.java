@@ -16,7 +16,7 @@ public class Test2Controller {
 //    @PostMapping("/updateDB")
 //    public ResponseEntity<String> updateDB(){
 //    	Request request = new Request();
-//    	request.setRequesttypeId(9008);
+//    	request.setActionId(9008);
 //    	request.setLibraryclassId(5001);
 //    	request.setRequestedAt(System.currentTimeMillis());
 //    	request.setRequestedBy("prak");

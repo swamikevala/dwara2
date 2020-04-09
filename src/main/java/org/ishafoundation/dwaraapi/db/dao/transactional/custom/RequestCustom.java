@@ -6,6 +6,6 @@ import org.ishafoundation.dwaraapi.model.WrappedRequestList;
 
 public interface RequestCustom {
 	
-	WrappedRequestList findAllByRequesttypeAndUserIdAndRequestedAtOrderByLatest(Integer requesttypeId, Integer userId, LocalDateTime fromDate, LocalDateTime toDate, int pageNumber, int pageSize);
+	WrappedRequestList findAllByActionAndUserIdAndRequestedAtOrderByLatest(Integer actionId, Integer userId, LocalDateTime fromDate, LocalDateTime toDate, int pageNumber, int pageSize);
 
 }

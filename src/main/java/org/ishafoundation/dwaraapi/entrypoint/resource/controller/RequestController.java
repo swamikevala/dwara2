@@ -9,7 +9,7 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.cacheutil.RequesttypeCacheUtil;
+import org.ishafoundation.dwaraapi.db.cacheutil.ActionCacheUtil;
 import org.ishafoundation.dwaraapi.db.cacheutil.StatusCacheUtil;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
@@ -17,7 +17,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.User;
-import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
@@ -58,7 +58,7 @@ public class RequestController {
 	private ObjectMappingUtil objectMappingUtil;
 	
 	@Autowired
-	private RequesttypeCacheUtil requesttypeCacheUtil;
+	private ActionCacheUtil actionCacheUtil;
 	
 	@Autowired
 	private StatusCacheUtil statusCacheUtil;
@@ -90,8 +90,8 @@ public class RequestController {
 		
 		Integer requestypeId = null;
 		if(requestType != null) {
-			Requesttype requesttypeObj = requesttypeCacheUtil.getRequesttype(requestType);
-			requestypeId = requesttypeObj.getId();
+			Action actionObj = actionCacheUtil.getAction(requestType);
+			requestypeId = actionObj.getId();
 		}
 		Integer userId = null;
 		if(user != null) {
@@ -99,7 +99,7 @@ public class RequestController {
 			userId = userObj.getId();
 		}
 		
-		WrappedRequestList wrappedRequestList = requestDao.findAllByRequesttypeAndUserIdAndRequestedAtOrderByLatest(requestypeId, userId, fromDate, toDate, pageNumber, pageSize);
+		WrappedRequestList wrappedRequestList = requestDao.findAllByActionAndUserIdAndRequestedAtOrderByLatest(requestypeId, userId, fromDate, toDate, pageNumber, pageSize);
 	   	List<Request> requestList = wrappedRequestList.getRequestList();
 	   	
 	   	List<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request> requestListForResponse = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request>();
@@ -160,17 +160,17 @@ public class RequestController {
 		   		statusIdSet.add(statusCacheUtil.getStatus(statusArrAsString[i]).getId());
 			}
 		}
-		Integer requesttypeId = null;
+		Integer actionId = null;
 		if(requestType != null){
-		   	Requesttype requesttype = requesttypeCacheUtil.getRequesttype(requestType);
-		   	requesttypeId = requesttype.getId();
+		   	Action action = actionCacheUtil.getAction(requestType);
+		   	actionId = action.getId();
 		}
 		
 	   	WrappedSubrequestList wrappedSubrequestList = null;
     	if(latest)
-    		wrappedSubrequestList = subrequestDao.findAllLatestByRequesttypeAndStatusIds(requesttypeId, statusIdSet, pageNumber, pageSize); // TODO implement using Latest
+    		wrappedSubrequestList = subrequestDao.findAllLatestByActionAndStatusIds(actionId, statusIdSet, pageNumber, pageSize); // TODO implement using Latest
     	else
-    		wrappedSubrequestList = subrequestDao.findAllByRequesttypeIdAndStatusIds(requesttypeId, statusIdSet, pageNumber, pageSize);
+    		wrappedSubrequestList = subrequestDao.findAllByActionIdAndStatusIds(actionId, statusIdSet, pageNumber, pageSize);
 
 	   	List<Subrequest> subrequestList = wrappedSubrequestList.getSubrequestList();
 	   	

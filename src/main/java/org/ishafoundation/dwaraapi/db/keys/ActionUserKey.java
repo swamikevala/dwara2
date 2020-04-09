@@ -7,31 +7,31 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 @Embeddable
-public class RequesttypeUserKey implements Serializable {
+public class ActionUserKey implements Serializable {
 
 	private static final long serialVersionUID = 1490630317339527316L;
 
-	@Column(name = "requesttype_id")
-    private int requesttypeId;
+	@Column(name = "action_id")
+    private int actionId;
  
     @Column(name = "user_id")
     private int userId;
  
-    public RequesttypeUserKey() {}
+    public ActionUserKey() {}
     
-    public RequesttypeUserKey(
-        int requesttypeId,
+    public ActionUserKey(
+        int actionId,
         int userId) {
-        this.requesttypeId = requesttypeId;
+        this.actionId = actionId;
         this.userId = userId;
     }
  
-    public int getRequesttypeId() {
-		return requesttypeId;
+    public int getActionId() {
+		return actionId;
 	}
 
-	public void setRequesttypeId(int requesttypeId) {
-		this.requesttypeId = requesttypeId;
+	public void setActionId(int actionId) {
+		this.actionId = actionId;
 	}
 
 	public int getUserId() {
@@ -49,13 +49,13 @@ public class RequesttypeUserKey implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        RequesttypeUserKey that = (RequesttypeUserKey) o;
-        return Objects.equals(requesttypeId, that.requesttypeId) &&
+        ActionUserKey that = (ActionUserKey) o;
+        return Objects.equals(actionId, that.actionId) &&
                Objects.equals(userId, that.userId);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(requesttypeId, userId);
+        return Objects.hash(actionId, userId);
     }
 }

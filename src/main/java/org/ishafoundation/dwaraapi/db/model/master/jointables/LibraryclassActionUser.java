@@ -9,47 +9,47 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.keys.LibraryclassRequesttypeUserKey;
+import org.ishafoundation.dwaraapi.db.keys.LibraryclassActionUserKey;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.User;
-import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 
-@Entity(name = "LibraryclassRequesttypeUser")
-@Table(name="libraryclass_requesttype_user")
-public class LibraryclassRequesttypeUser {
+@Entity(name = "LibraryclassActionUser")
+@Table(name="libraryclass_action_user")
+public class LibraryclassActionUser {
 
 	@EmbeddedId
-	private LibraryclassRequesttypeUserKey id;
+	private LibraryclassActionUserKey id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("libraryclassId")
 	private Libraryclass libraryclass;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("requesttypeId")
-	private Requesttype requesttype;
+    @MapsId("actionId")
+	private Action action;
 
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("userId")
 	private User user;
 	
 	
-	public LibraryclassRequesttypeUser() {
+	public LibraryclassActionUser() {
 		
 	}
 
-	public LibraryclassRequesttypeUser(Libraryclass libraryclass, Requesttype requesttype, User user) {
+	public LibraryclassActionUser(Libraryclass libraryclass, Action action, User user) {
 		this.libraryclass = libraryclass;
-		this.requesttype = requesttype;
+		this.action = action;
 		this.user = user;
-		this.id = new LibraryclassRequesttypeUserKey(libraryclass.getId(), requesttype.getId(), user.getId());
+		this.id = new LibraryclassActionUserKey(libraryclass.getId(), action.getId(), user.getId());
 	}
 	
-    public LibraryclassRequesttypeUserKey getId() {
+    public LibraryclassActionUserKey getId() {
 		return id;
 	}
 
-	public void setId(LibraryclassRequesttypeUserKey id) {
+	public void setId(LibraryclassActionUserKey id) {
 		this.id = id;
 	}
 
@@ -61,12 +61,12 @@ public class LibraryclassRequesttypeUser {
 		this.libraryclass = libraryclass;
 	}
 
-	public Requesttype getRequesttype() {
-		return requesttype;
+	public Action getAction() {
+		return action;
 	}
 
-	public void setRequesttype(Requesttype requesttype) {
-		this.requesttype = requesttype;
+	public void setAction(Action action) {
+		this.action = action;
 	}
 
 	public User getUser() {
@@ -84,15 +84,15 @@ public class LibraryclassRequesttypeUser {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        LibraryclassRequesttypeUser that = (LibraryclassRequesttypeUser) o;
+        LibraryclassActionUser that = (LibraryclassActionUser) o;
         return Objects.equals(libraryclass, that.libraryclass) &&
-        		Objects.equals(requesttype, that.requesttype) &&
+        		Objects.equals(action, that.action) &&
                 Objects.equals(user, that.user);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(libraryclass, requesttype, user);
+        return Objects.hash(libraryclass, action, user);
     }
 
 }

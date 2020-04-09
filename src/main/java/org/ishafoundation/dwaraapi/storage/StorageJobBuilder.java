@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.ishafoundation.dwaraapi.constants.Requesttype;
+import org.ishafoundation.dwaraapi.constants.Action;
 import org.ishafoundation.dwaraapi.db.dao.master.TapeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryclassTapesetDao;
 import org.ishafoundation.dwaraapi.db.dao.view.V_RestoreFileDao;
@@ -48,8 +48,8 @@ public class StorageJobBuilder {
 		int taskId = task.getId();
 		Subrequest subrequest = job.getSubrequest();
 		Request request = subrequest.getRequest();
-		org.ishafoundation.dwaraapi.constants.Requesttype requestType = request.getRequesttype();
-		if(requestType == org.ishafoundation.dwaraapi.constants.Requesttype.ingest) {
+		org.ishafoundation.dwaraapi.constants.Action requestType = request.getAction();
+		if(requestType == org.ishafoundation.dwaraapi.constants.Action.ingest) {
 			if (taskUtils.isTaskStorage(task)) { // means its a copy job...
 				LibraryclassTapeset libraryclassTapeset = libraryclassTapesetDao.findByTaskId(taskId);
 				// TODO - Lazy loading of archivejob... just get all the information only when the job is picked for processing. Why load all info upfront only to get discarded.
@@ -84,7 +84,7 @@ public class StorageJobBuilder {
 				storageJob.setEncrypted(libraryclassTapeset.isEncrypted());
 			}
 		}
-		else if(requestType == org.ishafoundation.dwaraapi.constants.Requesttype.restore) {
+		else if(requestType == org.ishafoundation.dwaraapi.constants.Action.restore) {
 			storageJob = new StorageJob();
 			storageJob.setJob(job);
 			
@@ -102,7 +102,7 @@ public class StorageJobBuilder {
 			
 			int userId = request.getUserId();
 
-			V_RestoreFile v_RestoreFile = v_RestoreFileDao.findByTapesetCopyNumberAndIdFileIdAndIdRequesttypeAndIdUserId(copyNumber, fileIdToBeRestored, Requesttype.restore, userId);			
+			V_RestoreFile v_RestoreFile = v_RestoreFileDao.findByTapesetCopyNumberAndIdFileIdAndIdActionAndIdUserId(copyNumber, fileIdToBeRestored, Action.restore, userId);			
 
 			storageJob.setFilePathname(v_RestoreFile.getFilePathname());
 

@@ -12,8 +12,6 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.PostConstruct;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
@@ -26,28 +24,27 @@ import org.ishafoundation.dwaraapi.api.resp.ingest.IngestFile;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.constants.Status;
-import org.ishafoundation.dwaraapi.db.cacheutil.Extns_TaskfiletypeCacheUtil;
+import org.ishafoundation.dwaraapi.db.cacheutil.ActionCacheUtil;
 import org.ishafoundation.dwaraapi.db.cacheutil.LibraryclassCacheUtil;
-import org.ishafoundation.dwaraapi.db.cacheutil.RequesttypeCacheUtil;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
 import org.ishafoundation.dwaraapi.db.dao.master.LibraryclassDao;
-import org.ishafoundation.dwaraapi.db.dao.master.RequesttypeDao;
-import org.ishafoundation.dwaraapi.db.dao.master.TaskfiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryclassRequesttypeUserDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryclassActionUserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TFilerenameDao;
 import org.ishafoundation.dwaraapi.db.model.master.Extension;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassRequesttypeUser;
-import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassActionUser;
+import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFilerename;
 import org.ishafoundation.dwaraapi.ingest.scan.SourceDirScanner;
 import org.ishafoundation.dwaraapi.job.JobManager;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
@@ -76,9 +73,9 @@ import io.swagger.annotations.ApiResponses;
 
 @CrossOrigin
 @RestController
-public class IngestController {
+public class LibraryController {
 
-	private static final Logger logger = LoggerFactory.getLogger(IngestController.class);
+	private static final Logger logger = LoggerFactory.getLogger(LibraryController.class);
 
 	@Autowired
 	private LibraryclassDao libraryclassDao;
@@ -87,7 +84,10 @@ public class IngestController {
 	private UserDao userDao;
 	
 	@Autowired
-	private LibraryclassRequesttypeUserDao libraryclassRequesttypeUserDao;	
+	private TFilerenameDao tFilerenameDao;
+	
+	@Autowired
+	private LibraryclassActionUserDao libraryclassActionUserDao;	
 	
 	@Autowired
 	private SourceDirScanner sourceDirScanner;
@@ -103,9 +103,6 @@ public class IngestController {
 
 	@Autowired
 	private FileDao fileDao;
-
-	@Autowired
-	private TaskfiletypeDao taskfiletypeDao;
 	
 	@Autowired
 	private JobDao jobDao;
@@ -123,10 +120,7 @@ public class IngestController {
 	private Configuration configuration;
 	
 	@Autowired
-	private Extns_TaskfiletypeCacheUtil extns_FiletypeCacheUtil;
-	
-	@Autowired
-	private RequesttypeCacheUtil requesttypeCacheUtil;
+	private ActionCacheUtil actionCacheUtil;
 
 	@Autowired
 	private LibraryclassCacheUtil libraryclassCacheUtil;
@@ -138,36 +132,26 @@ public class IngestController {
 	private JunkFilesMover junkFilesMover;
 	
 	private static final String DEFAULT_REQUESTTYPE = "ingest";
-	// TODO : do we even need this or can we just use libraryclass.pathprefix
-	private String stagingSrcDirRoot = null;
-	
-	@PostConstruct
-	private void loadTasktypeList() {
-		stagingSrcDirRoot = configuration.getStagingSrcDirRoot();
-	}
 	
 	
-	@ApiOperation(value = "Scans the selected directory path chosen in the dropdown and lists all candidate folders for users to ingest it.", response = List.class)
+	@ApiOperation(value = "Scans the selected libraryclass passed and lists all candidate folders from across all users to ingest", response = List.class)
 	@ApiResponses(value = { 
 		    @ApiResponse(code = 200, message = "Ok"),
-		    @ApiResponse(code = 204, message = "No folders found to be ingested"),
-		    @ApiResponse(code = 401, message = "Unauthorized"),
-		    @ApiResponse(code = 403, message = "Forbidden"),
 		    @ApiResponse(code = 404, message = "Not Found")
 	})
-	@GetMapping("/ingest/library")
+	@GetMapping("/library/staging")
 	public ResponseEntity<List<IngestFile>> getAllIngestableFiles(@RequestParam String libraryclass) {
 		List<IngestFile> ingestFileList = new ArrayList<IngestFile>();
 		
 		Libraryclass toBeIngestedLibraryclass = libraryclassDao.findByName(libraryclass);
-		Requesttype requesttypeObj = requesttypeCacheUtil.getRequesttype(DEFAULT_REQUESTTYPE);
+		Action actionObj = actionCacheUtil.getAction(DEFAULT_REQUESTTYPE);
 		String pathPrefix = toBeIngestedLibraryclass.getPathPrefix();
 
 		List<String> scanFolderBasePathList = new ArrayList<String>();
 		
-		List<LibraryclassRequesttypeUser> libraryclassUserList = libraryclassRequesttypeUserDao.findAllByLibraryclassIdAndRequesttypeId(toBeIngestedLibraryclass.getId(), requesttypeObj.getId());
-		for (LibraryclassRequesttypeUser libraryclassRequesttypeUser : libraryclassUserList) {
-			scanFolderBasePathList.add(pathPrefix + File.separator + libraryclassRequesttypeUser.getUser().getName());
+		List<LibraryclassActionUser> libraryclassUserList = libraryclassActionUserDao.findAllByLibraryclassIdAndActionId(toBeIngestedLibraryclass.getId(), actionObj.getId());
+		for (LibraryclassActionUser libraryclassActionUser : libraryclassUserList) {
+			scanFolderBasePathList.add(pathPrefix + File.separator + libraryclassActionUser.getUser().getName());
 		}
 		
 		ingestFileList = sourceDirScanner.scanSourceDir(toBeIngestedLibraryclass, scanFolderBasePathList);
@@ -179,12 +163,58 @@ public class IngestController {
 		}
 	}
 	
+	@PostMapping("/library/staging/rename")
+    public ResponseEntity<IngestFile> renameFolder(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.FileAttributes fileAttributes){
+		String sourcePath = fileAttributes.getSourcePath();
+		String oldFileName = fileAttributes.getOldFilename();
+		String newFileName = fileAttributes.getNewFilename();
+		File srcFile = FileUtils.getFile(sourcePath, oldFileName);
+		File destFile = FileUtils.getFile(sourcePath, newFileName);
+		
+		
+		IngestFile nthIngestFile = new IngestFile();
+		
+		nthIngestFile.setSourcePath(sourcePath);
+		nthIngestFile.setOldFilename(oldFileName);
+		nthIngestFile.setNewFilename(newFileName);
+		String errorType = null;
+
+		
+		try {
+    		if(srcFile.isDirectory())
+    			FileUtils.moveDirectory(srcFile, destFile);
+    		else if(srcFile.isFile())
+    			FileUtils.moveFile(srcFile, destFile);
+    		else
+    			throw new Exception("File not found " + srcFile);
+			TFilerename tFilerename = new TFilerename(sourcePath, oldFileName);
+			tFilerename.setNewFilename(newFileName);
+			tFilerename.setRenamedAt(LocalDateTime.now());
+	    	String requestedBy = getUserFromContext();
+	    	tFilerename.setUser(userDao.findByName(requestedBy));
+
+	    	tFilerenameDao.save(tFilerename);
+		} catch (Exception e) {
+			errorType = "Error";
+			nthIngestFile.setErrorType(errorType);
+			nthIngestFile.setErrorMessage("Unable to rename file " + srcFile + " as " + destFile + " because " + e.getMessage());
+		}
+		
+
+		if (errorType == null) {
+			return ResponseEntity.ok(nthIngestFile);
+		} else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(nthIngestFile);
+		}
+    	
+	}
+	
 	@ApiOperation(value = "Ingest comment goes here")
 	@ApiResponses(value = { 
 		    @ApiResponse(code = 202, message = "Request submitted and queued up"),
 		    @ApiResponse(code = 400, message = "Error")
 	})
-	@PostMapping("/ingest")
+	@PostMapping("/library/staging/ingest")
 	//public org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedRequest ingest(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest){
     public org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request ingest(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest){	
     	boolean isAllValid = true;
@@ -234,12 +264,12 @@ public class IngestController {
 	    	}
 	    	
 			if(isAllValid) {
-		    	//Requesttype requesttype = requesttypeCacheUtil.getRequesttype(DEFAULT_REQUESTTYPE);
+		    	//Action action = actionCacheUtil.getAction(DEFAULT_REQUESTTYPE);
 	    	
 		    	String requestedBy = getUserFromContext();
 		    	
 		    	Request request = new Request();
-		    	request.setRequesttype(org.ishafoundation.dwaraapi.constants.Requesttype.valueOf(DEFAULT_REQUESTTYPE));
+		    	request.setAction(org.ishafoundation.dwaraapi.constants.Action.valueOf(DEFAULT_REQUESTTYPE));
 		    	request.setLibraryclass(libraryclass);
 		    	request.setRequestedAt(LocalDateTime.now());
 		    	request.setUser(userDao.findByName(requestedBy));
@@ -405,7 +435,7 @@ public class IngestController {
     	// STEP 1 - Moves the file from ReadyToIngest directory to Staging directory
     	File libraryFileInStagingDir = null;
     	try {
-    		libraryFileInStagingDir = moveFileToStaging(sourcePath, oldFileName, libraryFileName, libraryParams.isRerun());
+    		libraryFileInStagingDir = moveFileToStaging(sourcePath, oldFileName, request.getLibraryclass().getPathPrefix(), libraryFileName, libraryParams.isRerun());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -485,9 +515,9 @@ public class IngestController {
     }
 	
 
-    private File moveFileToStaging(String sourcePath, String oldFileName, String libraryFileName, boolean isRerun) throws Exception {
+    private File moveFileToStaging(String sourcePath, String oldFileName, String destinationPath, String libraryFileName, boolean isRerun) throws Exception {
     	File libraryFileInReadyToIngestDir = FileUtils.getFile(sourcePath, oldFileName);
-    	String libraryFilePathInStagingDir = stagingSrcDirRoot + File.separator + libraryFileName; // TODO remove stagingSrcDirRoot - request.getLibraryclass().getPathPrefix() + File.separator + libraryFileName;
+    	String libraryFilePathInStagingDir =  destinationPath + File.separator + libraryFileName; //  stagingSrcDirRoot + File.separator + libraryFileName; // TODO remove stagingSrcDirRoot - 
     	File libraryFileInStagingDir = FileUtils.getFile(libraryFilePathInStagingDir);
     	if(isRerun) {
     		logger.info("Skipped setting permissions and moving medialibrary directory from RTI to Staging area");

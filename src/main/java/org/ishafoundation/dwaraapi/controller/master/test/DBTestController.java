@@ -5,7 +5,7 @@ import java.util.List;
 import org.ishafoundation.dwaraapi.db.dao.master.LibraryclassDao;
 import org.ishafoundation.dwaraapi.db.dao.master.PrioritybandDao;
 import org.ishafoundation.dwaraapi.db.dao.master.PropertyDao;
-import org.ishafoundation.dwaraapi.db.dao.master.RequesttypeDao;
+import org.ishafoundation.dwaraapi.db.dao.master.ActionDao;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.StorageformatDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TapesetDao;
@@ -14,8 +14,8 @@ import org.ishafoundation.dwaraapi.db.dao.master.TaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TaskfiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TasksetDao;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.RequesttypeUserDao;
-import org.ishafoundation.dwaraapi.db.keys.RequesttypeUserKey;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionUserDao;
+import org.ishafoundation.dwaraapi.db.keys.ActionUserKey;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.Priorityband;
 import org.ishafoundation.dwaraapi.db.model.master.Property;
@@ -27,8 +27,8 @@ import org.ishafoundation.dwaraapi.db.model.master.Task;
 import org.ishafoundation.dwaraapi.db.model.master.Taskfiletype;
 import org.ishafoundation.dwaraapi.db.model.master.Taskset;
 import org.ishafoundation.dwaraapi.db.model.master.User;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.RequesttypeUser;
-import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionUser;
+import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -76,13 +76,13 @@ public class DBTestController extends SetupExtenstionFiletypeController{
 	private UserDao userDao;
 
 	@Autowired
-	private RequesttypeDao requesttypeDao;
+	private ActionDao actionDao;
 	
 	@Autowired
 	private PrioritybandDao prioritybandDao;
 
 	@Autowired
-	private RequesttypeUserDao requesttypeUserDao;
+	private ActionUserDao actionUserDao;
     
     
 	@PostMapping("/insertLibraryclass")
@@ -101,23 +101,23 @@ public class DBTestController extends SetupExtenstionFiletypeController{
     	Property property = createProperty();
     	libraryclass.addProperty(property, 1, true);
     	
-    	Requesttype ingest = createIngestRequesttype();
-    	Requesttype cancel = createCancelRequesttype();
-    	Requesttype delete = createDeleteRequesttype();
+    	Action ingest = createIngestAction();
+    	Action cancel = createCancelAction();
+    	Action delete = createDeleteAction();
     	Priorityband pb = createPriorityband();
     	User user1 = createUser1();
 		user1.setPriorityband(pb);
-		user1.addRequesttype(cancel, 2);
-		user1.addRequesttype(delete, 2);
+		user1.addAction(cancel, 2);
+		user1.addAction(delete, 2);
 		user1 = userDao.save(user1);
 		
 		User user2 = createUser2();
 		user2.setPriorityband(pb);
-		user2.addRequesttype(cancel, 1);
+		user2.addAction(cancel, 1);
 		user2 = userDao.save(user2);
 		
-    	libraryclass.addRequesttypeUser(ingest, user1);
-    	libraryclass.addRequesttypeUser(ingest, user2);
+    	libraryclass.addActionUser(ingest, user1);
+    	libraryclass.addActionUser(ingest, user2);
     	libraryclass = libraryclassDao.save(libraryclass);
 		
 		//LibraryclassTargetvolume libraryclassTargetvolume = new LibraryclassTargetvolume();
@@ -260,19 +260,19 @@ public class DBTestController extends SetupExtenstionFiletypeController{
 		return libraryclass;
 	}
 	
-	protected Requesttype createIngestRequesttype(){
-    	Requesttype ingest = new Requesttype(8001, "Ingest");
-    	return ingest = requesttypeDao.save(ingest);
+	protected Action createIngestAction(){
+    	Action ingest = new Action(8001, "Ingest");
+    	return ingest = actionDao.save(ingest);
     	
 	}
-	private Requesttype createCancelRequesttype(){
-		Requesttype cancel = new Requesttype(8003, "Cancel");
-		return cancel = requesttypeDao.save(cancel);
+	private Action createCancelAction(){
+		Action cancel = new Action(8003, "Cancel");
+		return cancel = actionDao.save(cancel);
 	}
 	
-	private Requesttype createDeleteRequesttype(){
-		Requesttype delete = new Requesttype(8004, "Delete");
-		delete = requesttypeDao.save(delete);
+	private Action createDeleteAction(){
+		Action delete = new Action(8004, "Delete");
+		delete = actionDao.save(delete);
 		return delete;
 	}
 	
@@ -334,18 +334,18 @@ public class DBTestController extends SetupExtenstionFiletypeController{
     @GetMapping("/permissions")
     public boolean getPermissionLevel(){
     	int forUser = 21001;
-    	int requesttypeId = 8003;
+    	int actionId = 8003;
     	
-    	RequesttypeUser requesttypeUser = requesttypeUserDao.findByRequesttypeIdAndUserId(requesttypeId, forUser);
-    	System.out.println("Response returned with unnecessary joins - " + requesttypeUser.getPermissionLevel());
+    	ActionUser actionUser = actionUserDao.findByActionIdAndUserId(actionId, forUser);
+    	System.out.println("Response returned with unnecessary joins - " + actionUser.getPermissionLevel());
 
-    	RequesttypeUserKey requesttypeUserKey =  new RequesttypeUserKey(requesttypeId, forUser);
-    	RequesttypeUser requesttypeUser2 = requesttypeUserDao.findById(requesttypeUserKey).get();
-    	System.out.println("with no joins - " + requesttypeUser2.getPermissionLevel());
+    	ActionUserKey actionUserKey =  new ActionUserKey(actionId, forUser);
+    	ActionUser actionUser2 = actionUserDao.findById(actionUserKey).get();
+    	System.out.println("with no joins - " + actionUser2.getPermissionLevel());
     	/*
     	 * Wrong query
-    	RequesttypeUser requesttypeUser2 = requesttypeUserDao.findByRequesttypeRequesttypeIdAndUserUserId(requesttypeId, forUser);
-    	System.out.println("with no joins - " + requesttypeUser2.getPermissionLevel());
+    	ActionUser actionUser2 = actionUserDao.findByActionActionIdAndUserUserId(actionId, forUser);
+    	System.out.println("with no joins - " + actionUser2.getPermissionLevel());
     	*/
 		return true;
     	

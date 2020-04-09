@@ -4,22 +4,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.cacheutil.RequesttypeCacheUtil;
-import org.ishafoundation.dwaraapi.db.dao.master.LibraryclassDao;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryclassRequesttypeUserDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryclassActionUserDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryclassTargetvolumeDao;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.User;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassRequesttypeUser;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassActionUser;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassTargetvolume;
-import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.ApiOperation;
@@ -33,86 +30,75 @@ public class LibraryclassController {
 	private UserDao userDao;
 	
 	@Autowired
-	private LibraryclassDao libraryclassDao;
-	
-	@Autowired
-	private LibraryclassRequesttypeUserDao libraryclassRequesttypeUserDao;
+	private LibraryclassActionUserDao libraryclassActionUserDao;
 
 	@Autowired
 	private LibraryclassTargetvolumeDao libraryclassTargetvolumeDao;
 	
-	@Autowired
-	private RequesttypeCacheUtil requesttypeCacheUtil;
-
-	/*
-	userId=3&requestType=ingest&showTargetVolumes=true [200]
-			// TODO - user request param is not mandatory,
-			 * if user param is not passed then we list out all libraryclasses
-			 *  and how about other filters? requesttype?
-		*/	
-	@ApiOperation(value = "Gets all the libraryclasses allowed for the user for the requesttype")
+	@ApiOperation(value = "Gets all the libraryclasses allowed for the user")
 	@GetMapping("/libraryclass")
-	public ResponseEntity<List<org.ishafoundation.dwaraapi.api.resp.Libraryclass>> getLibraryclass(@RequestParam(required=false) String user, @RequestParam(required=false) String requestType, @RequestParam(required=false) boolean showTargetVolumes) { 		
+	public ResponseEntity<List<org.ishafoundation.dwaraapi.api.resp.Libraryclass>> getLibraryclass() { 		
 
 		List<org.ishafoundation.dwaraapi.api.resp.Libraryclass> response_LibraryclassList = new ArrayList<org.ishafoundation.dwaraapi.api.resp.Libraryclass>();
 
-		HashMap<Integer, List<Integer>> libraryclassId_TargetvolumeList_Map = new HashMap<Integer, List<Integer>>();
-		if(showTargetVolumes) {
-			// gets all Libraryclass to targetvolumes upfront and holds it in memory thus avoiding as many db calls inside the loop
-			Iterable<LibraryclassTargetvolume> libraryclassTargetvolumeList = libraryclassTargetvolumeDao.findAll();
-			for (LibraryclassTargetvolume libraryclassTargetvolume : libraryclassTargetvolumeList) {
-				int libraryclassId = libraryclassTargetvolume.getLibraryclass().getId();
-				List<Integer> targetVolumeList = libraryclassId_TargetvolumeList_Map.get(libraryclassId);
-				if(targetVolumeList != null) {
-					targetVolumeList.add(libraryclassTargetvolume.getTargetvolume().getId());
+		HashMap<Integer, List<String>> libraryclassId_TargetvolumeList_Map = new HashMap<Integer, List<String>>();
+		// gets all Libraryclass to targetvolumes upfront and holds it in memory thus avoiding as many db calls inside the loop
+		Iterable<LibraryclassTargetvolume> libraryclassTargetvolumeList = libraryclassTargetvolumeDao.findAll();
+		for (LibraryclassTargetvolume libraryclassTargetvolume : libraryclassTargetvolumeList) {
+			int libraryclassId = libraryclassTargetvolume.getLibraryclass().getId();
+			List<String> targetVolumeList = libraryclassId_TargetvolumeList_Map.get(libraryclassId);
+			if(targetVolumeList != null) {
+				targetVolumeList.add(libraryclassTargetvolume.getTargetvolume().getName());
+			}else {
+				targetVolumeList = new ArrayList<String>();
+				targetVolumeList.add(libraryclassTargetvolume.getTargetvolume().getName());
+				libraryclassId_TargetvolumeList_Map.put(libraryclassId, targetVolumeList);
+			}
+		}
+		
+		String user = getUserFromContext();
+		User userObj = userDao.findByName(user); 
+		
+		List<LibraryclassActionUser> libraryclassActionUserList = libraryclassActionUserDao.findAllByUserId(userObj.getId());
+		HashMap<Integer, List<String>> libraryclassId_PermittedActions_Map = new HashMap<Integer, List<String>>();
+		
+		for (LibraryclassActionUser libraryclassActionUser : libraryclassActionUserList) {
+			Libraryclass libraryclass = libraryclassActionUser.getLibraryclass();
+			int libraryclassId = libraryclass.getId();
+			if(libraryclass.isSource()) { // just double ensuring only source libraryclasses are added to the resultset...Ideally only source libraryclass should be configured for the user in libraryclassactionUser table, but just an extra check
+				List<String> permittedActionsList = libraryclassId_PermittedActions_Map.get(libraryclassId);
+				if(permittedActionsList != null) {
+					permittedActionsList.add(libraryclassActionUser.getAction().getName());
 				}else {
-					targetVolumeList = new ArrayList<Integer>();
-					targetVolumeList.add(libraryclassTargetvolume.getTargetvolume().getId());
-					libraryclassId_TargetvolumeList_Map.put(libraryclassId, targetVolumeList);
+					permittedActionsList = new ArrayList<String>();
+					permittedActionsList.add(libraryclassActionUser.getAction().getName());
+					libraryclassId_PermittedActions_Map.put(libraryclassId, permittedActionsList);
 				}
 			}
 		}
 		
-		Iterable<Libraryclass> libraryclassList = libraryclassDao.findAll();
-		if(user == null || requestType == null) { // TODO should we get both together?? Check with swami - // if(user == null && requestType == null) { // if no filters get it all.
-			for (Libraryclass nthLibraryclass : libraryclassList) {
-				org.ishafoundation.dwaraapi.api.resp.Libraryclass response_Libraryclass = new org.ishafoundation.dwaraapi.api.resp.Libraryclass();
-				int libraryclassId = nthLibraryclass.getId();
-				response_Libraryclass.setLibraryclassId(libraryclassId);
-				response_Libraryclass.setName(nthLibraryclass.getName());
-				if(showTargetVolumes) {
-					List<Integer> targetVolumeIdList = libraryclassId_TargetvolumeList_Map.get(libraryclassId);
-					Integer[] targetVolumeIds = targetVolumeIdList.toArray(new Integer[targetVolumeIdList.size()]); //(int[]) ArrayUtils.toPrimitive();
-					response_Libraryclass.setTargetVolumeIds(targetVolumeIds);
-				}
-				response_LibraryclassList.add(response_Libraryclass);
-			}
-		}
-		else {
-			// TODO can one of the filter be null or both expected together
-			// do we validate it too... // NOTE There will be duplicates... if one of the parameter is not passed...
-			Requesttype requesttypeObj = null;
-			if(requestType != null)
-				requesttypeObj = requesttypeCacheUtil.getRequesttype(requestType);
-			
-			User userObj = null;
-			if(user != null)
-				userObj = userDao.findByName(user); 
-			
-			List<LibraryclassRequesttypeUser> libraryclassRequesttypeUserList = libraryclassRequesttypeUserDao.findAllByRequesttypeIdAndUserId(requesttypeObj.getId(), userObj.getId());
-			for (LibraryclassRequesttypeUser libraryclassRequesttypeUser : libraryclassRequesttypeUserList) {
-				Libraryclass libraryclass = libraryclassRequesttypeUser.getLibraryclass();
-				int libraryclassId = libraryclass.getId();
-				if(libraryclass.isSource()) { // just double ensuring only source libraryclasses are added to the resultset...Ideally only source libraryclass should be configured for the user in libraryclassrequesttypeUser, but just an extra check
-					org.ishafoundation.dwaraapi.api.resp.Libraryclass response_Libraryclass = new org.ishafoundation.dwaraapi.api.resp.Libraryclass();
+		HashMap<Integer, org.ishafoundation.dwaraapi.api.resp.Libraryclass> libraryclassId_ResponseLibraryclass_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.api.resp.Libraryclass>();
+		for (LibraryclassActionUser libraryclassActionUser : libraryclassActionUserList) {
+			Libraryclass libraryclass = libraryclassActionUser.getLibraryclass();
+			int libraryclassId = libraryclass.getId();
+			if(libraryclass.isSource()) { // just double ensuring only source libraryclasses are added to the resultset...Ideally only source libraryclass should be configured for the user in libraryclassactionUser table, but just an extra check
+				org.ishafoundation.dwaraapi.api.resp.Libraryclass response_Libraryclass = libraryclassId_ResponseLibraryclass_Map.get(libraryclassId);
+						
+				if(response_Libraryclass == null) {
+					response_Libraryclass = new org.ishafoundation.dwaraapi.api.resp.Libraryclass();
 					response_Libraryclass.setLibraryclassId(libraryclassId);
 					response_Libraryclass.setName(libraryclass.getName());
 					response_Libraryclass.setDisplayOrder(libraryclass.getDisplayOrder());
-					if(showTargetVolumes) {
-						List<Integer> targetVolumeIdList = libraryclassId_TargetvolumeList_Map.get(libraryclassId);
-						Integer[] targetVolumeIds = targetVolumeIdList.toArray(new Integer[targetVolumeIdList.size()]); //(int[]) ArrayUtils.toPrimitive();
-						response_Libraryclass.setTargetVolumeIds(targetVolumeIds);
-					}
+	
+					List<String> targetVolumesList = libraryclassId_TargetvolumeList_Map.get(libraryclassId);
+					String[] targetVolumes = targetVolumesList.toArray(new String[targetVolumesList.size()]);
+					response_Libraryclass.setTargetVolumes(targetVolumes);
+
+					List<String> permittedActionsList = libraryclassId_PermittedActions_Map.get(libraryclassId);
+					String[] permittedActions = permittedActionsList.toArray(new String[permittedActionsList.size()]); 
+					response_Libraryclass.setPermittedActions(permittedActions);
+					
+					libraryclassId_ResponseLibraryclass_Map.put(libraryclassId, response_Libraryclass);
 					response_LibraryclassList.add(response_Libraryclass);
 				}
 			}
@@ -123,5 +109,9 @@ public class LibraryclassController {
 		} else {
 			return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
 		}
+	}
+	
+	private String getUserFromContext() {
+		return SecurityContextHolder.getContext().getAuthentication().getName();
 	}
 }

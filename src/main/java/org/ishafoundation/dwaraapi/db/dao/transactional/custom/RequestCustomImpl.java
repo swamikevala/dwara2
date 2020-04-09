@@ -20,7 +20,7 @@ public class RequestCustomImpl implements RequestCustom {
     private EntityManager entityManager;
     
     /*
-     * args[0] - requesttypeId - the request type
+     * args[0] - actionId - the request type
      * args[1] - userId - filter on who created the request
      * args[2,3] - fromDate, toDate - the date range within which the request is requested
      * args[4] - pageNumber - the nth pagenumber that need to be shown...
@@ -28,7 +28,7 @@ public class RequestCustomImpl implements RequestCustom {
      */
     
 	@Override
-	public WrappedRequestList findAllByRequesttypeAndUserIdAndRequestedAtOrderByLatest(Integer requesttypeId, Integer userId, LocalDateTime fromDate, LocalDateTime toDate, int pageNumber, int pageSize) {
+	public WrappedRequestList findAllByActionAndUserIdAndRequestedAtOrderByLatest(Integer actionId, Integer userId, LocalDateTime fromDate, LocalDateTime toDate, int pageNumber, int pageSize) {
 		
 		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 		
@@ -36,7 +36,7 @@ public class RequestCustomImpl implements RequestCustom {
 		CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
 		Root<Request> requestRootForCount = countQuery.from(Request.class);
 		
-		List<Predicate> predicates = getFramedPredicates(requestRootForCount, cb, requesttypeId, userId, fromDate, toDate);
+		List<Predicate> predicates = getFramedPredicates(requestRootForCount, cb, actionId, userId, fromDate, toDate);
 		countQuery.select(cb.count(requestRootForCount)).where(cb.and(predicates.toArray(new Predicate[0])));
 		
 		count = entityManager.createQuery(countQuery).getSingleResult();
@@ -44,7 +44,7 @@ public class RequestCustomImpl implements RequestCustom {
         CriteriaQuery<Request> query = cb.createQuery(Request.class);
         Root<Request> requestRoot = query.from(Request.class);
         
-        predicates = getFramedPredicates(requestRoot, cb, requesttypeId, userId, fromDate, toDate);
+        predicates = getFramedPredicates(requestRoot, cb, actionId, userId, fromDate, toDate);
        	query.select(requestRoot).where(cb.and(predicates.toArray(new Predicate[0])));
        	query.orderBy(cb.desc(requestRoot.get("id"))); // default orderby most recent first
         List<Request> requestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
@@ -56,13 +56,13 @@ public class RequestCustomImpl implements RequestCustom {
         return wrappedRequestList;
 	}
 
-	private List<Predicate> getFramedPredicates(Root<Request> requestRoot, CriteriaBuilder cb, Integer requesttypeId, Integer userId,
+	private List<Predicate> getFramedPredicates(Root<Request> requestRoot, CriteriaBuilder cb, Integer actionId, Integer userId,
 			LocalDateTime fromDate, LocalDateTime toDate) {
         
         
 	    List<Predicate> predicates = new ArrayList<>();
-		if(requesttypeId != null) {
-			predicates.add(cb.equal(requestRoot.get("requesttype"), requesttypeId));
+		if(actionId != null) {
+			predicates.add(cb.equal(requestRoot.get("action"), actionId));
 		}
 		if(userId != null) {
 			predicates.add(cb.equal(requestRoot.get("user"), userId));

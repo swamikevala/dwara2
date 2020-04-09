@@ -36,7 +36,7 @@ public class ObjectMappingUtil {
 		org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request requestForResponse = new org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request();
 		
 		requestForResponse.setRequestId(request.getId());
-		requestForResponse.setRequesttype(request.getRequesttype().toString());
+		requestForResponse.setAction(request.getAction().toString());
 		requestForResponse.setRequestedAt(request.getRequestedAt());
 		requestForResponse.setRequestedBy(request.getUser().getName());
 		requestForResponse.setLibraryclassName(request.getLibraryclass().getName());	

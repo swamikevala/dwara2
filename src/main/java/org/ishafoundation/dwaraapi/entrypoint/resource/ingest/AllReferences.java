@@ -2,14 +2,14 @@ package org.ishafoundation.dwaraapi.entrypoint.resource.ingest;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Status;
 
 public class AllReferences {
 	
 	private List<Status> status;
 	
-	private List<Requesttype> requesttype;
+	private List<Action> action;
 	
 
 	public List<Status> getStatus() {
@@ -20,11 +20,11 @@ public class AllReferences {
 		this.status = status;
 	}
 
-	public List<Requesttype> getRequesttype() {
-		return requesttype;
+	public List<Action> getAction() {
+		return action;
 	}
 
-	public void setRequesttype(List<Requesttype> requesttype) {
-		this.requesttype = requesttype;
+	public void setAction(List<Action> action) {
+		this.action = action;
 	}
 }

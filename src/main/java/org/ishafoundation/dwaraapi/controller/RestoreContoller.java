@@ -9,16 +9,11 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.req.restore.FileParams;
 import org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedSubrequest;
-import org.ishafoundation.dwaraapi.constants.Requesttype;
+import org.ishafoundation.dwaraapi.constants.Action;
 import org.ishafoundation.dwaraapi.constants.Status;
-import org.ishafoundation.dwaraapi.db.dao.master.RequesttypeDao;
-import org.ishafoundation.dwaraapi.db.dao.master.TapeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TargetvolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.FileTapeDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.dao.view.V_RestoreFileDao;
@@ -34,7 +29,6 @@ import org.ishafoundation.dwaraapi.tape.library.TapeLibraryManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -53,31 +47,16 @@ public class RestoreContoller {
 	Logger logger = LoggerFactory.getLogger(RestoreContoller.class);
 
 	@Autowired
-	private FileDao fileDao;
-
-	@Autowired
-	private LibraryDao libraryDao;
-	
-	@Autowired
 	private V_RestoreFileDao v_RestoreFileDao;
 	
 	@Autowired
 	private UserDao userDao;
 	
 	@Autowired
-	private TapeDao tapeDao;
-	
-	@Autowired
-	private FileTapeDao fileTapeDao;
-	
-	@Autowired
 	private RequestDao requestDao;	
 	
 	@Autowired
 	private SubrequestDao subrequestDao;	
-	
-	@Autowired
-	private RequesttypeDao requesttypeDao;	
 	
 	@Autowired
 	private JobDao jobDao;	
@@ -87,9 +66,7 @@ public class RestoreContoller {
 	
 	@Autowired
 	private JobManager jobManager;
-	
-	@Autowired
-	private ApplicationContext applicationContext;
+
 	
 	@Autowired
 	private TapeLibraryManager tapeLibraryManager;	
@@ -128,14 +105,14 @@ public class RestoreContoller {
 		MtxStatus mtxStatus = tapeLibraryManager.getMtxStatus();
 		List<String> loadedTapeList = mtxStatus.getAllLoadedTapesInTheLibrary();
 
-		List<Requesttype> requesttypeList = new ArrayList<Requesttype>();
-		requesttypeList.add(Requesttype.list);
-		requesttypeList.add(Requesttype.restore);
+		List<Action> actionList = new ArrayList<Action>();
+		actionList.add(Action.list);
+		actionList.add(Action.restore);
 		
 		String requestedBy = getUserFromContext();
 		int userId = userDao.findByName(requestedBy).getId();
 		
-		List<V_RestoreFile> v_RestoreFileList = v_RestoreFileDao.findAllByTapesetCopyNumberAndIdFileIdAndIdRequesttypeInAndIdUserId(copyNumber, fileId, requesttypeList, userId);
+		List<V_RestoreFile> v_RestoreFileList = v_RestoreFileDao.findAllByTapesetCopyNumberAndIdFileIdAndIdActionInAndIdUserId(copyNumber, fileId, actionList, userId);
 		
 
 		int id = 0;
@@ -157,9 +134,9 @@ public class RestoreContoller {
 			fileSize = v_RestoreFile.getFileSize();
 			libraryclass = v_RestoreFile.getLibraryclassName();
 			isDeleted = v_RestoreFile.isFileTapeDeleted();
-			if(v_RestoreFileKey.getRequesttype() == Requesttype.list)
+			if(v_RestoreFileKey.getAction() == Action.list)
 				listPermitted = true;
-			if(v_RestoreFileKey.getRequesttype() == Requesttype.restore)
+			if(v_RestoreFileKey.getAction() == Action.restore)
 				restorePermitted = true;
 			// TODO - how to arrive at targetVolumePermitted
 			if(loadedTapeList.contains(barcode))
@@ -192,9 +169,9 @@ public class RestoreContoller {
     	org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedRequest response = new org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedRequest();
 		try {
 	    	String requestedBy = getUserFromContext();
-	    	Requesttype requesttype = Requesttype.restore;
+	    	Action action = Action.restore;
 			Request request = new Request();
-			request.setRequesttype(requesttype);
+			request.setAction(action);
 	    	request.setCopyNumber(userRequest.getCopyNumber());
 	    	request.setTargetvolume(targetvolumeDao.findById(userRequest.getTargetvolumeId()).get());//request.setTargetvolumeId(userRequest.getTargetvolumeId());
 	    	request.setOutputFolder(userRequest.getOutputFolder());
@@ -246,7 +223,7 @@ public class RestoreContoller {
 	    	//requestForResponse.setRequested(request.getRequestedAt());
 	    	requestForResponse.setRequestedBy(requestedBy);
 	    	requestForResponse.setRequestId(request.getId());
-	    	//requestForResponse.setRequesttype(requesttype);
+	    	//requestForResponse.setAction(action);
 	    	requestForResponse.setResponseHeaderWrappedSubrequestList(responseHeaderWrappedSubrequestList);
 	    	requestForResponse.setTargetvolumeId(userRequest.getTargetvolumeId());
 	    	

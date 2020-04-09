@@ -4,10 +4,10 @@ import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
 @Converter(autoApply = true)
-public class RequesttypeAttributeConverter implements AttributeConverter<Requesttype, Integer> {
+public class ActionAttributeConverter implements AttributeConverter<Action, Integer> {
 
 	@Override
-	public Integer convertToDatabaseColumn(Requesttype attribute) {
+	public Integer convertToDatabaseColumn(Action attribute) {
 		if (attribute == null)
 			return null;
 
@@ -16,26 +16,24 @@ public class RequesttypeAttributeConverter implements AttributeConverter<Request
 			return 8001;
 		case restore:
 			return 8002;
-		case scan:
-			return 8003;
 		case list:
-			return 8004;
+			return 8003;
 		case rename:
-			return 8005;
+			return 8004;
 		case hold:
-			return 8006;
+			return 8005;
 		case release:
-			return 8007;
+			return 8006;
 		case cancel:
-			return 8008;
+			return 8007;
 		case abort:
-			return 8009;
+			return 8008;
 		case delete:
-			return 8010;
+			return 8009;
 		case rewrite:
-			return 8011;
+			return 8010;
 		case diagnostics:
-			return 8012;
+			return 8011;
 
 		default:
 			throw new IllegalArgumentException(attribute + " not supported.");
@@ -43,35 +41,33 @@ public class RequesttypeAttributeConverter implements AttributeConverter<Request
 	}
 
 	@Override
-	public Requesttype convertToEntityAttribute(Integer dbData) {
+	public Action convertToEntityAttribute(Integer dbData) {
 		if (dbData == null)
 			return null;
 
 		switch (dbData) {
 		case 8001:
-			return Requesttype.ingest;
+			return Action.ingest;
 		case 8002:
-			return Requesttype.restore;
+			return Action.restore;
 		case 8003:
-			return Requesttype.scan;
+			return Action.list;
 		case 8004:
-			return Requesttype.list;
+			return Action.rename;
 		case 8005:
-			return Requesttype.rename;
+			return Action.hold;
 		case 8006:
-			return Requesttype.hold;
+			return Action.release;
 		case 8007:
-			return Requesttype.release;
+			return Action.cancel;
 		case 8008:
-			return Requesttype.cancel;
+			return Action.abort;
 		case 8009:
-			return Requesttype.abort;
+			return Action.delete;
 		case 8010:
-			return Requesttype.delete;
+			return Action.rewrite;
 		case 8011:
-			return Requesttype.rewrite;
-		case 8012:
-			return Requesttype.diagnostics;
+			return Action.diagnostics;
 
 		default:
 			throw new IllegalArgumentException(dbData + " not supported.");

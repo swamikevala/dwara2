@@ -7,7 +7,7 @@ public class Request {
 	
 	private int requestId;
 	
-	private String requesttype;
+	private String action;
 
 	private String libraryclassName;
 
@@ -28,12 +28,12 @@ public class Request {
 		this.requestId = requestId;
 	}
 
-	public String getRequesttype() {
-		return requesttype;
+	public String getAction() {
+		return action;
 	}
 
-	public void setRequesttype(String requesttype) {
-		this.requesttype = requesttype;
+	public void setAction(String action) {
+		this.action = action;
 	}
 
 	public String getLibraryclassName() {

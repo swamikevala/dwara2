@@ -27,20 +27,20 @@ public class SubrequestCustomImpl implements SubrequestCustom {
     // Just going with JPA out right evven though it has challenges - https://spring.io/blog/2011/04/26/advanced-spring-data-jpa-specifications-and-querydsl/
 
 	@Override
-	public WrappedSubrequestList findAllByRequesttypeIdAndStatusIds(Integer requesttypeId, Set<Integer> statusIds, int pageNumber, int pageSize) {
-		//Framing the query --> select * from `subrequest` `s` join `request` `r` on `s`.`request_id`=`r`.`request_id` and `r`.`requesttype_id`=9008 and (`s`.`status_id`=1 or `s`.`status_id`=2);
+	public WrappedSubrequestList findAllByActionIdAndStatusIds(Integer actionId, Set<Integer> statusIds, int pageNumber, int pageSize) {
+		//Framing the query --> select * from `subrequest` `s` join `request` `r` on `s`.`request_id`=`r`.`request_id` and `r`.`action_id`=9008 and (`s`.`status_id`=1 or `s`.`status_id`=2);
         
 		
 		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 		CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
 		Root<Subrequest> subrequestRoot2 = countQuery.from(Subrequest.class);
-		Join<Subrequest, Request> requestJoin2 = frameJoin(subrequestRoot2, cb, requesttypeId, statusIds);
+		Join<Subrequest, Request> requestJoin2 = frameJoin(subrequestRoot2, cb, actionId, statusIds);
 		countQuery.select(cb.count(requestJoin2.getParent()));
 		Long count = entityManager.createQuery(countQuery).getSingleResult();
 		
         CriteriaQuery<Subrequest> query = cb.createQuery(Subrequest.class);
         Root<Subrequest> subrequestRoot = query.from(Subrequest.class);
-        Join<Subrequest, Request> requestJoin = frameJoin(subrequestRoot, cb, requesttypeId, statusIds);
+        Join<Subrequest, Request> requestJoin = frameJoin(subrequestRoot, cb, actionId, statusIds);
 
 		query.select(requestJoin.getParent());	
 		query.orderBy(cb.desc(subrequestRoot.get("id")));
@@ -57,7 +57,7 @@ public class SubrequestCustomImpl implements SubrequestCustom {
 	// - https://spring.io/blog/2011/04/26/advanced-spring-data-jpa-specifications-and-querydsl/ 
 	// so we have this method called by different CriteriaQuery's as many times
 	
-	private Join<Subrequest, Request> frameJoin(Root<Subrequest> subrequestRoot, CriteriaBuilder cb, Integer requesttypeId, Set<Integer> statusIdSet) {
+	private Join<Subrequest, Request> frameJoin(Root<Subrequest> subrequestRoot, CriteriaBuilder cb, Integer actionId, Set<Integer> statusIdSet) {
 	    Join<Subrequest, Request> requestJoin = null;
 	    try {
 	    	requestJoin = subrequestRoot.join("request", JoinType.INNER);
@@ -73,8 +73,8 @@ public class SubrequestCustomImpl implements SubrequestCustom {
 				predicates.add(cb.or(statusPredicates.toArray(new Predicate[statusPredicates.size()])));
 		    } 
 		    
-		    if(requesttypeId != null) {
-		    	predicates.add(cb.equal(requestJoin.get("requesttype"), requesttypeId));
+		    if(actionId != null) {
+		    	predicates.add(cb.equal(requestJoin.get("action"), actionId));
 		    }
 
 		    requestJoin.on(cb.and(predicates.toArray(new Predicate[predicates.size()])));
@@ -85,7 +85,7 @@ public class SubrequestCustomImpl implements SubrequestCustom {
 	    return requestJoin;
 	}
 	
-//	private Join<Subrequest, Request> frameJoin(Root<Subrequest> subrequestRoot, CriteriaBuilder cb, int requesttypeId, Set<Integer> statusIdSet) {
+//	private Join<Subrequest, Request> frameJoin(Root<Subrequest> subrequestRoot, CriteriaBuilder cb, int actionId, Set<Integer> statusIdSet) {
 //	    Join<Subrequest, Request> requestJoin = null;
 //	    try {
 //	    	requestJoin = subrequestRoot.join("request", JoinType.INNER);
@@ -96,9 +96,9 @@ public class SubrequestCustomImpl implements SubrequestCustom {
 //				for (Integer statusId : statusIdSet) {
 //					predicates.add(cb.equal(statusIdPath, statusId));
 //				}
-//				requestJoin.on(cb.equal(requestJoin.get("requesttype"), requesttypeId), cb.or(predicates.toArray(new Predicate[predicates.size()])));
+//				requestJoin.on(cb.equal(requestJoin.get("action"), actionId), cb.or(predicates.toArray(new Predicate[predicates.size()])));
 //		    } else {
-//		    	requestJoin.on(cb.equal(requestJoin.get("requesttype"), requesttypeId));
+//		    	requestJoin.on(cb.equal(requestJoin.get("action"), actionId));
 //		    }
 //	    }catch (Exception e) {
 //			e.printStackTrace();
@@ -107,9 +107,9 @@ public class SubrequestCustomImpl implements SubrequestCustom {
 //	}
 	
 	@Override
-	public WrappedSubrequestList findAllLatestByRequesttypeAndStatusIds(int requesttypeId, Set<Integer> statusIdSet, int pageNumber, int pageSize) {
+	public WrappedSubrequestList findAllLatestByActionAndStatusIds(int actionId, Set<Integer> statusIdSet, int pageNumber, int pageSize) {
 		// TODO need to get the latest... ? How?
-		return findAllByRequesttypeIdAndStatusIds(requesttypeId, statusIdSet, pageNumber, pageSize);
+		return findAllByActionIdAndStatusIds(actionId, statusIdSet, pageNumber, pageSize);
 	}
 
 }

@@ -9,9 +9,9 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.constants.Requesttype;
+import org.ishafoundation.dwaraapi.constants.Action;
 import org.ishafoundation.dwaraapi.constants.TapedriveStatus;
-import org.ishafoundation.dwaraapi.db.dao.master.RequesttypeDao;
+import org.ishafoundation.dwaraapi.db.dao.master.ActionDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TapeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TapedriveDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryclassTapesetDao;
@@ -49,7 +49,7 @@ public class TapeJobSelector {
 	private LibraryDao libraryDao;		
 	
 	@Autowired
-	private RequesttypeDao requesttypeDao;
+	private ActionDao actionDao;
 	
 	@Autowired
 	private RequestDao requestDao;
@@ -682,11 +682,11 @@ public class TapeJobSelector {
 			
 			tapeJob.setJob(job);
 
-			org.ishafoundation.dwaraapi.constants.Requesttype requestType = job.getSubrequest().getRequest().getRequesttype();
-			if(requestType == org.ishafoundation.dwaraapi.constants.Requesttype.ingest) {
+			org.ishafoundation.dwaraapi.constants.Action requestType = job.getSubrequest().getRequest().getAction();
+			if(requestType == org.ishafoundation.dwaraapi.constants.Action.ingest) {
 				tapeJob.setStorageOperation(StorageOperation.WRITE);
 				logger.trace("write job");
-			}else if (requestType == org.ishafoundation.dwaraapi.constants.Requesttype.restore) {
+			}else if (requestType == org.ishafoundation.dwaraapi.constants.Action.restore) {
 				tapeJob.setStorageOperation(StorageOperation.READ);
 				logger.trace("read job");
 			}

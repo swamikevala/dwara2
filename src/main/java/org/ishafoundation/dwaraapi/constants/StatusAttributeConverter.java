@@ -30,12 +30,10 @@ public class StatusAttributeConverter implements AttributeConverter<Status, Inte
 			return 10008;
 		case aborted:
 			return 10009;
-		case deleted:
-			return 10010;
 		case failed:
-			return 10011;
+			return 10010;
 		case marked_completed:
-			return 10012;
+			return 10011;
 
 		default:
 			throw new IllegalArgumentException(attribute + " not supported.");
@@ -67,10 +65,8 @@ public class StatusAttributeConverter implements AttributeConverter<Status, Inte
 		case 10009:
 			return Status.aborted;
 		case 10010:
-			return Status.deleted;
-		case 10011:
 			return Status.failed;
-		case 10012:
+		case 10011:
 			return Status.marked_completed;
 
 		default:

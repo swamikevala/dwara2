@@ -15,7 +15,7 @@ public class TestController {
 //    	Set<Integer> statusIdSet = new HashSet<Integer>();
 //    	statusIdSet.add(1);
 //    	statusIdSet.add(4);
-//    	List<Subrequest2> subrequestList = subrequestDao2.findAllByRequesttypeAndStatusIds(9008, statusIdSet);
+//    	List<Subrequest2> subrequestList = subrequestDao2.findAllByActionAndStatusIds(9008, statusIdSet);
 //    	for (Subrequest2 nthSubrequest : subrequestList) {
 //    		System.out.println("nth result set request " + nthSubrequest.getRequest().getRequestId());
 //			System.out.println("nth result set " + nthSubrequest.getSubrequestId());

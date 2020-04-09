@@ -20,7 +20,7 @@ public class RequestResponseUtils {
 //		org.ishafoundation.dwaraapi.api.resp.ingest.RequestWithWrappedSubrequest requestForResponse = new org.ishafoundation.dwaraapi.api.resp.ingest.RequestWithWrappedSubrequest();
 //
 //		requestForResponse.setRequestId(request.getId());
-//		requestForResponse.setRequesttypeId(request.getRequesttype().getId());
+//		requestForResponse.setActionId(request.getAction().getId());
 //		requestForResponse.setRequestedAt(request.getRequestedAt());
 //		requestForResponse.setRequestedBy(request.getRequestedBy());
 //		requestForResponse.setLibraryclassId(request.getLibraryclass().getId());		
@@ -38,7 +38,7 @@ public class RequestResponseUtils {
 		org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request requestForResponse = new org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request();
 		
 		requestForResponse.setRequestId(request.getId());
-		requestForResponse.setRequesttype(request.getRequesttype().toString());
+		requestForResponse.setAction(request.getAction().toString());
 		requestForResponse.setRequestedAt(request.getRequestedAt());
 		requestForResponse.setRequestedBy(request.getUser().getName());
 		requestForResponse.setLibraryclassName(request.getLibraryclass().getName());	

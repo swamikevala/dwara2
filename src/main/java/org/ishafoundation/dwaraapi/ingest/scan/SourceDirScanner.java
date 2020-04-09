@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -15,8 +17,10 @@ import org.ishafoundation.dwaraapi.api.resp.ingest.IngestFile;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TFilerenameDao;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.Sequence;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFilerename;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,10 +37,23 @@ public class SourceDirScanner {
 	@Autowired
     private Configuration configuration;
 //    @Value("${regexAllowedChrsInFileName}")
-//    private String regexAllowedChrsInFileName;	
+//    private String regexAllowedChrsInFileName;
+	
+	@Autowired
+	private TFilerenameDao tFilerenameDao;
 	
     private Pattern folderNameWithoutPrevSeqCodePattern = Pattern.compile("([_-]?)(.*)");
 
+    private String DELETED = "deleted";
+	
+    private String regexAllowedChrsInFileName = null;
+	Pattern allowedChrsInFileNamePattern = null;
+	@PostConstruct
+	private void loadTasktypeList() {
+		regexAllowedChrsInFileName = configuration.getRegexAllowedChrsInFileName();
+		allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
+	}
+	
 	public List<IngestFile> scanSourceDir(Libraryclass libraryclass, List<String> scanFolderBasePathList) {
 		//int libraryclassId = libraryclass.getId();
     	String libraryclassName = libraryclass.getName();
@@ -58,7 +75,7 @@ public class SourceDirScanner {
 			
 			IOFileFilter dirFilter = FileFilterUtils.directoryFileFilter();
 			IOFileFilter notCancelledFolderFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(Status.cancelled.toString()));
-			IOFileFilter notDeletedFolderFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(Status.deleted.toString()));
+			IOFileFilter notDeletedFolderFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(DELETED));
 			
 			//FileFilter allDirectoriesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(dirFilter, notCancelledFolderFilter, notDeletedFolderFilter);
 			FileFilter allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(dirFilter, notCancelledFolderFilter, notDeletedFolderFilter);
@@ -79,7 +96,7 @@ public class SourceDirScanner {
 	    	}	
 	    	
 	    	// All deleted medialibrary...
-	    	String deletedOriginSourceDir = sourcePath + File.separator + Status.deleted.toString();
+	    	String deletedOriginSourceDir = sourcePath + File.separator + DELETED;
 	    	File[] deletedIngestableFiles = new File(deletedOriginSourceDir).listFiles();
 	    	if(deletedIngestableFiles != null) {
 	    		List<IngestFile> nthScanFolderBaseDeletedDirectoryIngestFileList = scanForIngestableFiles(sequence, extractionRegex, isKeepExtractedCode, deletedOriginSourceDir, deletedIngestableFiles);
@@ -93,70 +110,93 @@ public class SourceDirScanner {
 	private List<IngestFile> scanForIngestableFiles(Sequence sequence, String extractionRegex, boolean isKeepExtractedCode, String sourcePath, File[] ingestableFiles) {
 		// NOTE : Not able to make this global as the value from properties file was just not set
 		// Un comment this for testing using main class Pattern allowedChrsInFolderNamePattern = Pattern.compile("[\\w-]*");
-		String regexAllowedChrsInFileName = configuration.getRegexAllowedChrsInFileName();
-		Pattern allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
 		
 		List<IngestFile> ingestFileList = new ArrayList<IngestFile>();
     	for (int i = 0; i < ingestableFiles.length; i++) {
 			File nthIngestableFile = ingestableFiles[i];
-
-            double size = 0;
-            String warning = null;
-            int fileCount = 0;
-            
-            // added to try catch for the test api not to throw an error when looking for a non-existing folder
-            try {
-            	size = FileUtils.sizeOf(nthIngestableFile);
-            }catch (Exception e) {
-				// swallowing it...
-			}
-            
-            if(nthIngestableFile.isDirectory()) {
-	            try {
-	            	fileCount = FileUtils.listFiles(nthIngestableFile, null, true).size();
-	            }catch (Exception e) {
-					// swallowing it...
-				}
-            }else {
-            	fileCount = 1;
-            }
-            
-//			if(fileCount > nodeumConfiguration.getFilesLimit())
-//				warning = "Medialibrary File contains more than " + nodeumConfiguration.getFilesLimit() + " files. Please check? If, expected please note that ingest takes extra time";
-			
-			String fileName = nthIngestableFile.getName();
-			if(fileName.length() > 150)
-				warning = (StringUtils.isNotBlank(warning) ? warning + " & " : "" ) + "File Name gt 150 characters";
-			
-			Matcher m = allowedChrsInFileNamePattern.matcher(fileName);
-			if(!m.matches())
-				warning = (StringUtils.isNotBlank(warning) ? warning + " & " : "" ) + "File Name contains spl characters";
-            
-			String prevSeqCode = null;
-			if(StringUtils.isNotBlank(extractionRegex)) {
-				prevSeqCode = getExistingSeqCodeFromFolderName(fileName, extractionRegex);
-			}
-			String customFolderName = getCustomFolderName(fileName, prevSeqCode, sequence, isKeepExtractedCode);
-			
-			IngestFile nthIngestFile = new IngestFile();
-			
-			nthIngestFile.setSourcePath(sourcePath);
-			nthIngestFile.setFileCount(fileCount);
-			nthIngestFile.setTotalSize(size);
-			//nthIngestDirectory.setFileSizeInMBytes(totalSizeInMB);
-			nthIngestFile.setPrevSequenceCode(prevSeqCode);
-			if(StringUtils.isNotBlank(extractionRegex) && isKeepExtractedCode) // if regex present and useExtractCode is true but prevSeqCode is null then throw error...
-				nthIngestFile.setPrevSequenceCodeExpected(true);
-			nthIngestFile.setOldFilename(fileName);
-			nthIngestFile.setNewFilename(customFolderName);
-			String errorType = null;
-			if(warning != null)
-				errorType = "Warning";// TODO hardcoded for now - fetch it from error type table...
-			nthIngestFile.setErrorType(errorType);
-			nthIngestFile.setErrorMessage(warning);
+			IngestFile nthIngestFile = getFileAttributes(nthIngestableFile, sequence, extractionRegex, isKeepExtractedCode, sourcePath);
 			ingestFileList.add(nthIngestFile);
 		}
     	return ingestFileList;
+	}
+
+//	public IngestFile getFileAttributes(Libraryclass libraryclass, List<String> scanFolderBasePathList) {
+//		//int libraryclassId = libraryclass.getId();
+//    	String libraryclassName = libraryclass.getName();
+//        int sequenceId = libraryclass.getSequenceId(); // getting the primary key of the Sequence table which holds the lastsequencenumber for this group...
+//        Sequence sequence = null;
+//        try {
+//        	sequence = sequenceDao.findById(sequenceId).get();
+//        }catch (Exception e) {
+//        	logger.error("Missing sequence table row for " + sequenceId);
+//        	return null;
+//		}
+//    	String extractionRegex = sequence.getExtractionRegex();
+//    	boolean isKeepExtractedCode = sequence.isKeepExtractedCode();
+//	}
+	
+	private IngestFile getFileAttributes(File nthIngestableFile, Sequence sequence, String extractionRegex, boolean isKeepExtractedCode, String sourcePath) {
+        double size = 0;
+        String warning = null;
+        int fileCount = 0;
+        
+        // added to try catch for the test api not to throw an error when looking for a non-existing folder
+        try {
+        	size = FileUtils.sizeOf(nthIngestableFile);
+        }catch (Exception e) {
+			// swallowing it...
+		}
+        
+        if(nthIngestableFile.isDirectory()) {
+            try {
+            	fileCount = FileUtils.listFiles(nthIngestableFile, null, true).size();
+            }catch (Exception e) {
+				// swallowing it...
+			}
+        }else {
+        	fileCount = 1;
+        }
+        
+//		if(fileCount > nodeumConfiguration.getFilesLimit())
+//			warning = "Medialibrary File contains more than " + nodeumConfiguration.getFilesLimit() + " files. Please check? If, expected please note that ingest takes extra time";
+		
+		String fileName = nthIngestableFile.getName();
+		if(fileName.length() > 150)
+			warning = (StringUtils.isNotBlank(warning) ? warning + " & " : "" ) + "File Name gt 150 characters";
+		
+		Matcher m = allowedChrsInFileNamePattern.matcher(fileName);
+		if(!m.matches())
+			warning = (StringUtils.isNotBlank(warning) ? warning + " & " : "" ) + "File Name contains spl characters";
+        
+		String prevSeqCode = null;
+		if(StringUtils.isNotBlank(extractionRegex)) {
+			prevSeqCode = getExistingSeqCodeFromFolderName(fileName, extractionRegex);
+		}
+		String customFolderName = null;
+		
+		TFilerename tFilerename = tFilerenameDao.findByTFilerenameKeySourcePathAndTFilerenameKeyOldFilename(sourcePath, fileName);
+		if(tFilerename != null)
+			customFolderName =  tFilerename.getNewFilename();
+		else
+			customFolderName = getCustomFolderName(fileName, prevSeqCode, sequence, isKeepExtractedCode);
+		
+		IngestFile nthIngestFile = new IngestFile();
+		
+		nthIngestFile.setSourcePath(sourcePath);
+		nthIngestFile.setFileCount(fileCount);
+		nthIngestFile.setTotalSize(size);
+		//nthIngestDirectory.setFileSizeInMBytes(totalSizeInMB);
+		nthIngestFile.setPrevSequenceCode(prevSeqCode);
+		if(StringUtils.isNotBlank(extractionRegex) && isKeepExtractedCode) // if regex present and useExtractCode is true but prevSeqCode is null then throw error...
+			nthIngestFile.setPrevSequenceCodeExpected(true);
+		nthIngestFile.setOldFilename(fileName);
+		nthIngestFile.setNewFilename(customFolderName);
+		String errorType = null;
+		if(warning != null)
+			errorType = "Warning";// TODO hardcoded for now - fetch it from error type table...
+		nthIngestFile.setErrorType(errorType);
+		nthIngestFile.setErrorMessage(warning);
+		return nthIngestFile;
 	}
 	
 	public String getExistingSeqCodeFromFolderName(String folderName, String extractionRegex){

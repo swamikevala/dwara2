@@ -13,9 +13,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassRequesttypeUser;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.RequesttypeUser;
-import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassActionUser;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionUser;
+import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -39,12 +39,12 @@ public class User {
     @OneToMany(mappedBy = "user",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
-    private List<RequesttypeUser> requesttypes = new ArrayList<>();
+    private List<ActionUser> actions = new ArrayList<>();
 
     @OneToMany(mappedBy = "user",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
-    private List<LibraryclassRequesttypeUser> libraryclassRequesttypeUser = new ArrayList<>();     
+    private List<LibraryclassActionUser> libraryclassActionUser = new ArrayList<>();     
     
 	public int getId() {
 		return id;
@@ -83,45 +83,45 @@ public class User {
 	}
 	
 	@JsonIgnore
-    public List<RequesttypeUser> getRequesttypes() {
-		return requesttypes;
+    public List<ActionUser> getActions() {
+		return actions;
 	}
 
 	@JsonIgnore
-	public void setRequesttypes(List<RequesttypeUser> requesttypes) {
-		this.requesttypes = requesttypes;
+	public void setActions(List<ActionUser> actions) {
+		this.actions = actions;
 	}
 
-	public void addRequesttype(Requesttype requesttype, int permissionLevel) {
-        RequesttypeUser requesttypeUser = new RequesttypeUser(requesttype, this);
-        requesttypeUser.setPermissionLevel(permissionLevel);
-        requesttypes.add(requesttypeUser);
-        requesttype.getUsers().add(requesttypeUser);
+	public void addAction(Action action, int permissionLevel) {
+        ActionUser actionUser = new ActionUser(action, this);
+        actionUser.setPermissionLevel(permissionLevel);
+        actions.add(actionUser);
+        action.getUsers().add(actionUser);
     }
     
-    public void removeRequesttype(Requesttype requesttype) {
-        for (Iterator<RequesttypeUser> iterator = requesttypes.iterator();
+    public void removeAction(Action action) {
+        for (Iterator<ActionUser> iterator = actions.iterator();
              iterator.hasNext(); ) {
-            RequesttypeUser requesttypeUser = iterator.next();
+            ActionUser actionUser = iterator.next();
  
-            if (requesttypeUser.getUser().equals(this) &&
-                    requesttypeUser.getRequesttype().equals(requesttype)) {
+            if (actionUser.getUser().equals(this) &&
+                    actionUser.getAction().equals(action)) {
                 iterator.remove();
-                requesttypeUser.getRequesttype().getUsers().remove(requesttypeUser);
-                requesttypeUser.setUser(null);
-                requesttypeUser.setRequesttype(null);
+                actionUser.getAction().getUsers().remove(actionUser);
+                actionUser.setUser(null);
+                actionUser.setAction(null);
             }
         }
     }
 	
 	@JsonIgnore
-	public List<LibraryclassRequesttypeUser> getLibraryclassRequesttypeUser() {
-		return libraryclassRequesttypeUser;
+	public List<LibraryclassActionUser> getLibraryclassActionUser() {
+		return libraryclassActionUser;
 	}
 
 	@JsonIgnore
-	public void setLibraryclassRequesttypeUser(List<LibraryclassRequesttypeUser> libraryclassRequesttypeUser) {
-		this.libraryclassRequesttypeUser = libraryclassRequesttypeUser;
+	public void setLibraryclassActionUser(List<LibraryclassActionUser> libraryclassActionUser) {
+		this.libraryclassActionUser = libraryclassActionUser;
 	}
 	
     @Override

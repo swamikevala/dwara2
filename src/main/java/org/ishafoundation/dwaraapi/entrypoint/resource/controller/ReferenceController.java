@@ -3,9 +3,9 @@ package org.ishafoundation.dwaraapi.entrypoint.resource.controller;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.constants.Reference;
-import org.ishafoundation.dwaraapi.db.dao.master.RequesttypeDao;
+import org.ishafoundation.dwaraapi.db.dao.master.ActionDao;
 import org.ishafoundation.dwaraapi.db.dao.master.StatusDao;
-import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Status;
 import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.AllReferences;
 import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.SingleReference;
@@ -31,7 +31,7 @@ public class ReferenceController {
 	private static final Logger logger = LoggerFactory.getLogger(ReferenceController.class);
 
 	@Autowired
-	private RequesttypeDao requesttypeDao;	
+	private ActionDao actionDao;	
 
 	@Autowired
 	private StatusDao statusDao;	
@@ -55,10 +55,10 @@ public class ReferenceController {
 //		
 //		}
 		List<Status> statusList = (List<Status>) statusDao.findAll();
-		List<Requesttype> requesttypeList = (List<Requesttype>) requesttypeDao.findAll();
+		List<Action> actionList = (List<Action>) actionDao.findAll();
 		
 		allReferences.setStatus(statusList);
-		allReferences.setRequesttype(requesttypeList);
+		allReferences.setAction(actionList);
 		
 		return ResponseEntity.ok(allReferences);
 	}
@@ -76,9 +76,9 @@ public class ReferenceController {
 			List<Status> statusList = (List<Status>) statusDao.findAll();
 			singleReferenceList = miscObjectMapper.statusListToSingleReferenceList(statusList);
 			break;
-		case Requesttype:
-			List<Requesttype> requesttypeList = (List<Requesttype>) requesttypeDao.findAll();
-			singleReferenceList = miscObjectMapper.requesttypeListToSingleReferenceList(requesttypeList);
+		case Action:
+			List<Action> actionList = (List<Action>) actionDao.findAll();
+			singleReferenceList = miscObjectMapper.actionListToSingleReferenceList(actionList);
 			break;
 		default:
 			logger.error("Not supported");

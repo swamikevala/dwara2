@@ -12,7 +12,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.constants.Requesttype;
+import org.ishafoundation.dwaraapi.constants.Action;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.Targetvolume;
 import org.ishafoundation.dwaraapi.db.model.master.User;
@@ -29,8 +29,8 @@ public class Request {
 	@Column(name="id")
 	private int id;
 	
-	@Column(name="requesttype_id")
-	private Requesttype requesttype;
+	@Column(name="action_id")
+	private Action action;
 
 	@OneToOne(optional = true)
 	private Libraryclass libraryclass;
@@ -82,12 +82,12 @@ public class Request {
 		this.id = id;
 	}
 
-	public Requesttype getRequesttype() {
-		return requesttype;
+	public Action getAction() {
+		return action;
 	}
 
-	public void setRequesttype(Requesttype requesttype) {
-		this.requesttype = requesttype;
+	public void setAction(Action action) {
+		this.action = action;
 	}
 
 	public Libraryclass getLibraryclass() {

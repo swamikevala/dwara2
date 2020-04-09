@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams;
 import org.ishafoundation.dwaraapi.api.resp.ingest.IngestFile;
-import org.ishafoundation.dwaraapi.db.model.master.reference.Requesttype;
+import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Status;
 import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.SingleReference;
 import org.mapstruct.Mapper;
@@ -16,6 +16,6 @@ public interface MiscObjectMapper {
 	
 	List<SingleReference> statusListToSingleReferenceList(List<Status> statusList);
 	
-	List<SingleReference> requesttypeListToSingleReferenceList(List<Requesttype> requesttypeList);
+	List<SingleReference> actionListToSingleReferenceList(List<Action> actionList);
 	
 }

@@ -46,6 +46,9 @@ public class Task {
 	@OneToOne(fetch = FetchType.LAZY)
 	private Application application;
 	
+	@Column(name="storage")
+	private boolean storage;
+	
     @OneToMany(mappedBy = "task",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
@@ -98,6 +101,14 @@ public class Task {
 
 	public void setApplication(Application application) {
 		this.application = application;
+	}
+	
+	public boolean isStorage() {
+		return storage;
+	}
+
+	public void setStorage(boolean storage) {
+		this.storage = storage;
 	}
 
 	@JsonIgnore

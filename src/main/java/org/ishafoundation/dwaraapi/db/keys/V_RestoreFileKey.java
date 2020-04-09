@@ -6,7 +6,7 @@ import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
-import org.ishafoundation.dwaraapi.constants.Requesttype;
+import org.ishafoundation.dwaraapi.constants.Action;
 
 
 @Embeddable
@@ -23,8 +23,8 @@ public class V_RestoreFileKey implements Serializable {
 	@Column(name = "targetvolume_id")
 	private int targetvolumeId;
 
-	@Column(name = "requesttype_id")
-	private Requesttype requesttype;
+	@Column(name = "action_id")
+	private Action action;
 
 	@Column(name = "user_id")
 	private int userId;
@@ -32,11 +32,11 @@ public class V_RestoreFileKey implements Serializable {
 	public V_RestoreFileKey() {
 	}
 
-	public V_RestoreFileKey(int fileId, int tapeId, int targetvolumeId, Requesttype requesttype, int userId) {
+	public V_RestoreFileKey(int fileId, int tapeId, int targetvolumeId, Action action, int userId) {
 		this.fileId = fileId;
 		this.tapeId = tapeId;
 		this.targetvolumeId = targetvolumeId;
-		this.requesttype = requesttype;
+		this.action = action;
 		this.userId = userId;
 	}
 
@@ -66,12 +66,12 @@ public class V_RestoreFileKey implements Serializable {
 		this.targetvolumeId = targetvolumeId;
 	}
 
-	public Requesttype getRequesttype() {
-		return requesttype;
+	public Action getAction() {
+		return action;
 	}
 
-	public void setRequesttype(Requesttype requesttype) {
-		this.requesttype = requesttype;
+	public void setAction(Action action) {
+		this.action = action;
 	}
 
 	public int getUserId() {
@@ -92,12 +92,12 @@ public class V_RestoreFileKey implements Serializable {
 
 		V_RestoreFileKey that = (V_RestoreFileKey) o;
 		return Objects.equals(fileId, that.fileId) && Objects.equals(tapeId, that.tapeId)
-				&& Objects.equals(targetvolumeId, that.targetvolumeId) && Objects.equals(requesttype, that.requesttype)
+				&& Objects.equals(targetvolumeId, that.targetvolumeId) && Objects.equals(action, that.action)
 				&& Objects.equals(userId, that.userId);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(fileId, tapeId, targetvolumeId, requesttype, userId);
+		return Objects.hash(fileId, tapeId, targetvolumeId, action, userId);
 	}
 }
