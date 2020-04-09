@@ -14,20 +14,8 @@ public class V_RestoreFileKey implements Serializable {
 
 	private static final long serialVersionUID = 766133869669209715L;
 
-	@Column(name = "libraryclass_id")
-	private int libraryclassId;
-	
-	@Column(name = "library_id")
-	private int libraryId;
-	
 	@Column(name = "file_id")
 	private int fileId;
-
-	@Column(name = "storageformat_id")
-	private int storageformatId;
-	
-	@Column(name = "tapeset_id")
-	private int tapesetId;
 
 	@Column(name = "tape_id")
 	private int tapeId;
@@ -44,37 +32,15 @@ public class V_RestoreFileKey implements Serializable {
 	public V_RestoreFileKey() {
 	}
 
-	public V_RestoreFileKey(int libraryclassId, int libraryId, int fileId, int storageformatId, int tapesetId, int tapeId, int targetvolumeId,
-			Requesttype requesttype, int userId) {
-		this.libraryclassId = libraryclassId;
-		this.libraryId = libraryId;
+	public V_RestoreFileKey(int fileId, int tapeId, int targetvolumeId, Requesttype requesttype, int userId) {
 		this.fileId = fileId;
-		
-		this.storageformatId = storageformatId;
-		this.tapesetId = tapesetId;
 		this.tapeId = tapeId;
-		
 		this.targetvolumeId = targetvolumeId;
 		this.requesttype = requesttype;
 		this.userId = userId;
 	}
 
 
-	public int getLibraryclassId() {
-		return libraryclassId;
-	}
-
-	public void setLibraryclassId(int libraryclassId) {
-		this.libraryclassId = libraryclassId;
-	}
-
-	public int getLibraryId() {
-		return libraryId;
-	}
-
-	public void setLibraryId(int libraryId) {
-		this.libraryId = libraryId;
-	}
 
 	public int getFileId() {
 		return fileId;
@@ -83,23 +49,7 @@ public class V_RestoreFileKey implements Serializable {
 	public void setFileId(int fileId) {
 		this.fileId = fileId;
 	}
-
-	public int getStorageformatId() {
-		return storageformatId;
-	}
-
-	public void setStorageformatId(int storageformatId) {
-		this.storageformatId = storageformatId;
-	}
-
-	public int getTapesetId() {
-		return tapesetId;
-	}
-
-	public void setTapesetId(int tapesetId) {
-		this.tapesetId = tapesetId;
-	}
-
+	
 	public int getTapeId() {
 		return tapeId;
 	}
@@ -141,15 +91,13 @@ public class V_RestoreFileKey implements Serializable {
 			return false;
 
 		V_RestoreFileKey that = (V_RestoreFileKey) o;
-		return Objects.equals(libraryclassId, that.libraryclassId) && Objects.equals(libraryId, that.libraryId)
-				&& Objects.equals(fileId, that.fileId) && Objects.equals(storageformatId, that.storageformatId)
-				&& Objects.equals(tapesetId, that.tapesetId) && Objects.equals(tapeId, that.tapeId)
+		return Objects.equals(fileId, that.fileId) && Objects.equals(tapeId, that.tapeId)
 				&& Objects.equals(targetvolumeId, that.targetvolumeId) && Objects.equals(requesttype, that.requesttype)
 				&& Objects.equals(userId, that.userId);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(libraryclassId, libraryId, fileId, storageformatId, tapesetId, tapeId, targetvolumeId, requesttype, userId);
+		return Objects.hash(fileId, tapeId, targetvolumeId, requesttype, userId);
 	}
 }

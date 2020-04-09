@@ -14,7 +14,7 @@ public class Subrequest {
 
 	private int subrequestRefId;
 
-	private int statusId;
+	private String status;
 	
 
 	public int getSubrequestId() {
@@ -65,11 +65,12 @@ public class Subrequest {
 		this.subrequestRefId = subrequestRefId;
 	}
 
-	public int getStatusId() {
-		return statusId;
+	public String getStatus() {
+		return status;
 	}
 
-	public void setStatusId(int statusId) {
-		this.statusId = statusId;
+	public void setStatus(String status) {
+		this.status = status;
 	}
+
 }

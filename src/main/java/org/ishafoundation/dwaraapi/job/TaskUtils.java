@@ -1,14 +1,32 @@
 package org.ishafoundation.dwaraapi.job;
 
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryclassTapesetDao;
 import org.ishafoundation.dwaraapi.db.model.master.Task;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassTapeset;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TaskUtils {
 	
+	@Autowired
+	private LibraryclassTapesetDao libraryclassTapesetDao;
+	
+	public boolean isTaskStorageV2(Task task) {
+		
+		LibraryclassTapeset libraryclassTapeset = libraryclassTapesetDao.findByTaskId(task.getId());
+
+		boolean isTaskStorage = false;
+		if (libraryclassTapeset != null)  // means its a copy job...
+			isTaskStorage = true;
+		
+		return isTaskStorage;
+	}
+	
 	public boolean isTaskStorage(Task task) {
-		boolean isTaskStorage = true;
-		if(task.getTaskfiletype() != null)
+
+		boolean isTaskStorage = true;		if(task.getTaskfiletype() != null)
+
 			isTaskStorage = false;
 		
 		return isTaskStorage;

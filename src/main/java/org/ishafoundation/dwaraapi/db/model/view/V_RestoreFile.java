@@ -56,6 +56,7 @@ public class V_RestoreFile {
 	@EmbeddedId
 	private V_RestoreFileKey id;
 	
+
 	@Column(name="file_pathname")
 	private String filePathname;
 
@@ -207,5 +208,52 @@ public class V_RestoreFile {
 	public void setFileTapeDeleted(boolean fileTapeDeleted) {
 		this.fileTapeDeleted = fileTapeDeleted;
 	}
+
+//	
+//	@Column(name = "libraryclass_id")
+//	private int libraryclassId;
+//	
+//	@Column(name = "library_id")
+//	private int libraryId;
+//	
+//	
+//	@Column(name = "storageformat_id")
+//	private int storageformatId;
+//	
+//	@Column(name = "tapeset_id")
+//	private int tapesetId;
+//
+//	public int getLibraryclassId() {
+//		return libraryclassId;
+//	}
+//
+//	public void setLibraryclassId(int libraryclassId) {
+//		this.libraryclassId = libraryclassId;
+//	}
+//
+//	public int getLibraryId() {
+//		return libraryId;
+//	}
+//
+//	public void setLibraryId(int libraryId) {
+//		this.libraryId = libraryId;
+//	}
+//
+//	
+//	public int getStorageformatId() {
+//		return storageformatId;
+//	}
+//
+//	public void setStorageformatId(int storageformatId) {
+//		this.storageformatId = storageformatId;
+//	}
+//
+//	public int getTapesetId() {
+//		return tapesetId;
+//	}
+//
+//	public void setTapesetId(int tapesetId) {
+//		this.tapesetId = tapesetId;
+//	}
 
 }

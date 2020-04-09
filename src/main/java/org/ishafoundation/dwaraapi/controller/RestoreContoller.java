@@ -1,12 +1,16 @@
 package org.ishafoundation.dwaraapi.controller;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.api.req.restore.FileParams;
+import org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedSubrequest;
 import org.ishafoundation.dwaraapi.constants.Requesttype;
+import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.master.RequesttypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TapeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TargetvolumeDao;
@@ -20,6 +24,9 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.dao.view.V_RestoreFileDao;
 import org.ishafoundation.dwaraapi.db.keys.V_RestoreFileKey;
 import org.ishafoundation.dwaraapi.db.model.master.Targetvolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
 import org.ishafoundation.dwaraapi.db.model.view.V_RestoreFile;
 import org.ishafoundation.dwaraapi.job.JobManager;
 import org.ishafoundation.dwaraapi.tape.library.MtxStatus;
@@ -33,6 +40,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -177,112 +186,94 @@ public class RestoreContoller {
 		return nthFile;
 	}
 	
-//	@ApiOperation(value = "Restores the list of files requested from copy 1 into the target volume location grouped under the output dir")
-//	@PostMapping("/restore")
-//	public org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedRequest restore(@RequestBody org.ishafoundation.dwaraapi.api.req.restore.UserRequest userRequest){
-//    	org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedRequest response = new org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedRequest();
-//		try {
-//	    	Requesttype requesttype = requesttypeDao.findByName("RESTORE");
-//	    	int requesttypeId = requesttype.getRequesttypeId();
-//	    	
-//	    	long requestedAt = System.currentTimeMillis();
-//	    	String requestedBy = getUserFromContext();
-//	    	
-//			Request request = new Request();
-//			request.setRequesttypeId(requesttypeId);
-//	    	request.setCopyNumber(userRequest.getCopyNumber());
-//	    	request.setTargetvolumeId(userRequest.getTargetvolumeId());
-//	    	request.setOutputFolder(userRequest.getOutputFolder());
-//			request.setRequestedAt(requestedAt);
-//	    	request.setRequestedBy(requestedBy);
-//	    	logger.debug("DB Request Creation");
-//	    	request = requestDao.save(request);
-//	    	int requestId = request.getRequestId();
-//	    	logger.debug("DB Request Creation - Success " + requestId);
-//
-//	    	List<ResponseHeaderWrappedSubrequest> responseHeaderWrappedSubrequestList = new ArrayList<ResponseHeaderWrappedSubrequest>();
-//	    	
-//	    	List<FileParams> fileParamsList = userRequest.getFileParams();
-//	    	for (Iterator<FileParams> iterator2 = fileParamsList.iterator(); iterator2.hasNext();) {
-//				FileParams nthFileParams = (FileParams) iterator2.next();
-//				
-//				int fileId = nthFileParams.getFileId();
-//				
-//		    	int statusId = Status.QUEUED.getStatusId();
-//
-//		    	Subrequest subrequest = new Subrequest();
-//		    	subrequest.setRequestId(requestId);
-//		    	subrequest.setFileId(fileId);
-//		    	subrequest.setOptimizeTapeAccess(nthFileParams.isOptimizeTapeAccess());
-//		    	subrequest.setPriority(nthFileParams.getPriority());
-//		    	subrequest.setStatusId(statusId);
-//
-//		    	logger.debug("DB Subrequest Creation");
-//		    	subrequest = subrequestDao.save(subrequest);
-//		    	logger.debug("DB Subrequest Creation - Success " + subrequest.getRequestId());
-//
-//				createJobTableRows(subrequest, requesttypeId);
-//				
-//				
-//		    	org.ishafoundation.dwaraapi.api.resp.restore.Subrequest systemGeneratedSubRequestForResponse = new org.ishafoundation.dwaraapi.api.resp.restore.Subrequest();
-//		    	systemGeneratedSubRequestForResponse.setFileId(fileId);
-//		    	systemGeneratedSubRequestForResponse.setSubrequestId(subrequest.getSubrequestId());
-//		    	systemGeneratedSubRequestForResponse.setOptimizeTapeAccess(subrequest.isOptimizeTapeAccess());
-//		    	systemGeneratedSubRequestForResponse.setPriority(subrequest.getPriority());
-//		    	systemGeneratedSubRequestForResponse.setRequestId(requestId);
-//		    	systemGeneratedSubRequestForResponse.setStatusId(Status.QUEUED.getStatusId());
-//		    	
-//		    	org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedSubrequest responseHeaderWrappedSubrequest = new org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedSubrequest();
-//		    	
-//		    	responseHeaderWrappedSubrequest.setResponseCode(200);
-//		    	responseHeaderWrappedSubrequest.setResponseMessage("Resp message");
-//		    	responseHeaderWrappedSubrequest.setResponseType("Resp type");
-//		    	responseHeaderWrappedSubrequest.setSubrequest(systemGeneratedSubRequestForResponse);
-//				
-//				
-//		    	responseHeaderWrappedSubrequestList.add(responseHeaderWrappedSubrequest);
-//			}
-//	    	
-//	    	org.ishafoundation.dwaraapi.api.resp.restore.RequestWithWrappedSubrequest requestForResponse = new org.ishafoundation.dwaraapi.api.resp.restore.RequestWithWrappedSubrequest();
-//	    	requestForResponse.setCopyNumber(userRequest.getCopyNumber());
-//	    	requestForResponse.setOutputFolder(userRequest.getOutputFolder());
-//	    	requestForResponse.setRequestedAt(requestedAt);
-//	    	requestForResponse.setRequestedBy(requestedBy);
-//	    	requestForResponse.setRequestId(requestId);
-//	    	requestForResponse.setRequesttypeId(requesttypeId);
-//	    	requestForResponse.setResponseHeaderWrappedSubrequestList(responseHeaderWrappedSubrequestList);
-//	    	requestForResponse.setTargetvolumeId(userRequest.getTargetvolumeId());
-//	    	
-//	    	response.setRequest(requestForResponse);
-//	    	
-//	    	response.setResponseCode(200);
-//			response.setResponseType("Success");
-//			response.setResponseMessage("UserRequest(s) Submitted Successfully");
-//					
-//
-//		} catch (Throwable e) {
-//			String errorMsg = "Unable to trigger the restore job - " + e.getMessage();
-//			logger.error(errorMsg, e);
-//			response.setResponseCode(111);
-//			response.setResponseType("Failed");
-//			response.setResponseMessage(errorMsg);
-//		}
-//		return response;		
-//	}
-//	
+	@ApiOperation(value = "Restores the list of files requested from copy 1 into the target volume location grouped under the output dir")
+	@PostMapping("/restore")
+	public org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedRequest restore(@RequestBody org.ishafoundation.dwaraapi.api.req.restore.UserRequest userRequest){
+    	org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedRequest response = new org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedRequest();
+		try {
+	    	String requestedBy = getUserFromContext();
+	    	Requesttype requesttype = Requesttype.restore;
+			Request request = new Request();
+			request.setRequesttype(requesttype);
+	    	request.setCopyNumber(userRequest.getCopyNumber());
+	    	request.setTargetvolume(targetvolumeDao.findById(userRequest.getTargetvolumeId()).get());//request.setTargetvolumeId(userRequest.getTargetvolumeId());
+	    	request.setOutputFolder(userRequest.getOutputFolder());
+			request.setRequestedAt(LocalDateTime.now());
+			request.setUser(userDao.findByName(requestedBy));
+	    	logger.debug("DB Request Creation");
+	    	request = requestDao.save(request);
+	    	logger.debug("DB Request Creation - Success " + request.getId());
+
+	    	List<ResponseHeaderWrappedSubrequest> responseHeaderWrappedSubrequestList = new ArrayList<ResponseHeaderWrappedSubrequest>();
+	    	
+	    	List<FileParams> fileParamsList = userRequest.getFileParams();
+	    	for (Iterator<FileParams> iterator2 = fileParamsList.iterator(); iterator2.hasNext();) {
+				FileParams nthFileParams = (FileParams) iterator2.next();
+				
+				int fileId = nthFileParams.getFileId();
+				
+		    	Subrequest subrequest = new Subrequest();
+		    	subrequest.setRequest(request);
+		    	subrequest.setFileId(fileId);
+		    	subrequest.setPriority(nthFileParams.getPriority());
+		    	subrequest.setStatus(Status.queued);
+
+		    	logger.debug("DB Subrequest Creation");
+		    	subrequest = subrequestDao.save(subrequest);
+		    	logger.debug("DB Subrequest Creation - Success " + subrequest.getId());
+
+				createJobTableRows(request, subrequest);
+				
+				
+		    	org.ishafoundation.dwaraapi.api.resp.restore.Subrequest systemGeneratedSubRequestForResponse = new org.ishafoundation.dwaraapi.api.resp.restore.Subrequest();
+		    	systemGeneratedSubRequestForResponse.setFileId(fileId);
+		    	systemGeneratedSubRequestForResponse.setSubrequestId(subrequest.getId());
+		    	systemGeneratedSubRequestForResponse.setPriority(subrequest.getPriority());
+		    	systemGeneratedSubRequestForResponse.setRequestId(request.getId());
+		    	systemGeneratedSubRequestForResponse.setStatus(Status.queued.toString());
+		    	
+		    	org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedSubrequest responseHeaderWrappedSubrequest = new org.ishafoundation.dwaraapi.api.resp.restore.ResponseHeaderWrappedSubrequest();
+		    	
+		    	responseHeaderWrappedSubrequest.setSubrequest(systemGeneratedSubRequestForResponse);
+				
+				
+		    	responseHeaderWrappedSubrequestList.add(responseHeaderWrappedSubrequest);
+			}
+	    	
+	    	org.ishafoundation.dwaraapi.api.resp.restore.RequestWithWrappedSubrequest requestForResponse = new org.ishafoundation.dwaraapi.api.resp.restore.RequestWithWrappedSubrequest();
+	    	requestForResponse.setCopyNumber(userRequest.getCopyNumber());
+	    	requestForResponse.setOutputFolder(userRequest.getOutputFolder());
+	    	//requestForResponse.setRequested(request.getRequestedAt());
+	    	requestForResponse.setRequestedBy(requestedBy);
+	    	requestForResponse.setRequestId(request.getId());
+	    	//requestForResponse.setRequesttype(requesttype);
+	    	requestForResponse.setResponseHeaderWrappedSubrequestList(responseHeaderWrappedSubrequestList);
+	    	requestForResponse.setTargetvolumeId(userRequest.getTargetvolumeId());
+	    	
+	    	response.setRequest(requestForResponse);
+	    	
+					
+
+		} catch (Throwable e) {
+			String errorMsg = "Unable to trigger the restore job - " + e.getMessage();
+			logger.error(errorMsg, e);
+		}
+		return response;		
+	}
+	
 	private String getUserFromContext() {
 		return SecurityContextHolder.getContext().getAuthentication().getName();
 	}
-//	
-//    private void createJobTableRows(Subrequest subrequest, int requesttypeId) {
-//    	List<Job> jobList = jobManager.createJobs(requesttypeId, 0, subrequest, null);
-//    	
-//    	logger.debug("DB Job rows Creation");   
-//    	jobDao.saveAll(jobList);
-//    	logger.debug("DB Job rows Creation - Success");
-//    }	
-//
-//	
+	
+    private void createJobTableRows(Request request, Subrequest subrequest) {
+    	List<Job> jobList = jobManager.createJobs(request, subrequest, null);
+    	
+    	logger.debug("DB Job rows Creation");   
+    	jobDao.saveAll(jobList);
+    	logger.debug("DB Job rows Creation - Success");
+    }	
+
+	
 //	
 //	
 //	

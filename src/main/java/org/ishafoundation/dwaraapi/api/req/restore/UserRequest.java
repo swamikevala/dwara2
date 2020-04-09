@@ -7,8 +7,6 @@ public class UserRequest {
 	private int copyNumber;
 	private int targetvolumeId;
 	private String outputFolder;
-	private String requestedBy;
-	private long requestedAt;
 	private List<FileParams> fileParams;
 
 	public int getCopyNumber() {
@@ -28,18 +26,6 @@ public class UserRequest {
 	}
 	public void setOutputFolder(String outputFolder) {
 		this.outputFolder = outputFolder;
-	}
-	public String getRequestedBy() {
-		return requestedBy;
-	}
-	public void setRequestedBy(String requestedBy) {
-		this.requestedBy = requestedBy;
-	}
-	public long getRequestedAt() {
-		return requestedAt;
-	}
-	public void setRequestedAt(long requestedAt) {
-		this.requestedAt = requestedAt;
 	}
 	public List<FileParams> getFileParams() {
 		return fileParams;
