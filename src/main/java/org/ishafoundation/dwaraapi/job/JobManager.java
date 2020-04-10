@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.constants.Action;
 import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.master.TaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.TaskTasksetDao;
@@ -105,7 +106,7 @@ public class JobManager {
 			// check prerequisite jobs completion status
 			boolean isJobReadyToBeProcessed = isJobReadyToBeProcessed(job);
 			logger.info("isJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
-			if(isJobReadyToBeProcessed) {
+			if(task.getName().equals(Action.restore.toString()) || isJobReadyToBeProcessed) {
 				// TODO : we were doing this on tasktype, but now that there is no tasktype how to differentiate? Check with Swami
 				if(!taskUtils.isTaskStorage(task)) { // a non-storage process job
 					logger.trace("process job");
