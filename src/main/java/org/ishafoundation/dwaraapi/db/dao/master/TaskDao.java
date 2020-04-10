@@ -8,4 +8,6 @@ import org.springframework.data.repository.CrudRepository;
 public interface TaskDao extends CrudRepository<Task,Integer> {
 	
 	List<Task> findAllByTasksetsTasksetId(int tasksetId);
+	
+	Task findByName(String taskName);
 }

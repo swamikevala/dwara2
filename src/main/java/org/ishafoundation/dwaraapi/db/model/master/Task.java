@@ -27,7 +27,7 @@ public class Task {
 	@Column(name="id")
 	private Integer id; // Is Integer so compatibe with - field in library class (only applicable where source = false)
 	
-	@Column(name="name")
+	@Column(name="name", unique=true)
 	private String name;
 
 	@Column(name="description")

@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.constants.Status;
+import org.ishafoundation.dwaraapi.db.dao.master.TaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.TaskTasksetDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.master.Task;
@@ -34,6 +35,9 @@ public class JobManager {
 	
 	@Autowired
 	private JobDao jobDao;	
+	
+	@Autowired
+	private TaskDao taskDao;
 		
 	@Autowired
 	private JobUtils jobUtils;	
@@ -78,6 +82,18 @@ public class JobManager {
 		
 		return jobList;
 	}
+	
+	public Job createJobForRestore(Request request, Subrequest subrequest){
+			Job job = new Job();
+			Task nthTask = taskDao.findByName(request.getAction().name());
+			logger.trace("nthTaskId in set - " + nthTask.getId());
+			job.setTask(nthTask);
+			job.setSubrequest(subrequest);				
+			job.setCreatedAt(LocalDateTime.now());
+			job.setStatus(Status.queued);
+
+		return job;
+	}	
 
 	public void processJobs() {
 		List<Job> storageJobList = new ArrayList<Job>();

@@ -199,7 +199,7 @@ public class RestoreContoller {
 		    	subrequest = subrequestDao.save(subrequest);
 		    	logger.debug("DB Subrequest Creation - Success " + subrequest.getId());
 
-				createJobTableRows(request, subrequest);
+		    	createRestoreJob(request, subrequest);
 				
 				
 		    	org.ishafoundation.dwaraapi.api.resp.restore.Subrequest systemGeneratedSubRequestForResponse = new org.ishafoundation.dwaraapi.api.resp.restore.Subrequest();
@@ -242,12 +242,12 @@ public class RestoreContoller {
 		return SecurityContextHolder.getContext().getAuthentication().getName();
 	}
 	
-    private void createJobTableRows(Request request, Subrequest subrequest) {
-    	List<Job> jobList = jobManager.createJobs(request, subrequest, null);
+    private void createRestoreJob(Request request, Subrequest subrequest) {
+    	Job job = jobManager.createJobForRestore(request, subrequest);
     	
-    	logger.debug("DB Job rows Creation");   
-    	jobDao.saveAll(jobList);
-    	logger.debug("DB Job rows Creation - Success");
+    	logger.debug("DB Job for restore Creation");   
+    	jobDao.save(job);
+    	logger.debug("DB Job for restore Creation - Success");
     }	
 
 	
