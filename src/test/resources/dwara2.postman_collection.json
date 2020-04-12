@@ -69,7 +69,7 @@
 			"response": []
 		},
 		{
-			"name": "scan",
+			"name": "list-libraryclass",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -103,6 +103,213 @@
 			"response": []
 		},
 		{
+			"name": "list-FilesToBeIngested",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "ShivaShambho",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "pgurumurthy",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}{{suffix}}/library/staging?libraryclass=pub-video",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}{{suffix}}",
+					"path": [
+						"library",
+						"staging"
+					],
+					"query": [
+						{
+							"key": "libraryclass",
+							"value": "pub-video"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "rename-staging_folder",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "ShivaShambho",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "pgurumurthy",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n             \"sourcePath\": \"/data/user/pgurumurthy/ingest/pub-video\",\n        \"oldFilename\": \"For-IngestTesting-Shots-Of-Sadhanapada-Particpants-Volunteering-In-BSP_SPH-IYC_24-Oct-2019_Z280V_2\",\n        \"newFilename\": \"11111_For-IngestTesting-Shots-Of-Sadhanapada-Particpants-Volunteering-In-BSP_SPH-IYC_24-Oct-2019_Z280V_2\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}{{suffix}}/library/staging/rename",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}{{suffix}}",
+					"path": [
+						"library",
+						"staging",
+						"rename"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "http://192.168.222.223:8080/api/ingest",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"libraryclassId\": 5001,\n    \"subrequest\": [\n        {\n            \"newFilename\": \"10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9\",\n            \"oldFilename\": \"10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9\",\n            \"sourcePath\": \"/data/ingested\"\n        },\n        {\n            \"newFilename\": \"12345_ForCopyTest_18-Nov-1980_FS7\",\n            \"oldFilename\": \"12345_ForCopyTest_18-Nov-1980_FS7\",\n            \"sourcePath\": \"/data/ingested\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://192.168.222.223:8080/api/ingest",
+							"protocol": "http",
+							"host": [
+								"192",
+								"168",
+								"222",
+								"223"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"ingest"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Access-Control-Allow-Origin",
+							"value": "*"
+						},
+						{
+							"key": "Access-Control-Allow-Methods",
+							"value": "GET,POST,DELETE,PUT,OPTIONS"
+						},
+						{
+							"key": "Access-Control-Allow-Headers",
+							"value": "*"
+						},
+						{
+							"key": "Access-Control-Allow-Credentials",
+							"value": "true"
+						},
+						{
+							"key": "Access-Control-Max-Age",
+							"value": "180"
+						},
+						{
+							"key": "Set-Cookie",
+							"value": "JSESSIONID=7705E446DD6D9E0BF0CDF1D90C2CDC23; Path=/api; HttpOnly"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "1; mode=block"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, no-store, max-age=0, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "Expires",
+							"value": "0"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json;charset=UTF-8"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Date",
+							"value": "Thu, 05 Mar 2020 10:04:13 GMT"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=20"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"responseCode\": 200,\n    \"responseType\": \"some responseType\",\n    \"responseMessage\": \"Som message\",\n    \"request\": {\n        \"requestId\": 856,\n        \"requesttypeId\": 9008,\n        \"libraryclassId\": 5001,\n        \"requestedBy\": \"\",\n        \"requestedAt\": 1583402652786,\n        \"subrequestResp\": [\n            {\n                \"responseCode\": 200,\n                \"responseType\": \"Resp type\",\n                \"responseMessage\": \"Resp message\",\n                \"subrequest\": {\n                    \"subrequestId\": 857,\n                    \"requestId\": 856,\n                    \"sourcePath\": \"/data/ingested\",\n                    \"skipTasks\": null,\n                    \"rerun\": false,\n                    \"rerunNo\": 0,\n                    \"optimizeTapeAccess\": false,\n                    \"priority\": 0,\n                    \"subrequestRefId\": 0,\n                    \"oldFilename\": \"10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9\",\n                    \"newFilename\": \"10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9\",\n                    \"prevSequenceCode\": null,\n                    \"library\": {\n                        \"libraryId\": 858,\n                        \"libraryclassId\": 5001,\n                        \"name\": \"10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9\",\n                        \"fileCount\": 555,\n                        \"deleted\": false,\n                        \"fileStructureMd5\": \"someFileStructureMd5Value\",\n                        \"libraryIdRef\": 0\n                    },\n                    \"statusId\": 1\n                }\n            },\n            {\n                \"responseCode\": 200,\n                \"responseType\": \"Resp type\",\n                \"responseMessage\": \"Resp message\",\n                \"subrequest\": {\n                    \"subrequestId\": 868,\n                    \"requestId\": 856,\n                    \"sourcePath\": \"/data/ingested\",\n                    \"skipTasks\": null,\n                    \"rerun\": false,\n                    \"rerunNo\": 0,\n                    \"optimizeTapeAccess\": false,\n                    \"priority\": 0,\n                    \"subrequestRefId\": 0,\n                    \"oldFilename\": \"12345_ForCopyTest_18-Nov-1980_FS7\",\n                    \"newFilename\": \"12345_ForCopyTest_18-Nov-1980_FS7\",\n                    \"prevSequenceCode\": null,\n                    \"library\": {\n                        \"libraryId\": 869,\n                        \"libraryclassId\": 5001,\n                        \"name\": \"12345_ForCopyTest_18-Nov-1980_FS7\",\n                        \"fileCount\": 555,\n                        \"deleted\": false,\n                        \"fileStructureMd5\": \"someFileStructureMd5Value\",\n                        \"libraryIdRef\": 0\n                    },\n                    \"statusId\": 1\n                }\n            }\n        ]\n    }\n}"
+				}
+			]
+		},
+		{
 			"name": "ingest",
 			"request": {
 				"auth": {
@@ -131,7 +338,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"library\": [\r\n    {\r\n      \"newFilename\": \"Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoPro1\",\r\n      \"oldFilename\": \"Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoPro1\",\r\n      \"sourcePath\": \"/data/user/pgurumurthy/ingest/pub-video\"\r\n    }\r\n  ],\r\n  \"libraryclassId\": 5001\r\n}",
+					"raw": "{\r\n  \"library\": [\r\n   {\r\n        \"sourcePath\": \"/data/user/pgurumurthy/ingest/pub-video\",\r\n        \"oldFilename\": \"Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoPro1\",\r\n        \"newFilename\": \"Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoPro1\",\r\n        \"fileCount\": 2,\r\n        \"totalSize\": 1.708578488E9,\r\n        \"prevSequenceCode\": null,\r\n        \"prevSequenceCodeExpected\": false,\r\n        \"errorType\": null,\r\n        \"errorMessage\": null\r\n    }\r\n  ],\r\n  \"libraryclassId\": 5001\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -139,13 +346,15 @@
 					}
 				},
 				"url": {
-					"raw": "http://{{host}}:{{port}}{{suffix}}/ingest",
+					"raw": "http://{{host}}:{{port}}{{suffix}}/library/staging/ingest",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
 					],
 					"port": "{{port}}{{suffix}}",
 					"path": [
+						"library",
+						"staging",
 						"ingest"
 					]
 				}
@@ -287,7 +496,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{host}}:{{port}}{{suffix}}/request?pageNumber=1&fromDate=2020-04-01T23:53:02",
+					"raw": "http://{{host}}:{{port}}{{suffix}}/request?pageNumber=1",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
@@ -300,10 +509,51 @@
 						{
 							"key": "pageNumber",
 							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "specific-request with subrequests",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "ShivaShambho",
+							"type": "string"
 						},
 						{
-							"key": "fromDate",
-							"value": "2020-04-01T23:53:02"
+							"key": "username",
+							"value": "pgurumurthy",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}{{suffix}}/request/269?pageNumber=1&showSubrequests=true",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}{{suffix}}",
+					"path": [
+						"request",
+						"269"
+					],
+					"query": [
+						{
+							"key": "pageNumber",
+							"value": "1"
+						},
+						{
+							"key": "showSubrequests",
+							"value": "true"
 						}
 					]
 				}
@@ -318,12 +568,12 @@
 					"basic": [
 						{
 							"key": "password",
-							"value": "dwara123",
+							"value": "ShivaShambho",
 							"type": "string"
 						},
 						{
 							"key": "username",
-							"value": "dwara",
+							"value": "pgurumurthy",
 							"type": "string"
 						}
 					]
@@ -331,7 +581,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{host}}:{{port}}{{suffix}}/subrequest/809",
+					"raw": "http://{{host}}:{{port}}{{suffix}}/subrequest/270?showJobs=true",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
@@ -339,7 +589,58 @@
 					"port": "{{port}}{{suffix}}",
 					"path": [
 						"subrequest",
-						"809"
+						"270"
+					],
+					"query": [
+						{
+							"key": "showJobs",
+							"value": "true"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "specific-list file for restore",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "ShivaShambho",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "pgurumurthy",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}{{suffix}}/file/290?copyNumber=1&showDeleted=false",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}{{suffix}}",
+					"path": [
+						"file",
+						"290"
+					],
+					"query": [
+						{
+							"key": "copyNumber",
+							"value": "1"
+						},
+						{
+							"key": "showDeleted",
+							"value": "false"
+						}
 					]
 				}
 			},
@@ -353,7 +654,7 @@
 					"basic": [
 						{
 							"key": "password",
-							"value": "pgm123",
+							"value": "ShivaShambho",
 							"type": "string"
 						},
 						{
@@ -374,7 +675,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"copyNumber\": 1,\r\n  \"fileParams\": [\r\n    {\r\n      \"fileId\": 964,\r\n      \"optimizeTapeAccess\": true,\r\n      \"priority\": 0\r\n    },\r\n    {\r\n      \"fileId\": 976,\r\n      \"optimizeTapeAccess\": true,\r\n      \"priority\": 0\r\n    }    \r\n  ],\r\n  \"outputFolder\": \"restore-test-listening-to-thevaram\",\r\n  \"targetvolumeId\": 17001\r\n}",
+					"raw": "{\r\n  \"copyNumber\": 1,\r\n  \"fileParams\": [\r\n    {\r\n      \"fileId\": 964,\r\n      \"priority\": 0\r\n    },\r\n    {\r\n      \"fileId\": 976,\r\n      \"priority\": 0\r\n    }    \r\n  ],\r\n  \"outputFolder\": \"restore-test-listening-to-thevaram\",\r\n  \"targetvolumeId\": 17001\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"

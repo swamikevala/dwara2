@@ -1,14 +1,10 @@
 package org.ishafoundation.dwaraapi.entrypoint.resource.ingest;
 		
-
-public class Library {
+public class Libraryclass {
 
 	private int id;
 
-	private Libraryclass libraryclass;
-
 	private String name;
-
 
 	public int getId() {
 		return id;
@@ -18,14 +14,6 @@ public class Library {
 		this.id = id;
 	}
 
-	public Libraryclass getLibraryclass() {
-		return libraryclass;
-	}
-
-	public void setLibraryclass(Libraryclass libraryclass) {
-		this.libraryclass = libraryclass;
-	}
-
 	public String getName() {
 		return name;
 	}
@@ -33,5 +21,4 @@ public class Library {
 	public void setName(String name) {
 		this.name = name;
 	}
-
 }

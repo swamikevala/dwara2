@@ -50,8 +50,9 @@ public class RequestCustomImpl implements RequestCustom {
         List<Request> requestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
         
         WrappedRequestList wrappedRequestList = new WrappedRequestList();
-        wrappedRequestList.setPageNumber(pageNumber);
-        wrappedRequestList.setTotalNoOfRecords(count);
+        wrappedRequestList.setPage(pageNumber);
+        wrappedRequestList.setPageSize(pageSize);
+        wrappedRequestList.setTotal(count);
         wrappedRequestList.setRequestList(requestList);
         return wrappedRequestList;
 	}

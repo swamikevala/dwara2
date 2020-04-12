@@ -43,7 +43,7 @@ public class TapeJobsManager extends ArchiveJobsManager{
 	 */
 	@Override
 	public void manage(List<StorageJob> tapeStorageJobsList) {
-		if(tapeStorageJobsList.size() <= 0) {
+		if(tapeStorageJobsList.size() <= 0) { // Double verifying if there are any tape jobs or not
 			logger.debug("No tape jobs in queue to be processed");
 			return;
 		}

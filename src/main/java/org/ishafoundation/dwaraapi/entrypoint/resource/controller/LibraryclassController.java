@@ -37,9 +37,9 @@ public class LibraryclassController {
 	
 	@ApiOperation(value = "Gets all the libraryclasses allowed for the user")
 	@GetMapping("/libraryclass")
-	public ResponseEntity<List<org.ishafoundation.dwaraapi.api.resp.Libraryclass>> getLibraryclass() { 		
+	public ResponseEntity<List<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.list.LibraryclassForList>> getLibraryclass() { 		
 
-		List<org.ishafoundation.dwaraapi.api.resp.Libraryclass> response_LibraryclassList = new ArrayList<org.ishafoundation.dwaraapi.api.resp.Libraryclass>();
+		List<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.list.LibraryclassForList> response_LibraryclassList = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.list.LibraryclassForList>();
 
 		HashMap<Integer, List<String>> libraryclassId_TargetvolumeList_Map = new HashMap<Integer, List<String>>();
 		// gets all Libraryclass to targetvolumes upfront and holds it in memory thus avoiding as many db calls inside the loop
@@ -77,15 +77,15 @@ public class LibraryclassController {
 			}
 		}
 		
-		HashMap<Integer, org.ishafoundation.dwaraapi.api.resp.Libraryclass> libraryclassId_ResponseLibraryclass_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.api.resp.Libraryclass>();
+		HashMap<Integer, org.ishafoundation.dwaraapi.entrypoint.resource.ingest.list.LibraryclassForList> libraryclassId_ResponseLibraryclass_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.entrypoint.resource.ingest.list.LibraryclassForList>();
 		for (LibraryclassActionUser libraryclassActionUser : libraryclassActionUserList) {
 			Libraryclass libraryclass = libraryclassActionUser.getLibraryclass();
 			int libraryclassId = libraryclass.getId();
 			if(libraryclass.isSource()) { // just double ensuring only source libraryclasses are added to the resultset...Ideally only source libraryclass should be configured for the user in libraryclassactionUser table, but just an extra check
-				org.ishafoundation.dwaraapi.api.resp.Libraryclass response_Libraryclass = libraryclassId_ResponseLibraryclass_Map.get(libraryclassId);
+				org.ishafoundation.dwaraapi.entrypoint.resource.ingest.list.LibraryclassForList response_Libraryclass = libraryclassId_ResponseLibraryclass_Map.get(libraryclassId);
 						
 				if(response_Libraryclass == null) {
-					response_Libraryclass = new org.ishafoundation.dwaraapi.api.resp.Libraryclass();
+					response_Libraryclass = new org.ishafoundation.dwaraapi.entrypoint.resource.ingest.list.LibraryclassForList();
 					response_Libraryclass.setLibraryclassId(libraryclassId);
 					response_Libraryclass.setName(libraryclass.getName());
 					response_Libraryclass.setDisplayOrder(libraryclass.getDisplayOrder());

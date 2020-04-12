@@ -99,36 +99,49 @@ public class JobManager {
 	public void processJobs() {
 		List<Job> storageJobList = new ArrayList<Job>();
 		List<Job> jobList = jobDao.findAllByStatusOrderById(Status.queued);
-		for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
-			Job job = (Job) iterator.next();
-			logger.info("job - " + job.getId());
-			Task task = job.getTask();
-			// check prerequisite jobs completion status
-			boolean isJobReadyToBeProcessed = isJobReadyToBeProcessed(job);
-			logger.info("isJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
-			if(task.getName().equals(Action.restore.toString()) || isJobReadyToBeProcessed) {
-				// TODO : we were doing this on tasktype, but now that there is no tasktype how to differentiate? Check with Swami
-				if(!taskUtils.isTaskStorage(task)) { // a non-storage process job
-					logger.trace("process job");
-					TaskJobManager_ThreadTask taskJobManager_ThreadTask = applicationContext.getBean(TaskJobManager_ThreadTask.class);
-					taskJobManager_ThreadTask.setJob(job);
-					taskSingleThreadExecutor.getExecutor().execute(taskJobManager_ThreadTask);
-				}else {
-					logger.trace("added to storagejob collection");
-					// all storage jobs need to be grouped for some optimisation...
-					storageJobList.add(job);
+		
+		if(jobList.size() > 0) {
+			for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
+				Job job = (Job) iterator.next();
+				logger.info("job - " + job.getId());
+				Task task = job.getTask();
+				// check prerequisite jobs completion status
+				boolean isJobReadyToBeProcessed = isJobReadyToBeProcessed(job);
+				logger.info("isJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
+				if(isJobReadyToBeProcessed) {
+					// TODO : we were doing this on tasktype, but now that there is no tasktype how to differentiate? Check with Swami
+					if(!taskUtils.isTaskStorage(task)) { // a non-storage process job
+						logger.trace("process job");
+						TaskJobManager_ThreadTask taskJobManager_ThreadTask = applicationContext.getBean(TaskJobManager_ThreadTask.class);
+						taskJobManager_ThreadTask.setJob(job);
+						taskSingleThreadExecutor.getExecutor().execute(taskJobManager_ThreadTask);
+					}else {
+						logger.trace("added to storagejob collection");
+						// all storage jobs need to be grouped for some optimisation...
+						storageJobList.add(job);
+					}
 				}
 			}
+			
+			if(storageJobList.size() > 0) {
+				StorageJobsManager_ThreadTask storageThreadTask = applicationContext.getBean(StorageJobsManager_ThreadTask.class);
+				storageThreadTask.setJobList(storageJobList);
+				storageSingleThreadExecutor.getExecutor().execute(storageThreadTask);
+			}else {
+				logger.trace("No storage job to be processed");
+			}
 		}
-		
-		StorageJobsManager_ThreadTask storageThreadTask = applicationContext.getBean(StorageJobsManager_ThreadTask.class);
-		storageThreadTask.setJobList(storageJobList);
-		storageSingleThreadExecutor.getExecutor().execute(storageThreadTask);
+		else {
+			logger.trace("No jobs queued up");
+		}
 	}
 
 	// If a job is a dependent job the parent job's status should be completed for it to be ready to be taken up for processing...
 	private boolean isJobReadyToBeProcessed(Job job) {
 		boolean isJobReadyToBeProcessed = true;
+		
+		if(job.getTask().getName().equals(Action.restore.toString()))
+			return isJobReadyToBeProcessed;
 		
 		Library inputLibrary = job.getInputLibrary();//The input library of a dependent job is set by the parent job after it completes the processing
 		if(inputLibrary == null) { // means its a job dependent on its parent job(to set the library to be used), which is not completed.  

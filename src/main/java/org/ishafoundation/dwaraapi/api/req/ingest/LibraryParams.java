@@ -1,14 +1,33 @@
 package org.ishafoundation.dwaraapi.api.req.ingest;
 
-public class LibraryParams extends FileAttributes{
+public class LibraryParams{
 
+	private String sourcePath;
+
+	private String name;
+	
 	private String skipTasks;
 
 	private boolean rerun;
 
 	private String prevSequenceCode;
-
 	
+
+	public String getSourcePath() {
+		return sourcePath;
+	}
+
+	public void setSourcePath(String sourcePath) {
+		this.sourcePath = sourcePath;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
 	public String getSkipTasks() {
 		return skipTasks;
 	}

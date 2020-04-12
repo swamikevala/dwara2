@@ -48,8 +48,8 @@ public class StorageJobBuilder {
 		int taskId = task.getId();
 		Subrequest subrequest = job.getSubrequest();
 		Request request = subrequest.getRequest();
-		org.ishafoundation.dwaraapi.constants.Action requestType = request.getAction();
-		if(requestType == org.ishafoundation.dwaraapi.constants.Action.ingest) {
+		org.ishafoundation.dwaraapi.constants.Action action = request.getAction();
+		if(action == org.ishafoundation.dwaraapi.constants.Action.ingest) {
 			if (taskUtils.isTaskStorage(task)) { // means its a copy job...
 				LibraryclassTapeset libraryclassTapeset = libraryclassTapesetDao.findByTaskId(taskId);
 				// TODO - Lazy loading of archivejob... just get all the information only when the job is picked for processing. Why load all info upfront only to get discarded.
@@ -84,7 +84,7 @@ public class StorageJobBuilder {
 				storageJob.setEncrypted(libraryclassTapeset.isEncrypted());
 			}
 		}
-		else if(requestType == org.ishafoundation.dwaraapi.constants.Action.restore) {
+		else if(action == org.ishafoundation.dwaraapi.constants.Action.restore) {
 			storageJob = new StorageJob();
 			storageJob.setJob(job);
 			

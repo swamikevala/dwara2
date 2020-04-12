@@ -13,14 +13,12 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.api.resp.ingest.IngestFile;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.TFilerenameDao;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.Sequence;
-import org.ishafoundation.dwaraapi.db.model.transactional.TFilerename;
+import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.IngestFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,9 +34,6 @@ public class SourceDirScanner {
     
 	@Autowired
     private Configuration configuration;
-	
-	@Autowired
-	private TFilerenameDao tFilerenameDao;
 	
     private Pattern folderNameWithoutPrevSeqCodePattern = Pattern.compile("([_-]?)(.*)");
 
@@ -106,8 +101,6 @@ public class SourceDirScanner {
 	}
 	
 	private List<IngestFile> scanForIngestableFiles(Sequence sequence, String extractionRegex, boolean isKeepExtractedCode, String sourcePath, File[] ingestableFiles) {
-		// NOTE : Not able to make this global as the value from properties file was just not set
-		// Un comment this for testing using main class Pattern allowedChrsInFolderNamePattern = Pattern.compile("[\\w-]*");
 		
 		List<IngestFile> ingestFileList = new ArrayList<IngestFile>();
     	for (int i = 0; i < ingestableFiles.length; i++) {
@@ -118,20 +111,6 @@ public class SourceDirScanner {
     	return ingestFileList;
 	}
 
-//	public IngestFile getFileAttributes(Libraryclass libraryclass, List<String> scanFolderBasePathList) {
-//		//int libraryclassId = libraryclass.getId();
-//    	String libraryclassName = libraryclass.getName();
-//        int sequenceId = libraryclass.getSequenceId(); // getting the primary key of the Sequence table which holds the lastsequencenumber for this group...
-//        Sequence sequence = null;
-//        try {
-//        	sequence = sequenceDao.findById(sequenceId).get();
-//        }catch (Exception e) {
-//        	logger.error("Missing sequence table row for " + sequenceId);
-//        	return null;
-//		}
-//    	String extractionRegex = sequence.getExtractionRegex();
-//    	boolean isKeepExtractedCode = sequence.isKeepExtractedCode();
-//	}
 	
 	private IngestFile getFileAttributes(File nthIngestableFile, Sequence sequence, String extractionRegex, boolean isKeepExtractedCode, String sourcePath) {
         double size = 0;
@@ -154,9 +133,6 @@ public class SourceDirScanner {
         }else {
         	fileCount = 1;
         }
-        
-//		if(fileCount > nodeumConfiguration.getFilesLimit())
-//			warning = "Medialibrary File contains more than " + nodeumConfiguration.getFilesLimit() + " files. Please check? If, expected please note that ingest takes extra time";
 		
 		String fileName = nthIngestableFile.getName();
 		if(fileName.length() > 150)
@@ -168,15 +144,10 @@ public class SourceDirScanner {
         
 		String prevSeqCode = null;
 		if(StringUtils.isNotBlank(extractionRegex)) {
-			prevSeqCode = getExistingSeqCodeFromFolderName(fileName, extractionRegex);
+			prevSeqCode = getExistingSeqCodeFromLibraryName(fileName, extractionRegex);
 		}
-		String customFolderName = null;
-		
-		TFilerename tFilerename = tFilerenameDao.findByTFilerenameKeySourcePathAndTFilerenameKeyOldFilename(sourcePath, fileName);
-		if(tFilerename != null)
-			customFolderName =  tFilerename.getNewFilename();
-		else
-			customFolderName = getCustomFolderName(fileName, prevSeqCode, sequence, isKeepExtractedCode);
+		// TODO : Talk to swami - we still need old filename and new filename...
+		String customFileName = getCustomLibraryName(fileName, prevSeqCode, sequence, isKeepExtractedCode);
 		
 		IngestFile nthIngestFile = new IngestFile();
 		
@@ -187,8 +158,8 @@ public class SourceDirScanner {
 		nthIngestFile.setPrevSequenceCode(prevSeqCode);
 		if(StringUtils.isNotBlank(extractionRegex) && isKeepExtractedCode) // if regex present and useExtractCode is true but prevSeqCode is null then throw error...
 			nthIngestFile.setPrevSequenceCodeExpected(true);
-		nthIngestFile.setOldFilename(fileName);
-		nthIngestFile.setNewFilename(customFolderName);
+		nthIngestFile.setLibraryName(fileName);
+		nthIngestFile.setSuggestedLibraryName(customFileName);
 		String errorType = null;
 		if(warning != null)
 			errorType = "Warning";// TODO hardcoded for now - fetch it from error type table...
@@ -197,7 +168,7 @@ public class SourceDirScanner {
 		return nthIngestFile;
 	}
 	
-	public String getExistingSeqCodeFromFolderName(String folderName, String extractionRegex){
+	public String getExistingSeqCodeFromLibraryName(String folderName, String extractionRegex){
 		String existingSeqCodeFromFolderName = null;
 		
 		Pattern p = Pattern.compile(extractionRegex);
@@ -207,7 +178,10 @@ public class SourceDirScanner {
 		return existingSeqCodeFromFolderName;
 	}
 	
-	private String getCustomFolderName(String folderName, String prevSeqCode, Sequence sequence, boolean isKeepExtractedCode){
+	// All isha specific logic should go out...
+	// TODO - make it generic - 
+	// TODO - Also at the time of scanning compare against the seq code and err out
+	private String getCustomLibraryName(String folderName, String prevSeqCode, Sequence sequence, boolean isKeepExtractedCode){
 		String customFolderName = folderName;
 		if(isKeepExtractedCode) { // For contentgroups where isKeepExtractedCode is true just use the prevSeqCode(seqId that was in the folder name originally)
 			String folderNameToBe = null;

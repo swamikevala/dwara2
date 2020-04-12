@@ -19,10 +19,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.exception.DwaraException;
 import org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams;
-import org.ishafoundation.dwaraapi.api.resp.ingest.IngestFile;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.constants.Status;
@@ -37,7 +35,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.TFilerenameDao;
 import org.ishafoundation.dwaraapi.db.model.master.Extension;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassActionUser;
@@ -46,7 +43,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
-import org.ishafoundation.dwaraapi.db.model.transactional.TFilerename;
+import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.IngestFile;
+import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.RenamedFile;
 import org.ishafoundation.dwaraapi.ingest.scan.SourceDirScanner;
 import org.ishafoundation.dwaraapi.job.JobManager;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
@@ -84,9 +82,6 @@ public class LibraryController {
 	
 	@Autowired
 	private UserDao userDao;
-	
-	@Autowired
-	private TFilerenameDao tFilerenameDao;
 	
 	@Autowired
 	private LibraryclassActionUserDao libraryclassActionUserDao;	
@@ -170,7 +165,7 @@ public class LibraryController {
 	}
 	
 	@PostMapping("/library/staging/rename")
-    public ResponseEntity<IngestFile> renameFolder(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.FileAttributes fileAttributes){
+    public ResponseEntity<RenamedFile> renameFolder(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.FileAttributes fileAttributes){
 		String sourcePath = fileAttributes.getSourcePath();
 		String oldFileName = fileAttributes.getOldFilename();
 		String newFileName = fileAttributes.getNewFilename();
@@ -178,11 +173,10 @@ public class LibraryController {
 		File destFile = FileUtils.getFile(sourcePath, newFileName);
 		
 		
-		IngestFile nthIngestFile = new IngestFile();
+		RenamedFile renamedFile = new RenamedFile();
 		
-		nthIngestFile.setSourcePath(sourcePath);
-		nthIngestFile.setOldFilename(oldFileName);
-		nthIngestFile.setNewFilename(newFileName);
+		renamedFile.setSourcePath(sourcePath);
+		renamedFile.setLibraryName(newFileName);
 		String errorType = null;
 
 		
@@ -193,24 +187,16 @@ public class LibraryController {
     			FileUtils.moveFile(srcFile, destFile);
     		else
     			throw new Exception("File not found " + srcFile);
-			TFilerename tFilerename = new TFilerename(sourcePath, oldFileName);
-			tFilerename.setNewFilename(newFileName);
-			tFilerename.setRenamedAt(LocalDateTime.now());
-	    	String requestedBy = getUserFromContext();
-	    	tFilerename.setUser(userDao.findByName(requestedBy));
-
-	    	tFilerenameDao.save(tFilerename);
 		} catch (Exception e) {
 			errorType = "Error";
-			nthIngestFile.setErrorType(errorType);
-			nthIngestFile.setErrorMessage("Unable to rename file " + srcFile + " as " + destFile + " because " + e.getMessage());
+			renamedFile.setErrorType(errorType);
+			renamedFile.setErrorMessage("Unable to rename file " + srcFile + " as " + destFile + " because " + e.getMessage());
 		}
-		
 
 		if (errorType == null) {
-			return ResponseEntity.ok(nthIngestFile);
+			return ResponseEntity.ok(renamedFile);
 		} else {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(nthIngestFile);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(renamedFile);
 		}
     	
 	}
@@ -221,8 +207,7 @@ public class LibraryController {
 		    @ApiResponse(code = 400, message = "Error")
 	})
 	@PostMapping("/library/staging/ingest")
-	//public org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedRequest ingest(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest){
-    public org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request ingest(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest){	
+    public ResponseEntity<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request> ingest(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest){	
     	boolean isAllValid = true;
     	org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request response = null;	
     	try {
@@ -252,14 +237,14 @@ public class LibraryController {
 				if(isExtnSupported && configuration.isLibraryFileSystemPermissionsNeedToBeSet()) {
 					
 					String script = configuration.getLibraryFile_ChangePermissionsScriptPath();
-					String oldFileName = nthLibraryParams.getOldFilename();
+					String libraryName = nthLibraryParams.getName();
 					String sourcePath = nthLibraryParams.getSourcePath();// holds something like /data/user/pgurumurthy/ingest/pub-video
 		
-					CommandLineExecutionResponse setPermsCommandLineExecutionResponse = changeFilePermissions(script, sourcePath, oldFileName);
+					CommandLineExecutionResponse setPermsCommandLineExecutionResponse = changeFilePermissions(script, sourcePath, libraryName);
 					
 					if(!setPermsCommandLineExecutionResponse.isComplete()) {					
 						isAllValid = false;
-						File toBeIngestedFile = FileUtils.getFile(sourcePath, oldFileName);
+						File toBeIngestedFile = FileUtils.getFile(sourcePath, libraryName);
 						String errorMsg = "Unable to set permissions to " + toBeIngestedFile + ". " + setPermsCommandLineExecutionResponse.getFailureReason();
 						ingestFile.setErrorType(errorType);								        
 						ingestFile.setErrorMessage(ingestFile.getErrorMessage() + " :: " + errorMsg);
@@ -284,18 +269,14 @@ public class LibraryController {
 		    	int requestId = request.getId();
 		    	logger.debug("DB Request Creation - Success " + requestId);
 	
-		    	// Updating the ResponseHeaderWrappedRequest subrequest
-		    	//List<org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest> responseHeaderWrappedSubrequest = new ArrayList<org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest>();
 		    	List<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest> responseSubrequestList = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest>();
 	
 		    	for (Iterator<LibraryParams> subrequestListIterator = libraryParamsList.iterator(); subrequestListIterator.hasNext();) {
 		    		LibraryParams nthLibraryParams = subrequestListIterator.next();
-					//org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest subrequestResp = ingest_internal(request, nthSubrequest);
 					org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest subrequestResp = ingest_internal(request, nthLibraryParams);
 					responseSubrequestList.add(subrequestResp);
 		    	}
 	
-		    	//org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedRequest response = requestResponseUtils.frameWrappedRequestObjectForResponse(request, responseSubrequestList);
 		    	response = objectMappingUtil.frameRequestObjectForResponse(request);
 		    	response.setSubrequestList(responseSubrequestList);
 			}
@@ -312,7 +293,8 @@ public class LibraryController {
 			else
 				throw new DwaraException(e.getMessage(), null);
 		}
-    	return response;
+
+    	return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
     
     // TODO - need to do this check for Audio too...
@@ -344,10 +326,10 @@ public class LibraryController {
 		}
     	
     	// Step 2 - Iterate through all Files under the library Directory and check if their extensions are supported in our system.
-    	String originalFileName = ingestRequestParams.getOldFilename();
+    	String libraryName = ingestRequestParams.getName();
     	String originFolderPath = ingestRequestParams.getSourcePath();
     	
-    	File mediaLibraryFile = FileUtils.getFile(originFolderPath, originalFileName);
+    	File mediaLibraryFile = FileUtils.getFile(originFolderPath, libraryName);
     	
 		Collection<File> allFilesInTheSystem = null;
         if(mediaLibraryFile.isDirectory()) {
@@ -425,23 +407,16 @@ public class LibraryController {
 	 * 10) Then Responds with the created medialibrary DB entries ID.
 	 * 
 	 */
-	//private org.ishafoundation.dwaraapi.api.resp.ingest.ResponseHeaderWrappedSubrequest ingest_internal(Request request, org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams systemGenRequest){
     private org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest ingest_internal(Request request, org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams libraryParams){
     	
-    	String oldFileName = libraryParams.getOldFilename();
-    	String newFileName = libraryParams.getNewFilename();
-    	
     	String sourcePath = libraryParams.getSourcePath();
-    	String libraryFileName = oldFileName;
-        if(StringUtils.isNotBlank(newFileName) && !oldFileName.equals(newFileName)){
-        	libraryFileName = newFileName;
-        }
-    	logger.trace("Now ingesting - " + libraryFileName);
+    	String libraryName = libraryParams.getName();
+
 		
     	// STEP 1 - Moves the file from ReadyToIngest directory to Staging directory
     	File libraryFileInStagingDir = null;
     	try {
-    		libraryFileInStagingDir = moveFileToStaging(sourcePath, oldFileName, request.getLibraryclass().getPathPrefix(), libraryFileName, libraryParams.isRerun());
+    		libraryFileInStagingDir = moveFileToStaging(sourcePath, libraryName, request.getLibraryclass().getPathPrefix(), libraryName, libraryParams.isRerun());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -459,8 +434,7 @@ public class LibraryController {
     	Status status = Status.queued;
     	
     	Subrequest subrequest = new Subrequest();
-    	subrequest.setNewFilename(newFileName);
-    	subrequest.setOldFilename(oldFileName);
+    	subrequest.setLibraryName(libraryName);
     	subrequest.setPrevSequenceCode(libraryParams.getPrevSequenceCode());
     	subrequest.setRequest(request);
     	subrequest.setRerun(libraryParams.isRerun());
@@ -478,7 +452,7 @@ public class LibraryController {
     	library.setFileCount(fileCount);
     	library.setFileStructureMd5("someFileStructureMd5Value"); // TODO : Hardcoded for now
     	library.setLibraryclass(request.getLibraryclass());
-    	library.setName(newFileName);
+    	library.setName(libraryName);
     	library.setqLatestSubrequest(subrequest);
     	logger.debug("DB Library Creation");  
     	library = libraryDao.save(library);

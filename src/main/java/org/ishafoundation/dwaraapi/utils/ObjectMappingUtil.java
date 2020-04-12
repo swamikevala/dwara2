@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams;
-import org.ishafoundation.dwaraapi.api.resp.ingest.IngestFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
+import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.IngestFile;
 import org.ishafoundation.dwaraapi.entrypoint.resource.mapper.MiscObjectMapper;
 import org.ishafoundation.dwaraapi.entrypoint.resource.mapper.Subrequest_EntityToWithJobDetailsResource_Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,9 +73,9 @@ public class ObjectMappingUtil {
 		org.ishafoundation.dwaraapi.entrypoint.resource.ingest.SubrequestWithJobDetails subRequestForResponse = subrequest_EntityToWithJobDetailsResource_Mapper.entityToResource(subrequest);
 		
 		if(jobList != null) {
-			List<org.ishafoundation.dwaraapi.api.resp.ingest.Job> jobListForResponse = new ArrayList<org.ishafoundation.dwaraapi.api.resp.ingest.Job>();
+			List<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Job> jobListForResponse = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Job>();
 			for (Job job : jobList) {
-				org.ishafoundation.dwaraapi.api.resp.ingest.Job jobForResponse = frameJobObjectForResponse(job);
+				org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Job jobForResponse = frameJobObjectForResponse(job);
 				jobListForResponse.add(jobForResponse);
 			}		
 			subRequestForResponse.setJobList(jobListForResponse);
@@ -83,8 +83,8 @@ public class ObjectMappingUtil {
 		return subRequestForResponse;		
 	}	
 	
-	public org.ishafoundation.dwaraapi.api.resp.ingest.Job frameJobObjectForResponse(Job job){
-		org.ishafoundation.dwaraapi.api.resp.ingest.Job jobForResponse = new org.ishafoundation.dwaraapi.api.resp.ingest.Job();
+	public org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Job frameJobObjectForResponse(Job job){
+		org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Job jobForResponse = new org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Job();
 		jobForResponse.setId(job.getId());
 		jobForResponse.setInputLibraryId(job.getInputLibrary() != null ? job.getInputLibrary().getId() : null);
 		jobForResponse.setOutputLibraryId(job.getOutputLibrary() != null ? job.getOutputLibrary().getId() : null);
@@ -93,7 +93,7 @@ public class ObjectMappingUtil {
 		jobForResponse.setCreatedAt(job.getCreatedAt());
 		jobForResponse.setCompletedAt(job.getCompletedAt());
 		jobForResponse.setSubrequestId(job.getSubrequest().getId());
-		jobForResponse.setTaskId(job.getTask().getId());
+		jobForResponse.setTaskName(job.getTask().getName());
 		return jobForResponse;
 	}
 }

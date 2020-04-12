@@ -35,9 +35,18 @@ public class Library {
 	@OneToOne
 	private Libraryclass libraryclass;
 
+	@Column(name="original_name")
+	private String originalName;
+	
 	@Column(name="name")
 	private String name;
 
+	@Column(name="sequence_code")
+	private String sequenceCode;
+	
+	@Column(name="prev_sequence_code")
+	private String prev_sequence_code;
+	
 	@Column(name="file_count")
 	private int fileCount;
 
@@ -100,12 +109,36 @@ public class Library {
 		return this.libraryclass.getName();
 	}
 	
+	public String getOriginalName() {
+		return originalName;
+	}
+
+	public void setOriginalName(String originalName) {
+		this.originalName = originalName;
+	}
+
 	public String getName() {
 		return name;
 	}
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public String getSequenceCode() {
+		return sequenceCode;
+	}
+
+	public void setSequenceCode(String sequenceCode) {
+		this.sequenceCode = sequenceCode;
+	}
+
+	public String getPrev_sequence_code() {
+		return prev_sequence_code;
+	}
+
+	public void setPrev_sequence_code(String prev_sequence_code) {
+		this.prev_sequence_code = prev_sequence_code;
 	}
 
 	public int getFileCount() {

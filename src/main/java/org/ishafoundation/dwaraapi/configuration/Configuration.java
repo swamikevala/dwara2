@@ -18,8 +18,6 @@ public class Configuration {
 	private String junkFilesStagedDirName;
 	
 	private String readyToIngestSrcDirRoot;
-
-	private int pageSize;
 	
 	private String sshPrvKeyFileLocation;
 
@@ -70,14 +68,6 @@ public class Configuration {
 
 	public void setReadyToIngestSrcDirRoot(String readyToIngestSrcDirRoot) {
 		this.readyToIngestSrcDirRoot = readyToIngestSrcDirRoot;
-	}
-
-	public int getPageSize() {
-		return pageSize;
-	}
-
-	public void setPageSize(int pageSize) {
-		this.pageSize = pageSize;
 	}
 
 	public String getSshPrvKeyFileLocation() {

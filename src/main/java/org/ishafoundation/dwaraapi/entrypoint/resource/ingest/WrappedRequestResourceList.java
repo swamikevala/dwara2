@@ -2,9 +2,9 @@ package org.ishafoundation.dwaraapi.entrypoint.resource.ingest;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.api.resp.CommonResponse;
+import org.ishafoundation.dwaraapi.entrypoint.resource.PagingAndSortingDetails;
 
-public class WrappedRequestResourceList extends CommonResponse{
+public class WrappedRequestResourceList extends PagingAndSortingDetails{
 	
 	private List<Request> request;
 

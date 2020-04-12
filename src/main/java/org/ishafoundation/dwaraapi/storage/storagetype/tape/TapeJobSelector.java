@@ -9,23 +9,14 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.constants.Action;
 import org.ishafoundation.dwaraapi.constants.TapedriveStatus;
-import org.ishafoundation.dwaraapi.db.dao.master.ActionDao;
-import org.ishafoundation.dwaraapi.db.dao.master.TapeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TapedriveDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryclassTapesetDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.Tapedrive;
 import org.ishafoundation.dwaraapi.db.model.master.Tape;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassTapeset;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
-import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
 import org.ishafoundation.dwaraapi.model.Volume;
 import org.ishafoundation.dwaraapi.storage.constants.StorageOperation;
 import org.ishafoundation.dwaraapi.storage.model.GroupedJobsCollection;
@@ -46,25 +37,7 @@ public class TapeJobSelector {
 	private TapedriveDao tapedriveDao;	
 	
 	@Autowired
-	private LibraryDao libraryDao;		
-	
-	@Autowired
-	private ActionDao actionDao;
-	
-	@Autowired
-	private RequestDao requestDao;
-	
-	@Autowired
-	private SubrequestDao subrequestDao;
-	
-	@Autowired
 	private LibraryclassTapesetDao libraryclassTapesetDao;
-	
-	@Autowired
-	private JobDao jobDao;	
-	
-	@Autowired
-	private TapeDao tapeDao;
 	
 	@Autowired
 	private TapeLibraryManager tapeLibraryManager;		
@@ -80,6 +53,8 @@ public class TapeJobSelector {
 	 * @return
 	 */
 	public StorageJob getJob(List<StorageJob> tapeJobsList, DriveStatusDetails driveStatusDetails) {
+		if(tapeJobsList.size() <= 0)
+			return null;
 		
 		List<StorageJob> ignoreOptimisationTapeJobsList = getIgnoreOptimisationTapeJobsList(tapeJobsList);
 		
@@ -152,18 +127,21 @@ public class TapeJobSelector {
 		String volumeTag = driveStatusDetails.getDte().getVolumeTag();
 
 		if(StringUtils.isNotBlank(volumeTag)) { // means the drive has a tape already loaded
-			logger.debug("Already has the tape " + volumeTag + " loaded. Checking if the tape is needed by any of the queued jobs");
+			logger.debug("Drive " + driveStatusDetails.getDriveSNo() + " already has the tape " + volumeTag + " loaded. Checking if the tape is needed by any of the queued jobs");
 			for (Iterator<StorageJob> tapeJobsIterator = tapeJobsList.iterator(); tapeJobsIterator.hasNext();) {
 				StorageJob tapeJob = (StorageJob) tapeJobsIterator.next();
 				Volume toBeUsedVolume = tapeJob.getVolume();
 				String toBeUsedVolumeCode = toBeUsedVolume.getTape().getBarcode();
 				// checking if the tape is needed by any of the jobs
 				if(toBeUsedVolumeCode.equals(volumeTag)) { 
+					logger.debug("Jobs in the list match the tape " + volumeTag);
 					// if yes group and order the jobs...
 					List<StorageJob> groupedAndOrderedJobsOnVolumeTagList = groupAndOrderJobsBasedOnVolumeTag(tapeJobsList, toBeUsedVolumeCode); // returns only the tape specific jobs
 					// pick a job by checking if another job is not using the tape and also verify if there is not a concurrent overlap
 					chosenTapeJob = chooseAJob(groupedAndOrderedJobsOnVolumeTagList, false, null); // false - as only the drive specific tape related jobs are in the list and hence job's tape needs no verification against other drives...
 					chosenTapeJob.setDriveAlreadyLoadedWithTape(true);
+					logger.debug("Job chosen. Removing the same tape jobs from the list");
+					tapeJobsList.removeAll(groupedAndOrderedJobsOnVolumeTagList); // removing all same tape specific jobs...
 					return chosenTapeJob;
 				}
 				// else continue checking with the next job...
@@ -251,7 +229,7 @@ public class TapeJobSelector {
 			Job5 = Priority 2, Volume Tag V5A003, Read, Block 66
 	 */	
 	private List<StorageJob> groupAndOrderJobsBasedOnVolumeTag(List<StorageJob> tapeJobsList, String toBeUsedVolumeCode){
-		logger.debug("Grouping And Ordering Jobs Based On VolumeTag" + toBeUsedVolumeCode);
+		logger.debug("Grouping And Ordering Jobs Based On VolumeTag " + toBeUsedVolumeCode);
 		List<StorageJob> groupedAndOrderedJobsList = new ArrayList<StorageJob>();
 
 		// To group and order the jobs
@@ -652,7 +630,7 @@ public class TapeJobSelector {
 	// Lets say for drive 1 we are choosing a job copy 3 but the tape specific to the job is already available in other drive. Then we have to skip the job from selection. This method does the verification of the tape needed by the job against drives 
 	private boolean isTapeNeededForTheJobAlreadyLoadedInAnyDrive(StorageJob tapeJob, List<DriveStatusDetails> allAvailableDrivesList){
 		String barcode = tapeJob.getVolume().getTape().getBarcode();
-		logger.trace("Checking if the tape " + barcode + " needed by the job " + tapeJob.getJob().getId() + " is already loaded in any of the other drives.");
+		logger.trace("Checking if the tape " + barcode + " needed by the job " + tapeJob.getJob().getId() + " is already loaded in any of the drives.");
 		
 		if(allAvailableDrivesList.size() > 0) { // means drive(s) available
 			for (Iterator<DriveStatusDetails> driveStatusDetailsIterator = allAvailableDrivesList.iterator(); driveStatusDetailsIterator.hasNext();) {
@@ -664,7 +642,7 @@ public class TapeJobSelector {
 			}
 		}
 		
-		logger.trace("Tape needed for the job is not already loaded in any other drive");
+		logger.trace("Tape needed for the job is not already loaded in any of the drives.");
 		return false;
 	}
 	
@@ -682,11 +660,11 @@ public class TapeJobSelector {
 			
 			tapeJob.setJob(job);
 
-			org.ishafoundation.dwaraapi.constants.Action requestType = job.getSubrequest().getRequest().getAction();
-			if(requestType == org.ishafoundation.dwaraapi.constants.Action.ingest) {
+			org.ishafoundation.dwaraapi.constants.Action action = job.getSubrequest().getRequest().getAction();
+			if(action == org.ishafoundation.dwaraapi.constants.Action.ingest) {
 				tapeJob.setStorageOperation(StorageOperation.WRITE);
 				logger.trace("write job");
-			}else if (requestType == org.ishafoundation.dwaraapi.constants.Action.restore) {
+			}else if (action == org.ishafoundation.dwaraapi.constants.Action.restore) {
 				tapeJob.setStorageOperation(StorageOperation.READ);
 				logger.trace("read job");
 			}

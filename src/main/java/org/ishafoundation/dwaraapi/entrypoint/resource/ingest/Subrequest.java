@@ -20,15 +20,13 @@ public class Subrequest{
 
 	private int subrequestRefId;
 
-	private String oldFilename;
-	
-	private String newFilename;
+	private String libraryName;
 
 	private String prevSequenceCode;
 
 	private Library library;
 	
-	private Integer[] permittedRequestTypeIds;
+	private String[] permittedActions;
 	
 	private String status;
 	
@@ -105,20 +103,12 @@ public class Subrequest{
 		this.subrequestRefId = subrequestRefId;
 	}
 
-	public String getOldFilename() {
-		return oldFilename;
+	public String getLibraryName() {
+		return libraryName;
 	}
 
-	public void setOldFilename(String oldFilename) {
-		this.oldFilename = oldFilename;
-	}
-
-	public String getNewFilename() {
-		return newFilename;
-	}
-
-	public void setNewFilename(String newFilename) {
-		this.newFilename = newFilename;
+	public void setLibraryName(String libraryName) {
+		this.libraryName = libraryName;
 	}
 
 	public String getPrevSequenceCode() {
@@ -137,12 +127,12 @@ public class Subrequest{
 		this.library = library;
 	}
 
-	public Integer[] getPermittedRequestTypeIds() {
-		return permittedRequestTypeIds;
+	public String[] getPermittedActions() {
+		return permittedActions;
 	}
 
-	public void setPermittedRequestTypeIds(Integer[] permittedRequestTypeIds) {
-		this.permittedRequestTypeIds = permittedRequestTypeIds;
+	public void setPermittedActions(String[] permittedActions) {
+		this.permittedActions = permittedActions;
 	}
 
 	public String getStatus() {

@@ -51,11 +51,8 @@ public class Subrequest {
 	@OneToOne
 	private Library library;
 
-	@Column(name="new_filename")
-	private String newFilename;
-
-	@Column(name="old_filename")
-	private String oldFilename;
+	@Column(name="library_name")
+	private String libraryName;
 
 	@Column(name="prev_sequence_code")
 	private String prevSequenceCode;
@@ -148,20 +145,12 @@ public class Subrequest {
 		this.library = library;
 	}
 
-	public String getNewFilename() {
-		return newFilename;
+	public String getLibraryName() {
+		return libraryName;
 	}
 
-	public void setNewFilename(String newFilename) {
-		this.newFilename = newFilename;
-	}
-
-	public String getOldFilename() {
-		return oldFilename;
-	}
-
-	public void setOldFilename(String oldFilename) {
-		this.oldFilename = oldFilename;
+	public void setLibraryName(String libraryName) {
+		this.libraryName = libraryName;
 	}
 
 	public String getPrevSequenceCode() {

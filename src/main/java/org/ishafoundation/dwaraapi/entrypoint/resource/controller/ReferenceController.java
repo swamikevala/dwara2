@@ -5,6 +5,8 @@ import java.util.List;
 import org.ishafoundation.dwaraapi.constants.Reference;
 import org.ishafoundation.dwaraapi.db.dao.master.ActionDao;
 import org.ishafoundation.dwaraapi.db.dao.master.StatusDao;
+import org.ishafoundation.dwaraapi.db.dao.master.TargetvolumeDao;
+import org.ishafoundation.dwaraapi.db.model.master.Targetvolume;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Status;
 import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.AllReferences;
@@ -35,6 +37,9 @@ public class ReferenceController {
 
 	@Autowired
 	private StatusDao statusDao;	
+	
+	@Autowired
+	private TargetvolumeDao targetvolumeDao;		
 	
 	@Autowired
 	private MiscObjectMapper miscObjectMapper; 
@@ -89,6 +94,17 @@ public class ReferenceController {
 			return ResponseEntity.ok(singleReferenceList);
 		} else {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); //NO_CONTENT
+		}
+	}
+	
+	@ApiOperation(value = "Lists all the target volumes", response = List.class)
+	@GetMapping("/reference/targetvolume")
+	public ResponseEntity<List<Targetvolume>> getAllTargetVolumes() {
+		List<Targetvolume> targetvolumeList = (List<Targetvolume>) targetvolumeDao.findAll();
+		if (targetvolumeList.size() > 0) {
+			return ResponseEntity.ok(targetvolumeList);
+		} else {
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
 		}
 	}
 }

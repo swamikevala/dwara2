@@ -47,8 +47,9 @@ public class SubrequestCustomImpl implements SubrequestCustom {
         List<Subrequest> subrequestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
         
         WrappedSubrequestList wrappedSubrequestList = new WrappedSubrequestList();
-        wrappedSubrequestList.setPageNumber(pageNumber);
-        wrappedSubrequestList.setTotalNoOfRecords(count);
+        wrappedSubrequestList.setPage(pageNumber);
+        wrappedSubrequestList.setPageSize(pageSize);
+        wrappedSubrequestList.setTotal(count);
         wrappedSubrequestList.setSubrequestList(subrequestList);
         return wrappedSubrequestList;
 	}

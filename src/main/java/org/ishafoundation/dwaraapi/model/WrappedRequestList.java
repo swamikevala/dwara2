@@ -2,13 +2,14 @@ package org.ishafoundation.dwaraapi.model;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.api.resp.CommonResponse;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.entrypoint.resource.PagingAndSortingDetails;
 
-public class WrappedRequestList extends CommonResponse{
+public class WrappedRequestList extends PagingAndSortingDetails{
 	
 	private List<Request> request; // named request instead of requestList so output json will have an array of request...
 
+	
 	public List<Request> getRequestList() {
 		return request;
 	}
@@ -16,6 +17,4 @@ public class WrappedRequestList extends CommonResponse{
 	public void setRequestList(List<Request> requestList) {
 		this.request = requestList;
 	}
-
-
 }

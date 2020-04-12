@@ -15,7 +15,7 @@ public class Request {
 
 	private LocalDateTime requestedAt;
 	
-	private Integer[] permittedRequestTypeIds;
+	private String[] permittedActions;
 	
 	private List<Subrequest> subrequestList;
 	
@@ -60,12 +60,12 @@ public class Request {
 		this.requestedAt = requestedAt;
 	}
 
-	public Integer[] getPermittedRequestTypeIds() {
-		return permittedRequestTypeIds;
+	public String[] getPermittedActions() {
+		return permittedActions;
 	}
 
-	public void setPermittedRequestTypeIds(Integer[] permittedRequestTypeIds) {
-		this.permittedRequestTypeIds = permittedRequestTypeIds;
+	public void setPermittedActions(String[] permittedActions) {
+		this.permittedActions = permittedActions;
 	}
 
 	public List<Subrequest> getSubrequestList() {

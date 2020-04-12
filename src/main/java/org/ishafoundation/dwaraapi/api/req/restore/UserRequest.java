@@ -5,7 +5,7 @@ import java.util.List;
 public class UserRequest {
 	
 	private int copyNumber;
-	private int targetvolumeId;
+	private String targetvolumeName;
 	private String outputFolder;
 	private List<FileParams> fileParams;
 
@@ -15,11 +15,11 @@ public class UserRequest {
 	public void setCopyNumber(int copyNumber) {
 		this.copyNumber = copyNumber;
 	}
-	public int getTargetvolumeId() {
-		return targetvolumeId;
+	public String getTargetvolumeName() {
+		return targetvolumeName;
 	}
-	public void setTargetvolumeId(int targetvolumeId) {
-		this.targetvolumeId = targetvolumeId;
+	public void setTargetvolumeName(String targetvolumeName) {
+		this.targetvolumeName = targetvolumeName;
 	}
 	public String getOutputFolder() {
 		return outputFolder;

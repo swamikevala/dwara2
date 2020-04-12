@@ -8,4 +8,6 @@ import org.springframework.data.repository.CrudRepository;
 public interface TargetvolumeDao extends CrudRepository<Targetvolume, Integer> {
 	
 	List<Targetvolume> findAllByLibraryclassTargetvolumeLibraryclassId(int libraryclassId);
+
+	Targetvolume findByName(String targetvolumeName);
 }

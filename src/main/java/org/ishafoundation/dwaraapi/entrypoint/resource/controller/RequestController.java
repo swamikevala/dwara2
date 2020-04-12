@@ -6,14 +6,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-
-import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.constants.SortOrder;
 import org.ishafoundation.dwaraapi.db.cacheutil.ActionCacheUtil;
 import org.ishafoundation.dwaraapi.db.cacheutil.StatusCacheUtil;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.User;
@@ -22,7 +19,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
 import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.WrappedRequestResourceList;
-import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.WrappedSubrequestWithJobDetailsList;
+import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.WrappedSubrequestWithJobDetailsResourceList;
 import org.ishafoundation.dwaraapi.model.WrappedRequestList;
 import org.ishafoundation.dwaraapi.model.WrappedSubrequestList;
 import org.ishafoundation.dwaraapi.utils.ObjectMappingUtil;
@@ -44,9 +41,6 @@ public class RequestController {
 	
 	@Autowired
 	private SubrequestDao subrequestDao;
-
-	@Autowired
-	private LibraryDao libraryDao;
 	
 	@Autowired
 	private UserDao userDao;
@@ -62,16 +56,6 @@ public class RequestController {
 	
 	@Autowired
 	private StatusCacheUtil statusCacheUtil;
-	
-	@Autowired
-	private Configuration configuration;
-	
-	private int pageSize = 10; // defaulting it to 10
-	
-	@PostConstruct
-	private void loadPageSize() {
-		pageSize = configuration.getPageSize();
-	}
 
 	/*
 	 * filters the request on the following
@@ -84,14 +68,13 @@ public class RequestController {
 	 * resultset is by default ordered by most recent first
 	 */
 	@GetMapping("/request")
-	public WrappedRequestResourceList getRequestList(@RequestParam(required=false) String requestType, @RequestParam(required=false) String user, @RequestParam(required=false) @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime fromDate, @RequestParam(required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate, @RequestParam(required=false, defaultValue="1") Integer pageNumber) {
-	// do we also need showSubrequests in here... public WrappedRequestResourceList getRequestList(@RequestParam(required=false) String requestType, @RequestParam(required=false) String user, @RequestParam(required=false) @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime fromDate, @RequestParam(required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate, @RequestParam(required=false) boolean showSubrequests, @RequestParam Integer pageNumber) {
+	public WrappedRequestResourceList getRequestList(@RequestParam(required=false) String action, @RequestParam(required=false) String user, @RequestParam(required=false) @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime fromDate, @RequestParam(required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate, @RequestParam(required=false, defaultValue="1") Integer page, @RequestParam(required=false, defaultValue="10") Integer pageSize, @RequestParam(required=false) String sortColumn, @RequestParam(required=false) SortOrder sortOrder) {
 		boolean showSubrequests = false;
 		
-		Integer requestypeId = null;
-		if(requestType != null) {
-			Action actionObj = actionCacheUtil.getAction(requestType);
-			requestypeId = actionObj.getId();
+		Integer actionId = null;
+		if(action != null) {
+			Action actionObj = actionCacheUtil.getAction(action);
+			actionId = actionObj.getId();
 		}
 		Integer userId = null;
 		if(user != null) {
@@ -99,7 +82,7 @@ public class RequestController {
 			userId = userObj.getId();
 		}
 		
-		WrappedRequestList wrappedRequestList = requestDao.findAllByActionAndUserIdAndRequestedAtOrderByLatest(requestypeId, userId, fromDate, toDate, pageNumber, pageSize);
+		WrappedRequestList wrappedRequestList = requestDao.findAllByActionAndUserIdAndRequestedAtOrderByLatest(actionId, userId, fromDate, toDate, page, pageSize);
 	   	List<Request> requestList = wrappedRequestList.getRequestList();
 	   	
 	   	List<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request> requestListForResponse = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request>();
@@ -116,8 +99,9 @@ public class RequestController {
 		
 		WrappedRequestResourceList wrappedRequestResourceList = new WrappedRequestResourceList();
 		wrappedRequestResourceList.setRequest(requestListForResponse);
-		wrappedRequestResourceList.setPageNumber(pageNumber);
-		wrappedRequestResourceList.setTotalNoOfRecords(wrappedRequestList.getTotalNoOfRecords());
+		wrappedRequestResourceList.setPage(page);
+		wrappedRequestResourceList.setPageSize(pageSize);
+		wrappedRequestResourceList.setTotal(wrappedRequestList.getTotal());
 		return wrappedRequestResourceList;
 	}
 	
@@ -136,6 +120,7 @@ public class RequestController {
 		return requestForResponse;
 	}
 
+	// TODO : to ensure for restore related search only restore relevant Request/subrequest info is shown
 
 	/*
 	 * filters using
@@ -148,7 +133,7 @@ public class RequestController {
 	 * @args[3] - showJobs
 	 */
 	@GetMapping("/subrequest")
-	public org.ishafoundation.dwaraapi.entrypoint.resource.ingest.WrappedSubrequestWithJobDetailsList getSubrequestList(@RequestParam(required=false) String requestType, @RequestParam(required=false) String status, @RequestParam(required=false) boolean latest, @RequestParam(required=false) boolean showJobs, @RequestParam(required=false, defaultValue="1") Integer pageNumber) {
+	public org.ishafoundation.dwaraapi.entrypoint.resource.ingest.WrappedSubrequestWithJobDetailsResourceList getSubrequestList(@RequestParam(required=false) String action, @RequestParam(required=false) String status, @RequestParam(required=false) String user, @RequestParam(required=false) String libraryName, @RequestParam(required=false) @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime fromDate, @RequestParam(required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate, @RequestParam(required=false) boolean latest, @RequestParam(required=false) boolean showJobs, @RequestParam(required=false, defaultValue="1") Integer page, @RequestParam(required=false, defaultValue="10") Integer pageSize, @RequestParam(required=false) String sortColumn, @RequestParam(required=false) SortOrder sortOrder) {
 		List<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.SubrequestWithJobDetails> subrequestListForResponse = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.SubrequestWithJobDetails>();
 		
 		Set<Integer> statusIdSet = null;
@@ -161,16 +146,16 @@ public class RequestController {
 			}
 		}
 		Integer actionId = null;
-		if(requestType != null){
-		   	Action action = actionCacheUtil.getAction(requestType);
-		   	actionId = action.getId();
+		if(action != null){
+		   	Action actionObj = actionCacheUtil.getAction(action);
+		   	actionId = actionObj.getId();
 		}
 		
 	   	WrappedSubrequestList wrappedSubrequestList = null;
     	if(latest)
-    		wrappedSubrequestList = subrequestDao.findAllLatestByActionAndStatusIds(actionId, statusIdSet, pageNumber, pageSize); // TODO implement using Latest
+    		wrappedSubrequestList = subrequestDao.findAllLatestByActionAndStatusIds(actionId, statusIdSet, page, pageSize); // TODO implement using Latest
     	else
-    		wrappedSubrequestList = subrequestDao.findAllByActionIdAndStatusIds(actionId, statusIdSet, pageNumber, pageSize);
+    		wrappedSubrequestList = subrequestDao.findAllByActionIdAndStatusIds(actionId, statusIdSet, page, pageSize);
 
 	   	List<Subrequest> subrequestList = wrappedSubrequestList.getSubrequestList();
 	   	
@@ -179,10 +164,11 @@ public class RequestController {
 			subrequestListForResponse.add(subrequestForResponse);		
 		}
 		
-		WrappedSubrequestWithJobDetailsList wrappedSubrequestWithJobDetailsList = new WrappedSubrequestWithJobDetailsList();
+		WrappedSubrequestWithJobDetailsResourceList wrappedSubrequestWithJobDetailsList = new WrappedSubrequestWithJobDetailsResourceList();
 		wrappedSubrequestWithJobDetailsList.setSubrequest(subrequestListForResponse);
-		wrappedSubrequestWithJobDetailsList.setPageNumber(pageNumber);
-		wrappedSubrequestWithJobDetailsList.setTotalNoOfRecords(wrappedSubrequestList.getTotalNoOfRecords());
+		wrappedSubrequestWithJobDetailsList.setPage(page);
+		wrappedSubrequestWithJobDetailsList.setPageSize(pageSize);
+		wrappedSubrequestWithJobDetailsList.setTotal(wrappedSubrequestList.getTotal());
 		return wrappedSubrequestWithJobDetailsList;
 	}
 	

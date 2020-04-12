@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.controller;
 
+import org.ishafoundation.dwaraapi.entrypoint.resource.controller.scheduled.ScheduledStatusUpdaterController;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

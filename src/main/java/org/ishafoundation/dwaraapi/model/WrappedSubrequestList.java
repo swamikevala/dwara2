@@ -2,10 +2,10 @@ package org.ishafoundation.dwaraapi.model;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.api.resp.CommonResponse;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
+import org.ishafoundation.dwaraapi.entrypoint.resource.PagingAndSortingDetails;
 
-public class WrappedSubrequestList extends CommonResponse{
+public class WrappedSubrequestList extends PagingAndSortingDetails{
 	
 	private List<Subrequest> subrequest; // named subrequest instead of subrequestList so output json will have an array of subrequest...
 

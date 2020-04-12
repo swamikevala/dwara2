@@ -7,6 +7,8 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface ExtensionDao extends CrudRepository<Extension, Integer> {
 	
+	Extension findTopByOrderByIdDesc();
+	
 	/* will frame a query like 
 		select * from extension 
 			join extension_filetype on extension.id = extension_filetype.extension_id 

@@ -53,6 +53,7 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .csrf().disable()
                 .authorizeRequests().antMatchers("/register").permitAll()
+                .and().authorizeRequests().antMatchers("/setpassword").permitAll()
                 .and().authorizeRequests().antMatchers("/admin/**").permitAll().anyRequest().hasRole("ADMIN")
                 .and().authorizeRequests().antMatchers("/ingest/**").permitAll().anyRequest().hasRole("USER")
                 .and().authorizeRequests().antMatchers("/contentgroup/**").permitAll().anyRequest().hasRole("USER")
