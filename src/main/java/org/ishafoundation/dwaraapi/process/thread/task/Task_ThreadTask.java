@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.constants.Status;
-import org.ishafoundation.dwaraapi.db.dao.master.ApplicationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.LibraryclassDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ApplicationFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FailureDao;
@@ -32,7 +31,6 @@ import org.ishafoundation.dwaraapi.job.JobUtils;
 import org.ishafoundation.dwaraapi.model.LogicalFile;
 import org.ishafoundation.dwaraapi.model.TaskResponse;
 import org.ishafoundation.dwaraapi.process.factory.TaskFactory;
-import org.ishafoundation.dwaraapi.process.thread.task.mam.MamUpdateTaskExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,9 +74,6 @@ public class Task_ThreadTask implements Runnable{
 	
 	@Autowired
 	private TFileJobDao tFileJobDao;
-
-	@Autowired
-	private ApplicationDao applicationDao;
 	
 	@Autowired
 	private ApplicationFileDao applicationFileDao;

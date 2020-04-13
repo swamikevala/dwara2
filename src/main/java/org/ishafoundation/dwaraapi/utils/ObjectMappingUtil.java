@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams;
+import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
@@ -39,7 +40,8 @@ public class ObjectMappingUtil {
 		requestForResponse.setAction(request.getAction().toString());
 		requestForResponse.setRequestedAt(request.getRequestedAt());
 		requestForResponse.setRequestedBy(request.getUser().getName());
-		requestForResponse.setLibraryclassName(request.getLibraryclass().getName());	
+		Libraryclass libraryclass = request.getLibraryclass();
+		requestForResponse.setLibraryclassName(libraryclass != null ? libraryclass.getName() : null);	
 
 		
 		return requestForResponse;

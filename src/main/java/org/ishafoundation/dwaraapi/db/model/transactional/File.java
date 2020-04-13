@@ -37,7 +37,7 @@ public class File {
 	@ManyToOne(fetch = FetchType.LAZY)
 	private Library library;
 	
-	@Column(name="pathname")
+	@Column(name="pathname", unique = true)
 	private String pathname;
 
 	@Column(name="crc")

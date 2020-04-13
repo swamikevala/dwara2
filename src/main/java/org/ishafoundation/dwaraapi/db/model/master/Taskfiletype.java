@@ -24,7 +24,7 @@ public class Taskfiletype {
 	@Column(name="id")
 	private Integer id; // is Integer and hence value can be null - "Copy Tasks" in task table has no relevance/meaning for filetype
 	
-	@Column(name="name")
+	@Column(name="name", unique = true)
 	private String name;
 
     @OneToMany(mappedBy = "taskfiletype",

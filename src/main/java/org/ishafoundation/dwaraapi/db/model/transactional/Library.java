@@ -35,10 +35,10 @@ public class Library {
 	@OneToOne
 	private Libraryclass libraryclass;
 
-	@Column(name="original_name")
+	@Column(name="original_name", unique = true)
 	private String originalName;
 	
-	@Column(name="name")
+	@Column(name="name", unique = true)
 	private String name;
 
 	@Column(name="sequence_code")

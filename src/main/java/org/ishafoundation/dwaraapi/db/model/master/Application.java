@@ -22,7 +22,7 @@ public class Application {
 	@Column(name="id")
 	private int id;
 	
-	@Column(name="name")
+	@Column(name="name", unique = true)
 	private String name;
 	
     @OneToMany(mappedBy = "application",

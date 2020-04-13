@@ -14,7 +14,7 @@ public class Tapelibrary {
 	@Column(name="id")
 	private int id;
 	
-	@Column(name="name")
+	@Column(name="name", unique = true)
 	private String name;
 
 	@Column(name="slots")

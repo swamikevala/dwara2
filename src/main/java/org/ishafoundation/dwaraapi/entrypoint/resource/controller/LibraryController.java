@@ -318,7 +318,7 @@ public class LibraryController {
 		}
     	
     	// Step 1 - get all supported extensions in the system
-		List<Extension> extensionList = extensionDao.findAllByTaskfiletypesTaskfiletypeId(taskfiletypeId);
+		Iterable<Extension> extensionList = extensionDao.findAll();
 		Set<String> supportedExtns =  new TreeSet<String>();
 		for (Extension extension : extensionList) {
 			supportedExtns.add(extension.getName().toUpperCase());

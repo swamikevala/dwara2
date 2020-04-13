@@ -37,7 +37,7 @@ public class Tape {
 	@ManyToOne(fetch = FetchType.LAZY)
 	private Tapetype tapetype;
 
-	@Column(name="barcode")
+	@Column(name="barcode", unique = true)
 	private String barcode;
 
 	@Column(name="finalized")
