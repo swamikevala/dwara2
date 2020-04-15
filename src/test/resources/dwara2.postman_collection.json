@@ -35,7 +35,64 @@
 			"response": []
 		},
 		{
+			"name": "user-setpassword",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}{{suffix}}/register?username=pgurumurthy&password=ShivaShambho",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}{{suffix}}",
+					"path": [
+						"register"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "pgurumurthy"
+						},
+						{
+							"key": "password",
+							"value": "ShivaShambho"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "login",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "a20f8f83-72cc-4dd6-ad0a-f1a3ef11cbae",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "6ae0042c-051a-4ccb-9b8b-303ad0090555",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Your test name\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.value).to.eql(100);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -69,7 +126,97 @@
 			"response": []
 		},
 		{
+			"name": "add-extension",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "ShivaShambho",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "pgurumurthy",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}{{suffix}}/extensionAdministration/addExtension?description=some%20msg&extension=MTB&taskfiletypeName=Video",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}{{suffix}}",
+					"path": [
+						"extensionAdministration",
+						"addExtension"
+					],
+					"query": [
+						{
+							"key": "description",
+							"value": "some%20msg"
+						},
+						{
+							"key": "extension",
+							"value": "MTB"
+						},
+						{
+							"key": "taskfiletypeName",
+							"value": "Video"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "list-libraryclass",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "25f4a421-3ff1-4686-b1fe-ee6df327f423",
+						"exec": [
+							"var host = pm.environment.get(\"host\");",
+							"var port = pm.environment.get(\"port\");",
+							"var suffix = pm.environment.get(\"suffix\");",
+							"var url = \"http://\" + host + \":\"+ port + suffix + \"/getIngestListJson\";",
+							"console.log(url);",
+							"pm.sendRequest(url, function (err, response) {",
+							"    pm.globals.set(\"libraryclassListResponse\", response.json());",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "082c3ba5-c90f-4659-837a-62bf4a670761",
+						"exec": [
+							"pm.test(\"Your test name\", function () {",
+							"    var output = pm.globals.get(\"libraryclassListResponse\");",
+							"    ",
+							"    var jsonData = pm.response.json();",
+							"    console.log(output);",
+							"    console.log(jsonData);",
+							"    pm.expect(jsonData).to.eql(output);",
+							"});",
+							"pm.test(\"Your test name\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.value).to.eql(100);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -172,7 +319,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n             \"sourcePath\": \"/data/user/pgurumurthy/ingest/pub-video\",\n        \"oldFilename\": \"For-IngestTesting-Shots-Of-Sadhanapada-Particpants-Volunteering-In-BSP_SPH-IYC_24-Oct-2019_Z280V_2\",\n        \"newFilename\": \"11111_For-IngestTesting-Shots-Of-Sadhanapada-Particpants-Volunteering-In-BSP_SPH-IYC_24-Oct-2019_Z280V_2\"\n}",
+					"raw": "{\n             \"sourcePath\": \"/data/user/pgurumurthy/ingest/pub-video\",\n        \"oldLibraryname\": \"11111_For-IngestTesting-Shots-Of-Sadhanapada-Particpants-Volunteering-In-BSP_SPH-IYC_24-Oct-2019_Z280V_2\",\n        \"newLibraryname\": \"33333_For-IngestTesting-Shots-Of-Sadhanapada-Particpants-Volunteering-In-BSP_SPH-IYC_24-Oct-2019_Z280V_2\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -338,7 +485,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"library\": [\r\n   {\r\n        \"sourcePath\": \"/data/user/pgurumurthy/ingest/pub-video\",\r\n        \"oldFilename\": \"Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoPro1\",\r\n        \"newFilename\": \"Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoPro1\",\r\n        \"fileCount\": 2,\r\n        \"totalSize\": 1.708578488E9,\r\n        \"prevSequenceCode\": null,\r\n        \"prevSequenceCodeExpected\": false,\r\n        \"errorType\": null,\r\n        \"errorMessage\": null\r\n    }\r\n  ],\r\n  \"libraryclassId\": 5001\r\n}",
+					"raw": "{\n    \"library\": [\n    \t{\n        \"sourcePath\": \"c:\\\\data\\\\user\\\\pgurumurthy\\\\ingest\\\\pub-video\",\n        \"name\": \"679_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\"\n    \t}\n    ],\n    \"libraryclassId\": 5001\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -603,6 +750,24 @@
 		},
 		{
 			"name": "specific-list file for restore",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "425d37f1-94af-4e75-a635-2ae85b81951b",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Your test name\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.name).to.eql(\"Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoPro_777/DCIM/104GOPRO/GOPR6925.MP4\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -622,7 +787,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{host}}:{{port}}{{suffix}}/file/290?copyNumber=1&showDeleted=false",
+					"raw": "http://{{host}}:{{port}}{{suffix}}/file/314?copyNumber=1&showDeleted=false",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
@@ -630,7 +795,7 @@
 					"port": "{{port}}{{suffix}}",
 					"path": [
 						"file",
-						"290"
+						"314"
 					],
 					"query": [
 						{

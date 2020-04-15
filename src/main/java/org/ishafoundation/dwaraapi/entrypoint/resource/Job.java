@@ -1,15 +1,19 @@
-package org.ishafoundation.dwaraapi.entrypoint.resource.ingest;
+package org.ishafoundation.dwaraapi.entrypoint.resource;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
+@JsonInclude(Include.NON_NULL)
 public class Job {
 	private int id;
 	
 	private String taskName;
 
-	private Integer inputLibraryId; // cannot be null, but is null initially for derived jobs and only later gets updated when the parent job's output is generated...
+	private Library inputLibrary; // cannot be null, but is null initially for derived jobs and only later gets updated when the parent job's output is generated...
 
-	private Integer outputLibraryId; // can be null
+	private Library outputLibrary; // can be null
 	
 	private LocalDateTime completedAt;
 
@@ -38,20 +42,20 @@ public class Job {
 		this.taskName = taskName;
 	}
 
-	public Integer getInputLibraryId() {
-		return inputLibraryId;
+	public Library getInputLibrary() {
+		return inputLibrary;
 	}
 
-	public void setInputLibraryId(Integer inputLibraryId) {
-		this.inputLibraryId = inputLibraryId;
+	public void setInputLibrary(Library inputLibrary) {
+		this.inputLibrary = inputLibrary;
 	}
 
-	public Integer getOutputLibraryId() {
-		return outputLibraryId;
+	public Library getOutputLibrary() {
+		return outputLibrary;
 	}
 
-	public void setOutputLibraryId(Integer outputLibraryId) {
-		this.outputLibraryId = outputLibraryId;
+	public void setOutputLibrary(Library outputLibrary) {
+		this.outputLibrary = outputLibrary;
 	}
 
 	public LocalDateTime getCompletedAt() {

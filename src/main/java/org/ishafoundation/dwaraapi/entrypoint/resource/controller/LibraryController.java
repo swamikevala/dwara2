@@ -167,8 +167,8 @@ public class LibraryController {
 	@PostMapping("/library/staging/rename")
     public ResponseEntity<RenamedFile> renameFolder(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.FileAttributes fileAttributes){
 		String sourcePath = fileAttributes.getSourcePath();
-		String oldFileName = fileAttributes.getOldFilename();
-		String newFileName = fileAttributes.getNewFilename();
+		String oldFileName = fileAttributes.getOldLibraryname();
+		String newFileName = fileAttributes.getNewLibraryname();
 		File srcFile = FileUtils.getFile(sourcePath, oldFileName);
 		File destFile = FileUtils.getFile(sourcePath, newFileName);
 		
@@ -207,15 +207,15 @@ public class LibraryController {
 		    @ApiResponse(code = 400, message = "Error")
 	})
 	@PostMapping("/library/staging/ingest")
-    public ResponseEntity<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request> ingest(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest){	
+    public ResponseEntity<org.ishafoundation.dwaraapi.entrypoint.resource.RequestWithSubrequestDetails> ingest(@RequestBody org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest){	
     	boolean isAllValid = true;
-    	org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Request response = null;	
+    	org.ishafoundation.dwaraapi.entrypoint.resource.RequestWithSubrequestDetails response = null;	
     	try {
 	    	 // TODO get this from errortype DB
 	    	String errorType = "Error";
 	    	
-	    	int libraryclassId = userRequest.getLibraryclassId();
-	    	Libraryclass libraryclass = libraryclassCacheUtil.getLibraryclass(libraryclassId);
+	    	String libraryclassName = userRequest.getLibraryclass();
+	    	Libraryclass libraryclass = libraryclassCacheUtil.getLibraryclass(libraryclassName);
 	    	int filetypeId = libraryclass.getTaskfiletypeId();
 	
 	    	List<IngestFile> ingestFileList = new ArrayList<IngestFile>();
@@ -269,11 +269,11 @@ public class LibraryController {
 		    	int requestId = request.getId();
 		    	logger.debug("DB Request Creation - Success " + requestId);
 	
-		    	List<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest> responseSubrequestList = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest>();
+		    	List<org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest> responseSubrequestList = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest>();
 	
 		    	for (Iterator<LibraryParams> subrequestListIterator = libraryParamsList.iterator(); subrequestListIterator.hasNext();) {
 		    		LibraryParams nthLibraryParams = subrequestListIterator.next();
-					org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest subrequestResp = ingest_internal(request, nthLibraryParams);
+					org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest subrequestResp = ingest_internal(request, nthLibraryParams);
 					responseSubrequestList.add(subrequestResp);
 		    	}
 	
@@ -407,7 +407,7 @@ public class LibraryController {
 	 * 10) Then Responds with the created medialibrary DB entries ID.
 	 * 
 	 */
-    private org.ishafoundation.dwaraapi.entrypoint.resource.ingest.Subrequest ingest_internal(Request request, org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams libraryParams){
+    private org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest ingest_internal(Request request, org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams libraryParams){
     	
     	String sourcePath = libraryParams.getSourcePath();
     	String libraryName = libraryParams.getName();

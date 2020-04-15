@@ -16,6 +16,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.TableGenerator;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ApplicationFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileTape;
@@ -29,7 +30,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class File {
 
 	@Id
-	@GeneratedValue(strategy=GenerationType.SEQUENCE)
+	@GeneratedValue(generator = "dwara_seq_generator", strategy=GenerationType.TABLE)
+	@TableGenerator(name="dwara_seq_generator", 
+	 table="dwara_sequences", 
+	 pkColumnName="primary_key_fields", 
+	 valueColumnName="current_val", 
+	 pkColumnValue="file_id", allocationSize = 1)
 	@Column(name="id")
 	private int id;
 	

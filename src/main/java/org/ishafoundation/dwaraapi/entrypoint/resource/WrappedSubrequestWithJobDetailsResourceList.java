@@ -1,8 +1,6 @@
-package org.ishafoundation.dwaraapi.entrypoint.resource.ingest;
+package org.ishafoundation.dwaraapi.entrypoint.resource;
 
 import java.util.List;
-
-import org.ishafoundation.dwaraapi.entrypoint.resource.PagingAndSortingDetails;
 
 public class WrappedSubrequestWithJobDetailsResourceList extends PagingAndSortingDetails{
 

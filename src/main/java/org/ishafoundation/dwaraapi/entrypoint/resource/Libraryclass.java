@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.entrypoint.resource.ingest;
+package org.ishafoundation.dwaraapi.entrypoint.resource;
 		
 public class Libraryclass {
 

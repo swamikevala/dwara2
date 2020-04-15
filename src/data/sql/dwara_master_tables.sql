@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.7.17, for Win64 (x86_64)
 --
--- Host: 127.0.0.1    Database: dwara_v2_fromtest
+-- Host: 127.0.0.1    Database: dwara_v2_latest
 -- ------------------------------------------------------
 -- Server version	5.7.11
 
@@ -26,7 +26,8 @@ CREATE TABLE `action` (
   `id` int(11) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_p6dhhp25fj7w2vok63k0vrsv` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -78,7 +79,8 @@ DROP TABLE IF EXISTS `application`;
 CREATE TABLE `application` (
   `id` int(11) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_lspnba25gpku3nx3oecprrx8c` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -126,7 +128,8 @@ CREATE TABLE `extension` (
   `id` int(11) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_gmfbyygelvk6j16w8p3h54a9m` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -136,7 +139,7 @@ CREATE TABLE `extension` (
 
 LOCK TABLES `extension` WRITE;
 /*!40000 ALTER TABLE `extension` DISABLE KEYS */;
-INSERT INTO `extension` VALUES (3001,'Some MP4 description','MP4'),(3002,'Some MOV description','MOV'),(3003,'Some MTS description','MTS'),(3004,'d','JPG'),(3005,'d','TIF'),(3006,'d','NEF'),(3007,'d','XMP'),(3008,'test','MP4_FFPROBE_OUT');
+INSERT INTO `extension` VALUES (3001,'Some MP4 description','MP4'),(3002,'Some MOV description','MOV'),(3003,'Some MTS description','MTS'),(3004,'d','JPG'),(3005,'d','TIF'),(3006,'d','NEF'),(3007,'d','XMP'),(3008,'test','MP4_FFPROBE_OUT'),(3009,'ABC desc','ABC'),(3010,'some msg','MTB');
 /*!40000 ALTER TABLE `extension` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -164,7 +167,7 @@ CREATE TABLE `extension_taskfiletype` (
 
 LOCK TABLES `extension_taskfiletype` WRITE;
 /*!40000 ALTER TABLE `extension_taskfiletype` DISABLE KEYS */;
-INSERT INTO `extension_taskfiletype` VALUES ('\0',3001,4001),('\0',3001,4004),('\0',3002,4001),('\0',3003,4001),('',3004,4001),('\0',3004,4003),('',3004,4004),('\0',3005,4003),('\0',3006,4003),('',3007,4003),('',3008,4001),('',3008,4004);
+INSERT INTO `extension_taskfiletype` VALUES ('\0',3001,4001),('\0',3001,4004),('\0',3002,4001),('\0',3003,4001),('',3004,4001),('\0',3004,4003),('',3004,4004),('\0',3005,4003),('\0',3006,4003),('',3007,4003),('',3008,4001),('',3008,4004),('\0',3009,4001),('\0',3010,4001),('\0',3011,4001);
 /*!40000 ALTER TABLE `extension_taskfiletype` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -183,28 +186,6 @@ SET character_set_client = utf8;
 SET character_set_client = @saved_cs_client;
 
 --
--- Table structure for table `hibernate_sequence`
---
-
-DROP TABLE IF EXISTS `hibernate_sequence`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `hibernate_sequence` (
-  `next_val` bigint(20) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `hibernate_sequence`
---
-
-LOCK TABLES `hibernate_sequence` WRITE;
-/*!40000 ALTER TABLE `hibernate_sequence` DISABLE KEYS */;
-INSERT INTO `hibernate_sequence` VALUES (269),(269),(269),(269),(269),(269),(269);
-/*!40000 ALTER TABLE `hibernate_sequence` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `libraryclass`
 --
 
@@ -218,11 +199,12 @@ CREATE TABLE `libraryclass` (
   `name` varchar(255) DEFAULT NULL,
   `path_prefix` varchar(255) DEFAULT NULL,
   `source` bit(1) DEFAULT NULL,
-  `taskfiletype_id` int(11) DEFAULT NULL,
-  `sequence_id` int(11) DEFAULT NULL,
   `generator_task_id` int(11) DEFAULT NULL,
+  `sequence_id` int(11) DEFAULT NULL,
+  `taskfiletype_id` int(11) DEFAULT NULL,
   `taskset_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_1qissykd31sguue37gm2j3fmt` (`name`),
   KEY `FKn5fr92avsm6pmbimp0ncrpp3r` (`generator_task_id`),
   KEY `FKqt6xlxpgp8emoqm5ur9on83hb` (`sequence_id`),
   KEY `FK195mnrphn1n5xob4axm60ulbo` (`taskfiletype_id`),
@@ -240,7 +222,7 @@ CREATE TABLE `libraryclass` (
 
 LOCK TABLES `libraryclass` WRITE;
 /*!40000 ALTER TABLE `libraryclass` DISABLE KEYS */;
-INSERT INTO `libraryclass` VALUES (5001,'\0',0,'pub-video','C:\\data\\user','',4001,9001,NULL,19001),(5002,'\0',0,'pub-audio','C:\\data\\user','',4002,9002,NULL,19001),(5003,'\0',0,'private1-video','C:\\data\\user','',4001,0,NULL,19001),(5004,'\0',0,'Private2-Video','C:\\data\\user','',4001,0,NULL,19001),(5005,'\0',0,'Private3-Video','C:\\data\\user','',4001,0,NULL,19001),(5006,'\0',0,'Private1-Audio','C:\\data\\user','',4002,0,NULL,19001),(5007,'\0',0,'PreviewProxy-Video','C:\\data\\transcoded','\0',4004,9007,18004,19001),(5008,'\0',0,'MezzanineProxy-Video','C:\\data\\transcoded','\0',0,9008,18017,19001),(5009,'\0',0,'Private(ALL)PreviewProxy-Video - common private libclass for all ???','C:\\data\\transcoded','\0',0,9007,NULL,19001),(5010,'\0',0,'Private(ALL)MezzanineProxy-Video','C:\\data\\transcoded','\0',0,9008,NULL,19001),(5011,'\0',0,'Private(ALL)PreviewProxy-Audio','C:\\data\\transcoded','\0',0,9007,NULL,19001),(5012,'\0',0,'Private(ALL)MezzanineProxy-Audio','C:\\data\\transcoded','\0',0,9008,NULL,19001),(5013,'\0',0,'Private2PreviewProxy-Video','C:\\data\\transcoded','\0',0,9007,NULL,19001);
+INSERT INTO `libraryclass` VALUES (5001,'\0',0,'pub-video','C:\\data\\user','',NULL,9001,4001,19001),(5002,'\0',0,'pub-audio','C:\\data\\user','',NULL,9002,4002,19001),(5003,'\0',0,'private1-video','C:\\data\\user','',NULL,0,4001,19001),(5004,'\0',0,'Private2-Video','C:\\data\\user','',NULL,0,4001,19001),(5005,'\0',0,'Private3-Video','C:\\data\\user','',NULL,0,4001,19001),(5006,'\0',0,'Private1-Audio','C:\\data\\user','',NULL,0,4002,19001),(5007,'\0',0,'PreviewProxy-Video','C:\\data\\transcoded','\0',18004,9007,4004,19001),(5008,'\0',0,'MezzanineProxy-Video','C:\\data\\transcoded','\0',18017,9008,0,19001),(5009,'\0',0,'Private(ALL)PreviewProxy-Video - common private libclass for all ???','C:\\data\\transcoded','\0',NULL,9007,0,19001),(5010,'\0',0,'Private(ALL)MezzanineProxy-Video','C:\\data\\transcoded','\0',NULL,9008,0,19001),(5011,'\0',0,'Private(ALL)PreviewProxy-Audio','C:\\data\\transcoded','\0',NULL,9007,0,19001),(5012,'\0',0,'Private(ALL)MezzanineProxy-Audio','C:\\data\\transcoded','\0',NULL,9008,0,19001),(5013,'\0',0,'Private2PreviewProxy-Video','C:\\data\\transcoded','\0',NULL,9007,0,19001);
 /*!40000 ALTER TABLE `libraryclass` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -374,7 +356,8 @@ CREATE TABLE `priorityband` (
   `name` varchar(255) DEFAULT NULL,
   `optimize_tape_access` bit(1) DEFAULT NULL,
   `start` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_ash8838axsg24ngytu9ktcu9` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -400,7 +383,8 @@ CREATE TABLE `property` (
   `name` varchar(255) DEFAULT NULL,
   `regex` varchar(255) DEFAULT NULL,
   `replace_char_space` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_hgo2avysvdf8312u6ivgyc1lp` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -451,7 +435,8 @@ DROP TABLE IF EXISTS `status`;
 CREATE TABLE `status` (
   `id` int(11) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_reccgx9nr0a8dwv201t44l6pd` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -461,7 +446,7 @@ CREATE TABLE `status` (
 
 LOCK TABLES `status` WRITE;
 /*!40000 ALTER TABLE `status` DISABLE KEYS */;
-INSERT INTO `status` VALUES (10001,'queued'),(10002,'in_progress'),(10003,'completed '),(10004,'partially_completed'),(10005,'completed_with_failures'),(10006,'on_hold'),(10007,'skipped'),(10008,'cancelled'),(10009,'aborted'),(10010,'failed'),(10011,'marked_completed');
+INSERT INTO `status` VALUES (10009,'aborted'),(10008,'cancelled'),(10003,'completed '),(10005,'completed_with_failures'),(10010,'failed'),(10002,'in_progress'),(10011,'marked_completed'),(10006,'on_hold'),(10004,'partially_completed'),(10001,'queued'),(10007,'skipped');
 /*!40000 ALTER TABLE `status` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -475,7 +460,8 @@ DROP TABLE IF EXISTS `storageformat`;
 CREATE TABLE `storageformat` (
   `id` int(11) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_epvrr6ofac4vbcwwh66cknt8w` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -485,7 +471,7 @@ CREATE TABLE `storageformat` (
 
 LOCK TABLES `storageformat` WRITE;
 /*!40000 ALTER TABLE `storageformat` DISABLE KEYS */;
-INSERT INTO `storageformat` VALUES (11001,'BRU'),(11002,'ZIP'),(11003,'LTFS');
+INSERT INTO `storageformat` VALUES (11001,'BRU'),(11003,'LTFS'),(11002,'ZIP');
 /*!40000 ALTER TABLE `storageformat` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -504,6 +490,7 @@ CREATE TABLE `tape` (
   `tapeset_id` int(11) DEFAULT NULL,
   `tapetype_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_kvgnsb221x24c2gwy7ke5c3b2` (`barcode`),
   KEY `FK7ownyqvia57xxb9beuq4aas23` (`tapeset_id`),
   KEY `FKqx75p35kbopxlxdrvbjj504kk` (`tapetype_id`),
   CONSTRAINT `FK7ownyqvia57xxb9beuq4aas23` FOREIGN KEY (`tapeset_id`) REFERENCES `tapeset` (`id`),
@@ -534,16 +521,16 @@ CREATE TABLE `tapedrive` (
   `element_address` int(11) DEFAULT NULL,
   `serial_number` varchar(255) DEFAULT NULL,
   `drive_status` varchar(255) DEFAULT NULL,
+  `job_id` int(11) DEFAULT NULL,
   `tape_id` int(11) DEFAULT NULL,
   `tapelibrary_id` int(11) DEFAULT NULL,
-  `job_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_pa9lyfv1barxj480rk2t6ko2h` (`device_wwid`),
   UNIQUE KEY `UK_p6fsras5m76fle6fv7m6b9mc5` (`element_address`),
   UNIQUE KEY `UK_5s7ejy9d7byhyb9sdtf52acv9` (`serial_number`),
+  KEY `FK7tctjfbctcy5a21gk7gjixljv` (`job_id`),
   KEY `FK273ysg7la64bkln9nei58lj73` (`tape_id`),
   KEY `FKkccsth8ndqf87jm5ygh9nl7px` (`tapelibrary_id`),
-  KEY `FK7tctjfbctcy5a21gk7gjixljv` (`job_id`),
   CONSTRAINT `FK273ysg7la64bkln9nei58lj73` FOREIGN KEY (`tape_id`) REFERENCES `tape` (`id`),
   CONSTRAINT `FK7tctjfbctcy5a21gk7gjixljv` FOREIGN KEY (`job_id`) REFERENCES `job` (`id`),
   CONSTRAINT `FKkccsth8ndqf87jm5ygh9nl7px` FOREIGN KEY (`tapelibrary_id`) REFERENCES `tapelibrary` (`id`)
@@ -556,7 +543,7 @@ CREATE TABLE `tapedrive` (
 
 LOCK TABLES `tapedrive` WRITE;
 /*!40000 ALTER TABLE `tapedrive` DISABLE KEYS */;
-INSERT INTO `tapedrive` VALUES (13001,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst',0,'1497199456','AVAILABLE',12009,14001,265),(13002,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1684087499-nst',1,'1684087499','AVAILABLE',12003,14001,261),(13003,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1970448833-nst',2,'1970448833','AVAILABLE',12004,14001,262);
+INSERT INTO `tapedrive` VALUES (13001,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst',0,'1497199456','AVAILABLE',NULL,12009,14001),(13002,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1684087499-nst',1,'1684087499','AVAILABLE',NULL,12002,14001),(13003,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1970448833-nst',2,'1970448833','AVAILABLE',NULL,12004,14001);
 /*!40000 ALTER TABLE `tapedrive` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -571,7 +558,8 @@ CREATE TABLE `tapelibrary` (
   `id` int(11) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
   `slots` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_sh6w0263k5bgs18f2nm4ge3yx` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -595,10 +583,11 @@ DROP TABLE IF EXISTS `tapeset`;
 CREATE TABLE `tapeset` (
   `id` int(11) NOT NULL,
   `barcode_prefix` varchar(255) DEFAULT NULL,
+  `copy_number` int(11) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
   `storageformat_id` int(11) DEFAULT NULL,
-  `copy_number` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_94i46a7am1k935a4iwp2ryblg` (`name`),
   KEY `FK9wvcfebto423b5840gwjru09e` (`storageformat_id`),
   CONSTRAINT `FK9wvcfebto423b5840gwjru09e` FOREIGN KEY (`storageformat_id`) REFERENCES `storageformat` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -610,7 +599,7 @@ CREATE TABLE `tapeset` (
 
 LOCK TABLES `tapeset` WRITE;
 /*!40000 ALTER TABLE `tapeset` DISABLE KEYS */;
-INSERT INTO `tapeset` VALUES (15001,'V5A','V5 Copy1 Tape pool with Bru format',11001,1),(15002,'V5B','V5 Copy2 Tape pool with Zip format',11001,2),(15003,'V5C','V5 Copy3 Tape pool with LTFS format',11001,3),(15004,'UA','U Copy1 Tape pool with Bru format',11001,1),(15005,'UB','U Copy2 Tape pool with Zip format',11002,2),(15006,'UC','U Copy3 Tape pool with LTFS format',11003,3),(15007,'PVA','PV Copy1 Tape pool with Bru format',11001,1),(15008,'PVB','PV Copy2 Tape pool with Zip format',11002,2),(15009,'PVC','PV Copy3 Tape pool with LTFS format',11003,3),(15010,'VLA','V Prev proxy Copy1 Tape pool',11001,1),(15012,'VMA','V Mezz proxy Copy1 Tape pool',11001,1);
+INSERT INTO `tapeset` VALUES (15001,'V5A',1,'V5 Copy1 Tape pool with Bru format',11001),(15002,'V5B',2,'V5 Copy2 Tape pool with Zip format',11001),(15003,'V5C',3,'V5 Copy3 Tape pool with LTFS format',11001),(15004,'UA',1,'U Copy1 Tape pool with Bru format',11001),(15005,'UB',2,'U Copy2 Tape pool with Zip format',11002),(15006,'UC',3,'U Copy3 Tape pool with LTFS format',11003),(15007,'PVA',1,'PV Copy1 Tape pool with Bru format',11001),(15008,'PVB',2,'PV Copy2 Tape pool with Zip format',11002),(15009,'PVC',3,'PV Copy3 Tape pool with LTFS format',11003),(15010,'VLA',1,'V Prev proxy Copy1 Tape pool',11001),(15012,'VMA',1,'V Mezz proxy Copy1 Tape pool',11001);
 /*!40000 ALTER TABLE `tapeset` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -625,7 +614,8 @@ CREATE TABLE `tapetype` (
   `id` int(11) NOT NULL,
   `capacity` varchar(255) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_hnx4y2mmsa254nbhmvxufhksx` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -650,7 +640,8 @@ CREATE TABLE `targetvolume` (
   `id` int(11) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
   `path` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_eglk0r8hlxvn0kx2gp5lw68st` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -673,15 +664,16 @@ DROP TABLE IF EXISTS `task`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `task` (
   `id` int(11) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
   `max_errors` int(11) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
-  `taskfiletype_id` int(11) DEFAULT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `application_id` int(11) DEFAULT NULL,
   `storage` bit(1) DEFAULT NULL,
+  `application_id` int(11) DEFAULT NULL,
+  `taskfiletype_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `FK8pfqcr004sgufca7fmjex73r5` (`taskfiletype_id`),
+  UNIQUE KEY `UK_lerptdo9d67pejjpbfau899tm` (`name`),
   KEY `FKkj95at7t3jbjg0nng1bw44asr` (`application_id`),
+  KEY `FK8pfqcr004sgufca7fmjex73r5` (`taskfiletype_id`),
   CONSTRAINT `FK8pfqcr004sgufca7fmjex73r5` FOREIGN KEY (`taskfiletype_id`) REFERENCES `taskfiletype` (`id`),
   CONSTRAINT `FKkj95at7t3jbjg0nng1bw44asr` FOREIGN KEY (`application_id`) REFERENCES `application` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -693,7 +685,7 @@ CREATE TABLE `task` (
 
 LOCK TABLES `task` WRITE;
 /*!40000 ALTER TABLE `task` DISABLE KEYS */;
-INSERT INTO `task` VALUES (18001,0,'V5 Raw Copy 1',NULL,NULL,NULL,''),(18002,0,'V5 Raw Copy 2',NULL,NULL,NULL,''),(18003,0,'V5 Raw Copy 3',NULL,NULL,NULL,''),(18004,0,'video_low_resolution_transcoding',4001,NULL,NULL,'\0'),(18005,20,'mam_update',4001,NULL,1001,'\0'),(18006,0,'Preview Proxy Copy 1',NULL,NULL,NULL,''),(18007,0,'Mezz Proxy Copy 1',NULL,NULL,NULL,''),(18008,0,'U Raw Copy 1',NULL,NULL,NULL,''),(18009,0,'U Raw Copy 2',NULL,NULL,NULL,''),(18010,0,'audio_transcoding',4002,NULL,NULL,'\0'),(18011,0,'copy_to_transcript_server',4002,NULL,NULL,'\0'),(18012,0,'Restore',NULL,NULL,NULL,''),(18013,0,'P2 Raw Copy 1',NULL,NULL,NULL,''),(18014,0,'P2 Raw Copy 2 Encrypted',NULL,NULL,NULL,''),(18015,0,'P2 Preview Proxy Copy 1',NULL,NULL,NULL,''),(18016,0,'P2 Preview Proxy Copy 2 Encrypted',NULL,NULL,NULL,''),(18017,0,'video_medium_resolution_transcoding',4001,NULL,NULL,'\0');
+INSERT INTO `task` VALUES (18001,NULL,0,'V5 Raw Copy 1','',NULL,NULL),(18002,NULL,0,'V5 Raw Copy 2','',NULL,NULL),(18003,NULL,0,'V5 Raw Copy 3','',NULL,NULL),(18004,NULL,0,'video_low_resolution_transcoding','\0',NULL,4001),(18005,NULL,20,'mam_update','\0',1001,4001),(18006,NULL,0,'Preview Proxy Copy 1','',NULL,NULL),(18007,NULL,0,'Mezz Proxy Copy 1','',NULL,NULL),(18008,NULL,0,'U Raw Copy 1','',NULL,NULL),(18009,NULL,0,'U Raw Copy 2','',NULL,NULL),(18010,NULL,0,'audio_transcoding','\0',NULL,4002),(18011,NULL,0,'copy_to_transcript_server','\0',NULL,4002),(18012,NULL,0,'restore','',NULL,NULL),(18013,NULL,0,'P2 Raw Copy 1','',NULL,NULL),(18014,NULL,0,'P2 Raw Copy 2 Encrypted','',NULL,NULL),(18015,NULL,0,'P2 Preview Proxy Copy 1','',NULL,NULL),(18016,NULL,0,'P2 Preview Proxy Copy 2 Encrypted','',NULL,NULL),(18017,NULL,0,'video_medium_resolution_transcoding','\0',NULL,4001);
 /*!40000 ALTER TABLE `task` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -737,7 +729,8 @@ DROP TABLE IF EXISTS `taskfiletype`;
 CREATE TABLE `taskfiletype` (
   `id` int(11) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_2dvjlhl0vwuq4xmpjieymjreh` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -747,7 +740,7 @@ CREATE TABLE `taskfiletype` (
 
 LOCK TABLES `taskfiletype` WRITE;
 /*!40000 ALTER TABLE `taskfiletype` DISABLE KEYS */;
-INSERT INTO `taskfiletype` VALUES (4001,'Video'),(4002,'Audio'),(4003,'Photo'),(4004,'PREV_PROXY'),(4005,'MEZZ_PROXY');
+INSERT INTO `taskfiletype` VALUES (4002,'Audio'),(4005,'MEZZ_PROXY'),(4003,'Photo'),(4004,'PREV_PROXY'),(4001,'Video');
 /*!40000 ALTER TABLE `taskfiletype` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -761,7 +754,8 @@ DROP TABLE IF EXISTS `taskset`;
 CREATE TABLE `taskset` (
   `id` int(11) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_ss1y94i0kw2p32ww4bv32i85n` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -771,7 +765,7 @@ CREATE TABLE `taskset` (
 
 LOCK TABLES `taskset` WRITE;
 /*!40000 ALTER TABLE `taskset` DISABLE KEYS */;
-INSERT INTO `taskset` VALUES (19001,'Video ingest workflow'),(19002,'Audio ingest workflow'),(19003,'Private2 Video ingest workflow');
+INSERT INTO `taskset` VALUES (19002,'Audio ingest workflow'),(19003,'Private2 Video ingest workflow'),(19001,'Video ingest workflow');
 /*!40000 ALTER TABLE `taskset` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -800,7 +794,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES (21001,'$2a$10$70nZ.1zvmmgAXQZ5qDFHxe08eTijEejJ5HRZAtwRcPuMjw4MfRley','pgurumurthy',6001);
+INSERT INTO `user` VALUES (21001,'$2a$10$70nZ.1zvmmgAXQZ5qDFHxe08eTijEejJ5HRZAtwRcPuMjw4MfRley','pgurumurthy',6001),(21002,'$2a$10$pfrQKh7LEw3oklfohO/WoOb0yUjL6pLAkmKQLDbA6tDO2BcZ.Eon.','apr',NULL);
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -818,7 +812,7 @@ SET character_set_client = utf8;
  1 AS `file_id`,
  1 AS `library_id`,
  1 AS `targetvolume_id`,
- 1 AS `requesttype_id`,
+ 1 AS `action_id`,
  1 AS `user_id`,
  1 AS `libraryclass_id`,
  1 AS `libraryclass_name`,
@@ -855,3 +849,31 @@ SET character_set_client = @saved_cs_client;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
 
+--
+-- Final view structure for view `v_restore_file`
+--
+
+/*!50001 DROP VIEW IF EXISTS `v_restore_file`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_restore_file` AS select `tape`.`id` AS `tape_id`,`tapeset`.`id` AS `tapeset_id`,`file`.`id` AS `file_id`,`library`.`id` AS `library_id`,`libraryclass_targetvolume`.`targetvolume_id` AS `targetvolume_id`,`libraryclass_action_user`.`action_id` AS `action_id`,`libraryclass_action_user`.`user_id` AS `user_id`,`libraryclass`.`id` AS `libraryclass_id`,`libraryclass`.`name` AS `libraryclass_name`,`file`.`pathname` AS `file_pathname`,`file`.`size` AS `file_size`,`file`.`crc` AS `file_crc`,`tape`.`barcode` AS `tape_barcode`,`tape`.`blocksize` AS `tape_blocksize`,`tape`.`finalized` AS `tape_finalized`,`tapeset`.`copy_number` AS `tapeset_copy_number`,`storageformat`.`id` AS `storageformat_id`,`storageformat`.`name` AS `storageformat_name`,`file_tape`.`block` AS `file_tape_block`,`file_tape`.`offset` AS `file_tape_offset`,`file_tape`.`encrypted` AS `file_tape_encrypted`,`file_tape`.`deleted` AS `file_tape_deleted` from ((((((((`file_tape` join `tape` on((`file_tape`.`tape_id` = `tape`.`id`))) join `tapeset` on((`tape`.`tapeset_id` = `tapeset`.`id`))) join `file` on((`file`.`id` = `file_tape`.`file_id`))) join `library` on((`file`.`library_id` = `library`.`id`))) join `storageformat` on((`storageformat`.`id` = `tapeset`.`storageformat_id`))) join `libraryclass` on((`libraryclass`.`id` = `library`.`libraryclass_id`))) join `libraryclass_targetvolume` on((`libraryclass_targetvolume`.`libraryclass_id` = `library`.`libraryclass_id`))) join `libraryclass_action_user` on((`libraryclass_action_user`.`libraryclass_id` = `library`.`libraryclass_id`))) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2020-04-13 16:38:15

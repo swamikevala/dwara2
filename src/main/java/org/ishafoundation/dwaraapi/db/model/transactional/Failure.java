@@ -8,6 +8,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.TableGenerator;
 
 
 @Entity
@@ -15,7 +16,12 @@ import javax.persistence.Table;
 public class Failure {
 
 	@Id
-	@GeneratedValue(strategy=GenerationType.SEQUENCE)
+	@GeneratedValue(generator = "dwara_seq_generator", strategy=GenerationType.TABLE)
+	@TableGenerator(name="dwara_seq_generator", 
+	 table="dwara_sequences", 
+	 pkColumnName="primary_key_fields", 
+	 valueColumnName="current_val", 
+	 pkColumnValue="failure_id", allocationSize = 1)
 	@Column(name="id")
 	private int id;
 	

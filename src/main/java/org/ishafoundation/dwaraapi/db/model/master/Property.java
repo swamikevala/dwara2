@@ -12,7 +12,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassProperty;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.LibraryProperty;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -38,11 +37,6 @@ public class Property {
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
     private List<LibraryclassProperty> libraryclassProperty = new ArrayList<>();
-    
-    @OneToMany(mappedBy = "property",
-            cascade = CascadeType.MERGE,
-            orphanRemoval = true)
-    private List<LibraryProperty> libraryProperty = new ArrayList<>();
     
 	public int getId() {
 		return id;
@@ -84,16 +78,6 @@ public class Property {
 	@JsonIgnore
 	public void setLibraryclassProperty(List<LibraryclassProperty> libraryclassProperty) {
 		this.libraryclassProperty = libraryclassProperty;
-	}
-	
-	@JsonIgnore
-	public List<LibraryProperty> getLibraryProperty() {
-		return libraryProperty;
-	}
-	
-	@JsonIgnore
-	public void setLibraryProperty(List<LibraryProperty> libraryProperty) {
-		this.libraryProperty = libraryProperty;
 	}
 
 	@Override

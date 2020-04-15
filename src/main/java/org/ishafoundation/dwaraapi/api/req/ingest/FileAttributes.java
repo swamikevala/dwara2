@@ -4,9 +4,9 @@ public class FileAttributes {
 
 	private String sourcePath;
 
-	private String oldFilename;
+	private String oldLibraryname;
 	
-	private String newFilename;
+	private String newLibraryname;
 
 	
 	public String getSourcePath() {
@@ -17,20 +17,19 @@ public class FileAttributes {
 		this.sourcePath = sourcePath;
 	}
 
-	public String getOldFilename() {
-		return oldFilename;
+	public String getOldLibraryname() {
+		return oldLibraryname;
 	}
 
-	public void setOldFilename(String oldFilename) {
-		this.oldFilename = oldFilename;
+	public void setOldLibraryname(String oldLibraryname) {
+		this.oldLibraryname = oldLibraryname;
 	}
 
-	public String getNewFilename() {
-		return newFilename;
+	public String getNewLibraryname() {
+		return newLibraryname;
 	}
 
-	public void setNewFilename(String newFilename) {
-		this.newFilename = newFilename;
+	public void setNewLibraryname(String newLibraryname) {
+		this.newLibraryname = newLibraryname;
 	}
-
 }

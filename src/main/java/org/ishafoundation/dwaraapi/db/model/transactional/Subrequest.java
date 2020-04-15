@@ -9,6 +9,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.TableGenerator;
 
 import org.ishafoundation.dwaraapi.constants.Status;
 
@@ -19,7 +20,12 @@ import org.ishafoundation.dwaraapi.constants.Status;
 public class Subrequest {
 
 	@Id
-	@GeneratedValue(strategy=GenerationType.SEQUENCE)
+	@GeneratedValue(generator = "dwara_seq_generator", strategy=GenerationType.TABLE)
+	@TableGenerator(name="dwara_seq_generator", 
+	 table="dwara_sequences", 
+	 pkColumnName="primary_key_fields", 
+	 valueColumnName="current_val", 
+	 pkColumnValue="subrequest_id", allocationSize = 1)
 	@Column(name="id")
 	private int id;
 	
@@ -28,7 +34,7 @@ public class Subrequest {
     private Request request;
 	
 	@Column(name="file_id")
-	private int fileId;
+	private Integer fileId;
 
 	@Column(name="source_path")
 	private String sourcePath;
@@ -40,13 +46,13 @@ public class Subrequest {
 	private String skipTasks;
 
 	@Column(name="rerun")
-	private boolean rerun;
+	private Boolean rerun;
 
 	@Column(name="rerun_no")
-	private int rerunNo;
+	private Integer rerunNo;
 
 	@Column(name="priority")
-	private int priority;
+	private Integer priority;
 
 	@OneToOne
 	private Library library;
@@ -66,26 +72,19 @@ public class Subrequest {
 		this.id = id;
 	}
 
-	//@JsonIgnore
 	public Request getRequest() {
 		return request;
 	}
 
-	//@JsonIgnore
 	public void setRequest(Request request) {
 		this.request = request;
 	}
-	
-	/*
-	public int getRequestId() {
-		return requestId = this.request.getId();
-	}
-	*/
-	public int getFileId() {
+
+	public Integer getFileId() {
 		return fileId;
 	}
 
-	public void setFileId(int fileId) {
+	public void setFileId(Integer fileId) {
 		this.fileId = fileId;
 	}
 
@@ -113,27 +112,27 @@ public class Subrequest {
 		this.skipTasks = skipTasks;
 	}
 
-	public boolean isRerun() {
+	public Boolean isRerun() {
 		return rerun;
 	}
 
-	public void setRerun(boolean rerun) {
+	public void setRerun(Boolean rerun) {
 		this.rerun = rerun;
 	}
 
-	public int getRerunNo() {
+	public Integer getRerunNo() {
 		return rerunNo;
 	}
 
-	public void setRerunNo(int rerunNo) {
+	public void setRerunNo(Integer rerunNo) {
 		this.rerunNo = rerunNo;
 	}
 
-	public int getPriority() {
+	public Integer getPriority() {
 		return priority;
 	}
 
-	public void setPriority(int priority) {
+	public void setPriority(Integer priority) {
 		this.priority = priority;
 	}
 

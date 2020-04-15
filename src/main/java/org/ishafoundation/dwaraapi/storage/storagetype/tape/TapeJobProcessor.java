@@ -83,6 +83,9 @@ public class TapeJobProcessor extends StorageTypeJobProcessor {
 
 				logger.trace(filePathNameTofileObj.toString());
 				logger.trace(fileName);
+				if(file == null) {
+					logger.trace("Junk folder not supposed to be written to tape. Filter it. Skipping its info getting added to DB");
+				}
 				FileTape ft = new FileTape(file, tape);
 				ft.setBlock(archivedFile.getBlockNumber());
 				//ft.setOffset(offset); // TODO ?? How

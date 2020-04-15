@@ -1,0 +1,15 @@
+[
+    {
+        "libraryclassId": 5001,
+        "name": "pub-video",
+        "targetVolumes": [
+            "Some Name"
+        ],
+        "displayOrder": 0,
+        "permittedActions": [
+            "ingest",
+            "restore",
+            "list"
+        ]
+    }
+]

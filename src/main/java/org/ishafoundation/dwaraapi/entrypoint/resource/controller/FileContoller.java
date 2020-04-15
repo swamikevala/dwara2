@@ -27,6 +27,7 @@ import org.ishafoundation.dwaraapi.db.model.view.V_RestoreFile;
 import org.ishafoundation.dwaraapi.job.JobManager;
 import org.ishafoundation.dwaraapi.tape.library.MtxStatus;
 import org.ishafoundation.dwaraapi.tape.library.TapeLibraryManager;
+import org.ishafoundation.dwaraapi.utils.ObjectMappingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +71,9 @@ public class FileContoller {
 	
 	@Autowired
 	private TapeLibraryManager tapeLibraryManager;	
+	
+	@Autowired
+	private ObjectMappingUtil objectMappingUtil;
 	
 
 	@ApiOperation(value = "Gets the details of all the files requested in fileIdsListAsCSV")
@@ -152,8 +156,8 @@ public class FileContoller {
 	
 	@ApiOperation(value = "Restores the list of files requested from copy 1 into the target volume location grouped under the output dir")
 	@PostMapping("/file/restore")
-	public ResponseEntity<org.ishafoundation.dwaraapi.entrypoint.resource.restore.Request> restore(@RequestBody org.ishafoundation.dwaraapi.api.req.restore.UserRequest userRequest){
-		org.ishafoundation.dwaraapi.entrypoint.resource.restore.Request requestForResponse = null;
+	public ResponseEntity<org.ishafoundation.dwaraapi.entrypoint.resource.RequestWithSubrequestDetails> restore(@RequestBody org.ishafoundation.dwaraapi.api.req.restore.UserRequest userRequest){
+		org.ishafoundation.dwaraapi.entrypoint.resource.RequestWithSubrequestDetails requestForResponse = null;
 		
 		try {
 
@@ -176,7 +180,7 @@ public class FileContoller {
 	    	request = requestDao.save(request);
 	    	logger.debug("DB Request Creation - Success " + request.getId());
 	    	
-	    	List<org.ishafoundation.dwaraapi.entrypoint.resource.restore.Subrequest> subrequestList = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.restore.Subrequest>();	
+	    	List<org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest> subrequestList = new ArrayList<org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest>();	
 	    	List<FileParams> fileParamsList = userRequest.getFileParams();
 	    	for (Iterator<FileParams> iterator2 = fileParamsList.iterator(); iterator2.hasNext();) {
 				FileParams nthFileParams = (FileParams) iterator2.next();
@@ -195,27 +199,12 @@ public class FileContoller {
 
 		    	createRestoreJob(request, subrequest);
 				
-		    	org.ishafoundation.dwaraapi.entrypoint.resource.restore.Subrequest systemGeneratedSubRequestForResponse = new org.ishafoundation.dwaraapi.entrypoint.resource.restore.Subrequest();
-		    	systemGeneratedSubRequestForResponse.setFileId(fileId);
-		    	systemGeneratedSubRequestForResponse.setSubrequestId(subrequest.getId());
-		    	systemGeneratedSubRequestForResponse.setPriority(subrequest.getPriority());
-		    	systemGeneratedSubRequestForResponse.setRequestId(request.getId());
-		    	systemGeneratedSubRequestForResponse.setStatus(Status.queued.toString());
+		    	org.ishafoundation.dwaraapi.entrypoint.resource.Subrequest systemGeneratedSubRequestForResponse = objectMappingUtil.frameSubrequestObjectForResponse(subrequest);
 
 		    	subrequestList.add(systemGeneratedSubRequestForResponse);
 			}
-	    	requestForResponse = new org.ishafoundation.dwaraapi.entrypoint.resource.restore.Request();
-	    	requestForResponse.setRequestId(request.getId());
-	    	requestForResponse.setAction(action.toString());
-
-	    	requestForResponse.setCopyNumber(request.getCopyNumber());
-	    	requestForResponse.setOutputFolder(request.getOutputFolder());
-	    	requestForResponse.setTargetvolumeName(targetvolumeName);
-	    	
-	    	requestForResponse.setRequestedAt(request.getRequestedAt());
-	    	requestForResponse.setRequestedBy(requestedBy);
-	    	
-	    	requestForResponse.setSubrequest(subrequestList);
+	    	requestForResponse = objectMappingUtil.frameRequestObjectForResponse(request);
+	    	requestForResponse.setSubrequestList(subrequestList);
 		} catch (Throwable e) {
 			String errorMsg = "Unable to trigger the restore job - " + e.getMessage();
 			logger.error(errorMsg, e);

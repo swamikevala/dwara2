@@ -15,9 +15,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.TableGenerator;
 
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.LibraryProperty;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.LibraryTape;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -28,7 +28,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class Library {
 
 	@Id
-	@GeneratedValue(strategy=GenerationType.SEQUENCE)
+	@GeneratedValue(generator = "dwara_seq_generator", strategy=GenerationType.TABLE)
+	@TableGenerator(name="dwara_seq_generator", 
+	 table="dwara_sequences", 
+	 pkColumnName="primary_key_fields", 
+	 valueColumnName="current_val", 
+	 pkColumnValue="library_id", allocationSize = 1)
 	@Column(name="id")
 	private int id;
 
@@ -70,11 +75,6 @@ public class Library {
 	@OneToOne
 	@JoinColumn(name="q_latest_subrequest_id") 
 	private Subrequest qLatestSubrequest;
-	
-    @OneToMany(mappedBy = "library",
-            cascade = CascadeType.MERGE,
-            orphanRemoval = true)
-    private List<LibraryProperty> libraryProperty = new ArrayList<>();
 
     @OneToMany(mappedBy = "library",
             cascade = CascadeType.MERGE,
@@ -199,16 +199,6 @@ public class Library {
 	
 	public int getqLatestSubrequestId() {
 		return this.qLatestSubrequest.getId();
-	}
-
-	@JsonIgnore
-	public List<LibraryProperty> getLibraryProperty() {
-		return libraryProperty;
-	}
-	
-	@JsonIgnore
-	public void setLibraryProperty(List<LibraryProperty> libraryProperty) {
-		this.libraryProperty = libraryProperty;
 	}
 	
 	@JsonIgnore

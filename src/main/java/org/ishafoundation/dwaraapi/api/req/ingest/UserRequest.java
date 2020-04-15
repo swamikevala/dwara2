@@ -4,19 +4,19 @@ import java.util.List;
 
 public class UserRequest {
 	
-	private int libraryclassId;
+	private String libraryclass;
 
 	private List<LibraryParams> library;
 
 	
-	public int getLibraryclassId() {
-		return libraryclassId;
+	public String getLibraryclass() {
+		return libraryclass;
 	}
 
-	public void setLibraryclassId(int libraryclassId) {
-		this.libraryclassId = libraryclassId;
+	public void setLibraryclass(String libraryclass) {
+		this.libraryclass = libraryclass;
 	}
-
+	
 	public List<LibraryParams> getLibrary() {
 		return library;
 	}
