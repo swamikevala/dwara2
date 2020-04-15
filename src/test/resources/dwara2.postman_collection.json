@@ -11,7 +11,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://{{host}}:{{port}}{{suffix}}/register?username=pgurumurthy&password=ShivaShambho",
+					"raw": "http://{{host}}:{{port}}{{suffix}}/register?username=apr&password=ShivaShambho",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
@@ -23,7 +23,7 @@
 					"query": [
 						{
 							"key": "username",
-							"value": "pgurumurthy"
+							"value": "apr"
 						},
 						{
 							"key": "password",
@@ -40,23 +40,23 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://{{host}}:{{port}}{{suffix}}/register?username=pgurumurthy&password=ShivaShambho",
+					"raw": "http://{{host}}:{{port}}{{suffix}}/setpassword?username=apr&password=ShivaShambhooooo",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
 					],
 					"port": "{{port}}{{suffix}}",
 					"path": [
-						"register"
+						"setpassword"
 					],
 					"query": [
 						{
 							"key": "username",
-							"value": "pgurumurthy"
+							"value": "apr"
 						},
 						{
 							"key": "password",
-							"value": "ShivaShambho"
+							"value": "ShivaShambhooooo"
 						}
 					]
 				}
@@ -67,27 +67,28 @@
 			"name": "login",
 			"event": [
 				{
-					"listen": "prerequest",
+					"listen": "test",
 					"script": {
-						"id": "a20f8f83-72cc-4dd6-ad0a-f1a3ef11cbae",
+						"id": "e901ce8c-c18b-4c54-87f7-65e4ab233e07",
 						"exec": [
-							""
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Check user id and name\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.id).to.eql(21001);",
+							"    pm.expect(jsonData.name).to.eql(\"pgurumurthy\");",
+							"});"
 						],
 						"type": "text/javascript"
 					}
 				},
 				{
-					"listen": "test",
+					"listen": "prerequest",
 					"script": {
-						"id": "6ae0042c-051a-4ccb-9b8b-303ad0090555",
+						"id": "83ba01a3-aa72-4b34-bd4f-85f223fc66ee",
 						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							"pm.test(\"Your test name\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.value).to.eql(100);",
-							"});"
+							""
 						],
 						"type": "text/javascript"
 					}
@@ -485,7 +486,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"library\": [\n    \t{\n        \"sourcePath\": \"c:\\\\data\\\\user\\\\pgurumurthy\\\\ingest\\\\pub-video\",\n        \"name\": \"679_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\"\n    \t}\n    ],\n    \"libraryclassId\": 5001\n}",
+					"raw": "{\n    \"library\": [\n    \t{\n        \"sourcePath\": \"/data/user/pgurumurthy/ingest/pub-video\",\n        \"name\": \"PG_Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoPro_PG_2\"\n    \t}\n    ],\n    \"libraryclass\": \"pub-video\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -683,7 +684,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{host}}:{{port}}{{suffix}}/request/269?pageNumber=1&showSubrequests=true",
+					"raw": "http://{{host}}:{{port}}{{suffix}}/request/1?pageNumber=1&showSubrequests=true",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
@@ -691,7 +692,7 @@
 					"port": "{{port}}{{suffix}}",
 					"path": [
 						"request",
-						"269"
+						"1"
 					],
 					"query": [
 						{
@@ -728,7 +729,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{host}}:{{port}}{{suffix}}/subrequest/270?showJobs=true",
+					"raw": "http://{{host}}:{{port}}{{suffix}}/subrequest/1?showJobs=true",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
@@ -736,7 +737,7 @@
 					"port": "{{port}}{{suffix}}",
 					"path": [
 						"subrequest",
-						"270"
+						"1"
 					],
 					"query": [
 						{
@@ -787,7 +788,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{host}}:{{port}}{{suffix}}/file/314?copyNumber=1&showDeleted=false",
+					"raw": "http://{{host}}:{{port}}{{suffix}}/file/14?copyNumber=1&showDeleted=false",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
@@ -795,7 +796,7 @@
 					"port": "{{port}}{{suffix}}",
 					"path": [
 						"file",
-						"314"
+						"14"
 					],
 					"query": [
 						{
@@ -840,7 +841,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"copyNumber\": 1,\r\n  \"fileParams\": [\r\n    {\r\n      \"fileId\": 964,\r\n      \"priority\": 0\r\n    },\r\n    {\r\n      \"fileId\": 976,\r\n      \"priority\": 0\r\n    }    \r\n  ],\r\n  \"outputFolder\": \"restore-test-listening-to-thevaram\",\r\n  \"targetvolumeId\": 17001\r\n}",
+					"raw": "{\r\n  \"copyNumber\": 1,\r\n  \"fileParams\": [\r\n    {\r\n      \"fileId\": 14,\r\n      \"priority\": 0\r\n    }  \r\n  ],\r\n  \"outputFolder\": \"JIRA-1234-Randommm\",\r\n  \"targetvolumeName\": \"Some Name\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -848,13 +849,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://{{host}}:{{port}}{{suffix}}/restore",
+					"raw": "http://{{host}}:{{port}}{{suffix}}/file/restore",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
 					],
 					"port": "{{port}}{{suffix}}",
 					"path": [
+						"file",
 						"restore"
 					]
 				}

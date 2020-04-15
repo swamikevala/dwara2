@@ -85,6 +85,7 @@ public class TapeJobProcessor extends StorageTypeJobProcessor {
 				logger.trace(fileName);
 				if(file == null) {
 					logger.trace("Junk folder not supposed to be written to tape. Filter it. Skipping its info getting added to DB");
+					continue;
 				}
 				FileTape ft = new FileTape(file, tape);
 				ft.setBlock(archivedFile.getBlockNumber());

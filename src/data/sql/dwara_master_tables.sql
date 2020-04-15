@@ -167,7 +167,7 @@ CREATE TABLE `extension_taskfiletype` (
 
 LOCK TABLES `extension_taskfiletype` WRITE;
 /*!40000 ALTER TABLE `extension_taskfiletype` DISABLE KEYS */;
-INSERT INTO `extension_taskfiletype` VALUES ('\0',3001,4001),('\0',3001,4004),('\0',3002,4001),('\0',3003,4001),('',3004,4001),('\0',3004,4003),('',3004,4004),('\0',3005,4003),('\0',3006,4003),('',3007,4003),('',3008,4001),('',3008,4004),('\0',3009,4001),('\0',3010,4001),('\0',3011,4001);
+INSERT INTO `extension_taskfiletype` VALUES ('\0',3001,4001),('\0',3001,4004),('\0',3002,4001),('\0',3003,4001),('',3004,4001),('\0',3004,4003),('',3004,4004),('\0',3005,4003),('\0',3006,4003),('',3007,4003),('',3008,4001),('',3008,4004),('\0',3009,4001),('\0',3010,4001);
 /*!40000 ALTER TABLE `extension_taskfiletype` ENABLE KEYS */;
 UNLOCK TABLES;
 
