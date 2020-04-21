@@ -20,7 +20,8 @@ public class StorageJob {
 	private Storagetype storagetype;
 	private boolean optimizeTapeAccess = true; // by default we need tape optimisation // TODO is an attribute of storagetype. Should fit this in storagetype
 	
-	private int driveNo; // TODO is an attribute of storagetype. Should fit this in storagetype
+	private String tapeLibraryName; // TODO is an attribute of storagetype. Should fit this in storagetype
+	private int driveNo; // elementAddress
 	private String deviceWwid;
 	
 	
@@ -83,6 +84,12 @@ public class StorageJob {
 	}
 	public void setOptimizeTapeAccess(boolean optimizeTapeAccess) {
 		this.optimizeTapeAccess = optimizeTapeAccess;
+	}
+	public String getTapeLibraryName() {
+		return tapeLibraryName;
+	}
+	public void setTapeLibraryName(String tapeLibraryName) {
+		this.tapeLibraryName = tapeLibraryName;
 	}
 	public int getDriveNo() {
 		return driveNo;

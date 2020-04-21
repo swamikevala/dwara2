@@ -7,11 +7,13 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.constants.TapedriveStatus;
 import org.ishafoundation.dwaraapi.db.dao.master.TapedriveDao;
+import org.ishafoundation.dwaraapi.db.dao.master.TapelibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.FileTapeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryTapeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.model.Tapedrive;
 import org.ishafoundation.dwaraapi.db.model.master.Tape;
+import org.ishafoundation.dwaraapi.db.model.master.Tapelibrary;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileTape;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.LibraryTape;
@@ -31,6 +33,9 @@ public class TapeJobProcessor extends StorageTypeJobProcessor {
 	
 	@Autowired
 	private TapedriveDao tapedriveDao;
+	
+	@Autowired
+	private TapelibraryDao tapelibraryDao;
 	
 	@Autowired
 	private FileTapeDao fileTapeDao;	
@@ -124,13 +129,17 @@ public class TapeJobProcessor extends StorageTypeJobProcessor {
 	}
 	
 	private void updateTapeDriveTable(StorageJob storageJob) {
-		Tapedrive tapedrive = tapedriveDao.findByElementAddress(storageJob.getDriveNo());
+		int tapeLibraryId = getTapeLibraryId(storageJob.getTapeLibraryName());
+		Tapedrive tapedrive = tapedriveDao.findByTapelibraryIdAndElementAddress(tapeLibraryId , storageJob.getDriveNo());
 		tapedrive.setStatus(TapedriveStatus.AVAILABLE.toString());
 		logger.debug("DB Tapedrive Updation " + tapedrive.getStatus());
 		tapedriveDao.save(tapedrive);
 		logger.debug("DB Tapedrive Updation - Success");
 	}
 	
-
+	private int getTapeLibraryId(String tapeLibraryName) {
+		Tapelibrary tapelibrary = tapelibraryDao.findByName(tapeLibraryName);
+		return tapelibrary.getId();
+	}
 	
 }

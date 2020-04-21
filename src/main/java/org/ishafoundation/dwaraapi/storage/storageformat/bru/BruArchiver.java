@@ -18,9 +18,14 @@ import org.ishafoundation.dwaraapi.storage.storageformat.bru.response.components
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Primary
+//@Profile("default") works
+@Profile({ "!dev & !test" })
 public class BruArchiver extends AbstractStorageFormatArchiver {
     static {
     	StorageFormatFactory.register("BRU", BruArchiver.class);

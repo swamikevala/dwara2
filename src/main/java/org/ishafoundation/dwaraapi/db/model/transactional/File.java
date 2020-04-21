@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 		
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -54,6 +55,9 @@ public class File {
 
 	@Column(name="deleted")
 	private boolean deleted;
+	
+	@Column(name="verified_at")
+	private LocalDateTime verifiedAt;
 
 	@OneToOne
 	@JoinColumn(name="file_ref_id")
@@ -120,6 +124,14 @@ public class File {
 
 	public void setDeleted(boolean deleted) {
 		this.deleted = deleted;
+	}
+
+	public LocalDateTime getVerifiedAt() {
+		return verifiedAt;
+	}
+
+	public void setVerifiedAt(LocalDateTime verifiedAt) {
+		this.verifiedAt = verifiedAt;
 	}
 
 	public File getFileRef() {

@@ -1,0 +1,181 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+  <action id="8001" description="" name="ingest"/>
+  <action id="8002" description="" name="restore"/>
+  <action id="8003" description="" name="list"/>
+  <action id="8004" description="" name="rename"/>
+  <action id="8005" description="" name="hold"/>
+  <action id="8006" description="" name="release"/>
+  <action id="8007" description="" name="cancel"/>
+  <action id="8008" description="" name="abort"/>
+  <action id="8009" description="" name="delete"/>
+  <action id="8010" description="" name="rewrite"/>
+  <action id="8011" description="" name="diagnostics"/>
+  <action_user permission_level="2" action_id="8003" user_id="21001"/>
+  <application id="1001" name="MAM"/>
+  <application_file/>
+  <badfile/>
+  <dwara_sequences primary_key_fields="badfile_id" current_val="0"/>
+  <dwara_sequences primary_key_fields="failure_id" current_val="0"/>
+  <dwara_sequences primary_key_fields="file_id" current_val="0"/>
+  <dwara_sequences primary_key_fields="job_id" current_val="0"/>
+  <dwara_sequences primary_key_fields="library_id" current_val="0"/>
+  <dwara_sequences primary_key_fields="request_id" current_val="0"/>
+  <dwara_sequences primary_key_fields="subrequest_id" current_val="0"/>
+  <error/>
+  <extension id="3001" description="Some MP4 description" name="MP4"/>
+  <extension id="3002" description="Some MOV description" name="MOV"/>
+  <extension id="3003" description="Some MTS description" name="MTS"/>
+  <extension id="3004" description="d" name="JPG"/>
+  <extension id="3005" description="d" name="TIF"/>
+  <extension id="3006" description="d" name="NEF"/>
+  <extension id="3007" description="d" name="XMP"/>
+  <extension id="3008" description="test" name="MP4_FFPROBE_OUT"/>
+  <extension id="3009" description="ABC desc" name="ABC"/>
+  <extension id="3010" description="some msg" name="MTB"/>
+  <extension_taskfiletype sidecar="false" extension_id="3001" taskfiletype_id="4001"/>
+  <extension_taskfiletype sidecar="false" extension_id="3001" taskfiletype_id="4004"/>
+  <extension_taskfiletype sidecar="false" extension_id="3002" taskfiletype_id="4001"/>
+  <extension_taskfiletype sidecar="false" extension_id="3003" taskfiletype_id="4001"/>
+  <extension_taskfiletype sidecar="true" extension_id="3004" taskfiletype_id="4001"/>
+  <extension_taskfiletype sidecar="false" extension_id="3004" taskfiletype_id="4003"/>
+  <extension_taskfiletype sidecar="true" extension_id="3004" taskfiletype_id="4004"/>
+  <extension_taskfiletype sidecar="false" extension_id="3005" taskfiletype_id="4003"/>
+  <extension_taskfiletype sidecar="false" extension_id="3006" taskfiletype_id="4003"/>
+  <extension_taskfiletype sidecar="true" extension_id="3007" taskfiletype_id="4003"/>
+  <extension_taskfiletype sidecar="true" extension_id="3008" taskfiletype_id="4001"/>
+  <extension_taskfiletype sidecar="true" extension_id="3008" taskfiletype_id="4004"/>
+  <extension_taskfiletype sidecar="false" extension_id="3009" taskfiletype_id="4001"/>
+  <extension_taskfiletype sidecar="false" extension_id="3010" taskfiletype_id="4001"/>
+  <failure/>
+  <file/>
+  <file_tape/>
+  <job/>
+  <library/>
+  <library_tape/>
+  <libraryclass id="5001" concurrent_copies="false" display_order="0" name="pub-video" path_prefix="C:\data\user" source="true" sequence_id="9001" taskfiletype_id="4001" taskset_id="19001"/>
+  <libraryclass id="5002" concurrent_copies="false" display_order="0" name="pub-audio" path_prefix="C:\data\user" source="true" sequence_id="9002" taskfiletype_id="4002" taskset_id="19001"/>
+  <libraryclass id="5003" concurrent_copies="false" display_order="0" name="private1-video" path_prefix="C:\data\user" source="true" sequence_id="0" taskfiletype_id="4001" taskset_id="19001"/>
+  <libraryclass id="5004" concurrent_copies="false" display_order="0" name="Private2-Video" path_prefix="C:\data\user" source="true" sequence_id="0" taskfiletype_id="4001" taskset_id="19001"/>
+  <libraryclass id="5005" concurrent_copies="false" display_order="0" name="Private3-Video" path_prefix="C:\data\user" source="true" sequence_id="0" taskfiletype_id="4001" taskset_id="19001"/>
+  <libraryclass id="5006" concurrent_copies="false" display_order="0" name="Private1-Audio" path_prefix="C:\data\user" source="true" sequence_id="0" taskfiletype_id="4002" taskset_id="19001"/>
+  <libraryclass id="5007" concurrent_copies="false" display_order="0" name="PreviewProxy-Video" path_prefix="C:\data\transcoded" source="false" generator_task_id="18004" sequence_id="9007" taskfiletype_id="4004" taskset_id="19001"/>
+  <libraryclass id="5008" concurrent_copies="false" display_order="0" name="MezzanineProxy-Video" path_prefix="C:\data\transcoded" source="false" generator_task_id="18017" sequence_id="9008" taskfiletype_id="0" taskset_id="19001"/>
+  <libraryclass id="5009" concurrent_copies="false" display_order="0" name="Private(ALL)PreviewProxy-Video - common private libclass for all ???" path_prefix="C:\data\transcoded" source="false" sequence_id="9007" taskfiletype_id="0" taskset_id="19001"/>
+  <libraryclass id="5010" concurrent_copies="false" display_order="0" name="Private(ALL)MezzanineProxy-Video" path_prefix="C:\data\transcoded" source="false" sequence_id="9008" taskfiletype_id="0" taskset_id="19001"/>
+  <libraryclass id="5011" concurrent_copies="false" display_order="0" name="Private(ALL)PreviewProxy-Audio" path_prefix="C:\data\transcoded" source="false" sequence_id="9007" taskfiletype_id="0" taskset_id="19001"/>
+  <libraryclass id="5012" concurrent_copies="false" display_order="0" name="Private(ALL)MezzanineProxy-Audio" path_prefix="C:\data\transcoded" source="false" sequence_id="9008" taskfiletype_id="0" taskset_id="19001"/>
+  <libraryclass id="5013" concurrent_copies="false" display_order="0" name="Private2PreviewProxy-Video" path_prefix="C:\data\transcoded" source="false" sequence_id="9007" taskfiletype_id="0" taskset_id="19001"/>
+  <libraryclass_action_user action_id="8001" libraryclass_id="5001" user_id="21001"/>
+  <libraryclass_action_user action_id="8002" libraryclass_id="5001" user_id="21001"/>
+  <libraryclass_action_user action_id="8003" libraryclass_id="5001" user_id="21001"/>
+  <libraryclass_property optional="false" position="1" libraryclass_id="5001" property_id="7001"/>
+  <libraryclass_property optional="true" position="2" libraryclass_id="5001" property_id="7002"/>
+  <libraryclass_property optional="false" position="3" libraryclass_id="5001" property_id="7003"/>
+  <libraryclass_property optional="false" position="4" libraryclass_id="5001" property_id="7004"/>
+  <libraryclass_property optional="true" position="5" libraryclass_id="5001" property_id="7005"/>
+  <libraryclass_property optional="false" position="5" libraryclass_id="5001" property_id="7006"/>
+  <libraryclass_property optional="false" position="1" libraryclass_id="5002" property_id="7001"/>
+  <libraryclass_property optional="true" position="2" libraryclass_id="5002" property_id="7002"/>
+  <libraryclass_property optional="false" position="3" libraryclass_id="5002" property_id="7003"/>
+  <libraryclass_property optional="false" position="4" libraryclass_id="5002" property_id="7004"/>
+  <libraryclass_tapeset encrypted="false" libraryclass_id="5001" tapeset_id="15001" task_id="18001"/>
+  <libraryclass_tapeset encrypted="false" libraryclass_id="5001" tapeset_id="15002" task_id="18002"/>
+  <libraryclass_tapeset encrypted="false" libraryclass_id="5001" tapeset_id="15003" task_id="18003"/>
+  <libraryclass_tapeset encrypted="false" libraryclass_id="5007" tapeset_id="15010" task_id="18006"/>
+  <libraryclass_targetvolume libraryclass_id="5001" targetvolume_id="17001"/>
+  <priorityband id="6001" end="10" name="Band 1" optimize_tape_access="true" start="5"/>
+  <property id="7001" name="event" regex="[a-zA-Z0-9-]+" replace_char_space="_"/>
+  <property id="7002" name="event2" regex="[a-zA-Z0-9-]+" replace_char_space="_"/>
+  <property id="7003" name="location" regex="[a-zA-Z0-9-]+" replace_char_space="_"/>
+  <property id="7004" name="date" regex="(?:0[1-9]|[12][0-9]|3[01])-(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec])-(?:19|20)\d\d)" replace_char_space="_"/>
+  <property id="7005" name="deviceinfo1" regex="[a-zA-Z0-9-]+" replace_char_space="_"/>
+  <property id="7006" name="deviceinfo2" regex="[a-zA-Z0-9-]+" replace_char_space="_"/>
+  <request/>
+  <sequence id="9001" keep_extracted_code="false" last_number="24533"/>
+  <sequence id="9002" extraction_regex="^[A-Z]{1,2}[\\d]{1,4}" keep_extracted_code="false" last_number="999" prefix="A"/>
+  <sequence id="9003" keep_extracted_code="false" last_number="555" prefix="Z"/>
+  <sequence id="9004" extraction_regex="^[A-Z]{1,2}[\\d]{1,4}" keep_extracted_code="false" last_number="333"/>
+  <sequence id="9005" extraction_regex="^[\\d]{1,5}" keep_extracted_code="true" last_number="0"/>
+  <sequence id="9006" extraction_regex="^[Z\\d]{1,6}" keep_extracted_code="true" last_number="0"/>
+  <sequence id="9007" keep_extracted_code="false" last_number="0" prefix="L"/>
+  <sequence id="9008" keep_extracted_code="false" last_number="0" prefix="M"/>
+  <status id="10001" name="queued"/>
+  <status id="10002" name="in_progress"/>
+  <status id="10003" name="completed "/>
+  <status id="10004" name="partially_completed"/>
+  <status id="10005" name="completed_with_failures"/>
+  <status id="10006" name="on_hold"/>
+  <status id="10007" name="skipped"/>
+  <status id="10008" name="cancelled"/>
+  <status id="10009" name="aborted"/>
+  <status id="10010" name="failed"/>
+  <status id="10011" name="marked_completed"/>
+  <storageformat id="11001" name="BRU"/>
+  <storageformat id="11002" name="ZIP"/>
+  <storageformat id="11003" name="LTFS"/>
+  <subrequest/>
+  <t_file_job/>
+  <tape id="12001" barcode="V5A001" blocksize="256000" finalized="true" tapeset_id="15001" tapetype_id="16002"/>
+  <tape id="12002" barcode="V5A003" blocksize="256000" finalized="false" tapeset_id="15001" tapetype_id="16002"/>
+  <tape id="12003" barcode="V5B003" blocksize="256000" finalized="false" tapeset_id="15002" tapetype_id="16002"/>
+  <tape id="12004" barcode="V5C003" blocksize="256000" finalized="false" tapeset_id="15003" tapetype_id="16002"/>
+  <tape id="12005" barcode="UA001" blocksize="256000" finalized="false" tapeset_id="15004" tapetype_id="16002"/>
+  <tape id="12006" barcode="UB001" blocksize="256000" finalized="false" tapeset_id="15005" tapetype_id="16002"/>
+  <tape id="12007" barcode="UC001" blocksize="256000" finalized="false" tapeset_id="15006" tapetype_id="16002"/>
+  <tape id="12008" barcode="PVA001" blocksize="256000" finalized="false" tapeset_id="15007" tapetype_id="16002"/>
+  <tape id="12009" barcode="VLA003" blocksize="256000" finalized="false" tapeset_id="15010" tapetype_id="16002"/>
+  <tape id="12010" barcode="VMA001" blocksize="256000" finalized="false" tapeset_id="15012" tapetype_id="16002"/>
+  <tapedrive id="13001" device_wwid="/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst" element_address="0" serial_number="1497199456" drive_status="AVAILABLE" tape_id="12009" tapelibrary_id="14001"/>
+  <tapedrive id="13002" device_wwid="/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1684087499-nst" element_address="1" serial_number="1684087499" drive_status="AVAILABLE" tape_id="12002" tapelibrary_id="14001"/>
+  <tapedrive id="13003" device_wwid="/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1970448833-nst" element_address="2" serial_number="1970448833" drive_status="AVAILABLE" tape_id="12004" tapelibrary_id="14001"/>
+  <tapelibrary id="14001" name="/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400" slots="24"/>
+  <tapeset id="15001" barcode_prefix="V5A" copy_number="1" name="V5 Copy1 Tape pool with Bru format" storageformat_id="11001"/>
+  <tapeset id="15002" barcode_prefix="V5B" copy_number="2" name="V5 Copy2 Tape pool with Zip format" storageformat_id="11001"/>
+  <tapeset id="15003" barcode_prefix="V5C" copy_number="3" name="V5 Copy3 Tape pool with LTFS format" storageformat_id="11001"/>
+  <tapeset id="15004" barcode_prefix="UA" copy_number="1" name="U Copy1 Tape pool with Bru format" storageformat_id="11001"/>
+  <tapeset id="15005" barcode_prefix="UB" copy_number="2" name="U Copy2 Tape pool with Zip format" storageformat_id="11002"/>
+  <tapeset id="15006" barcode_prefix="UC" copy_number="3" name="U Copy3 Tape pool with LTFS format" storageformat_id="11003"/>
+  <tapeset id="15007" barcode_prefix="PVA" copy_number="1" name="PV Copy1 Tape pool with Bru format" storageformat_id="11001"/>
+  <tapeset id="15008" barcode_prefix="PVB" copy_number="2" name="PV Copy2 Tape pool with Zip format" storageformat_id="11002"/>
+  <tapeset id="15009" barcode_prefix="PVC" copy_number="3" name="PV Copy3 Tape pool with LTFS format" storageformat_id="11003"/>
+  <tapeset id="15010" barcode_prefix="VLA" copy_number="1" name="V Prev proxy Copy1 Tape pool" storageformat_id="11001"/>
+  <tapeset id="15012" barcode_prefix="VMA" copy_number="1" name="V Mezz proxy Copy1 Tape pool" storageformat_id="11001"/>
+  <tapetype id="16001" capacity="60000000000" name="LTO 6"/>
+  <tapetype id="16002" capacity="70000000000" name="LTO 7"/>
+  <targetvolume id="17001" name="Some Name" path="/data/RESTORED"/>
+  <task id="18001" max_errors="0" name="V5 Raw Copy 1" storage="true"/>
+  <task id="18002" max_errors="0" name="V5 Raw Copy 2" storage="true"/>
+  <task id="18003" max_errors="0" name="V5 Raw Copy 3" storage="true"/>
+  <task id="18004" max_errors="0" name="video_low_resolution_transcoding" storage="false" taskfiletype_id="4001"/>
+  <task id="18005" max_errors="20" name="mam_update" storage="false" application_id="1001" taskfiletype_id="4001"/>
+  <task id="18006" max_errors="0" name="Preview Proxy Copy 1" storage="true"/>
+  <task id="18007" max_errors="0" name="Mezz Proxy Copy 1" storage="true"/>
+  <task id="18008" max_errors="0" name="U Raw Copy 1" storage="true"/>
+  <task id="18009" max_errors="0" name="U Raw Copy 2" storage="true"/>
+  <task id="18010" max_errors="0" name="audio_transcoding" storage="false" taskfiletype_id="4002"/>
+  <task id="18011" max_errors="0" name="copy_to_transcript_server" storage="false" taskfiletype_id="4002"/>
+  <task id="18012" max_errors="0" name="restore" storage="true"/>
+  <task id="18013" max_errors="0" name="P2 Raw Copy 1" storage="true"/>
+  <task id="18014" max_errors="0" name="P2 Raw Copy 2 Encrypted" storage="true"/>
+  <task id="18015" max_errors="0" name="P2 Preview Proxy Copy 1" storage="true"/>
+  <task id="18016" max_errors="0" name="P2 Preview Proxy Copy 2 Encrypted" storage="true"/>
+  <task id="18017" max_errors="0" name="video_medium_resolution_transcoding" storage="false" taskfiletype_id="4001"/>
+  <task_taskset task_id="18001" taskset_id="19001"/>
+  <task_taskset task_id="18002" taskset_id="19001"/>
+  <task_taskset task_id="18003" taskset_id="19001"/>
+  <task_taskset task_id="18004" taskset_id="19001"/>
+  <task_taskset task_id="18005" taskset_id="19001" pre_task_id="18004"/>
+  <task_taskset task_id="18006" taskset_id="19001" pre_task_id="18004"/>
+  <taskfiletype id="4001" name="Video"/>
+  <taskfiletype id="4002" name="Audio"/>
+  <taskfiletype id="4003" name="Photo"/>
+  <taskfiletype id="4004" name="PREV_PROXY"/>
+  <taskfiletype id="4005" name="MEZZ_PROXY"/>
+  <taskset id="19001" name="Video ingest workflow"/>
+  <taskset id="19002" name="Audio ingest workflow"/>
+  <taskset id="19003" name="Private2 Video ingest workflow"/>
+  <user id="21001" hash="$2a$10$70nZ.1zvmmgAXQZ5qDFHxe08eTijEejJ5HRZAtwRcPuMjw4MfRley" name="pgurumurthy" priorityband_id="6001"/>
+  <user id="21002" hash="$2a$10$pfrQKh7LEw3oklfohO/WoOb0yUjL6pLAkmKQLDbA6tDO2BcZ.Eon." name="apr"/>
+  <user id="21003" hash="$2a$10$.NbfODC.wFZXCQTIZyYq9u89gslA/xf95vLyaPQJija0/wvSqkTV6" name="Sadhguru"/>
+</dataset>

@@ -211,9 +211,8 @@ public class Task_ThreadTask implements Runnable{
 						    outputLibrary.setLibraryRef(job.getInputLibrary()); //sourceLibraryId
 						    outputLibrary.setFileCount(111);
 						    outputLibrary.setFileStructureMd5("not needed");
-						    // TODO : try avoiding this call...
-						    Libraryclass outputLibraryclass = libraryclassDao.findByGeneratorTaskId(taskId); //  the task output's resultant libraryclass
-						    //Libraryclass outputLibraryclass = libraryclassDao.findByTaskId(taskId); //  the task output's resultant libraryclass
+						    
+						    Libraryclass outputLibraryclass = task.getOutputLibraryclass();
 						    outputLibrary.setLibraryclass(outputLibraryclass);
 						    outputLibrary.setName(outputLibraryName);
 						    

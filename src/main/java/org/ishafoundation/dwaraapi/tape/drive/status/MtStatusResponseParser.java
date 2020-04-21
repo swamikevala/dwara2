@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.tape.drive;
+package org.ishafoundation.dwaraapi.tape.drive.status;
 
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -89,10 +89,10 @@ public class MtStatusResponseParser {
 
 						switch (statusCode) {
 						case ONLINE:
-							mtStatus.setDriveReady(true);
+							mtStatus.setReady(true);
 							break;			        	
 						case DR_OPEN:
-							mtStatus.setDriveReady(false);
+							mtStatus.setReady(false);
 							break;
 						case BOT:
 						case EOD:

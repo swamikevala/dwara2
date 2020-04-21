@@ -20,6 +20,7 @@ import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
 import org.ishafoundation.dwaraapi.constants.Status;
+import org.ishafoundation.dwaraapi.db.model.master.Tape;
 import org.ishafoundation.dwaraapi.db.model.master.Task;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 
@@ -65,6 +66,9 @@ public class Job {
 
 	@Column(name="status_id")
 	private Status status;
+	
+	@OneToOne(fetch = FetchType.LAZY)
+	private Tape tape; 
 	
     @OneToMany(mappedBy = "job",
             cascade = CascadeType.MERGE,
@@ -141,6 +145,16 @@ public class Job {
 
 	public void setStatus(Status status) {
 		this.status = status;
+	}
+
+	@JsonIgnore
+	public Tape getTape() {
+		return tape;
+	}
+
+	@JsonIgnore
+	public void setTape(Tape tape) {
+		this.tape = tape;
 	}
 
 	@JsonIgnore

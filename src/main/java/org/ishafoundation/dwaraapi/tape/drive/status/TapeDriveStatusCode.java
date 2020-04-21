@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.tape.drive;
+package org.ishafoundation.dwaraapi.tape.drive.status;
 
 public enum TapeDriveStatusCode {
 	/*

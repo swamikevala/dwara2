@@ -2,6 +2,8 @@ package org.ishafoundation.dwaraapi.tape.library.components;
 
 public class StorageElement {
 	private int sNo;
+	private boolean importExport;
+	private boolean empty;
 	private String volumeTag;
 
 	public int getsNo() {
@@ -10,6 +12,22 @@ public class StorageElement {
 
 	public void setsNo(int sNo) {
 		this.sNo = sNo;
+	}
+
+	public boolean isImportExport() {
+		return importExport;
+	}
+
+	public void setImportExport(boolean importExport) {
+		this.importExport = importExport;
+	}
+
+	public boolean isEmpty() {
+		return empty;
+	}
+
+	public void setEmpty(boolean empty) {
+		this.empty = empty;
 	}
 
 	public String getVolumeTag() {

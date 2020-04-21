@@ -2,7 +2,7 @@ package org.ishafoundation.dwaraapi.tape.library.components;
 
 public class DataTransferElement {
 	private int sNo;
-	private boolean isEmpty;
+	private boolean empty;
 	private int storageElementNo;
 	private String volumeTag;
 
@@ -15,11 +15,11 @@ public class DataTransferElement {
 	}
 
 	public boolean isEmpty() {
-		return isEmpty;
+		return empty;
 	}
 
-	public void setEmpty(boolean isEmpty) {
-		this.isEmpty = isEmpty;
+	public void setEmpty(boolean empty) {
+		this.empty = empty;
 	}
 
 	public int getStorageElementNo() {
@@ -40,6 +40,6 @@ public class DataTransferElement {
 	
 	@Override
 	public String toString() {
-		return "sNo : " + sNo + " isEmpty : " + isEmpty + " sen : " + storageElementNo + " vt : " + volumeTag;
+		return "sNo : " + sNo + " empty : " + empty + " sen : " + storageElementNo + " vt : " + volumeTag;
 	}
 }

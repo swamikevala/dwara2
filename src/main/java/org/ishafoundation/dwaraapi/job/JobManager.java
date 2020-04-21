@@ -98,6 +98,12 @@ public class JobManager {
 
 	public void processJobs() {
 		List<Job> storageJobList = new ArrayList<Job>();
+		
+		// TODO Block jobs so that formatting jobs can happen...
+//		List<Job> formattingJobList = jobDao.findAllQueuedFormattingJobs(Action.format, Status.queued);
+//		if(formattingJobList) {
+//			return;
+//		}
 		List<Job> jobList = jobDao.findAllByStatusOrderById(Status.queued);
 		
 		if(jobList.size() > 0) {

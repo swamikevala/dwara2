@@ -5,5 +5,7 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface TapelibraryDao extends CrudRepository<Tapelibrary,Integer> {
 	
+	Tapelibrary findByName(String tapelibraryName);
+	
 
 }

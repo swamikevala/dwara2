@@ -7,7 +7,7 @@ import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.ArchiveJobsManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.thread.executor.TapeTaskThreadPoolExecutor;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.thread.task.TapeTask;
-import org.ishafoundation.dwaraapi.tape.drive.DriveStatusDetails;
+import org.ishafoundation.dwaraapi.tape.drive.status.DriveStatusDetails;
 import org.ishafoundation.dwaraapi.tape.library.TapeLibraryManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

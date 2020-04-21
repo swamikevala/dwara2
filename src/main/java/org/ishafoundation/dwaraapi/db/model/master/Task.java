@@ -46,15 +46,18 @@ public class Task {
 	@OneToOne(fetch = FetchType.LAZY)
 	private Application application;
 	
-	@Column(name="storage")
-	private boolean storage;
+	@Column(name="copy_number")
+	private Integer copyNumber;
+
+	@OneToOne
+	private Libraryclass outputLibraryclass;
 	
     @OneToMany(mappedBy = "task",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
     private List<TaskTaskset> tasksets = new ArrayList<>();
 	
-
+	
     public Integer getId() {
 		return id;
 	}
@@ -103,12 +106,22 @@ public class Task {
 		this.application = application;
 	}
 	
-	public boolean isStorage() {
-		return storage;
+	public Integer getCopyNumber() {
+		return copyNumber;
 	}
 
-	public void setStorage(boolean storage) {
-		this.storage = storage;
+	public void setCopyNumber(Integer copyNumber) {
+		this.copyNumber = copyNumber;
+	}
+
+	@JsonIgnore
+	public Libraryclass getOutputLibraryclass() {
+		return outputLibraryclass;
+	}
+
+	@JsonIgnore
+	public void setOutputLibraryclass(Libraryclass outputLibraryclass) {
+		this.outputLibraryclass = outputLibraryclass;
 	}
 
 	@JsonIgnore

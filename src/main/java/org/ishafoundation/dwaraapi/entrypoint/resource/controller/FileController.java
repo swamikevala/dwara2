@@ -25,8 +25,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
 import org.ishafoundation.dwaraapi.db.model.view.V_RestoreFile;
 import org.ishafoundation.dwaraapi.job.JobManager;
-import org.ishafoundation.dwaraapi.tape.library.MtxStatus;
 import org.ishafoundation.dwaraapi.tape.library.TapeLibraryManager;
+import org.ishafoundation.dwaraapi.tape.library.status.MtxStatus;
 import org.ishafoundation.dwaraapi.utils.ObjectMappingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,9 +44,9 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.annotations.ApiOperation;
 
 @RestController
-public class FileContoller {
+public class FileController {
 	
-	Logger logger = LoggerFactory.getLogger(FileContoller.class);
+	Logger logger = LoggerFactory.getLogger(FileController.class);
 
 	@Autowired
 	private V_RestoreFileDao v_RestoreFileDao;
@@ -95,9 +95,7 @@ public class FileContoller {
 	@GetMapping("/file/{fileId}")
 	public org.ishafoundation.dwaraapi.entrypoint.resource.restore.list.File getFile(@PathVariable int fileId, @RequestParam(required=false, defaultValue="1") int copyNumber, @RequestParam(defaultValue="false") boolean showDeleted) {
 
-		// cache this...
-		MtxStatus mtxStatus = tapeLibraryManager.getMtxStatus();
-		List<String> loadedTapeList = mtxStatus.getAllLoadedTapesInTheLibrary();
+		List<String> loadedTapeList = tapeLibraryManager.getAllLoadedTapesInTheLibraries();
 
 		List<Action> actionList = new ArrayList<Action>();
 		actionList.add(Action.list);

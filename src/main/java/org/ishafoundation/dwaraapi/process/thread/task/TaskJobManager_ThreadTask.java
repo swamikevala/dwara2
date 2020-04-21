@@ -92,7 +92,7 @@ public class TaskJobManager_ThreadTask implements Runnable{
 		String outputLibraryPathname = null; // holds where to generate the files in the physical system...
 		Task task = job.getTask();
 		int taskId = task.getId();
-		Libraryclass outputLibraryclass = libraryclassDao.findByGeneratorTaskId(taskId); //  the task output's resultant libraryclass
+		Libraryclass outputLibraryclass = task.getOutputLibraryclass();
 
 		if(outputLibraryclass != null) {
 			outputLibraryName = getOutputLibraryName(outputLibraryclass, libraryName);

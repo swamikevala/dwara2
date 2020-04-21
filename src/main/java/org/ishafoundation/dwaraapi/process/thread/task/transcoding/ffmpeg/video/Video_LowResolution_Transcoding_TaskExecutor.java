@@ -16,9 +16,13 @@ import org.ishafoundation.dwaraapi.process.transcoding.ffmpeg.utils.M01XmlFileHa
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Primary
+@Profile({ "!dev & !test" })
 public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask implements ITaskExecutor{
     static {
     	TaskFactory.register("video_low_resolution_transcoding", Video_LowResolution_Transcoding_TaskExecutor.class);

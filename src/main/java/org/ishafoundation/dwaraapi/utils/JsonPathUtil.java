@@ -66,7 +66,7 @@ public class JsonPathUtil {
 		List<Map<String, Object>> catalogs = JsonPathUtil.getArray(response , "data");
 		if(catalogs.size() > 0) {
 			Map<String, Object> catalog = catalogs.get(0);
-			int catalogId = (int) catalog.get("ID");	
+			Integer catalogId = (Integer) catalog.get("ID");	
 			System.out.println(catalogId);
 		}
 		

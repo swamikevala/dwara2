@@ -29,12 +29,16 @@ import org.ishafoundation.dwaraapi.utils.JsonPathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import com.jcraft.jsch.Session;
 
 @Component
+@Primary
+@Profile({ "!dev & !test" })
 public class MamUpdateTaskExecutor implements ITaskExecutor {
     static {
     	TaskFactory.register("mam_update", MamUpdateTaskExecutor.class);
@@ -144,7 +148,6 @@ public class MamUpdateTaskExecutor implements ITaskExecutor {
 			int catdvClipId = insertClip(catdvSessionId, fileId, catalogId, generatedProxyMetaDataFilePath, proxyFilePathOnMamServer, generatedThumbnailPath); //(proxyGenerationCompletedEvent.getMediaLibraryId(), StorageType.PRIMARY_COPY);
 			taskResponse.setIsComplete(true); 
 			taskResponse.setStdOutResponse("catdvClipId - " + catdvClipId);// TODO : where/how do we update externalrefid in db ...
-			taskResponse.setNeedDbUpdate(true);
 			taskResponse.setAppId(catdvClipId + ""); 
 		} catch (Throwable e) {
 			String failureReason = "insert Clip failed - " + e.getMessage();

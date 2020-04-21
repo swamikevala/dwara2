@@ -33,7 +33,7 @@ public class TaskUtils {
 	}
 	
 	public boolean isTaskStorage(Task task) {
-		return task.isStorage();
+		return task.getCopyNumber() != null ? true : false;
 	}
 //	
 //	@Autowired

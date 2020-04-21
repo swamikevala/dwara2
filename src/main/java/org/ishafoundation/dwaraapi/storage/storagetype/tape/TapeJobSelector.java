@@ -11,9 +11,11 @@ import java.util.TreeSet;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.constants.TapedriveStatus;
 import org.ishafoundation.dwaraapi.db.dao.master.TapedriveDao;
+import org.ishafoundation.dwaraapi.db.dao.master.TapelibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryclassTapesetDao;
 import org.ishafoundation.dwaraapi.db.model.Tapedrive;
 import org.ishafoundation.dwaraapi.db.model.master.Tape;
+import org.ishafoundation.dwaraapi.db.model.master.Tapelibrary;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassTapeset;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
@@ -21,7 +23,7 @@ import org.ishafoundation.dwaraapi.model.Volume;
 import org.ishafoundation.dwaraapi.storage.constants.StorageOperation;
 import org.ishafoundation.dwaraapi.storage.model.GroupedJobsCollection;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.tape.drive.DriveStatusDetails;
+import org.ishafoundation.dwaraapi.tape.drive.status.DriveStatusDetails;
 import org.ishafoundation.dwaraapi.tape.library.TapeLibraryManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +37,9 @@ public class TapeJobSelector {
 	
 	@Autowired
 	private TapedriveDao tapedriveDao;	
+	
+	@Autowired
+	private TapelibraryDao tapelibraryDao;
 	
 	@Autowired
 	private LibraryclassTapesetDao libraryclassTapesetDao;
@@ -76,7 +81,8 @@ public class TapeJobSelector {
 		// so when copy 1 is picked up for processing on a separate thread even before we call the TapeLibrary Utils and use the drive and update the db,
 		// getTheCurrentlyRunningArchiveJobs is being called by the second copy job thus the method not having any tape drive busy and so giving the same tape drive given for copy 1...
 		if(tapeJob != null) {
-			Tapedrive tapedrive = tapedriveDao.findByElementAddress(driveStatusDetails.getDriveSNo());
+			int tapeLibraryId = getTapeLibraryId(driveStatusDetails.getTapeLibraryName());
+			Tapedrive tapedrive = tapedriveDao.findByTapelibraryIdAndElementAddress(tapeLibraryId, driveStatusDetails.getDriveSNo());
 			tapedrive.setStatus(TapedriveStatus.BUSY.toString());
 			tapedrive.setTape(tapeJob.getVolume().getTape());
 			tapedrive.setJob(tapeJob.getJob()); //TODO : Swami has removed this in confluence. This is used in getTheCurrentlyRunningTapeJobs. Clarify this...
@@ -84,10 +90,16 @@ public class TapeJobSelector {
 			tapedriveDao.save(tapedrive);
 			logger.debug("DB Tapedrive Updation - Success");
 			
+			tapeJob.setTapeLibraryName(driveStatusDetails.getTapeLibraryName());
 			tapeJob.setDriveNo(driveStatusDetails.getDriveSNo());
 			tapeJob.setDeviceWwid(tapedrive.getDeviceWwid());
 		}
 		return tapeJob;
+	}
+	
+	private int getTapeLibraryId(String tapeLibraryName) {
+		Tapelibrary tapelibrary = tapelibraryDao.findByName(tapeLibraryName);
+		return tapelibrary.getId();
 	}
 	
 	private List<StorageJob> getIgnoreOptimisationTapeJobsList(List<StorageJob> tapeJobsList){

@@ -1,20 +1,20 @@
-package org.ishafoundation.dwaraapi.tape.drive;
+package org.ishafoundation.dwaraapi.tape.drive.status;
 
 public class MtStatus {
 
-	private boolean isBusy; // if response has - Device or resource busy isBusy = true
+	private boolean busy; // if response has - Device or resource busy busy = true
 	private int fileNumber;
 	private int blockNumber;
 	private int softErrorCount;
-	private boolean isDriveReady; // if ONLINE isDriveReady = true, if DR_OPEN isDriveReady = false
+	private boolean ready; // if ONLINE ready = true, if DR_OPEN ready = false
 	private TapeDriveStatusCode statusCode;
 	private boolean isWriteProtected;
 	
 	public boolean isBusy() {
-		return isBusy;
+		return busy;
 	}
-	public void setBusy(boolean isBusy) {
-		this.isBusy = isBusy;
+	public void setBusy(boolean busy) {
+		this.busy = busy;
 	}
 	public int getFileNumber() {
 		return fileNumber;
@@ -34,11 +34,11 @@ public class MtStatus {
 	public void setSoftErrorCount(int softErrorCount) {
 		this.softErrorCount = softErrorCount;
 	}
-	public boolean isDriveReady() {
-		return isDriveReady;
+	public boolean isReady() {
+		return ready;
 	}
-	public void setDriveReady(boolean isDriveReady) {
-		this.isDriveReady = isDriveReady;
+	public void setReady(boolean ready) {
+		this.ready = ready;
 	}
 	public TapeDriveStatusCode getStatusCode() {
 		return statusCode;
@@ -55,6 +55,6 @@ public class MtStatus {
 
 	@Override
 	public String toString() {
-		return "isBusy : " + isBusy + " fileNumber : " + fileNumber + " blockNumber : " + blockNumber + " softErrorCount : " + softErrorCount + " isDriveReady : " + isDriveReady + " statusCode : " + statusCode + " isWriteProtected : " + isWriteProtected;
+		return "busy : " + busy + " fileNumber : " + fileNumber + " blockNumber : " + blockNumber + " softErrorCount : " + softErrorCount + " ready : " + ready + " statusCode : " + statusCode + " isWriteProtected : " + isWriteProtected;
 	}
 }
