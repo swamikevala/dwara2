@@ -222,7 +222,7 @@ CREATE TABLE `libraryclass` (
 
 LOCK TABLES `libraryclass` WRITE;
 /*!40000 ALTER TABLE `libraryclass` DISABLE KEYS */;
-INSERT INTO `libraryclass` VALUES (5001,'\0',0,'pub-video','C:\\data\\user','',NULL,9001,4001,19001),(5002,'\0',0,'pub-audio','C:\\data\\user','',NULL,9002,4002,19001),(5003,'\0',0,'private1-video','C:\\data\\user','',NULL,0,4001,19001),(5004,'\0',0,'Private2-Video','C:\\data\\user','',NULL,0,4001,19001),(5005,'\0',0,'Private3-Video','C:\\data\\user','',NULL,0,4001,19001),(5006,'\0',0,'Private1-Audio','C:\\data\\user','',NULL,0,4002,19001),(5007,'\0',0,'PreviewProxy-Video','C:\\data\\transcoded','\0',18004,9007,4004,19001),(5008,'\0',0,'MezzanineProxy-Video','C:\\data\\transcoded','\0',18017,9008,0,19001),(5009,'\0',0,'Private(ALL)PreviewProxy-Video - common private libclass for all ???','C:\\data\\transcoded','\0',NULL,9007,0,19001),(5010,'\0',0,'Private(ALL)MezzanineProxy-Video','C:\\data\\transcoded','\0',NULL,9008,0,19001),(5011,'\0',0,'Private(ALL)PreviewProxy-Audio','C:\\data\\transcoded','\0',NULL,9007,0,19001),(5012,'\0',0,'Private(ALL)MezzanineProxy-Audio','C:\\data\\transcoded','\0',NULL,9008,0,19001),(5013,'\0',0,'Private2PreviewProxy-Video','C:\\data\\transcoded','\0',NULL,9007,0,19001);
+INSERT INTO `libraryclass` VALUES (5001,'\0',0,'pub-video','C:\\data\\ingested','',NULL,9001,4001,19001),(5002,'\0',0,'pub-audio','C:\\data\\ingested','',NULL,9002,4002,19001),(5003,'\0',0,'private1-video','C:\\data\\ingested','',NULL,0,4001,19001),(5004,'\0',0,'Private2-Video','C:\\data\\ingested','',NULL,0,4001,19001),(5005,'\0',0,'Private3-Video','C:\\data\\ingested','',NULL,0,4001,19001),(5006,'\0',0,'Private1-Audio','C:\\data\\ingested','',NULL,0,4002,19001),(5007,'\0',0,'PreviewProxy-Video','C:\\data\\transcoded','\0',18004,9007,4004,19001),(5008,'\0',0,'MezzanineProxy-Video','C:\\data\\transcoded','\0',18017,9008,0,19001),(5009,'\0',0,'Private(ALL)PreviewProxy-Video - common private libclass for all ???','C:\\data\\transcoded','\0',NULL,9007,0,19001),(5010,'\0',0,'Private(ALL)MezzanineProxy-Video','C:\\data\\transcoded','\0',NULL,9008,0,19001),(5011,'\0',0,'Private(ALL)PreviewProxy-Audio','C:\\data\\transcoded','\0',NULL,9007,0,19001),(5012,'\0',0,'Private(ALL)MezzanineProxy-Audio','C:\\data\\transcoded','\0',NULL,9008,0,19001),(5013,'\0',0,'Private2PreviewProxy-Video','C:\\data\\transcoded','\0',NULL,9007,0,19001);
 /*!40000 ALTER TABLE `libraryclass` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -670,11 +670,15 @@ CREATE TABLE `task` (
   `storage` bit(1) DEFAULT NULL,
   `application_id` int(11) DEFAULT NULL,
   `taskfiletype_id` int(11) DEFAULT NULL,
+  `copy_number` int(11) DEFAULT NULL,
+  `output_libraryclass_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_lerptdo9d67pejjpbfau899tm` (`name`),
   KEY `FKkj95at7t3jbjg0nng1bw44asr` (`application_id`),
   KEY `FK8pfqcr004sgufca7fmjex73r5` (`taskfiletype_id`),
+  KEY `FKcb4subrdv67gwoxkiodeofkqk` (`output_libraryclass_id`),
   CONSTRAINT `FK8pfqcr004sgufca7fmjex73r5` FOREIGN KEY (`taskfiletype_id`) REFERENCES `taskfiletype` (`id`),
+  CONSTRAINT `FKcb4subrdv67gwoxkiodeofkqk` FOREIGN KEY (`output_libraryclass_id`) REFERENCES `libraryclass` (`id`),
   CONSTRAINT `FKkj95at7t3jbjg0nng1bw44asr` FOREIGN KEY (`application_id`) REFERENCES `application` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -685,7 +689,7 @@ CREATE TABLE `task` (
 
 LOCK TABLES `task` WRITE;
 /*!40000 ALTER TABLE `task` DISABLE KEYS */;
-INSERT INTO `task` VALUES (18001,NULL,0,'V5 Raw Copy 1','',NULL,NULL),(18002,NULL,0,'V5 Raw Copy 2','',NULL,NULL),(18003,NULL,0,'V5 Raw Copy 3','',NULL,NULL),(18004,NULL,0,'video_low_resolution_transcoding','\0',NULL,4001),(18005,NULL,20,'mam_update','\0',1001,4001),(18006,NULL,0,'Preview Proxy Copy 1','',NULL,NULL),(18007,NULL,0,'Mezz Proxy Copy 1','',NULL,NULL),(18008,NULL,0,'U Raw Copy 1','',NULL,NULL),(18009,NULL,0,'U Raw Copy 2','',NULL,NULL),(18010,NULL,0,'audio_transcoding','\0',NULL,4002),(18011,NULL,0,'copy_to_transcript_server','\0',NULL,4002),(18012,NULL,0,'restore','',NULL,NULL),(18013,NULL,0,'P2 Raw Copy 1','',NULL,NULL),(18014,NULL,0,'P2 Raw Copy 2 Encrypted','',NULL,NULL),(18015,NULL,0,'P2 Preview Proxy Copy 1','',NULL,NULL),(18016,NULL,0,'P2 Preview Proxy Copy 2 Encrypted','',NULL,NULL),(18017,NULL,0,'video_medium_resolution_transcoding','\0',NULL,4001);
+INSERT INTO `task` VALUES (18001,NULL,0,'V5 Raw Copy 1','',NULL,NULL,1,NULL),(18002,NULL,0,'V5 Raw Copy 2','',NULL,NULL,2,NULL),(18003,NULL,0,'V5 Raw Copy 3','',NULL,NULL,3,NULL),(18004,NULL,0,'video_low_resolution_transcoding','\0',NULL,4001,NULL,NULL),(18005,NULL,20,'mam_update','\0',1001,4001,NULL,NULL),(18006,NULL,0,'Preview Proxy Copy 1','',NULL,NULL,1,NULL),(18007,NULL,0,'Mezz Proxy Copy 1','',NULL,NULL,1,NULL),(18008,NULL,0,'U Raw Copy 1','',NULL,NULL,1,NULL),(18009,NULL,0,'U Raw Copy 2','',NULL,NULL,2,NULL),(18010,NULL,0,'audio_transcoding','\0',NULL,4002,NULL,NULL),(18011,NULL,0,'copy_to_transcript_server','\0',NULL,4002,NULL,NULL),(18012,NULL,0,'restore','',NULL,NULL,1,NULL),(18013,NULL,0,'P2 Raw Copy 1','',NULL,NULL,1,NULL),(18014,NULL,0,'P2 Raw Copy 2 Encrypted','',NULL,NULL,2,NULL),(18015,NULL,0,'P2 Preview Proxy Copy 1','',NULL,NULL,1,NULL),(18016,NULL,0,'P2 Preview Proxy Copy 2 Encrypted','',NULL,NULL,2,NULL),(18017,NULL,0,'video_medium_resolution_transcoding','\0',NULL,4001,NULL,NULL);
 /*!40000 ALTER TABLE `task` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -801,79 +805,3 @@ UNLOCK TABLES;
 --
 -- Temporary view structure for view `v_restore_file`
 --
-
-DROP TABLE IF EXISTS `v_restore_file`;
-/*!50001 DROP VIEW IF EXISTS `v_restore_file`*/;
-SET @saved_cs_client     = @@character_set_client;
-SET character_set_client = utf8;
-/*!50001 CREATE VIEW `v_restore_file` AS SELECT 
- 1 AS `tape_id`,
- 1 AS `tapeset_id`,
- 1 AS `file_id`,
- 1 AS `library_id`,
- 1 AS `targetvolume_id`,
- 1 AS `action_id`,
- 1 AS `user_id`,
- 1 AS `libraryclass_id`,
- 1 AS `libraryclass_name`,
- 1 AS `file_pathname`,
- 1 AS `file_size`,
- 1 AS `file_crc`,
- 1 AS `tape_barcode`,
- 1 AS `tape_blocksize`,
- 1 AS `tape_finalized`,
- 1 AS `tapeset_copy_number`,
- 1 AS `storageformat_id`,
- 1 AS `storageformat_name`,
- 1 AS `file_tape_block`,
- 1 AS `file_tape_offset`,
- 1 AS `file_tape_encrypted`,
- 1 AS `file_tape_deleted`*/;
-SET character_set_client = @saved_cs_client;
-
---
--- Final view structure for view `extension_taskfiletype_view`
---
-
-/*!50001 DROP VIEW IF EXISTS `extension_taskfiletype_view`*/;
-/*!50001 SET @saved_cs_client          = @@character_set_client */;
-/*!50001 SET @saved_cs_results         = @@character_set_results */;
-/*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8 */;
-/*!50001 SET character_set_results     = utf8 */;
-/*!50001 SET collation_connection      = utf8_general_ci */;
-/*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `extension_taskfiletype_view` AS select `taskfiletype`.`name` AS `taskfiletype_name`,`extension`.`name` AS `extension_name`,`extension_taskfiletype`.`sidecar` AS `sidecar` from ((`extension_taskfiletype` join `taskfiletype` on((`taskfiletype`.`id` = `extension_taskfiletype`.`taskfiletype_id`))) join `extension` on((`extension`.`id` = `extension_taskfiletype`.`extension_id`))) order by `taskfiletype`.`id` */;
-/*!50001 SET character_set_client      = @saved_cs_client */;
-/*!50001 SET character_set_results     = @saved_cs_results */;
-/*!50001 SET collation_connection      = @saved_col_connection */;
-
---
--- Final view structure for view `v_restore_file`
---
-
-/*!50001 DROP VIEW IF EXISTS `v_restore_file`*/;
-/*!50001 SET @saved_cs_client          = @@character_set_client */;
-/*!50001 SET @saved_cs_results         = @@character_set_results */;
-/*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8 */;
-/*!50001 SET character_set_results     = utf8 */;
-/*!50001 SET collation_connection      = utf8_general_ci */;
-/*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `v_restore_file` AS select `tape`.`id` AS `tape_id`,`tapeset`.`id` AS `tapeset_id`,`file`.`id` AS `file_id`,`library`.`id` AS `library_id`,`libraryclass_targetvolume`.`targetvolume_id` AS `targetvolume_id`,`libraryclass_action_user`.`action_id` AS `action_id`,`libraryclass_action_user`.`user_id` AS `user_id`,`libraryclass`.`id` AS `libraryclass_id`,`libraryclass`.`name` AS `libraryclass_name`,`file`.`pathname` AS `file_pathname`,`file`.`size` AS `file_size`,`file`.`crc` AS `file_crc`,`tape`.`barcode` AS `tape_barcode`,`tape`.`blocksize` AS `tape_blocksize`,`tape`.`finalized` AS `tape_finalized`,`tapeset`.`copy_number` AS `tapeset_copy_number`,`storageformat`.`id` AS `storageformat_id`,`storageformat`.`name` AS `storageformat_name`,`file_tape`.`block` AS `file_tape_block`,`file_tape`.`offset` AS `file_tape_offset`,`file_tape`.`encrypted` AS `file_tape_encrypted`,`file_tape`.`deleted` AS `file_tape_deleted` from ((((((((`file_tape` join `tape` on((`file_tape`.`tape_id` = `tape`.`id`))) join `tapeset` on((`tape`.`tapeset_id` = `tapeset`.`id`))) join `file` on((`file`.`id` = `file_tape`.`file_id`))) join `library` on((`file`.`library_id` = `library`.`id`))) join `storageformat` on((`storageformat`.`id` = `tapeset`.`storageformat_id`))) join `libraryclass` on((`libraryclass`.`id` = `library`.`libraryclass_id`))) join `libraryclass_targetvolume` on((`libraryclass_targetvolume`.`libraryclass_id` = `library`.`libraryclass_id`))) join `libraryclass_action_user` on((`libraryclass_action_user`.`libraryclass_id` = `library`.`libraryclass_id`))) */;
-/*!50001 SET character_set_client      = @saved_cs_client */;
-/*!50001 SET character_set_results     = @saved_cs_results */;
-/*!50001 SET collation_connection      = @saved_col_connection */;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2020-04-13 16:38:15
