@@ -11,6 +11,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.job.TaskUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,10 +32,21 @@ public class ScheduledStatusUpdaterController {
 	@Autowired
 	private TaskUtils taskUtils;
 
+	@Value("${scheduler.enabled:true}")
+	private boolean isEnabled;
+	
 	@Scheduled(fixedDelay = 60000)
     @PostMapping("/updateStatus")
     public ResponseEntity<String> updateStatus(){
-    	
+    	if(isEnabled) {
+    		updateTransactionalTablesStatus();
+	    	return ResponseEntity.status(HttpStatus.OK).body("Done");
+    	}
+    	else
+    		return null; 
+    }
+	
+	private void updateTransactionalTablesStatus() {
 		List<Job> jobList = jobDao.findAllByStatusOrderById(Status.in_progress);
 		for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
 			Job job = (Job) iterator.next();
@@ -74,7 +87,5 @@ public class ScheduledStatusUpdaterController {
 				}
 			}
 		}
-   	
-		return null;
-    }
+	}
 }

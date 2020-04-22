@@ -1,23 +1,61 @@
 package org.ishafoundation.dwaraapi.controller;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams;
+import org.ishafoundation.dwaraapi.entrypoint.resource.RequestWithSubrequestDetails;
+import org.ishafoundation.dwaraapi.entrypoint.resource.controller.LibraryController;
+import org.junit.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+@TestPropertySource(locations = "classpath:/config/application-stage.properties")
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class LibraryControllerTest {
-//
-//	@Autowired 
-//	IngestController libraryController;
-//	
-//	@Test
-//	public void ingest() {
-//		//libraryController.ingest(14001, "C:\\data\\user\\pgurumurthy\\ingest\\pub-video", "14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A", "14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A", "", -1, -1, -1);
-//		String libraryNameToBeIngested = "99999_Shivanga-Ladies_Sharing_English_Avinashi_10-Dec-2017_Panasonic-AG90A";
-//		org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest = new org.ishafoundation.dwaraapi.api.req.ingest.UserRequest();
-//		
-//		libraryController.ingest(userRequest);
-//	}
-//
+
+	@Autowired 
+	LibraryController libraryController;
+	
+	@Test
+	@WithMockUser(username = "user1", password = "pwd")
+	public void ingest() {
+		String sourcePath =  "C:\\data\\user\\pgurumurthy\\ingest\\pub-video";
+		String libraryNameToBeIngested = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9";
+		
+		List<LibraryParams> libraryParamsList = new ArrayList<LibraryParams>();
+		
+		LibraryParams libraryParams = new LibraryParams();
+		libraryParams.setSourcePath(sourcePath);
+		libraryParams.setName(libraryNameToBeIngested);
+		
+		libraryParamsList.add(libraryParams);
+		
+		org.ishafoundation.dwaraapi.api.req.ingest.UserRequest userRequest = new org.ishafoundation.dwaraapi.api.req.ingest.UserRequest();
+		userRequest.setLibraryclass("pub-video");
+		userRequest.setLibrary(libraryParamsList);
+		
+		ResponseEntity<RequestWithSubrequestDetails> response = libraryController.ingest(userRequest);
+		
+		// TODO validate response here...
+		HttpStatus statusCode = response.getStatusCode();
+		Assert.assertEquals(202, response.getStatusCodeValue());
+		// assert statuscode = 202
+		RequestWithSubrequestDetails respBody = response.getBody();
+		Assert.assertEquals(true, response.getBody().getLibraryId() > 0);
+		System.out.println("Ingested successfully");
+		// TODO Also assert important parts of response...
+		
+		// verify DB data here...
+		
+		
+	}
 }

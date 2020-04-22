@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.controller;
+package org.ishafoundation.dwaraapi.dbunit;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -25,13 +25,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 @TestPropertySource(locations = "classpath:/config/application-stage.properties")
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class JobsControllerTest extends DBTestCase {
+public class SampleDBTest extends DBTestCase {
 
 	@Autowired
 	private Environment environment;
-	
-	@Autowired
-	private UserAdminController userAdminController;
 	
 	@PostConstruct
 	void initialiseDbProperties(){
@@ -41,7 +38,6 @@ public class JobsControllerTest extends DBTestCase {
         System.setProperty(PropertiesBasedJdbcDatabaseTester.DBUNIT_USERNAME, environment.getProperty(PropertiesBasedJdbcDatabaseTester.DBUNIT_USERNAME));
         System.setProperty(PropertiesBasedJdbcDatabaseTester.DBUNIT_PASSWORD, environment.getProperty(PropertiesBasedJdbcDatabaseTester.DBUNIT_PASSWORD));
 	}
-	
 	
 	@Override
     protected IDataSet getDataSet() throws Exception {
@@ -58,7 +54,8 @@ public class JobsControllerTest extends DBTestCase {
 
     @Test
     public void testMe() throws Exception {
-    	
+
+    	// TODO : integrate dbtest case with spring as the dataset./setup and teardown methods are not getting called.
     	//userAdminController.processRegister("abc", "abc");
     	
 //        // Fetch database data after executing your code
@@ -71,15 +68,4 @@ public class JobsControllerTest extends DBTestCase {
         partialDataSet.addTable("user");
         FlatXmlDataSet.write(partialDataSet, new FileOutputStream("output.xml"));
     }
-
-	
-//
-//	@Autowired 
-//	JobsController jobsController;
-//	
-//	@Test
-//	public void ingest() {
-//		jobsController.triggerJobs();
-//	}
-//
 }
