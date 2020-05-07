@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.db.dao.transactional;
 
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.constants.Action;
 import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.springframework.data.repository.CrudRepository;
@@ -16,6 +17,8 @@ public interface JobDao extends CrudRepository<Job,Integer> {
 	List<Job> findAllBySubrequestIdOrderById(int subrequestId);
 	
 	Job findByTaskIdAndSubrequestId(int taskId, int subrequestId);
+	
+	List<Job> findAllBySubrequestRequestActionAndStatus(Action action, Status status);
 	
 	//Job findById(int jobId);
 }

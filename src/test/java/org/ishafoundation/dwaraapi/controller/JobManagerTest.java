@@ -9,7 +9,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-@TestPropertySource(locations = "classpath:/config/application-stage.properties")
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class JobManagerTest{
@@ -18,7 +17,7 @@ public class JobManagerTest{
 	private JobManager jobManager;
 	
 	@Test
-	@WithMockUser(username = "user1", password = "pwd")
+	@WithMockUser(username = "pgurumurthy", password = "pwd")
 	public void processJobs() {
 		jobManager.processJobs();
 	}

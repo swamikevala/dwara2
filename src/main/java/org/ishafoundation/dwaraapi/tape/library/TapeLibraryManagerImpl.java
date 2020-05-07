@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Primary
 //@Profile("default") works
-@Profile({ "!dev & !test" })
+@Profile({ "!dev & !stage" })
 public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 	
 	private static Logger logger = LoggerFactory.getLogger(TapeLibraryManagerImpl.class);

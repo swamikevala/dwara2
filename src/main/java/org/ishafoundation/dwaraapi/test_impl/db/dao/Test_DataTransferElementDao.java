@@ -9,6 +9,8 @@ public interface Test_DataTransferElementDao extends CrudRepository<Test_DataTra
 
 	Test_DataTransferElement findBySNo(int sNo);
 	
-	List<Test_DataTransferElement> findAllByTapelibraryId(int tapelibraryId);
+	Test_DataTransferElement findByTapedriveId(int tapedriveId);
+	
+	List<Test_DataTransferElement> findAllByTapelibraryName(String tapelibraryName);
 	
 }

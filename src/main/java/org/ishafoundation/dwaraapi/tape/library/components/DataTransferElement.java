@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.tape.library.components;
 public class DataTransferElement {
 	private int sNo;
 	private boolean empty;
-	private int storageElementNo;
+	private Integer storageElementNo;
 	private String volumeTag;
 
 	public int getsNo() {
@@ -22,11 +22,11 @@ public class DataTransferElement {
 		this.empty = empty;
 	}
 
-	public int getStorageElementNo() {
+	public Integer getStorageElementNo() {
 		return storageElementNo;
 	}
 
-	public void setStorageElementNo(int storageElementNo) {
+	public void setStorageElementNo(Integer storageElementNo) {
 		this.storageElementNo = storageElementNo;
 	}
 

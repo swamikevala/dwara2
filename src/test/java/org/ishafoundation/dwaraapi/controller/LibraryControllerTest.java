@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.controller;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.api.exception.DwaraException;
 import org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams;
 import org.ishafoundation.dwaraapi.entrypoint.resource.RequestWithSubrequestDetails;
 import org.ishafoundation.dwaraapi.entrypoint.resource.controller.LibraryController;
@@ -17,7 +18,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-@TestPropertySource(locations = "classpath:/config/application-stage.properties")
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class LibraryControllerTest {
@@ -26,7 +26,7 @@ public class LibraryControllerTest {
 	LibraryController libraryController;
 	
 	@Test
-	@WithMockUser(username = "user1", password = "pwd")
+	@WithMockUser(username = "pgurumurthy", password = "pwd")
 	public void ingest() {
 		String sourcePath =  "C:\\data\\user\\pgurumurthy\\ingest\\pub-video";
 		String libraryNameToBeIngested = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9";
@@ -43,8 +43,14 @@ public class LibraryControllerTest {
 		userRequest.setLibraryclass("pub-video");
 		userRequest.setLibrary(libraryParamsList);
 		
-		ResponseEntity<RequestWithSubrequestDetails> response = libraryController.ingest(userRequest);
-		
+		ResponseEntity<RequestWithSubrequestDetails> response = null;
+		try {
+			response = libraryController.ingest(userRequest);
+		}catch (DwaraException e) {
+			// since we are invoking the method straight... we need to catch the exception.
+			
+			System.err.println(e.getDetails());
+		}
 		// TODO validate response here...
 		HttpStatus statusCode = response.getStatusCode();
 		Assert.assertEquals(202, response.getStatusCodeValue());

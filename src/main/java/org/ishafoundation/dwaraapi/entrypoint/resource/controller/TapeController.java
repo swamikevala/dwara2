@@ -1,18 +1,24 @@
 package org.ishafoundation.dwaraapi.entrypoint.resource.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.constants.Status;
+import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
-import org.ishafoundation.dwaraapi.tape.drive.TapeDriveManager;
-import org.ishafoundation.dwaraapi.tape.drive.status.DriveStatusDetails;
-import org.ishafoundation.dwaraapi.tape.library.TapeLibraryManager;
+import org.ishafoundation.dwaraapi.job.JobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,15 +30,21 @@ import io.swagger.annotations.ApiOperation;
 public class TapeController {
 	
 	Logger logger = LoggerFactory.getLogger(TapeController.class);
+	
+	@Autowired
+	private UserDao userDao;
 
 	@Autowired
-	private TapeLibraryManager tapeLibraryManager;
+	private RequestDao requestDao;
 	
 	@Autowired
-	private TapeDriveManager tapeDriveManager;
+	private SubrequestDao subrequestDao;
 	
-	// TODO Question for swami - Should we do write and verify immediately..
+	@Autowired
+	private JobDao jobDao;
 	
+	@Autowired
+	private JobManager jobManager;
 	
 	//	POST /tape/123/verify
 	// TODO Question for swami - Help on this
@@ -45,36 +57,36 @@ public class TapeController {
 	}
 
 	
-	//	POST /tape/123/writeLabel
+	//	POST /tape/V5A001/writeLabel
 	@ApiOperation(value = "?")
 	@PostMapping("/tape/{tapeBarcode}/writeLabel")
 	public ResponseEntity<String> writeLabel(@PathVariable("tapeBarcode") String tapeBarcode){
 		
-		// TODO This will be moved out of the controller here...
-		// TODO do we have to create jobs for these...
 		Request request = new Request();
-		Subrequest subrequest = new Subrequest();
-		Job job = new Job();
+    	request.setAction(org.ishafoundation.dwaraapi.constants.Action.format);
+    	request.setRequestedAt(LocalDateTime.now());
+    	
+    	String requestedBy = SecurityContextHolder.getContext().getAuthentication().getName();
+    	request.setUser(userDao.findByName(requestedBy));
+    	logger.debug("DB Request Creation");
+    	request = requestDao.save(request);
+    	int requestId = request.getId();
+    	logger.debug("DB Request Creation - Success " + requestId);
 		
-		//get a drive
-		List<DriveStatusDetails> availableDrivesList = tapeLibraryManager.getAvailableDrivesList();
-		DriveStatusDetails dsd = availableDrivesList.get(0);
-		
-		// load the tape
-		try {
-			tapeLibraryManager.locateAndLoadTapeOnToDrive(tapeBarcode, dsd.getTapeLibraryName(), dsd.getDriveSNo());
-			//tapeDriveManager.writeLabel(tapeBarcode, dsd.getDriveSNo());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-
-
-
-		
-		
-		return ResponseEntity.status(HttpStatus.OK).body("");
+    	Subrequest subrequest = new Subrequest();
+    	subrequest.setRequest(request);
+    	subrequest.setStatus(Status.queued);
+    	logger.debug("DB Subrequest Creation");
+    	subrequest = subrequestDao.save(subrequest);
+    	logger.debug("DB Subrequest Creation - Success " + subrequest.getId());
+    	
+		//Job job = jobManager.createLabelingJob(request, subrequest);
+    	Job job = jobManager.createJobForLabeling(request, subrequest);
+    	logger.debug("DB Job row Creation");   
+    	jobDao.save(job);
+    	logger.debug("DB Job row Creation - Success");
+	    
+		return ResponseEntity.status(HttpStatus.OK).body(tapeBarcode + " Write Label request submitted - " + requestId);
 	}
 
 	

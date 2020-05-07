@@ -34,7 +34,10 @@ public class ActionAttributeConverter implements AttributeConverter<Action, Inte
 			return 8010;
 		case diagnostics:
 			return 8011;
-
+		case tapedrivemapping:
+			return 8012;
+		case format:
+			return 8013;			
 		default:
 			throw new IllegalArgumentException(attribute + " not supported.");
 		}
@@ -68,6 +71,10 @@ public class ActionAttributeConverter implements AttributeConverter<Action, Inte
 			return Action.rewrite;
 		case 8011:
 			return Action.diagnostics;
+		case 8012:
+			return Action.tapedrivemapping;
+		case 8013:
+			return Action.format;
 
 		default:
 			throw new IllegalArgumentException(dbData + " not supported.");

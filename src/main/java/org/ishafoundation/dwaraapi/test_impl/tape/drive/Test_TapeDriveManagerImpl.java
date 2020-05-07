@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile({ "dev | test" })
+@Profile({ "dev | stage" })
 public class Test_TapeDriveManagerImpl extends AbstractTapeDriveManagerImpl{
 	
 	private static final Logger logger = LoggerFactory.getLogger(Test_TapeDriveManagerImpl.class);
@@ -34,30 +34,44 @@ public class Test_TapeDriveManagerImpl extends AbstractTapeDriveManagerImpl{
 	// For e.g., if 5 medialibrary already in volume and to write the 6th mediaLibrary on tape, we need to position tapeHead on FileNumber = 5 - Remember Tape fileNumbers starts with 0
 	// Reference - http://etutorials.org/Linux+systems/how+linux+works/Chapter+13+Backups/13.6+Tape+Drive+Devices/
 	@Override
-	public DriveStatusDetails setTapeHeadPositionForWriting(int tapelibraryId, int dataTransferElementNo) {
+	public DriveStatusDetails setTapeHeadPositionForWriting(String tapelibraryName, int dataTransferElementNo) {
 		
 		return null;
 	}
 
 	// if blockNo is not requested to be seeked...
 	@Override
-	public DriveStatusDetails setTapeHeadPositionForReading(int tapelibraryId, int dataTransferElementNo, int blockNumberToSeek) {
+	public DriveStatusDetails setTapeHeadPositionForReading(String tapelibraryName, int dataTransferElementNo, int blockNumberToSeek) {
 		return null;
 	}
 
+	@Override
+	public boolean isTapeBlank(String tapelibraryName, int dataTransferElementNo) {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	@Override
+	public DriveStatusDetails setTapeHeadPositionForFormatting(String tapelibraryName, int dataTransferElementNo) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 	// drivename has to be unique even on different libraries... so need to pass tapelibraryid???
 	@Override
-	protected MtStatus getMtStatus(int tapelibraryId, String driveName){
+	protected MtStatus getMtStatus(String driveName){
 		MtStatus mtStatus = null;
 		
-		Tapedrive tapedrive = tapedriveDao.findByTapelibraryIdAndDeviceWwidContaining(tapelibraryId, driveName);
-		int driveElementAddress = tapedrive.getElementAddress();
+		Tapedrive tapedrive = tapedriveDao.findByDeviceWwidContaining(driveName);
+		int tapedriveId = tapedrive.getId();
 		
-		Test_DataTransferElement test_DataTransferElement = test_DataTransferElementDao.findBySNo(driveElementAddress);
+		Test_DataTransferElement test_DataTransferElement = test_DataTransferElementDao.findByTapedriveId(tapedriveId);
 		Test_MtStatus test_MtStatus = test_DataTransferElement.getTest_MtStatus();
 		
 		mtStatus = test_TapeObjectsMapper.getMtStatus(test_MtStatus);
 		return mtStatus;
 	}
+
+
 
 }

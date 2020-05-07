@@ -1,61 +1,98 @@
 package org.ishafoundation.dwaraapi.tape.label;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
+import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.PathVariable;
 
 @Component
 public class TapeLabelManager{
+	
+	Logger logger = LoggerFactory.getLogger(TapeLabelManager.class);
+
+	@Autowired
+	private CommandLineExecuter commandLineExecuter;
+	
+	@Value("${tape.volumelabel1.implid}")
+	private String implId;
+	
+	@Value("${tape.volumelabel1.ownerid}")
+	private String ownerId;
+	
+//	@Autowired
+//	private TapeLibraryManager tapeLibraryManager;
 //	
-//	// TODO Move this out
-//	public ResponseEntity<String> writeLabel(String tapeBarcode, int tapelibraryId, int dataTransferElementNo){
-//
+//	@Autowired
+//	private TapeDriveManager tapeDriveManager;
+//	
+//	public
+//		//get a drive
+//		List<DriveStatusDetails> availableDrivesList = tapeLibraryManager.getAvailableDrivesList();
+//		DriveStatusDetails dsd = availableDrivesList.get(0);
 //		
-//		//		Option 1 - issue multiple commands
-//		//		
-//		//		dd << EOF of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80
-//		//		getLabel(tapeBarcode) // TODO: should this storageformat specific? anyway provide a way...
-//		//		EOF
-//		
-//				
-//		//		Option 2 - using echo		
-//		//		echo "VOL1V5A001L             LTFS                                                  4" | dd of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80
-//						
-//				
-//		//		Option 3 - using a temp file
-//		//		dd if=/data/tmp/V5A001-Label.txt of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80		
-//
+//		// load the tape
 //		try {
-//			String dataTransferElementName = getDriveName(tapelibraryId, dataTransferElementNo);
-//			// rewind the tape
-//			rewind(dataTransferElementName);
-//
-//			String storageFormat = "BRU"; // TODO get it from tapeset
-//			String label1 = getLabel1(tapeBarcode, storageFormat);
-//			commandLineExecuter.executeCommand("echo \"" + label1 + "\" | dd of=" + dataTransferElementName + " bs=80");
-//			
-//			String label2 = getLabel2(tapeBarcode, storageFormat);
-//			commandLineExecuter.executeCommand("echo \"" + label2 + "\" | dd of=" + dataTransferElementName + " bs=80");
+//			tapeLibraryManager.locateAndLoadTapeOnToDrive(tapeBarcode, dsd.getTapelibraryName(), dsd.getDriveSNo());
+//			tapeLabelManager.writeVolumeHeaderLabelSet(tapeBarcode, dsd.getDriveName());
 //		} catch (Exception e) {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
-//		
-//		return ResponseEntity.status(HttpStatus.OK).body("");
+//	
 //	}
-//
-//
-//	private String getLabel1(String tapeBarcode, String storageFormat) {
-//		// TODO Something like below
-//		return "VOL1" + tapeBarcode + "L             " + storageFormat + "                                                   4";
-//	}
-//
-//	private String getLabel2(String tapeBarcode, String storageFormat) {
-//		// TODO Something like below
-//		return "VOL2" + tapeBarcode + "L             " + storageFormat + "                                                   4";
-//	}
-//
+	public boolean writeVolumeHeaderLabelSet(String tapeBarcode, String storageFormat, String dataTransferElementName) throws Exception{
+		boolean isSuccess = false;
+
+		// Writing a label to the tape has multiple options..
+		//		Option 1 - issue multiple commands
+		//		
+		//		dd << EOF of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80
+		//		getLabel(tapeBarcode) // TODO: should this storageformat specific? anyway provide a way...
+		//		EOF
+		
+				
+		//		Option 2 - using echo		
+		//		echo "VOL1V5A001L             LTFS                                                  4" | dd of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80
+						
+				
+		//		Option 3 - using a temp file
+		//		dd if=/data/tmp/V5A001-Label.txt of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80		
+
+		String label1 = getLabel1(tapeBarcode);
+		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("echo \"" + label1 + "\" | dd of=" + dataTransferElementName + " bs=80");
+		if(cler.isComplete()) {
+			String label2 = getLabel2(storageFormat);
+			cler = commandLineExecuter.executeCommand("echo \"" + label2 + "\" | dd of=" + dataTransferElementName + " bs=80");
+			if(cler.isComplete()) 
+				isSuccess = true;
+		}
+		return isSuccess;
+		
+	}
+
+
+	private String getLabel1(String tapeBarcode) throws Exception {
+		String label = null;
+		String volID = StringUtils.substring(tapeBarcode, 0, 6);
+		String ltoGen = StringUtils.substring(tapeBarcode, 6, 8);
+		
+		
+		VolumeHeaderLabel1 vol1 = new VolumeHeaderLabel1(volID, ltoGen, implId, ownerId); // TODO - Get the label owner from app.properties...
+		label = vol1.getLabel();
+		return label;
+	}
+
+	private String getLabel2(String storageFormat) throws Exception {
+		String label = null;
+		VolumeHeaderLabel2 vol2 = new VolumeHeaderLabel2(); // TODO - Get the label owner from app.properties...
+		label = vol2.getLabel();
+		return label;
+	}
+
 //	public ResponseEntity<String> readLabel(@PathVariable("tapeBarcode") String tapeBarcode){
 //		
 ////		rewind the tape

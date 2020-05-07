@@ -10,6 +10,7 @@ import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.master.TaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.TaskTasksetDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.Task;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.TaskTaskset;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
@@ -33,6 +34,9 @@ public class JobManager {
 	
 	@Autowired
 	private TaskTasksetDao taskTasksetDao;	
+	
+	@Autowired
+	private SubrequestDao subrequestDao;
 	
 	@Autowired
 	private JobDao jobDao;	
@@ -96,22 +100,35 @@ public class JobManager {
 		return job;
 	}	
 
+	public Job createJobForLabeling(Request request, Subrequest subrequest){
+		return createJobForRestore(request, subrequest);
+	}
+	
 	public void processJobs() {
 		List<Job> storageJobList = new ArrayList<Job>();
 		
-		// TODO Block jobs so that formatting jobs can happen...
-//		List<Job> formattingJobList = jobDao.findAllQueuedFormattingJobs(Action.format, Status.queued);
-//		if(formattingJobList) {
-//			return;
-//		}
-		List<Job> jobList = jobDao.findAllByStatusOrderById(Status.queued);
+		// Need to block all storage jobs when there is a queued/inprogress mapdrive request... 
+		List<Status> statusList = new ArrayList<Status>();
+		statusList.add(Status.queued);
+		statusList.add(Status.in_progress);
+
+		// If a subrequest action type is mapdrive and status is queued or inprogress skip storage jobs...
+		long tapedrivemappingRequestInFlight = subrequestDao.countByRequestActionAndStatusIn(Action.tapedrivemapping, statusList); 
+		boolean isTapedrivemappingReqInFlight = false;
+		if(tapedrivemappingRequestInFlight > 0)
+			isTapedrivemappingReqInFlight = true;
+		
+		
+		List<Job> jobList = jobDao.findAllByStatusOrderById(Status.queued); // Irrespective of the tapedrivemapping or format request non storage jobs can still be dequeued, hence we are querying it all... 
+		List<Job> tapelabelingJobListQueued = jobDao.findAllBySubrequestRequestActionAndStatus(Action.format, Status.queued);
+		List<Job> tapelabelingJobListInProgress = jobDao.findAllBySubrequestRequestActionAndStatus(Action.format, Status.in_progress);
 		
 		if(jobList.size() > 0) {
 			for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
 				Job job = (Job) iterator.next();
 				logger.info("job - " + job.getId());
 				Task task = job.getTask();
-				// check prerequisite jobs completion status
+				// check prerequisite job's completion status
 				boolean isJobReadyToBeProcessed = isJobReadyToBeProcessed(job);
 				logger.info("isJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
 				if(isJobReadyToBeProcessed) {
@@ -122,9 +139,28 @@ public class JobManager {
 						taskJobManager_ThreadTask.setJob(job);
 						taskSingleThreadExecutor.getExecutor().execute(taskJobManager_ThreadTask);
 					}else {
-						logger.trace("added to storagejob collection");
-						// all storage jobs need to be grouped for some optimisation...
-						storageJobList.add(job);
+						if(isTapedrivemappingReqInFlight) { // there is a queued map drive request, so blocking all storage jobs until the mapdrive request is complete...
+							logger.trace("Skipping adding to storagejob collection as Tapedrivemapping InFlight");
+						}
+						else if(tapelabelingJobListInProgress.size() > 0) { // if any tape labeling request already in flight
+							logger.trace("Skipping adding to storagejob collection as Tapelabeling InFlight");
+						}
+						else if(tapelabelingJobListQueued.size() > 0) { // if any tape labeling request queued up
+							// only adding the tape labeling job to the list
+							if(job.getSubrequest().getRequest().getAction() == Action.format) {
+								if(storageJobList.size() == 0) { // add only one job at a time. If already added skip it
+									storageJobList.add(job);
+									logger.trace("Added the format job to storagejob collection");
+								}
+								else
+									logger.trace("Already another format job added to storagejob collection. So skipping this");
+							}
+						}
+						else { // only add when no tapedrivemapping or format activity
+							// all storage jobs need to be grouped for some optimisation...
+							storageJobList.add(job);
+							logger.trace("Added to storagejob collection");
+						}
 					}
 				}
 			}
@@ -146,7 +182,7 @@ public class JobManager {
 	private boolean isJobReadyToBeProcessed(Job job) {
 		boolean isJobReadyToBeProcessed = true;
 		
-		if(job.getTask().getName().equals(Action.restore.toString()))
+		if(job.getTask().getName().equals(Action.restore.toString()) || job.getTask().getName().equals(Action.format.toString()))
 			return isJobReadyToBeProcessed;
 		
 		Library inputLibrary = job.getInputLibrary();//The input library of a dependent job is set by the parent job after it completes the processing

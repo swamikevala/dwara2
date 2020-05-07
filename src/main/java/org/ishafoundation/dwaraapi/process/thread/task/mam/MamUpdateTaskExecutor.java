@@ -38,7 +38,7 @@ import com.jcraft.jsch.Session;
 
 @Component
 @Primary
-@Profile({ "!dev & !test" })
+@Profile({ "!dev & !stage" })
 public class MamUpdateTaskExecutor implements ITaskExecutor {
     static {
     	TaskFactory.register("mam_update", MamUpdateTaskExecutor.class);
@@ -118,18 +118,13 @@ public class MamUpdateTaskExecutor implements ITaskExecutor {
 			String generatedProxyMetaDataFilePath = logicalFile.getSidecarFile("mp4_ffprobe_out").getAbsolutePath();				
 			
 			String proxyFilePathOnMamServer = generatedProxyFilePath.replace(StringUtils.substringBefore(generatedProxyFilePath, File.separator + category + File.separator), catDVConfiguration.getSshProxiesRootLocation());
-			if(ArrayUtils.contains(env.getActiveProfiles(), "dev")) {
-				logger.info("Now Copying the Proxy file " + generatedProxyFilePath + " over to " + proxyFilePathOnMamServer);
-				FileUtils.copyFile(new File(generatedProxyFilePath), new File(proxyFilePathOnMamServer));
-			} else {
-				jSchSession = catdvSshSessionHelper.getSession();
-				String parentDir = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathOnMamServer);
-				String command1 = "mkdir -p " + parentDir;
-				remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, libraryName + ".out_mkdir_mamErr");
-				
-				logger.info("Now Copying the Proxy file " + generatedProxyFilePath + " over to catdv server location " + proxyFilePathOnMamServer);
-				securedCopier.copyTo(jSchSession, generatedProxyFilePath, proxyFilePathOnMamServer);
-			}
+			jSchSession = catdvSshSessionHelper.getSession();
+			String parentDir = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathOnMamServer);
+			String command1 = "mkdir -p " + parentDir;
+			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, libraryName + ".out_mkdir_mamErr");
+			
+			logger.info("Now Copying the Proxy file " + generatedProxyFilePath + " over to catdv server location " + proxyFilePathOnMamServer);
+			securedCopier.copyTo(jSchSession, generatedProxyFilePath, proxyFilePathOnMamServer);
 			String catalogName = getCatalogName(libraryName);
 			
 			int catalogId = catalogChecker.getCatalogId(catdvSessionId, catalogName);

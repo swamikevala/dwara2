@@ -11,11 +11,9 @@ import java.util.TreeSet;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.constants.TapedriveStatus;
 import org.ishafoundation.dwaraapi.db.dao.master.TapedriveDao;
-import org.ishafoundation.dwaraapi.db.dao.master.TapelibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryclassTapesetDao;
 import org.ishafoundation.dwaraapi.db.model.Tapedrive;
 import org.ishafoundation.dwaraapi.db.model.master.Tape;
-import org.ishafoundation.dwaraapi.db.model.master.Tapelibrary;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassTapeset;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
@@ -37,9 +35,6 @@ public class TapeJobSelector {
 	
 	@Autowired
 	private TapedriveDao tapedriveDao;	
-	
-	@Autowired
-	private TapelibraryDao tapelibraryDao;
 	
 	@Autowired
 	private LibraryclassTapesetDao libraryclassTapesetDao;
@@ -81,8 +76,7 @@ public class TapeJobSelector {
 		// so when copy 1 is picked up for processing on a separate thread even before we call the TapeLibrary Utils and use the drive and update the db,
 		// getTheCurrentlyRunningArchiveJobs is being called by the second copy job thus the method not having any tape drive busy and so giving the same tape drive given for copy 1...
 		if(tapeJob != null) {
-			int tapeLibraryId = getTapeLibraryId(driveStatusDetails.getTapeLibraryName());
-			Tapedrive tapedrive = tapedriveDao.findByTapelibraryIdAndElementAddress(tapeLibraryId, driveStatusDetails.getDriveSNo());
+			Tapedrive tapedrive = tapedriveDao.findByTapelibraryNameAndElementAddress(driveStatusDetails.getTapelibraryName(), driveStatusDetails.getDriveSNo());
 			tapedrive.setStatus(TapedriveStatus.BUSY.toString());
 			tapedrive.setTape(tapeJob.getVolume().getTape());
 			tapedrive.setJob(tapeJob.getJob()); //TODO : Swami has removed this in confluence. This is used in getTheCurrentlyRunningTapeJobs. Clarify this...
@@ -90,17 +84,14 @@ public class TapeJobSelector {
 			tapedriveDao.save(tapedrive);
 			logger.debug("DB Tapedrive Updation - Success");
 			
-			tapeJob.setTapeLibraryName(driveStatusDetails.getTapeLibraryName());
+			//tapeJob.setTapeLibraryId(tapeLibraryId);
+			tapeJob.setTapeLibraryName(driveStatusDetails.getTapelibraryName());
 			tapeJob.setDriveNo(driveStatusDetails.getDriveSNo());
 			tapeJob.setDeviceWwid(tapedrive.getDeviceWwid());
 		}
 		return tapeJob;
 	}
-	
-	private int getTapeLibraryId(String tapeLibraryName) {
-		Tapelibrary tapelibrary = tapelibraryDao.findByName(tapeLibraryName);
-		return tapelibrary.getId();
-	}
+
 	
 	private List<StorageJob> getIgnoreOptimisationTapeJobsList(List<StorageJob> tapeJobsList){
 		logger.trace("Getting ignore optimisation list");
@@ -358,7 +349,7 @@ public class TapeJobSelector {
 		logger.debug("Ordering the jobs within tapes");
 		List<StorageJob> orderedJobsList = new ArrayList<StorageJob>();
 
-		Map<Integer, List<StorageJob>> storageOperationId_storageOperationIdGroupedJobs = new HashMap<Integer, List<StorageJob>>();
+		Map<StorageOperation, List<StorageJob>> storageOperation_storageOperationGroupedJobs = new HashMap<StorageOperation, List<StorageJob>>();
 
 		logger.trace("First step - Grouping the read and write jobs within tapes");
 		// First group all read and write jobs...
@@ -366,27 +357,27 @@ public class TapeJobSelector {
 		// and for V5A005 - readjobs = [Job2] and writejobs = [Job6, Job7]
 		for (Iterator<StorageJob> iterator = groupedOnVolumeTagJobsList.iterator(); iterator.hasNext();) {
 			StorageJob tapeJob = (StorageJob) iterator.next();
-			int storageOperationId = tapeJob.getStorageOperation().getStorageOperationId();
-			if(storageOperationId_storageOperationIdGroupedJobs.containsKey(storageOperationId)) {
-				List<StorageJob> groupedOnStorageOperationJobsList = storageOperationId_storageOperationIdGroupedJobs.get(storageOperationId);
+			StorageOperation storageOperation = tapeJob.getStorageOperation();
+			if(storageOperation_storageOperationGroupedJobs.containsKey(storageOperation)) {
+				List<StorageJob> groupedOnStorageOperationJobsList = storageOperation_storageOperationGroupedJobs.get(storageOperation);
 				groupedOnStorageOperationJobsList.add(tapeJob);
-				storageOperationId_storageOperationIdGroupedJobs.put(storageOperationId, groupedOnStorageOperationJobsList);
+				storageOperation_storageOperationGroupedJobs.put(storageOperation, groupedOnStorageOperationJobsList);
 			}
 			else {
 				List<StorageJob> groupedOnStorageOperationJobsList = new ArrayList<StorageJob>();
 				groupedOnStorageOperationJobsList.add(tapeJob);
-				storageOperationId_storageOperationIdGroupedJobs.put(storageOperationId, groupedOnStorageOperationJobsList);
+				storageOperation_storageOperationGroupedJobs.put(storageOperation, groupedOnStorageOperationJobsList);
 			}			
 		}
 		logger.trace("Completed first step");
 		if(logger.isTraceEnabled()) {
 			logger.trace("The jobs are grouped like below");
-			Set<Integer> storageOperationIdGroupedJobsKeySet = storageOperationId_storageOperationIdGroupedJobs.keySet();
-			for (Iterator<Integer> iterator = storageOperationIdGroupedJobsKeySet.iterator(); iterator.hasNext();) {
-				Integer storageOperationId = (Integer) iterator.next();
-				logger.trace("Grouped job list for storage operation - " + storageOperationId);
-				List<StorageJob> storageOperationIdGroupedJobsList = storageOperationId_storageOperationIdGroupedJobs.get(storageOperationId);
-				for (StorageJob storageJob : storageOperationIdGroupedJobsList) {
+			Set<StorageOperation> storageOperationGroupedJobsKeySet = storageOperation_storageOperationGroupedJobs.keySet();
+			for (Iterator<StorageOperation> iterator = storageOperationGroupedJobsKeySet.iterator(); iterator.hasNext();) {
+				StorageOperation storageOperation = (StorageOperation) iterator.next();
+				logger.trace("Grouped job list for storage operation - " + storageOperation);
+				List<StorageJob> storageOperationGroupedJobsList = storageOperation_storageOperationGroupedJobs.get(storageOperation);
+				for (StorageJob storageJob : storageOperationGroupedJobsList) {
 					logger.trace(""+storageJob.getJob().getId());
 				}
 				logger.trace("--------------------------------------");
@@ -394,14 +385,14 @@ public class TapeJobSelector {
 		}
 		
 		logger.trace("Second step - Ordering the read and write jobs within tapes");
-		Set<Integer> storageOperationIdGroupedJobsKeySet = storageOperationId_storageOperationIdGroupedJobs.keySet();
-		for (Iterator<Integer> iterator = storageOperationIdGroupedJobsKeySet.iterator(); iterator.hasNext();) {
-			Integer storageOperationId = (Integer) iterator.next();
+		Set<StorageOperation> storageOperationGroupedJobsKeySet = storageOperation_storageOperationGroupedJobs.keySet();
+		for (Iterator<StorageOperation> iterator = storageOperationGroupedJobsKeySet.iterator(); iterator.hasNext();) {
+			StorageOperation storageOperation = (StorageOperation) iterator.next();
 			// READ/RESTORE - ordered based on seqBlocks
 			// V5A001 - readjobs = [Job1, Job3, Job4] becomes [Job4, Job1, Job3]
-			if(storageOperationId == StorageOperation.READ.getStorageOperationId()) {
+			if(storageOperation == StorageOperation.READ) {
 				logger.trace("Ordering the read jobs using blocknumber");
-				List<StorageJob> readJobs = storageOperationId_storageOperationIdGroupedJobs.get(storageOperationId);
+				List<StorageJob> readJobs = storageOperation_storageOperationGroupedJobs.get(storageOperation);
 				Set<Integer> seqBlockOrderSortedSet = new TreeSet<Integer>();
 				// In a single block there could be multiple files so need the List<StorageJob>...
 				Map<Integer, List<StorageJob>> seqBlock_seqBlockGroupedJobs = new HashMap<Integer, List<StorageJob>>();
@@ -432,10 +423,10 @@ public class TapeJobSelector {
 				}
 				logger.trace("Completed ordering the read jobs using blocknumber");
 			}
-			else if(storageOperationId == StorageOperation.WRITE.getStorageOperationId()) { // WRITE/INGEST - ordered based on seqId of the library...
+			else if(storageOperation == StorageOperation.WRITE) { // WRITE/INGEST - ordered based on seqId of the library...
 				// V5A005 - readjobs = [Job2] and writejobs = [Job6, Job7], retains the same order
 				logger.trace("Ordering the write jobs based on library seqId");
-				List<StorageJob> writeJobs = storageOperationId_storageOperationIdGroupedJobs.get(storageOperationId);
+				List<StorageJob> writeJobs = storageOperation_storageOperationGroupedJobs.get(storageOperation);
 				Set<String> libraryNameOrderedSortedSet = new TreeSet<String>();
 				Map<String, StorageJob> libraryName_TapeJob = new HashMap<String, StorageJob>();
 
@@ -500,8 +491,8 @@ public class TapeJobSelector {
 			for (Iterator<StorageJob> iterator = currentlyRunningTapeJobsList.iterator(); iterator.hasNext();) {
 				StorageJob runningTapeJob = (StorageJob) iterator.next();
 				
-				int storageOperationId = runningTapeJob.getStorageOperation().getStorageOperationId();
-				if(storageOperationId == StorageOperation.WRITE.getStorageOperationId()) {
+				StorageOperation storageOperation = runningTapeJob.getStorageOperation();
+				if(storageOperation == StorageOperation.WRITE) {
 					isWriteJobsOn = true;
 					currentlyRunningWriteJobsList.add(runningTapeJob);
 				}
@@ -546,8 +537,8 @@ public class TapeJobSelector {
 						continue;
 					}
 					logger.trace("Checking candidacy for - " + tapeJob.getJob().getId());
-					int storageOperationId = tapeJob.getStorageOperation().getStorageOperationId();
-					if(storageOperationId == StorageOperation.WRITE.getStorageOperationId()) { // only for writes we need to check on the concurrent overlapping 
+					StorageOperation storageOperation = tapeJob.getStorageOperation();
+					if(storageOperation == StorageOperation.WRITE) { // only for writes we need to check on the concurrent overlapping 
 						// check overlapping on concurrent writes...
 						if(!tapeJob.isConcurrentCopies()) { // if concurrent copy on the job is not allowed
 							logger.trace("Concurrent copy on this tape job not allowed. Checking if any already running write jobs overlap concurrency with this...");
@@ -660,7 +651,7 @@ public class TapeJobSelector {
 	
 	private List<StorageJob> getTheCurrentlyRunningTapeJobs(){
 		List<StorageJob> currentlyRunningTapeJobsList = new ArrayList<StorageJob>();
-		List<Tapedrive> tapedriveList = tapedriveDao.findAllByStatus("Busy".toUpperCase());
+		List<Tapedrive> tapedriveList = tapedriveDao.findAllByStatus(TapedriveStatus.BUSY.toString()); // TODO should this be string?
 		for (Iterator<Tapedrive> iterator = tapedriveList.iterator(); iterator.hasNext();) {
 			Tapedrive tapedrive = (Tapedrive) iterator.next();
 

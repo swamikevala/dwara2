@@ -109,9 +109,8 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 			MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
 			logger.trace("getting details of drive " + toBeUsedDataTransferElementSNo);
 			
-			
-			DriveStatusDetails driveStatusDetails = tapeDriveManager.getDriveDetails(getTapeLibraryId(tapeLibraryName), toBeUsedDataTransferElementSNo);
-			driveStatusDetails.setTapeLibraryName(tapeLibraryName);
+			DriveStatusDetails driveStatusDetails = tapeDriveManager.getDriveDetails(tapeLibraryName, toBeUsedDataTransferElementSNo);
+			driveStatusDetails.setTapelibraryName(tapeLibraryName);
 			if(driveStatusDetails.getMtStatus().isReady()){ // means drive is not empty and has another tape - so we need to unload the other tape
 				logger.trace(toBeUsedDataTransferElementSNo + " is not empty and has another tape - so we need to unload the other tape");
 				if(!driveStatusDetails.getMtStatus().isBusy()) {
@@ -141,30 +140,23 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 		return isSuccess;
 	}
 
-	
-	protected int getTapeLibraryId(String tapeLibraryName) {
-		Tapelibrary tapelibrary = tapelibraryDao.findByName(tapeLibraryName);
-		return tapelibrary.getId();
-	}
-	
 	protected abstract MtxStatus getMtxStatus(String tapeLibraryName);
 	
 	private List<DriveStatusDetails> getAvailableDrivesList(String tapeLibraryName, MtxStatus mtxStatus){
-		int tapelibraryId = getTapeLibraryId(tapeLibraryName);
 		List<DriveStatusDetails> availablDriveDetailsList = new ArrayList<DriveStatusDetails>();
 		List<DataTransferElement> dteList = mtxStatus.getDteList();
 		logger.trace("All drives list " +  dteList);
 		for (Iterator<DataTransferElement> iterator = dteList.iterator(); iterator.hasNext();) {
 			DataTransferElement nthDataTransferElement = (DataTransferElement) iterator.next();
 			int dataTransferElementSNo = nthDataTransferElement.getsNo(); 
-			DriveStatusDetails dsd = tapeDriveManager.getDriveDetails(tapelibraryId, dataTransferElementSNo);
-			dsd.setTapeLibraryName(tapeLibraryName);
+			DriveStatusDetails dsd = tapeDriveManager.getDriveDetails(tapeLibraryName, dataTransferElementSNo);
+			dsd.setTapelibraryName(tapeLibraryName);
 			dsd.setDte(nthDataTransferElement);
 			if(!dsd.getMtStatus().isBusy()) { // only not busy drives are candidates
 				logger.trace("Drive " + dataTransferElementSNo + " is available");
 				logger.trace("Double verifying if the drive is not been used indeed");
 				// we flag a tapedrive as busy after job is selected for the drive even before the job deals with the drive... The below is take care of such usecase...
-				Tapedrive tapedrive = tapedriveDao.findByTapelibraryIdAndElementAddress(tapelibraryId, dataTransferElementSNo);
+				Tapedrive tapedrive = tapedriveDao.findByTapelibraryNameAndElementAddress(tapeLibraryName, dataTransferElementSNo);
 				String tapedriveStatus = tapedrive.getStatus();
 				if(!tapedriveStatus.equals(TapedriveStatus.AVAILABLE.toString())){
 					logger.info("Tapedrive table's status for element address " + dataTransferElementSNo + " is flagged as being used by " + tapedrive.getId());

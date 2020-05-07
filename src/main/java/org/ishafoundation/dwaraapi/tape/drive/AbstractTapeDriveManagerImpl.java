@@ -1,9 +1,7 @@
 package org.ishafoundation.dwaraapi.tape.drive;
 
 import org.ishafoundation.dwaraapi.db.dao.master.TapedriveDao;
-import org.ishafoundation.dwaraapi.db.dao.master.TapelibraryDao;
 import org.ishafoundation.dwaraapi.db.model.Tapedrive;
-import org.ishafoundation.dwaraapi.db.model.master.Tapelibrary;
 import org.ishafoundation.dwaraapi.tape.drive.status.DriveStatusDetails;
 import org.ishafoundation.dwaraapi.tape.drive.status.MtStatus;
 import org.slf4j.Logger;
@@ -18,21 +16,17 @@ public abstract class AbstractTapeDriveManagerImpl implements TapeDriveManager{
 
 	@Autowired
 	private TapedriveDao tapedriveDao;
-	
-//	@Autowired
-//	private TapelibraryDao tapelibraryDao;
-	
 		
 	// Swami said we can talk to the drive even more on a low level and get details like no.OfReads, writes, usage etc.,
 	@Override
-	public DriveStatusDetails getDriveDetails(int tapelibraryId, int dataTransferElementNo){
-		String driveName = getDriveName(tapelibraryId, dataTransferElementNo);
-		MtStatus mtStatus = getMtStatus(tapelibraryId, driveName);
+	public DriveStatusDetails getDriveDetails(String tapelibraryName, int dataTransferElementNo){
+		String driveName = getDriveName(tapelibraryName, dataTransferElementNo);
+		MtStatus mtStatus = getMtStatus(driveName);
 		
 		DriveStatusDetails dsd = new DriveStatusDetails();
-//		Tapelibrary tapelibrary = tapelibraryDao.findById(tapelibraryId);
-//		dsd.setTapeLibraryName(tapeLibraryName);
+		dsd.setTapelibraryName(tapelibraryName);
 		dsd.setDriveSNo(dataTransferElementNo);
+		dsd.setDriveName(driveName);
 		dsd.setMtStatus(mtStatus);
 		dsd.setDte(null);
 		
@@ -48,13 +42,13 @@ public abstract class AbstractTapeDriveManagerImpl implements TapeDriveManager{
 		return dsd;
 	}
 	
-	private String getDriveName(int tapelibraryId, int dataTransferElementNo) {
-		Tapedrive tapedrive = tapedriveDao.findByTapelibraryIdAndElementAddress(tapelibraryId, dataTransferElementNo); // TODO Cache this...
+	protected String getDriveName(String tapelibraryName, int dataTransferElementNo) {
+		Tapedrive tapedrive = tapedriveDao.findByTapelibraryNameAndElementAddress(tapelibraryName, dataTransferElementNo); // TODO Cache this...
 		return tapedrive.getDeviceWwid();
 	}
 
 	// drivename has to be unique even on different libraries... so need to pass tapelibraryid??? 
-	protected abstract MtStatus getMtStatus(int tapelibraryId, String driveName);
-	
+//	protected abstract MtStatus getMtStatus(int tapelibraryId, String driveName);
+	protected abstract MtStatus getMtStatus(String driveName);
 
 }

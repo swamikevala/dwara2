@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+  <user id="21001" hash="$2a$10$70nZ.1zvmmgAXQZ5qDFHxe08eTijEejJ5HRZAtwRcPuMjw4MfRley" name="pgurumurthy" priorityband_id="6001"/>
+  <user id="21002" hash="$2a$10$pfrQKh7LEw3oklfohO/WoOb0yUjL6pLAkmKQLDbA6tDO2BcZ.Eon." name="apr"/>
+  <user id="21003" hash="$2a$10$JDBuv5l9F1jJEOk8JqGQVOoqxGRaRNIujWIK.7y9jXUh99S65xEr." name="Sadhguru"/>
+  <action_user permission_level="2" action_id="8003" user_id="21001"/>
+  <libraryclass_action_user action_id="8001" libraryclass_id="5001" user_id="21001"/>
+  <libraryclass_action_user action_id="8002" libraryclass_id="5001" user_id="21001"/>
+  <libraryclass_action_user action_id="8003" libraryclass_id="5001" user_id="21001"/>
+</dataset>

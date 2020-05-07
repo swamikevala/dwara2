@@ -23,7 +23,7 @@ public class Tapedrive {
 	private String deviceWwid;
 
 	@Column(name="element_address", unique=true)
-	private int elementAddress;
+	private Integer elementAddress;
 
 	// Many tapedrives for a library - hence ManytoOne
 	// unidirectional reference on client side is enough
@@ -64,11 +64,11 @@ public class Tapedrive {
 		this.deviceWwid = deviceWwid;
 	}
 
-	public int getElementAddress() {
+	public Integer getElementAddress() {
 		return elementAddress;
 	}
 
-	public void setElementAddress(int elementAddress) {
+	public void setElementAddress(Integer elementAddress) {
 		this.elementAddress = elementAddress;
 	}
 

@@ -4,16 +4,16 @@ import org.ishafoundation.dwaraapi.tape.library.components.DataTransferElement;
 
 public class DriveStatusDetails {
 	private int tapelibraryId;
-	private String tapeLibraryName;
+	private String tapelibraryName;
 	private DataTransferElement dte;
 	private int driveSNo;
+	private String driveName;
 	private MtStatus mtStatus;
 	private int noOfWrites;
 	private int noOfReads;
 	private int hoursOfWrites;
 	private int hoursOfReads;
 	private int totalUsageInHours;
-	
 
 	
 //	public int getTapelibraryId() {
@@ -22,12 +22,12 @@ public class DriveStatusDetails {
 //	public void setTapelibraryId(int tapelibraryId) {
 //		this.tapelibraryId = tapelibraryId;
 //	}
-	public String getTapeLibraryName() {
-		return tapeLibraryName;
+	public String getTapelibraryName() {
+		return tapelibraryName;
 	}
-	public void setTapeLibraryName(String tapeLibraryName) {
-		this.tapeLibraryName = tapeLibraryName;
-	}	
+	public void setTapelibraryName(String tapelibraryName) {
+		this.tapelibraryName = tapelibraryName;
+	}
 	public DataTransferElement getDte() {
 		return dte;
 	}
@@ -39,6 +39,12 @@ public class DriveStatusDetails {
 	}
 	public void setDriveSNo(int driveSNo) {
 		this.driveSNo = driveSNo;
+	}
+	public String getDriveName() {
+		return driveName;
+	}
+	public void setDriveName(String driveName) {
+		this.driveName = driveName;
 	}
 	public MtStatus getMtStatus() {
 		return mtStatus;

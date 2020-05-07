@@ -5,5 +5,5 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface TapesetDao extends CrudRepository<Tapeset,Integer> {
 	
-
+	Tapeset findByBarcodePrefix(String barcodePrefix);
 }

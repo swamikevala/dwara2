@@ -9,8 +9,14 @@ public interface TapedriveDao extends CrudRepository<Tapedrive,Integer> {
 	
 	List<Tapedrive> findAllByStatus(String status);
 	
-	Tapedrive findByTapelibraryIdAndElementAddress(int tapelibraryId, int elementAddress);
+	Tapedrive findByTapelibraryNameAndElementAddress(String tapelibraryName, int elementAddress);
 	
-	Tapedrive findByTapelibraryIdAndDeviceWwidContaining(int tapelibraryId, String wwid);
+	Tapedrive findByDeviceWwidContaining(String wwid);
+	
+//	Tapedrive findByTapelibraryNameAndDeviceWwidContaining(String tapelibraryName, String wwid);
+//	
+//	Tapedrive findByTapelibraryIdAndElementAddress(int tapelibraryId, int elementAddress);
+//	
+//	Tapedrive findByTapelibraryIdAndDeviceWwidContaining(int tapelibraryId, String wwid);
 	
 }

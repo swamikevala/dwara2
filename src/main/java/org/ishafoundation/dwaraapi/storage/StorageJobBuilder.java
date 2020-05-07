@@ -4,14 +4,18 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.constants.Action;
 import org.ishafoundation.dwaraapi.db.dao.master.TapeDao;
+import org.ishafoundation.dwaraapi.db.dao.master.TapesetDao;
+import org.ishafoundation.dwaraapi.db.dao.master.TapetypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryclassTapesetDao;
 import org.ishafoundation.dwaraapi.db.dao.view.V_RestoreFileDao;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.Storageformat;
 import org.ishafoundation.dwaraapi.db.model.master.Tape;
 import org.ishafoundation.dwaraapi.db.model.master.Tapeset;
+import org.ishafoundation.dwaraapi.db.model.master.Tapetype;
 import org.ishafoundation.dwaraapi.db.model.master.Task;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassTapeset;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
@@ -25,6 +29,7 @@ import org.ishafoundation.dwaraapi.model.Volume;
 import org.ishafoundation.dwaraapi.storage.constants.StorageOperation;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -34,6 +39,12 @@ public class StorageJobBuilder {
 	private TapeDao tapeDao;
 	
 	@Autowired
+	private TapesetDao tapesetDao;
+
+	@Autowired
+	private TapetypeDao tapetypeDao;
+	
+	@Autowired
 	private V_RestoreFileDao v_RestoreFileDao;
 	
 	@Autowired
@@ -41,6 +52,9 @@ public class StorageJobBuilder {
 		
 	@Autowired
 	private TaskUtils taskUtils;
+	
+	@Value("${tape.blocksize}")
+	private int blocksize;
 	
 	public StorageJob buildStorageJob(Job job) {
 		StorageJob storageJob = null;
@@ -130,9 +144,45 @@ public class StorageJobBuilder {
 			Storageformat storageformat = tapeset.getStorageformat();
 			storageJob.setStorageformat(storageformat);
 		}
+		else if(action == org.ishafoundation.dwaraapi.constants.Action.format) {
+			storageJob = new StorageJob();
+			storageJob.setJob(job);
+			
+			// What type of job
+			storageJob.setStorageOperation(StorageOperation.FORMAT);
+
+			String tapeBarcode = "V5A005L7"; //FIXME: subrequest.getTapeBarcode();
+			Tape tape = getTape(tapeBarcode);
+			
+			Volume volume = new Volume();
+			
+			volume.setTape(tape);
+			storageJob.setVolume(volume);	
+			
+			storageJob.setStorageformat(tape.getTapeset().getStorageformat());
+		}
 		return storageJob;
 	}
 
+	private Tape getTape(String tapeBarcode) {
+		Tape tape = new Tape();
+		
+		Tape latestTapeEntry = tapeDao.findTopByOrderByIdDesc();
+		int id = latestTapeEntry.getId() + 1;
+		tape.setId(id);
+		
+		tape.setBarcode(tapeBarcode);
+		tape.setBlocksize(blocksize);
+		tape.setFinalized(false);
+
+		String barcodePrefix = StringUtils.substring(tapeBarcode, 0, 3);
+		Tapeset tapeset = tapesetDao.findByBarcodePrefix(barcodePrefix);
+		tape.setTapeset(tapeset);
+
+		Tapetype tapetype = tapetypeDao.findByName("LTO7"); // tapetypeDao.findByCapacity();// FIXME : how to arrive at this??
+		tape.setTapetype(tapetype);
+		return tape;
+	}
 	private Storagetype getStoragetype(){
 		// TODO Assumes storagetype is tape. For now its ok. Need to extend...
 		Storagetype storagetype = new Storagetype();

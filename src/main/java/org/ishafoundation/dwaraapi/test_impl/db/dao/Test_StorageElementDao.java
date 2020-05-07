@@ -9,6 +9,6 @@ public interface Test_StorageElementDao extends CrudRepository<Test_StorageEleme
 
 	Test_StorageElement findBySNo(int sNo);
 	
-	List<Test_StorageElement> findAllByTapelibraryId(int tapelibraryId);
+	List<Test_StorageElement> findAllByTapelibraryName(String tapelibraryName);
 
 }

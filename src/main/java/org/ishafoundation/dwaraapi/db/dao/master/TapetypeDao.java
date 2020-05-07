@@ -5,5 +5,7 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface TapetypeDao extends CrudRepository<Tapetype,Integer> {
 	
-
+	Tapetype findByCapacity(String capacity);
+	
+	Tapetype findByName(String name);
 }

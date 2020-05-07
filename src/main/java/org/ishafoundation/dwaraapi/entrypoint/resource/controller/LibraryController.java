@@ -201,6 +201,18 @@ public class LibraryController {
     	
 	}
 	
+	private Set<String> supportedExtns = null;
+	private List<Pattern> excludedFileNamesRegexList = null;
+	
+	@PostConstruct
+	private void prepareExcludedFileNamesRegexList() {
+		excludedFileNamesRegexList = new ArrayList<Pattern>();
+		for (int i = 0; i < configuration.getJunkFilesFinderRegexPatternList().length; i++) {
+			Pattern nthJunkFilesFinderRegexPattern = Pattern.compile(configuration.getJunkFilesFinderRegexPatternList()[i]);
+			excludedFileNamesRegexList.add(nthJunkFilesFinderRegexPattern);
+		}
+	}
+	
 	@ApiOperation(value = "Ingest comment goes here")
 	@ApiResponses(value = { 
 		    @ApiResponse(code = 202, message = "Request submitted and queued up"),
@@ -218,6 +230,15 @@ public class LibraryController {
 	    	Libraryclass libraryclass = libraryclassCacheUtil.getLibraryclass(libraryclassName);
 	    	int filetypeId = libraryclass.getTaskfiletypeId();
 	
+			// TODO: Move this out. Unnecessarily framing the list for every request - when it can be cached and cleared when extension DB table changes...
+	    	// Step 1 - get all supported extensions in the system
+			Iterable<Extension> extensionList = extensionDao.findAll();
+			supportedExtns =  new TreeSet<String>();
+			for (Extension extension : extensionList) {
+				supportedExtns.add(extension.getName().toUpperCase());
+				supportedExtns.add(extension.getName().toLowerCase());
+			}
+			
 	    	List<IngestFile> ingestFileList = new ArrayList<IngestFile>();
 	    	// Iterating the request - LibraryParams
 	    	List<LibraryParams> libraryParamsList = userRequest.getLibrary();
@@ -284,7 +305,7 @@ public class LibraryController {
 	    		ObjectMapper mapper = new ObjectMapper(); 
 	    		mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 	    		JsonNode jsonNode = mapper.valueToTree(ingestFileList);
-	    		throw new DwaraException("Pre ingest validation failed", jsonNode);
+	    		throw new DwaraException("Pre ingest validation failed ", jsonNode);
 			}
 			
 		}catch (Exception e) {
@@ -310,26 +331,13 @@ public class LibraryController {
      * @throws Exception with the list of unsupported extensions...
      */
     private void checkExtensionSupport(LibraryParams ingestRequestParams, int taskfiletypeId) throws Exception{
-    	// Step 0 - Exclude the junk files...
-		List<Pattern> excludedFileNamesRegexList = new ArrayList<Pattern>();
-		for (int i = 0; i < configuration.getJunkFilesFinderRegexPatternList().length; i++) {
-			Pattern nthJunkFilesFinderRegexPattern = Pattern.compile(configuration.getJunkFilesFinderRegexPatternList()[i]);
-			excludedFileNamesRegexList.add(nthJunkFilesFinderRegexPattern);
-		}
-    	
-    	// Step 1 - get all supported extensions in the system
-		Iterable<Extension> extensionList = extensionDao.findAll();
-		Set<String> supportedExtns =  new TreeSet<String>();
-		for (Extension extension : extensionList) {
-			supportedExtns.add(extension.getName().toUpperCase());
-			supportedExtns.add(extension.getName().toLowerCase());
-		}
-    	
     	// Step 2 - Iterate through all Files under the library Directory and check if their extensions are supported in our system.
     	String libraryName = ingestRequestParams.getName();
     	String originFolderPath = ingestRequestParams.getSourcePath();
     	
     	File mediaLibraryFile = FileUtils.getFile(originFolderPath, libraryName);
+    	if(!mediaLibraryFile.exists())
+    		throw new Exception("The following library doesnt exist - " + mediaLibraryFile.getAbsolutePath());
     	
 		Collection<File> allFilesInTheSystem = null;
         if(mediaLibraryFile.isDirectory()) {

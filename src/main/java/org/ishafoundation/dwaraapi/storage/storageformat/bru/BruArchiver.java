@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Primary
 //@Profile("default") works
-@Profile({ "!dev & !test" })
+@Profile({ "!dev & !stage" })
 public class BruArchiver extends AbstractStorageFormatArchiver {
     static {
     	StorageFormatFactory.register("BRU", BruArchiver.class);

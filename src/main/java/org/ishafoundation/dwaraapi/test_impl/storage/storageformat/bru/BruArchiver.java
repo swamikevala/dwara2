@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile({ "dev | test" })
+@Profile({ "dev | stage" })
 public class BruArchiver extends AbstractStorageFormatArchiver {
     static {
     	StorageFormatFactory.register("BRU", BruArchiver.class);

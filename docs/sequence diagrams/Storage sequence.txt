@@ -1,0 +1,24 @@
+title Storage Job flow
+
+Scheduler->JobManager:process()
+note over JobManager:lists ready to process storage jobs
+JobManager-->StorageJobsManager_ThreadTask:Delegates storage jobs list
+note over StorageJobsManager_ThreadTask:builds the storage job with more info related to storage
+StorageJobsManager_ThreadTask->StorageTypeManager:process()
+note over StorageTypeManager:Chooses the storage type specific Manager impl
+StorageTypeManager->TapeJobsManager:manage()
+note over TapeJobsManager:Iterate available drives
+TapeJobsManager->TapeJobSelector:Job Selection
+TapeJobSelector->TapeJobsManager:Selected Job
+note over TapeJobsManager:Spawn a thread to process the tape job
+TapeJobsManager-->TapeTask:
+note over TapeTask:locateAndLoadTapeOnToDrive(), setTapeHeadPosition()
+TapeTask->TapeJobProcessor:write(),read()
+TapeJobProcessor->StorageTypeJobProcessor:super()
+note over StorageTypeJobProcessor:Chooses the storage format specific impl
+StorageTypeJobProcessor->BruArchiver(StorageFormatter):
+BruArchiver(StorageFormatter)->StorageTypeJobProcessor:
+note over StorageTypeJobProcessor:Updates Job status
+StorageTypeJobProcessor->TapeJobProcessor:
+note over TapeJobProcessor:Updates tape specific tables
+TapeJobProcessor->TapeTask:End

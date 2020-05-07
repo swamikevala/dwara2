@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile({ "dev | test" })
+@Profile({ "dev | stage" })
 public class MamUpdateTaskExecutor implements ITaskExecutor {
     static {
     	TaskFactory.register("mam_update", MamUpdateTaskExecutor.class);

@@ -9,6 +9,7 @@ import org.ishafoundation.dwaraapi.tape.library.components.DataTransferElement;
 import org.ishafoundation.dwaraapi.tape.library.components.StorageElement;
 import org.ishafoundation.dwaraapi.tape.library.status.MtxStatus;
 import org.ishafoundation.dwaraapi.test_impl.db.dao.Test_DataTransferElementDao;
+import org.ishafoundation.dwaraapi.test_impl.db.dao.Test_MtStatusDao;
 import org.ishafoundation.dwaraapi.test_impl.db.dao.Test_StorageElementDao;
 import org.ishafoundation.dwaraapi.test_impl.db.model.Test_DataTransferElement;
 import org.ishafoundation.dwaraapi.test_impl.db.model.Test_MtStatus;
@@ -20,11 +21,14 @@ import org.springframework.stereotype.Component;
 
 @Component
 //@Profile("!default") works as well
-@Profile({ "dev | test" })
+@Profile({ "dev | stage" })
 public class Test_TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl {
 
 	@Autowired
 	private Test_DataTransferElementDao test_DataTransferElementDao;
+	
+	@Autowired
+	private Test_MtStatusDao test_MtStatusDao;
 	
 	@Autowired
 	private Test_StorageElementDao test_StorageElementDao;
@@ -51,12 +55,11 @@ public class Test_TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl 
 		test_MtStatus.setFileNumber(1);
 		test_MtStatus.setBlockNumber(0);
 		
-		//test_DataTransferElement.setTest_MtStatus(test_MtStatus);
+		// TODO: This is not good. We shouldn't explicitly saving this. The association is supposed to have MtStatus saved as well on saving DataTransferElement. 
+		// For some reason works when running on a container but not working on running as tests...
+		test_MtStatusDao.save(test_MtStatus); 
 		test_DataTransferElementDao.save(test_DataTransferElement);
-		
-		
-		// update Test_StorageElement and Test_DataTransferElement tables...
-		return false;
+		return true;
 	}
 
 	@Override
@@ -75,7 +78,9 @@ public class Test_TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl 
 		test_MtStatus.setFileNumber(-1);
 		test_MtStatus.setBlockNumber(-1);
 		
-		//test_DataTransferElement.setTest_MtStatus(test_MtStatus);
+		// TODO: This is not good. We shouldn't explicitly saving this. The association is supposed to have MtStatus saved as well on saving DataTransferElement. 
+		// For some reason works when running on a container but not working on running as tests...		
+		test_MtStatusDao.save(test_MtStatus); 
 		test_DataTransferElementDao.save(test_DataTransferElement);
 
 
@@ -83,24 +88,23 @@ public class Test_TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl 
 		test_StorageElement.setEmpty(false);
 		test_StorageElement.setVolumeTag(volumeTag);
 		test_StorageElementDao.save(test_StorageElement);
-		return false;
+		return true;
 	}
 	
 	@Override
 	protected MtxStatus getMtxStatus(String tapeLibraryName){
-		int tapelibraryId = getTapeLibraryId(tapeLibraryName);
 		MtxStatus mtxStatus = new MtxStatus();
 		mtxStatus.setStorageChangerName(tapeLibraryName);
 		
 		List<DataTransferElement> dteList = new ArrayList<DataTransferElement>();
-		List<Test_DataTransferElement> test_DataTransferElementList = test_DataTransferElementDao.findAllByTapelibraryId(tapelibraryId);
+		List<Test_DataTransferElement> test_DataTransferElementList = test_DataTransferElementDao.findAllByTapelibraryName(tapeLibraryName);
 		for (Test_DataTransferElement test_DataTransferElement : test_DataTransferElementList) {
 			dteList.add(test_TapeObjectsMapper.getDataTransferElement(test_DataTransferElement));
 		}
 		mtxStatus.setDteList(dteList);
 		
 		List<StorageElement> seList = new ArrayList<StorageElement>();
-		List<Test_StorageElement> test_StorageElementList = test_StorageElementDao.findAllByTapelibraryId(tapelibraryId);
+		List<Test_StorageElement> test_StorageElementList = test_StorageElementDao.findAllByTapelibraryName(tapeLibraryName);
 		for (Test_StorageElement test_StorageElement : test_StorageElementList) {
 			seList.add(test_TapeObjectsMapper.getStorageElement(test_StorageElement));
 		}

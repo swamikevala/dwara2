@@ -11,6 +11,8 @@ import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /*
@@ -20,6 +22,8 @@ import org.springframework.stereotype.Component;
  * 
  */
 @Component
+@Primary
+@Profile({ "!dev & !stage" })
 public class CommandLineExecuter {
 
 	private static Logger logger = LoggerFactory.getLogger(CommandLineExecuter.class);

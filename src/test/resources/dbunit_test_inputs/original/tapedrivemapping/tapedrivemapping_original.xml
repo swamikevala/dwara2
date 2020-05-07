@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+  <test_data_transfer_element id="50001" empty="true" s_no="0" tapelibrary_id="14001" test_mt_status_id="51001" tapedrive_id="13001"/>
+  <test_data_transfer_element id="50002" empty="true" s_no="1" tapelibrary_id="14001" test_mt_status_id="51002" tapedrive_id="13002"/>
+  <test_data_transfer_element id="50003" empty="true" s_no="2" tapelibrary_id="14001" test_mt_status_id="51003" tapedrive_id="13003"/>
+  <test_mt_status id="51001" busy="false" is_write_protected="false" ready="false"/>
+  <test_mt_status id="51002" busy="false" is_write_protected="false" ready="false"/>
+  <test_mt_status id="51003" busy="false" is_write_protected="false" ready="false"/>
+  <test_storage_element id="52001" empty="false" import_export="false" s_no="1" volume_tag="V5A001" tapelibrary_id="14001"/>
+  <test_storage_element id="52002" empty="false" import_export="false" s_no="2" volume_tag="V5A002" tapelibrary_id="14001"/>
+  <test_storage_element id="52003" empty="false" import_export="false" s_no="3" volume_tag="V5A003" tapelibrary_id="14001"/>
+  <test_storage_element id="52004" empty="false" import_export="false" s_no="4" volume_tag="V5B003" tapelibrary_id="14001"/>
+  <test_storage_element id="52005" empty="false" import_export="false" s_no="5" volume_tag="V5C003" tapelibrary_id="14001"/>
+  <test_storage_element id="52006" empty="false" import_export="false" s_no="6" volume_tag="VLA003" tapelibrary_id="14001"/>
+  <test_storage_element id="52007" empty="false" import_export="false" s_no="7" volume_tag="V4A003" tapelibrary_id="14001"/>
+  <tapedrive id="13001" device_wwid="/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst" element_address="0" serial_number="1497199456" drive_status="AVAILABLE" tapelibrary_id="14001"/>
+  <tapedrive id="13002" device_wwid="/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1684087499-nst" element_address="1" serial_number="1684087499" drive_status="AVAILABLE" tapelibrary_id="14001"/>
+  <tapedrive id="13003" device_wwid="/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1970448833-nst" element_address="2" serial_number="1970448833" drive_status="AVAILABLE" tapelibrary_id="14001"/>
+</dataset>

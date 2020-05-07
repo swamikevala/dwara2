@@ -25,7 +25,7 @@ public class Test_StorageElement {
 	
 	private String volumeTag;
 
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne
 	private Tapelibrary tapelibrary;
 	
 	public int getId() {

@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile({ "dev | test" })
+@Profile({ "dev | stage" })
 public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask implements ITaskExecutor{
     static {
     	TaskFactory.register("video_low_resolution_transcoding", Video_LowResolution_Transcoding_TaskExecutor.class);

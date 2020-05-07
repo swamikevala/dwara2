@@ -1,7 +1,10 @@
 package org.ishafoundation.dwaraapi.constants;
 
 /**
- * type of Request - We use this strategy to map this enum with the DB https://thoughts-on-java.org/hibernate-enum-mappings/#customizedMapping
+ * type of Request/Actions that can be performed in the system... - 
+ * We use this strategy to map this enum with the DB https://thoughts-on-java.org/hibernate-enum-mappings/#customizedMapping
+ * 
+ * if this enum is changed please ensure ActionAttributeConverter reflects the change too.
  */
 public enum Action {
 	ingest,
@@ -14,5 +17,7 @@ public enum Action {
 	abort,
 	delete,
 	rewrite,
-	diagnostics
+	diagnostics,
+	tapedrivemapping,
+	format
 }

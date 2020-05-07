@@ -30,11 +30,14 @@ CREATE TABLE `test_data_transfer_element` (
   `volume_tag` varchar(255) DEFAULT NULL,
   `tapelibrary_id` int(11) DEFAULT NULL,
   `test_mt_status_id` int(11) DEFAULT NULL,
+  `tapedrive_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FKgut4ugiuu8r4kiqc74er0belo` (`tapelibrary_id`),
   KEY `FK8asc5nr209nwdk5aqiipma83h` (`test_mt_status_id`),
+  KEY `FKrjp9jh0xhma6b86d2tb0tkj4d` (`tapedrive_id`),
   CONSTRAINT `FK8asc5nr209nwdk5aqiipma83h` FOREIGN KEY (`test_mt_status_id`) REFERENCES `test_mt_status` (`id`),
-  CONSTRAINT `FKgut4ugiuu8r4kiqc74er0belo` FOREIGN KEY (`tapelibrary_id`) REFERENCES `tapelibrary` (`id`)
+  CONSTRAINT `FKgut4ugiuu8r4kiqc74er0belo` FOREIGN KEY (`tapelibrary_id`) REFERENCES `tapelibrary` (`id`),
+  CONSTRAINT `FKrjp9jh0xhma6b86d2tb0tkj4d` FOREIGN KEY (`tapedrive_id`) REFERENCES `tapedrive` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -44,7 +47,7 @@ CREATE TABLE `test_data_transfer_element` (
 
 LOCK TABLES `test_data_transfer_element` WRITE;
 /*!40000 ALTER TABLE `test_data_transfer_element` DISABLE KEYS */;
-INSERT INTO `test_data_transfer_element` VALUES (50001,'\0',0,1,'V5A001',14001,51001),(50002,'',1,NULL,NULL,14001,51002),(50003,'',2,NULL,NULL,14001,51003);
+INSERT INTO `test_data_transfer_element` VALUES (50001,'\0',0,1,'V5A001',14001,51001,13001),(50002,'',1,NULL,NULL,14001,51002,13002),(50003,'',2,NULL,NULL,14001,51003,13003);
 /*!40000 ALTER TABLE `test_data_transfer_element` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -117,4 +120,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-04-20 17:35:34
+-- Dump completed on 2020-04-28 16:34:38
