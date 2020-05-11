@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -59,8 +60,8 @@ public class TapeController {
 	
 	//	POST /tape/V5A001/writeLabel
 	@ApiOperation(value = "?")
-	@PostMapping("/tape/{tapeBarcode}/writeLabel")
-	public ResponseEntity<String> writeLabel(@PathVariable("tapeBarcode") String tapeBarcode){
+	@PostMapping("/tape/format")
+	public ResponseEntity<String> format(@RequestBody org.ishafoundation.dwaraapi.api.req.Format requestBody){
 		
 		Request request = new Request();
     	request.setAction(org.ishafoundation.dwaraapi.constants.Action.format);
@@ -73,6 +74,7 @@ public class TapeController {
     	int requestId = request.getId();
     	logger.debug("DB Request Creation - Success " + requestId);
 		
+    	// TODO requestBody needs to go in...
     	Subrequest subrequest = new Subrequest();
     	subrequest.setRequest(request);
     	subrequest.setStatus(Status.queued);
@@ -86,7 +88,7 @@ public class TapeController {
     	jobDao.save(job);
     	logger.debug("DB Job row Creation - Success");
 	    
-		return ResponseEntity.status(HttpStatus.OK).body(tapeBarcode + " Write Label request submitted - " + requestId);
+		return ResponseEntity.status(HttpStatus.OK).body(requestBody.getBarcode() + " Write Label request submitted - " + requestId);
 	}
 
 	

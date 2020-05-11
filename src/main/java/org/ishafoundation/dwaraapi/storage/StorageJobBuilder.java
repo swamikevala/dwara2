@@ -151,7 +151,7 @@ public class StorageJobBuilder {
 			// What type of job
 			storageJob.setStorageOperation(StorageOperation.FORMAT);
 
-			String tapeBarcode = "V5A005L7"; //FIXME: subrequest.getTapeBarcode();
+			String tapeBarcode = "V5A999L7"; //FIXME: subrequest.getTapeBarcode();
 			Tape tape = getTape(tapeBarcode);
 			
 			Volume volume = new Volume();

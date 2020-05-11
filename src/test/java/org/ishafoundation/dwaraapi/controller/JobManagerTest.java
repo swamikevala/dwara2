@@ -20,6 +20,13 @@ public class JobManagerTest{
 	@WithMockUser(username = "pgurumurthy", password = "pwd")
 	public void processJobs() {
 		jobManager.processJobs();
+		
+		try {
+			Thread.sleep(20000); // sleeping for 20 secs before we do the expected DB verification
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }

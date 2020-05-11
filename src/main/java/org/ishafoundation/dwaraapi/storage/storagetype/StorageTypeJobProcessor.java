@@ -1,9 +1,5 @@
 package org.ishafoundation.dwaraapi.storage.storagetype;
 
-import java.time.LocalDateTime;
-
-import org.ishafoundation.dwaraapi.constants.Status;
-import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.storage.StorageFormatFactory;
 import org.ishafoundation.dwaraapi.storage.constants.StorageOperation;
@@ -18,9 +14,6 @@ import org.springframework.context.ApplicationContext;
 public class StorageTypeJobProcessor {
 	
 	private static final Logger logger = LoggerFactory.getLogger(StorageTypeJobProcessor.class);
-
-	@Autowired
-	private JobDao jobDao;	
 	
 	@Autowired
 	private ApplicationContext applicationContext;	
@@ -44,15 +37,6 @@ public class StorageTypeJobProcessor {
     
     
     public ArchiveResponse service(StorageJob storageJob) throws Throwable{
-    	Status status = Status.in_progress;
-    	// some common code goes in here... 
-		Job job = (Job) storageJob.getJob();
-		job.setStartedAt(LocalDateTime.now());
-		job.setStatus(status);
-		logger.debug("DB Job Updation " + status);
-		jobDao.save(job);
-		logger.debug("DB Job Updation - Success");
-		
     	// based on format
 		String storageformat = storageJob.getStorageformat().getName();
 		AbstractStorageFormatArchiver storageFormatter = StorageFormatFactory.getInstance(applicationContext, storageformat);
@@ -69,17 +53,10 @@ public class StorageTypeJobProcessor {
 				else
 					archiveResponse = null;
 			}
-				
-			status = Status.completed;
 		}catch (Exception e) {
 			logger.error("Storage type implementation responded with error", e);
-			status = Status.failed;
+			throw e;
 		}
-		job.setStatus(status);
-		job.setCompletedAt(LocalDateTime.now());
-		logger.debug("DB Job Updation " + status);
-		jobDao.save(job);
-		logger.debug("DB Job Updation - Success");
 		return archiveResponse;
     }
     

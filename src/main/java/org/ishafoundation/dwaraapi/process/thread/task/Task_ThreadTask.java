@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.constants.Status;
-import org.ishafoundation.dwaraapi.db.dao.master.LibraryclassDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ApplicationFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
@@ -31,6 +30,7 @@ import org.ishafoundation.dwaraapi.job.JobUtils;
 import org.ishafoundation.dwaraapi.model.LogicalFile;
 import org.ishafoundation.dwaraapi.model.TaskResponse;
 import org.ishafoundation.dwaraapi.process.factory.TaskFactory;
+import org.ishafoundation.dwaraapi.utils.CRCUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,10 +53,7 @@ public class Task_ThreadTask implements Runnable{
 
 
 	private static final Logger logger = LoggerFactory.getLogger(Task_ThreadTask.class);
-	
-	@Autowired
-    private LibraryclassDao libraryclassDao;
-	
+		
 	@Autowired
     private LibraryDao libraryDao;
 
@@ -247,12 +244,14 @@ public class Task_ThreadTask implements Runnable{
 						nthFileRowToBeInserted.setLibrary(outputLibrary);
 						//nthFileRowToBeInserted.setFiletypeId(filetypeId); // TODO How?
 						
-						nthFileRowToBeInserted.setPathname(destinationDirPath.replace(outputLibraryPathname, outputLibraryName) + File.separator + FilenameUtils.getBaseName(logicalFile.getAbsolutePath()) + ".mp4");
+						String filePathname = tasktypeResponse.getDestinationPathname().replace(outputLibraryPathname, outputLibraryName);
+						nthFileRowToBeInserted.setPathname(filePathname);
+						//nthFileRowToBeInserted.setPathname(destinationDirPath.replace(outputLibraryPathname, outputLibraryName) + File.separator + FilenameUtils.getBaseName(logicalFile.getAbsolutePath()) + ".mp4");
 						
 						//(destinationFilePath + FilenameUtils.getName(logicalFile.getAbsolutePath()));
 						
 						// TODO need to be done and set after proxy file is generated
-						nthFileRowToBeInserted.setCrc("crc_for_proxy"); 
+						nthFileRowToBeInserted.setCrc(CRCUtil.getCrc(new File(filePathname))); 
 						nthFileRowToBeInserted.setSize(9999);// TODO Hardcoded...
 				    	logger.debug("DB File Creation");   
 						fileDao.save(nthFileRowToBeInserted);

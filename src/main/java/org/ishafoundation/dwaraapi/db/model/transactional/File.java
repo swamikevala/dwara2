@@ -48,7 +48,7 @@ public class File {
 	private String pathname;
 
 	@Column(name="crc")
-	private String crc;
+	private Long crc;
 
 	@Column(name="size")
 	private double size;
@@ -102,11 +102,11 @@ public class File {
 		this.pathname = pathname;
 	}
 
-	public String getCrc() {
+	public Long getCrc() {
 		return crc;
 	}
 
-	public void setCrc(String crc) {
+	public void setCrc(Long crc) {
 		this.crc = crc;
 	}
 

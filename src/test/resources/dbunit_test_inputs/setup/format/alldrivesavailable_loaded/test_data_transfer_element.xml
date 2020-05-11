@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+  <test_data_transfer_element id="50001" empty="0" s_no="0" storage_element_no="8" volume_tag="V5A004" tapelibrary_id="14001" test_mt_status_id="51001" tapedrive_id="13001"/>
+  <test_data_transfer_element id="50002" empty="1" s_no="1" tapelibrary_id="14001" test_mt_status_id="51002" tapedrive_id="13002"/>
+  <test_data_transfer_element id="50003" empty="1" s_no="2" tapelibrary_id="14001" test_mt_status_id="51003" tapedrive_id="13003"/>
+</dataset>

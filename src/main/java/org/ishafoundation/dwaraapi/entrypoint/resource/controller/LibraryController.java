@@ -48,6 +48,7 @@ import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.RenamedFile;
 import org.ishafoundation.dwaraapi.ingest.scan.SourceDirScanner;
 import org.ishafoundation.dwaraapi.job.JobManager;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.utils.CRCUtil;
 import org.ishafoundation.dwaraapi.utils.JunkFilesMover;
 import org.ishafoundation.dwaraapi.utils.ObjectMappingUtil;
 import org.slf4j.Logger;
@@ -476,8 +477,9 @@ public class LibraryController {
 			filePath = filePath.replace(request.getLibraryclass().getPathPrefix() + File.separator, ""); //filePath = filePath.replace(stagingSrcDirRoot + File.separator, "");
 			org.ishafoundation.dwaraapi.db.model.transactional.File nthFileRowToBeInserted = new org.ishafoundation.dwaraapi.db.model.transactional.File();
 			nthFileRowToBeInserted.setPathname(filePath);
-			nthFileRowToBeInserted.setCrc(getCrc(file));
-			nthFileRowToBeInserted.setSize(size);
+			if(file.isFile())
+				nthFileRowToBeInserted.setCrc(CRCUtil.getCrc(file));
+			nthFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
 			nthFileRowToBeInserted.setLibrary(library);
 			toBeAddedFileTableEntries.add(nthFileRowToBeInserted);			
 		}
@@ -560,10 +562,6 @@ public class LibraryController {
 //		}
 //		return taskfiletype;
 //	}
-	
-	private String getCrc(File file) {
-		return "crc:TODO";
-	}
 	
 	private void setAttributes() {
 		// TODO : The attribute set of tables need to be updated...

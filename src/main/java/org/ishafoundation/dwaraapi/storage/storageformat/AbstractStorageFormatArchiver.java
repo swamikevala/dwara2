@@ -1,7 +1,7 @@
 package org.ishafoundation.dwaraapi.storage.storageformat;
 
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.tape.label.TapeLabelManager;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.label.TapeLabelManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

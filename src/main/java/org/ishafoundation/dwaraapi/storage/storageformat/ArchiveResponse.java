@@ -6,7 +6,28 @@ import java.util.List;
 import org.ishafoundation.dwaraapi.storage.storageformat.ArchivedFile;
 
 public class ArchiveResponse {
+	
+	private String libraryName;
+	
+	private int libraryBlockNumber;
+	
 	private List<ArchivedFile> archivedFileList = new ArrayList<ArchivedFile>();
+
+	public String getLibraryName() {
+		return libraryName;
+	}
+
+	public void setLibraryName(String libraryName) {
+		this.libraryName = libraryName;
+	}
+
+	public int getLibraryBlockNumber() {
+		return libraryBlockNumber;
+	}
+
+	public void setLibraryBlockNumber(int libraryBlockNumber) {
+		this.libraryBlockNumber = libraryBlockNumber;
+	}
 
 	public List<ArchivedFile> getArchivedFileList() {
 		return archivedFileList;

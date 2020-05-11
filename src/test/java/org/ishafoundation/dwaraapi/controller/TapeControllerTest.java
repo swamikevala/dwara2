@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.controller;
 
+import org.ishafoundation.dwaraapi.api.req.Format;
 import org.ishafoundation.dwaraapi.entrypoint.resource.controller.TapeController;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,7 +18,13 @@ public class TapeControllerTest {
 	
 	@Test
 	@WithMockUser(username = "pgurumurthy", password = "pwd")
-	public void triggerMapDrives() {
-		tapeController.writeLabel("V5A001");
+	public void format() {
+		
+		Format requestBody = new Format();
+		requestBody.setBarcode("V5A999L7");
+		requestBody.setType("LTO7");
+		requestBody.setForce(false);
+		
+		tapeController.format(requestBody);
 	}
 }

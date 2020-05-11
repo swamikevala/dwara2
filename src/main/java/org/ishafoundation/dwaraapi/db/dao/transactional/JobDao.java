@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.constants.Action;
 import org.ishafoundation.dwaraapi.constants.Status;
+import org.ishafoundation.dwaraapi.db.model.master.Tape;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.springframework.data.repository.CrudRepository;
 
@@ -19,6 +20,8 @@ public interface JobDao extends CrudRepository<Job,Integer> {
 	Job findByTaskIdAndSubrequestId(int taskId, int subrequestId);
 	
 	List<Job> findAllBySubrequestRequestActionAndStatus(Action action, Status status);
+	
+	Job findTopByTapeBarcodeOrderByIdDesc(String tapeBarcode);
 	
 	//Job findById(int jobId);
 }
