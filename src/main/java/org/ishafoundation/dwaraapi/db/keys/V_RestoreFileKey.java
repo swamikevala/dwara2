@@ -6,7 +6,7 @@ import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
-import org.ishafoundation.dwaraapi.constants.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 
 
 @Embeddable

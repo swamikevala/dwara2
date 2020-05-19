@@ -11,7 +11,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
-import org.ishafoundation.dwaraapi.constants.Status;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 
 

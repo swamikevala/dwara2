@@ -1,17 +1,17 @@
 package org.ishafoundation.dwaraapi.storage.storageformat.ltfs;
 
-import org.ishafoundation.dwaraapi.storage.StorageFormatFactory;
+import org.ishafoundation.dwaraapi.storage.StorageformatFactory;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.storageformat.AbstractStorageFormatArchiver;
+import org.ishafoundation.dwaraapi.storage.storageformat.AbstractStorageformatArchiver;
 import org.ishafoundation.dwaraapi.storage.storageformat.ArchiveResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class LTFSArchiver extends AbstractStorageFormatArchiver {
+public class LTFSArchiver extends AbstractStorageformatArchiver {
     static {
-    	StorageFormatFactory.register("LTFS", LTFSArchiver.class);
+    	StorageformatFactory.register("LTFS", LTFSArchiver.class);
     }
     
     private static final Logger logger = LoggerFactory.getLogger(LTFSArchiver.class);

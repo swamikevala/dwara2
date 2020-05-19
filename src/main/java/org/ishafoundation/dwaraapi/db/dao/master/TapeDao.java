@@ -3,16 +3,17 @@ package org.ishafoundation.dwaraapi.db.dao.master;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.model.master.Tape;
-import org.ishafoundation.dwaraapi.db.model.master.User;
 import org.springframework.data.repository.CrudRepository;
 
 public interface TapeDao extends CrudRepository<Tape,Integer> {
 
-	List<Tape> findAllByTapesetIdAndFinalizedIsFalse(int tapeset_id);
-//	@Query(value="SELECT * FROM tape where tapeset_id=?1 and finalized=false", nativeQuery=true)
-//	List<Tape> getWritableTapes(int tapeset_id);
+	Tape findTopByTapesetIdAndFinalizedIsFalseOrderByIdAsc(int tapesetId);
 	
-	List<Tape> findAllByTapesetId(int tapeset_id);
+	List<Tape> findAllByTapesetIdAndFinalizedIsFalse(int tapesetId);
+//	@Query(value="SELECT * FROM tape where tapesetId=?1 and finalized=false", nativeQuery=true)
+//	List<Tape> getWritableTapes(int tapesetId);
 	
-	Tape findTopByOrderByIdDesc();
+	List<Tape> findAllByTapesetId(int tapesetId);
+	
+	Tape findTopByOrderByIdDesc(); // when a format_tape action is triggered we need to add the formatted tape to our system with the most last tape's Id + 1...
 }

@@ -56,7 +56,7 @@ public class Library {
 	private int fileCount;
 
 	@Column(name="total_size")
-	private double totalSize;
+	private long totalSize;
 	
 	@Column(name="deleted")
 	private boolean deleted;
@@ -149,11 +149,11 @@ public class Library {
 		this.fileCount = fileCount;
 	}
 
-	public double getTotalSize() {
+	public long getTotalSize() {
 		return totalSize;
 	}
 
-	public void setTotalSize(double totalSize) {
+	public void setTotalSize(long totalSize) {
 		this.totalSize = totalSize;
 	}
 

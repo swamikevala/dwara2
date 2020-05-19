@@ -46,6 +46,9 @@ public class Tape {
 	@Column(name="blocksize")
 	private int blocksize;
 	
+	@Column(name="imported")
+	private boolean imported;
+	
     @OneToMany(mappedBy = "tape",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
@@ -104,6 +107,14 @@ public class Tape {
 		this.blocksize = blocksize;
 	}
 	
+	public boolean isImported() {
+		return imported;
+	}
+
+	public void setImported(boolean imported) {
+		this.imported = imported;
+	}
+
 	@JsonIgnore
 	public List<FileTape> getFileTape() {
 		return fileTape;

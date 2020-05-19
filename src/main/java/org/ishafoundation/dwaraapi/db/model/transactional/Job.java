@@ -19,10 +19,10 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
-import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.model.master.Tape;
-import org.ishafoundation.dwaraapi.db.model.master.Task;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.enumreferences.Tasktype;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -39,10 +39,14 @@ public class Job {
 	 pkColumnValue="job_id", allocationSize = 1)
 	@Column(name="id")
 	private int id;
-	
-	@OneToOne
-	private Task task;
 
+	@Column(name="tasktype_id")
+	private Tasktype tasktype;
+	
+	@Column(name="task_id")
+	private int taskId; // Points to a record either in storagetask or in processingtask
+
+	// The FK constraint is removed so that this can point to one of the domain's library.
 	@OneToOne
 	@JoinColumn(name="input_library_id")
 	private Library inputLibrary;
@@ -50,6 +54,15 @@ public class Job {
 	@OneToOne(optional = true)
 	@JoinColumn(name="output_library_id")
 	private Library outputLibrary;
+
+//	@Column(name="input_library_id")
+//	private int input_library_id; // can contain one of the domain librarys id
+//	
+//	@Column(name="output_library_id")
+//	private int output_library_id;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+    private Job jobRef;
 	
 	@Column(name="completed_at")
 	private LocalDateTime completedAt;
@@ -68,6 +81,9 @@ public class Job {
 	private Status status;
 	
 	@OneToOne(fetch = FetchType.LAZY)
+	private org.ishafoundation.dwaraapi.db.model.master.configuration.Error error; 
+	
+	@OneToOne(fetch = FetchType.LAZY)
 	private Tape tape; 
 	
     @OneToMany(mappedBy = "job",
@@ -83,14 +99,14 @@ public class Job {
 		this.id = id;
 	}
 
-	public Task getTask() {
-		return task;
-	}
-
-	public void setTask(Task task) {
-		this.task = task;
-	}
-
+//	public Task getTask() {
+//		return task;
+//	}
+//
+//	public void setTask(Task task) {
+//		this.task = task;
+//	}
+//
 	public Library getInputLibrary() {
 		return inputLibrary;
 	}
@@ -107,9 +123,59 @@ public class Job {
 		this.outputLibrary = outputLibrary;
 	}
 
+	public Tasktype getTasktype() {
+		return tasktype;
+	}
+
+	public void setTasktype(Tasktype tasktype) {
+		this.tasktype = tasktype;
+	}
+
+	public int getTaskId() {
+		return taskId;
+	}
+
+	public void setTaskId(int taskId) {
+		this.taskId = taskId;
+	}
+
+//	public int getInput_library_id() {
+//		return input_library_id;
+//	}
+//
+//	public void setInput_library_id(int input_library_id) {
+//		this.input_library_id = input_library_id;
+//	}
+//
+//	public int getOutput_library_id() {
+//		return output_library_id;
+//	}
+//
+//	public void setOutput_library_id(int output_library_id) {
+//		this.output_library_id = output_library_id;
+//	}
+
+	public Job getJobRef() {
+		return jobRef;
+	}
+
+	public void setJobRef(Job jobRef) {
+		this.jobRef = jobRef;
+	}
+
+	public org.ishafoundation.dwaraapi.db.model.master.configuration.Error getError() {
+		return error;
+	}
+
+	public void setError(org.ishafoundation.dwaraapi.db.model.master.configuration.Error error) {
+		this.error = error;
+	}
+	
+	
 	public LocalDateTime getCompletedAt() {
 		return completedAt;
 	}
+
 
 	public void setCompletedAt(LocalDateTime completedAt) {
 		this.completedAt = completedAt;

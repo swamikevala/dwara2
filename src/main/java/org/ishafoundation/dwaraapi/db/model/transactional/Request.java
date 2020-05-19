@@ -13,10 +13,10 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
-import org.ishafoundation.dwaraapi.constants.Action;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.Targetvolume;
 import org.ishafoundation.dwaraapi.db.model.master.User;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -84,7 +84,9 @@ public class Request {
 	@ManyToOne(fetch = FetchType.LAZY) 
     private Subrequest subrequest;
 	
-	//library_id (fk)
+//	// TODO how do we know which domain it is..
+//	@Column(name="library_id")
+//	private Integer libraryId; // The FK constraint is removed so that this can point to one of the domain's library.
 	// Eg. Many rename requests could have been requested on the same library
 	@ManyToOne(fetch = FetchType.LAZY) 
 	private Library library;

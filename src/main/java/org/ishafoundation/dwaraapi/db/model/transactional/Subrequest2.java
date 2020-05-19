@@ -1,7 +1,5 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 		
-import java.util.Map;
-
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
@@ -9,12 +7,13 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
-import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.attributeconverter.SubrequestActionColumnsAttributeConverter;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 
 
@@ -40,8 +39,9 @@ public class Subrequest2 {
 	private Status status;
 
 	 /* This converter does the trick */
-	 @Convert(converter = SubrequestActionColumnsAttributeConverter.class)
-	 private ActionColumns actionColumns;
+	@Lob
+	@Convert(converter = SubrequestActionColumnsAttributeConverter.class)
+	private ActionColumns actionColumns;
 	  
 	
 	public int getId() {

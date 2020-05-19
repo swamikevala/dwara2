@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.constants.TapedriveStatus;
 import org.ishafoundation.dwaraapi.db.dao.master.TapedriveDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TapelibraryDao;
 import org.ishafoundation.dwaraapi.db.model.Tapedrive;
 import org.ishafoundation.dwaraapi.db.model.master.Tapelibrary;
+import org.ishafoundation.dwaraapi.enumreferences.TapedriveStatus;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.TapeDriveManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveStatusDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.DataTransferElement;

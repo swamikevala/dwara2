@@ -2,9 +2,9 @@ package org.ishafoundation.dwaraapi.db.dao.view;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.constants.Action;
 import org.ishafoundation.dwaraapi.db.keys.V_RestoreFileKey;
 import org.ishafoundation.dwaraapi.db.model.view.V_RestoreFile;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.springframework.data.repository.CrudRepository;
 
 public interface V_RestoreFileDao extends CrudRepository<V_RestoreFile,V_RestoreFileKey> {

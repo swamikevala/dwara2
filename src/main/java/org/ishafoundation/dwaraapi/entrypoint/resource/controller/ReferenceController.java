@@ -2,7 +2,6 @@ package org.ishafoundation.dwaraapi.entrypoint.resource.controller;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.constants.Reference;
 import org.ishafoundation.dwaraapi.db.dao.master.ActionDao;
 import org.ishafoundation.dwaraapi.db.dao.master.StatusDao;
 import org.ishafoundation.dwaraapi.db.dao.master.TargetvolumeDao;
@@ -12,6 +11,7 @@ import org.ishafoundation.dwaraapi.db.model.master.reference.Status;
 import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.AllReferences;
 import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.SingleReference;
 import org.ishafoundation.dwaraapi.entrypoint.resource.mapper.MiscObjectMapper;
+import org.ishafoundation.dwaraapi.enumreferences.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

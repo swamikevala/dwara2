@@ -7,9 +7,9 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
-import org.ishafoundation.dwaraapi.storage.StorageFormatFactory;
+import org.ishafoundation.dwaraapi.storage.StorageformatFactory;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.storageformat.AbstractStorageFormatArchiver;
+import org.ishafoundation.dwaraapi.storage.storageformat.AbstractStorageformatArchiver;
 import org.ishafoundation.dwaraapi.storage.storageformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.storageformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.storageformat.bru.response.BruResponse;
@@ -26,9 +26,9 @@ import org.springframework.stereotype.Component;
 @Primary
 //@Profile("default") works
 @Profile({ "!dev & !stage" })
-public class BruArchiver extends AbstractStorageFormatArchiver {
+public class BruArchiver extends AbstractStorageformatArchiver {
     static {
-    	StorageFormatFactory.register("BRU", BruArchiver.class);
+    	StorageformatFactory.register("BRU", BruArchiver.class);
     }
     
     private static final Logger logger = LoggerFactory.getLogger(BruArchiver.class);

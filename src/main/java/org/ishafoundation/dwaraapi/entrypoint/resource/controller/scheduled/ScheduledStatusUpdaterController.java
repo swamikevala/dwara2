@@ -4,12 +4,12 @@ import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
-import org.ishafoundation.dwaraapi.job.TaskUtils;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.enumreferences.Tasktype;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -28,9 +28,6 @@ public class ScheduledStatusUpdaterController {
 
 	@Autowired
 	private TFileJobDao tFileJobDao;
-	
-	@Autowired
-	private TaskUtils taskUtils;
 
 	@Value("${scheduler.enabled:true}")
 	private boolean isEnabled;
@@ -47,10 +44,10 @@ public class ScheduledStatusUpdaterController {
     }
 	
 	private void updateTransactionalTablesStatus() {
-		List<Job> jobList = jobDao.findAllByStatusOrderById(Status.in_progress);
+		List<Job> jobList = jobDao.findAllByStatusAndJobRefIsNullOrderById(Status.in_progress);
 		for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
 			Job job = (Job) iterator.next();
-			if(!taskUtils.isTaskStorage(job.getTask())){ // consolidated update needed only for process jobs...
+			if(job.getTasktype() == Tasktype.processing){ // consolidated update needed only for process jobs...
 				boolean inProgress = false;
 				boolean hasFailures = false;
 				boolean hasAnyCompleted = false;
@@ -79,7 +76,7 @@ public class ScheduledStatusUpdaterController {
 						job.setStatus(Status.completed);
 					}
 					if(hasFailures && hasAnyCompleted)
-						job.setStatus(Status.completed_with_failures);
+						job.setStatus(Status.completed_failures);
 					
 					jobDao.save(job);
 					

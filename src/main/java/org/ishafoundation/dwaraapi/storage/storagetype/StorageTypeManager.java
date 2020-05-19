@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeJobsManager;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.job.TapeJobsManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -4,17 +4,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.constants.Action;
-import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.Subrequest2Dao;
 import org.ishafoundation.dwaraapi.db.model.transactional.ActionColumns;
-import org.ishafoundation.dwaraapi.db.model.transactional.FormatColumns;
-import org.ishafoundation.dwaraapi.db.model.transactional.IngestColumns;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.RestoreColumns;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest2;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,10 +33,10 @@ public class Subrequest2Tests{
 	@Autowired
 	private Subrequest2Dao subrequest2Dao;
 	
-	@Test
+	//@Test
 	public void testSubrequest2_1() {
-		Subrequest2 subrequest2 = subrequest2Dao.findById(3).get();
-		IngestColumns ic = subrequest2.getActionColumns().getIngest();
+		Subrequest2 subrequest2 = subrequest2Dao.findById(5).get();
+		ActionColumns ic = subrequest2.getActionColumns();
 		
 		System.out.println(ic.getLibraryName());
 	}
@@ -49,47 +46,51 @@ public class Subrequest2Tests{
 	public void testSubrequest2_2() {
 		String requestedBy = SecurityContextHolder.getContext().getAuthentication().getName();
     	
-		//Action action = Action.ingest;
-		//Action action = Action.restore;
-		Action action = Action.format;
+		Action action = null;
 		
-		Request request = new Request();
-		request.setAction(action);
-		request.setUser(userDao.findByName(requestedBy));
-    	request.setRequestedAt(LocalDateTime.now());
-    	requestDao.save(request);
-    	
-		Subrequest2 subrequest2 = new Subrequest2();
-		subrequest2.setRequest(request);
-		subrequest2.setStatus(Status.queued);
-		
-		IngestColumns ingest = new IngestColumns();
-		ingest.setLibraryId(1);
-		ingest.setLibraryName("some lib name");
-		ingest.setSourcePath("some sourcePath");
-		
-		RestoreColumns restore = new RestoreColumns();
-		restore.setFileId(1);
-		restore.setPriority(0);
-		
-		FormatColumns format = new FormatColumns();
-		format.setBarcode("some barcode");
-		format.setStorageType("Some storage type");
-		format.setForce(true);
-		
-		ActionColumns actionColumns = new ActionColumns();
-		
-		if(action == Action.ingest)
-			actionColumns.setIngest(ingest);
-		else if(action == Action.restore) 
-			actionColumns.setRestore(restore);
-		else if(action == Action.format) 
-			actionColumns.setFormat(format);
-		
-		subrequest2.setActionColumns(actionColumns);
-		
-		subrequest2Dao.save(subrequest2);
-		
+		for (int i = 0; i < 3; i++) {
+			if(i == 0)
+				action = Action.ingest;
+			else if(i == 1)
+				action = Action.restore;
+			else if(i == 2)
+				action = Action.format_tape;
+			
+			Request request = new Request();
+			request.setAction(action);
+			request.setUser(userDao.findByName(requestedBy));
+	    	request.setRequestedAt(LocalDateTime.now());
+	    	requestDao.save(request);
+	    	
+			Subrequest2 subrequest2 = new Subrequest2();
+			subrequest2.setRequest(request);
+			subrequest2.setStatus(Status.queued);
+			
+			ActionColumns actionColumns = new ActionColumns();
+			
+			if(action == Action.ingest) {
+				actionColumns.setSourcePath("some sourcePath");
+//				actionColumns.setSkipTasks(null);
+//				actionColumns.setRerun(false);
+//				actionColumns.setRerunNo(0);
+				actionColumns.setLibraryId(1);
+				actionColumns.setLibraryName("some lib name");
+//				actionColumns.setPrevSequenceCode(null);
+			}
+			else if(action == Action.restore) { 
+				actionColumns.setFileId(1);
+				actionColumns.setPriority(0);
+			}
+			else if(action == Action.format_tape) { 
+				actionColumns.setBarcode("some barcode");
+				actionColumns.setStorageType("Some storage type");
+				actionColumns.setForce(true);
+			}
+			
+			subrequest2.setActionColumns(actionColumns);
+			
+			subrequest2Dao.save(subrequest2);
+		}
 		List<Status> statusList = new ArrayList<Status>();
 		statusList.add(Status.queued);
 		statusList.add(Status.in_progress);

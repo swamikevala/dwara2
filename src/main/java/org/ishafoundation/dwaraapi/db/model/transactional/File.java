@@ -51,7 +51,7 @@ public class File {
 	private Long crc;
 
 	@Column(name="size")
-	private double size;
+	private long size;
 
 	@Column(name="deleted")
 	private boolean deleted;
@@ -110,11 +110,11 @@ public class File {
 		this.crc = crc;
 	}
 
-	public double getSize() {
+	public long getSize() {
 		return size;
 	}
 
-	public void setSize(double size) {
+	public void setSize(long size) {
 		this.size = size;
 	}
 

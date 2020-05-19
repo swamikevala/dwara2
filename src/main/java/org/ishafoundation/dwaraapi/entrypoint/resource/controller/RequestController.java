@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.ishafoundation.dwaraapi.constants.SortOrder;
 import org.ishafoundation.dwaraapi.db.cacheutil.ActionCacheUtil;
 import org.ishafoundation.dwaraapi.db.cacheutil.StatusCacheUtil;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
@@ -20,6 +19,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
 import org.ishafoundation.dwaraapi.entrypoint.resource.WrappedRequestResourceList;
 import org.ishafoundation.dwaraapi.entrypoint.resource.WrappedSubrequestWithJobDetailsResourceList;
+import org.ishafoundation.dwaraapi.enumreferences.SortOrder;
 import org.ishafoundation.dwaraapi.model.WrappedRequestList;
 import org.ishafoundation.dwaraapi.model.WrappedSubrequestList;
 import org.ishafoundation.dwaraapi.utils.ObjectMappingUtil;

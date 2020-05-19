@@ -15,4 +15,6 @@ public interface FileTapeDao extends CrudRepository<FileTape,Integer> {
 	FileTape findByFileIdAndTapeId(int fileIdToBeRestored, int tapeId);
 	
 	List<FileTape> findAllByFileId(int fileIdToBeRestored);
+	
+	List<FileTape> findAllByTapeId(int tapeId);
 }

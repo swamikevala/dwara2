@@ -5,11 +5,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.Tapelibrary;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDrivePreparer;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.DataTransferElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

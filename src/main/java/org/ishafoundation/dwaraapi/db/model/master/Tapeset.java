@@ -1,18 +1,12 @@
 package org.ishafoundation.dwaraapi.db.model.master;
 		
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-
-import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassTapeset;
 
 
 @Entity
@@ -35,11 +29,6 @@ public class Tapeset {
 	
 	@Column(name="copy_number")
 	private int copyNumber;
-	
-    @OneToMany(mappedBy = "tapeset",
-            cascade = CascadeType.MERGE,
-            orphanRemoval = true)
-    List<LibraryclassTapeset> libraryclassTapeset = new ArrayList<>();
 	
 	public Tapeset() {}
 	
@@ -87,14 +76,6 @@ public class Tapeset {
 
 	public void setCopyNumber(int copyNumber) {
 		this.copyNumber = copyNumber;
-	}
-
-	public List<LibraryclassTapeset> getLibraryclassTapeset() {
-		return libraryclassTapeset;
-	}
-
-	public void setLibraryclassTapeset(List<LibraryclassTapeset> libraryclassTapeset) {
-		this.libraryclassTapeset = libraryclassTapeset;
 	}
 	
 	@Override

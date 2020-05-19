@@ -17,6 +17,12 @@ public class Storageformat {
 	@Column(name="name", unique = true)
 	private String name;
 
+	@Column(name="filesize_increase_rate")
+	private float filesizeIncreaseRate;
+	
+	@Column(name="filesize_increase_const")
+	private int filesizeIncreaseConst;
+	
 	public Storageformat() {
 		
 	}

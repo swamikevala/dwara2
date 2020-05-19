@@ -23,7 +23,6 @@ import org.ishafoundation.dwaraapi.api.exception.DwaraException;
 import org.ishafoundation.dwaraapi.api.req.ingest.LibraryParams;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.cacheutil.ActionCacheUtil;
 import org.ishafoundation.dwaraapi.db.cacheutil.LibraryclassCacheUtil;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
@@ -35,8 +34,8 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.LibraryDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
-import org.ishafoundation.dwaraapi.db.model.master.Extension;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Extension;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassActionUser;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
@@ -45,6 +44,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
 import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.IngestFile;
 import org.ishafoundation.dwaraapi.entrypoint.resource.ingest.RenamedFile;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.ingest.scan.SourceDirScanner;
 import org.ishafoundation.dwaraapi.job.JobManager;
 import org.ishafoundation.dwaraapi.model.CommandLineExecutionResponse;
@@ -229,7 +229,6 @@ public class LibraryController {
 	    	
 	    	String libraryclassName = userRequest.getLibraryclass();
 	    	Libraryclass libraryclass = libraryclassCacheUtil.getLibraryclass(libraryclassName);
-	    	int filetypeId = libraryclass.getTaskfiletypeId();
 	
 			// TODO: Move this out. Unnecessarily framing the list for every request - when it can be cached and cleared when extension DB table changes...
 	    	// Step 1 - get all supported extensions in the system
@@ -248,7 +247,7 @@ public class LibraryController {
 	    		boolean isExtnSupported = true;
 	    		IngestFile ingestFile = objectMappingUtil.frameIngestFileObject(nthLibraryParams);
 	    		try {
-	    			checkExtensionSupport(nthLibraryParams, filetypeId);
+	    			checkExtensionSupport(nthLibraryParams);
 				} catch (Exception e) {
 					ingestFile.setErrorType(errorType);
 					ingestFile.setErrorMessage(e.getMessage());
@@ -282,7 +281,7 @@ public class LibraryController {
 		    	String requestedBy = getUserFromContext();
 		    	
 		    	Request request = new Request();
-		    	request.setAction(org.ishafoundation.dwaraapi.constants.Action.valueOf(DEFAULT_REQUESTTYPE));
+		    	request.setAction(org.ishafoundation.dwaraapi.enumreferences.Action.valueOf(DEFAULT_REQUESTTYPE));
 		    	request.setLibraryclass(libraryclass);
 		    	request.setRequestedAt(LocalDateTime.now());
 		    	request.setUser(userDao.findByName(requestedBy));
@@ -331,7 +330,7 @@ public class LibraryController {
      * @return
      * @throws Exception with the list of unsupported extensions...
      */
-    private void checkExtensionSupport(LibraryParams ingestRequestParams, int taskfiletypeId) throws Exception{
+    private void checkExtensionSupport(LibraryParams ingestRequestParams) throws Exception{
     	// Step 2 - Iterate through all Files under the library Directory and check if their extensions are supported in our system.
     	String libraryName = ingestRequestParams.getName();
     	String originFolderPath = ingestRequestParams.getSourcePath();
@@ -438,7 +437,7 @@ public class LibraryController {
     	
     	Collection<File> libraryFileAndDirsList = getFileList(libraryFileInStagingDir, junkFilesStagedDirName);
     	int fileCount = libraryFileAndDirsList.size();
-        double size = FileUtils.sizeOf(libraryFileInStagingDir);
+        long size = FileUtils.sizeOf(libraryFileInStagingDir);
     	
     	Status status = Status.queued;
     	
@@ -463,6 +462,10 @@ public class LibraryController {
     	library.setLibraryclass(request.getLibraryclass());
     	library.setName(libraryName);
     	library.setqLatestSubrequest(subrequest);
+//    	library.setOriginalName(originalName);
+//    	library.setPrev_sequence_code(prev_sequence_code);
+//    	library.setSequenceCode(sequenceCode);
+    	library.setTotalSize(size);
     	logger.debug("DB Library Creation");  
     	library = libraryDao.save(library);
     	int libraryId = library.getId();
@@ -543,24 +546,21 @@ public class LibraryController {
 	}
     
     private void createJobTableEntries(Request request, Subrequest subrequest, Library library) {
-    	List<Job> jobList = jobManager.createJobs(request, subrequest, library);
-    	logger.debug("DB Job rows Creation");   
-    	jobDao.saveAll(jobList);
-    	logger.debug("DB Job rows Creation - Success");
+    	List<Job> jobList = jobManager.createJobsForIngest(request, subrequest, library);
     }
 
 	private String getUserFromContext() {
 		return SecurityContextHolder.getContext().getAuthentication().getName();
 	}
 	
-//	private Taskfiletype getTaskfiletype(File file) {
-//		Taskfiletype taskfiletype = null;
+//	private Filetype getFiletype(File file) {
+//		Filetype filetype = null;
 //		if(file.isFile()) {
 //			String extn = FilenameUtils.getExtension(file.getName()).toUpperCase();
 //			
-//			taskfiletype = taskfiletypeDao.findByExtensionsExtensionName(extn); // TODO : extns_FiletypeCacheUtil.getExtns_FiletypeMap().get(extn);
+//			filetype = filetypeDao.findByExtensionsExtensionName(extn); // TODO : extns_FiletypeCacheUtil.getExtns_FiletypeMap().get(extn);
 //		}
-//		return taskfiletype;
+//		return filetype;
 //	}
 	
 	private void setAttributes() {

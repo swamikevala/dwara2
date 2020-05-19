@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.db.attributeconverter;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
-import org.ishafoundation.dwaraapi.constants.Status;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 @Converter(autoApply = true)
 public class StatusAttributeConverter implements AttributeConverter<Status, Integer> {
@@ -22,7 +22,7 @@ public class StatusAttributeConverter implements AttributeConverter<Status, Inte
 			return 10003;
 		case partially_completed:
 			return 10004;
-		case completed_with_failures:
+		case completed_failures:
 			return 10005;
 		case on_hold:
 			return 10006;
@@ -57,7 +57,7 @@ public class StatusAttributeConverter implements AttributeConverter<Status, Inte
 		case 10004:
 			return Status.partially_completed;
 		case 10005:
-			return Status.completed_with_failures;
+			return Status.completed_failures;
 		case 10006:
 			return Status.on_hold;
 		case 10007:

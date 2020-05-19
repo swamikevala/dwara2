@@ -11,7 +11,7 @@ import javax.persistence.MapsId;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.keys.ApplicationFileKey;
-import org.ishafoundation.dwaraapi.db.model.master.Application;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Application;
 import org.ishafoundation.dwaraapi.db.model.transactional.File;
 
 /*

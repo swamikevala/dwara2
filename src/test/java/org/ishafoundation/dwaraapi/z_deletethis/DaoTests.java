@@ -3,13 +3,15 @@ package org.ishafoundation.dwaraapi.z_deletethis;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.constants.Action;
-import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.master.TapedriveDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.LibraryTapeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.Tapedrive;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.LibraryTape;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class DaoTests{
 
 	@Autowired
+	private LibraryTapeDao libraryTapeDao;
+	
+	@Autowired
 	private TapedriveDao tapedriveDao;	
 	
 	@Autowired
@@ -28,6 +33,12 @@ public class DaoTests{
 	
 	@Autowired
 	private JobDao jobDao;	
+	
+	@Test
+	public void testLibraryTapeDao() {		
+		long a = libraryTapeDao.findUsedSpaceOnTape(12002);
+		System.out.println(a);
+	}
 	
 	//@Test
 	public void testTapedriveDao() {
@@ -46,14 +57,14 @@ public class DaoTests{
 		statusList.add(Status.in_progress);
 
 		// If a subrequest action type is mapdrive and status is queued or inprogress skip storage jobs...
-		long count = subrequestDao.countByRequestActionAndStatusIn(Action.tapedrivemapping, statusList); 
+		long count = subrequestDao.countByRequestActionAndStatusIn(Action.map_tapedrives, statusList); 
 		System.out.println(count);
 	}	
 
-	@Test
+	//@Test
 	public void testJobDao() {
 		
-		List<Job> jobList = jobDao.findAllBySubrequestRequestActionAndStatus(Action.format, Status.queued);
+		List<Job> jobList = jobDao.findAllBySubrequestRequestActionAndStatus(Action.format_tape, Status.queued);
 		System.out.println(jobList.size());
 	}	
 }

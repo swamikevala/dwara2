@@ -2,7 +2,7 @@ package org.ishafoundation.dwaraapi.db.dao.master;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.model.master.Extension;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Extension;
 import org.springframework.data.repository.CrudRepository;
 
 public interface ExtensionDao extends CrudRepository<Extension, Integer> {
@@ -15,7 +15,7 @@ public interface ExtensionDao extends CrudRepository<Extension, Integer> {
 			join filetype on extension_filetype.filetype_id = filetype.id 
 			where filetype.id = 4001;
 	*/
-	List<Extension> findAllByTaskfiletypesTaskfiletypeId(int taskfiletypeId);
+	List<Extension> findAllByFiletypesFiletypeId(int filetypeId);
 	
 	/*
 	 * we might also need sidecar along with the list of extensions. 

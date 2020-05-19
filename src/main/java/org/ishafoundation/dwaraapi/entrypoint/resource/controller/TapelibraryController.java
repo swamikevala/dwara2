@@ -3,12 +3,12 @@ package org.ishafoundation.dwaraapi.entrypoint.resource.controller;
 import java.time.LocalDateTime;
 import java.util.concurrent.Executors;
 
-import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeDriveMapperThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +68,7 @@ public class TapelibraryController {
 		Block all storage jobs when there is a queued map drive request... If a subrequest action type is mapdrive and status is queued or inprogress
 		*/
     	Request request = new Request();
-    	request.setAction(org.ishafoundation.dwaraapi.constants.Action.tapedrivemapping);
+    	request.setAction(org.ishafoundation.dwaraapi.enumreferences.Action.map_tapedrives);
     	request.setRequestedAt(LocalDateTime.now());
     	
     	String requestedBy = SecurityContextHolder.getContext().getAuthentication().getName();

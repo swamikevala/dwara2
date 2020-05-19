@@ -8,15 +8,12 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassProperty;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassActionUser;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassTapeset;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassProperty;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.LibraryclassTargetvolume;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 
@@ -45,21 +42,8 @@ public class Libraryclass {
 	@Column(name="source")
 	private boolean source;
 
-	// unidirectional reference
-	// Many libraryclasses can share the same filetype...
-	// Eg.,
-	// Pubvideo - video
-	// Privvideo - video
-	@ManyToOne(fetch = FetchType.LAZY)
-	private Taskfiletype taskfiletype;
-
 	@Column(name="concurrent_copies")
 	private boolean concurrentCopies;
-	
-	// Unidirectional is enough... 
-	// Many libraryclasses can use the same default taskset
-	@ManyToOne(fetch = FetchType.LAZY)
-	private Taskset taskset;	
 	
 	@Column(name="display_order")
 	private int displayOrder;
@@ -68,11 +52,6 @@ public class Libraryclass {
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
     private List<LibraryclassTargetvolume> libraryclassTargetvolume = new ArrayList<>();
-
-    @OneToMany(mappedBy = "libraryclass",
-            cascade = CascadeType.MERGE,
-            orphanRemoval = true)
-    private List<LibraryclassTapeset> libraryclassTapeset = new ArrayList<>(); 
     
     @OneToMany(mappedBy = "libraryclass",
             cascade = CascadeType.MERGE,
@@ -131,45 +110,6 @@ public class Libraryclass {
 		this.source = source;
 	}
 	
-	@JsonIgnore
-	public Taskfiletype getTaskfiletype() {
-		return taskfiletype;
-	}
-
-	@JsonIgnore
-	public void setTaskfiletype(Taskfiletype taskfiletype) {
-		this.taskfiletype = taskfiletype;
-	}
-
-	public int getTaskfiletypeId() {
-		return taskfiletype.getId();
-	}
-	/*
-	@JsonIgnore
-	public Task getTask() {
-		return task;
-	}
-
-	@JsonIgnore
-	public void setTask(Task task) {
-		this.task = task;
-	}
-
-	public Integer getTaskId() {
-		Integer taskId = null;
-		if(task != null)
-			taskId = task.getId();
-		return taskId;
-	}*/
-	
-	/*
-	public Integer getGeneratorTaskId() {
-		Integer generatorTaskId = null;
-		if(generatorTask != null)
-			generatorTaskId = generatorTask.getId();
-		return generatorTaskId;
-	}*/
-	
 	public boolean isConcurrentCopies() {
 		return concurrentCopies;
 	}
@@ -178,20 +118,6 @@ public class Libraryclass {
 		this.concurrentCopies = concurrentCopies;
 	}
 
-	@JsonIgnore
-	public Taskset getTaskset() {
-		return taskset;
-	}
-
-	@JsonIgnore
-	public void setTaskset(Taskset taskset) {
-		this.taskset = taskset;
-	}
-	
-	public int getTasksetId() {
-		return taskset.getId();
-	}	
-	
 	public int getDisplayOrder() {
 		return displayOrder;
 	}
@@ -199,7 +125,7 @@ public class Libraryclass {
 	public void setDisplayOrder(int displayOrder) {
 		this.displayOrder = displayOrder;
 	}
-	
+
 	@JsonIgnore
 	public List<LibraryclassTargetvolume> getLibraryclassTargetvolume() {
 		return libraryclassTargetvolume;
@@ -208,16 +134,6 @@ public class Libraryclass {
 	@JsonIgnore
 	public void setLibraryclassTargetvolume(List<LibraryclassTargetvolume> libraryclassTargetvolume) {
 		this.libraryclassTargetvolume = libraryclassTargetvolume;
-	}
-	
-	@JsonIgnore
-	public List<LibraryclassTapeset> getLibraryclassTapeset() {
-		return libraryclassTapeset;
-	}
-
-	@JsonIgnore
-	public void setLibraryclassTapeset(List<LibraryclassTapeset> libraryclassTapeset) {
-		this.libraryclassTapeset = libraryclassTapeset;
 	}
 
 	@JsonIgnore
@@ -269,17 +185,7 @@ public class Libraryclass {
     	// inversing linking the join table entry to the target object
         targetvolume.getLibraryclassTargetvolume().add(libraryclassTargetvolume);
     }
-    
-    public void addTapeset(Tapeset tapeset, Task task, int copyNumber, boolean encrypted) {
-    	// linking the join table entry to this owning object
-    	LibraryclassTapeset libraryclassTapeset = new LibraryclassTapeset(this, tapeset);
-    	libraryclassTapeset.setTask(task);
-    	libraryclassTapeset.setEncrypted(encrypted);
-    	this.libraryclassTapeset.add(libraryclassTapeset);
-
-    	// inversing linking the join table entry to the target object
-        tapeset.getLibraryclassTapeset().add(libraryclassTapeset);
-    }    
+   
     
     public void addProperty(Property property, int position, boolean optional) {
     	// linking the join table entry to this owning object

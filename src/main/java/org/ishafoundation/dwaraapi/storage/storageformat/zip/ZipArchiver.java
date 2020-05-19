@@ -1,17 +1,17 @@
 package org.ishafoundation.dwaraapi.storage.storageformat.zip;
 
-import org.ishafoundation.dwaraapi.storage.StorageFormatFactory;
+import org.ishafoundation.dwaraapi.storage.StorageformatFactory;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.storageformat.AbstractStorageFormatArchiver;
+import org.ishafoundation.dwaraapi.storage.storageformat.AbstractStorageformatArchiver;
 import org.ishafoundation.dwaraapi.storage.storageformat.ArchiveResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ZipArchiver extends AbstractStorageFormatArchiver {
+public class ZipArchiver extends AbstractStorageformatArchiver {
     static {
-    	StorageFormatFactory.register("ZIP", ZipArchiver.class);
+    	StorageformatFactory.register("ZIP", ZipArchiver.class);
     }
     private static final Logger logger = LoggerFactory.getLogger(ZipArchiver.class);
     

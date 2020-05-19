@@ -4,18 +4,17 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.constants.Action;
 import org.ishafoundation.dwaraapi.db.model.master.Libraryclass;
 import org.ishafoundation.dwaraapi.db.model.master.Tape;
-import org.ishafoundation.dwaraapi.db.model.master.Task;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.storage.StorageJobBuilder;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeJobSelector;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveStatusDetails;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.job.TapeJobSelector;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -64,9 +63,9 @@ public class TapeJobSelectorTests {
     	library.setName("10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9");
     	library.setLibraryclass(libraryclass);
     	
-    	Task task = new Task();
-    	task.setId(18001);
-    	task.setCopyNumber(1);
+//    	Task task = new Task();
+//    	task.setId(18001);
+//    	task.setCopyNumber(1);
     	
     	Tape tape = new Tape();
     	tape.setBarcode("V5A003");
@@ -75,7 +74,8 @@ public class TapeJobSelectorTests {
     	job1.setId(1);
     	job1.setSubrequest(subrequest);
     	job1.setInputLibrary(library);
-    	job1.setTask(task);
+//    	TODO job1.setTasktype(tasktype);
+    	job1.setTaskId(18001);
     	job1.setTape(tape);
     	
     	jobList.add(job1);

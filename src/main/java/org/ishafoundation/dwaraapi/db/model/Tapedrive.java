@@ -9,6 +9,7 @@ import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.model.master.Tape;
 import org.ishafoundation.dwaraapi.db.model.master.Tapelibrary;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Tapedrivetype;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 
 @Entity
@@ -18,6 +19,9 @@ public class Tapedrive {
 	@Id
 	@Column(name="id")
 	private int id;
+	
+	@ManyToOne // Many tapedrives of a same type 
+	private Tapedrivetype tapedrivetype;
 	
 	@Column(name="device_wwid", unique=true)
 	private String deviceWwid;
@@ -33,8 +37,7 @@ public class Tapedrive {
 	@Column(name="drive_status")
 	private String status;
 
-
-	// TODO : Swami has removed this in the confluence. This is needed to getTheCurrentlyRunningTapeJobs
+	// This is needed to getTheCurrentlyRunningTapeJobs
 	// unidirectional reference is enough
 	@OneToOne(optional=true)
 	private Job job;
@@ -54,6 +57,14 @@ public class Tapedrive {
 
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	public Tapedrivetype getTapedrivetype() {
+		return tapedrivetype;
+	}
+
+	public void setTapedrivetype(Tapedrivetype tapedrivetype) {
+		this.tapedrivetype = tapedrivetype;
 	}
 
 	public String getDeviceWwid() {

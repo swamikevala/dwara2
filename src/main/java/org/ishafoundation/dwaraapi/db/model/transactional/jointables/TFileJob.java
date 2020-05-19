@@ -12,11 +12,11 @@ import javax.persistence.MapsId;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.constants.Status;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Library;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 @Entity(name = "TFileJob")
 @Table(name="t_file_job")
@@ -33,10 +33,13 @@ public class TFileJob {
     @MapsId("jobId")
 	private Job job;
 
-	// Many files on a job referring to the same library
-	// Many jobs on a particular file referring to the same library
-	// So Many Filejob combination to one library
-	// but the combination is just one on one
+//	// FK removed to support multi domains
+//	private int libraryId;
+	
+//	// Many files on a job referring to the same library
+//	// Many jobs on a particular file referring to the same library
+//	// So Many Filejob combination to one library
+//	// but the combination is just one on one
 	@OneToOne(fetch = FetchType.LAZY)
 	private Library library;
 	

@@ -18,10 +18,14 @@ public class Tapetype {
 	private String name;
 
 	@Column(name="capacity")
-	private String capacity;
+	private long capacity;
 
+	@Column(name="blocksize")
+	private int blocksize;
+	
 	public Tapetype() {}
-	public Tapetype(int id, String name, String capacity) {
+	
+	public Tapetype(int id, String name, long capacity) {
 		this.id = id;
 		this.name = name;
 		this.capacity = capacity;
@@ -43,12 +47,20 @@ public class Tapetype {
 		this.name = name;
 	}
 	
-	public String getCapacity() {
+	public long getCapacity() {
 		return capacity;
 	}
 
-	public void setCapacity(String capacity) {
+	public void setCapacity(long capacity) {
 		this.capacity = capacity;
 	}
-
+	
+	public int getBlocksize() {
+		return blocksize;
+	}
+	
+	public void setBlocksize(int blocksize) {
+		this.blocksize = blocksize;
+	}
+	
 }

@@ -45,9 +45,9 @@ public interface EntityResourceMapper {
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
 	org.ishafoundation.dwaraapi.entrypoint.resource.SubrequestWithJobDetails getSubrequestWithJobDetailsResource(org.ishafoundation.dwaraapi.db.model.transactional.Subrequest entity);
 
-	@Mappings({
-        @Mapping(source = "task.name", target = "taskName")
-    })
+//	@Mappings({
+//        @Mapping(source = "task.name", target = "taskName")
+//    })
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
 	org.ishafoundation.dwaraapi.entrypoint.resource.Job getJobResource(org.ishafoundation.dwaraapi.db.model.transactional.Job entity);
 }
