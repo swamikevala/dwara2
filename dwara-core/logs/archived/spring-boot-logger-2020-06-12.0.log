@@ -1,0 +1,406 @@
+2020-06-12 17:45:03,225 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data repositories in DEFAULT mode.
+2020-06-12 17:45:03,252 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 14ms. Found 0 repository interfaces.
+2020-06-12 17:45:04,001 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-06-12 17:45:04,184 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-06-12 17:45:04,275 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-06-12 17:45:04,378 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.3.10.Final}
+2020-06-12 17:45:04,381 INFO org.hibernate.cfg.Environment [main] HHH000206: hibernate.properties not found
+2020-06-12 17:45:04,589 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+2020-06-12 17:45:05,393 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL57Dialect
+2020-06-12 17:45:06,086 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-06-12 17:45:06,120 WARN org.springframework.context.support.AbstractApplicationContext [main] Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jobCreator': Unsatisfied dependency expressed through field 'actionelementDao'; nested exception is org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementDao' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {@org.springframework.beans.factory.annotation.Autowired(required=true)}
+2020-06-12 17:45:06,120 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-06-12 17:45:06,127 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Shutdown initiated...
+2020-06-12 17:45:06,149 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Shutdown completed.
+2020-06-12 17:45:06,163 INFO org.springframework.boot.autoconfigure.logging.ConditionEvaluationReportLoggingListener [main] 
+
+Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+2020-06-12 17:45:06,379 ERROR org.springframework.boot.diagnostics.LoggingFailureAnalysisReporter [main] 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Field actionelementDao in org.ishafoundation.dwaraapi.job.JobCreator required a bean of type 'org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementDao' that could not be found.
+
+The injection point has the following annotations:
+	- @org.springframework.beans.factory.annotation.Autowired(required=true)
+
+
+Action:
+
+Consider defining a bean of type 'org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementDao' in your configuration.
+
+2020-06-12 17:45:06,382 ERROR org.springframework.test.context.TestContextManager [main] Caught exception while allowing TestExecutionListener [org.springframework.test.context.web.ServletTestExecutionListener@56de5251] to prepare test instance [org.ishafoundation.dwaraapi.job.JobCreatorTest@68f6e55d]
+java.lang.IllegalStateException: Failed to load ApplicationContext
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:125)
+	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:108)
+	at org.springframework.test.context.web.ServletTestExecutionListener.setUpRequestContextIfNecessary(ServletTestExecutionListener.java:190)
+	at org.springframework.test.context.web.ServletTestExecutionListener.prepareTestInstance(ServletTestExecutionListener.java:132)
+	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:246)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.createTest(SpringJUnit4ClassRunner.java:227)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner$1.runReflectiveCall(SpringJUnit4ClassRunner.java:289)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.methodBlock(SpringJUnit4ClassRunner.java:291)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.runChild(SpringJUnit4ClassRunner.java:246)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.runChild(SpringJUnit4ClassRunner.java:97)
+	at org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)
+	at org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)
+	at org.springframework.test.context.junit4.statements.RunBeforeTestClassCallbacks.evaluate(RunBeforeTestClassCallbacks.java:61)
+	at org.springframework.test.context.junit4.statements.RunAfterTestClassCallbacks.evaluate(RunAfterTestClassCallbacks.java:70)
+	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:413)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.run(SpringJUnit4ClassRunner.java:190)
+	at org.eclipse.jdt.internal.junit4.runner.JUnit4TestReference.run(JUnit4TestReference.java:89)
+	at org.eclipse.jdt.internal.junit.runner.TestExecution.run(TestExecution.java:41)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:541)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:763)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.run(RemoteTestRunner.java:463)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.main(RemoteTestRunner.java:209)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jobCreator': Unsatisfied dependency expressed through field 'actionelementDao'; nested exception is org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementDao' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {@org.springframework.beans.factory.annotation.Autowired(required=true)}
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.inject(AutowiredAnnotationBeanPostProcessor.java:596)
+	at org.springframework.beans.factory.annotation.InjectionMetadata.inject(InjectionMetadata.java:90)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.postProcessProperties(AutowiredAnnotationBeanPostProcessor.java:374)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1411)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:592)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:515)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:320)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:318)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:843)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:877)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:549)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:775)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:397)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316)
+	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:127)
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:99)
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:117)
+	... 26 common frames omitted
+Caused by: org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementDao' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {@org.springframework.beans.factory.annotation.Autowired(required=true)}
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.raiseNoMatchingBeanFound(DefaultListableBeanFactory.java:1655)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1214)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1168)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.inject(AutowiredAnnotationBeanPostProcessor.java:593)
+	... 44 common frames omitted
+2020-06-12 17:52:20,979 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data repositories in DEFAULT mode.
+2020-06-12 17:52:21,000 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 12ms. Found 0 repository interfaces.
+2020-06-12 17:52:21,794 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-06-12 17:52:21,974 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-06-12 17:52:22,065 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-06-12 17:52:22,180 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.3.10.Final}
+2020-06-12 17:52:22,184 INFO org.hibernate.cfg.Environment [main] HHH000206: hibernate.properties not found
+2020-06-12 17:52:22,379 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+2020-06-12 17:52:22,916 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL57Dialect
+2020-06-12 17:52:23,370 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-06-12 17:52:23,401 WARN org.springframework.context.support.AbstractApplicationContext [main] Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jobCreator': Unsatisfied dependency expressed through field 'jobDao'; nested exception is org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'org.ishafoundation.dwaraapi.db.dao.transactional.JobDao' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {@org.springframework.beans.factory.annotation.Autowired(required=true)}
+2020-06-12 17:52:23,402 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-06-12 17:52:23,403 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Shutdown initiated...
+2020-06-12 17:52:23,422 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Shutdown completed.
+2020-06-12 17:52:23,434 INFO org.springframework.boot.autoconfigure.logging.ConditionEvaluationReportLoggingListener [main] 
+
+Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+2020-06-12 17:52:23,596 ERROR org.springframework.boot.diagnostics.LoggingFailureAnalysisReporter [main] 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Field jobDao in org.ishafoundation.dwaraapi.job.JobCreator required a bean of type 'org.ishafoundation.dwaraapi.db.dao.transactional.JobDao' that could not be found.
+
+The injection point has the following annotations:
+	- @org.springframework.beans.factory.annotation.Autowired(required=true)
+
+
+Action:
+
+Consider defining a bean of type 'org.ishafoundation.dwaraapi.db.dao.transactional.JobDao' in your configuration.
+
+2020-06-12 17:52:23,600 ERROR org.springframework.test.context.TestContextManager [main] Caught exception while allowing TestExecutionListener [org.springframework.test.context.web.ServletTestExecutionListener@56de5251] to prepare test instance [org.ishafoundation.dwaraapi.job.JobCreatorTest@68f6e55d]
+java.lang.IllegalStateException: Failed to load ApplicationContext
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:125)
+	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:108)
+	at org.springframework.test.context.web.ServletTestExecutionListener.setUpRequestContextIfNecessary(ServletTestExecutionListener.java:190)
+	at org.springframework.test.context.web.ServletTestExecutionListener.prepareTestInstance(ServletTestExecutionListener.java:132)
+	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:246)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.createTest(SpringJUnit4ClassRunner.java:227)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner$1.runReflectiveCall(SpringJUnit4ClassRunner.java:289)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.methodBlock(SpringJUnit4ClassRunner.java:291)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.runChild(SpringJUnit4ClassRunner.java:246)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.runChild(SpringJUnit4ClassRunner.java:97)
+	at org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)
+	at org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)
+	at org.springframework.test.context.junit4.statements.RunBeforeTestClassCallbacks.evaluate(RunBeforeTestClassCallbacks.java:61)
+	at org.springframework.test.context.junit4.statements.RunAfterTestClassCallbacks.evaluate(RunAfterTestClassCallbacks.java:70)
+	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:413)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.run(SpringJUnit4ClassRunner.java:190)
+	at org.eclipse.jdt.internal.junit4.runner.JUnit4TestReference.run(JUnit4TestReference.java:89)
+	at org.eclipse.jdt.internal.junit.runner.TestExecution.run(TestExecution.java:41)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:541)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:763)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.run(RemoteTestRunner.java:463)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.main(RemoteTestRunner.java:209)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jobCreator': Unsatisfied dependency expressed through field 'jobDao'; nested exception is org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'org.ishafoundation.dwaraapi.db.dao.transactional.JobDao' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {@org.springframework.beans.factory.annotation.Autowired(required=true)}
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.inject(AutowiredAnnotationBeanPostProcessor.java:596)
+	at org.springframework.beans.factory.annotation.InjectionMetadata.inject(InjectionMetadata.java:90)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.postProcessProperties(AutowiredAnnotationBeanPostProcessor.java:374)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1411)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:592)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:515)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:320)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:318)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:843)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:877)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:549)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:775)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:397)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316)
+	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:127)
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:99)
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:117)
+	... 26 common frames omitted
+Caused by: org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'org.ishafoundation.dwaraapi.db.dao.transactional.JobDao' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {@org.springframework.beans.factory.annotation.Autowired(required=true)}
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.raiseNoMatchingBeanFound(DefaultListableBeanFactory.java:1655)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1214)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1168)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.inject(AutowiredAnnotationBeanPostProcessor.java:593)
+	... 44 common frames omitted
+2020-06-12 21:02:35,156 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data repositories in DEFAULT mode.
+2020-06-12 21:02:35,797 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 612ms. Found 37 repository interfaces.
+2020-06-12 21:02:37,132 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-06-12 21:02:37,497 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-06-12 21:02:37,768 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-06-12 21:02:37,952 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.3.10.Final}
+2020-06-12 21:02:37,958 INFO org.hibernate.cfg.Environment [main] HHH000206: hibernate.properties not found
+2020-06-12 21:02:38,417 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+2020-06-12 21:02:39,202 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL57Dialect
+2020-06-12 21:02:39,638 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:02:39,644 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:02:39,650 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:02:39,654 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:02:39,658 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:02:39,737 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:02:39,789 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.SubrequestDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:02:39,801 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:02:41,701 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-06-12 21:02:42,757 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [main] HHH000397: Using ASTQueryTranslatorFactory
+2020-06-12 21:02:44,602 INFO org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration [main] 
+
+Using generated security password: 1a532f0a-401c-4d3f-8089-7fdb163f16de
+
+2020-06-12 21:02:45,112 INFO org.springframework.security.web.DefaultSecurityFilterChain [main] Creating filter chain: any request, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@6c4c32ff, org.springframework.security.web.context.SecurityContextPersistenceFilter@713c8cbb, org.springframework.security.web.header.HeaderWriterFilter@5fc42998, org.springframework.security.web.csrf.CsrfFilter@13e6ab86, org.springframework.security.web.authentication.logout.LogoutFilter@34947355, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@779cda39, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@e9947af, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@5a1a5521, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@3bfead8d, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@7053a864, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@3ed3e66d, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@5603632c, org.springframework.security.web.session.SessionManagementFilter@5dfb65d5, org.springframework.security.web.access.ExceptionTranslationFilter@7aa62a90, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@40dd2cfe]
+2020-06-12 21:02:45,503 ERROR org.springframework.test.context.TestContextManager [main] Caught exception while allowing TestExecutionListener [org.springframework.boot.test.autoconfigure.SpringBootDependencyInjectionTestExecutionListener@258d79be] to prepare test instance [org.ishafoundation.dwaraapi.job.JobCreatorTest@67201eeb]
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'org.ishafoundation.dwaraapi.job.JobCreatorTest': Unsatisfied dependency expressed through field 'domainAttributeConverter'; nested exception is org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {@org.springframework.beans.factory.annotation.Autowired(required=true)}
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.inject(AutowiredAnnotationBeanPostProcessor.java:596)
+	at org.springframework.beans.factory.annotation.InjectionMetadata.inject(InjectionMetadata.java:90)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.postProcessProperties(AutowiredAnnotationBeanPostProcessor.java:374)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1411)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireBeanProperties(AbstractAutowireCapableBeanFactory.java:391)
+	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.injectDependencies(DependencyInjectionTestExecutionListener.java:119)
+	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.prepareTestInstance(DependencyInjectionTestExecutionListener.java:83)
+	at org.springframework.boot.test.autoconfigure.SpringBootDependencyInjectionTestExecutionListener.prepareTestInstance(SpringBootDependencyInjectionTestExecutionListener.java:44)
+	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:246)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.createTest(SpringJUnit4ClassRunner.java:227)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner$1.runReflectiveCall(SpringJUnit4ClassRunner.java:289)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.methodBlock(SpringJUnit4ClassRunner.java:291)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.runChild(SpringJUnit4ClassRunner.java:246)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.runChild(SpringJUnit4ClassRunner.java:97)
+	at org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)
+	at org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)
+	at org.springframework.test.context.junit4.statements.RunBeforeTestClassCallbacks.evaluate(RunBeforeTestClassCallbacks.java:61)
+	at org.springframework.test.context.junit4.statements.RunAfterTestClassCallbacks.evaluate(RunAfterTestClassCallbacks.java:70)
+	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:413)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.run(SpringJUnit4ClassRunner.java:190)
+	at org.eclipse.jdt.internal.junit4.runner.JUnit4TestReference.run(JUnit4TestReference.java:89)
+	at org.eclipse.jdt.internal.junit.runner.TestExecution.run(TestExecution.java:41)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:541)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:763)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.run(RemoteTestRunner.java:463)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.main(RemoteTestRunner.java:209)
+Caused by: org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {@org.springframework.beans.factory.annotation.Autowired(required=true)}
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.raiseNoMatchingBeanFound(DefaultListableBeanFactory.java:1655)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1214)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1168)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.inject(AutowiredAnnotationBeanPostProcessor.java:593)
+	... 30 common frames omitted
+2020-06-12 21:02:45,549 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [Thread-2] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-06-12 21:02:45,558 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown initiated...
+2020-06-12 21:02:45,789 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown completed.
+2020-06-12 21:05:50,310 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data repositories in DEFAULT mode.
+2020-06-12 21:05:50,837 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 501ms. Found 37 repository interfaces.
+2020-06-12 21:05:52,182 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-06-12 21:05:52,600 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-06-12 21:05:52,884 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-06-12 21:05:53,079 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.3.10.Final}
+2020-06-12 21:05:53,083 INFO org.hibernate.cfg.Environment [main] HHH000206: hibernate.properties not found
+2020-06-12 21:05:53,540 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+2020-06-12 21:05:54,282 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL57Dialect
+2020-06-12 21:05:54,720 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:05:54,725 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:05:54,732 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:05:54,735 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:05:54,740 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:05:54,820 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:05:54,877 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.SubrequestDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:05:54,890 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:05:56,822 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-06-12 21:05:58,139 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [main] HHH000397: Using ASTQueryTranslatorFactory
+2020-06-12 21:06:00,213 INFO org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration [main] 
+
+Using generated security password: 3aec5936-e71b-4600-a60b-e4849cad40db
+
+2020-06-12 21:06:00,695 INFO org.springframework.security.web.DefaultSecurityFilterChain [main] Creating filter chain: any request, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@1bdb6b36, org.springframework.security.web.context.SecurityContextPersistenceFilter@66694050, org.springframework.security.web.header.HeaderWriterFilter@6441cff1, org.springframework.security.web.csrf.CsrfFilter@ec67be1, org.springframework.security.web.authentication.logout.LogoutFilter@702e21c, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@480fb706, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@5cb3cfef, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@381d7c4c, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@109f95b1, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@2d7df55, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@33f3ebfc, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@1e3689e7, org.springframework.security.web.session.SessionManagementFilter@4f09d998, org.springframework.security.web.access.ExceptionTranslationFilter@344f4a82, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@462deb2b]
+2020-06-12 21:06:11,644 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [Thread-2] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-06-12 21:06:11,647 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown initiated...
+2020-06-12 21:06:11,672 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown completed.
+2020-06-12 21:07:56,376 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data repositories in DEFAULT mode.
+2020-06-12 21:07:56,755 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 364ms. Found 37 repository interfaces.
+2020-06-12 21:07:57,602 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-06-12 21:07:57,849 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-06-12 21:07:57,992 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-06-12 21:07:58,132 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.3.10.Final}
+2020-06-12 21:07:58,135 INFO org.hibernate.cfg.Environment [main] HHH000206: hibernate.properties not found
+2020-06-12 21:07:58,437 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+2020-06-12 21:07:59,030 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL57Dialect
+2020-06-12 21:07:59,407 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:07:59,411 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:07:59,416 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:07:59,419 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:07:59,423 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:07:59,478 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:07:59,514 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.SubrequestDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:07:59,524 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:08:00,739 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-06-12 21:08:01,443 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [main] HHH000397: Using ASTQueryTranslatorFactory
+2020-06-12 21:08:02,665 INFO org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration [main] 
+
+Using generated security password: d9932adb-322d-4ed9-abdd-68d531c68abb
+
+2020-06-12 21:08:02,997 INFO org.springframework.security.web.DefaultSecurityFilterChain [main] Creating filter chain: any request, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@28be7db5, org.springframework.security.web.context.SecurityContextPersistenceFilter@73bd146c, org.springframework.security.web.header.HeaderWriterFilter@1722ede1, org.springframework.security.web.csrf.CsrfFilter@51d26fed, org.springframework.security.web.authentication.logout.LogoutFilter@3c00da24, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@381f05a9, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@6b3284, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@700596f9, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@7cd2d3b6, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@3437fc4f, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@712dd0b0, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@2ac00dc9, org.springframework.security.web.session.SessionManagementFilter@34f3c920, org.springframework.security.web.access.ExceptionTranslationFilter@765e5a55, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@507e3e77]
+2020-06-12 21:24:43,182 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data repositories in DEFAULT mode.
+2020-06-12 21:24:43,526 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 326ms. Found 37 repository interfaces.
+2020-06-12 21:24:44,361 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-06-12 21:24:44,615 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-06-12 21:24:44,773 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-06-12 21:24:44,885 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.3.10.Final}
+2020-06-12 21:24:44,888 INFO org.hibernate.cfg.Environment [main] HHH000206: hibernate.properties not found
+2020-06-12 21:24:45,185 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+2020-06-12 21:24:45,756 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL57Dialect
+2020-06-12 21:24:46,124 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:24:46,128 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:24:46,134 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:24:46,137 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:24:46,141 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:24:46,202 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:24:46,241 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.SubrequestDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:24:46,248 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:24:48,607 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-06-12 21:24:49,413 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [main] HHH000397: Using ASTQueryTranslatorFactory
+2020-06-12 21:24:50,716 INFO org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration [main] 
+
+Using generated security password: 5744d101-82dc-4e0a-baae-78e3f0ab0175
+
+2020-06-12 21:24:51,100 INFO org.springframework.security.web.DefaultSecurityFilterChain [main] Creating filter chain: any request, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@411e567e, org.springframework.security.web.context.SecurityContextPersistenceFilter@6bca6c4c, org.springframework.security.web.header.HeaderWriterFilter@674c01ce, org.springframework.security.web.csrf.CsrfFilter@1db7c267, org.springframework.security.web.authentication.logout.LogoutFilter@68ee7b3b, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@3c3357c7, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@6b6cf3c1, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@4e58eda2, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@1e3689e7, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@5dcec8e9, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@3652dd19, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@75f9a35a, org.springframework.security.web.session.SessionManagementFilter@509e0253, org.springframework.security.web.access.ExceptionTranslationFilter@39303a6, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@66d766b9]
+2020-06-12 21:24:51,354 ERROR org.springframework.test.context.TestContextManager [main] Caught exception while allowing TestExecutionListener [org.springframework.boot.test.autoconfigure.SpringBootDependencyInjectionTestExecutionListener@176b75f7] to prepare test instance [org.ishafoundation.dwaraapi.job.JobCreatorTest@7d816d32]
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'org.ishafoundation.dwaraapi.job.JobCreatorTest': Unsatisfied dependency expressed through field 'artifactMap'; nested exception is org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'java.util.Map<java.lang.String, java.lang.Class<org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact>>' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {@org.springframework.beans.factory.annotation.Autowired(required=true)}
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.inject(AutowiredAnnotationBeanPostProcessor.java:596)
+	at org.springframework.beans.factory.annotation.InjectionMetadata.inject(InjectionMetadata.java:90)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.postProcessProperties(AutowiredAnnotationBeanPostProcessor.java:374)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1411)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireBeanProperties(AbstractAutowireCapableBeanFactory.java:391)
+	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.injectDependencies(DependencyInjectionTestExecutionListener.java:119)
+	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.prepareTestInstance(DependencyInjectionTestExecutionListener.java:83)
+	at org.springframework.boot.test.autoconfigure.SpringBootDependencyInjectionTestExecutionListener.prepareTestInstance(SpringBootDependencyInjectionTestExecutionListener.java:44)
+	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:246)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.createTest(SpringJUnit4ClassRunner.java:227)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner$1.runReflectiveCall(SpringJUnit4ClassRunner.java:289)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.methodBlock(SpringJUnit4ClassRunner.java:291)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.runChild(SpringJUnit4ClassRunner.java:246)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.runChild(SpringJUnit4ClassRunner.java:97)
+	at org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)
+	at org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)
+	at org.springframework.test.context.junit4.statements.RunBeforeTestClassCallbacks.evaluate(RunBeforeTestClassCallbacks.java:61)
+	at org.springframework.test.context.junit4.statements.RunAfterTestClassCallbacks.evaluate(RunAfterTestClassCallbacks.java:70)
+	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:413)
+	at org.springframework.test.context.junit4.SpringJUnit4ClassRunner.run(SpringJUnit4ClassRunner.java:190)
+	at org.eclipse.jdt.internal.junit4.runner.JUnit4TestReference.run(JUnit4TestReference.java:89)
+	at org.eclipse.jdt.internal.junit.runner.TestExecution.run(TestExecution.java:41)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:541)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:763)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.run(RemoteTestRunner.java:463)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.main(RemoteTestRunner.java:209)
+Caused by: org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'java.util.Map<java.lang.String, java.lang.Class<org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact>>' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {@org.springframework.beans.factory.annotation.Autowired(required=true)}
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.raiseNoMatchingBeanFound(DefaultListableBeanFactory.java:1655)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1214)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1168)
+	at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor$AutowiredFieldElement.inject(AutowiredAnnotationBeanPostProcessor.java:593)
+	... 30 common frames omitted
+2020-06-12 21:24:51,380 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [Thread-2] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-06-12 21:24:51,382 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown initiated...
+2020-06-12 21:24:51,571 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown completed.
+2020-06-12 21:36:19,895 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data repositories in DEFAULT mode.
+2020-06-12 21:36:20,228 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 317ms. Found 37 repository interfaces.
+2020-06-12 21:36:21,042 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-06-12 21:36:21,276 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-06-12 21:36:21,421 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-06-12 21:36:21,555 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.3.10.Final}
+2020-06-12 21:36:21,559 INFO org.hibernate.cfg.Environment [main] HHH000206: hibernate.properties not found
+2020-06-12 21:36:21,840 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+2020-06-12 21:36:22,414 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL57Dialect
+2020-06-12 21:36:22,768 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:36:22,773 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:36:22,779 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:36:22,782 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:36:22,786 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-12 21:36:22,847 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:36:22,881 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.SubrequestDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:36:22,888 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-12 21:36:24,107 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-06-12 21:36:24,804 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [main] HHH000397: Using ASTQueryTranslatorFactory
+2020-06-12 21:36:26,040 INFO org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration [main] 
+
+Using generated security password: 029d42a5-068d-49ad-aded-1108054b0987
+
+2020-06-12 21:36:26,392 INFO org.springframework.security.web.DefaultSecurityFilterChain [main] Creating filter chain: any request, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@39e91bda, org.springframework.security.web.context.SecurityContextPersistenceFilter@568e2d65, org.springframework.security.web.header.HeaderWriterFilter@34947355, org.springframework.security.web.csrf.CsrfFilter@14af9f51, org.springframework.security.web.authentication.logout.LogoutFilter@4e9d1119, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@1ea78c72, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@6e140753, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@2c3f81ef, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@7bc239db, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@56728f48, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@4ad57db1, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@374013e8, org.springframework.security.web.session.SessionManagementFilter@5e6ad84c, org.springframework.security.web.access.ExceptionTranslationFilter@74f9004c, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@22cca101]
+2020-06-12 21:37:16,938 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [Thread-2] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-06-12 21:37:16,942 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown initiated...
+2020-06-12 21:37:16,960 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown completed.

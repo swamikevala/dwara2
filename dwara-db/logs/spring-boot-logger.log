@@ -1,0 +1,96 @@
+2020-06-16 11:57:24,482 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data repositories in DEFAULT mode.
+2020-06-16 11:57:24,890 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 391ms. Found 38 repository interfaces.
+2020-06-16 11:57:25,797 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-06-16 11:57:26,137 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-06-16 11:57:26,359 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-06-16 11:57:26,540 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.3.10.Final}
+2020-06-16 11:57:26,543 INFO org.hibernate.cfg.Environment [main] HHH000206: hibernate.properties not found
+2020-06-16 11:57:26,867 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+2020-06-16 11:57:27,624 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL57Dialect
+2020-06-16 11:57:28,229 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:57:28,235 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:57:28,241 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:57:28,245 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:57:28,250 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:57:28,316 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-16 11:57:28,359 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.SubrequestDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-16 11:57:28,367 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-16 11:57:30,053 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-06-16 11:57:30,837 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [main] HHH000397: Using ASTQueryTranslatorFactory
+2020-06-16 11:57:32,342 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [Thread-2] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-06-16 11:57:32,345 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown initiated...
+2020-06-16 11:57:32,379 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown completed.
+2020-06-16 11:58:08,355 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data repositories in DEFAULT mode.
+2020-06-16 11:58:08,790 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 419ms. Found 38 repository interfaces.
+2020-06-16 11:58:09,691 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-06-16 11:58:10,045 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-06-16 11:58:10,255 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-06-16 11:58:10,411 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.3.10.Final}
+2020-06-16 11:58:10,414 INFO org.hibernate.cfg.Environment [main] HHH000206: hibernate.properties not found
+2020-06-16 11:58:10,739 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+2020-06-16 11:58:11,680 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL57Dialect
+2020-06-16 11:58:12,356 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:58:12,361 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:58:12,367 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:58:12,369 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:58:12,374 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:58:12,429 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-16 11:58:12,463 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.SubrequestDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-16 11:58:12,469 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-16 11:58:14,194 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-06-16 11:58:15,005 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [main] HHH000397: Using ASTQueryTranslatorFactory
+2020-06-16 11:58:16,548 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [Thread-2] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-06-16 11:58:16,553 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown initiated...
+2020-06-16 11:58:16,574 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown completed.
+2020-06-16 11:59:08,160 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data repositories in DEFAULT mode.
+2020-06-16 11:59:09,393 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 402ms. Found 38 repository interfaces.
+2020-06-16 11:59:10,117 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-06-16 11:59:10,412 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-06-16 11:59:10,572 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-06-16 11:59:10,703 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.3.10.Final}
+2020-06-16 11:59:10,707 INFO org.hibernate.cfg.Environment [main] HHH000206: hibernate.properties not found
+2020-06-16 11:59:10,983 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+2020-06-16 11:59:11,611 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL57Dialect
+2020-06-16 11:59:12,265 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:59:12,270 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:59:12,275 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:59:12,278 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:59:12,282 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:59:12,322 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-16 11:59:12,365 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.SubrequestDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-16 11:59:12,375 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-16 11:59:13,975 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-06-16 11:59:14,765 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [main] HHH000397: Using ASTQueryTranslatorFactory
+2020-06-16 11:59:16,215 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [Thread-2] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-06-16 11:59:16,218 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown initiated...
+2020-06-16 11:59:16,252 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown completed.
+2020-06-16 11:59:47,154 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data repositories in DEFAULT mode.
+2020-06-16 11:59:47,575 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 402ms. Found 38 repository interfaces.
+2020-06-16 11:59:48,337 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-06-16 11:59:48,610 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-06-16 11:59:48,770 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-06-16 11:59:48,927 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.3.10.Final}
+2020-06-16 11:59:48,930 INFO org.hibernate.cfg.Environment [main] HHH000206: hibernate.properties not found
+2020-06-16 11:59:49,237 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+2020-06-16 11:59:50,037 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL57Dialect
+2020-06-16 11:59:50,886 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:59:50,893 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:59:50,901 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:59:50,904 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:59:50,910 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-16 11:59:50,971 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-16 11:59:51,013 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.SubrequestDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-16 11:59:51,024 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-16 11:59:52,780 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-06-16 11:59:53,583 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [main] HHH000397: Using ASTQueryTranslatorFactory
+2020-06-16 11:59:54,932 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [Thread-2] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-06-16 11:59:54,935 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown initiated...
+2020-06-16 11:59:54,953 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown completed.
