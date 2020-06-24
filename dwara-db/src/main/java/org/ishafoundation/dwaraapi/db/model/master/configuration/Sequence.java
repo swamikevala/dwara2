@@ -17,9 +17,17 @@ public class Sequence implements Cacheable{
 		// Just to make the class cacheable
 		return null;
 	}
+	
 	@Id
 	@Column(name="id")
 	private int id;
+	
+	@Column(name="barcode")
+	private boolean barcode = false;
+	
+	// TODO - Not needed. any sequence_ref_id null is a group
+	@Column(name="group")
+	private boolean group = false;
 	
 	@Column(name="last_number")
 	private int lastNumber;
@@ -27,11 +35,11 @@ public class Sequence implements Cacheable{
 	@Column(name="prefix")
 	private String prefix;
 
-	@Column(name="extraction_regex")
-	private String extractionRegex;
+	@Column(name="artifact_extraction_regex")
+	private String artifactExtractionRegex;
 
-	@Column(name="keep_extracted_code")
-	private boolean keepExtractedCode;
+	@Column(name="artifact_keep_code")
+	private boolean artifactKeepCode;
 
 		
 	public int getId() {
@@ -42,6 +50,22 @@ public class Sequence implements Cacheable{
 		this.id = id;
 	}
 	
+	public boolean isBarcode() {
+		return barcode;
+	}
+
+	public void setBarcode(boolean barcode) {
+		this.barcode = barcode;
+	}
+
+	public boolean isGroup() {
+		return group;
+	}
+
+	public void setGroup(boolean group) {
+		this.group = group;
+	}
+
 	public int getLastNumber() {
 		return lastNumber;
 	}
@@ -58,20 +82,20 @@ public class Sequence implements Cacheable{
 		this.prefix = prefix;
 	}
 	
-	public String getExtractionRegex() {
-		return extractionRegex;
+	public String getArtifactExtractionRegex() {
+		return artifactExtractionRegex;
 	}
 
-	public void setExtractionRegex(String extractionRegex) {
-		this.extractionRegex = extractionRegex;
-	}
-	
-	public boolean isKeepExtractedCode() {
-		return keepExtractedCode;
+	public void setArtifactExtractionRegex(String artifactExtractionRegex) {
+		this.artifactExtractionRegex = artifactExtractionRegex;
 	}
 
-	public void setKeepExtractedCode(boolean keepExtractedCode) {
-		this.keepExtractedCode = keepExtractedCode;
+	public boolean isArtifactKeepCode() {
+		return artifactKeepCode;
+	}
+
+	public void setArtifactKeepCode(boolean artifactKeepCode) {
+		this.artifactKeepCode = artifactKeepCode;
 	}
 
 	public void incrementLastNumber() {

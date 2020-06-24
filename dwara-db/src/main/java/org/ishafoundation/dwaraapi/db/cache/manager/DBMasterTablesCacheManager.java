@@ -9,11 +9,15 @@ import javax.annotation.PostConstruct;
 import org.ishafoundation.dwaraapi.db.dao.master.cache.CacheableRepository;
 import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DBMasterTablesCacheManager<T> {
+	
+	private static final Logger logger = LoggerFactory.getLogger(DBMasterTablesCacheManager.class);
 	
 	@Autowired
 	private Map<String, CacheableRepository> cacheableReposMap;
@@ -26,12 +30,12 @@ public class DBMasterTablesCacheManager<T> {
 
 	@PostConstruct
 	public void loadAll() {
-		System.out.println("Now loading all Master tables for caching...");
+		logger.debug("Now loading all Master tables for caching...");
 		CacheableTablesList[] configTables = CacheableTablesList.values();
 		for (int i = 0; i < configTables.length; i++) {
 			CacheableTablesList configurationTables = configTables[i];
 			String tableName = configurationTables.name();
-			System.out.println("caching... " + tableName);
+			logger.debug("caching... " + tableName);
 			
 			// TODO : need to do the validation here...
 			List<Cacheable> list = (List<Cacheable>) cacheableReposMap.get(tableName+"Dao").findAll();
@@ -83,7 +87,7 @@ public class DBMasterTablesCacheManager<T> {
 	}
 	
 	public void clearAll() {
-		System.out.println("Now clear all");
+		logger.debug("Now clear all");
 		
 		tables_table_List.clear();
 		tables_id_record_Map.clear();

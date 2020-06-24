@@ -8,16 +8,18 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
 @Entity
@@ -51,8 +53,7 @@ public class Request {
 	
 	@Column(name="action_id")
 	private Action action;
-
-	// One request can be raised by only one user
+	
 	@OneToOne(fetch = FetchType.LAZY)
 	private User user;
 	
@@ -62,26 +63,17 @@ public class Request {
 	@Column(name="domain_id")
 	private Domain domain;
 
-	// Many Requests like hold and release can all be referencing the same parent request
-	// holds the parent request that needs to be actioned(secondary actions like cancel etc.,)
-	//@Column(name="request_ref_id")
 	@ManyToOne(fetch = FetchType.LAZY)
     private Request requestRef;
-
-	// Many Requests on a subrequest like deleted/cancelled etc., are possible - Hence ManyToOne
-	// holds the primary subrequest that is requested to be canceled/held/release
-	@ManyToOne(fetch = FetchType.LAZY) 
-    private Subrequest subrequest;
 	
-	@Column(name="artifact_id")
-	private Integer artifactId;
+	@Column(name="status_id")
+	private Status status;
 	
-	//job_id (fk)
-	// Eg. job abortion - only one job per request...
-	@OneToOne
-	private Job job;
+	@Lob
+	@Column(name="details")
+	private RequestDetails details;
+	  
 	
-
 	public int getId() {
 		return id;
 	}
@@ -98,20 +90,14 @@ public class Request {
 		this.action = action;
 	}
 
-	@JsonIgnore
 	public User getUser() {
 		return user;
 	}
 
-	@JsonIgnore
 	public void setUser(User user) {
 		this.user = user;
 	}
 
-	public int getUserId() {
-		return user.getId();
-	}
-	
 	public LocalDateTime getRequestedAt() {
 		return requestedAt;
 	}
@@ -119,7 +105,7 @@ public class Request {
 	public void setRequestedAt(LocalDateTime requestedAt) {
 		this.requestedAt = requestedAt;
 	}
-	
+
 	public Domain getDomain() {
 		return domain;
 	}
@@ -136,27 +122,19 @@ public class Request {
 		this.requestRef = requestRef;
 	}
 
-	public Subrequest getSubrequest() {
-		return subrequest;
+	public Status getStatus() {
+		return status;
 	}
 
-	public void setSubrequest(Subrequest subrequest) {
-		this.subrequest = subrequest;
+	public void setStatus(Status status) {
+		this.status = status;
 	}
 
-	public Integer getArtifactId() {
-		return artifactId;
+	public RequestDetails getDetails() {
+		return details;
 	}
 
-	public void setArtifactId(Integer artifactId) {
-		this.artifactId = artifactId;
-	}
-
-	public Job getJob() {
-		return job;
-	}
-
-	public void setJob(Job job) {
-		this.job = job;
+	public void setDetails(RequestDetails details) {
+		this.details = details;
 	}
 }

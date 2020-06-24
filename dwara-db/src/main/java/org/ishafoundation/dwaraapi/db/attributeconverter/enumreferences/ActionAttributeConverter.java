@@ -40,16 +40,20 @@ public class ActionAttributeConverter implements AttributeConverter<Action, Inte
 			return 12;
 		case process:
 			return 13;
-		case format:
+		case restore_process:
 			return 14;
-		case finalize:
+		case format:
 			return 15;
-		case import_:
+		case finalize:
 			return 16;
-		case map_tapedrives:
+		case import_:
 			return 17;
-		case diagnostics:
+		case map_tapedrives:
 			return 18;
+		case diagnostics:
+			return 19;
+		case write:
+			return 20;		
 		default:
 			throw new IllegalArgumentException(attribute + " not supported.");
 		}
@@ -88,15 +92,19 @@ public class ActionAttributeConverter implements AttributeConverter<Action, Inte
 		case 13:
 			return Action.process;
 		case 14:
-			return Action.format;
+			return Action.restore_process;
 		case 15:
-			return Action.finalize;
+			return Action.format;
 		case 16:
-			return Action.import_;
+			return Action.finalize;
 		case 17:
-			return Action.map_tapedrives;
+			return Action.import_;
 		case 18:
-			return Action.diagnostics;
+			return Action.map_tapedrives;
+		case 19:
+			return Action.diagnostics;			
+		case 20:
+			return Action.write;			
 		default:
 			throw new IllegalArgumentException(dbData + " not supported.");
 		}

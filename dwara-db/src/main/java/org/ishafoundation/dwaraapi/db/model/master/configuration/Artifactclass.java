@@ -36,7 +36,7 @@ public class Artifactclass implements Cacheable{
 	private String uid;
 
 	@Column(name="domain_id")
-	private Integer domainId;
+	private org.ishafoundation.dwaraapi.enumreferences.Domain domain;
 	
 	@Column(name="path_prefix")
 	private String pathPrefix;	
@@ -93,12 +93,12 @@ public class Artifactclass implements Cacheable{
 		this.uid = uid;
 	}
 
-	public Integer getDomainId() {
-		return domainId;
+	public org.ishafoundation.dwaraapi.enumreferences.Domain getDomain() {
+		return domain;
 	}
 
-	public void setDomainId(Integer domainId) {
-		this.domainId = domainId;
+	public void setDomain(org.ishafoundation.dwaraapi.enumreferences.Domain domain) {
+		this.domain = domain;
 	}
 
 	public String getPathPrefix() {

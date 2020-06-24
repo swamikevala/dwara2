@@ -5,6 +5,11 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 
+/**
+ * Wraps the Job with more Storagetask related info like volume to be used  
+ *
+ */
+
 public class StorageJob {
 
 	private Job job; 

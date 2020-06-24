@@ -11,7 +11,7 @@ import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToOne;
 
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
-import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -53,8 +53,8 @@ public class Artifact {
  	// Causes cyclic associations 
  	// Many subrequest could have happened on the same library. Like rerun etc., But this holds the most recent subrequest so that it can be queried easily
 	@OneToOne
-	@JoinColumn(name="q_latest_subrequest_id") 
-	private Subrequest qLatestSubrequest;
+	@JoinColumn(name="q_latest_request_id") 
+	private Request qLatestRequest;
 
 	public int getId() {
 		return id;
@@ -147,19 +147,15 @@ public class Artifact {
 	public void setFileStructureMd5(String fileStructureMd5) {
 		this.fileStructureMd5 = fileStructureMd5;
 	}
-	
+
 	@JsonIgnore
-	public Subrequest getqLatestSubrequest() {
-		return qLatestSubrequest;
+	public Request getqLatestRequest() {
+		return qLatestRequest;
 	}
 
 	@JsonIgnore
-	public void setqLatestSubrequest(Subrequest qLatestSubrequest) {
-		this.qLatestSubrequest = qLatestSubrequest;
-	}	
-	
-	public int getqLatestSubrequestId() {
-		return this.qLatestSubrequest.getId();
+	public void setqLatestRequest(Request qLatestRequest) {
+		this.qLatestRequest = qLatestRequest;
 	}
 	
 	@Override

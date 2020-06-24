@@ -14,7 +14,7 @@ import javax.persistence.Table;
 import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionUser;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassActionUser;
-import org.ishafoundation.dwaraapi.enumreferences.Storagetask;
+import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -30,14 +30,8 @@ public class Action implements Cacheable{
 	@Column(name="name", unique = true)
 	private String name;
 
-	@Column(name="async")
-	private boolean async;
-	
-	@Column(name="complex")
-	private boolean complex;
-
-	@Column(name = "storagetask_id")
-	private Storagetask storagetask;
+	@Column(name="type")
+	private Actiontype type;
 	
 	@Column(name="description")
 	private String description;
@@ -69,28 +63,12 @@ public class Action implements Cacheable{
 		this.name = name;
 	}
 	
-	public boolean isAsync() {
-		return async;
+	public Actiontype getType() {
+		return type;
 	}
 
-	public void setAsync(boolean async) {
-		this.async = async;
-	}
-
-	public boolean isComplex() {
-		return complex;
-	}
-
-	public void setComplex(boolean complex) {
-		this.complex = complex;
-	}
-
-	public Storagetask getStoragetask() {
-		return storagetask;
-	}
-
-	public void setStoragetask(Storagetask storagetask) {
-		this.storagetask = storagetask;
+	public void setType(Actiontype type) {
+		this.type = type;
 	}
 
 	public String getDescription() {

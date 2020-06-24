@@ -12,6 +12,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -20,6 +21,7 @@ import javax.persistence.TableGenerator;
 
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Actionelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -38,8 +40,8 @@ public class Job {
 	@Column(name="id")
 	private int id;
 
-	@Column(name="storagetask_id")
-	private Integer storagetaskId; 
+	@Column(name = "storagetask_action_id")
+	private Integer storagetaskActionId;
 
 	@Column(name="processingtask_id")
 	private Integer processingtaskId;
@@ -63,9 +65,8 @@ public class Job {
 	@Column(name="created_at")
 	private LocalDateTime createdAt;
 
-	// Many jobs are possible for a subrequest
 	@ManyToOne(fetch = FetchType.LAZY)
-	private Subrequest subrequest;
+	private Request request;
 	
 	@Column(name="started_at")
 	private LocalDateTime startedAt;
@@ -75,9 +76,11 @@ public class Job {
 	
 	@OneToOne(fetch = FetchType.LAZY)
 	private org.ishafoundation.dwaraapi.db.model.master.reference.Error error; 
-	
-	@OneToOne(fetch = FetchType.LAZY)
-	private Volume volume; 
+
+	@Lob
+	@Column(name="details")
+	//@Convert(converter = SubrequestDetailsAttributeConverter.class)
+	private JobDetails details;
 	
     @OneToMany(mappedBy = "job",
             cascade = CascadeType.MERGE,
@@ -92,12 +95,12 @@ public class Job {
 		this.id = id;
 	}
 
-	public Integer getStoragetaskId() {
-		return storagetaskId;
+	public Integer getStoragetaskActionId() {
+		return storagetaskActionId;
 	}
 
-	public void setStoragetaskId(Integer storagetaskId) {
-		this.storagetaskId = storagetaskId;
+	public void setStoragetaskActionId(Integer storagetaskActionId) {
+		this.storagetaskActionId = storagetaskActionId;
 	}
 
 	public Integer getProcessingtaskId() {
@@ -169,13 +172,13 @@ public class Job {
 	}
 
 	@JsonIgnore
-	public Subrequest getSubrequest() {
-		return subrequest;
+	public Request getRequest() {
+		return request;
 	}
 
 	@JsonIgnore
-	public void setSubrequest(Subrequest subrequest) {
-		this.subrequest = subrequest;
+	public void setRequest(Request request) {
+		this.request = request;
 	}
 
 	public LocalDateTime getStartedAt() {
@@ -194,14 +197,12 @@ public class Job {
 		this.status = status;
 	}
 
-	@JsonIgnore
-	public Volume getVolume() {
-		return volume;
+	public JobDetails getDetails() {
+		return details;
 	}
 
-	@JsonIgnore
-	public void setVolume(Volume volume) {
-		this.volume = volume;
+	public void setDetails(JobDetails details) {
+		this.details = details;
 	}
 
 	@JsonIgnore

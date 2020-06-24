@@ -5,14 +5,14 @@ import java.io.IOException;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.json.SubrequestDetails;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Converter(autoApply = true)
-public class SubrequestDetailsAttributeConverter implements AttributeConverter<SubrequestDetails, String> {
+public class SubrequestDetailsAttributeConverter implements AttributeConverter<RequestDetails, String> {
 
 	private static ObjectMapper mapper;
 
@@ -23,7 +23,7 @@ public class SubrequestDetailsAttributeConverter implements AttributeConverter<S
 	}
 
 	@Override
-	public String convertToDatabaseColumn(SubrequestDetails data) {
+	public String convertToDatabaseColumn(RequestDetails data) {
 		if (null == data) {
 			// You may return null if you prefer that style
 			return "{}";
@@ -38,14 +38,14 @@ public class SubrequestDetailsAttributeConverter implements AttributeConverter<S
 	}
 
 	@Override
-	public SubrequestDetails convertToEntityAttribute(String s) {
+	public RequestDetails convertToEntityAttribute(String s) {
 		if (null == s) {
 			// You may return null if you prefer that style
-			return new SubrequestDetails();
+			return new RequestDetails();
 		}
 
 		try {
-			return mapper.readValue(s, new TypeReference<SubrequestDetails>() {
+			return mapper.readValue(s, new TypeReference<RequestDetails>() {
 			});
 
 		} catch (IOException e) {

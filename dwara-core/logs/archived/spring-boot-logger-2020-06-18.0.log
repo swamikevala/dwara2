@@ -1,0 +1,29 @@
+2020-06-18 17:14:34,020 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data repositories in DEFAULT mode.
+2020-06-18 17:14:34,428 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 388ms. Found 38 repository interfaces.
+2020-06-18 17:14:36,066 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-06-18 17:14:36,589 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-06-18 17:14:36,900 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-06-18 17:14:37,095 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.3.10.Final}
+2020-06-18 17:14:37,101 INFO org.hibernate.cfg.Environment [main] HHH000206: hibernate.properties not found
+2020-06-18 17:14:37,622 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+2020-06-18 17:14:38,518 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL57Dialect
+2020-06-18 17:14:39,043 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-18 17:14:39,048 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-18 17:14:39,055 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-18 17:14:39,059 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-18 17:14:39,066 WARN org.hibernate.boot.internal.InFlightMetadataCollectorImpl [main] HHH000069: Duplicate generator name dwara_seq_generator
+2020-06-18 17:14:39,147 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-18 17:14:39,201 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.SubrequestDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-18 17:14:39,213 WARN org.hibernate.type.descriptor.java.JavaTypeDescriptorRegistry [main] HHH000481: Encountered Java type [class org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails] for which we could not locate a JavaTypeDescriptor and which does not appear to implement equals and/or hashCode.  This can lead to significant performance problems when performing equality/dirty checking involving this Java type.  Consider registering a custom JavaTypeDescriptor or at least implementing equals/hashCode.
+2020-06-18 17:14:41,809 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-06-18 17:14:42,873 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [main] HHH000397: Using ASTQueryTranslatorFactory
+2020-06-18 17:14:45,790 INFO org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration [main] 
+
+Using generated security password: 8a345898-be9a-49c9-9521-432a63f129aa
+
+2020-06-18 17:14:46,596 INFO org.springframework.security.web.DefaultSecurityFilterChain [main] Creating filter chain: any request, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@73ccdfc1, org.springframework.security.web.context.SecurityContextPersistenceFilter@6b9b9cb9, org.springframework.security.web.header.HeaderWriterFilter@79a88f45, org.springframework.security.web.csrf.CsrfFilter@6c89c92e, org.springframework.security.web.authentication.logout.LogoutFilter@23b02f37, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@78c9c38a, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@52238861, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@18d8da77, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@173da924, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@3ad5f99, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@58e9e852, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@502dc93a, org.springframework.security.web.session.SessionManagementFilter@38447073, org.springframework.security.web.access.ExceptionTranslationFilter@b9c8678, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@12d33d7a]
+2020-06-18 17:15:07,351 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [Thread-2] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-06-18 17:15:07,357 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown initiated...
+2020-06-18 17:15:07,407 INFO com.zaxxer.hikari.HikariDataSource [Thread-2] HikariPool-1 - Shutdown completed.

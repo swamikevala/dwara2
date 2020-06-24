@@ -26,12 +26,12 @@ public class DomainUtilTest {
 	@Test
 	public void test_a_NullDomain() {
 		Artifact artifact = domainUtil.getDomainSpecificArtifact(null, 6);
-		System.out.println(artifact.getClass().getName());
+		logger.debug(artifact.getClass().getName());
 	}
 	
 	@Test
 	public void test_b_SpecificDomain() {
 		Artifact artifact = domainUtil.getDomainSpecificArtifact(Domain.two, 1);
-		System.out.println(artifact.getClass().getName());
+		logger.debug(artifact.getClass().getName());
 	}
 }

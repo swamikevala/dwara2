@@ -1,38 +1,106 @@
 package org.ishafoundation.dwaraapi.storage.storagetask;
 
 
-import java.util.Map;
+import java.util.List;
 
-import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.enumreferences.Storagetask;
-import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
+import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
-import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
-import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
+import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component("write")
 //@Profile({ "!dev & !stage" })
-public class Write extends AbstractStoragetask{
+public class Write extends AbstractStoragetaskAction{
 
     private static final Logger logger = LoggerFactory.getLogger(Write.class);
     
 	@Autowired
-	private Map<String, AbstractStoragetypeJobProcessor> storagetypeJobProcessorMap;
+	private DomainUtil domainUtil;
+	
+	@Autowired
+	private VolumeDao volumeDao;
 	
 	@Override
-	public ArchiveResponse execute(StoragetypeJob storagetypeJob) throws Throwable {
-		System.out.println(this.getClass().getName() + " write storagetask ");
-		Storagetype storagetype = storagetypeJob.getStorageJob().getVolume().getStoragetype();
-		//ArchiveResponse archiveResponse = stjpMap.get(storagetype.name() + "JobProcessor").write(storagejob);
-		ArchiveResponse archiveResponse = storagetypeJobProcessorMap.get(storagetype.name() + DwaraConstants.StorageTypeJobProcessorSuffix).write(storagetypeJob);
-		return archiveResponse;
+	public StorageJob buildStorageJob(Job job){
+
+		Request request = job.getRequest();
+		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getAction();
+		
+		Domain domain = job.getRequest().getDomain();
+		
+		Integer inputArtifactId = job.getInputArtifactId();
+		Artifact artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);
+
+			
+		String artifactName = artifact.getName();			
+		Artifactclass artifactclass = artifact.getArtifactclass();	
+//		int artifactclassId = artifactclass.getId();
+		
+		String pathPrefix = null;
+		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.ingest) {
+			pathPrefix = artifactclass.getPath();
+		}else if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.rewrite) {
+			pathPrefix = "whereverRestoredByThePrecedingRestoreJob";//artifactclass.getPath();
+		}
+			
+		String artifactpathToBeCopied = pathPrefix + java.io.File.separator + artifactName;
+		
+		long sizeOfTheLibraryToBeWritten = 0;//TODO - FileUtils.sizeOfDirectory(new java.io.File(artifactpathToBeCopied)); 
+		
+		StorageJob storageJob = new StorageJob();
+		storageJob.setJob(job);
+		
+		// what needs to be ingested
+		storageJob.setArtifact(artifact);
+		storageJob.setArtifactPrefixPath(pathPrefix);
+		storageJob.setArtifactName(artifactName);
+
+		int volumegroupId = job.getActionelement().getVolumeId();
+		
+		// to where
+		storageJob.setVolume(getToBeUsedPhysicalVolume(volumegroupId, sizeOfTheLibraryToBeWritten));
+		
+		return storageJob;
+	
 	}
+	
+	private Volume getToBeUsedPhysicalVolume(int volumegroupId, long sizeOfTheLibraryToBeWritten) {
+		
+		Volume toBeUsedVolume = null;
+		List<Volume> volumesList = volumeDao.findAllByVolumeRefIdAndFinalizedIsFalse(volumegroupId);
+		for (Volume volume : volumesList) {
+			//TODO if(Volume.getFree() > sizeOfTheLibraryToBeWritten) {
+				toBeUsedVolume = volume; // for now defaulting to first one...
+				break;
+			//}
+		}
+		return toBeUsedVolume;		
+	}
+	
+	@Override
+	public void postProcessDbUpdates(Job job, ArchiveResponse archiveResponse){
+		// file_volume and artifact_volume updated here...
+		
+	}
+	
+//	@Override
+//	public ArchiveResponse execute(StoragetypeJob storagetypeJob) throws Throwable {
+//		logger.debug(this.getClass().getName() + " write storagetask ");
+//		Storagetype storagetype = storagetypeJob.getStorageJob().getVolume().getStoragetype();
+//		//ArchiveResponse archiveResponse = stjpMap.get(storagetype.name() + "JobProcessor").write(storagejob);
+//		ArchiveResponse archiveResponse = storagetypeJobProcessorMap.get(storagetype.name() + DwaraConstants.StorageTypeJobProcessorSuffix).write(storagetypeJob);
+//		return archiveResponse;
+//	}
 
 
 

@@ -8,6 +8,8 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -16,6 +18,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class DeviceTest {
+	
+	private static final Logger logger = LoggerFactory.getLogger(DeviceTest.class);
 
 	@Autowired
 	private DeviceDao deviceDao;
@@ -37,10 +41,10 @@ public class DeviceTest {
 		deviceDetails = new DeviceDetails();
 		deviceDetails.setType("LTO");
 		deviceDetails.setGeneration(7);
-		int[] readable_volumetype_ids = {6,7};
-		deviceDetails.setReadable_volumetype_ids(readable_volumetype_ids);
-		int[] writeable_volumetype_ids = {6,7};
-		deviceDetails.setWriteable_volumetype_ids(writeable_volumetype_ids);		
+		int[] readable_generations = {6,7};
+		deviceDetails.setReadable_generations(readable_generations);
+		int[] writeable_generations = {7};
+		deviceDetails.setWriteable_generations(writeable_generations);		
 		deviceDetails.setAutoloader_id(1);
 		deviceDetails.setStandalone(false);
 
@@ -72,6 +76,6 @@ public class DeviceTest {
 	@Test
 	public void test_b_getADevice() {
 		Device device = deviceDao.findById(2).get();
-		System.out.println("Add - " + device.getDetails().getAutoloader_address());
+		logger.debug("Add - " + device.getDetails().getAutoloader_address());
 	}
 }

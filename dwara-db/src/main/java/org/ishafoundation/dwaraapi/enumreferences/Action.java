@@ -20,9 +20,11 @@ public enum Action {
 	rewrite,
 	migrate,
 	process,
+	restore_process,
 	format,
 	finalize,
 	import_,
 	map_tapedrives,
-	diagnostics
+	diagnostics,
+	write
 }

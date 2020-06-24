@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.SubrequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator;
 import org.slf4j.Logger;
@@ -20,9 +21,7 @@ import org.springframework.stereotype.Component;
 public class JobManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(JobManager.class);
-	
-	@Autowired
-	private SubrequestDao subrequestDao;
+
 	
 	@Autowired
 	private JobDao jobDao;	
@@ -35,6 +34,9 @@ public class JobManager {
 	
 	@Autowired
 	private StoragetypeJobDelegator storagetypeManager;
+	
+	@Autowired
+	private ActionAttributeConverter actionAttributeConverter;
 	
 	public void processJobs() {
 		List<Job> storageJobList = new ArrayList<Job>();
@@ -60,7 +62,7 @@ public class JobManager {
 				Job job = (Job) iterator.next();
 				logger.info("job - " + job.getId());
 				
-				Integer storagetaskId = job.getStoragetaskId();
+				Integer storagetaskId = job.getStoragetaskActionId();
 				Integer processingtaskId = job.getProcessingtaskId();
 
 				boolean isJobReadyToBeProcessed = isJobReadyToBeProcessed(job);
@@ -93,17 +95,24 @@ public class JobManager {
 //						}
 //						else { // only add when no tapedrivemapping or format activity
 							// all storage jobs need to be grouped for some optimisation...
-							storageJobList.add(job);
-							logger.trace("Added to storagejob collection");
+							Integer storagetaskActionId = job.getStoragetaskActionId();
+							Action storagetaskAction = actionAttributeConverter.convertToEntityAttribute(storagetaskActionId);
+	
+							if(storagetaskAction == Action.import_) {
+								// call import logic and update job status... separate threadexecutor???
+							}
+							else {
+								storageJobList.add(job);
+								logger.trace("Added to storagejob collection");
+							}
 //						}
 					}
 				}
 			}
 			
 			if(storageJobList.size() > 0) {
-				System.out.println(this.getClass().getName() + " job manager --> storagetypedelegation");
+				logger.debug(this.getClass().getName() + " job manager --> storagetypedelegation");
 				storagetypeManager.process(storageJobList);
-				
 			}else {
 				logger.trace("No storage job to be processed");
 			}
@@ -117,7 +126,7 @@ public class JobManager {
 	private boolean isJobReadyToBeProcessed(Job job) {
 		boolean isJobReadyToBeProcessed = true;
 		
-		Integer storagetaskId = job.getStoragetaskId();
+		Integer storagetaskId = job.getStoragetaskActionId();
 		if(storagetaskId == 2 || storagetaskId == 7)
 			return isJobReadyToBeProcessed;
 					

@@ -2,14 +2,17 @@ package org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain;
 		
 import java.util.Objects;
 
+import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.FetchType;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.MapsId;
 
 import org.ishafoundation.dwaraapi.db.keys.domain.ArtifactVolumeKey;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 
 /*
  * 
@@ -42,6 +45,10 @@ public class ArtifactVolume {
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("volumeId")
 	private Volume volume;
+	
+	@Lob
+	@Column(name="details")
+	private ArtifactVolumeDetails details;
 
 	public Volume getVolume() {
 		return volume;
@@ -57,6 +64,14 @@ public class ArtifactVolume {
 
 	public void setId(ArtifactVolumeKey id) {
 		this.id = id;
+	}
+	
+	public ArtifactVolumeDetails getDetails() {
+		return details;
+	}
+
+	public void setDetails(ArtifactVolumeDetails details) {
+		this.details = details;
 	}
 
 	@Override

@@ -17,5 +17,7 @@ public interface VolumeDao extends CrudRepository<Volume,Integer> {
 //	
 //	List<Volume> findAllByVolumesetId(int volumesetId);
 //	
-//	Volume findTopByOrderByIdDesc(); // when a format_volume action is triggered we need to add the formatted volume to our system with the most last volume's Id + 1...
+	Volume findTopByOrderByIdDesc(); // when a format_volume action is triggered we need to add the formatted volume to our system with the most last volume's Id + 1...
+	
+	Volume findByUid(String uId);
 }

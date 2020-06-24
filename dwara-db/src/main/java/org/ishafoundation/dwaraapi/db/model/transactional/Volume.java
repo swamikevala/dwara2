@@ -4,6 +4,8 @@ import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.Lob;
@@ -32,19 +34,23 @@ public class Volume {
 	@Column(name="uid", unique = true)
 	private String uid;
 	
-	@Column(name="volumetype_id")
+	@Enumerated(EnumType.STRING)
+	@Column(name="volumetype")
 	private Volumetype volumetype;
 	
-	@Column(name="storagetype_id")
-	private Storagetype storagetype;// points to enumreference
+	@Enumerated(EnumType.STRING)
+	@Column(name="storagetype")
+	private Storagetype storagetype;
 	
-	@Column(name="storagelevel_id")
+	@Enumerated(EnumType.STRING)
+	@Column(name="storagelevel")
 	private Storagelevel storagelevel;
 
 	@ManyToOne(fetch = FetchType.LAZY)
     private Volume volumeRef;
 	
-	@Column(name="checksumtype_id")
+	@Enumerated(EnumType.STRING)
+	@Column(name="checksumtype")
 	private Checksumtype checksumtype;
 	
 	@Column(name="finalized")

@@ -5,6 +5,8 @@ import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.Table;
@@ -28,7 +30,8 @@ public class Device implements Cacheable{
 	@Column(name="id")
 	private int id;
 	
-	@Column(name="devicetype_id")
+	@Enumerated(EnumType.STRING)
+	@Column(name="devicetype")
 	private Devicetype devicetype;
 	
 	@Column(name="uid", unique = true)

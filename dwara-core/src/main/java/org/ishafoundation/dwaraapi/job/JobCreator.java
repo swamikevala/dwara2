@@ -7,20 +7,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.StoragetaskAttributeConverter;
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Actionelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.Subrequest;
-import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
-import org.ishafoundation.dwaraapi.enumreferences.Storagetask;
+import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
+import org.ishafoundation.dwaraapi.utils.JobUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,15 +30,13 @@ public class JobCreator {
 	private static final Logger logger = LoggerFactory.getLogger(JobCreator.class);
 
 	@Autowired
-	private JobDao jobDao;
+	private JobUtils jobUtils;	
 	
 	@Autowired
 	private ActionelementDao actionelementDao;
-	
-	
-	
+		
 	@Autowired
-	private StoragetaskAttributeConverter storagetaskAttributeConverter;
+	private Map<String, AbstractStoragetaskAction> actionMap;
 
 	@SuppressWarnings("rawtypes")
 	@Autowired
@@ -48,7 +44,7 @@ public class JobCreator {
 
 	
 	// only if action is async create job should be called...
-	public List<Job> createJobs(Request request, Subrequest subrequest, Artifact artifact) throws Exception{
+	public List<Job> createJobs(Request request, Artifact artifact) throws Exception{
 		Action requestedBusinessAction = request.getAction();
 
 		org.ishafoundation.dwaraapi.db.model.master.reference.Action action = (org.ishafoundation.dwaraapi.db.model.master.reference.Action) dBMasterTablesCacheManager.getRecord(CacheableTablesList.action.name(), requestedBusinessAction.name());
@@ -59,22 +55,19 @@ public class JobCreator {
 		Map<Integer, Job> actionelementId_Job_Map = new HashMap<>();
 		
 		List<Job> jobList = new ArrayList<Job>();
-		if(!action.isAsync()) // No jobs are created for synchronous actions...
-			return jobList; // should this be null or an empty list
 		
-		Storagetask storagetask = action.getStoragetask();
-		if(action.isComplex()) {
+		if(Actiontype.complex == action.getType()) {
 			
 			List<Actionelement> actionelementList = actionelementDao.findAllByActionAndArtifactclassIdOrderByDisplayOrderAsc(requestedBusinessAction, artifact.getArtifactclass().getId());
 			for (Iterator<Actionelement> iterator = actionelementList.iterator(); iterator.hasNext();) {
 				Actionelement actionelement = (Actionelement) iterator.next();
 				
-				int storagetaskId = actionelement.getStoragetaskId();
+				int storagetaskActionId = actionelement.getStoragetaskActionId();
 				int processingtaskId = actionelement.getProcessingtaskId();
 			
 				Job job = new Job();
-				if(storagetaskId > 0)
-					job.setStoragetaskId(storagetaskId);
+				if(storagetaskActionId > 0)
+					job.setStoragetaskActionId(storagetaskActionId);
 				if(processingtaskId > 0)
 					job.setProcessingtaskId(processingtaskId);
 				
@@ -89,48 +82,32 @@ public class JobCreator {
 					job.setInputArtifactId(artifact.getId());
 				}
 				job.setActionelement(actionelement);
-				job.setSubrequest(subrequest);				
+				job.setRequest(request);				
 				job.setCreatedAt(LocalDateTime.now());
 				job.setStatus(Status.queued);
-				job = saveJob(job);
+//				
+//				JobDetails jobDetails = new JobDetails();
+//				jobDetails.setDevice_id(device_id);
+//				jobDetails.setVolume_id(volume_id);
+//				job.setDetails(jobDetails);
+				job = jobUtils.saveJob(job);
 				jobList.add(job);
 				actionelementId_Job_Map.put(actionelement.getId(), job);
 			}
 		}
-		else {
-			if(storagetask != null)
-				jobList.addAll(createStorageTaskJobs(requestedBusinessAction, subrequest, storagetask));
+		else if(Actiontype.storage_task == action.getType()){
+			String actionName = action.getName();
+			logger.debug("\t\tcalling storage task impl " + actionName);
+			AbstractStoragetaskAction actionImpl = actionMap.get(actionName);
+			
+			try {
+				jobList.addAll(actionImpl.createJobsForStoragetaskAction(request, Action.valueOf(actionName)));
+			} catch (Throwable e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		return jobList;
-	}
-	
-	private List<Job> createStorageTaskJobs(Action requestedBusinessAction, Subrequest subrequest, Storagetask storagetask){
-		List<Job> simpleStoragetaskJobs = new ArrayList<Job>();
-		Job job = new Job();
-		
-		int storagetaskId = storagetaskAttributeConverter.convertToDatabaseColumn(storagetask);
-		job.setStoragetaskId(storagetaskId);
-		job.setSubrequest(subrequest);
-		// TODO needed only for sub actions - job.setInputArtifactId(subrequest.getDetails().getArtifact_id());
-		job.setCreatedAt(LocalDateTime.now());
-		job.setStatus(Status.queued);
-		if(requestedBusinessAction == Action.restore) {
-			Volume volume = null;
-			//getvolume related stuff from the file here...
-			job.setVolume(volume);
-		}
-		job = saveJob(job);
-		simpleStoragetaskJobs.add(job);
-
-		return simpleStoragetaskJobs;
-	}
-	
-	
-	private Job saveJob(Job job) {
-		logger.debug("DB Job row Creation");   
-		job = jobDao.save(job);
-		logger.debug("DB Job row Creation - Success");
-		return job;
 	}
 
 }

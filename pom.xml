@@ -9,5 +9,6 @@
 		<module>dwara-db</module>
 		<module>dwara-core</module>
 		<module>dwara-service</module>
+    <module>dwara-tape</module>
   </modules>
 </project>

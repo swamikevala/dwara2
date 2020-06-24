@@ -9,6 +9,8 @@ import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
 import org.ishafoundation.dwaraapi.storage.model.DiskJob;
 import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,12 +18,21 @@ import org.springframework.stereotype.Component;
 //@Profile({ "!dev & !stage" })
 public class BlockStoragelevel implements IStoragelevel {
 
+	private static final Logger logger = LoggerFactory.getLogger(BlockStoragelevel.class);
+	
 	@Autowired
 	private Map<String, IArchiveformatter> aafMap;
 
+	
+	@Override
+	public ArchiveResponse format(StoragetypeJob job) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	@Override
 	public ArchiveResponse write(StoragetypeJob storagetypeJob) {
-		System.out.println(this.getClass().getName() + " block storage ");
+		logger.debug(this.getClass().getName() + " block storage ");
 		Archiveformat archiveformat = storagetypeJob.getStorageJob().getVolume().getArchiveformat();
     	IArchiveformatter archiveFormatter = aafMap.get(archiveformat.getName() + DwaraConstants.ArchiverSuffix);
     	
@@ -48,9 +59,20 @@ public class BlockStoragelevel implements IStoragelevel {
 	}
 
 	@Override
-	public ArchiveResponse restore(StoragetypeJob storagetypeJob) {
+	public ArchiveResponse verify(StoragetypeJob job) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+	@Override
+	public ArchiveResponse finalize(StoragetypeJob job) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	public ArchiveResponse restore(StoragetypeJob storagetypeJob) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

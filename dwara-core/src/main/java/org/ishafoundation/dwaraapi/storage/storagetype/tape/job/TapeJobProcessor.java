@@ -26,7 +26,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //	
 	@Override
 	protected void beforeWrite(StoragetypeJob storageJob) {
-		System.out.println("before write hook on TapeJP");
+		logger.debug("before write hook on TapeJP");
 //		// TODO Auto-generated method stub
 //		String tapeLibraryName = storageJob.getTapeLibraryName();
 //		int driveElementAddress = storageJob.getDriveNo();
@@ -40,7 +40,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	@Override
 	protected void afterWrite(StoragetypeJob storageJob) {
 		// TODO Auto-generated method stub
-		System.out.println("after write hook on TapeJP");
+		logger.debug("after write hook on TapeJP");
 	}
 
 	@Override

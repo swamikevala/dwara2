@@ -15,24 +15,25 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity(name = "Actionelement")
-@Table(name = "actionelement", uniqueConstraints={@UniqueConstraint(columnNames = {"action_id","artifactclass_id", "storagetask_id", "processingtask_id","volume_id"})})
+@Table(name = "actionelement", uniqueConstraints={@UniqueConstraint(columnNames = {"complex_action_id","artifactclass_id", "storagetask_action_id", "processingtask_id","volume_id"})})
 public class Actionelement {
 
 	@Id
 	@Column(name="id")
 	private int id;
 	
-	@Column(name = "action_id")
-	private Action action;
+	@Column(name = "complex_action_id")
+	private Action complexAction;
 	
 	@Column(name="artifactclass_id")
 	private int artifactclassId;
 
-	@Column(name = "storagetask_id")
-	private int storagetaskId;
+	@Column(name = "storagetask_action_id")
+	//private Action storagetaskAction;
+	private Integer storagetaskActionId;
 
 	@Column(name = "processingtask_id")
-	private int processingtaskId;
+	private Integer processingtaskId;
 	
 	// No FK relationship as this could be set to 0
 	@Column(name="volume_id")
@@ -63,12 +64,12 @@ public class Actionelement {
 		this.id = id;
 	}
 
-	public Action getAction() {
-		return action;
+	public Action getComplexAction() {
+		return complexAction;
 	}
 
-	public void setAction(Action action) {
-		this.action = action;
+	public void setComplexAction(Action complexAction) {
+		this.complexAction = complexAction;
 	}
 
 	public int getArtifactclassId() {
@@ -79,19 +80,27 @@ public class Actionelement {
 		this.artifactclassId = artifactclassId;
 	}
 
-	public int getStoragetaskId() {
-		return storagetaskId;
+//	public Action getStoragetaskAction() {
+//		return storagetaskAction;
+//	}
+//
+//	public void setStoragetaskAction(Action storagetaskAction) {
+//		this.storagetaskAction = storagetaskAction;
+//	}
+	
+	public Integer getStoragetaskActionId() {
+		return storagetaskActionId;
 	}
 
-	public void setStoragetaskId(int storagetaskId) {
-		this.storagetaskId = storagetaskId;
+	public void setStoragetaskActionId(Integer storagetaskActionId) {
+		this.storagetaskActionId = storagetaskActionId;
 	}
 
-	public int getProcessingtaskId() {
+	public Integer getProcessingtaskId() {
 		return processingtaskId;
 	}
 
-	public void setProcessingtaskId(int processingtaskId) {
+	public void setProcessingtaskId(Integer processingtaskId) {
 		this.processingtaskId = processingtaskId;
 	}
 

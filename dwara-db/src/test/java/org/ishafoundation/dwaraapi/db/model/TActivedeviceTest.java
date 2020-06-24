@@ -12,6 +12,8 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -20,6 +22,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class TActivedeviceTest {
+	
+	private static final Logger logger = LoggerFactory.getLogger(TActivedeviceTest.class);
 
 	@Autowired
 	private DeviceDao deviceDao;
@@ -43,7 +47,7 @@ public class TActivedeviceTest {
 	public void test_b_getTActivedevice() {
 		List<TActivedevice> activeDevice = tActivedeviceDao.findAllByDeviceDevicetypeAndDeviceStatus(Devicetype.tape_drive, DeviceStatus.AVAILABLE);
 		for (TActivedevice tActivedevice : activeDevice) {
-			System.out.println(tActivedevice.getDevice().getDetails().getAutoloader_address());
+			logger.debug(tActivedevice.getDevice().getDetails().getAutoloader_address()+"");
 		}
 	}
 }

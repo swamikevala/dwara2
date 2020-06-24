@@ -5,8 +5,8 @@ public class DeviceDetails {
 	//tape drive
 	private String type; //	e.g. LTO
 	private int generation;	
-	private int[] readable_volumetype_ids;		
-	private int[] writeable_volumetype_ids;	
+	private int[] readable_generations;		
+	private int[] writeable_generations;	
 	private String interface_;	
 	private int autoloader_id; //	Which autoloader the drive is connected to
 	private int autoloader_address; //	Which autoloader data transfer element the drive is associated with
@@ -16,6 +16,8 @@ public class DeviceDetails {
 	private int slots; //	
 	private int max_drives;	
 	private int[] generations_supported;
+
+	
 	public String getType() {
 		return type;
 	}
@@ -28,17 +30,17 @@ public class DeviceDetails {
 	public void setGeneration(int generation) {
 		this.generation = generation;
 	}
-	public int[] getReadable_volumetype_ids() {
-		return readable_volumetype_ids;
+	public int[] getReadable_generations() {
+		return readable_generations;
 	}
-	public void setReadable_volumetype_ids(int[] readable_volumetype_ids) {
-		this.readable_volumetype_ids = readable_volumetype_ids;
+	public void setReadable_generations(int[] readable_generations) {
+		this.readable_generations = readable_generations;
 	}
-	public int[] getWriteable_volumetype_ids() {
-		return writeable_volumetype_ids;
+	public int[] getWriteable_generations() {
+		return writeable_generations;
 	}
-	public void setWriteable_volumetype_ids(int[] writeable_volumetype_ids) {
-		this.writeable_volumetype_ids = writeable_volumetype_ids;
+	public void setWriteable_generations(int[] writeable_generations) {
+		this.writeable_generations = writeable_generations;
 	}
 	public String getInterface_() {
 		return interface_;
