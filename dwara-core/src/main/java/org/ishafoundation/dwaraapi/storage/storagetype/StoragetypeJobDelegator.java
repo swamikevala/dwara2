@@ -43,13 +43,12 @@ public class StoragetypeJobDelegator {
 	 * Wraps the jobs with extra storage info and groups based on storagetype and then delegates it to appropriate storagetype specific jobs processor
 	 */
 	public void process(List<Job> storageJobList) {
-		logger.debug(this.getClass().getName());
 		Map<Storagetype, List<StorageJob>> storagetype_storageTypeGroupedJobsList_Map = wrapJobsWithMoreInfoAndGroupOnStorageType(storageJobList);
 		Set<Storagetype> storagetypeSet = storagetype_storageTypeGroupedJobsList_Map.keySet();
 		
 		// delegate the task to appropriate storagetype specific jobs processor
 		for (Storagetype storagetype : storagetypeSet) {
-			logger.debug("\t\tdelegating to " + storagetype.name() + "job manager's separate thread ================");
+			logger.debug("Delegating to " + storagetype.name() + "job manager's separate thread ================");
 			AbstractStoragetypeJobManager storageTypeJobManager = storageTypeJobManagerMap.get(storagetype.name() + DwaraConstants.StorageTypeJobManagerSuffix);
 			storageTypeJobManager.setStorageJobList(storagetype_storageTypeGroupedJobsList_Map.get(storagetype));
 			storageSingleThreadExecutor.getExecutor().execute(storageTypeJobManager);
@@ -58,7 +57,7 @@ public class StoragetypeJobDelegator {
 	
 	private Map<Storagetype, List<StorageJob>> wrapJobsWithMoreInfoAndGroupOnStorageType(List<Job> storageJobList){
 		Map<Storagetype, List<StorageJob>> storagetype_storageTypeGroupedJobsList_Map = new HashMap<>();
-		logger.debug("\t\twrapJobsWithMoreInfoAndGroupOnStorageType");
+		logger.debug("WrapJobsWithMoreInfoAndGroupOnStorageType");
 		for (Job job : storageJobList) {
 			Integer storagetaskActionId = job.getStoragetaskActionId();
 			Action storagetaskAction = actionAttributeConverter.convertToEntityAttribute(storagetaskActionId);

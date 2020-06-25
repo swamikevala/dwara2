@@ -20,7 +20,7 @@ public class Domain implements Cacheable{
 	@Column(name="name", unique = true)
 	private String name;
 	
-	@Column(name="default")
+	@Column(name="defaultt")
 //	private boolean default_;
 	private boolean defaultt;
 

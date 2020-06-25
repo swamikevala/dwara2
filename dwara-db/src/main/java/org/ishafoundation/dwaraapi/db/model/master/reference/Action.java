@@ -7,6 +7,8 @@ import java.util.Objects;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -30,6 +32,7 @@ public class Action implements Cacheable{
 	@Column(name="name", unique = true)
 	private String name;
 
+	@Enumerated(EnumType.STRING)
 	@Column(name="type")
 	private Actiontype type;
 	

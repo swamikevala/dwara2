@@ -4,7 +4,9 @@ import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.springframework.stereotype.Component;
 
+@Component
 @Converter(autoApply = true)
 public class ActionAttributeConverter implements AttributeConverter<Action, Integer> {
 
@@ -16,44 +18,44 @@ public class ActionAttributeConverter implements AttributeConverter<Action, Inte
 		switch (attribute) {
 		case ingest:
 			return 1;
-		case restore:
-			return 2;
-		case verify:
-			return 3;
-		case list:
-			return 4;
-		case rename:
-			return 5;
-		case hold:
-			return 6;
-		case release:
-			return 7;
-		case cancel:
-			return 8;
-		case abort:
-			return 9;
-		case delete:
-			return 10;
-		case rewrite:
-			return 11;
-		case migrate:
-			return 12;
-		case process:
-			return 13;
-		case restore_process:
-			return 14;
-		case format:
-			return 15;
-		case finalize:
-			return 16;
-		case import_:
-			return 17;
-		case map_tapedrives:
-			return 18;
-		case diagnostics:
-			return 19;
 		case write:
-			return 20;		
+			return 2;
+		case restore:
+			return 3;
+		case verify:
+			return 4;
+		case list:
+			return 5;
+		case rename:
+			return 6;
+		case hold:
+			return 7;
+		case release:
+			return 8;
+		case cancel:
+			return 9;
+		case abort:
+			return 10;
+		case delete:
+			return 11;
+		case rewrite:
+			return 12;
+		case migrate:
+			return 13;
+		case process:
+			return 14;
+		case restore_process:
+			return 15;
+		case format:
+			return 16;
+		case finalize:
+			return 17;
+		case import_:
+			return 18;
+		case map_tapedrives:
+			return 19;
+		case diagnostics:
+			return 20;
 		default:
 			throw new IllegalArgumentException(attribute + " not supported.");
 		}
@@ -68,43 +70,43 @@ public class ActionAttributeConverter implements AttributeConverter<Action, Inte
 		case 1:
 			return Action.ingest;
 		case 2:
-			return Action.restore;
+			return Action.write;
 		case 3:
-			return Action.verify;
+			return Action.restore;
 		case 4:
-			return Action.list;
+			return Action.verify;
 		case 5:
-			return Action.rename;
+			return Action.list;
 		case 6:
-			return Action.hold;
+			return Action.rename;
 		case 7:
-			return Action.release;
+			return Action.hold;
 		case 8:
-			return Action.cancel;
+			return Action.release;
 		case 9:
-			return Action.abort;
+			return Action.cancel;
 		case 10:
-			return Action.delete;
+			return Action.abort;
 		case 11:
-			return Action.rewrite;
+			return Action.delete;
 		case 12:
-			return Action.migrate;
+			return Action.rewrite;
 		case 13:
-			return Action.process;
+			return Action.migrate;
 		case 14:
-			return Action.restore_process;
+			return Action.process;
 		case 15:
-			return Action.format;
+			return Action.restore_process;
 		case 16:
-			return Action.finalize;
+			return Action.format;
 		case 17:
-			return Action.import_;
+			return Action.finalize;
 		case 18:
-			return Action.map_tapedrives;
+			return Action.import_;
 		case 19:
-			return Action.diagnostics;			
+			return Action.map_tapedrives;
 		case 20:
-			return Action.write;			
+			return Action.diagnostics;
 		default:
 			throw new IllegalArgumentException(dbData + " not supported.");
 		}

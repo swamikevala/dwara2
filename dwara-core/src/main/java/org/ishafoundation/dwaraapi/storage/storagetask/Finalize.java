@@ -18,8 +18,5 @@ import org.springframework.stereotype.Component;
 public class Finalize extends AbstractStoragetaskAction{
 
     private static final Logger logger = LoggerFactory.getLogger(Finalize.class);
-    
-	@Autowired
-	private Map<String, AbstractStoragetypeJobProcessor> storagetypeJobProcessorMap;
 
 }

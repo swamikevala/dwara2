@@ -31,7 +31,7 @@ public class DeviceTest {
 		device.setDevicetype(Devicetype.tape_autoloader);
 		device.setUid("/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400");
 		DeviceDetails deviceDetails = new DeviceDetails();
-		int[] generations_supported = {6,7};
+		Integer[] generations_supported = {6,7};
 		deviceDetails.setGenerations_supported(generations_supported);
 		deviceDetails.setSlots(24);
 		deviceDetails.setMax_drives(3);
@@ -41,9 +41,9 @@ public class DeviceTest {
 		deviceDetails = new DeviceDetails();
 		deviceDetails.setType("LTO");
 		deviceDetails.setGeneration(7);
-		int[] readable_generations = {6,7};
+		Integer[] readable_generations = {6,7};
 		deviceDetails.setReadable_generations(readable_generations);
-		int[] writeable_generations = {7};
+		Integer[] writeable_generations = {7};
 		deviceDetails.setWriteable_generations(writeable_generations);		
 		deviceDetails.setAutoloader_id(1);
 		deviceDetails.setStandalone(false);

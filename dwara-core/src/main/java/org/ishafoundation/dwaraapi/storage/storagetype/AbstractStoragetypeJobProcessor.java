@@ -27,113 +27,114 @@ public abstract class AbstractStoragetypeJobProcessor {
 		logger.debug(this.getClass().getName());
 	}
 	
-    protected void beforeFormat(StoragetypeJob storageJob) {}
+    protected void beforeFormat(StoragetypeJob storagetypeJob) {}
     
-	//public ArchiveResponse restore(StorageJob storageJob) throws Throwable{
-	public ArchiveResponse format(StoragetypeJob storageJob) throws Throwable{
+	//public ArchiveResponse restore(StorageJob storagetypeJob) throws Throwable{
+	public ArchiveResponse format(StoragetypeJob storagetypeJob) throws Throwable{
 		ArchiveResponse ar = null;
-    	beforeFormat(storageJob);
+    	beforeFormat(storagetypeJob);
     	
-    	IStoragelevel iStoragelevel = getStoragelevelImpl(storageJob);
-    	ar = iStoragelevel.format(storageJob);
+    	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
+    	ar = iStoragelevel.format(storagetypeJob);
     	
-//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storageJob);
-//    	ar = storageFormatter.restore(storageJob);
-    	afterFormat(storageJob);
+//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storagetypeJob);
+//    	ar = storageFormatter.restore(storagetypeJob);
+    	afterFormat(storagetypeJob);
     	return ar; 
    	
     }
 	
-	protected void afterFormat(StoragetypeJob storageJob) {}
+	protected void afterFormat(StoragetypeJob storagetypeJob) {}
 
 	
-    protected void beforeWrite(StoragetypeJob storageJob) {}
+    protected void beforeWrite(StoragetypeJob storagetypeJob) {}
     
-    public ArchiveResponse write(StoragetypeJob storageJob) throws Throwable{
+    public ArchiveResponse write(StoragetypeJob storagetypeJob) throws Throwable{
     	ArchiveResponse ar = null;
-    	beforeWrite(storageJob);
+    	beforeWrite(storagetypeJob);
     	
-    	IStoragelevel iStoragelevel = getStoragelevelImpl(storageJob);
-    	ar = iStoragelevel.write(storageJob);
+    	logger.info("Writing job " + storagetypeJob.getStorageJob().getJob().getId());
+    	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
+    	ar = iStoragelevel.write(storagetypeJob);
     	
-//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storageJob);
-//    	ar = storageFormatter.write(storageJob);
-    	afterWrite(storageJob);
+//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storagetypeJob);
+//    	ar = storageFormatter.write(storagetypeJob);
+    	afterWrite(storagetypeJob);
     	return ar; 
     }
     
-    protected void afterWrite(StoragetypeJob storageJob) {}
+    protected void afterWrite(StoragetypeJob storagetypeJob) {}
     
     // TODO Should we force this to be implemented or let it be overwritten
-//    protected abstract void afterWrite(StorageTypeJob storageJob);
+//    protected abstract void afterWrite(StorageTypeJob storagetypeJob);
 //
-//	protected abstract void beforeWrite(StorageTypeJob storageJob);
+//	protected abstract void beforeWrite(StorageTypeJob storagetypeJob);
 
-    protected void beforeVerify(StoragetypeJob storageJob) {}
+    protected void beforeVerify(StoragetypeJob storagetypeJob) {}
     
-	//public ArchiveResponse restore(StorageJob storageJob) throws Throwable{
-	public ArchiveResponse verify(StoragetypeJob storageJob) throws Throwable{
+	//public ArchiveResponse restore(StorageJob storagetypeJob) throws Throwable{
+	public ArchiveResponse verify(StoragetypeJob storagetypeJob) throws Throwable{
 		ArchiveResponse ar = null;
-    	beforeVerify(storageJob);
+    	beforeVerify(storagetypeJob);
     	
-    	IStoragelevel iStoragelevel = getStoragelevelImpl(storageJob);
-    	ar = iStoragelevel.verify(storageJob);
+    	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
+    	ar = iStoragelevel.verify(storagetypeJob);
     	
-//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storageJob);
-//    	ar = storageFormatter.restore(storageJob);
-    	afterVerify(storageJob);
+//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storagetypeJob);
+//    	ar = storageFormatter.restore(storagetypeJob);
+    	afterVerify(storagetypeJob);
     	return ar; 
    	
     }
 	
-	protected void afterVerify(StoragetypeJob storageJob) {}
+	protected void afterVerify(StoragetypeJob storagetypeJob) {}
     
-    protected void beforeFinalize(StoragetypeJob storageJob) {}
+    protected void beforeFinalize(StoragetypeJob storagetypeJob) {}
     
-	//public ArchiveResponse restore(StorageJob storageJob) throws Throwable{
-	public ArchiveResponse finalize(StoragetypeJob storageJob) throws Throwable{
+	//public ArchiveResponse restore(StorageJob storagetypeJob) throws Throwable{
+	public ArchiveResponse finalize(StoragetypeJob storagetypeJob) throws Throwable{
 		ArchiveResponse ar = null;
-    	beforeFinalize(storageJob);
+    	beforeFinalize(storagetypeJob);
     	
-    	IStoragelevel iStoragelevel = getStoragelevelImpl(storageJob);
-    	ar = iStoragelevel.finalize(storageJob);
+    	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
+    	ar = iStoragelevel.finalize(storagetypeJob);
     	
-//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storageJob);
-//    	ar = storageFormatter.restore(storageJob);
-    	afterFinalize(storageJob);
+//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storagetypeJob);
+//    	ar = storageFormatter.restore(storagetypeJob);
+    	afterFinalize(storagetypeJob);
     	return ar; 
    	
     }
 	
-	protected void afterFinalize(StoragetypeJob storageJob) {}
+	protected void afterFinalize(StoragetypeJob storagetypeJob) {}
 
 
-    protected void beforeRestore(StoragetypeJob storageJob) {}
+    protected void beforeRestore(StoragetypeJob storagetypeJob) {}
     
-	//public ArchiveResponse restore(StorageJob storageJob) throws Throwable{
-	public ArchiveResponse restore(StoragetypeJob storageJob) throws Throwable{
+	//public ArchiveResponse restore(StorageJob storagetypeJob) throws Throwable{
+	public ArchiveResponse restore(StoragetypeJob storagetypeJob) throws Throwable{
 		ArchiveResponse ar = null;
-    	beforeRestore(storageJob);
+    	beforeRestore(storagetypeJob);
     	
-    	IStoragelevel iStoragelevel = getStoragelevelImpl(storageJob);
-    	ar = iStoragelevel.restore(storageJob);
+    	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
+    	ar = iStoragelevel.restore(storagetypeJob);
     	
-//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storageJob);
-//    	ar = storageFormatter.restore(storageJob);
-    	afterRestore(storageJob);
+//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storagetypeJob);
+//    	ar = storageFormatter.restore(storagetypeJob);
+    	afterRestore(storagetypeJob);
     	return ar; 
    	
     }
 	
-	protected void afterRestore(StoragetypeJob storageJob) {}
+	protected void afterRestore(StoragetypeJob storagetypeJob) {}
 	
-	private IStoragelevel getStoragelevelImpl(StoragetypeJob storageJob){
-		Storagelevel storagelevel = storageJob.getStorageJob().getVolume().getStoragelevel();
+	private IStoragelevel getStoragelevelImpl(StoragetypeJob storagetypeJob){
+		Storagelevel storagelevel = storagetypeJob.getStorageJob().getVolume().getStoragelevel();
 		return islMap.get(storagelevel.name()+DwaraConstants.StoragelevelSuffix);//+"Storagelevel");
 	}
 	
-//	protected abstract void afterRestore(StorageTypeJob storageJob);
+//	protected abstract void afterRestore(StorageTypeJob storagetypeJob);
 //
-//	protected abstract void beforeRestore(StorageTypeJob storageJob);
+//	protected abstract void beforeRestore(StorageTypeJob storagetypeJob);
 
 }

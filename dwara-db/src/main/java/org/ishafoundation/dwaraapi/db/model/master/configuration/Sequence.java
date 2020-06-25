@@ -2,7 +2,9 @@ package org.ishafoundation.dwaraapi.db.model.master.configuration;
 		
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
@@ -23,14 +25,17 @@ public class Sequence implements Cacheable{
 	private int id;
 	
 	@Column(name="barcode")
-	private boolean barcode = false;
+	private boolean barcode;
 	
 	// TODO - Not needed. any sequence_ref_id null is a group
-	@Column(name="group")
-	private boolean group = false;
+	@Column(name="group_")
+	private boolean group;
 	
 	@Column(name="last_number")
 	private int lastNumber;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+    private Sequence sequenceRef;
 
 	@Column(name="prefix")
 	private String prefix;
@@ -74,6 +79,14 @@ public class Sequence implements Cacheable{
 		this.lastNumber = lastNumber;
 	}
 	
+	public Sequence getSequenceRef() {
+		return sequenceRef;
+	}
+
+	public void setSequenceRef(Sequence sequenceRef) {
+		this.sequenceRef = sequenceRef;
+	}
+
 	public String getPrefix() {
 		return prefix;
 	}

@@ -58,7 +58,7 @@ public class JobCreator {
 		
 		if(Actiontype.complex == action.getType()) {
 			
-			List<Actionelement> actionelementList = actionelementDao.findAllByActionAndArtifactclassIdOrderByDisplayOrderAsc(requestedBusinessAction, artifact.getArtifactclass().getId());
+			List<Actionelement> actionelementList = actionelementDao.findAllByComplexActionAndArtifactclassIdOrderByDisplayOrderAsc(requestedBusinessAction, artifact.getArtifactclass().getId());
 			for (Iterator<Actionelement> iterator = actionelementList.iterator(); iterator.hasNext();) {
 				Actionelement actionelement = (Actionelement) iterator.next();
 				

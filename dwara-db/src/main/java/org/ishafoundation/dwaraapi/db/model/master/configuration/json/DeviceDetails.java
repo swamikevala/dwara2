@@ -4,19 +4,19 @@ public class DeviceDetails {
 	
 	//tape drive
 	private String type; //	e.g. LTO
-	private int generation;	
-	private int[] readable_generations;		
-	private int[] writeable_generations;	
+	private Integer generation;	
+	private Integer[] readable_generations;		
+	private Integer[] writeable_generations;	
 	private String interface_;	
-	private int autoloader_id; //	Which autoloader the drive is connected to
-	private int autoloader_address; //	Which autoloader data transfer element the drive is associated with
-	private boolean standalone;//	Is the drive a standalone drive
+	private Integer autoloader_id; //	Which autoloader the drive is connected to
+	private Integer autoloader_address; //	Which autoloader data transfer element the drive is associated with
+	private Boolean standalone;//	Is the drive a standalone drive
 	
 	//tape autoloader
-	private int slots; //	
-	private int max_drives;	
-	private int[] generations_supported;
-
+	private Integer slots; //	
+	private Integer max_drives;	
+	private Integer[] generations_supported;
+	
 	
 	public String getType() {
 		return type;
@@ -24,22 +24,22 @@ public class DeviceDetails {
 	public void setType(String type) {
 		this.type = type;
 	}
-	public int getGeneration() {
+	public Integer getGeneration() {
 		return generation;
 	}
-	public void setGeneration(int generation) {
+	public void setGeneration(Integer generation) {
 		this.generation = generation;
 	}
-	public int[] getReadable_generations() {
+	public Integer[] getReadable_generations() {
 		return readable_generations;
 	}
-	public void setReadable_generations(int[] readable_generations) {
+	public void setReadable_generations(Integer[] readable_generations) {
 		this.readable_generations = readable_generations;
 	}
-	public int[] getWriteable_generations() {
+	public Integer[] getWriteable_generations() {
 		return writeable_generations;
 	}
-	public void setWriteable_generations(int[] writeable_generations) {
+	public void setWriteable_generations(Integer[] writeable_generations) {
 		this.writeable_generations = writeable_generations;
 	}
 	public String getInterface_() {
@@ -48,40 +48,40 @@ public class DeviceDetails {
 	public void setInterface_(String interface_) {
 		this.interface_ = interface_;
 	}
-	public int getAutoloader_id() {
+	public Integer getAutoloader_id() {
 		return autoloader_id;
 	}
-	public void setAutoloader_id(int autoloader_id) {
+	public void setAutoloader_id(Integer autoloader_id) {
 		this.autoloader_id = autoloader_id;
 	}
-	public int getAutoloader_address() {
+	public Integer getAutoloader_address() {
 		return autoloader_address;
 	}
-	public void setAutoloader_address(int autoloader_address) {
+	public void setAutoloader_address(Integer autoloader_address) {
 		this.autoloader_address = autoloader_address;
 	}
-	public boolean isStandalone() {
+	public Boolean getStandalone() {
 		return standalone;
 	}
-	public void setStandalone(boolean standalone) {
+	public void setStandalone(Boolean standalone) {
 		this.standalone = standalone;
 	}
-	public int getSlots() {
+	public Integer getSlots() {
 		return slots;
 	}
-	public void setSlots(int slots) {
+	public void setSlots(Integer slots) {
 		this.slots = slots;
 	}
-	public int getMax_drives() {
+	public Integer getMax_drives() {
 		return max_drives;
 	}
-	public void setMax_drives(int max_drives) {
+	public void setMax_drives(Integer max_drives) {
 		this.max_drives = max_drives;
 	}
-	public int[] getGenerations_supported() {
+	public Integer[] getGenerations_supported() {
 		return generations_supported;
 	}
-	public void setGenerations_supported(int[] generations_supported) {
+	public void setGenerations_supported(Integer[] generations_supported) {
 		this.generations_supported = generations_supported;
 	}
 }

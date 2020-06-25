@@ -111,7 +111,7 @@ public class JobManager {
 			}
 			
 			if(storageJobList.size() > 0) {
-				logger.debug(this.getClass().getName() + " job manager --> storagetypedelegation");
+				logger.debug(storageJobList.size() + " storage jobs are process ready");
 				storagetypeManager.process(storageJobList);
 			}else {
 				logger.trace("No storage job to be processed");

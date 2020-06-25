@@ -19,10 +19,10 @@ public class DiskJobManager extends AbstractStoragetypeJobManager {
 
 	@Override
     public void run() {
-		logger.debug(this.getClass().getName() + " disk job manager");
+
 		List<StorageJob> storageJobsList = getStorageJobList();
 		StorageJob storageJob = storageJobsList.get(0); //selected Job
-		
+		logger.debug("Processing disk job " + storageJob.getJob().getId());		
 		DiskJob dj = new DiskJob();
 		dj.setStorageJob(storageJob);
 		

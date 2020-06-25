@@ -34,8 +34,7 @@ public class FileStoragelevel implements IStoragelevel {
 	
 	@Override
 	public ArchiveResponse write(StoragetypeJob job) {
-		logger.debug(this.getClass().getName() + " file storage ");
-		logger.debug(this.getClass().getName() + " file storage means doesnt use any archive");
+		logger.debug("File storage means doesnt use any archive, but copies straight.");
 		// Archiveformat only needed for block...
 		// invoke the copy command here...
 		return null;

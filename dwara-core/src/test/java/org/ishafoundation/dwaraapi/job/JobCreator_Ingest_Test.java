@@ -65,7 +65,8 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 		
 		RequestDetails details = new RequestDetails();
 		details.setBody(postBody);
-		return details;
+		//return details;
+		return null;
 	}
 
 	@Test

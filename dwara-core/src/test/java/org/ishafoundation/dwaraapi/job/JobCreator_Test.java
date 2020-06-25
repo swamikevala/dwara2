@@ -7,7 +7,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,9 +27,9 @@ public class JobCreator_Test {
 	@Autowired
 	protected JobCreator jobCreator;
 	
-	@BeforeClass
-	public Request createRequest() throws Exception {
-		Request request = new Request();
+	@Before
+	public void createRequest() throws Exception {
+		request = new Request();
 		request.setAction(action);
 		request.setDomain(getDomain(null));
 		// request.setUser(user);
@@ -38,7 +38,7 @@ public class JobCreator_Test {
 		
 		RequestDetails details = getRequestDetails();
 		request.setDetails(details);
-		return requestDao.save(request);
+		requestDao.save(request);
 	}
 	
 	protected RequestDetails getRequestDetails() {

@@ -8,6 +8,7 @@ package org.ishafoundation.dwaraapi.enumreferences;
  */
 public enum Action {
 	ingest,
+	write,
 	restore,
 	verify,
 	list,
@@ -25,6 +26,5 @@ public enum Action {
 	finalize,
 	import_,
 	map_tapedrives,
-	diagnostics,
-	write
+	diagnostics
 }
