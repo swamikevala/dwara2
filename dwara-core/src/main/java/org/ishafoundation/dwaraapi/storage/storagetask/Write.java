@@ -36,26 +36,39 @@ public class Write extends AbstractStoragetaskAction{
 		Request request = job.getRequest();
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getAction();
 		
-		Domain domain = job.getRequest().getDomain();
-		
-		Integer inputArtifactId = job.getInputArtifactId();
-		Artifact artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);
-
-			
-		String artifactName = artifact.getName();			
-		Artifactclass artifactclass = artifact.getArtifactclass();	
 //		int artifactclassId = artifactclass.getId();
-		
+		Artifact artifact = null;
+		String artifactName = null;
 		String pathPrefix = null;
+		int volumegroupId = 0;
+		Volume volume = null;
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.ingest) {
+			Domain domain = job.getRequest().getDomain();
+			Integer inputArtifactId = job.getInputArtifactId();
+			artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);
+			artifactName = artifact.getName();			
+			Artifactclass artifactclass = artifact.getArtifactclass();	
+
 			pathPrefix = artifactclass.getPath();
-		}else if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.rewrite) {
-			pathPrefix = "whereverRestoredByThePrecedingRestoreJob";//artifactclass.getPath();
-		}
+			volumegroupId = job.getActionelement().getVolumeId();
 			
-		String artifactpathToBeCopied = pathPrefix + java.io.File.separator + artifactName;
-		
-		long sizeOfTheLibraryToBeWritten = 0;//TODO - FileUtils.sizeOfDirectory(new java.io.File(artifactpathToBeCopied)); 
+			
+			String artifactpathToBeCopied = pathPrefix + java.io.File.separator + artifactName;
+			long sizeOfTheLibraryToBeWritten = 0;//TODO - FileUtils.sizeOfDirectory(new java.io.File(artifactpathToBeCopied)); 			
+			volume = getToBeUsedPhysicalVolume(volumegroupId, sizeOfTheLibraryToBeWritten);
+
+		}else if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.rewrite || requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.migrate) {
+			artifactName = request.getDetails().getArtifact_name();
+			pathPrefix = "whereverRestoredByThePrecedingRestoreJob";//artifactclass.getPath();
+			// TODO have a util for Group Uid to Uid 
+//			String volumegroupUid = request.getDetails().getVolume_group_uid();
+//			Volume volume = volumeDao.findByUid(volumegroupUid);
+//			volumegroupId = volume.getId();
+			
+			String volumeUid = request.getDetails().getTo_volume_uid();
+			volume = volumeDao.findByUid(volumeUid);
+		}
+
 		
 		StorageJob storageJob = new StorageJob();
 		storageJob.setJob(job);
@@ -65,10 +78,8 @@ public class Write extends AbstractStoragetaskAction{
 		storageJob.setArtifactPrefixPath(pathPrefix);
 		storageJob.setArtifactName(artifactName);
 
-		int volumegroupId = job.getActionelement().getVolumeId();
-		
 		// to where
-		storageJob.setVolume(getToBeUsedPhysicalVolume(volumegroupId, sizeOfTheLibraryToBeWritten));
+		storageJob.setVolume(volume);
 		
 		return storageJob;
 	

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -23,19 +24,12 @@ public abstract class AbstractStoragetaskAction{
 	private static final Logger logger = LoggerFactory.getLogger(AbstractStoragetaskAction.class);
 	
 	@Autowired
-	protected JobUtils jobUtils;	
+	private JobDao jobDao;		
 	
 	@Autowired
 	protected ActionAttributeConverter actionAttributeConverter;
 	
 	protected List<org.ishafoundation.dwaraapi.enumreferences.Action> storagetaskActionList = new ArrayList<org.ishafoundation.dwaraapi.enumreferences.Action>();
-	
-	public StorageJob buildStorageJob(Job job){
-		// If needed to be overwritten by subclass implementations
-		StorageJob storageJob = new StorageJob();
-		storageJob.setJob(job);
-		return storageJob;
-	}
 	
 	public List<Job> createJobsForStoragetaskAction(Request request, Action action){
 		List<Job> simpleActionJobs = new ArrayList<Job>();
@@ -71,9 +65,17 @@ public abstract class AbstractStoragetaskAction{
 //			//getvolume related stuff from the file here...
 //			job.setVolume(volume);
 //		}
-		return jobUtils.saveJob(job);
+		return saveJob(job);
 	}
 
+	
+	public StorageJob buildStorageJob(Job job){
+		// If needed to be overwritten by subclass implementations
+		StorageJob storageJob = new StorageJob();
+		storageJob.setJob(job);
+		return storageJob;
+	}
+	
 	public void postProcessDbUpdates(Job job, ArchiveResponse archiveResponse) {
 		// If needed to be overwritten by subclass implementations
 	}
@@ -99,6 +101,11 @@ public abstract class AbstractStoragetaskAction{
 
 	//public abstract ArchiveResponse execute(StoragetypeJob storagejob) throws Throwable;
 
+	private Job saveJob(Job job) {
+		job = jobDao.save(job);
+		logger.info("Job " + job.getId() + " - Created");
+		return job;
+	}
 
 
 

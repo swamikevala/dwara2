@@ -33,12 +33,13 @@ public class JobManager {
 	private ApplicationContext applicationContext;
 	
 	@Autowired
-	private StoragetypeJobDelegator storagetypeManager;
+	private StoragetypeJobDelegator storagetypeJobDelegator;
 	
 	@Autowired
 	private ActionAttributeConverter actionAttributeConverter;
 	
-	public void processJobs() {
+	public void manageJobs() {
+		logger.trace("***** Managing jobs now *****");
 		List<Job> storageJobList = new ArrayList<Job>();
 		
 //		// Need to block all storage jobs when there is a queued/inprogress mapdrive request... 
@@ -60,13 +61,20 @@ public class JobManager {
 		if(jobList.size() > 0) {
 			for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
 				Job job = (Job) iterator.next();
-				logger.info("job - " + job.getId());
 				
-				Integer storagetaskId = job.getStoragetaskActionId();
+				String jobName = null;
+				Action storagetaskAction = null;
+				Integer storagetaskActionId = job.getStoragetaskActionId();
 				Integer processingtaskId = job.getProcessingtaskId();
-
+				if(storagetaskActionId != null) {
+					storagetaskAction = actionAttributeConverter.convertToEntityAttribute(storagetaskActionId);
+					jobName = storagetaskAction.name();
+				}
+				else {
+					jobName = processingtaskId.toString(); // TODO Get the name of the process than just the id...
+				}
+				logger.info("job - " + job.getId() + ":" + jobName);
 				boolean isJobReadyToBeProcessed = isJobReadyToBeProcessed(job);
-				
 				logger.info("isJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
 				if(isJobReadyToBeProcessed) {
 					// TODO : we were doing this on tasktype, but now that there is no tasktype how to differentiate? Check with Swami
@@ -95,8 +103,6 @@ public class JobManager {
 //						}
 //						else { // only add when no tapedrivemapping or format activity
 							// all storage jobs need to be grouped for some optimisation...
-							Integer storagetaskActionId = job.getStoragetaskActionId();
-							Action storagetaskAction = actionAttributeConverter.convertToEntityAttribute(storagetaskActionId);
 	
 							if(storagetaskAction == Action.import_) {
 								// call import logic and update job status... separate threadexecutor???
@@ -112,7 +118,7 @@ public class JobManager {
 			
 			if(storageJobList.size() > 0) {
 				logger.debug(storageJobList.size() + " storage jobs are process ready");
-				storagetypeManager.process(storageJobList);
+				storagetypeJobDelegator.delegate(storageJobList);
 			}else {
 				logger.trace("No storage job to be processed");
 			}
@@ -125,25 +131,15 @@ public class JobManager {
 	// If a job is a dependent job the parent job's status should be completed for it to be ready to be taken up for processing...
 	private boolean isJobReadyToBeProcessed(Job job) {
 		boolean isJobReadyToBeProcessed = true;
-		
-		Integer storagetaskId = job.getStoragetaskActionId();
-		if(storagetaskId == 2 || storagetaskId == 7)
-			return isJobReadyToBeProcessed;
-					
-		Integer inputLibraryId = job.getInputArtifactId();//The input library of a dependent job is set by the parent job after it completes the processing
-		if(inputLibraryId == null) { // means its a job dependent on its parent job(to set the library to be used), which is not completed.  
-			isJobReadyToBeProcessed = false;
+
+		Job parentJob = job.getJobRef();
+		if(parentJob != null) { 
+			// means a dependent job.
+			Status parentJobStatus = parentJob.getStatus();
+			if(parentJobStatus != Status.completed && parentJobStatus != Status.completed_failures)
+				isJobReadyToBeProcessed = false;
 		}
-		else {
-			
-			Job parentJob = job.getJobRef();
-			if(parentJob != null) { 
-				// means a dependent job.
-				Status parentJobStatus = parentJob.getStatus();
-				if(parentJobStatus != Status.completed && parentJobStatus != Status.completed_failures)
-					isJobReadyToBeProcessed = false;
-			}
-		}
+
 		return isJobReadyToBeProcessed;
 	}
 	

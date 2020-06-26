@@ -26,7 +26,7 @@ public class DiskJobManager extends AbstractStoragetypeJobManager {
 		DiskJob dj = new DiskJob();
 		dj.setStorageJob(storageJob);
 		
-		process(dj);
+		manage(dj);
 		
 
 	}

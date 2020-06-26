@@ -1,13 +1,16 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.thread;
 
 import java.lang.reflect.Method;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -26,6 +29,9 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 	
 	@Autowired
 	private ActionAttributeConverter actionAttributeConverter;
+	
+	@Autowired
+	private JobDao jobDao;	
 	
 	// Not thread safe - so ensure the subclass is prototype scoped
 	private List<StorageJob> storageJobList;
@@ -46,56 +52,52 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 //	
 //	protected abstract StorageTypeJob selectStorageTypeJob();
 	
-	protected ArchiveResponse process(StoragetypeJob storagejob){
+	protected ArchiveResponse manage(StoragetypeJob storagetypeJob){
 		Job job = null;
 		ArchiveResponse archiveResponse = null;
 		try {
-	//		job = storagejob.getJob();
-	//		jobUtils.updateJobInProgress(job);
+			job = storagetypeJob.getStorageJob().getJob();
+			updateJobInProgress(job);
 			
-			archiveResponse = execute(storagejob);
+			Integer storagetaskActionId = storagetypeJob.getStorageJob().getJob().getStoragetaskActionId();
+			Action storagetaskAction = actionAttributeConverter.convertToEntityAttribute(storagetaskActionId);
 			
-	//		jobUtils.updateJobCompleted(job);
+			Storagetype storagetype = storagetypeJob.getStorageJob().getVolume().getStoragetype();
+			AbstractStoragetypeJobProcessor storagetypeJobProcessorImpl = storagetypeJobProcessorMap.get(storagetype.name() + DwaraConstants.StorageTypeJobProcessorSuffix);
+			Method storageTaskMethod = storagetypeJobProcessorImpl.getClass().getMethod(storagetaskAction.name(), StoragetypeJob.class);
+			archiveResponse = (ArchiveResponse) storageTaskMethod.invoke(storagetypeJobProcessorImpl, storagetypeJob);
+			
+			updateJobCompleted(job);
 		}catch (Throwable e) {
-	//		jobUtils.updateJobFailed(job);
-			e.printStackTrace();
+			updateJobFailed(job);
+			// updateError Table;
+			logger.error(e.getMessage());
 		}
 		return archiveResponse;
 	}
 
-	private ArchiveResponse execute(StoragetypeJob storagetypeJob) throws Throwable {
-		Integer storagetaskActionId = storagetypeJob.getStorageJob().getJob().getStoragetaskActionId();
-		Action storagetaskAction = actionAttributeConverter.convertToEntityAttribute(storagetaskActionId);
+	protected Job updateJobInProgress(Job job) {
+		if(job.getStatus() != Status.in_progress) { // If not updated already
+			job.setStartedAt(LocalDateTime.now());
+			job = updateJobStatus(job, Status.in_progress);
+		}
 		
-		Storagetype storagetype = storagetypeJob.getStorageJob().getVolume().getStoragetype();
-		AbstractStoragetypeJobProcessor storagetypeJobProcessorImpl = storagetypeJobProcessorMap.get(storagetype.name() + DwaraConstants.StorageTypeJobProcessorSuffix);
-		Method storageTaskMethod = storagetypeJobProcessorImpl.getClass().getMethod(storagetaskAction.name(), StoragetypeJob.class);
-		ArchiveResponse archiveResponse = (ArchiveResponse) storageTaskMethod.invoke(storagetypeJobProcessorImpl, storagetypeJob);
-
-		return archiveResponse;
+		return job;
 	}
 	
-//	protected void invokeAction(StoragetypeJob storagetypeJob){
-//		Integer dbData = storagetypeJob.getStorageJob().getJob().getActionRefId();
-//		Action action = actionAttributeConverter.convertToEntityAttribute(dbData);
-//		AbstractStoragetaskAction actionImpl = storagetaskActionMap.get(action.name());
-//		
-//		try {
-//			logger.debug("\t\tcalling storage task impl " + action.name());
-//			actionImpl.process(storagetypeJob);
-//		} catch (Throwable e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	}
-//	protected abstract void preExecution();
-//	
-//	protected abstract void format();
+	protected Job updateJobCompleted(Job job) {
+		job.setCompletedAt(LocalDateTime.now());
+		return updateJobStatus(job, Status.completed);
+	}
 	
-//	public void manage(List<Job> archiveJobsList);
-//		based on format
-//		call formatspecificArchiver...
-//	}
-
-//	protected abstract void postExecution();
+	protected Job updateJobFailed(Job job) {
+		return updateJobStatus(job, Status.failed);
+	}
+	
+	private Job updateJobStatus(Job job, Status status) {
+		job.setStatus(status);
+		job = jobDao.save(job);
+		logger.info("Job " + job.getId() + " - " + status);
+		return job;
+	}
 }

@@ -30,8 +30,8 @@ public class JobCreator_Rewrite_Test extends JobCreator_Test{
 		RequestDetails details = new RequestDetails();
 		String artifact_name = "";
 		details.setArtifact_name(artifact_name);
-		details.setFrom_volume_uid("V4A002"); // TODO how do we validate that the volume passed is only physical and not
-		details.setTo_volume_uid("V4A003");
+		details.setFrom_volume_uid("V5B001"); // TODO how do we validate that the volume passed is only physical and not
+		details.setTo_volume_uid("V5B002");
 
 		return details;
 	}
@@ -47,9 +47,9 @@ public class JobCreator_Rewrite_Test extends JobCreator_Test{
 			systemrequest.setRequestedAt(LocalDateTime.now());
 			
 			systemrequest.setDetails(request.getDetails());
-			requestDao.save(systemrequest);
+			systemrequest = requestDao.save(systemrequest);
 
-			jobCreator.createJobs(request, null);
+			jobCreator.createJobs(systemrequest, null);
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();

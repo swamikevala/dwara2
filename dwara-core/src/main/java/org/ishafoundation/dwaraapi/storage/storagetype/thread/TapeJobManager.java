@@ -8,11 +8,12 @@ import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TActivedeviceDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TActivedevice;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.DeviceStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
-import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.thread.executor.TapeTaskThreadPoolExecutor;
@@ -69,43 +70,39 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		List<TActivedevice> activeDeviceList = tActivedeviceDao.findAllByDeviceDevicetypeAndDeviceStatus(Devicetype.tape_drive, DeviceStatus.AVAILABLE);
 
 		if(storagetaskAction == Action.map_tapedrives || storagetaskAction == Action.format) {
+			updateJobInProgress(storageJob.getJob());
 			logger.debug("Unloading all tapes from all drives by tapeDrivePreparer");
 			//tapeDrivePreparer
 			
 			if(storagetaskAction == Action.map_tapedrives) {
-				//job inprogress
-				Status status = Status.in_progress;
+
 				try {
 					logger.debug("Mapping drives using TapeDriveMapper");
 					//TapeDriveMapper
-					status = Status.completed;
+					updateJobCompleted(storageJob.getJob());
 				}catch (Exception e) {
-					// TODO: handle exception
-					status = Status.failed;
-				}finally {
-					// job status
-					// where do we update job status...
+					logger.error(e.getMessage());
+					updateJobFailed(storageJob.getJob());
 				}
 			}
 			else if(storagetaskAction == Action.format) {
 				TActivedevice tActivedevice = activeDeviceList.get(0);
-				Device tapedriveDevice = tActivedevice.getDevice();
-				logger.debug("Drive selected for the format job");
-				
-				prepareTapeJobAndContinueNextSteps(storageJob, tapedriveDevice, false);
+				prepareTapeJobAndContinueNextSteps(storageJob, tActivedevice, false);
 			}
 		}
 		else {
+			logger.trace("Iterating through available drives");
 			for (TActivedevice tActivedevice : activeDeviceList) {
-				logger.debug("Iterating through available drives");
+				
 				Device tapedriveDevice = tActivedevice.getDevice();
-				logger.debug("Drive selected");
+				logger.trace("Selecting Job for drive - " + tapedriveDevice.getUid());
 				// select a job for the available drive
 				// if drive has a tape loaded that matches the joblist
 				// TODO : Tape job selection happens here
 				StorageJob selectedStorageJob = selectJob(storageJobsList, tapedriveDevice);
-				logger.debug("Job selected");
-				prepareTapeJobAndContinueNextSteps(selectedStorageJob, tapedriveDevice, true);
+				logger.debug("Job " + selectedStorageJob.getJob().getId() + " selected");
+				
+				prepareTapeJobAndContinueNextSteps(selectedStorageJob, tActivedevice, true);
  
 				// based on available tapedrives
 				
@@ -138,35 +135,56 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		return storageJobsList.get(0);
 	}
 
-	private void prepareTapeJobAndContinueNextSteps(StorageJob storageJob, Device tapedriveDevice, boolean nextStepsInSeparateThread) {
-		int tapedriveNo = tapedriveDevice.getDetails().getAutoloader_address(); // data transfer element/drive no
-		String tapedriveUid = tapedriveDevice.getUid();
-		Device tapelibraryDevice = deviceDao.findById(tapedriveDevice.getDetails().getAutoloader_id()).get();
-		String tapeLibraryName = tapelibraryDevice.getUid();
-		logger.debug("Drive marked Busy");
-		
-		boolean tapedriveAlreadyLoadedWithTape = false;
-		
-		logger.debug("Composing Tape job");
-		TapeJob tapeJob = new TapeJob();
-		tapeJob.setStorageJob(storageJob);
-		tapeJob.setTapeLibraryName(tapeLibraryName);
-		tapeJob.setTapedriveNo(tapedriveNo);
-		tapeJob.setTapedriveUid(tapedriveUid);
-		tapeJob.setTapedriveAlreadyLoadedWithTape(tapedriveAlreadyLoadedWithTape);
-		
-		
-		if(nextStepsInSeparateThread) {
-			logger.debug("Launching separate tape task thread -----------");
-			TapeTask tapeTask = new TapeTask();//applicationContext.getBean(TapeTask.class); 
-			tapeTask.setTapeJob(tapeJob);
-			tapeTaskThreadPoolExecutor.getExecutor().execute(tapeTask);
+	private void prepareTapeJobAndContinueNextSteps(StorageJob storageJob, TActivedevice tActivedevice, boolean nextStepsInSeparateThread) {
+		Job job = null;
+		try {
+			job = storageJob.getJob();
+			Volume volume = storageJob.getVolume();
+			updateJobInProgress(job);
+			
+			Device tapedriveDevice = tActivedevice.getDevice();
+			String tapedriveUid = tapedriveDevice.getUid();
+			DeviceStatus deviceStatus = DeviceStatus.BUSY;
+			logger.debug("Marking drive " + tapedriveUid + " - " +  deviceStatus);
+			tActivedevice.setJob(job);
+			tActivedevice.setVolume(volume);
+			tActivedevice.setDeviceStatus(deviceStatus);
+			tActivedevice = tActivedeviceDao.save(tActivedevice);
+			
+			int tapedriveNo = tapedriveDevice.getDetails().getAutoloader_address(); // data transfer element/drive no
+			logger.trace("Getting associated tape library");
+			Device tapelibraryDevice = deviceDao.findById(tapedriveDevice.getDetails().getAutoloader_id()).get();
+			String tapeLibraryName = tapelibraryDevice.getUid();
+			
+			boolean tapedriveAlreadyLoadedWithTape = false;
+			
+			logger.trace("Composing Tape job");
+			TapeJob tapeJob = new TapeJob();
+			tapeJob.setStorageJob(storageJob);
+			tapeJob.settActivedevice(tActivedevice);
+			tapeJob.setTapeLibraryName(tapeLibraryName);
+			tapeJob.setTapedriveNo(tapedriveNo);
+			tapeJob.setTapedriveUid(tapedriveUid);
+			tapeJob.setTapedriveAlreadyLoadedWithTape(tapedriveAlreadyLoadedWithTape);
+			
+			
+			if(nextStepsInSeparateThread) {
+				logger.debug("Launching separate tape task thread -----------");
+				TapeTask tapeTask = new TapeTask();//applicationContext.getBean(TapeTask.class); 
+				tapeTask.setTapeJob(tapeJob);
+				tapeTaskThreadPoolExecutor.getExecutor().execute(tapeTask);
+			}
+			else {
+				logger.debug("Continuing in same thread");
+				manage(tapeJob);
+			}
 		}
-		else {
-			logger.debug("Invoking storage task in same thread");
-			process(tapeJob);
+		catch (Exception e) {
+			logger.error(e.getMessage());
+			updateJobFailed(job);
 		}
 	}
+	
 	public class TapeTask implements Runnable{
 	
 		private TapeJob tapeJob;
@@ -181,8 +199,23 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	
 		@Override
 		public void run() {
-			logger.debug("Processing tape job " + tapeJob.getStorageJob().getJob().getId());	
-			process(tapeJob);
+			logger.info("Now taking up Tape job - " + tapeJob.getStorageJob().getJob().getId());	
+			manage(tapeJob);
+			
+			TActivedevice tActivedevice = tapeJob.gettActivedevice();
+			DeviceStatus deviceStatus = DeviceStatus.AVAILABLE;
+			logger.debug("Marking back drive " + tapeJob.getTapedriveUid() + " - " + deviceStatus);
+			tActivedevice.setJob(null);
+			tActivedevice.setVolume(null);
+			tActivedevice.setDeviceStatus(deviceStatus);
+			tActivedevice = tActivedeviceDao.save(tActivedevice);
+
+//			if current job is write dont mark the device as available as verify needs to happen
+//			tapeJob.getStorageJob().getJob().getJobRef().getStatus()
+//			if() {
+//				
+//				
+//			}
 		}
 	}
 }

@@ -1,9 +1,12 @@
 package org.ishafoundation.dwaraapi.job;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
@@ -52,21 +55,26 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 	
 	@Override
 	protected RequestDetails getRequestDetails() {
-		String postBodyJson = "";
-		
-		ObjectMapper mapper = new ObjectMapper();
-		JsonNode postBody = null;
-		try {
-			postBody = mapper.readValue(postBodyJson, JsonNode.class);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
 		RequestDetails details = new RequestDetails();
-		details.setBody(postBody);
-		//return details;
-		return null;
+		try {
+			URL fileUrl = this.getClass().getResource("/testcases/ingest/ingest_request.json");
+			String postBodyJson = FileUtils.readFileToString(new File(fileUrl.getFile()));
+			
+			String artifact_name_1 = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
+					+ System.currentTimeMillis();
+			String artifact_name_2 = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
+					+ System.currentTimeMillis();
+			postBodyJson = postBodyJson.replace("<<artifact_name_1>>", artifact_name_1);
+			postBodyJson = postBodyJson.replace("<<artifact_name_2>>", artifact_name_2);
+			
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode postBody = mapper.readValue(postBodyJson, JsonNode.class);
+			details.setBody(postBody);
+
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		return details;
 	}
 
 	@Test
@@ -102,17 +110,17 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 			logger.debug("successfully tested config table caching");
 
 			String domainAsString = domainAttributeConverter.convertToDatabaseColumn(request.getDomain());
-			String domainSpecificArtifactName = "artifact" + domainAsString;
-			Artifact artifact = DomainSpecificArtifactFactory.getInstance(domainSpecificArtifactName);
+			String domainSpecificArtifactTableName = "artifact" + domainAsString;
+			Artifact artifact = DomainSpecificArtifactFactory.getInstance(domainSpecificArtifactTableName);
 			artifact.setName(
 					"10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9" + System.currentTimeMillis());
 			artifact.setArtifactclass(artifactclass);
-			artifactDaoMap.get(domainSpecificArtifactName + "Dao").save(artifact);
+			artifactDaoMap.get(domainSpecificArtifactTableName + "Dao").save(artifact);
 
 			// TODO File related changes go here...
 
 			logger.debug("successfully tested domain specific table testing");
-			jobCreator.createJobs(request, artifact);
+			jobCreator.createJobs(systemrequest, artifact);
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();

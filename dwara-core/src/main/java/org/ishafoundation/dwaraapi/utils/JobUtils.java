@@ -57,31 +57,6 @@ public class JobUtils {
 //		job = saveJob(job);
 //	}
 
-	public void updateJobInProgress(Job job) {
-		job.setStartedAt(LocalDateTime.now());
-		updateJobStatus(job, Status.in_progress);
-	}
+
 	
-	public void updateJobCompleted(Job job) {
-		job.setCompletedAt(LocalDateTime.now());
-		updateJobStatus(job, Status.completed);
-	}
-	
-	public void updateJobFailed(Job job) {
-		updateJobStatus(job, Status.failed);
-	}
-	
-	public void updateJobStatus(Job job, Status status) {
-		job.setStatus(status);
-		logger.debug("DB Job Updation " + status);
-		jobDao.save(job);
-		logger.trace("DB Job Updation - Success");
-	}
-	
-	public Job saveJob(Job job) {
-		logger.debug("DB Job row Creation");   
-		job = jobDao.save(job);
-		logger.trace("DB Job row Creation - Success");
-		return job;
-	}
 }

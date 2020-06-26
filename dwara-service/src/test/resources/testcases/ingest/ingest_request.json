@@ -1,0 +1,22 @@
+{
+	"artifactclass": "pub-video",
+	"domain":"one",
+	"artifact": [
+		{
+			"artifact_name": "<<artifact_name_1>>",
+			"prev_sequence_code": null,
+			"rerun": null,
+			"rerun_no": null,
+			"skip_storagetasks": null,
+			"skip_processingtasks": null
+		},
+		{
+			"artifact_name": "<<artifact_name_2>>",
+			"prev_sequence_code": null,
+			"rerun": null,
+			"rerun_no": null,
+			"skip_storagetasks": null,
+			"skip_processingtasks": [3,7]
+		}
+	]
+}

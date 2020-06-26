@@ -23,9 +23,11 @@ public class JobManagerTest {
 	@Test
 	public void test_Process() {
 		try {
-			jobManager.processJobs();
+			jobManager.manageJobs();
 			
-			// The processjob creates threads for jobs and let them get processed on their own threads and returns. The server shutsdown when this parent test completes even when the threads are still processing. So sleeping some time so the job threads would have completed...
+			// The manager creates threads for jobs and let them get processed on their own threads and returns here. 
+			// The server shutsdown when the call returns back here and the test completes - even when the spawned threads are still processing.
+			// So sleeping some time so the job threads would have completed...
 			try {
 				Thread.sleep(20000); // sleeping for 20 secs before we do the expected DB verification
 			} catch (InterruptedException e) {

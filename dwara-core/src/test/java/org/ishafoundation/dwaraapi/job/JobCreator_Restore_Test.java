@@ -87,7 +87,7 @@ public class JobCreator_Restore_Test extends JobCreator_Test {
 			requestDao.save(systemrequest);
 			logger.debug("successfully tested json insert");
 
-			jobCreator.createJobs(request, null);
+			jobCreator.createJobs(systemrequest, null);
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();

@@ -10,17 +10,12 @@ import org.ishafoundation.dwaraapi.storage.storagelevel.IStoragelevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 
 public abstract class AbstractStoragetypeJobProcessor {
 	
 	private static final Logger logger = LoggerFactory.getLogger(AbstractStoragetypeJobProcessor.class);
 	
 	@Autowired
-	private ApplicationContext applicationContext;	
-	
-	@Autowired
-//	private IStoragelevel iStoragelevel;
 	private Map<String, IStoragelevel> islMap;
 
 	public AbstractStoragetypeJobProcessor() {
@@ -50,10 +45,10 @@ public abstract class AbstractStoragetypeJobProcessor {
     protected void beforeWrite(StoragetypeJob storagetypeJob) {}
     
     public ArchiveResponse write(StoragetypeJob storagetypeJob) throws Throwable{
+    	logger.info("Writing job " + storagetypeJob.getStorageJob().getJob().getId());
     	ArchiveResponse ar = null;
     	beforeWrite(storagetypeJob);
     	
-    	logger.info("Writing job " + storagetypeJob.getStorageJob().getJob().getId());
     	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
     	ar = iStoragelevel.write(storagetypeJob);
     	
@@ -74,6 +69,7 @@ public abstract class AbstractStoragetypeJobProcessor {
     
 	//public ArchiveResponse restore(StorageJob storagetypeJob) throws Throwable{
 	public ArchiveResponse verify(StoragetypeJob storagetypeJob) throws Throwable{
+		logger.info("Verifying job " + storagetypeJob.getStorageJob().getJob().getId());
 		ArchiveResponse ar = null;
     	beforeVerify(storagetypeJob);
     	
@@ -113,6 +109,7 @@ public abstract class AbstractStoragetypeJobProcessor {
     
 	//public ArchiveResponse restore(StorageJob storagetypeJob) throws Throwable{
 	public ArchiveResponse restore(StoragetypeJob storagetypeJob) throws Throwable{
+		logger.info("Restoring job " + storagetypeJob.getStorageJob().getJob().getId());
 		ArchiveResponse ar = null;
     	beforeRestore(storagetypeJob);
     	

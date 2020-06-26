@@ -1,8 +1,11 @@
 package org.ishafoundation.dwaraapi.storage.model;
 
+import org.ishafoundation.dwaraapi.db.model.transactional.TActivedevice;
+
 public class TapeJob extends StoragetypeJob {
 	
 	private boolean optimizeTapeAccess = true; // by default we need tape optimisation // TODO is an attribute of storagetype. Should fit this in storagetype
+	private TActivedevice tActivedevice;
 	private String tapeLibraryName;
 	private int tapedriveNo; // elementAddress
 	private String tapedriveUid;//
@@ -13,6 +16,12 @@ public class TapeJob extends StoragetypeJob {
 	}
 	public void setOptimizeTapeAccess(boolean optimizeTapeAccess) {
 		this.optimizeTapeAccess = optimizeTapeAccess;
+	}
+	public TActivedevice gettActivedevice() {
+		return tActivedevice;
+	}
+	public void settActivedevice(TActivedevice tActivedevice) {
+		this.tActivedevice = tActivedevice;
 	}
 	public String getTapeLibraryName() {
 		return tapeLibraryName;
