@@ -102,11 +102,11 @@ public class ArtifactService {
 					Artifact artifact = DomainSpecificArtifactFactory.getInstance(domainSpecificArtifactTableName);
 					artifact.setName(requestParams.getArtifact_name());
 					artifact.setArtifactclass(artifactclass);
-					artifactDaoMap.get(domainSpecificArtifactTableName + "Dao").save(artifact);
-
+					artifact = (Artifact) artifactDaoMap.get(domainSpecificArtifactTableName + "Dao").save(artifact);
+					logger.debug(domainSpecificArtifactTableName + " - " + artifact.getId());
 					// TODO - Pending Impl - File related changes go here...
 
-					logger.debug("successfully tested domain specific table testing");
+					
 					jobCreator.createJobs(systemrequest, artifact);
 				}
 

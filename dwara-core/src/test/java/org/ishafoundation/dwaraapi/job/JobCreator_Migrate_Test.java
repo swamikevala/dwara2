@@ -13,6 +13,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class JobCreator_Migrate_Test extends JobCreator_Rewrite_Test{
 	
 	public JobCreator_Migrate_Test() {
+		super();
 		action = Action.migrate;
 	}
 }

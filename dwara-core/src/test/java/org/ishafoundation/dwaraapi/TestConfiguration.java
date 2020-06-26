@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class TestConfiguration {
 	
-	private static final Logger logger = LoggerFactory.getLogger(TestConfiguration.class);
+//	private static final Logger logger = LoggerFactory.getLogger(TestConfiguration.class);
 
 	
 	

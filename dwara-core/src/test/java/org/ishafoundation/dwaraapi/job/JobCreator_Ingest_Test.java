@@ -1,12 +1,8 @@
 package org.ishafoundation.dwaraapi.job;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
@@ -26,9 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringRunner.class)
@@ -51,30 +44,19 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 
 	public JobCreator_Ingest_Test() {
 		action = Action.ingest;
+		requestInputFilePath = "/testcases/ingest_request.json";
 	}
 	
 	@Override
-	protected RequestDetails getRequestDetails() {
-		RequestDetails details = new RequestDetails();
-		try {
-			URL fileUrl = this.getClass().getResource("/testcases/ingest/ingest_request.json");
-			String postBodyJson = FileUtils.readFileToString(new File(fileUrl.getFile()));
-			
-			String artifact_name_1 = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
-					+ System.currentTimeMillis();
-			String artifact_name_2 = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
-					+ System.currentTimeMillis();
-			postBodyJson = postBodyJson.replace("<<artifact_name_1>>", artifact_name_1);
-			postBodyJson = postBodyJson.replace("<<artifact_name_2>>", artifact_name_2);
-			
-			ObjectMapper mapper = new ObjectMapper();
-			JsonNode postBody = mapper.readValue(postBodyJson, JsonNode.class);
-			details.setBody(postBody);
+	protected String fillPlaceHolders(String postBodyJson) {
+		String artifact_name_1 = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
+				+ System.currentTimeMillis();
+		String artifact_name_2 = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
+				+ System.currentTimeMillis();
+		postBodyJson = postBodyJson.replace("<<artifact_name_1>>", artifact_name_1);
+		postBodyJson = postBodyJson.replace("<<artifact_name_2>>", artifact_name_2);
 
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		return details;
+		return postBodyJson;
 	}
 
 	@Test

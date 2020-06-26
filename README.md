@@ -7,6 +7,11 @@ Apply the database scripts from src/data/sql in the below order
 
     1. schema.sql(ensure the schema name is what is used in the application.properties)
     2. dwara_master_tables.sql
+
+Please refer the confluence page on how to unit test https://art.iyc.ishafoundation.org/x/eVAbAQ 
+
+
+TODO: The following are still WIP, please ignore...
 	
 Start the app with skip tests
     ```mvn clean package/install spring-boot:run```

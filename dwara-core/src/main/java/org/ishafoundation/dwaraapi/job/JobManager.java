@@ -10,7 +10,9 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.storage.storagetask.ImportStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator;
+import org.ishafoundation.dwaraapi.thread.executor.TaskSingleThreadExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +39,9 @@ public class JobManager {
 	
 	@Autowired
 	private ActionAttributeConverter actionAttributeConverter;
+	
+	@Autowired
+	private TaskSingleThreadExecutor taskSingleThreadExecutor;
 	
 	public void manageJobs() {
 		logger.trace("***** Managing jobs now *****");
@@ -106,6 +111,9 @@ public class JobManager {
 	
 							if(storagetaskAction == Action.import_) {
 								// call import logic and update job status... separate threadexecutor???
+								ImportStoragetaskAction importStoragetaskAction = applicationContext.getBean(ImportStoragetaskAction.class);
+								importStoragetaskAction.setJob(job);
+								taskSingleThreadExecutor.getExecutor().execute(importStoragetaskAction);
 							}
 							else {
 								storageJobList.add(job);

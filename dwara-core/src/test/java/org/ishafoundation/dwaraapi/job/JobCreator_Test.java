@@ -1,7 +1,10 @@
 package org.ishafoundation.dwaraapi.job;
 
+import java.io.File;
+import java.net.URL;
 import java.time.LocalDateTime;
 
+import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
@@ -13,12 +16,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class JobCreator_Test {
 
 	protected Request request = null;
+	protected String requestInputFilePath = null;
 	protected Action action = null;
 	
 	@Autowired
@@ -36,13 +43,20 @@ public class JobCreator_Test {
 		request.setRequestedAt(LocalDateTime.now());
 
 		
-		RequestDetails details = getRequestDetails();
+		RequestDetails details = new RequestDetails();
+		if(requestInputFilePath != null) {
+			URL fileUrl = this.getClass().getResource(requestInputFilePath);
+			String postBodyJson = FileUtils.readFileToString(new File(fileUrl.getFile()));
+			
+			postBodyJson = fillPlaceHolders(postBodyJson);
+			
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode postBody = mapper.readValue(postBodyJson, JsonNode.class);
+			details.setBody(postBody);
+		}
 		request.setDetails(details);
 		requestDao.save(request);
 	}
-	
-	protected RequestDetails getRequestDetails() {
-		return null;}
 	
 	private Domain getDomain(String userRequest) {
 		// to get domaindefault we might need a util... or a query...
@@ -50,6 +64,29 @@ public class JobCreator_Test {
 		if (domain == null)
 			domain = Domain.one; // defaulting to the domain configured as default...
 		return domain;
+	}
+
+	protected String fillPlaceHolders(String postBodyJson) {
+		// TODO Auto-generated method stub
+		return postBodyJson;
+	}
+	
+	protected void createSingleSystemrequestAndJobs() throws Exception{
+		Request systemrequest = new Request();
+		systemrequest.setRequestRef(request);
+		systemrequest.setAction(request.getAction());
+		systemrequest.setDomain(request.getDomain());
+		systemrequest.setRequestedAt(LocalDateTime.now());
+	
+		RequestDetails details = getSystemrequestDetails();
+		systemrequest.setDetails(details);
+		systemrequest = requestDao.save(systemrequest);
+		
+		jobCreator.createJobs(systemrequest, null);
+	}
+	protected RequestDetails getSystemrequestDetails() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -20,19 +20,20 @@ public class JobCreator_Finalize_Test extends JobCreator_Test{
 	
 	public JobCreator_Finalize_Test() {
 		action = Action.finalize;
+		//requestInputFilePath = "/testcases/finalize/finalize_request.json";
 	}
 	
 	@Override
-	protected RequestDetails getRequestDetails() {
+	protected RequestDetails getSystemrequestDetails() {
 		RequestDetails details = new RequestDetails();
 		details.setVolume_uid("V4A002");
 		return details;
 	}
 
 	@Test
-	public void test_d_Finalise() {
+	public void test_Finalise() {
 		try {
-			jobCreator.createJobs(request, null);
+			createSingleSystemrequestAndJobs();
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();

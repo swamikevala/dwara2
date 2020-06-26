@@ -1,0 +1,13 @@
+{
+  "domain": "one",
+  "location": "LR",
+  "output_folder": "JIRA-1234-Randommm",
+  "destinationpath": "Some destinationpath",
+  "verify": false,
+  "fileParams": [
+    {
+      "file_id": 14,
+      "priority": 0
+    }  
+  ]
+}

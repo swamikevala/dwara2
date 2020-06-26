@@ -1,0 +1,6 @@
+{
+  "artifact_name": "some artifact_name",
+  "from_volume_uid": "V5B001",
+  "to_volume_uid": "V5B002",
+  "to_volume_group_uid": "V5B"
+}

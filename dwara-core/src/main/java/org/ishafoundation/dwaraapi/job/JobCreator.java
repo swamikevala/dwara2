@@ -114,9 +114,9 @@ public class JobCreator {
 	}
 
 	private Job saveJob(Job job) {
-		logger.debug("DB Job row Creation");   
+		//logger.debug("DB Job row Creation");   
 		job = jobDao.save(job);
-		logger.trace("DB Job " + job.getId() + " - Created");
+		logger.info("DB Job " + job.getId() + " - Created");
 		return job;
 	}
 }

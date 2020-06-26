@@ -16,10 +16,11 @@ public class JobCreator_Format_Test extends JobCreator_Test{
 
 	public JobCreator_Format_Test() {
 		action = Action.format;
+		requestInputFilePath = "/testcases/format_request.json";
 	}
 	
 	@Override
-	protected RequestDetails getRequestDetails() {
+	protected RequestDetails getSystemrequestDetails() {
 		RequestDetails details = new RequestDetails();
 		details.setVolume_uid("V4A002"); // TODO how do we validate that the volume passed is only physical and not
 		// group the volume belongs to
@@ -30,9 +31,9 @@ public class JobCreator_Format_Test extends JobCreator_Test{
 	}
 
 	@Test
-	public void test_a_Format() {
+	public void test_Format() {
 		try {
-			jobCreator.createJobs(request, null);
+			createSingleSystemrequestAndJobs();
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();

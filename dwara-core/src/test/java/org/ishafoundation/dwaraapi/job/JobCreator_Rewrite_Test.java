@@ -1,8 +1,5 @@
 package org.ishafoundation.dwaraapi.job;
 
-import java.time.LocalDateTime;
-
-import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.junit.FixMethodOrder;
@@ -23,10 +20,11 @@ public class JobCreator_Rewrite_Test extends JobCreator_Test{
 
 	public JobCreator_Rewrite_Test() {
 		action = Action.rewrite;
+		requestInputFilePath = "/testcases/rewrite_request.json";
 	}
 
 	@Override
-	protected RequestDetails getRequestDetails() {
+	protected RequestDetails getSystemrequestDetails() {
 		RequestDetails details = new RequestDetails();
 		String artifact_name = "";
 		details.setArtifact_name(artifact_name);
@@ -39,17 +37,7 @@ public class JobCreator_Rewrite_Test extends JobCreator_Test{
 	@Test
 	public void test_Rewrite() {
 		try {
-			Request systemrequest = new Request();
-			systemrequest.setRequestRef(request);
-			
-			systemrequest.setAction(request.getAction());
-			systemrequest.setDomain(request.getDomain());
-			systemrequest.setRequestedAt(LocalDateTime.now());
-			
-			systemrequest.setDetails(request.getDetails());
-			systemrequest = requestDao.save(systemrequest);
-
-			jobCreator.createJobs(systemrequest, null);
+			createSingleSystemrequestAndJobs();
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();

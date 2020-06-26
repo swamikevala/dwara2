@@ -8,15 +8,17 @@ import org.ishafoundation.dwaraapi.api.req.ingest.UserRequest;
 import org.ishafoundation.dwaraapi.service.ArtifactService;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-//@RunWith(SpringRunner.class)
+@RunWith(SpringRunner.class)
 @SpringBootTest
 public class JobCreator_Ingest_Test{
 
@@ -44,19 +46,20 @@ public class JobCreator_Ingest_Test{
 //			FileUtils.write(new File(fileUrl.getFile()), postBody);
 			
 			String postBodyJson = FileUtils.readFileToString(new File(fileUrl.getFile()));
-			
+			long suffix = System.currentTimeMillis();
 			String artifact_name_1 = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
-					+ System.currentTimeMillis();
-			String artifact_name_2 = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
-					+ System.currentTimeMillis();
+					+ suffix;
 			postBodyJson = postBodyJson.replace("<<artifact_name_1>>", artifact_name_1);
+			String artifact_name_2 = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
+					+ (suffix + 1);
 			postBodyJson = postBodyJson.replace("<<artifact_name_2>>", artifact_name_2);
 			
 
 			UserRequest ur = mapper.readValue(postBodyJson, new TypeReference<UserRequest>() {});
 			System.out.println(ur.getArtifactclass());
-			ArtifactService as = new ArtifactService();
-			as.ingest(ur);
+			//ArtifactService as = new ArtifactService();
+			//as.ingest(ur);
+			artifactService.ingest(ur);
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();

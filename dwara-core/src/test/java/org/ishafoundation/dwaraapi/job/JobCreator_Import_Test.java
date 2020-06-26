@@ -1,7 +1,9 @@
 package org.ishafoundation.dwaraapi.job;
 
+import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.junit.FixMethodOrder;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,5 +16,27 @@ public class JobCreator_Import_Test extends JobCreator_Test{
 	
 	public JobCreator_Import_Test() {
 		action = Action.import_;
+		requestInputFilePath = "/testcases/import_request.json";
+	}
+	
+	@Override
+	protected RequestDetails getSystemrequestDetails() {
+		
+		RequestDetails details = new RequestDetails();
+		details.setVolume_uid("V4A999"); // TODO how do we validate that the volume passed is only physical and not
+		// group the volume belongs to
+		details.setVolume_group_uid("V4A");
+		details.setGeneration(7);
+		return details;
+	}
+
+	@Test
+	public void test_Import() {
+		try {
+			createSingleSystemrequestAndJobs();
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
 	}
 }
