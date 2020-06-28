@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 //@Component("tapeJobProcessor")
 //TODO : how to enforce the component name
-@Component("disk" + DwaraConstants.StorageTypeJobProcessorSuffix)
+@Component("disk" + DwaraConstants.STORAGETYPE_JOBPROCESSOR_SUFFIX)
 //@Profile({ "!dev & !stage" })
 public class DiskJobProcessor extends AbstractStoragetypeJobProcessor {
 

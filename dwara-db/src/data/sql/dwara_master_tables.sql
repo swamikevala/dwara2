@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.7.17, for Win64 (x86_64)
 --
--- Host: 127.0.0.1    Database: dwara_v3_test
+-- Host: 127.0.0.1    Database: dwara_v4_test
 -- ------------------------------------------------------
 -- Server version	5.7.11
 
@@ -23,12 +23,10 @@ DROP TABLE IF EXISTS `action`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `action` (
-  `id` int(11) NOT NULL,
-  `name` varchar(255) DEFAULT NULL,
+  `id` varchar(255) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `type` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `UK_p6dhhp25fj7w2vok63k0vrsv` (`name`)
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -38,7 +36,7 @@ CREATE TABLE `action` (
 
 LOCK TABLES `action` WRITE;
 /*!40000 ALTER TABLE `action` DISABLE KEYS */;
-INSERT INTO `action` VALUES (1,'ingest',NULL,'complex'),(2,'write',NULL,'storage_task'),(3,'restore',NULL,'storage_task'),(4,'verify',NULL,'storage_task'),(5,'list',NULL,'sync'),(6,'rename',NULL,'sync'),(7,'hold',NULL,'sync'),(8,'release',NULL,'sync'),(9,'cancel',NULL,'sync'),(10,'abort',NULL,'sync'),(11,'delete',NULL,'sync'),(12,'rewrite',NULL,'storage_task'),(13,'migrate',NULL,'storage_task'),(14,'process',NULL,'complex'),(15,'restore_process',NULL,'complex'),(16,'format',NULL,'storage_task'),(17,'finalize',NULL,'storage_task'),(18,'import',NULL,'storage_task'),(19,'map_tapedrives',NULL,'storage_task'),(20,'diagnostics',NULL,'sync');
+INSERT INTO `action` VALUES ('abort',NULL,'sync'),('cancel',NULL,'sync'),('delete',NULL,'sync'),('diagnostics',NULL,'sync'),('finalize',NULL,'storage_task'),('format',NULL,'storage_task'),('hold',NULL,'sync'),('import',NULL,'storage_task'),('ingest',NULL,'complex'),('list',NULL,'sync'),('map_tapedrives',NULL,'storage_task'),('migrate',NULL,'storage_task'),('process',NULL,'complex'),('release',NULL,'sync'),('rename',NULL,'sync'),('restore',NULL,'storage_task'),('restore_process',NULL,'complex'),('rewrite',NULL,'storage_task'),('verify',NULL,'storage_task'),('write',NULL,'storage_task');
 /*!40000 ALTER TABLE `action` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -51,7 +49,7 @@ DROP TABLE IF EXISTS `action_user`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `action_user` (
   `permission_level` int(11) DEFAULT NULL,
-  `action_id` int(11) NOT NULL,
+  `action_id` varchar(255) NOT NULL,
   `user_id` int(11) NOT NULL,
   PRIMARY KEY (`action_id`,`user_id`),
   KEY `FK6bb095i1f07tksvwtiya0ckmp` (`user_id`),
@@ -78,19 +76,18 @@ DROP TABLE IF EXISTS `actionelement`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `actionelement` (
   `id` int(11) NOT NULL,
+  `actionelement_ref_id` int(11) DEFAULT NULL,
   `active` bit(1) DEFAULT NULL,
   `artifactclass_id` int(11) DEFAULT NULL,
+  `complex_action_id` varchar(255) DEFAULT NULL,
   `display_order` int(11) DEFAULT NULL,
   `encryption` bit(1) DEFAULT NULL,
-  `processingtask_id` int(11) DEFAULT NULL,
+  `processingtask_id` varchar(255) DEFAULT NULL,
+  `storagetask_action_id` varchar(255) DEFAULT NULL,
   `volume_id` int(11) DEFAULT NULL,
   `output_artifactclass_id` int(11) DEFAULT NULL,
-  `actionelement_ref_id` int(11) DEFAULT NULL,
-  `complex_action_id` int(11) DEFAULT NULL,
-  `storagetask_action_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UKctjlo837d7w4lee0vk0cnyg4k` (`complex_action_id`,`artifactclass_id`,`storagetask_action_id`,`processingtask_id`,`volume_id`),
-  UNIQUE KEY `UKqdits3p9d5xdjo4xsn30vo0hc` (`complex_action_id`,`storagetask_action_id`,`artifactclass_id`,`processingtask_id`,`volume_id`),
   KEY `FKa45pj6kronqjpd2cevestewo7` (`output_artifactclass_id`),
   CONSTRAINT `FKa45pj6kronqjpd2cevestewo7` FOREIGN KEY (`output_artifactclass_id`) REFERENCES `artifactclass` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -102,7 +99,7 @@ CREATE TABLE `actionelement` (
 
 LOCK TABLES `actionelement` WRITE;
 /*!40000 ALTER TABLE `actionelement` DISABLE KEYS */;
-INSERT INTO `actionelement` VALUES (1,'',1,1,'\0',0,1,NULL,NULL,1,2),(2,'',1,2,'\0',0,1,NULL,1,1,4),(3,'',1,3,'\0',0,3,NULL,NULL,1,2);
+INSERT INTO `actionelement` VALUES (1,NULL,'',1,'ingest',1,'\0','','write',1,NULL),(2,1,'',1,'ingest',2,'\0','','verify',1,NULL),(3,NULL,'',1,'ingest',3,'\0','','write',3,NULL);
 /*!40000 ALTER TABLE `actionelement` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -114,14 +111,13 @@ DROP TABLE IF EXISTS `archiveformat`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `archiveformat` (
-  `id` int(11) NOT NULL,
+  `id` varchar(255) NOT NULL,
   `blocksize` int(11) DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
   `filesize_increase_const` int(11) DEFAULT NULL,
   `filesize_increase_rate` float DEFAULT NULL,
-  `name` varchar(255) DEFAULT NULL,
   `restore_verify` bit(1) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `UK_oxw11uxyv2yaaj6ks295v2nog` (`name`)
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -131,7 +127,7 @@ CREATE TABLE `archiveformat` (
 
 LOCK TABLES `archiveformat` WRITE;
 /*!40000 ALTER TABLE `archiveformat` DISABLE KEYS */;
-INSERT INTO `archiveformat` VALUES (1,512,NULL,NULL,'tar',''),(2,512,2048,0.125,'bru_existing','\0'),(3,1024,2048,0.125,'bru','\0');
+INSERT INTO `archiveformat` VALUES ('bru',1024,NULL,2048,0.125,'\0'),('bru_existing',512,NULL,2048,0.125,'\0'),('tar',512,NULL,NULL,NULL,'');
 /*!40000 ALTER TABLE `archiveformat` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -146,7 +142,7 @@ CREATE TABLE `artifactclass` (
   `id` int(11) NOT NULL,
   `concurrent_volume_copies` bit(1) DEFAULT NULL,
   `display_order` int(11) DEFAULT NULL,
-  `domain_id` int(11) DEFAULT NULL,
+  `domain_id` varchar(255) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
   `path_prefix` varchar(255) DEFAULT NULL,
   `source` bit(1) DEFAULT NULL,
@@ -166,7 +162,7 @@ CREATE TABLE `artifactclass` (
 
 LOCK TABLES `artifactclass` WRITE;
 /*!40000 ALTER TABLE `artifactclass` DISABLE KEYS */;
-INSERT INTO `artifactclass` VALUES (1,'\0',1,1,'pub-video','C:\\data\\ingested','','pub-video',1);
+INSERT INTO `artifactclass` VALUES (1,'\0',1,'1','pub-video','C:\\data\\ingested','','pub-video',1);
 /*!40000 ALTER TABLE `artifactclass` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -178,7 +174,7 @@ DROP TABLE IF EXISTS `artifactclass_action_user`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `artifactclass_action_user` (
-  `action_id` int(11) NOT NULL,
+  `action_id` varchar(255) NOT NULL,
   `artifactclass_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   PRIMARY KEY (`action_id`,`artifactclass_id`,`user_id`),
@@ -260,12 +256,12 @@ DROP TABLE IF EXISTS `device`;
 CREATE TABLE `device` (
   `id` int(11) NOT NULL,
   `details` longtext,
+  `devicetype` varchar(255) DEFAULT NULL,
   `manufacturer` varchar(255) DEFAULT NULL,
   `model` varchar(255) DEFAULT NULL,
   `serial_number` varchar(255) DEFAULT NULL,
   `uid` varchar(255) DEFAULT NULL,
   `warranty_expiry_date` datetime(6) DEFAULT NULL,
-  `devicetype` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_4776vaiywo1kdis4lp8jkm0av` (`serial_number`),
   UNIQUE KEY `UK_bym2ir5cd5feay02tryi5dv1a` (`uid`)
@@ -278,7 +274,7 @@ CREATE TABLE `device` (
 
 LOCK TABLES `device` WRITE;
 /*!40000 ALTER TABLE `device` DISABLE KEYS */;
-INSERT INTO `device` VALUES (1,'{\"slots\":24,\"max_drives\":3,\"generations_supported\":[6,7]}',NULL,NULL,NULL,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400',NULL,'tape_autoloader'),(2,'{\"type\":\"LTO\",\"generation\":7,\"readable_generations\":[6,7],\"writeable_generations\":[6,7],\"autoloader_id\":1,\"autoloader_address\":0,\"standalone\":false}',NULL,NULL,NULL,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst',NULL,'tape_drive'),(3,'{\"type\":\"LTO\",\"generation\":7,\"readable_generations\":[6,7],\"writeable_generations\":[6,7],\"autoloader_id\":1,\"autoloader_address\":1,\"standalone\":false}',NULL,NULL,NULL,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1684087499-nst',NULL,'tape_drive'),(4,'{\"type\":\"LTO\",\"generation\":7,\"readable_generations\":[6,7],\"writeable_generations\":[6,7],\"autoloader_id\":1,\"autoloader_address\":2,\"standalone\":false}',NULL,NULL,NULL,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1970448833-nst',NULL,'tape_drive');
+INSERT INTO `device` VALUES (1,'{\"slots\":24,\"max_drives\":3,\"generations_supported\":[6,7]}','tape_autoloader',NULL,NULL,NULL,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400',NULL),(2,'{\"type\":\"LTO\",\"generation\":7,\"readable_generations\":[6,7],\"writeable_generations\":[6,7],\"autoloader_id\":1,\"autoloader_address\":0,\"standalone\":false}','tape_drive',NULL,NULL,NULL,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst',NULL),(3,'{\"type\":\"LTO\",\"generation\":7,\"readable_generations\":[6,7],\"writeable_generations\":[6,7],\"autoloader_id\":1,\"autoloader_address\":1,\"standalone\":false}','tape_drive',NULL,NULL,NULL,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1684087499-nst',NULL),(4,'{\"type\":\"LTO\",\"generation\":7,\"readable_generations\":[6,7],\"writeable_generations\":[6,7],\"autoloader_id\":1,\"autoloader_address\":2,\"standalone\":false}','tape_drive',NULL,NULL,NULL,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1970448833-nst',NULL);
 /*!40000 ALTER TABLE `device` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -291,8 +287,8 @@ DROP TABLE IF EXISTS `domain`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `domain` (
   `id` int(11) NOT NULL,
+  `default` bit(1) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
-  `defaultt` bit(1) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_ga2sqp4lboblqv6oks9oryd9q` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -304,7 +300,7 @@ CREATE TABLE `domain` (
 
 LOCK TABLES `domain` WRITE;
 /*!40000 ALTER TABLE `domain` DISABLE KEYS */;
-INSERT INTO `domain` VALUES (1,'1','');
+INSERT INTO `domain` VALUES (1,'','default'),(2,'\0','backup');
 /*!40000 ALTER TABLE `domain` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -469,13 +465,11 @@ DROP TABLE IF EXISTS `processingtask`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `processingtask` (
-  `id` int(11) NOT NULL,
+  `id` varchar(255) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `max_errors` int(11) DEFAULT NULL,
-  `name` varchar(255) DEFAULT NULL,
   `filetype_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `UK_ta18voxyw85sovvievpj3l3l7` (`name`),
   KEY `FKio0nausiwh38wjh2l1dr8dqh6` (`filetype_id`),
   CONSTRAINT `FKio0nausiwh38wjh2l1dr8dqh6` FOREIGN KEY (`filetype_id`) REFERENCES `filetype` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -499,12 +493,12 @@ DROP TABLE IF EXISTS `sequence`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `sequence` (
   `id` int(11) NOT NULL,
-  `last_number` int(11) DEFAULT NULL,
-  `prefix` varchar(255) DEFAULT NULL,
   `artifact_extraction_regex` varchar(255) DEFAULT NULL,
   `artifact_keep_code` bit(1) DEFAULT NULL,
   `barcode` bit(1) DEFAULT NULL,
-  `group_` bit(1) DEFAULT NULL,
+  `group` bit(1) DEFAULT NULL,
+  `last_number` int(11) DEFAULT NULL,
+  `prefix` varchar(255) DEFAULT NULL,
   `sequence_ref_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FK5v8kpxq28gqfbgrsmaermgfrc` (`sequence_ref_id`),
@@ -518,32 +512,8 @@ CREATE TABLE `sequence` (
 
 LOCK TABLES `sequence` WRITE;
 /*!40000 ALTER TABLE `sequence` DISABLE KEYS */;
-INSERT INTO `sequence` VALUES (1,10000,NULL,NULL,'\0','\0','\0',NULL);
+INSERT INTO `sequence` VALUES (1,NULL,'\0','\0','\0',10000,NULL,NULL);
 /*!40000 ALTER TABLE `sequence` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `status`
---
-
-DROP TABLE IF EXISTS `status`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `status` (
-  `id` int(11) NOT NULL,
-  `name` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `UK_reccgx9nr0a8dwv201t44l6pd` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `status`
---
-
-LOCK TABLES `status` WRITE;
-/*!40000 ALTER TABLE `status` DISABLE KEYS */;
-/*!40000 ALTER TABLE `status` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -617,17 +587,17 @@ DROP TABLE IF EXISTS `volume`;
 CREATE TABLE `volume` (
   `id` int(11) NOT NULL,
   `capacity` bigint(20) DEFAULT NULL,
+  `checksumtype` varchar(255) DEFAULT NULL,
   `details` longtext,
   `finalized` bit(1) DEFAULT NULL,
   `imported` bit(1) DEFAULT NULL,
-  `uid` varchar(255) DEFAULT NULL,
-  `archiveformat_id` int(11) DEFAULT NULL,
-  `location_id` int(11) DEFAULT NULL,
-  `volume_ref_id` int(11) DEFAULT NULL,
-  `checksumtype` varchar(255) DEFAULT NULL,
   `storagelevel` varchar(255) DEFAULT NULL,
   `storagetype` varchar(255) DEFAULT NULL,
+  `uid` varchar(255) DEFAULT NULL,
   `volumetype` varchar(255) DEFAULT NULL,
+  `archiveformat_id` varchar(255) DEFAULT NULL,
+  `location_id` int(11) DEFAULT NULL,
+  `volume_ref_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_mti1y5awoy6kh7txrapn7ux85` (`uid`),
   KEY `FKsw7cga5kgm5yqs2sfpq9hdidv` (`archiveformat_id`),
@@ -645,7 +615,7 @@ CREATE TABLE `volume` (
 
 LOCK TABLES `volume` WRITE;
 /*!40000 ALTER TABLE `volume` DISABLE KEYS */;
-INSERT INTO `volume` VALUES (1,2500000000000,NULL,'\0','\0','V5A',3,1,NULL,'sha256','block','tape','group'),(2,2500000000000,'{\"barcoded\":true,\"blocksize\":1024,\"generation\":7}','\0','\0','V5A001',3,1,1,'sha256','block','tape','physical'),(3,2500000000000,NULL,'\0','\0','V5B',1,2,NULL,'sha256','file','disk','group'),(4,2500000000000,'{\"barcoded\":true,\"blocksize\":1024,\"generation\":7}','\0','\0','V5B001',1,2,3,'sha256','file','disk','physical'),(5,6000000000000,'{\"barcoded\":true,\"blocksize\":1024,\"generation\":7}','\0','\0','V5B002',1,2,3,'sha256','file','disk','physical'),(6,NULL,NULL,NULL,NULL,'V4A',NULL,NULL,NULL,NULL,NULL,NULL,'group'),(7,6000000000000,NULL,'\0','\0','V4A001',3,1,6,'sha256','block','tape','physical');
+INSERT INTO `volume` VALUES (1,2500000000000,'sha256',NULL,'\0','\0','block','tape','V5A','group','bru',1,NULL),(2,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":1024,\"generation\":6}','\0','\0','block','tape','V5A001','physical','bru',1,1),(3,2500000000000,'sha256',NULL,'\0','\0','file','disk','V5B','group','tar',2,NULL),(4,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":1024,\"generation\":6}','\0','\0','file','disk','V5B001','physical','tar',2,3),(5,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":1024,\"generation\":7}','\0','\0','file','disk','V5B002','physical','tar',2,3),(6,6000000000000,'sha256',NULL,'\0','\0','block','tape','V4A','group','bru',1,NULL),(7,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":1024,\"generation\":7}','\0','\0','block','tape','V4A001','physical','bru',1,6);
 /*!40000 ALTER TABLE `volume` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -658,4 +628,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-06-25 12:59:19
+-- Dump completed on 2020-06-28 14:39:21

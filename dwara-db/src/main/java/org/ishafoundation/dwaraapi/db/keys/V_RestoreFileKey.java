@@ -23,7 +23,7 @@ public class V_RestoreFileKey implements Serializable {
 	@Column(name = "targetvolume_id")
 	private int targetvolumeId;
 
-	@Column(name = "action_id")
+	@Column(name = "action")
 	private Action action;
 
 	@Column(name = "user_id")

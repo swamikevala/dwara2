@@ -3,15 +3,10 @@ package org.ishafoundation.dwaraapi.db.model.cache;
 public enum CacheableTablesList {
 	
 	// reference tables
-	action,
-//	checksumtype,
-//	status,
-//	storagelevel,
-//	storagetask,
-//	storagetype,
+//	action,
 	
 	// configuration tables
-	archiveformat,
+//	archiveformat,
 	artifactclass,
 	destinationpath,
 	device,

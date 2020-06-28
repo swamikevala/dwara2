@@ -34,7 +34,7 @@ public class Write extends AbstractStoragetaskAction{
 	public StorageJob buildStorageJob(Job job){
 
 		Request request = job.getRequest();
-		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getAction();
+		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 		
 //		int artifactclassId = artifactclass.getId();
 		Artifact artifact = null;

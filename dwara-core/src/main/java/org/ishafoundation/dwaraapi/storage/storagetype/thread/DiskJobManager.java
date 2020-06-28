@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-@Component("disk"+DwaraConstants.StorageTypeJobManagerSuffix)
+@Component("disk"+DwaraConstants.STORAGETYPE_JOBMANAGER_SUFFIX)
 @Scope("prototype")
 public class DiskJobManager extends AbstractStoragetypeJobManager {
 

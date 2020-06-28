@@ -1,10 +1,10 @@
 package org.ishafoundation.dwaraapi.db.dao.master;
 
-import org.ishafoundation.dwaraapi.db.dao.master.cache.CacheableRepository;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
+import org.springframework.data.repository.CrudRepository;
 
-public interface ActionDao extends CacheableRepository<Action> {
+public interface ActionDao extends CrudRepository<Action, String> {
 	
-	Action findByName(String name);
+	//Action findByName(String name);
 	
 }

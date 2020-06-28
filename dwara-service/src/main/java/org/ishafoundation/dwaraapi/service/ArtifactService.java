@@ -3,21 +3,19 @@ package org.ishafoundation.dwaraapi.service;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import org.ishafoundation.dwaraapi.api.req.ingest.RequestParams;
 import org.ishafoundation.dwaraapi.api.req.ingest.UserRequest;
 import org.ishafoundation.dwaraapi.api.req.ingest.mapper.RequestToEntityObjectMapper;
-import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactFactory;
 import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.job.JobCreator;
@@ -45,22 +43,18 @@ public class ArtifactService {
 	@Autowired
 	private RequestToEntityObjectMapper requestToEntityObjectMapper; 
 	
-	@SuppressWarnings("rawtypes")
 	@Autowired
-	private Map<String, ArtifactRepository> artifactDaoMap;
+	private DomainUtil domainUtil;
 
 	@SuppressWarnings("rawtypes")
 	@Autowired
 	private DBMasterTablesCacheManager dBMasterTablesCacheManager;
-	
-	@Autowired
-	private DomainAttributeConverter domainAttributeConverter;
 
     public ResponseEntity<String> ingest(UserRequest userRequest){	
     	try {
 	    	
 		    	Request request = new Request();
-				request.setAction(Action.ingest);
+				request.setActionId(Action.ingest);
 				request.setDomain(getDomain(userRequest.getDomain()));
 		    	// request.setUser(userDao.findByName(requestedBy));
 				// request.setUser(user);
@@ -82,7 +76,7 @@ public class ArtifactService {
 		    	for (RequestParams requestParams : requestParamsList) {
 					Request systemrequest = new Request();
 					systemrequest.setRequestRef(request);
-					systemrequest.setAction(request.getAction());
+					systemrequest.setActionId(request.getActionId());
 					systemrequest.setDomain(request.getDomain());
 					systemrequest.setUser(request.getUser());
 					systemrequest.setRequestedAt(LocalDateTime.now());
@@ -96,14 +90,12 @@ public class ArtifactService {
 					
 					Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager.getRecord(CacheableTablesList.artifactclass.name(), artifactclassName);
 
-					String domainAsString = domainAttributeConverter.convertToDatabaseColumn(request.getDomain());
-					String domainSpecificArtifactTableName = "artifact" + domainAsString;
-					
-					Artifact artifact = DomainSpecificArtifactFactory.getInstance(domainSpecificArtifactTableName);
+					Artifact artifact = DomainSpecificArtifactFactory.getInstance(request.getDomain());
 					artifact.setName(requestParams.getArtifact_name());
 					artifact.setArtifactclass(artifactclass);
-					artifact = (Artifact) artifactDaoMap.get(domainSpecificArtifactTableName + "Dao").save(artifact);
-					logger.debug(domainSpecificArtifactTableName + " - " + artifact.getId());
+					artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(request.getDomain()).save(artifact);
+					logger.debug(artifact.getClass().getSimpleName() + " - " + artifact.getId());
+					
 					// TODO - Pending Impl - File related changes go here...
 
 					

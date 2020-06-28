@@ -8,6 +8,8 @@ import java.util.Objects;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -22,6 +24,7 @@ import javax.persistence.TableGenerator;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Actionelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -41,11 +44,11 @@ public class Job {
 	private int id;
 
 	@Column(name = "storagetask_action_id")
-	private Integer storagetaskActionId;
+	private Action storagetaskActionId;
 
 	@Column(name="processingtask_id")
-	private Integer processingtaskId;
-
+	private String processingtaskId;
+	
 	@ManyToOne(fetch = FetchType.LAZY)
     private Actionelement actionelement;
 
@@ -71,7 +74,8 @@ public class Job {
 	@Column(name="started_at")
 	private LocalDateTime startedAt;
 
-	@Column(name="status_id")
+	@Enumerated(EnumType.STRING)
+	@Column(name="status")
 	private Status status;
 	
 	@OneToOne(fetch = FetchType.LAZY)
@@ -79,7 +83,6 @@ public class Job {
 
 	@Lob
 	@Column(name="details")
-	//@Convert(converter = SubrequestDetailsAttributeConverter.class)
 	private JobDetails details;
 	
     @OneToMany(mappedBy = "job",
@@ -87,7 +90,8 @@ public class Job {
             orphanRemoval = true)
     private List<TFileJob> tFileJob = new ArrayList<>();
 
-	public int getId() {
+
+    public int getId() {
 		return id;
 	}
 
@@ -95,19 +99,19 @@ public class Job {
 		this.id = id;
 	}
 
-	public Integer getStoragetaskActionId() {
+	public Action getStoragetaskActionId() {
 		return storagetaskActionId;
 	}
 
-	public void setStoragetaskActionId(Integer storagetaskActionId) {
+	public void setStoragetaskActionId(Action storagetaskActionId) {
 		this.storagetaskActionId = storagetaskActionId;
 	}
 
-	public Integer getProcessingtaskId() {
+	public String getProcessingtaskId() {
 		return processingtaskId;
 	}
 
-	public void setProcessingtaskId(Integer processingtaskId) {
+	public void setProcessingtaskId(String processingtaskId) {
 		this.processingtaskId = processingtaskId;
 	}
 

@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component("file"+DwaraConstants.StoragelevelSuffix)
+@Component("file"+DwaraConstants.STORAGELEVEL_SUFFIX)
 //@Profile({ "!dev & !stage" })
 public class FileStoragelevel implements IStoragelevel {
 

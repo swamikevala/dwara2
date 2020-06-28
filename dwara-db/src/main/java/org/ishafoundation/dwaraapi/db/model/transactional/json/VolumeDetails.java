@@ -38,4 +38,5 @@ public class VolumeDetails {
 	public void setProvider_id(Integer provider_id) {
 		this.provider_id = provider_id;
 	}
+	// TODO : equals and hashCode
 }

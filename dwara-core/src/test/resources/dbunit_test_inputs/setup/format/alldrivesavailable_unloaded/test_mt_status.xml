@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+  <test_mt_status id="51001" block_number="-1" busy="0" file_number="-1" is_write_protected="0" ready="0" status_code="1"/>
+  <test_mt_status id="51002" block_number="-1" busy="0" file_number="-1" is_write_protected="0" ready="0" status_code="1"/>
+  <test_mt_status id="51003" block_number="-1" busy="0" file_number="-1" is_write_protected="0" ready="0" status_code="1"/>
+</dataset>

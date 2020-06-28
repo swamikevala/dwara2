@@ -127,7 +127,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	private IStoragelevel getStoragelevelImpl(StoragetypeJob storagetypeJob){
 		Storagelevel storagelevel = storagetypeJob.getStorageJob().getVolume().getStoragelevel();
-		return islMap.get(storagelevel.name()+DwaraConstants.StoragelevelSuffix);//+"Storagelevel");
+		return islMap.get(storagelevel.name()+DwaraConstants.STORAGELEVEL_SUFFIX);//+"Storagelevel");
 	}
 	
 //	protected abstract void afterRestore(StorageTypeJob storagetypeJob);

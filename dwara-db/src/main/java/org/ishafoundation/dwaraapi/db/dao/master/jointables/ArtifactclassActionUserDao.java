@@ -7,10 +7,10 @@ import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassActio
 import org.springframework.data.repository.CrudRepository;
 
 public interface ArtifactclassActionUserDao extends CrudRepository<ArtifactclassActionUser,ArtifactclassActionUserKey> {
-	
-	List<ArtifactclassActionUser> findAllByArtifactclassIdAndActionId(int artifactclassId, int actionId);
-	
-	List<ArtifactclassActionUser> findAllByActionIdAndUserId(int actionId, int userId);
-	
-	List<ArtifactclassActionUser> findAllByUserId(int userId);
+//	
+//	List<ArtifactclassActionUser> findAllByArtifactclassIdAndActionId(int artifactclassId, String action);
+//	
+//	List<ArtifactclassActionUser> findAllByActionIdAndUserId(String action, int userId);
+//	
+//	List<ArtifactclassActionUser> findAllByUserId(int userId);
 }

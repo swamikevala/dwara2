@@ -11,3 +11,6 @@
 #     https://www.atlassian.com/git/tutorials/git-lfs
 /target/
 /bin/
+/logs/
+/dwara-core/logs/
+/dwara-service/logs/

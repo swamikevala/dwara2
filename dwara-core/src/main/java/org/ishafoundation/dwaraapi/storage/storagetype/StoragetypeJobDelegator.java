@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
@@ -25,10 +24,7 @@ import org.springframework.stereotype.Component;
 public class StoragetypeJobDelegator {
 	
 	private static final Logger logger = LoggerFactory.getLogger(StoragetypeJobDelegator.class);
-	
-	@Autowired
-	private ActionAttributeConverter actionAttributeConverter;
-	
+		
 	@Autowired
 	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
 	
@@ -49,7 +45,7 @@ public class StoragetypeJobDelegator {
 		// delegate the task to appropriate storagetype specific jobs processor
 		for (Storagetype storagetype : storagetypeSet) {
 			logger.debug("Delegating to " + storagetype.name() + "JobManager's separate thread ================");
-			AbstractStoragetypeJobManager storageTypeJobManager = storageTypeJobManagerMap.get(storagetype.name() + DwaraConstants.StorageTypeJobManagerSuffix);
+			AbstractStoragetypeJobManager storageTypeJobManager = storageTypeJobManagerMap.get(storagetype.name() + DwaraConstants.STORAGETYPE_JOBMANAGER_SUFFIX);
 			storageTypeJobManager.setStorageJobList(storagetype_storageTypeGroupedJobsList_Map.get(storagetype));
 			storagetypeThreadPoolExecutor.getExecutor().execute(storageTypeJobManager);
 		}
@@ -59,8 +55,7 @@ public class StoragetypeJobDelegator {
 		Map<Storagetype, List<StorageJob>> storagetype_storageTypeGroupedJobsList_Map = new HashMap<>();
 		logger.debug("Wrapping jobs with more storage info and grouping them on Storagetype");
 		for (Job job : storageJobList) {
-			Integer storagetaskActionId = job.getStoragetaskActionId();
-			Action storagetaskAction = actionAttributeConverter.convertToEntityAttribute(storagetaskActionId);
+			Action storagetaskAction = job.getStoragetaskActionId();
 			AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(storagetaskAction.name());
 			StorageJob storageJob = storagetaskActionImpl.buildStorageJob(job);
 			

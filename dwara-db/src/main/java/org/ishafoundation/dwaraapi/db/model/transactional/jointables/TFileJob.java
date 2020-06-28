@@ -6,6 +6,8 @@ import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
@@ -44,7 +46,8 @@ public class TFileJob {
 	@Column(name="pid")
 	private int pid;
 
-	@Column(name="status_id")
+	@Enumerated(EnumType.STRING)
+	@Column(name="status")
 	private Status status;
 
 	@Column(name="started_at")

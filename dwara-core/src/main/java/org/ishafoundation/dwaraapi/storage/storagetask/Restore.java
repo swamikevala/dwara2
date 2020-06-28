@@ -1,14 +1,11 @@
 package org.ishafoundation.dwaraapi.storage.storagetask;
 
 
-import java.util.Map;
-
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +23,7 @@ public class Restore extends AbstractStoragetaskAction{
 	@Override
 	public StorageJob buildStorageJob(Job job) {
 		Request request = job.getRequest();
-		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getAction();
+		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 		StorageJob storageJob = new StorageJob();
 		storageJob.setJob(job);
 		

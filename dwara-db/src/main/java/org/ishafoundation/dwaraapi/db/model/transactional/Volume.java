@@ -70,7 +70,6 @@ public class Volume {
 	
 	@Lob
 	@Column(name="details")
-	//@Convert(converter = SubrequestDetailsAttributeConverter.class)
 	private VolumeDetails details;
 
 

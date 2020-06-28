@@ -9,6 +9,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 
@@ -23,17 +24,16 @@ public class Actionelement {
 	private int id;
 	
 	@Column(name = "complex_action_id")
-	private Action complexAction;
+	private Action complexActionId;
 	
 	@Column(name="artifactclass_id")
 	private int artifactclassId;
-
+	
 	@Column(name = "storagetask_action_id")
-	//private Action storagetaskAction;
-	private Integer storagetaskActionId;
+	private Action storagetaskActionId;// TODO : ??? How can this be 0 and will make the uniqueConstraints work???
 
 	@Column(name = "processingtask_id")
-	private Integer processingtaskId;
+	private String processingtaskId;
 	
 	// No FK relationship as this could be set to 0
 	@Column(name="volume_id")
@@ -64,12 +64,12 @@ public class Actionelement {
 		this.id = id;
 	}
 
-	public Action getComplexAction() {
-		return complexAction;
+	public Action getComplexActionId() {
+		return complexActionId;
 	}
 
-	public void setComplexAction(Action complexAction) {
-		this.complexAction = complexAction;
+	public void setComplexActionId(Action complexActionId) {
+		this.complexActionId = complexActionId;
 	}
 
 	public int getArtifactclassId() {
@@ -80,27 +80,23 @@ public class Actionelement {
 		this.artifactclassId = artifactclassId;
 	}
 
-//	public Action getStoragetaskAction() {
-//		return storagetaskAction;
-//	}
-//
-//	public void setStoragetaskAction(Action storagetaskAction) {
-//		this.storagetaskAction = storagetaskAction;
-//	}
-	
-	public Integer getStoragetaskActionId() {
+	public Action getStoragetaskActionId() {
 		return storagetaskActionId;
 	}
 
-	public void setStoragetaskActionId(Integer storagetaskActionId) {
+	public void setStoragetaskActionId(Action storagetaskActionId) {
 		this.storagetaskActionId = storagetaskActionId;
 	}
 
-	public Integer getProcessingtaskId() {
+	public String getProcessingtaskId() {
+		if(StringUtils.isBlank(processingtaskId))
+			processingtaskId = null;// We do this so that uniqueness constraint works...
 		return processingtaskId;
 	}
 
-	public void setProcessingtaskId(Integer processingtaskId) {
+	public void setProcessingtaskId(String processingtaskId) {
+		if(processingtaskId == null)
+			processingtaskId = "";// We do this so that uniqueness constraint works...
 		this.processingtaskId = processingtaskId;
 	}
 

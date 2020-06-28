@@ -7,20 +7,18 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
-
 
 @Entity
 @Table(name="archiveformat")
-public class Archiveformat implements Cacheable{
+public class Archiveformat{
 	
 	@Id
 	@Column(name="id")
-	private int id;
-	
-	@Column(name="name", unique = true)
-	private String name;
+	private String id;
 
+	@Column(name="description")
+	private String description;
+	
 	@Column(name="blocksize")
 	private int blocksize;
 	
@@ -34,22 +32,22 @@ public class Archiveformat implements Cacheable{
 	private Integer filesizeIncreaseConst;
 	
 
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
-	
-	public String getName() {
-		return name;
+
+	public String getDescription() {
+		return description;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setDescription(String description) {
+		this.description = description;
 	}
-	
+
 	public int getBlocksize() {
 		return blocksize;
 	}
@@ -87,12 +85,12 @@ public class Archiveformat implements Cacheable{
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Archiveformat obj = (Archiveformat) o;
-        return Objects.equals(name, obj.name);
+        return Objects.equals(id, obj.id);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(id);
     }
 
 }

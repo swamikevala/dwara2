@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -50,9 +52,9 @@ public class Request {
 	 pkColumnValue="request_id", allocationSize = 1)
 	@Column(name="id")
 	private int id;
-	
+
 	@Column(name="action_id")
-	private Action action;
+	private Action actionId;
 	
 	@OneToOne(fetch = FetchType.LAZY)
 	private User user;
@@ -66,7 +68,8 @@ public class Request {
 	@ManyToOne(fetch = FetchType.LAZY)
     private Request requestRef;
 	
-	@Column(name="status_id")
+	@Enumerated(EnumType.STRING)
+	@Column(name="status")
 	private Status status;
 	
 	@Lob
@@ -82,12 +85,12 @@ public class Request {
 		this.id = id;
 	}
 
-	public Action getAction() {
-		return action;
+	public Action getActionId() {
+		return actionId;
 	}
 
-	public void setAction(Action action) {
-		this.action = action;
+	public void setActionId(Action actionId) {
+		this.actionId = actionId;
 	}
 
 	public User getUser() {

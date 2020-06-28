@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+  <job actionelement_id="1" storagetask_action_id="write" status="queued"/>
+  <job actionelement_id="2" storagetask_action_id="verify" status="queued"/> <!-- ST verify will have job_ref_id= , but job_id is dynamic -->
+  <job actionelement_id="3" storagetask_action_id="write" status="queued"/>
+</dataset>

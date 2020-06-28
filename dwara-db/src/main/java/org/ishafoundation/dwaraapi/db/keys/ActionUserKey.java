@@ -12,7 +12,7 @@ public class ActionUserKey implements Serializable {
 	private static final long serialVersionUID = 1490630317339527316L;
 
 	@Column(name = "action_id")
-    private int actionId;
+    private String actionId;
  
     @Column(name = "user_id")
     private int userId;
@@ -20,17 +20,17 @@ public class ActionUserKey implements Serializable {
     public ActionUserKey() {}
     
     public ActionUserKey(
-        int actionId,
+        String actionName,
         int userId) {
-        this.actionId = actionId;
+        this.actionId = actionName;
         this.userId = userId;
     }
  
-    public int getActionId() {
+	public String getActionId() {
 		return actionId;
 	}
 
-	public void setActionId(int actionId) {
+	public void setActionId(String actionId) {
 		this.actionId = actionId;
 	}
 

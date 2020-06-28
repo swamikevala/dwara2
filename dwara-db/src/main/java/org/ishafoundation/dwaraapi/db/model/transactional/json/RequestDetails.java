@@ -1,5 +1,9 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
+import java.util.Objects;
+
+import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class RequestDetails {
@@ -248,4 +252,18 @@ public class RequestDetails {
 	public void setTo_volume_uid(String to_volume_uid) {
 		this.to_volume_uid = to_volume_uid;
 	}
+	
+	// TODO : equals and hashCode
+//	@Override
+//    public boolean equals(Object o) {
+//        if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
+//        Action action = (Action) o;
+//        return Objects.equals(id, action.id);
+//    }
+// 
+//    @Override
+//    public int hashCode() {
+//        return Objects.hash(id);
+//    }
 }

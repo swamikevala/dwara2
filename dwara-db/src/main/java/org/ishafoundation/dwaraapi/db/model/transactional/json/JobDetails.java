@@ -17,4 +17,6 @@ public class JobDetails {
 	public void setDevice_id(Integer device_id) {
 		this.device_id = device_id;
 	}
+	
+	// TODO : equals and hashCode
 }

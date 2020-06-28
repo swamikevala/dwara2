@@ -1,17 +1,24 @@
 package org.ishafoundation.dwaraapi.job;
 
+import java.io.File;
+import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.Map;
 
-import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
+import org.dbunit.Assertion;
+import org.dbunit.database.IDatabaseConnection;
+import org.dbunit.database.QueryDataSet;
+import org.dbunit.dataset.IDataSet;
+import org.dbunit.dataset.ITable;
+import org.dbunit.dataset.filter.DefaultColumnFilter;
+import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactFactory;
 import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -23,6 +30,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.github.springtestdbunit.bean.DatabaseDataSourceConnectionFactoryBean;
+
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -30,17 +39,15 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 
 	private static final Logger logger = LoggerFactory.getLogger(JobCreator_Ingest_Test.class);
 
-
-	@SuppressWarnings("rawtypes")
-	@Autowired
-	private Map<String, ArtifactRepository> artifactDaoMap;
-
 	@SuppressWarnings("rawtypes")
 	@Autowired
 	private DBMasterTablesCacheManager dBMasterTablesCacheManager;
-
+	
 	@Autowired
-	private DomainAttributeConverter domainAttributeConverter;
+	private DatabaseDataSourceConnectionFactoryBean dbUnitDatabaseConnection;
+	
+	@Autowired
+	private DomainUtil domainUtil;
 
 	public JobCreator_Ingest_Test() {
 		action = Action.ingest;
@@ -65,7 +72,7 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 			Request systemrequest = new Request();
 			systemrequest.setRequestRef(request);
 			
-			systemrequest.setAction(request.getAction());
+			systemrequest.setActionId(request.getActionId());
 			systemrequest.setDomain(request.getDomain());
 			systemrequest.setRequestedAt(LocalDateTime.now());
 			
@@ -91,22 +98,58 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 
 			logger.debug("successfully tested config table caching");
 
-			String domainAsString = domainAttributeConverter.convertToDatabaseColumn(request.getDomain());
-			String domainSpecificArtifactTableName = "artifact" + domainAsString;
-			Artifact artifact = DomainSpecificArtifactFactory.getInstance(domainSpecificArtifactTableName);
-			artifact.setName(
-					"10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9" + System.currentTimeMillis());
+			Artifact artifact = DomainSpecificArtifactFactory.getInstance(request.getDomain());
+			artifact.setName("10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9" + System.currentTimeMillis());
 			artifact.setArtifactclass(artifactclass);
-			artifactDaoMap.get(domainSpecificArtifactTableName + "Dao").save(artifact);
+			domainUtil.getDomainSpecificArtifactRepository(request.getDomain()).save(artifact);
 
 			// TODO File related changes go here...
 
 			logger.debug("successfully tested domain specific table testing");
 			jobCreator.createJobs(systemrequest, artifact);
+			
+			IDatabaseConnection  dbUnitDbConnection = dbUnitDatabaseConnection.getObject();		// Passing the connection so its reused...
+			
+			validateDBDataForIngestJobCreation(systemrequest, dbUnitDbConnection);
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
 		}
+	}
+
+	private void validateDBDataForIngestJobCreation(Request systemrequest, IDatabaseConnection  dbUnitDbConnection) throws Exception{
+		// Assert Request table
+	
+		// Assert Artifact table
+		
+		// Assert File table
+		
+		// Assert Job table
+		assertJobTable(systemrequest, dbUnitDbConnection);
+	}
+	
+	private void assertJobTable(Request systemrequest, IDatabaseConnection  dbUnitDbConnection) throws Exception{
+		int systemrequestId = systemrequest.getId();
+	
+		// partial database export
+	    QueryDataSet partialDataSet = new QueryDataSet(dbUnitDbConnection);
+	    partialDataSet.addTable("Job", "SELECT * FROM job WHERE request_id=" + systemrequestId);
+	
+	    ITable actualTable = partialDataSet.getTable("job");
+	    
+	    // Load expected data from an XML dataset
+	    URL fileUrl = this.getClass().getResource("/dbunit_test_inputs/expected/ingest/jobcreation/job.xml");
+	    IDataSet expectedDataSet = new FlatXmlDataSetBuilder().build(new File(fileUrl.getFile()));
+	    ITable expectedTable = expectedDataSet.getTable("job");
+	    
+	//  // Assert actual database table match expected table
+	//  Assertion.assertEquals(expectedTable, actualTable);
+	    
+	    //We have to exclude some columns from comparison
+	    ITable filteredTable = DefaultColumnFilter.includedColumnsTable(actualTable, 
+	    		expectedTable.getTableMetaData().getColumns());
+	    Assertion.assertEquals(expectedTable, filteredTable); 
+	    logger.info("DBUnit assertion success");
 	}
 
 }

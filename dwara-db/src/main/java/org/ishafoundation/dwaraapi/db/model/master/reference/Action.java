@@ -13,7 +13,6 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionUser;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassActionUser;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
@@ -23,14 +22,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name="action")
-public class Action implements Cacheable{
-	
+public class Action{
 	@Id
 	@Column(name="id")
-	private int id;
-	
-	@Column(name="name", unique = true)
-	private String name;
+	private String id;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name="type")
@@ -49,23 +44,14 @@ public class Action implements Cacheable{
             orphanRemoval = true)
     private List<ArtifactclassActionUser> artifactclassActionUser = new ArrayList<>();     
 
-
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
-	
-	public String getName() {
-		return name;
-	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
-	
 	public Actiontype getType() {
 		return type;
 	}
@@ -108,11 +94,11 @@ public class Action implements Cacheable{
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Action action = (Action) o;
-        return Objects.equals(getName(), action.getName());
+        return Objects.equals(id, action.id);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(getName());
+        return Objects.hash(id);
     }
 }

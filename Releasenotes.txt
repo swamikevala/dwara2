@@ -1,0 +1,12 @@
+27th and 28th Jun
+	schema changes
+		drop database
+		create database
+		run the dwara-master sql script again
+	DB unit intro
+		org.ishafoundation.dwaraapi.job.JobCreator_Ingest_Test.assertJobTable() has some sample DBUnit integration. 
+		More DBunit integration examples can be found in the other branch
+		https://bitbucket.org/ishafoundation/dwara2/src/development/src/test/java/org/ishafoundation/dwaraapi/dbunittests/storage/storagetype/tape/format/FormatTests.java
+		https://bitbucket.org/ishafoundation/dwara2/src/development/src/test/java/org/ishafoundation/dwaraapi/dbunittests/storage/storagetype/tape/library/TapeDriveMapperTests.java 
+	
+	

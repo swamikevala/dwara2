@@ -37,7 +37,7 @@ public class JobCreator_Test {
 	@Before
 	public void createRequest() throws Exception {
 		request = new Request();
-		request.setAction(action);
+		request.setActionId(action);
 		request.setDomain(getDomain(null));
 		// request.setUser(user);
 		request.setRequestedAt(LocalDateTime.now());
@@ -74,7 +74,7 @@ public class JobCreator_Test {
 	protected void createSingleSystemrequestAndJobs() throws Exception{
 		Request systemrequest = new Request();
 		systemrequest.setRequestRef(request);
-		systemrequest.setAction(request.getAction());
+		systemrequest.setActionId(request.getActionId());
 		systemrequest.setDomain(request.getDomain());
 		systemrequest.setRequestedAt(LocalDateTime.now());
 	

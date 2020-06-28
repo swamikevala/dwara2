@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.dbunit.config;
+package org.ishafoundation.dwaraapi;
 
 import javax.sql.DataSource;
 

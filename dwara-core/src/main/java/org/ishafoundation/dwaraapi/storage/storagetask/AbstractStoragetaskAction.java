@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -14,7 +13,6 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.utils.JobUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +23,6 @@ public abstract class AbstractStoragetaskAction{
 	
 	@Autowired
 	private JobDao jobDao;		
-	
-	@Autowired
-	protected ActionAttributeConverter actionAttributeConverter;
 	
 	protected List<org.ishafoundation.dwaraapi.enumreferences.Action> storagetaskActionList = new ArrayList<org.ishafoundation.dwaraapi.enumreferences.Action>();
 	
@@ -52,8 +47,7 @@ public abstract class AbstractStoragetaskAction{
 		if(parentJob != null)
 			job.setJobRef(parentJob);
 		
-		int storagetaskActionId = actionAttributeConverter.convertToDatabaseColumn(storagetaskAction);
-		job.setStoragetaskActionId(storagetaskActionId);
+		job.setStoragetaskActionId(storagetaskAction);
 		job.setRequest(request);
 		// TODO needed only for sub actions - job.setInputArtifactId(subrequest.getDetails().getArtifact_id());
 		job.setCreatedAt(LocalDateTime.now());

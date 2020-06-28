@@ -28,7 +28,7 @@ public class Sequence implements Cacheable{
 	private boolean barcode;
 	
 	// TODO - Not needed. any sequence_ref_id null is a group
-	@Column(name="group_")
+	@Column(name="\"group\"")
 	private boolean group;
 	
 	@Column(name="last_number")

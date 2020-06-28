@@ -3,7 +3,6 @@ package org.ishafoundation.dwaraapi.db.dao.transactional;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
-import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.springframework.data.repository.CrudRepository;
 

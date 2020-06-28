@@ -43,7 +43,8 @@ public class DBMasterTablesCacheManager<T> {
 			Map<String, Cacheable> name_record_Map = new HashMap<String, Cacheable>();
 			
 			for (Cacheable cacheable : list) {
-				id_record_Map.put(cacheable.getId(), cacheable);
+				if(cacheable.getId() > 0)
+					id_record_Map.put(cacheable.getId(), cacheable);
 				if(cacheable.getName() != null)
 					name_record_Map.put(cacheable.getName(), cacheable);
 			}

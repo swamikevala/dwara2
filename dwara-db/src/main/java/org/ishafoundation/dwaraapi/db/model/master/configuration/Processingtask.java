@@ -9,19 +9,14 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
-
 
 @Entity
 @Table(name="processingtask")
-public class Processingtask implements Cacheable{
+public class Processingtask{
 
 	@Id
 	@Column(name="id")
-	private int id;
-	
-	@Column(name="name", unique=true)
-	private String name;
+	private String id;
 
 	@Column(name="description")
 	private String description;
@@ -36,20 +31,13 @@ public class Processingtask implements Cacheable{
 	@ManyToOne(fetch = FetchType.LAZY)
 	private Filetype filetype;
 	
-    public int getId() {
+	
+    public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 
 	public String getDescription() {
@@ -84,11 +72,11 @@ public class Processingtask implements Cacheable{
             return false;
  
         Processingtask task = (Processingtask) o;
-        return Objects.equals(name, task.name);
+        return Objects.equals(id, task.id);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(id);
     }
 }

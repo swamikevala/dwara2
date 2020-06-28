@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component("block"+DwaraConstants.StoragelevelSuffix)
+@Component("block"+DwaraConstants.STORAGELEVEL_SUFFIX)
 //@Profile({ "!dev & !stage" })
 public class BlockStoragelevel implements IStoragelevel {
 
@@ -32,9 +32,9 @@ public class BlockStoragelevel implements IStoragelevel {
 
 	@Override
 	public ArchiveResponse write(StoragetypeJob storagetypeJob) {
-		logger.debug(this.getClass().getName() + " block storage ");
+		logger.debug("Writing blocks");
 		Archiveformat archiveformat = storagetypeJob.getStorageJob().getVolume().getArchiveformat();
-    	IArchiveformatter archiveFormatter = aafMap.get(archiveformat.getName() + DwaraConstants.ArchiverSuffix);
+    	IArchiveformatter archiveFormatter = aafMap.get(archiveformat.getId() + DwaraConstants.ARCHIVER_SUFFIX);
     	
     	
 		String artifactSourcePath = storagetypeJob.getStorageJob().getArtifactPrefixPath();

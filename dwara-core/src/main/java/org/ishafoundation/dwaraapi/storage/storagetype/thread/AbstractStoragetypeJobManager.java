@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -26,10 +25,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 	
 	@Autowired
 	private Map<String, AbstractStoragetypeJobProcessor> storagetypeJobProcessorMap;
-	
-	@Autowired
-	private ActionAttributeConverter actionAttributeConverter;
-	
+		
 	@Autowired
 	private JobDao jobDao;	
 	
@@ -59,11 +55,10 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 			job = storagetypeJob.getStorageJob().getJob();
 			updateJobInProgress(job);
 			
-			Integer storagetaskActionId = storagetypeJob.getStorageJob().getJob().getStoragetaskActionId();
-			Action storagetaskAction = actionAttributeConverter.convertToEntityAttribute(storagetaskActionId);
+			Action storagetaskAction = storagetypeJob.getStorageJob().getJob().getStoragetaskActionId();
 			
 			Storagetype storagetype = storagetypeJob.getStorageJob().getVolume().getStoragetype();
-			AbstractStoragetypeJobProcessor storagetypeJobProcessorImpl = storagetypeJobProcessorMap.get(storagetype.name() + DwaraConstants.StorageTypeJobProcessorSuffix);
+			AbstractStoragetypeJobProcessor storagetypeJobProcessorImpl = storagetypeJobProcessorMap.get(storagetype.name() + DwaraConstants.STORAGETYPE_JOBPROCESSOR_SUFFIX);
 			Method storageTaskMethod = storagetypeJobProcessorImpl.getClass().getMethod(storagetaskAction.name(), StoragetypeJob.class);
 			archiveResponse = (ArchiveResponse) storageTaskMethod.invoke(storagetypeJobProcessorImpl, storagetypeJob);
 			

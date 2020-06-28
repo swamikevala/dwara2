@@ -6,7 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface ActionUserDao extends CrudRepository<ActionUser,ActionUserKey> {
 
-	ActionUser findByActionIdAndUserId(int actionId, int userId);
+//	ActionUser findByActionNameAndUserId(String action, int userId);
 	
 	//ActionUser findByActionActionIdAndUserUserId(int actionId, int userId);
 }

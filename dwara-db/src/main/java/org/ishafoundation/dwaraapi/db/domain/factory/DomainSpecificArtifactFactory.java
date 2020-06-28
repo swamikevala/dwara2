@@ -3,7 +3,9 @@ package org.ishafoundation.dwaraapi.db.domain.factory;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 
 public class DomainSpecificArtifactFactory {
 	// https://medium.com/@kousiknath/design-patterns-different-approaches-to-use-factory-pattern-to-choose-objects-dynamically-at-run-71449bceecef
@@ -15,9 +17,13 @@ public class DomainSpecificArtifactFactory {
         }
     }
 
-    public static Artifact getInstance(String domainSpecificEntity) {
-        if (instances.containsKey(domainSpecificEntity)) {
-        	Class<? extends Artifact> entityAsClass = instances.get(domainSpecificEntity);
+    public static Artifact getInstance(Domain domain) {
+    	DomainAttributeConverter domainAttributeConverter = new DomainAttributeConverter();
+		String domainAsString = domainAttributeConverter.convertToDatabaseColumn(domain);
+		String domainSpecificArtifactTableName = "artifact" + domainAsString;
+
+        if (instances.containsKey(domainSpecificArtifactTableName)) {
+        	Class<? extends Artifact> entityAsClass = instances.get(domainSpecificArtifactTableName);
         	
         	Artifact entity = null;
         	try {

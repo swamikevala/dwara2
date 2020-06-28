@@ -24,10 +24,11 @@ public class DomainUtil {
 	private Map<String, ArtifactRepository> artifactDaoMap;
 
 	
-	public Artifact getDomainSpecificArtifact(Domain domain, int artifactId) {
+	@SuppressWarnings("rawtypes")
+	public ArtifactRepository getDomainSpecificArtifactRepository(Domain domain) {
 		String domainName = null;
 		if(domain == null) { // If domain is not available default it
-			org.ishafoundation.dwaraapi.db.model.master.configuration.Domain domainFromDB = domainDao.findByDefaulttTrue();
+			org.ishafoundation.dwaraapi.db.model.master.configuration.Domain domainFromDB = domainDao.findByDefaultTrue();
 			domainName = domainFromDB.getName();
 
 		}
@@ -36,8 +37,11 @@ public class DomainUtil {
 		}
 		
 		String domainSpecificArtifactName = "artifact" + domainName;
-		Artifact artifact = (Artifact) artifactDaoMap.get(domainSpecificArtifactName + "Dao").findById(artifactId).get();
-
+		return (ArtifactRepository) artifactDaoMap.get(domainSpecificArtifactName + "Dao");
+	}
+	
+	public Artifact getDomainSpecificArtifact(Domain domain, int artifactId) {
+		Artifact artifact = (Artifact) getDomainSpecificArtifactRepository(domain).findById(artifactId).get();
 		return artifact;
 	}
 	

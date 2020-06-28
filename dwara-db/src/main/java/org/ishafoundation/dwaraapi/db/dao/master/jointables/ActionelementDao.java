@@ -14,7 +14,7 @@ public interface ActionelementDao extends CrudRepository<Actionelement,Integer> 
 	
 	//Actionelement findByTaskIdAndTasktypeAndInputArtifactclassIdAndVolumesetId(int taskId, Tasktype tasktype, int artifactclassId, int volumesetId);
 	
-	List<Actionelement> findAllByComplexActionAndArtifactclassIdOrderByDisplayOrderAsc(Action action, int artifactclassId);
+	List<Actionelement> findAllByComplexActionIdAndArtifactclassIdOrderByDisplayOrderAsc(Action action, int artifactclassId);
 	
 	//List<Actionelement> findAllByInputArtifactclassIdOrderByDisplayOrderAsc(int artifactclassId);
 	

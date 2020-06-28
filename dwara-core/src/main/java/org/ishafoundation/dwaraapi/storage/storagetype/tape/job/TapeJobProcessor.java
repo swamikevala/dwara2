@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 //@Component("tapeJobProcessor")
-@Component("tape" + DwaraConstants.StorageTypeJobProcessorSuffix)
+@Component("tape" + DwaraConstants.STORAGETYPE_JOBPROCESSOR_SUFFIX)
 //@Profile({ "!dev & !stage" })
 public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 

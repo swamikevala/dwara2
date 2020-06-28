@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
-import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -27,19 +25,13 @@ public class JobManager {
 	
 	@Autowired
 	private JobDao jobDao;	
-		
-	@Autowired
-	private VolumeDao volumeDao;
 
 	@Autowired
 	private ApplicationContext applicationContext;
 	
 	@Autowired
 	private StoragetypeJobDelegator storagetypeJobDelegator;
-	
-	@Autowired
-	private ActionAttributeConverter actionAttributeConverter;
-	
+		
 	@Autowired
 	private TaskSingleThreadExecutor taskSingleThreadExecutor;
 	
@@ -68,15 +60,13 @@ public class JobManager {
 				Job job = (Job) iterator.next();
 				
 				String jobName = null;
-				Action storagetaskAction = null;
-				Integer storagetaskActionId = job.getStoragetaskActionId();
-				Integer processingtaskId = job.getProcessingtaskId();
-				if(storagetaskActionId != null) {
-					storagetaskAction = actionAttributeConverter.convertToEntityAttribute(storagetaskActionId);
+				Action storagetaskAction = job.getStoragetaskActionId();
+				String processingtaskId = job.getProcessingtaskId();
+				if(storagetaskAction != null) {
 					jobName = storagetaskAction.name();
 				}
 				else {
-					jobName = processingtaskId.toString(); // TODO Get the name of the process than just the id...
+					jobName = processingtaskId;
 				}
 				logger.info("job - " + job.getId() + ":" + jobName);
 				boolean isJobReadyToBeProcessed = isJobReadyToBeProcessed(job);

@@ -23,4 +23,5 @@ public class ArtifactVolumeDetails {
 	public void setTotal_volume_blocks(Integer total_volume_blocks) {
 		this.total_volume_blocks = total_volume_blocks;
 	}
+	// TODO : equals and hashCode
 }

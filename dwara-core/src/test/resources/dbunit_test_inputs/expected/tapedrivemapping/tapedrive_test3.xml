@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+  <tapedrive id="13001" device_wwid="/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst" element_address="2" serial_number="1497199456" drive_status="AVAILABLE" tapelibrary_id="14001"/>
+  <tapedrive id="13002" device_wwid="/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1684087499-nst" element_address="0" serial_number="1684087499" drive_status="AVAILABLE" tapelibrary_id="14001"/>
+  <tapedrive id="13003" device_wwid="/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1970448833-nst" element_address="1" serial_number="1970448833" drive_status="AVAILABLE" tapelibrary_id="14001"/>
+</dataset>

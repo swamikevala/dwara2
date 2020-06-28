@@ -3,9 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype.thread;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
-import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TActivedeviceDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
@@ -20,34 +18,23 @@ import org.ishafoundation.dwaraapi.storage.storagetype.tape.thread.executor.Tape
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-@Component("tape"+DwaraConstants.StorageTypeJobManagerSuffix)
+@Component("tape"+DwaraConstants.STORAGETYPE_JOBMANAGER_SUFFIX)
 @Scope("prototype")
 public class TapeJobManager extends AbstractStoragetypeJobManager {
 
 
     private static final Logger logger = LoggerFactory.getLogger(TapeJobManager.class);
-
-	@Autowired
-	private VolumeDao volumeDao;
 	
 	@Autowired
 	private DeviceDao deviceDao;
 	
 	@Autowired
 	private TActivedeviceDao tActivedeviceDao;
-	
-	@Autowired
-	private ApplicationContext applicationContext;	
-	
 	@Autowired
 	private TapeTaskThreadPoolExecutor tapeTaskThreadPoolExecutor;	
-	
-	@Autowired
-	private ActionAttributeConverter actionAttributeConverter;
 	
 	@Override
     public void run() {
@@ -56,7 +43,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		// execute the job
 
 		StorageJob storageJob = storageJobsList.get(0); // if there is a format/mapdrive job only one job will be in the list coming from JobManager... 
-		Action storagetaskAction = actionAttributeConverter.convertToEntityAttribute(storageJob.getJob().getStoragetaskActionId());
+		Action storagetaskAction = storageJob.getJob().getStoragetaskActionId();
 //		Action action = storageJob.getJob().getRequest().getAction();
 //		// are we ok?
 //		if(action == Action.format || action == Action.map_tapedrives || action == Action.finalize) {
