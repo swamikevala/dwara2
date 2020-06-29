@@ -3,12 +3,15 @@ package org.ishafoundation.dwaraapi.storage.storagetask;
 
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
@@ -30,28 +33,33 @@ public class Write extends AbstractStoragetaskAction{
 	@Autowired
 	private VolumeDao volumeDao;
 	
+	@SuppressWarnings("rawtypes")
+	@Autowired
+	private DBMasterTablesCacheManager dBMasterTablesCacheManager;
+	
 	@Override
 	public StorageJob buildStorageJob(Job job){
 
 		Request request = job.getRequest();
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 		
-//		int artifactclassId = artifactclass.getId();
 		Artifact artifact = null;
 		String artifactName = null;
 		String pathPrefix = null;
 		int volumegroupId = 0;
 		Volume volume = null;
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.ingest) {
-			Domain domain = job.getRequest().getDomain();
+			Integer artifactclassId = job.getRequest().getDetails().getArtifactclass_id();
+			Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager
+					.getRecord(CacheableTablesList.artifactclass.name(), artifactclassId);
+			Domain domain = artifactclass.getDomain();
+			pathPrefix = artifactclass.getPath();
+			
 			Integer inputArtifactId = job.getInputArtifactId();
 			artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);
 			artifactName = artifact.getName();			
-			Artifactclass artifactclass = artifact.getArtifactclass();	
 
-			pathPrefix = artifactclass.getPath();
 			volumegroupId = job.getActionelement().getVolumeId();
-			
 			
 			String artifactpathToBeCopied = pathPrefix + java.io.File.separator + artifactName;
 			long sizeOfTheLibraryToBeWritten = 0;//TODO - FileUtils.sizeOfDirectory(new java.io.File(artifactpathToBeCopied)); 			

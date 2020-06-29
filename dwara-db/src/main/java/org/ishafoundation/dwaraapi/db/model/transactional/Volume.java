@@ -69,7 +69,7 @@ public class Volume {
 	private Location location;
 	
 	@Lob
-	@Column(name="details")
+	@Column(name="details", columnDefinition="CLOB")
 	private VolumeDetails details;
 
 

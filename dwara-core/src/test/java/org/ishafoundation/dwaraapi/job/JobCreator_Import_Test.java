@@ -15,7 +15,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class JobCreator_Import_Test extends JobCreator_Test{
 	
 	public JobCreator_Import_Test() {
-		action = Action.import_;
+		action = "import";
 		requestInputFilePath = "/testcases/import_request.json";
 	}
 	

@@ -27,7 +27,7 @@ public class JobCreator_Restore_Test extends JobCreator_Test {
 	private DBMasterTablesCacheManager dBMasterTablesCacheManager;
 
 	public JobCreator_Restore_Test() {
-		action = Action.restore;
+		action = Action.restore.name();
 		requestInputFilePath = "/testcases/restore_request.json";
 	}
 	

@@ -20,9 +20,9 @@ public class ActionUserKey implements Serializable {
     public ActionUserKey() {}
     
     public ActionUserKey(
-        String actionName,
+        String actionId,
         int userId) {
-        this.actionId = actionName;
+        this.actionId = actionId;
         this.userId = userId;
     }
  

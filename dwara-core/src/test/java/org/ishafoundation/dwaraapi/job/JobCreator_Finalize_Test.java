@@ -19,7 +19,7 @@ public class JobCreator_Finalize_Test extends JobCreator_Test{
 	private static final Logger logger = LoggerFactory.getLogger(JobCreator_Finalize_Test.class);
 	
 	public JobCreator_Finalize_Test() {
-		action = Action.finalize;
+		action = Action.finalize.name();
 		//requestInputFilePath = "/testcases/finalize/finalize_request.json";
 	}
 	

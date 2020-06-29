@@ -30,20 +30,7 @@ public class JobCreator_Ingest_Test{
 		try {
 			ObjectMapper mapper = new ObjectMapper();
 			URL fileUrl = this.getClass().getResource("/testcases/ingest/ingest_request.json");
-			
-//			UserRequest ur = new UserRequest();
-//			ur.setArtifactclass("pv");
-//			List<RequestParams> artifact = new ArrayList<RequestParams>();
-//			RequestParams rp = new RequestParams();
-//			Integer[] skip_processingtasks = {3,7};
-//			rp.setSkip_processingtasks(skip_processingtasks );
-//			artifact.add(rp);
-//			ur.setArtifact(artifact);
-//
-//			
-//			String postBody = mapper.writeValueAsString(ur);
-//			System.out.println(postBody);
-//			FileUtils.write(new File(fileUrl.getFile()), postBody);
+
 			
 			String postBodyJson = FileUtils.readFileToString(new File(fileUrl.getFile()));
 			long suffix = System.currentTimeMillis();
@@ -56,9 +43,6 @@ public class JobCreator_Ingest_Test{
 			
 
 			UserRequest ur = mapper.readValue(postBodyJson, new TypeReference<UserRequest>() {});
-			System.out.println(ur.getArtifactclass());
-			//ArtifactService as = new ArtifactService();
-			//as.ingest(ur);
 			artifactService.ingest(ur);
 		} catch (Exception e) {
 			// TODO: handle exception

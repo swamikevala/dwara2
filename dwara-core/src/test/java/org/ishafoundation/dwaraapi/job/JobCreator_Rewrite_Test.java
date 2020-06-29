@@ -19,7 +19,7 @@ public class JobCreator_Rewrite_Test extends JobCreator_Test{
 	private static final Logger logger = LoggerFactory.getLogger(JobCreator_Rewrite_Test.class);
 
 	public JobCreator_Rewrite_Test() {
-		action = Action.rewrite;
+		action = Action.rewrite.name();
 		requestInputFilePath = "/testcases/rewrite_request.json";
 	}
 

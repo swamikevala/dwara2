@@ -9,6 +9,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TActivedevice;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.DeviceStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
@@ -33,6 +34,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	
 	@Autowired
 	private TActivedeviceDao tActivedeviceDao;
+	
 	@Autowired
 	private TapeTaskThreadPoolExecutor tapeTaskThreadPoolExecutor;	
 	
@@ -154,6 +156,10 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			tapeJob.setTapedriveUid(tapedriveUid);
 			tapeJob.setTapedriveAlreadyLoadedWithTape(tapedriveAlreadyLoadedWithTape);
 			
+			JobDetails jobDetails = new JobDetails();
+			jobDetails.setDevice_id(tapedriveDevice.getId());
+			jobDetails.setVolume_id(volume.getId());
+			job.setDetails(jobDetails);
 			
 			if(nextStepsInSeparateThread) {
 				logger.debug("Launching separate tape task thread -----------");

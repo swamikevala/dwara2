@@ -31,11 +31,11 @@ public class StorageJob {
 //	private boolean concurrentCopies;
 //
 //	// Restore stuff
-//	private int fileId;
-//	private String filePathname;
-//	private String destinationPath;
-//	private int block;
-//	private int offset;
+	private int fileId;
+	private String filePathname;
+	private String destinationPath;
+	private int block;
+	private int offset;
 //	
 //
 //	public Storagetask getStoragetask() {
@@ -133,34 +133,34 @@ public class StorageJob {
 //	public void setConcurrentCopies(boolean concurrentCopies) {
 //		this.concurrentCopies = concurrentCopies;
 //	}
-//	public int getFileId() {
-//		return fileId;
-//	}
-//	public void setFileId(int fileId) {
-//		this.fileId = fileId;
-//	}
-//	public String getFilePathname() {
-//		return filePathname;
-//	}
-//	public void setFilePathname(String filePathname) {
-//		this.filePathname = filePathname;
-//	}
-//	public String getDestinationPath() {
-//		return destinationPath;
-//	}
-//	public void setDestinationPath(String destinationPath) {
-//		this.destinationPath = destinationPath;
-//	}
-//	public int getBlock() {
-//		return block;
-//	}
-//	public void setBlock(int block) {
-//		this.block = block;
-//	}
-//	public int getOffset() {
-//		return offset;
-//	}
-//	public void setOffset(int offset) {
-//		this.offset = offset;
-//	}
+	public int getFileId() {
+		return fileId;
+	}
+	public void setFileId(int fileId) {
+		this.fileId = fileId;
+	}
+	public String getFilePathname() {
+		return filePathname;
+	}
+	public void setFilePathname(String filePathname) {
+		this.filePathname = filePathname;
+	}
+	public String getDestinationPath() {
+		return destinationPath;
+	}
+	public void setDestinationPath(String destinationPath) {
+		this.destinationPath = destinationPath;
+	}
+	public int getBlock() {
+		return block;
+	}
+	public void setBlock(int block) {
+		this.block = block;
+	}
+	public int getOffset() {
+		return offset;
+	}
+	public void setOffset(int offset) {
+		this.offset = offset;
+	}
 }

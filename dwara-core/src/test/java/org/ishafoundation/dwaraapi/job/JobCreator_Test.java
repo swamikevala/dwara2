@@ -5,6 +5,7 @@ import java.net.URL;
 import java.time.LocalDateTime;
 
 import org.apache.commons.io.FileUtils;
+import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
@@ -26,7 +27,7 @@ public class JobCreator_Test {
 
 	protected Request request = null;
 	protected String requestInputFilePath = null;
-	protected Action action = null;
+	protected String action = null;
 	
 	@Autowired
 	protected RequestDao requestDao;
@@ -37,8 +38,11 @@ public class JobCreator_Test {
 	@Before
 	public void createRequest() throws Exception {
 		request = new Request();
-		request.setActionId(action);
-		request.setDomain(getDomain(null));
+		ActionAttributeConverter actionAttributeConverter = new ActionAttributeConverter();
+		Action actionn = actionAttributeConverter.convertToEntityAttribute(action);
+		request.setActionId(actionn);
+		if(actionn == Action.restore)
+			request.setDomain(getDomain(null));
 		// request.setUser(user);
 		request.setRequestedAt(LocalDateTime.now());
 

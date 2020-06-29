@@ -5,14 +5,14 @@ import java.io.IOException;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Converter(autoApply = true)
-public class SubrequestDetailsAttributeConverter implements AttributeConverter<RequestDetails, String> {
+public class JobDetailsAttributeConverter implements AttributeConverter<JobDetails, String> {
 
 	private static ObjectMapper mapper;
 
@@ -23,33 +23,31 @@ public class SubrequestDetailsAttributeConverter implements AttributeConverter<R
 	}
 
 	@Override
-	public String convertToDatabaseColumn(RequestDetails data) {
+	public String convertToDatabaseColumn(JobDetails data) {
 		if (null == data) {
-			// You may return null if you prefer that style
-			return "{}";
+			return null;
 		}
 
 		try {
 			return mapper.writeValueAsString(data);
 
 		} catch (IOException e) {
-			throw new IllegalArgumentException("Error converting SubrequestDetails to JSON", e);
+			throw new IllegalArgumentException("Error converting JobDetails to JSON", e);
 		}
 	}
 
 	@Override
-	public RequestDetails convertToEntityAttribute(String s) {
+	public JobDetails convertToEntityAttribute(String s) {
 		if (null == s) {
-			// You may return null if you prefer that style
-			return new RequestDetails();
+			return null;
 		}
 
 		try {
-			return mapper.readValue(s, new TypeReference<RequestDetails>() {
+			return mapper.readValue(s, new TypeReference<JobDetails>() {
 			});
 
 		} catch (IOException e) {
-			throw new IllegalArgumentException("Error converting JSON to SubrequestDetails", e);
+			throw new IllegalArgumentException("Error converting JSON to JobDetails", e);
 		}
 	}
 }

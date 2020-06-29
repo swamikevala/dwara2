@@ -1,9 +1,5 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
-import java.util.Objects;
-
-import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
-
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class RequestDetails {

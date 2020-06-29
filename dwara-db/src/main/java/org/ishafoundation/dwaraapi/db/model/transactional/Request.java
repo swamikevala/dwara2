@@ -73,7 +73,7 @@ public class Request {
 	private Status status;
 	
 	@Lob
-	@Column(name="details")
+	@Column(name="details", columnDefinition="CLOB")
 	private RequestDetails details;
 	  
 	

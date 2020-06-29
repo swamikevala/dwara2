@@ -18,7 +18,7 @@ public class JobCreator_Map_Tapedrives_Test extends JobCreator_Test{
 	private static final Logger logger = LoggerFactory.getLogger(JobCreator_Map_Tapedrives_Test.class);
 
 	public JobCreator_Map_Tapedrives_Test() {
-		action = Action.map_tapedrives;
+		action = Action.map_tapedrives.name();
 	}
 	
 	@Test

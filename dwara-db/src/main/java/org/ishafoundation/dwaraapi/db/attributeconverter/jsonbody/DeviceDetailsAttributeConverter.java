@@ -25,8 +25,7 @@ public class DeviceDetailsAttributeConverter implements AttributeConverter<Devic
 	@Override
 	public String convertToDatabaseColumn(DeviceDetails data) {
 		if (null == data) {
-			// You may return null if you prefer that style
-			return "{}";
+			return null;
 		}
 
 		try {
@@ -40,8 +39,7 @@ public class DeviceDetailsAttributeConverter implements AttributeConverter<Devic
 	@Override
 	public DeviceDetails convertToEntityAttribute(String s) {
 		if (null == s) {
-			// You may return null if you prefer that style
-			return new DeviceDetails();
+			return null;
 		}
 
 		try {

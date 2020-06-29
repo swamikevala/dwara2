@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.job;
 import java.io.File;
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.Iterator;
 
 import org.dbunit.Assertion;
 import org.dbunit.database.IDatabaseConnection;
@@ -20,6 +21,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.springtestdbunit.bean.DatabaseDataSourceConnectionFactoryBean;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -50,7 +53,7 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 	private DomainUtil domainUtil;
 
 	public JobCreator_Ingest_Test() {
-		action = Action.ingest;
+		action = Action.ingest.name();
 		requestInputFilePath = "/testcases/ingest_request.json";
 	}
 	
@@ -59,7 +62,7 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 		String artifact_name_1 = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
 				+ System.currentTimeMillis();
 		String artifact_name_2 = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
-				+ System.currentTimeMillis();
+				+ (System.currentTimeMillis() + 1);
 		postBodyJson = postBodyJson.replace("<<artifact_name_1>>", artifact_name_1);
 		postBodyJson = postBodyJson.replace("<<artifact_name_2>>", artifact_name_2);
 
@@ -69,48 +72,45 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 	@Test
 	public void test_b_Ingest() {
 		try {
-			Request systemrequest = new Request();
-			systemrequest.setRequestRef(request);
-			
-			systemrequest.setActionId(request.getActionId());
-			systemrequest.setDomain(request.getDomain());
-			systemrequest.setRequestedAt(LocalDateTime.now());
-			
-
-			String artifact_name = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
-					+ System.currentTimeMillis();
-
-			RequestDetails details = new RequestDetails();
-			details.setArtifactclass_id(1);
-			details.setSourcepath("some sourcepath");
-			details.setArtifact_name(artifact_name);
-			details.setPrev_sequence_code("some prev_sequence_code");
-
-			systemrequest.setDetails(details);
-			
-			systemrequest = requestDao.save(systemrequest);
-			logger.debug("successfully tested json insert");
-
-
-			
+			JsonNode body = request.getDetails().getBody();
+			String artifactclassName = body.get("artifactclass").textValue();
 			Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager
-					.getRecord(CacheableTablesList.artifactclass.name(), "pub-video");
+					.getRecord(CacheableTablesList.artifactclass.name(), artifactclassName);
+			Domain domain = artifactclass.getDomain();
+			Iterator<JsonNode> artifacts = body.get("artifact").elements();
+			while (artifacts.hasNext()) {
+				Request systemrequest = new Request();
+				systemrequest.setRequestRef(request);
+				systemrequest.setActionId(request.getActionId());
+				systemrequest.setRequestedAt(LocalDateTime.now());
+				
+				JsonNode artifactJsonNode = (JsonNode) artifacts.next();
+				String artifact_name = artifactJsonNode.get("artifact_name").textValue();
+				
+				RequestDetails details = new RequestDetails();
+				details.setArtifactclass_id(artifactclass.getId());
+				details.setSourcepath("some sourcepath");
+				details.setArtifact_name(artifact_name);
+				details.setPrev_sequence_code("some prev_sequence_code");
 
-			logger.debug("successfully tested config table caching");
+				systemrequest.setDetails(details);
+				systemrequest = requestDao.save(systemrequest);
 
-			Artifact artifact = DomainSpecificArtifactFactory.getInstance(request.getDomain());
-			artifact.setName("10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9" + System.currentTimeMillis());
-			artifact.setArtifactclass(artifactclass);
-			domainUtil.getDomainSpecificArtifactRepository(request.getDomain()).save(artifact);
+				Artifact artifact = DomainSpecificArtifactFactory.getInstance(domain);
+				artifact.setName(artifact_name);
+				artifact.setArtifactclass(artifactclass);
+				domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
+	
+				// TODO File related changes go here...
+	
+				logger.debug("successfully tested domain specific table testing");
+				jobCreator.createJobs(systemrequest, artifact);
+				
+				IDatabaseConnection  dbUnitDbConnection = dbUnitDatabaseConnection.getObject();		// Passing the connection so its reused...
+				
+				validateDBDataForIngestJobCreation(systemrequest, dbUnitDbConnection);
+			}
 
-			// TODO File related changes go here...
-
-			logger.debug("successfully tested domain specific table testing");
-			jobCreator.createJobs(systemrequest, artifact);
-			
-			IDatabaseConnection  dbUnitDbConnection = dbUnitDatabaseConnection.getObject();		// Passing the connection so its reused...
-			
-			validateDBDataForIngestJobCreation(systemrequest, dbUnitDbConnection);
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();

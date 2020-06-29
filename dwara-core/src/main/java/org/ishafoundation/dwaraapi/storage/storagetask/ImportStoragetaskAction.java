@@ -45,6 +45,7 @@ public class ImportStoragetaskAction implements Runnable {
 			
 			updateJobCompleted(job);
 		}catch (Exception e) {
+			logger.error(e.getMessage(), e);
 			updateJobFailed(job);
 		}
 	}

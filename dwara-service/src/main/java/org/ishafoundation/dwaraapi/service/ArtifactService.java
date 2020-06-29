@@ -55,7 +55,6 @@ public class ArtifactService {
 	    	
 		    	Request request = new Request();
 				request.setActionId(Action.ingest);
-				request.setDomain(getDomain(userRequest.getDomain()));
 		    	// request.setUser(userDao.findByName(requestedBy));
 				// request.setUser(user);
 				request.setRequestedAt(LocalDateTime.now());
@@ -71,29 +70,29 @@ public class ArtifactService {
 	
 				// TODO - ??? - Artifactclass mismatch - api request passes string, while request.details has id...
 		    	String artifactclassName = userRequest.getArtifactclass();
+				Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager.getRecord(CacheableTablesList.artifactclass.name(), artifactclassName);
+				Domain domain = artifactclass.getDomain();
 		    	List<RequestParams> requestParamsList = userRequest.getArtifact();
 		    	
 		    	for (RequestParams requestParams : requestParamsList) {
 					Request systemrequest = new Request();
 					systemrequest.setRequestRef(request);
 					systemrequest.setActionId(request.getActionId());
-					systemrequest.setDomain(request.getDomain());
 					systemrequest.setUser(request.getUser());
 					systemrequest.setRequestedAt(LocalDateTime.now());
 					
 
 		    		RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetails(requestParams);
+		    		systemrequestDetails.setArtifactclass_id(artifactclass.getId()); // transitioning from global level on the request to artifact level...
 					systemrequest.setDetails(systemrequestDetails);
 					
 					systemrequest = requestDao.save(systemrequest);
 					logger.info("System request - " + systemrequest.getId());
 					
-					Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager.getRecord(CacheableTablesList.artifactclass.name(), artifactclassName);
-
-					Artifact artifact = DomainSpecificArtifactFactory.getInstance(request.getDomain());
+					Artifact artifact = DomainSpecificArtifactFactory.getInstance(domain);
 					artifact.setName(requestParams.getArtifact_name());
 					artifact.setArtifactclass(artifactclass);
-					artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(request.getDomain()).save(artifact);
+					artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
 					logger.debug(artifact.getClass().getSimpleName() + " - " + artifact.getId());
 					
 					// TODO - Pending Impl - File related changes go here...
@@ -109,13 +108,6 @@ public class ArtifactService {
 
     	return ResponseEntity.status(HttpStatus.ACCEPTED).body("Done");
     }
-    
-	private Domain getDomain(Domain domain) {
-		// to get domaindefault we might need a util... or a query...
-		if (domain == null)
-			domain = Domain.one; // defaulting to the domain configured as default...
-		return domain;
-	}
 	
 	// TODO - Unnecessary conversion happening...
 	private JsonNode getRequestDetails(UserRequest userRequest) {

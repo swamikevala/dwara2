@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.cache.util.ActionCacheUtil;
@@ -40,12 +41,15 @@ public class JobCreator {
 	@Autowired
 	private ActionCacheUtil actionCacheUtil;
 	
+	@Autowired
+	private ActionAttributeConverter actionAttributeConverter;
+	
 	// only if action is async create job should be called...
 	public List<Job> createJobs(Request request, Artifact artifact) throws Exception{
 		Action requestedBusinessAction = request.getActionId();
 
 //		org.ishafoundation.dwaraapi.db.model.master.reference.Action action = (org.ishafoundation.dwaraapi.db.model.master.reference.Action) dBMasterTablesCacheManager.getRecord(CacheableTablesList.action.name(), requestedBusinessAction.name());
-		org.ishafoundation.dwaraapi.db.model.master.reference.Action action = (org.ishafoundation.dwaraapi.db.model.master.reference.Action) actionCacheUtil.getAction(requestedBusinessAction.name());
+		org.ishafoundation.dwaraapi.db.model.master.reference.Action action = (org.ishafoundation.dwaraapi.db.model.master.reference.Action) actionCacheUtil.getAction(actionAttributeConverter.convertToDatabaseColumn(requestedBusinessAction));
 		
 		if(action == null)
 			throw new Exception("Action for " + requestedBusinessAction.name() + " not configured in DB properly. Please set it first");
@@ -85,23 +89,19 @@ public class JobCreator {
 				job.setRequest(request);				
 				job.setCreatedAt(LocalDateTime.now());
 				job.setStatus(Status.queued);
-//				
-//				JobDetails jobDetails = new JobDetails();
-//				jobDetails.setDevice_id(device_id);
-//				jobDetails.setVolume_id(volume_id);
-//				job.setDetails(jobDetails);
+
 				job = saveJob(job);
 				jobList.add(job);
 				actionelementId_Job_Map.put(actionelement.getId(), job);
 			}
 		}
 		else if(Actiontype.storage_task == action.getType()){
-			String actionName = action.getId();
-			logger.debug("\t\tcalling storage task impl " + actionName);
+			String actionName = requestedBusinessAction.name();
+			logger.debug("Calling storage task impl " + actionName);
 			AbstractStoragetaskAction actionImpl = actionMap.get(actionName);
 			
 			try {
-				jobList.addAll(actionImpl.createJobsForStoragetaskAction(request, Action.valueOf(actionName)));
+				jobList.addAll(actionImpl.createJobsForStoragetaskAction(request, requestedBusinessAction));
 			} catch (Throwable e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -24,10 +24,10 @@ public class ArtifactclassActionUserKey implements Serializable {
     
     public ArtifactclassActionUserKey(
         int artifactclassId,
-        String actionName,
+        String actionId,
         int userId) {
     	this.artifactclassId = artifactclassId;
-        this.actionId = actionName;
+        this.actionId = actionId;
         this.userId = userId;
     }
  

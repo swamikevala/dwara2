@@ -5,14 +5,14 @@ import java.io.IOException;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Converter(autoApply = true)
-public class VolumeDetailsAttributeConverter implements AttributeConverter<VolumeDetails, String> {
+public class RequestDetailsAttributeConverter implements AttributeConverter<RequestDetails, String> {
 
 	private static ObjectMapper mapper;
 
@@ -23,7 +23,7 @@ public class VolumeDetailsAttributeConverter implements AttributeConverter<Volum
 	}
 
 	@Override
-	public String convertToDatabaseColumn(VolumeDetails data) {
+	public String convertToDatabaseColumn(RequestDetails data) {
 		if (null == data) {
 			return null;
 		}
@@ -32,22 +32,22 @@ public class VolumeDetailsAttributeConverter implements AttributeConverter<Volum
 			return mapper.writeValueAsString(data);
 
 		} catch (IOException e) {
-			throw new IllegalArgumentException("Error converting VolumeDetails to JSON", e);
+			throw new IllegalArgumentException("Error converting RequestDetails to JSON", e);
 		}
 	}
 
 	@Override
-	public VolumeDetails convertToEntityAttribute(String s) {
+	public RequestDetails convertToEntityAttribute(String s) {
 		if (null == s) {
 			return null;
 		}
 
 		try {
-			return mapper.readValue(s, new TypeReference<VolumeDetails>() {
+			return mapper.readValue(s, new TypeReference<RequestDetails>() {
 			});
 
 		} catch (IOException e) {
-			throw new IllegalArgumentException("Error converting JSON to VolumeDetails", e);
+			throw new IllegalArgumentException("Error converting JSON to RequestDetails", e);
 		}
 	}
 }

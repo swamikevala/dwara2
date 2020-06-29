@@ -57,6 +57,7 @@ public class StoragetypeJobDelegator {
 		for (Job job : storageJobList) {
 			Action storagetaskAction = job.getStoragetaskActionId();
 			AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(storagetaskAction.name());
+			logger.trace("building storage job - " + job.getId() + ":" + storagetaskActionImpl.getClass().getSimpleName());
 			StorageJob storageJob = storagetaskActionImpl.buildStorageJob(job);
 			
 			Storagetype storagetype = storageJob.getVolume().getStoragetype();

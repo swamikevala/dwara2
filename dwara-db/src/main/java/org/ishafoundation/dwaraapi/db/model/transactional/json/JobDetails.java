@@ -1,10 +1,18 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
-public class JobDetails {
+import com.fasterxml.jackson.databind.JsonNode;
 
+public class JobDetails {
+	private JsonNode body;
 	private Integer volume_id;
 	private Integer device_id;
 	
+	public JsonNode getBody() {
+		return body;
+	}
+	public void setBody(JsonNode body) {
+		this.body = body;
+	}
 	public Integer getVolume_id() {
 		return volume_id;
 	}
