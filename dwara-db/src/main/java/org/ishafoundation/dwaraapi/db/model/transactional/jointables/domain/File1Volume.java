@@ -1,15 +1,10 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain;
 		
-import java.util.Objects;
-
-import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.keys.domain.FileVolumeKey;
+import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileVolumeFactory;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /*
  * 
@@ -20,50 +15,55 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * 
  * 
 */
-@Entity(name = "File1Volume")
+@Entity
+//@Table(name=File.TABLE_NAME_PREFIX + "1_volume")
 @Table(name="file1_volume")
 public class File1Volume extends FileVolume{
-
-	@EmbeddedId
-	private FileVolumeKey id;
+    static {
+//    	DomainSpecificFileVolumeFactory.register(File.TABLE_NAME_PREFIX + "1" + "_volume", File1Volume.class);
+    	DomainSpecificFileVolumeFactory.register(TABLE_NAME.replace("<<DOMAIN>>", "1"), File1Volume.class);
+    }
+	
 //
-//	@ManyToOne(fetch = FetchType.LAZY)
-//    @MapsId("file1Id")
-//	private File1 file1;
-
+//	@EmbeddedId
+//	private FileVolumeKey id;
+////
+////	@ManyToOne(fetch = FetchType.LAZY)
+////    @MapsId("file1Id")
+////	private File1 file1;
+//
 
 	public File1Volume() {
-		
+		super();
 	}
 	
 	public File1Volume(int fileId, Volume volume) {
-		this.setVolume(volume);
-		this.id = new FileVolumeKey(fileId, volume.getId());
+		super(fileId, volume);
 	}
 	
-	@JsonIgnore
-    public FileVolumeKey getId() {
-		return id;
-	}
-
-	@JsonIgnore
-	public void setId(FileVolumeKey id) {
-		this.id = id;
-	}
-
-	@Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
- 
-        if (o == null || getClass() != o.getClass())
-            return false;
- 
-        File1Volume that = (File1Volume) o;
-        return Objects.equals(id, that.id);
-    }
- 
-    @Override
-    public int hashCode() {
-    	 return Objects.hash(id);
-    }
+//	@JsonIgnore
+//    public FileVolumeKey getId() {
+//		return id;
+//	}
+//
+//	@JsonIgnore
+//	public void setId(FileVolumeKey id) {
+//		this.id = id;
+//	}
+//
+//	@Override
+//    public boolean equals(Object o) {
+//        if (this == o) return true;
+// 
+//        if (o == null || getClass() != o.getClass())
+//            return false;
+// 
+//        File1Volume that = (File1Volume) o;
+//        return Objects.equals(id, that.id);
+//    }
+// 
+//    @Override
+//    public int hashCode() {
+//    	 return Objects.hash(id);
+//    }
 }

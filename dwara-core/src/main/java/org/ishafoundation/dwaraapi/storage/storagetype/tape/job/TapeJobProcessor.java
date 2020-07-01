@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
 import org.slf4j.Logger;
@@ -37,11 +38,11 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		
 	}
 
-	@Override
-	protected void afterWrite(StoragetypeJob storageJob) {
-		// TODO Auto-generated method stub
-		logger.debug("after write hook on TapeJP");
-	}
+//	@Override
+//	protected void afterWrite(StoragetypeJob storageJob, ArchiveResponse ar) {
+//		// TODO Auto-generated method stub
+//		logger.debug("after write hook on TapeJP");
+//	}
 
 	@Override
 	protected void beforeRestore(StoragetypeJob storageJob) {

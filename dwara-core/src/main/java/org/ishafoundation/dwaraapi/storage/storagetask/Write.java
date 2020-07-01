@@ -48,11 +48,12 @@ public class Write extends AbstractStoragetaskAction{
 		String pathPrefix = null;
 		int volumegroupId = 0;
 		Volume volume = null;
+		Domain domain = null;
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.ingest) {
 			Integer artifactclassId = job.getRequest().getDetails().getArtifactclass_id();
 			Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager
 					.getRecord(CacheableTablesList.artifactclass.name(), artifactclassId);
-			Domain domain = artifactclass.getDomain();
+			domain = artifactclass.getDomain();
 			pathPrefix = artifactclass.getPath();
 			
 			Integer inputArtifactId = job.getInputArtifactId();
@@ -72,7 +73,7 @@ public class Write extends AbstractStoragetaskAction{
 //			String volumegroupUid = request.getDetails().getVolume_group_uid();
 //			Volume volume = volumeDao.findByUid(volumegroupUid);
 //			volumegroupId = volume.getId();
-			
+			// TODO domain = ??
 			String volumeUid = request.getDetails().getTo_volume_uid();
 			volume = volumeDao.findByUid(volumeUid);
 		}
@@ -80,7 +81,7 @@ public class Write extends AbstractStoragetaskAction{
 		
 		StorageJob storageJob = new StorageJob();
 		storageJob.setJob(job);
-		
+		storageJob.setDomain(domain);
 		// what needs to be ingested
 		storageJob.setArtifact(artifact);
 		storageJob.setArtifactPrefixPath(pathPrefix);

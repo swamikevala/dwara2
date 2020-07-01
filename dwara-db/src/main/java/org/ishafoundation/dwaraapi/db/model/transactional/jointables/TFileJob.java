@@ -28,7 +28,7 @@ public class TFileJob {
 //	@Column(name="file_id")
 //	private int fileId;
 	
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.LAZY) // TODO - To keep it consistent with File/Artifact should we remove FK here too
     @MapsId("jobId")
 	private Job job;
 
@@ -68,6 +68,10 @@ public class TFileJob {
 
 	public void setId(TFileJobKey id) {
 		this.id = id;
+	}
+
+	public int getFileId() {
+		return this.id.getFileId();
 	}
 
 	public Job getJob() {

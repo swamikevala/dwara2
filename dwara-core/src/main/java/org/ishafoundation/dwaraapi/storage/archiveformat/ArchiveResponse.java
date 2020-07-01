@@ -5,26 +5,26 @@ import java.util.List;
 
 public class ArchiveResponse {
 	
-	private String libraryName;
+	private String artifactName;
 	
-	private int libraryBlockNumber;
+	private int artifactBlockNumber;
 	
 	private List<ArchivedFile> archivedFileList = new ArrayList<ArchivedFile>();
 
-	public String getLibraryName() {
-		return libraryName;
+	public String getArtifactName() {
+		return artifactName;
 	}
 
-	public void setLibraryName(String libraryName) {
-		this.libraryName = libraryName;
+	public void setArtifactName(String artifactName) {
+		this.artifactName = artifactName;
 	}
 
-	public int getLibraryBlockNumber() {
-		return libraryBlockNumber;
+	public int getArtifactBlockNumber() {
+		return artifactBlockNumber;
 	}
 
-	public void setLibraryBlockNumber(int libraryBlockNumber) {
-		this.libraryBlockNumber = libraryBlockNumber;
+	public void setArtifactBlockNumber(int artifactBlockNumber) {
+		this.artifactBlockNumber = artifactBlockNumber;
 	}
 
 	public List<ArchivedFile> getArchivedFileList() {

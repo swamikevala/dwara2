@@ -1,33 +1,48 @@
 title Storage Job flow
 
 Scheduler->JobManager:manage()
-note over JobManager:lists "ready" jobs and delegates to storage/processing managers
 note over JobManager:blocks other jobs from getting dequeued if map/format jobs are lined up
-JobManager->StoragetypeJobDelegator:
+note over JobManager:lists "ready" jobs and delegates to storage/processing managers
+
+JobManager->StoragetypeJobDelegator:delegate()
 note over StoragetypeJobDelegator:Wraps Job with extra storage info
 note over StoragetypeJobDelegator:Delegates the storagetype specific jobs to respective impls to run / /ly
+
 StoragetypeJobDelegator-->AbstractStoragetypeJobManager:manage() on sep thread
 note over AbstractStoragetypeJobManager:Tape/Disk JobManagers
-AbstractStoragetypeJobManager->Tape(AbstractStoragetype)JobManager:
-note over Tape(AbstractStoragetype)JobManager:Iterates on available drives
+
+AbstractStoragetypeJobManager->Tape(AbstractStoragetype)JobManager:run()
+note over Tape(AbstractStoragetype)JobManager:If map/format unloads all tapes and calls impl
+
+
+note over Tape(AbstractStoragetype)JobManager:else iterates on available drives
 Tape(AbstractStoragetype)JobManager->TapeJobSelector:Job Selection
 TapeJobSelector->Tape(AbstractStoragetype)JobManager:Selected Job
 note over Tape(AbstractStoragetype)JobManager:Spawn a thread to process the tape job
+
 Tape(AbstractStoragetype)JobManager-->TapeTask:separate thread
-note over TapeTask:locateAndLoadTapeOnToDrive() 
-TapeTask->AbstractStoragetypeJobManager:invokeStoragetask()
-AbstractStoragetypeJobManager->AbstractStoragetask:write()/read()???
-AbstractStoragetask->AbstractStoragetypeJobProcessor:write()???
-AbstractStoragetypeJobManager->AbstractStoragetypeJobProcessor: OR ***???
+
+
+TapeTask->AbstractStoragetypeJobManager:manage()
+
+AbstractStoragetypeJobManager->AbstractStoragetypeJobProcessor:write()
 AbstractStoragetypeJobProcessor->Tape(AbstractStoragetype)JobProcessor:
+note over Tape(AbstractStoragetype)JobProcessor:locateAndLoadTapeOnToDrive()
+note over Tape(AbstractStoragetype)JobProcessor:isRightTape()
 note over Tape(AbstractStoragetype)JobProcessor:setTapeHeadPosition()
+
 Tape(AbstractStoragetype)JobProcessor->AbstractStoragetypeJobProcessor:
 note over AbstractStoragetypeJobProcessor:Chooses the storage level specific impl
+
 AbstractStoragetypeJobProcessor->IStoragelevel:
 note over IStoragelevel:Block/File
+
 Block(I)Storagelevel->BruArchiver(IArchiveformatter):write()
+
 BruArchiver(IArchiveformatter)->Block(I)Storagelevel:ArchiveResponse
+
 Block(I)Storagelevel->AbstractStoragetypeJobProcessor:
 note over AbstractStoragetypeJobProcessor:Updates Job status
 note over Tape(AbstractStoragetype)JobProcessor:Updates tape specific tables
+
 Tape(AbstractStoragetype)JobProcessor->TapeTask:End

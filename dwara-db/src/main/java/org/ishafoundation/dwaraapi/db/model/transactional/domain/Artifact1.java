@@ -10,17 +10,17 @@ import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactFacto
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
-@Entity(name="Artifact1")
-@Table(name="artifact1")//@Table(name="artifact")
+@Entity
+@Table(name=Artifact.TABLE_NAME_PREFIX + "1")
 public class Artifact1 extends Artifact{
     static {
-    	DomainSpecificArtifactFactory.register("artifact1", Artifact1.class);
+    	DomainSpecificArtifactFactory.register(TABLE_NAME_PREFIX + "1", Artifact1.class);
     }
 
 	// Causes cyclic associations 
 	// Many derived artifact1 reference the same parent artifact1 - Hence many to one
  	@ManyToOne
-	@JoinColumn(name="artifact1_ref_id")
+	@JoinColumn(name="artifact_ref_id")
 	private Artifact1 artifact1Ref;
     
 	@JsonIgnore

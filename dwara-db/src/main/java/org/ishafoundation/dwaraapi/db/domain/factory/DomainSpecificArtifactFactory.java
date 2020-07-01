@@ -20,14 +20,15 @@ public class DomainSpecificArtifactFactory {
     public static Artifact getInstance(Domain domain) {
     	DomainAttributeConverter domainAttributeConverter = new DomainAttributeConverter();
 		String domainAsString = domainAttributeConverter.convertToDatabaseColumn(domain);
-		String domainSpecificArtifactTableName = "artifact" + domainAsString;
+		String domainSpecificArtifactTableName = Artifact.TABLE_NAME_PREFIX + domainAsString;
 
         if (instances.containsKey(domainSpecificArtifactTableName)) {
         	Class<? extends Artifact> entityAsClass = instances.get(domainSpecificArtifactTableName);
         	
         	Artifact entity = null;
         	try {
-				entity = entityAsClass.newInstance();
+				//entity = entityAsClass.newInstance(); // https://stackoverflow.com/questions/195321/why-is-class-newinstance-evil
+				entity = entityAsClass.getConstructor().newInstance();
 			} catch (Exception e) {
 				// swallow it...
 			}

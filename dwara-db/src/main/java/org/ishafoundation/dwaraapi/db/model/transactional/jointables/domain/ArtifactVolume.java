@@ -12,6 +12,7 @@ import javax.persistence.MapsId;
 
 import org.ishafoundation.dwaraapi.db.keys.domain.ArtifactVolumeKey;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 
 /*
@@ -26,21 +27,14 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDet
 @MappedSuperclass
 public class ArtifactVolume {
 	
+	public static final String TABLE_NAME = Artifact.TABLE_NAME_PREFIX +"<<DOMAIN>>_volume";
+	
 	@EmbeddedId
 	private ArtifactVolumeKey id;
 
 //	@ManyToOne(fetch = FetchType.LAZY)
 //    @MapsId("artifact1Id")
 //	private Artifact1 artifact1;
-
-	public ArtifactVolume() {
-		
-	}
-	
-	public ArtifactVolume(int artifactId, Volume volume) {
-		this.setVolume(volume);
-		this.id = new ArtifactVolumeKey(artifactId, volume.getId());
-	}
 
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("volumeId")
@@ -50,6 +44,16 @@ public class ArtifactVolume {
 	@Column(name="details")
 	private ArtifactVolumeDetails details;
 
+
+	public ArtifactVolume() {
+		
+	}
+	
+	public ArtifactVolume(int artifactId, Volume volume) {
+		this.setVolume(volume);
+		this.id = new ArtifactVolumeKey(artifactId, volume.getId());
+	}
+	
 	public Volume getVolume() {
 		return volume;
 	}

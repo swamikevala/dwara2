@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
+import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class RequestDetails {
@@ -11,9 +13,11 @@ public class RequestDetails {
 	
 	private String volume_group_uid; // TODO : Schema deviation - Schema to change
 	
-	private Boolean force;
+	private Storagetype storagetype; // only needed when format possible for other storagetypes...// TODO : Schema deviation - Schema to change
 	
-	private Integer generation; // TODO : Schema deviation - Schema to change
+	private Integer generation; // Only needed for storagetype = tape // TODO : Schema deviation - Schema to change
+	
+	private Boolean force;
 	
 	// ingest stuff
 	private Integer artifactclass_id;
@@ -91,12 +95,12 @@ public class RequestDetails {
 		this.volume_group_uid = volume_group_uid;
 	}
 
-	public Boolean getForce() {
-		return force;
+	public Storagetype getStoragetype() {
+		return storagetype;
 	}
 
-	public void setForce(Boolean force) {
-		this.force = force;
+	public void setStoragetype(Storagetype storagetype) {
+		this.storagetype = storagetype;
 	}
 
 	public Integer getGeneration() {
@@ -107,6 +111,13 @@ public class RequestDetails {
 		this.generation = generation;
 	}
 
+	public Boolean getForce() {
+		return force;
+	}
+
+	public void setForce(Boolean force) {
+		this.force = force;
+	}
 	/********************  INGEST  ********************/
 	
 	public Integer getArtifactclass_id() {

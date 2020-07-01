@@ -7,19 +7,25 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileFactory;
+
 
 @Entity(name="File1")
-@Table(name="file1")
+@Table(name=File.TABLE_NAME_PREFIX + "1")
 public class File1 extends File{
-	
+    static {
+    	DomainSpecificFileFactory.register(TABLE_NAME_PREFIX + "1", File1.class);
+    }
+    
 	// Many file1s from the same artifact1
 	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name="artifact_id")
 	private Artifact1 artifact1;
 
 	@OneToOne
-	@JoinColumn(name="file1_ref_id")
+	@JoinColumn(name="file_ref_id")
 	private File1 file1Ref;
-    
+
 	public Artifact1 getArtifact1() {
 		return artifact1;
 	}
@@ -35,7 +41,30 @@ public class File1 extends File{
 	public void setFile1Ref(File1 file1Ref) {
 		this.file1Ref = file1Ref;
 	}
-
+	
+//	// Many file1s from the same artifact1
+//	@ManyToOne(fetch = FetchType.LAZY)
+//	private Artifact1 artifact;
+//
+//	@OneToOne
+//	@JoinColumn(name="file_ref_id")
+//	private File1 fileRef;
+//
+//	public Artifact1 getArtifact() {
+//		return artifact;
+//	}
+//
+//	public void setArtifact(Artifact1 artifact) {
+//		this.artifact = artifact;
+//	}
+//
+//	public File1 getFileRef() {
+//		return fileRef;
+//	}
+//
+//	public void setFileRef(File1 fileRef) {
+//		this.fileRef = fileRef;
+//	}
 	
 //	@Override
 //    public boolean equals(Object o) {

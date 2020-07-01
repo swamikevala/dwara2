@@ -3,6 +3,9 @@ package org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
+import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactVolumeFactory;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+
 /*
  * 
  * References - 
@@ -12,8 +15,20 @@ import javax.persistence.Table;
  * 
  * 
 */
-@Entity(name = "Artifact1Volume")
-@Table(name="artifact1_volume")//@Table(name="artifact_volume")
+@Entity
+@Table(name="artifact1_volume")
 public class Artifact1Volume extends ArtifactVolume{
+    static {
+    	//DomainSpecificArtifactVolumeFactory.register(Artifact.TABLE_NAME_PREFIX + "1" + "_volume", Artifact1Volume.class);
+    	DomainSpecificArtifactVolumeFactory.register(TABLE_NAME.replace("<<DOMAIN>>", "1"), Artifact1Volume.class);
+    }
+    
+    public Artifact1Volume() {
+    	super();
+	}
+    
+    public Artifact1Volume(int artifactId, Volume volume) {
+    	super(artifactId, volume);
+	}
 
 }

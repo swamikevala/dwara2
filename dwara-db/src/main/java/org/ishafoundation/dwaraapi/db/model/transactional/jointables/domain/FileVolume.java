@@ -3,12 +3,15 @@ package org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain;
 import java.time.LocalDateTime;
 
 import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.MapsId;
 
+import org.ishafoundation.dwaraapi.db.keys.domain.FileVolumeKey;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 
 /*
  * 
@@ -21,6 +24,11 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 */
 @MappedSuperclass
 public class FileVolume {
+	
+	public static final String TABLE_NAME = File.TABLE_NAME_PREFIX +"<<DOMAIN>>_volume";
+	
+	@EmbeddedId
+	private FileVolumeKey id;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("volumeId")
@@ -41,6 +49,15 @@ public class FileVolume {
 	@Column(name="deleted")
 	private boolean deleted;
 	
+	
+	public FileVolume() {
+		
+	}
+	
+	public FileVolume(int fileId, Volume volume) {
+		this.setVolume(volume);
+		this.id = new FileVolumeKey(fileId, volume.getId());
+	}
 
 	public Volume getVolume() {
 		return volume;

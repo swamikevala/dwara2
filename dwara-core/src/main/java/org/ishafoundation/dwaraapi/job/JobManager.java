@@ -5,12 +5,13 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.storage.storagetask.ImportStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator;
-import org.ishafoundation.dwaraapi.thread.executor.TaskSingleThreadExecutor;
+import org.ishafoundation.dwaraapi.thread.executor.ImportStoragetaskSingleThreadExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,8 @@ public class JobManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(JobManager.class);
 
+	@Autowired
+	private RequestDao requestDao;	
 	
 	@Autowired
 	private JobDao jobDao;	
@@ -33,27 +36,23 @@ public class JobManager {
 	private StoragetypeJobDelegator storagetypeJobDelegator;
 		
 	@Autowired
-	private TaskSingleThreadExecutor taskSingleThreadExecutor;
+	private ImportStoragetaskSingleThreadExecutor importStoragetaskSingleThreadExecutor;
 	
 	public void manageJobs() {
 		logger.trace("***** Managing jobs now *****");
 		List<Job> storageJobList = new ArrayList<Job>();
 		
-//		// Need to block all storage jobs when there is a queued/inprogress mapdrive request... 
-//		List<Status> statusList = new ArrayList<Status>();
-//		statusList.add(Status.queued);
-//		statusList.add(Status.in_progress);
-//
-//		// If a subrequest action type is mapdrive and status is queued or inprogress skip storage jobs...
-//		long tapedrivemappingRequestInFlight = subrequestDao.countByRequestActionAndStatusIn(Action.map_tapedrives, statusList); 
-//		boolean isTapedrivemappingReqInFlight = false;
-//		if(tapedrivemappingRequestInFlight > 0)
-//			isTapedrivemappingReqInFlight = true;
+		// Need to block all storage jobs from picked up for processing, when there is a queued/inprogress mapdrive/format request... 
+		List<Action> actionList = new ArrayList<Action>();
+		actionList.add(Action.map_tapedrives);
+		actionList.add(Action.format);
+
+		// If a subrequest action type is mapdrive and status is queued or inprogress skip storage jobs...
+		long blockingRequestsLinedUp = requestDao.countByActionIdInAndStatus(actionList, Status.queued);
+		long blockingRequestsInFlight = requestDao.countByActionIdInAndStatus(actionList, Status.in_progress);
 		
 		
 		List<Job> jobList = jobDao.findAllByStatusOrderById(Status.queued); // Irrespective of the tapedrivemapping or format request non storage jobs can still be dequeued, hence we are querying it all... 
-//		List<Job> tapelabelingJobListQueued = jobDao.findAllBySubrequestRequestActionAndStatus(Action.format, Status.queued);
-//		List<Job> tapelabelingJobListInProgress = jobDao.findAllBySubrequestRequestActionAndStatus(Action.format, Status.in_progress);
 		
 		if(jobList.size() > 0) {
 			for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
@@ -79,37 +78,30 @@ public class JobManager {
 //						taskJobManager_ThreadTask.setJob(job);
 //						taskSingleThreadExecutor.getExecutor().execute(taskJobManager_ThreadTask);
 					}else {
-//						if(isTapedrivemappingReqInFlight) { // there is a queued map drive request, so blocking all storage jobs until the mapdrive request is complete...
-//							logger.trace("Skipping adding to storagejob collection as Tapedrivemapping InFlight");
-//						}
-//						else if(tapelabelingJobListInProgress.size() > 0) { // if any tape labeling request already in flight
-//							logger.trace("Skipping adding to storagejob collection as Tapelabeling InFlight");
-//						}
-//						else if(tapelabelingJobListQueued.size() > 0) { // if any tape labeling request queued up
-//							// only adding the tape labeling job to the list
-//							if(job.getSubrequest().getRequest().getAction() == Action.format) {
-//								if(storageJobList.size() == 0) { // add only one job at a time. If already added skip it
-//									storageJobList.add(job);
-//									logger.trace("Added the format job to storagejob collection");
-//								}
-//								else
-//									logger.trace("Already another format job added to storagejob collection. So skipping this");
-//							}
-//						}
-//						else { // only add when no tapedrivemapping or format activity
+						if(storagetaskAction == Action.import_) {
+							ImportStoragetaskAction importStoragetaskAction = applicationContext.getBean(ImportStoragetaskAction.class);
+							importStoragetaskAction.setJob(job);
+							importStoragetaskSingleThreadExecutor.getExecutor().execute(importStoragetaskAction);
+						}
+						if(blockingRequestsInFlight > 0) { // format/tape map drive request in progress, so blocking all storage jobs until the job is complete...
+							logger.trace("Skipping adding to storagejob collection as a blocking request " + Status.in_progress.name());
+						}
+						else if(blockingRequestsLinedUp > 0) { // if any format/tape map drive request queued up
+							// only adding one blocking job to the list
+							if(job.getRequest().getActionId() == Action.format || job.getRequest().getActionId() == Action.map_tapedrives) {
+								if(storageJobList.size() == 0) { // add only one job at a time. If already added skip adding to the list and continue loop(we still need to continue so non-storage jobs are managed)...
+									storageJobList.add(job);
+									logger.trace("Added to storagejob collection");
+								}
+								else
+									logger.trace("Already another blocking job added to storagejob collection. So skipping this");
+							}
+						}
+						else { // only add when no tapedrivemapping or format activity
 							// all storage jobs need to be grouped for some optimisation...
-	
-							if(storagetaskAction == Action.import_) {
-								// call import logic and update job status... separate threadexecutor???
-								ImportStoragetaskAction importStoragetaskAction = applicationContext.getBean(ImportStoragetaskAction.class);
-								importStoragetaskAction.setJob(job);
-								taskSingleThreadExecutor.getExecutor().execute(importStoragetaskAction);
-							}
-							else {
-								storageJobList.add(job);
-								logger.trace("Added to storagejob collection");
-							}
-//						}
+							storageJobList.add(job);
+							logger.trace("Added to storagejob collection");
+						}
 					}
 				}
 			}

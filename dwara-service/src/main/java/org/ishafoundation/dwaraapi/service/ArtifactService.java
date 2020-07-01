@@ -1,19 +1,30 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.ishafoundation.dwaraapi.api.req.ingest.RequestParams;
 import org.ishafoundation.dwaraapi.api.req.ingest.UserRequest;
 import org.ishafoundation.dwaraapi.api.req.ingest.mapper.RequestToEntityObjectMapper;
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactFactory;
+import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileFactory;
 import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -89,21 +100,40 @@ public class ArtifactService {
 					systemrequest = requestDao.save(systemrequest);
 					logger.info("System request - " + systemrequest.getId());
 					
+//					Artifact derivedArtifact = DomainSpecificArtifactFactory.getInstance(domain);
+//					derivedArtifact.setName(requestParams.getArtifact_name()+"derived");
+//					derivedArtifact.setArtifactclass(artifactclass);
+//					derivedArtifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(derivedArtifact);
+					
 					Artifact artifact = DomainSpecificArtifactFactory.getInstance(domain);
 					artifact.setName(requestParams.getArtifact_name());
 					artifact.setArtifactclass(artifactclass);
 					artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
-					logger.debug(artifact.getClass().getSimpleName() + " - " + artifact.getId());
 					
-					// TODO - Pending Impl - File related changes go here...
-
+//					Method artifactRefSetter = artifact.getClass().getMethod("set" + artifact.getClass().getSimpleName() + "Ref", Artifact.class);
+//					artifactRefSetter.invoke(artifact, derivedArtifact);
+					
+					logger.info(artifact.getClass().getSimpleName() + " - " + artifact.getId());
+					
+					// TODO - Hardcoding
+					String readyToIngestPath =  "C:\\data\\ingested";
+					java.io.File libraryFileInStagingDir = new java.io.File(readyToIngestPath + java.io.File.separator + requestParams.getArtifact_name());
+			    	String junkFilesStagedDirName = ".dwara-ignored";//configuration.getJunkFilesStagedDirName(); 
+//			    	if(libraryFileInStagingDir.isDirectory())
+//			    		junkFilesMover.moveJunkFilesFromMediaLibrary(libraryFileInStagingDir.getAbsolutePath());
+			    	
+			    	Collection<java.io.File> libraryFileAndDirsList = getFileList(libraryFileInStagingDir, junkFilesStagedDirName);
+			    	int fileCount = libraryFileAndDirsList.size();
+			        long size = FileUtils.sizeOf(libraryFileInStagingDir);
+					
+			        createFiles(readyToIngestPath, domain, artifact, libraryFileAndDirsList);
 					
 					jobCreator.createJobs(systemrequest, artifact);
 				}
 
 			
 		}catch (Exception e) {
-
+			e.printStackTrace();
 		}
 
     	return ResponseEntity.status(HttpStatus.ACCEPTED).body("Done");
@@ -120,6 +150,49 @@ public class ArtifactService {
 			e1.printStackTrace();
 		}
 		return postBodyJson;
+	}
+	
+	private void createFiles(String pathPrefix, Domain domain, Artifact artifact, Collection<java.io.File> libraryFileAndDirsList) throws Exception {
+	
+	    List<File> toBeAddedFileTableEntries = new ArrayList<File>(); 
+	    for (Iterator<java.io.File> iterator = libraryFileAndDirsList.iterator(); iterator.hasNext();) {
+			
+			java.io.File file = (java.io.File) iterator.next();
+			String filePath = file.getAbsolutePath();
+			filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); //filePath = filePath.replace(stagingSrcDirRoot + File1.separator, "");
+			
+			File nthFileRowToBeInserted = DomainSpecificFileFactory.getInstance(domain);
+			nthFileRowToBeInserted.setPathname(filePath);
+			
+			//nthFileRowToBeInserted.setArtifact(artifact);
+			Method fileArtifactSetter = nthFileRowToBeInserted.getClass().getMethod("set" + artifact.getClass().getSimpleName(), artifact.getClass());
+			fileArtifactSetter.invoke(nthFileRowToBeInserted, artifact);
+			
+//			if(file.isFile())
+//				nthFileRowToBeInserted.setChecksum(CRCUtil.getCrc(file));
+			nthFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
+			toBeAddedFileTableEntries.add(nthFileRowToBeInserted);			
+		}
+	    
+	    if(toBeAddedFileTableEntries.size() > 0) {
+	    	logger.debug("DB File rows Creation");   
+	    	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+	    	domainSpecificFileRepository.saveAll(toBeAddedFileTableEntries);
+	    	logger.debug("DB File rows Creation - Success");
+	    }
+	}
+	
+    private Collection<java.io.File> getFileList(java.io.File libraryFileInStagingDir, String junkFilesStagedDirName) {
+        IOFileFilter dirFilter = null;
+        Collection<java.io.File> libraryFileAndDirsList = null;
+	    if(libraryFileInStagingDir.isDirectory()) {
+			dirFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(junkFilesStagedDirName, null));
+	    	libraryFileAndDirsList = FileUtils.listFilesAndDirs(libraryFileInStagingDir, TrueFileFilter.INSTANCE, dirFilter);
+	    }else {
+	    	libraryFileAndDirsList = new ArrayList<java.io.File>();
+	    	libraryFileAndDirsList.add(libraryFileInStagingDir);
+	    }
+	    return libraryFileAndDirsList;
 	}
 }
 

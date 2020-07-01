@@ -36,7 +36,7 @@ public class JobCreator {
 	private ActionelementDao actionelementDao;
 		
 	@Autowired
-	private Map<String, AbstractStoragetaskAction> actionMap;
+	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
 
 	@Autowired
 	private ActionCacheUtil actionCacheUtil;
@@ -98,7 +98,7 @@ public class JobCreator {
 		else if(Actiontype.storage_task == action.getType()){
 			String actionName = requestedBusinessAction.name();
 			logger.debug("Calling storage task impl " + actionName);
-			AbstractStoragetaskAction actionImpl = actionMap.get(actionName);
+			AbstractStoragetaskAction actionImpl = storagetaskActionMap.get(actionName);
 			
 			try {
 				jobList.addAll(actionImpl.createJobsForStoragetaskAction(request, requestedBusinessAction));

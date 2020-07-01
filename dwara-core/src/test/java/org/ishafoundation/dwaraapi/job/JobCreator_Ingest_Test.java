@@ -59,10 +59,10 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 	
 	@Override
 	protected String fillPlaceHolders(String postBodyJson) {
-		String artifact_name_1 = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
+		String artifact_name_1 = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9" + "_"
 				+ System.currentTimeMillis();
-		String artifact_name_2 = "10058_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9"
-				+ (System.currentTimeMillis() + 1);
+		String artifact_name_2 = "Shiva-Shambho_Everywhere_18-Nov-1980_Drone" + "_"
+				+ System.currentTimeMillis();
 		postBodyJson = postBodyJson.replace("<<artifact_name_1>>", artifact_name_1);
 		postBodyJson = postBodyJson.replace("<<artifact_name_2>>", artifact_name_2);
 
@@ -102,6 +102,8 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 				domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
 	
 				// TODO File related changes go here...
+				
+				
 	
 				logger.debug("successfully tested domain specific table testing");
 				jobCreator.createJobs(systemrequest, artifact);

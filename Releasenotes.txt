@@ -9,4 +9,10 @@
 		https://bitbucket.org/ishafoundation/dwara2/src/development/src/test/java/org/ishafoundation/dwaraapi/dbunittests/storage/storagetype/tape/format/FormatTests.java
 		https://bitbucket.org/ishafoundation/dwara2/src/development/src/test/java/org/ishafoundation/dwaraapi/dbunittests/storage/storagetype/tape/library/TapeDriveMapperTests.java 
 	
-	
+29th Jun - More fixes
+
+1st July - FileVolume and ArtifactVolume Domain specific dynamism
+	upgrade steps
+		drop database
+		create database
+		run the dwara-master sql script again

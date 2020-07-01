@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.storage.model;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 
 /**
@@ -16,6 +17,7 @@ public class StorageJob {
 //	private Storagetype storagetype;
 	private Volume volume; // Archive Operation determines choosing the volume - For Ingest a volume from pool of volumes fitting library size - Restore based on fileId and copyNumber...
 
+	private Domain domain;
 	// Ingest stuff
 	private Artifact artifact;
 	private String artifactName;
@@ -79,6 +81,12 @@ public class StorageJob {
 	}
 	public void setVolume(Volume volume) {
 		this.volume = volume;
+	}
+	public Domain getDomain() {
+		return domain;
+	}
+	public void setDomain(Domain domain) {
+		this.domain = domain;
 	}
 	public Artifact getArtifact() {
 		return artifact;
