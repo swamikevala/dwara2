@@ -5,10 +5,15 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,7 +31,21 @@ public class DaoTests{
 	@Autowired
 	private JobDao jobDao;
 	
+	@Autowired
+	private DomainUtil domainUtil;
+	
 	@Test
+	public void testFileVolume() {
+		Volume vol = getVolume(Domain.one, 60, 3);
+		System.out.println(vol.getUid());
+	}
+	
+	private Volume getVolume(Domain domain, int fileIdToBeRestored, Integer locationId) {
+    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
+    	FileVolume fileVolume = domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeLocationId(fileIdToBeRestored, locationId);
+		return fileVolume.getVolume();
+	}
+	
 	public void testRequestDao() {
 		List<Status> statusList = new ArrayList<Status>();
 		statusList.add(Status.queued);

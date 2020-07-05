@@ -4,4 +4,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.File
 
 public interface File1VolumeDao extends FileVolumeRepository<File1Volume>{
 	
+
+
 }

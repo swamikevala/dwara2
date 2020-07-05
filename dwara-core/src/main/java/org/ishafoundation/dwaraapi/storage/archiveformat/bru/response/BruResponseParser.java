@@ -125,13 +125,31 @@ public class BruResponseParser {
 	
 	static Logger logger = LoggerFactory.getLogger(BruResponseParser.class);
 	
-	public BruResponse parseBruResponse(String bruResponse){
-		BruResponse br = new BruResponse();
-		Scanner scanner = new Scanner(bruResponse);
+	public BruResponse parseBruResponse(String bruCommandResponse){
+		BruResponse bruResponse = new BruResponse();
+		Scanner scanner = new Scanner(bruCommandResponse);
 		while (scanner.hasNextLine()) {
 			String line = scanner.nextLine().trim();
 
-			String fileAndAttributesRegEx = "VL:(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)"; // VL:c|75008|1|1105188303|20154|99999_Daily-Mystic-Quote_Le-Meridien-Chennai_21-Dec-2019_FS7_4K/Clip/LMA122789_01.MP4
+			// Top stuff
+			String archiveIdRegEx = "archive ID = (.*)";
+			String bufferSizeRegEx = "buffer size = (.*) bytes"; 
+
+			// For each file
+			
+			// VL:c|75008|1|1105188303|20154|99999_Daily-Mystic-Quote_Le-Meridien-Chennai_21-Dec-2019_FS7_4K/Clip/LMA122789_01.MP4
+			// VL:<<Mode>>|<<archive running total data KB>>|?|<<file size>>|<<volume start block>>|<<file path name>>
+			// c - copy/write mode
+			// 75008 - running total of the amount of space used in kilobytes thus far - excludes the current file size - start of the
+			// 1 - ? It shows always 1 - Volume Id perhaps???
+			// 1105188303 - file size in bytes
+			// 20154 - Volume start block of the file
+			// 99999_Daily-Mystic-Quote_Le-Meridien-Chennai_21-Dec-2019_FS7_4K/Clip/LMA122789_01.MP4 - file path name
+			
+			String fileAndAttributesRegEx = "VL:(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)\\|(.[^\\|]*)"; 
+			
+			
+			// Execution summary stuff
 			String errorDescriptionRegEx = "bru: \\[([A-Z][0-9]{3})\\](.*)";
 			String startedRegEx = "Started: *(.*)";
 			String completedRegEx = "Completed: *(.*)";
@@ -145,6 +163,8 @@ public class BruResponseParser {
 			String readErrorsRegEx = "Read errors: *([0-9]*) soft,  ([0-9]*) hard";
 			String checksumErrorsRegEx = "Checksum errors: *([0-9]*)";
 
+			Pattern archiveIdRegExPattern = Pattern.compile(archiveIdRegEx);
+			Pattern bufferSizeRegExPattern = Pattern.compile(bufferSizeRegEx);
 			Pattern fileAndAttributesRegExPattern = Pattern.compile(fileAndAttributesRegEx);
 			Pattern errorDescriptionRegExPattern = Pattern.compile(errorDescriptionRegEx);
 			Pattern startedRegExPattern = Pattern.compile(startedRegEx);
@@ -159,6 +179,8 @@ public class BruResponseParser {
 			Pattern readErrorsRegExPattern = Pattern.compile(readErrorsRegEx);
 			Pattern checksumErrorsRegExPattern = Pattern.compile(checksumErrorsRegEx);
 
+			Matcher archiveIdRegExMatcher = archiveIdRegExPattern.matcher(line);
+			Matcher bufferSizeRegExMatcher = bufferSizeRegExPattern.matcher(line);
 			Matcher fileAndAttributesRegExMatcher = fileAndAttributesRegExPattern.matcher(line);
 			Matcher errorDescriptionRegExMatcher = errorDescriptionRegExPattern.matcher(line);
 			Matcher startedRegExMatcher = startedRegExPattern.matcher(line);
@@ -174,44 +196,51 @@ public class BruResponseParser {
 			Matcher checksumErrorsRegExMatcher = checksumErrorsRegExPattern.matcher(line);
 
 
-			if(fileAndAttributesRegExMatcher.matches()) {
+			if(archiveIdRegExMatcher.matches()) {
+				bruResponse.setArchiveId(archiveIdRegExMatcher.group(1));
+			}
+			else if(bufferSizeRegExMatcher.matches()) {
+				//bruResponse.setBufferSize(Integer.parseInt(bufferSizeRegExMatcher.group(1)));
+			}
+			else if(fileAndAttributesRegExMatcher.matches()) {
 				String operationType = fileAndAttributesRegExMatcher.group(1);
-				br.setOperationType(operationType);
+				bruResponse.setOperationType(operationType);
 				org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components.File file = new org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components.File();
 
-				file.setFileName(fileAndAttributesRegExMatcher.group(6));
-				file.setBlockNumber(Integer.parseInt(fileAndAttributesRegExMatcher.group(5)));
-				br.getFileList().add(file);
+				file.setFilePathName(fileAndAttributesRegExMatcher.group(6));
+				file.setArchiveRunningTotalDataInKB(Integer.parseInt(fileAndAttributesRegExMatcher.group(2)));
+				file.setVolumeBlockOffset(Integer.parseInt(fileAndAttributesRegExMatcher.group(5)));
+				bruResponse.getFileList().add(file);
 			}
 			else if(errorDescriptionRegExMatcher.matches()) {
 				ErrorDescription e = new ErrorDescription();
 				e.setCode(errorDescriptionRegExMatcher.group(1));
 				e.setDesc(errorDescriptionRegExMatcher.group(2));
-				br.getErrorDescriptionList().add(e);
+				bruResponse.getErrorDescriptionList().add(e);
 			}
 			else if(startedRegExMatcher.matches()) {
 				String startedAtAsString = startedRegExMatcher.group(1);
 				long startedAt = parseDate(startedAtAsString);
-				br.setStartedAt(startedAt);
+				bruResponse.setStartedAt(startedAt);
 			}
 			else if(completedRegExMatcher.matches()) {
 				String completedAtAsString = completedRegExMatcher.group(1);
-				br.setCompletedAt(parseDate(completedAtAsString));
+				bruResponse.setCompletedAt(parseDate(completedAtAsString));
 			}
 			else if(messagesRegExMatcher.matches()) {
-				br.setWarningCnt(Integer.parseInt(messagesRegExMatcher.group(1)));
-				br.setErrorCnt(Integer.parseInt(messagesRegExMatcher.group(2)));
+				bruResponse.setWarningCnt(Integer.parseInt(messagesRegExMatcher.group(1)));
+				bruResponse.setErrorCnt(Integer.parseInt(messagesRegExMatcher.group(2)));
 			}
-			else if(StringUtils.equals(br.getOperationType(),"c") && blocksWrittenRegExMatcher.matches()) {
+			else if(StringUtils.equals(bruResponse.getOperationType(),"c") && blocksWrittenRegExMatcher.matches()) {
 				int archiveBlocks = Integer.parseInt(blocksWrittenRegExMatcher.group(1));
 				if(archiveBlocks != 0) {
 					int archiveSize = Integer.parseInt(blocksWrittenRegExMatcher.group(2));
 					
-					br.setArchiveBlocks(archiveBlocks);
-					br.setArchiveSize(archiveSize);
+					bruResponse.setArchiveBlocks(archiveBlocks);
+					bruResponse.setArchiveSize(archiveSize);
 				}
 			}
-			else if(StringUtils.equals(br.getOperationType(),"c") && filesWrittenRegExMatcher.matches()) {
+			else if(StringUtils.equals(bruResponse.getOperationType(),"c") && filesWrittenRegExMatcher.matches()) {
 				int filesWritten = Integer.parseInt(filesWrittenRegExMatcher.group(1));
 				if(filesWritten != 0) {
 					int regularFilesCnt = Integer.parseInt(filesWrittenRegExMatcher.group(2));
@@ -221,19 +250,19 @@ public class BruResponseParser {
 					fp.setTotalNoOfFiles(filesWritten);
 					fp.setRegularCnt(regularFilesCnt);
 					fp.setOtherCnt(otherFilesCnt);
-					br.setFilesProcessed(fp);
+					bruResponse.setFilesProcessed(fp);
 				}
 			}
-			else if(StringUtils.equals(br.getOperationType(),"x") && blocksReadRegExMatcher.matches()) {
+			else if(StringUtils.equals(bruResponse.getOperationType(),"x") && blocksReadRegExMatcher.matches()) {
 				int archiveBlocks = Integer.parseInt(blocksReadRegExMatcher.group(1));
 				if(archiveBlocks != 0) {
 					int archiveSize = Integer.parseInt(blocksReadRegExMatcher.group(2));
 					
-					br.setArchiveBlocks(archiveBlocks);
-					br.setArchiveSize(archiveSize);
+					bruResponse.setArchiveBlocks(archiveBlocks);
+					bruResponse.setArchiveSize(archiveSize);
 				}				
 			}
-			else if(StringUtils.equals(br.getOperationType(),"x") && filesReadRegExMatcher.matches()) {
+			else if(StringUtils.equals(bruResponse.getOperationType(),"x") && filesReadRegExMatcher.matches()) {
 				int filesRead = Integer.parseInt(filesReadRegExMatcher.group(1));
 				if(filesRead != 0) {
 					int regularFilesCnt = Integer.parseInt(filesReadRegExMatcher.group(2));
@@ -243,32 +272,32 @@ public class BruResponseParser {
 					fp.setTotalNoOfFiles(filesRead);
 					fp.setRegularCnt(regularFilesCnt);
 					fp.setOtherCnt(otherFilesCnt);
-					br.setFilesProcessed(fp);
+					bruResponse.setFilesProcessed(fp);
 				}
 			}
 			else if(filesSkippedRegExMatcher.matches()) {
 				int filesSkipped = Integer.parseInt(filesSkippedRegExMatcher.group(1));
-				br.setFilesSkipped(filesSkipped);
+				bruResponse.setFilesSkipped(filesSkipped);
 			}
-			else if(StringUtils.equals(br.getOperationType(),"c") && writeErrorsRegExMatcher.matches()) {
+			else if(StringUtils.equals(bruResponse.getOperationType(),"c") && writeErrorsRegExMatcher.matches()) {
 				int softErrorCnt = Integer.parseInt(writeErrorsRegExMatcher.group(1));
 				int hardErrorCnt = Integer.parseInt(writeErrorsRegExMatcher.group(2));
-				br.setSoftErrorCnt(softErrorCnt);
-				br.setHardErrorCnt(hardErrorCnt);
+				bruResponse.setSoftErrorCnt(softErrorCnt);
+				bruResponse.setHardErrorCnt(hardErrorCnt);
 			}
-			else if(StringUtils.equals(br.getOperationType(),"x") && readErrorsRegExMatcher.matches()) {
+			else if(StringUtils.equals(bruResponse.getOperationType(),"x") && readErrorsRegExMatcher.matches()) {
 				int softErrorCnt = Integer.parseInt(readErrorsRegExMatcher.group(1));
 				int hardErrorCnt = Integer.parseInt(readErrorsRegExMatcher.group(2));
-				br.setSoftErrorCnt(softErrorCnt);
-				br.setHardErrorCnt(hardErrorCnt);				
+				bruResponse.setSoftErrorCnt(softErrorCnt);
+				bruResponse.setHardErrorCnt(hardErrorCnt);				
 			}
 			else if(checksumErrorsRegExMatcher.matches()) {
 				int checksumErrorCnt = Integer.parseInt(checksumErrorsRegExMatcher.group(1));
-				br.setChecksumErrorCnt(checksumErrorCnt);
+				bruResponse.setChecksumErrorCnt(checksumErrorCnt);
 			}
 		}
 		scanner.close();
-		return br;
+		return bruResponse;
 	}
 	
 	private long parseDate(String dateToBeParsed) {

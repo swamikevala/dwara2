@@ -1,23 +1,32 @@
 package org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components;
 
 public class File {
-	private int blockNumber;
-	private String fileName;
-	
-	public int getBlockNumber() {
-		return blockNumber;
+
+	private String filePathName;
+	private int archiveRunningTotalDataInKB; //running total of the amount of space used in kilobytes thus far - excludes the current file size - start of the 
+	private int volumeBlockOffset;
+
+
+	public String getFilePathName() {
+		return filePathName;
 	}
-	public void setBlockNumber(int blockNumber) {
-		this.blockNumber = blockNumber;
+	public void setFilePathName(String filePathName) {
+		this.filePathName = filePathName;
 	}
-	public String getFileName() {
-		return fileName;
+	public int getArchiveRunningTotalDataInKB() {
+		return archiveRunningTotalDataInKB;
 	}
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
+	public void setArchiveRunningTotalDataInKB(int archiveRunningTotalDataInKB) {
+		this.archiveRunningTotalDataInKB = archiveRunningTotalDataInKB;
+	}
+	public int getVolumeBlockOffset() {
+		return volumeBlockOffset;
+	}
+	public void setVolumeBlockOffset(int volumeBlockOffset) {
+		this.volumeBlockOffset = volumeBlockOffset;
 	}
 	@Override
 	public String toString() {
-		return "blockNumber : " + blockNumber + " fileName : " + fileName;
+		return "filePathName : " + filePathName + " archiveRunningTotalDataInKB : " + archiveRunningTotalDataInKB + " volumeBlockOffset : " + volumeBlockOffset;
 	}
 }

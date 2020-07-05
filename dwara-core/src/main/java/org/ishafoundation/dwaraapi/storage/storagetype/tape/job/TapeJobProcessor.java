@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
+import org.ishafoundation.dwaraapi.storage.model.TapeJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,15 +27,14 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //
 //	
 	@Override
-	protected void beforeWrite(StoragetypeJob storageJob) {
-		logger.debug("before write hook on TapeJP");
-//		// TODO Auto-generated method stub
-//		String tapeLibraryName = storageJob.getTapeLibraryName();
-//		int driveElementAddress = storageJob.getDriveNo();
-//		
-//		logger.trace("Now positioning tape head for writing");
+	protected void beforeWrite(StoragetypeJob storagetypeJob) {
+		TapeJob tapeJob = (TapeJob) storagetypeJob;
+		String tapeLibraryName = tapeJob.getTapeLibraryName();
+		int driveElementAddress = tapeJob.getTapedriveNo();
+		
+		logger.trace("Now positioning tape head for writing");
 //		tapeDriveManager.setTapeHeadPositionForWriting(tapeLibraryName, driveElementAddress); // FIXME - check on this, using eod, bsf 1 and fsf 1
-//		logger.trace("Tape Head positioned for writing");
+		logger.trace("Tape Head positioned for writing");
 		
 	}
 
@@ -45,10 +45,14 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //	}
 
 	@Override
-	protected void beforeRestore(StoragetypeJob storageJob) {
-		// TODO Auto-generated method stub
+	protected void beforeRestore(StoragetypeJob storagetypeJob) {
+		TapeJob tapeJob = (TapeJob) storagetypeJob;
+		String tapeLibraryName = tapeJob.getTapeLibraryName();
+		int driveElementAddress = tapeJob.getTapedriveNo();
+		int blockNumberToSeek = tapeJob.getStorageJob().getVolumeBlock();
 		
-//		tapeDriveManager.setTapeHeadPositionForReading(tapeLibraryName, driveElementAddress); // FIXME - check on this, using eod, bsf 1 and fsf 1
+//		tapeDriveManager.setTapeHeadPositionForReading(tapeLibraryName, driveElementAddress, blockNumberToSeek); // FIXME - check on this, using eod, bsf 1 and fsf 1
+		logger.trace("Tape Head positioned for reading");
 	}
 
 

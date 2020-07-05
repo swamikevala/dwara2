@@ -11,7 +11,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
-import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
+import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
@@ -48,9 +48,9 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 //	
 //	protected abstract StorageTypeJob selectStorageTypeJob();
 	
-	protected ArchiveResponse manage(StoragetypeJob storagetypeJob){
+	protected StorageResponse manage(StoragetypeJob storagetypeJob){
 		Job job = null;
-		ArchiveResponse archiveResponse = null;
+		StorageResponse storageResponse = null;
 		try {
 			job = storagetypeJob.getStorageJob().getJob();
 			updateJobInProgress(job);
@@ -60,15 +60,15 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 			Storagetype storagetype = storagetypeJob.getStorageJob().getVolume().getStoragetype();
 			AbstractStoragetypeJobProcessor storagetypeJobProcessorImpl = storagetypeJobProcessorMap.get(storagetype.name() + DwaraConstants.STORAGETYPE_JOBPROCESSOR_SUFFIX);
 			Method storageTaskMethod = storagetypeJobProcessorImpl.getClass().getMethod(storagetaskAction.name(), StoragetypeJob.class);
-			archiveResponse = (ArchiveResponse) storageTaskMethod.invoke(storagetypeJobProcessorImpl, storagetypeJob);
+			storageResponse = (StorageResponse) storageTaskMethod.invoke(storagetypeJobProcessorImpl, storagetypeJob);
 			
 			updateJobCompleted(job);
 		}catch (Throwable e) {
 			updateJobFailed(job);
 			// updateError Table;
-			logger.error(e.getMessage());
+			logger.error(e.getMessage(), e);
 		}
-		return archiveResponse;
+		return storageResponse;
 	}
 
 	protected Job updateJobInProgress(Job job) {

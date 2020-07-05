@@ -55,16 +55,12 @@ public class FileVolume {
 	}
 	
 	public FileVolume(int fileId, Volume volume) {
-		this.setVolume(volume);
+		this.volume = volume;
 		this.id = new FileVolumeKey(fileId, volume.getId());
 	}
 
 	public Volume getVolume() {
 		return volume;
-	}
-
-	public void setVolume(Volume volume) {
-		this.volume = volume;
 	}
 
 	public Integer getVolumeBlock() {

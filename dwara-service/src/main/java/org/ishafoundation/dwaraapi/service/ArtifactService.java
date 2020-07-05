@@ -175,10 +175,9 @@ public class ArtifactService {
 		}
 	    
 	    if(toBeAddedFileTableEntries.size() > 0) {
-	    	logger.debug("DB File rows Creation");   
 	    	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 	    	domainSpecificFileRepository.saveAll(toBeAddedFileTableEntries);
-	    	logger.debug("DB File rows Creation - Success");
+	    	logger.info("File records created successfully");
 	    }
 	}
 	

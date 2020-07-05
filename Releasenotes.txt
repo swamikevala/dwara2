@@ -1,3 +1,22 @@
+6th July - Verify and restore - WIP
+	
+5th July - FileVolume and ArtifactVolume block fixes, some DB configuration updates
+	Use mvn clean install -DskipTests instead of using the skiptests checkbox...
+	upgrade steps
+		drop database
+		create database
+		run the dwara-master sql script again
+	Execute the dwara-service JobCreator/JobManager tests and check if the filevolume and artifact volume blocks are ok for both tar and bru
+	Log extractor - Dev tool
+	
+1st July - FileVolume and ArtifactVolume Domain specific dynamism
+	upgrade steps
+		drop database
+		create database
+		run the dwara-master sql script again
+		
+29th Jun - More fixes
+
 27th and 28th Jun
 	schema changes
 		drop database
@@ -7,12 +26,4 @@
 		org.ishafoundation.dwaraapi.job.JobCreator_Ingest_Test.assertJobTable() has some sample DBUnit integration. 
 		More DBunit integration examples can be found in the other branch
 		https://bitbucket.org/ishafoundation/dwara2/src/development/src/test/java/org/ishafoundation/dwaraapi/dbunittests/storage/storagetype/tape/format/FormatTests.java
-		https://bitbucket.org/ishafoundation/dwara2/src/development/src/test/java/org/ishafoundation/dwaraapi/dbunittests/storage/storagetype/tape/library/TapeDriveMapperTests.java 
-	
-29th Jun - More fixes
-
-1st July - FileVolume and ArtifactVolume Domain specific dynamism
-	upgrade steps
-		drop database
-		create database
-		run the dwara-master sql script again
+		https://bitbucket.org/ishafoundation/dwara2/src/development/src/test/java/org/ishafoundation/dwaraapi/dbunittests/storage/storagetype/tape/library/TapeDriveMapperTests.java

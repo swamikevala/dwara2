@@ -8,6 +8,9 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepositor
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
+import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactVolumeFactory;
+import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileVolumeFactory;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
@@ -84,6 +87,10 @@ public class DomainUtil {
 		ArtifactVolume artifactVolume = (ArtifactVolume) getDomainSpecificArtifactVolumeRepository(domain).findById(artifactVolumeId).get();
 		return artifactVolume;
 	}
+
+	public ArtifactVolume getDomainSpecificArtifactVolumeInstance(Domain domain, int artifactId, Volume volume) {
+		return DomainSpecificArtifactVolumeFactory.getInstance(domain, artifactId, volume);	
+	}
 	
 	@SuppressWarnings("rawtypes")
 	public FileVolumeRepository getDomainSpecificFileVolumeRepository(Domain domain) {
@@ -98,12 +105,14 @@ public class DomainUtil {
 		return fileVolume;
 	}
 	
+	public FileVolume getDomainSpecificFileVolumeInstance(Domain domain, int fileId, Volume volume) {
+		return DomainSpecificFileVolumeFactory.getInstance(domain, fileId, volume);
+	}
 	private String getDomainName(Domain domain) {
 		String domainName = null;
 		if(domain == null) { // If domain is not available default it
 			org.ishafoundation.dwaraapi.db.model.master.configuration.Domain domainFromDB = domainDao.findByDefaultTrue();
 			domainName = domainFromDB.getName();
-
 		}
 		else {
 			domainName = domainAttributeConverter.convertToDatabaseColumn(domain);

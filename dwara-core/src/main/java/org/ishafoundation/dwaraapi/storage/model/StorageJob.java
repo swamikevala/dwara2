@@ -4,7 +4,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 
 /**
  * Wraps the Job with more Storagetask related info like volume to be used  
@@ -36,8 +35,8 @@ public class StorageJob {
 	private int fileId;
 	private String filePathname;
 	private String destinationPath;
-	private int block;
-	private int offset;
+	private Integer volumeBlock;
+	private Integer archiveBlock;
 //	
 //
 //	public Storagetask getStoragetask() {
@@ -159,16 +158,16 @@ public class StorageJob {
 	public void setDestinationPath(String destinationPath) {
 		this.destinationPath = destinationPath;
 	}
-	public int getBlock() {
-		return block;
+	public Integer getVolumeBlock() {
+		return volumeBlock;
 	}
-	public void setBlock(int block) {
-		this.block = block;
+	public void setVolumeBlock(Integer volumeBlock) {
+		this.volumeBlock = volumeBlock;
 	}
-	public int getOffset() {
-		return offset;
+	public Integer getArchiveBlock() {
+		return archiveBlock;
 	}
-	public void setOffset(int offset) {
-		this.offset = offset;
+	public void setArchiveBlock(Integer archiveBlock) {
+		this.archiveBlock = archiveBlock;
 	}
 }

@@ -1,24 +1,30 @@
 package org.ishafoundation.dwaraapi.storage.archiveformat;
 
 public class ArchivedFile {
-	private int blockNumber;
 	private String filePathName;
+	private int archiveBlockOffset;
+	private Integer volumeBlockOffset;
 	
-	public int getBlockNumber() {
-		return blockNumber;
-	}
-	public void setBlockNumber(int blockNumber) {
-		this.blockNumber = blockNumber;
-	}
 	public String getFilePathName() {
 		return filePathName;
 	}
 	public void setFilePathName(String filePathName) {
 		this.filePathName = filePathName;
 	}
-
+	public int getArchiveBlockOffset() {
+		return archiveBlockOffset;
+	}
+	public void setArchiveBlockOffset(int archiveBlockOffset) {
+		this.archiveBlockOffset = archiveBlockOffset;
+	}
+	public Integer getVolumeBlockOffset() {
+		return volumeBlockOffset;
+	}
+	public void setVolumeBlockOffset(Integer volumeBlockOffset) {
+		this.volumeBlockOffset = volumeBlockOffset;
+	}
 	@Override
 	public String toString() {
-		return "blockNumber : " + blockNumber + " filePathName : " + filePathName;
+		return "filePathName : " + filePathName + " archiveBlockOffset : " + archiveBlockOffset + " volumeBlockOffset : " + volumeBlockOffset;
 	}
 }

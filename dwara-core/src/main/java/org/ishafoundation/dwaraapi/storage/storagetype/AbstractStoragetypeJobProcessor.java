@@ -4,10 +4,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
@@ -24,12 +24,12 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDet
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
+import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
 import org.ishafoundation.dwaraapi.storage.storagelevel.IStoragelevel;
-import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,10 +40,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private Map<String, IStoragelevel> storagelevelMap;
-	
-	@Autowired
-	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
-	
+		
 	@Autowired
 	private DomainUtil domainUtil;
 
@@ -54,17 +51,17 @@ public abstract class AbstractStoragetypeJobProcessor {
     protected void beforeFormat(StoragetypeJob storagetypeJob) {}
     
 	//public ArchiveResponse restore(StorageJob storagetypeJob) throws Throwable{
-	public ArchiveResponse format(StoragetypeJob storagetypeJob) throws Throwable{
-		ArchiveResponse archiveResponse = null;
+	public StorageResponse format(StoragetypeJob storagetypeJob) throws Throwable{
+		StorageResponse storageResponse = null;
     	beforeFormat(storagetypeJob);
     	
     	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
-    	archiveResponse = iStoragelevel.format(storagetypeJob);
+    	storageResponse = iStoragelevel.format(storagetypeJob);
     	
 //    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storagetypeJob);
 //    	ar = storageFormatter.restore(storagetypeJob);
     	afterFormat(storagetypeJob);
-    	return archiveResponse; 
+    	return storageResponse; 
    	
     }
 	
@@ -73,22 +70,21 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
     protected void beforeWrite(StoragetypeJob storagetypeJob) {}
     
-    public ArchiveResponse write(StoragetypeJob storagetypeJob) throws Throwable{
+    public StorageResponse write(StoragetypeJob storagetypeJob) throws Throwable{
     	logger.info("Writing job " + storagetypeJob.getStorageJob().getJob().getId());
-    	ArchiveResponse archiveResponse = null;
+    	StorageResponse storageResponse = null;
     	beforeWrite(storagetypeJob);
     	
     	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
-    	archiveResponse = iStoragelevel.write(storagetypeJob);
+    	storageResponse = iStoragelevel.write(storagetypeJob);
 
-    	afterWrite(storagetypeJob, archiveResponse);
-    	return archiveResponse; 
+    	afterWrite(storagetypeJob, storageResponse);
+    	return storageResponse; 
     }
     
-//    protected void afterWrite(StoragetypeJob storagetypeJob, ArchiveResponse ar) {}
-    protected ArchiveResponse afterWrite(StoragetypeJob storagetypeJob, ArchiveResponse archiveResponse) throws Exception {
-    	// file_volume and artifact_volume updated here...
-    	
+    protected void afterWrite(StoragetypeJob storagetypeJob, StorageResponse storageResponse) throws Exception {
+		List<ArchivedFile> archivedFileList = null;
+
     	StorageJob storagejob = storagetypeJob.getStorageJob();
     	
 		Artifact artifact = storagejob.getArtifact();
@@ -97,74 +93,84 @@ public abstract class AbstractStoragetypeJobProcessor {
 		Volume volume = storagejob.getVolume();
 		
 		Domain domain = storagejob.getDomain();
-		// Get a map of Paths and their File1 Ids
+		
+		// Get a map of Paths and their File object
+		HashMap<String, ArchivedFile> filePathNameToArchivedFileObj = new LinkedHashMap<String, ArchivedFile>();
+		if(volume.getStoragelevel() == Storagelevel.block) { //could use if(storageResponse != null && storageResponse.getArchiveResponse() != null) { but archive and block are NOT mutually exclusive
+			archivedFileList = storageResponse.getArchiveResponse().getArchivedFileList();
+			for (Iterator<ArchivedFile> iterator = archivedFileList.iterator(); iterator.hasNext();) {
+				ArchivedFile archivedFile = (ArchivedFile) iterator.next();
+				String filePathName = archivedFile.getFilePathName();
+				filePathNameToArchivedFileObj.put(filePathName, archivedFile);
+			}
+		}
 		
     	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
     	Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_ARTIFACT_ID.replace("<<DOMAIN_SPECIFIC_ARTIFACT>>", artifact.getClass().getSimpleName()), int.class);
 //    	Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod("findAllBy" + artifact.getClass().getSimpleName() + "Id", int.class);
-    	
 		List<File> artifactFileList = (List<File>) fileDaoFindAllBy.invoke(domainSpecificFileRepository, artifactId);
-		
-		HashMap<Integer, String> fileIdToPath = new HashMap<Integer, String>();
-		HashMap<String, File> filePathNameTofileObj = new HashMap<String, File>();
+
+		// NOTE: We need filevolume entries even when response from storage layer is null(Only archiveformats return the file breakup storage details... Other non archive writes dont...)
+		// So we need to iterate on the files than on the archived file response...
+		// OBSERVATION: The written file order on volume and the listed file varies...
+		Integer artifactStartVolumeBlock = null;
+		List<FileVolume> toBeAddedFileVolumeTableEntries = new ArrayList<FileVolume>();
 		for (Iterator<File> iterator = artifactFileList.iterator(); iterator.hasNext();) {
 			File nthFile = iterator.next();
-			filePathNameTofileObj.put(FilenameUtils.separatorsToUnix(nthFile.getPathname()), nthFile);
-			fileIdToPath.put(nthFile.getId(), nthFile.getPathname());
-		}
-
-		int artifactBlock = 0;
-		//  some tape specific code like updating db file_tape and tapedrive...
-		List<ArchivedFile> archivedFileList = archiveResponse.getArchivedFileList();
-		List<FileVolume> toBeAddedFileVolumeTableEntries = new ArrayList<FileVolume>();
-		for (Iterator<ArchivedFile> iterator = archivedFileList.iterator(); iterator.hasNext();) {
-			ArchivedFile archivedFile = (ArchivedFile) iterator.next();
-			String fileName = archivedFile.getFilePathName(); 
+			String filePathname = FilenameUtils.separatorsToUnix(nthFile.getPathname());
 			
-			// TODO get the file id from File1 table using this fileName...
-			File file = null;
-			if(filePathNameTofileObj != null)
-				file = filePathNameTofileObj.get(fileName);
-
-			//logger.trace(filePathNameTofileObj.toString());
-			logger.trace(fileName);
-			if(file == null) {
-				logger.trace("Junk folder not supposed to be written to tape. Filter it. Skipping its info getting added to DB");
-				continue;
-			}
+		    // To get an File*Volume instance dynamically, where * is domain name...
+			//FileVolume fileVolume = DomainSpecificFileVolumeFactory.getInstance(domain, nthFile.getId(), volume);
+			//OR
+			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolumeInstance(domain, nthFile.getId(), volume);// lets just let users use the util consistently
 			
-			if(fileName.equals(artifact.getName()))
-				artifactBlock = archivedFile.getBlockNumber();
-			
-			
-			FileVolume fileVolume = DomainSpecificFileVolumeFactory.getInstance(domain, file.getId(), volume);
-			fileVolume.setArchiveBlock(archivedFile.getBlockNumber());
 			// TODO
-			//fileVolume.setVolumeBlock(volumeBlock);
 			//fileVolume.setVerifiedAt(verifiedAt);
 			//fileVolume.setEncrypted(encrypted);
-			
+
+			ArchivedFile archivedFile = filePathNameToArchivedFileObj.get(filePathname);
+			if(archivedFile != null) { // if(volume.getStoragelevel() == Storagelevel.block) { - need to check if the file is archived anyway even if its block, so going with the archivedFile check alone
+				Integer volumeBlock = archivedFile.getVolumeBlockOffset();
+				if(volumeBlock == null) {
+					// need to look the previous job's last file end block and append it with current job's - volumeBlock = 
+				}
+				if(filePathname.equals(artifact.getName())) {
+					artifactStartVolumeBlock = volumeBlock;
+				}
+				fileVolume.setVolumeBlock(volumeBlock);
+				fileVolume.setArchiveBlock(archivedFile.getArchiveBlockOffset());
+			}
 			toBeAddedFileVolumeTableEntries.add(fileVolume);
 		}
-		
+	
 	    if(toBeAddedFileVolumeTableEntries.size() > 0) {
-	    	logger.debug("DB FileVolume entries Creation");   
 	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
 	    	domainSpecificFileVolumeRepository.saveAll(toBeAddedFileVolumeTableEntries);
-	    	logger.debug("DB FileVolume entries Creation - Success");
+	    	logger.info("FileVolume records created successfully");
 	    }
 	    
-	    ArtifactVolume artifactVolume = DomainSpecificArtifactVolumeFactory.getInstance(domain, artifact.getId(), volume);
-	    ArtifactVolumeDetails artifactVolumeDetails = new ArtifactVolumeDetails();
-	    artifactVolumeDetails.setArchive_id("Some12345"); // TODO Fix this
-	    logger.debug("DB ArtifactVolume Creation");
+
+	    // To get an Artifact*Volume instance dynamically, where * is domain name...
+	    //ArtifactVolume artifactVolume = DomainSpecificArtifactVolumeFactory.getInstance(domain, artifact.getId(), volume);
+	    // OR
+	    ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolumeInstance(domain, artifact.getId(), volume); // lets just let users use the util consistently
+	    if(volume.getStoragelevel() == Storagelevel.block) {
+		    ArtifactVolumeDetails artifactVolumeDetails = new ArtifactVolumeDetails();
+		    
+		    ArchiveResponse archiveResponse = storageResponse.getArchiveResponse();
+			String archiveId = archiveResponse.getArchiveId();// For tar it will not be available...;
+			artifactStartVolumeBlock = archiveResponse.getArtifactStartVolumeBlock();// TODO : do we need to overwrite here or let the individual impl set this?
+		    Integer artifactTotalVolumeBlocks = archiveResponse.getArtifactTotalVolumeBlocks();
+		    artifactVolumeDetails.setArchive_id(archiveId);
+		    artifactVolumeDetails.setStart_volume_block(artifactStartVolumeBlock);
+		    artifactVolumeDetails.setTotal_volume_blocks(artifactTotalVolumeBlocks);
+		    
+		    artifactVolume.setDetails(artifactVolumeDetails);
+	    }
 	    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-    	domainSpecificArtifactVolumeRepository.save(artifactVolume);
-	    logger.debug("DB ArtifactVolume Creation - Success");
-	    
-	    archiveResponse.setArtifactName(artifact.getName());
-	    archiveResponse.setArtifactBlockNumber(artifactBlock);
-	    return archiveResponse;
+	    artifactVolume = domainSpecificArtifactVolumeRepository.save(artifactVolume);
+    	logger.info("ArtifactVolume - " + artifactVolume.getId());
+
     }
     
     // TODO Should we force this to be implemented or let it be overwritten
@@ -174,19 +180,19 @@ public abstract class AbstractStoragetypeJobProcessor {
 
     protected void beforeVerify(StoragetypeJob storagetypeJob) {}
     
-	//public ArchiveResponse restore(StorageJob storagetypeJob) throws Throwable{
-	public ArchiveResponse verify(StoragetypeJob storagetypeJob) throws Throwable{
+	//public StorageResponse restore(StorageJob storagetypeJob) throws Throwable{
+	public StorageResponse verify(StoragetypeJob storagetypeJob) throws Throwable{
 		logger.info("Verifying job " + storagetypeJob.getStorageJob().getJob().getId());
-		ArchiveResponse ar = null;
+		StorageResponse storageResponse = null;
     	beforeVerify(storagetypeJob);
     	
     	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
-    	ar = iStoragelevel.verify(storagetypeJob);
+    	storageResponse = iStoragelevel.verify(storagetypeJob);
     	
 //    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storagetypeJob);
 //    	ar = storageFormatter.restore(storagetypeJob);
     	afterVerify(storagetypeJob);
-    	return ar; 
+    	return storageResponse; 
    	
     }
 	
@@ -194,18 +200,18 @@ public abstract class AbstractStoragetypeJobProcessor {
     
     protected void beforeFinalize(StoragetypeJob storagetypeJob) {}
     
-	//public ArchiveResponse restore(StorageJob storagetypeJob) throws Throwable{
-	public ArchiveResponse finalize(StoragetypeJob storagetypeJob) throws Throwable{
-		ArchiveResponse ar = null;
+	//public StorageResponse restore(StorageJob storagetypeJob) throws Throwable{
+	public StorageResponse finalize(StoragetypeJob storagetypeJob) throws Throwable{
+		StorageResponse storageResponse = null;
     	beforeFinalize(storagetypeJob);
     	
     	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
-    	ar = iStoragelevel.finalize(storagetypeJob);
+    	storageResponse = iStoragelevel.finalize(storagetypeJob);
     	
 //    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storagetypeJob);
 //    	ar = storageFormatter.restore(storagetypeJob);
     	afterFinalize(storagetypeJob);
-    	return ar; 
+    	return storageResponse; 
    	
     }
 	
@@ -214,19 +220,19 @@ public abstract class AbstractStoragetypeJobProcessor {
 
     protected void beforeRestore(StoragetypeJob storagetypeJob) {}
     
-	//public ArchiveResponse restore(StorageJob storagetypeJob) throws Throwable{
-	public ArchiveResponse restore(StoragetypeJob storagetypeJob) throws Throwable{
+	//public StorageResponse restore(StorageJob storagetypeJob) throws Throwable{
+	public StorageResponse restore(StoragetypeJob storagetypeJob) throws Throwable{
 		logger.info("Restoring job " + storagetypeJob.getStorageJob().getJob().getId());
-		ArchiveResponse archiveResponse = null;
+		StorageResponse storageResponse = null;
     	beforeRestore(storagetypeJob);
     	
     	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
-    	archiveResponse = iStoragelevel.restore(storagetypeJob);
+    	storageResponse = iStoragelevel.restore(storagetypeJob);
     	
 //    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storagetypeJob);
 //    	ar = storageFormatter.restore(storagetypeJob);
     	afterRestore(storagetypeJob);
-    	return archiveResponse; 
+    	return storageResponse; 
    	
     }
 	

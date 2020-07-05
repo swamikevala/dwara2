@@ -39,7 +39,7 @@
     </root>
  
     <logger name="org.ishafoundation.dwaraapi" level="trace" additivity="false">
-        <!-- appender-ref ref="RollingFile" /-->
+        <appender-ref ref="RollingFile" />
         <appender-ref ref="Console" />
     </logger>
  

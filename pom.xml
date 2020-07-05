@@ -10,5 +10,6 @@
 		<module>dwara-core</module>
 		<module>dwara-service</module>
     <module>dwara-tape</module>
+    <module>dwara-core-mocks</module>
   </modules>
 </project>

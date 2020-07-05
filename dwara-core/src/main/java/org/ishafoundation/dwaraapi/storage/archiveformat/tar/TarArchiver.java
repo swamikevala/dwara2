@@ -1,31 +1,31 @@
 package org.ishafoundation.dwaraapi.storage.archiveformat.tar;
 
-import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
-import org.ishafoundation.dwaraapi.storage.storagelevel.FileStoragelevel;
+import java.util.List;
+
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component("tar"+DwaraConstants.ARCHIVER_SUFFIX)
-//@Profile({ "!dev & !stage" })
-public class TarArchiver implements IArchiveformatter {
+@Profile({ "!dev & !stage" })
+public class TarArchiver extends AbstractTarArchiver {
 	
 	private static final Logger logger = LoggerFactory.getLogger(TarArchiver.class);
 
 	@Override
-	public ArchiveResponse write(String artifactSourcePath,
-			int blockSizeInKB, String deviceName, String artifactNameToBeWritten) throws Exception {
-		logger.debug(this.getClass().getName() + " Tar write " +  deviceName + " :: " + artifactNameToBeWritten);
-		return new ArchiveResponse();
-	}
+	protected String executeCommand(List<String> tarCommandParamsList, String artifactName, int volumeBlocksize)
+			throws Exception {
 
-	@Override
-	public ArchiveResponse restore(String destinationPath,
-			int blockSizeInKB, String deviceName, Integer noOfBlocksToBeRead, Integer skipByteCount,
-			String filePathNameToBeRestored) throws Exception {
-		logger.debug("Tar read");
-		return new ArchiveResponse();
-	}}
+		String commandOutput = null;
+//		CommandLineExecutionResponse tarCopyCommandLineExecutionResponse = commandLineExecuter.executeCommand(tarCommandParamsList, commandlineExecutorErrorResponseTemporaryFilename + ".err"); // TODO Fix this output file...
+//		if(tarCopyCommandLineExecutionResponse.isComplete()) {
+//			commandOutput = tarCopyCommandLineExecutionResponse.getStdOutResponse();
+//		}else {
+//			logger.error("tar command execution failed " + tarCopyCommandLineExecutionResponse.getFailureReason());
+//			throw new Exception("Unable to execute tar command successfully");
+//		}
+		return commandOutput;
+	}
+}

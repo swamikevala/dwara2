@@ -51,8 +51,11 @@ public class Verify extends AbstractStoragetaskAction{
 		String artifactName = artifact.getName();			
 
 		storageJob.setFilePathname(artifactName); // in case of verifies file we need to restore is the artifact itself
-		int blockToSeek = 0; // TODO get file.volume_block for artifact's fileid 
-		storageJob.setBlock(blockToSeek);
+		
+		
+		
+//		int blockToSeek = 0; // TODO get file.volume_block for artifact's fileid 
+//		storageJob.setBlock(blockToSeek);
 
 		// from where
 		Volume volume = volumeDao.findById(volumeIdWriteJobUsed).get();

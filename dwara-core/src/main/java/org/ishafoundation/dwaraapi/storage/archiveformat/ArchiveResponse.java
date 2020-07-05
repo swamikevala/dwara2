@@ -7,9 +7,15 @@ public class ArchiveResponse {
 	
 	private String artifactName;
 	
-	private int artifactBlockNumber;
+	private String archiveId;
+	
+	private int artifactStartVolumeBlock;
+	
+	private int artifactTotalVolumeBlocks;
 	
 	private List<ArchivedFile> archivedFileList = new ArrayList<ArchivedFile>();
+
+	
 
 	public String getArtifactName() {
 		return artifactName;
@@ -19,12 +25,28 @@ public class ArchiveResponse {
 		this.artifactName = artifactName;
 	}
 
-	public int getArtifactBlockNumber() {
-		return artifactBlockNumber;
+	public String getArchiveId() {
+		return archiveId;
 	}
 
-	public void setArtifactBlockNumber(int artifactBlockNumber) {
-		this.artifactBlockNumber = artifactBlockNumber;
+	public void setArchiveId(String archiveId) {
+		this.archiveId = archiveId;
+	}
+
+	public int getArtifactStartVolumeBlock() {
+		return artifactStartVolumeBlock;
+	}
+
+	public void setArtifactStartVolumeBlock(int artifactStartVolumeBlock) {
+		this.artifactStartVolumeBlock = artifactStartVolumeBlock;
+	}
+
+	public int getArtifactTotalVolumeBlocks() {
+		return artifactTotalVolumeBlocks;
+	}
+
+	public void setArtifactTotalVolumeBlocks(int artifactTotalVolumeBlocks) {
+		this.artifactTotalVolumeBlocks = artifactTotalVolumeBlocks;
 	}
 
 	public List<ArchivedFile> getArchivedFileList() {

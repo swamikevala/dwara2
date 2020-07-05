@@ -5,4 +5,5 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 
 public interface LocationDao extends CacheableRepository<Location> {
 	
+	Location findByRestoreDefaultTrue();
 }

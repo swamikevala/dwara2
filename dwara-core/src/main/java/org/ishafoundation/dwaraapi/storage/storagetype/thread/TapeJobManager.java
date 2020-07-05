@@ -13,6 +13,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.DeviceStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
+import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.thread.executor.TapeTaskThreadPoolExecutor;
@@ -121,7 +122,9 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	}
 	
 	private StorageJob selectJob(List<StorageJob> storageJobsList, Device tapedriveDevice) {
-		return storageJobsList.get(0);
+		StorageJob sj = storageJobsList.get(0);
+		storageJobsList.remove(0);
+		return sj;
 	}
 
 	private void prepareTapeJobAndContinueNextSteps(StorageJob storageJob, TActivedevice tActivedevice, boolean nextStepsInSeparateThread) {
@@ -169,7 +172,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			}
 			else {
 				logger.debug("Continuing in same thread");
-				manage(tapeJob);
+				StorageResponse storageResponse = manage(tapeJob);
 			}
 		}
 		catch (Exception e) {
@@ -193,7 +196,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		@Override
 		public void run() {
 			logger.info("Now taking up Tape job - " + tapeJob.getStorageJob().getJob().getId());	
-			manage(tapeJob);
+			StorageResponse storageResponse = manage(tapeJob);
 			
 			TActivedevice tActivedevice = tapeJob.gettActivedevice();
 			DeviceStatus deviceStatus = DeviceStatus.AVAILABLE;

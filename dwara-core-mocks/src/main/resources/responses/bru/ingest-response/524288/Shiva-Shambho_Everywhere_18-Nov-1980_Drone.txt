@@ -1,0 +1,24 @@
+[root@test-ingest 1G-5G]# bru -cvvvvvvvvv  -b 524288 -f /dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst Shiva-Shambho_Everywhere_18-Nov-1980_Drone/
+archive ID = 5f006ac06d4e
+label = 
+buffer size = 512k bytes
+media size = <unknown>
+VL:c|0|1|4096|555|Shiva-Shambho_Everywhere_18-Nov-1980_Drone
+VL:c|0|1|7353665|555|Shiva-Shambho_Everywhere_18-Nov-1980_Drone/DJI_0001.MOV
+bru: [I181] wrote 4352 blocks (8704 KBytes) on volume [1], 0:00:00, 99999 KB/sec 
+
+**** bru: execution summary ****
+
+Started:Sat Jul  4 17:10:48 2020
+Completed:Sat Jul  4 17:10:48 2020
+Archive id:5f006ac06d4e
+Messages:0 warnings,  0 errors
+Archive I/O:4352 blocks (8704KB) written
+Archive I/O:0 blocks (0KB) read
+Files written:2 files (1 regular, 1 other)
+Files read:0 files (0 regular, 0 other)
+Files skipped:0 files
+Volumes used:1
+Write errors:0 soft,  0 hard
+Read errors:0 soft,  0 hard
+Checksum errors:0

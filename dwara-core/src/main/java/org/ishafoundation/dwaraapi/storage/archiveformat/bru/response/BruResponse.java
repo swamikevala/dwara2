@@ -8,6 +8,8 @@ import org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components
 import org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components.FilesProcessed;
 
 public class BruResponse {
+	private String archiveId;
+	private int bufferSize;
 	private String operationType;
 	private List<File> fileList = new ArrayList<File>();
 	private List<ErrorDescription> errorDescriptionList = new ArrayList<ErrorDescription>();
@@ -24,6 +26,18 @@ public class BruResponse {
 	private int checksumErrorCnt;
 	
 
+	public String getArchiveId() {
+		return archiveId;
+	}
+	public void setArchiveId(String archiveId) {
+		this.archiveId = archiveId;
+	}
+	public int getBufferSize() {
+		return bufferSize;
+	}
+	public void setBufferSize(int bufferSize) {
+		this.bufferSize = bufferSize;
+	}
 	public String getOperationType() {
 		return operationType;
 	}
