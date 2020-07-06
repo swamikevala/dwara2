@@ -13,4 +13,7 @@
 /bin/
 /logs/
 /dwara-core/logs/
+/dwara-core-mocks/logs/
+/dwara-db/logs/
 /dwara-service/logs/
+/dwara-tape/logs/

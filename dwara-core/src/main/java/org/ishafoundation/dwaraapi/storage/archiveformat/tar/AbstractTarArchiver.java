@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
@@ -78,34 +80,35 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 		
 		List<ArchivedFile> archivedFileList = new ArrayList<ArchivedFile>();
 		List<File> taredFileList = tarResponse.getFileList();
-		int previousFileArchiveBlockOffset = 0;
 		int lastNFinalFileArchiveBlockOffset = 0;
-		Long fileSize = 0L;
+		Long lastNFinalFileSize = 0L;
 		for (Iterator<File> iterator = taredFileList.iterator(); iterator.hasNext();) {
 			File taredFile = (File) iterator.next();
 			ArchivedFile archivedFile = new ArchivedFile();
-			
-			archivedFile.setFilePathName(taredFile.getFilePathName());
+			String filePathName = taredFile.getFilePathName();
+			if(filePathName.endsWith("/"))
+				filePathName = FilenameUtils.getFullPathNoEndSeparator(filePathName);
+			archivedFile.setFilePathName(filePathName);
 			int archiveBlockOffset = taredFile.getArchiveBlockOffset();
-			int volumeBlockOffset =  artifactStartVolumeBlock + (previousFileArchiveBlockOffset/blockingFactor);
+			int volumeBlockOffset =  artifactStartVolumeBlock + (archiveBlockOffset/blockingFactor);
 			archivedFile.setVolumeBlockOffset(volumeBlockOffset); 
 			archivedFile.setArchiveBlockOffset(archiveBlockOffset);
 			archivedFileList.add(archivedFile);
-			if(archiveBlockOffset > lastNFinalFileArchiveBlockOffset) {
+			if(archiveBlockOffset > lastNFinalFileArchiveBlockOffset) { // The highest valued arhive block offset is the last file...
 				lastNFinalFileArchiveBlockOffset = archiveBlockOffset;
-				fileSize = taredFile.getFileSize();
+				lastNFinalFileSize = taredFile.getFileSize();
 			}
-			previousFileArchiveBlockOffset = archiveBlockOffset;
 		}
 		
+		// TODO : better this...
 		int additionalHeaderBlocks = 1;
 		if(artifactName.length() > 10) {
 			additionalHeaderBlocks = 3;
 		}
 			
-		int lastFileEndArchiveBlock = (int) (fileSize/archiveformatBlocksize);
-		if(fileSize%archiveformatBlocksize > 0)
-			lastFileEndArchiveBlock = lastFileEndArchiveBlock + 1 + additionalHeaderBlocks; // +1 because for end files we need to round the division factor above...
+		int lastFileEndArchiveBlock = lastNFinalFileArchiveBlockOffset + (int) (lastNFinalFileSize/archiveformatBlocksize) + additionalHeaderBlocks;
+		if(lastNFinalFileSize%archiveformatBlocksize > 0)
+			lastFileEndArchiveBlock = lastFileEndArchiveBlock + 1; // +1 because for end files we need to round the division factor above...
 		
 		artifactTotalVolumeBlocks = (int) (lastFileEndArchiveBlock/blockingFactor);
 		if(lastFileEndArchiveBlock%blockingFactor > 0)
