@@ -6,7 +6,7 @@ public class ArchiveformatJob {
 
 	// Common
 	private int volumeBlocksize;
-	private int archiveBlocksize;
+	private int archiveformatBlocksize;
 	private String deviceName;
 
 	// Ingest
@@ -15,8 +15,10 @@ public class ArchiveformatJob {
 	
 	// Restore
 	private String destinationPath;
+	// TAR
 	private int noOfBlocksToBeRead;
 	private int skipByteCount;
+	// BRU
 	private String filePathNameToBeRestored;
 	
 
@@ -36,11 +38,11 @@ public class ArchiveformatJob {
 	public void setVolumeBlocksize(int volumeBlocksize) {
 		this.volumeBlocksize = volumeBlocksize;
 	}
-	public int getArchiveBlocksize() {
-		return archiveBlocksize;
+	public int getArchiveformatBlocksize() {
+		return archiveformatBlocksize;
 	}
-	public void setArchiveBlocksize(int archiveBlocksize) {
-		this.archiveBlocksize = archiveBlocksize;
+	public void setArchiveformatBlocksize(int archiveformatBlocksize) {
+		this.archiveformatBlocksize = archiveformatBlocksize;
 	}
 	public String getDeviceName() {
 		return deviceName;
@@ -83,6 +85,5 @@ public class ArchiveformatJob {
 	}
 	public void setFilePathNameToBeRestored(String filePathNameToBeRestored) {
 		this.filePathNameToBeRestored = filePathNameToBeRestored;
-	}
-	
+	}	
 }

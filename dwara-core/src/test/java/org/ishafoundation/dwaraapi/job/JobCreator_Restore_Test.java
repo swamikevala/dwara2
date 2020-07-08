@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -30,22 +32,7 @@ public class JobCreator_Restore_Test extends JobCreator_Test {
 		action = Action.restore.name();
 		requestInputFilePath = "/testcases/restore_request.json";
 	}
-	
-	@Override
-	protected RequestDetails getSystemrequestDetails() {
-		int file_id = 1;
-		Location location = getLocation("userrequestgoeshere");
-		
-		RequestDetails details = new RequestDetails();
-		details.setFile_id(file_id);
-		// details.setPriority(priority);
-		details.setLocation_id(location.getId());
-		details.setOutput_folder("some output_folder");
-		details.setDestinationpath("some dest path");
-		details.setVerify(false); // overwriting default archiveformat.verify during restore
-		return details;
-	}
-	
+
 	@Test
 	public void test_c_Restore() {
 		try {
@@ -55,8 +42,37 @@ public class JobCreator_Restore_Test extends JobCreator_Test {
 			e.printStackTrace();
 		}
 	}
+	
+	@Override
+	protected RequestDetails getSystemrequestDetails() {
 
-
+		JsonNode body = request.getDetails().getBody();
+		String requestedLocation = body.get("location").textValue();
+		String outputFolder = body.get("output_folder").textValue();
+		String destinationpath = body.get("destinationpath").textValue();
+		boolean verify = body.get("verify").booleanValue();
+		Location location = getLocation(requestedLocation);
+		
+//		Iterator<JsonNode> fileParams = body.get("fileParams").elements();
+//		while (fileParams.hasNext()) {
+//			JsonNode fileParamsJsonNode = (JsonNode) fileParams.next();
+//			int fileId = fileParamsJsonNode.get("file_id").intValue();
+//
+//		}
+		
+		JsonNode fileParamsJsonNode = body.get("fileParams").get(0);
+		int fileId = fileParamsJsonNode.get("file_id").intValue();		
+		
+		RequestDetails details = new RequestDetails();
+		details.setFile_id(fileId);
+		// details.setPriority(priority);
+		details.setLocation_id(location.getId());
+		details.setOutput_folder(outputFolder);
+		details.setDestinationpath(destinationpath);
+		details.setVerify(verify); // overwriting default archiveformat.verify during restore
+		return details;
+	}
+	
 	private Location getLocation(String userRequest) {
 		// to get domaindefault we might need a util... or a query...
 		Location location = null; // userRequest.getlocation(); null;// from user request

@@ -88,6 +88,11 @@ public class DomainUtil {
 		return artifactVolume;
 	}
 
+	public ArtifactVolume getDomainSpecificArtifactVolume(Domain domain, int artifactId, int volumeId) {
+		ArtifactVolume artifactVolume = (ArtifactVolume) getDomainSpecificArtifactVolumeRepository(domain).findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
+		return artifactVolume;
+	}
+	
 	public ArtifactVolume getDomainSpecificArtifactVolumeInstance(Domain domain, int artifactId, Volume volume) {
 		return DomainSpecificArtifactVolumeFactory.getInstance(domain, artifactId, volume);	
 	}
@@ -102,6 +107,11 @@ public class DomainUtil {
 	
 	public FileVolume getDomainSpecificFileVolume(Domain domain, int fileVolumeId) {
 		FileVolume fileVolume = (FileVolume) getDomainSpecificFileVolumeRepository(domain).findById(fileVolumeId).get();
+		return fileVolume;
+	}
+	
+	public FileVolume getDomainSpecificFileVolume(Domain domain, int fileId, int volumeId) {
+		FileVolume fileVolume = (FileVolume) getDomainSpecificFileVolumeRepository(domain).findByIdFileIdAndIdVolumeId(fileId, volumeId);
 		return fileVolume;
 	}
 	

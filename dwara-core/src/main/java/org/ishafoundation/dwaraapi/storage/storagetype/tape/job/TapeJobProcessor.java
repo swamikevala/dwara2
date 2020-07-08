@@ -32,7 +32,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
 		
-		logger.trace("Now positioning tape head for writing");
+		logger.trace("Now positioning tape head for writing" + tapeLibraryName + ":" + driveElementAddress);
 //		tapeDriveManager.setTapeHeadPositionForWriting(tapeLibraryName, driveElementAddress); // FIXME - check on this, using eod, bsf 1 and fsf 1
 		logger.trace("Tape Head positioned for writing");
 		
@@ -52,7 +52,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		int blockNumberToSeek = tapeJob.getStorageJob().getVolumeBlock();
 		
 //		tapeDriveManager.setTapeHeadPositionForReading(tapeLibraryName, driveElementAddress, blockNumberToSeek); // FIXME - check on this, using eod, bsf 1 and fsf 1
-		logger.trace("Tape Head positioned for reading");
+		logger.trace("Tape Head positioned for reading"+ tapeLibraryName + ":" + driveElementAddress  + ":" + blockNumberToSeek);
 	}
 
 

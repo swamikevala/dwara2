@@ -1,6 +1,8 @@
 package org.ishafoundation.dwaraapi.storage.storagetask;
 
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.LocationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
@@ -26,9 +28,6 @@ public class Restore extends AbstractStoragetaskAction{
     private static final Logger logger = LoggerFactory.getLogger(Restore.class);
     
 	@Autowired
-	private VolumeDao volumeDao;
-
-	@Autowired
 	private LocationDao locationDao;
 	
 	@Autowired
@@ -44,6 +43,7 @@ public class Restore extends AbstractStoragetaskAction{
 
 		// Domain
 		Domain domain = request.getDomain();
+		storageJob.setDomain(domain);
 		
 		// what need to be restored
 		int fileIdToBeRestored = request.getDetails().getFile_id();
@@ -72,9 +72,8 @@ public class Restore extends AbstractStoragetaskAction{
 //
 //		V_RestoreFile v_RestoreFile = v_RestoreFileDao.findByVolumesetLocationAndIdFileIdAndIdActionAndIdUserId(copyNumber, fileIdToBeRestored, Action.restore, userId);			
 //
-		FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-		File file = domainSpecificFileRepository.findById(fileIdToBeRestored).get();
-		storageJob.setFilePathname(file.getPathname());
+
+		
 //
 //		String uId = "V5A001";//v_RestoreFile.getId().getVolumeId();
 //		Volume volume = volumeDao.findByUid(uId);

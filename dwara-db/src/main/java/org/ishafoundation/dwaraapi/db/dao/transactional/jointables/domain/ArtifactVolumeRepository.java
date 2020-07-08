@@ -12,4 +12,6 @@ public interface ArtifactVolumeRepository<T extends ArtifactVolume> extends Crud
 //	long findUsedSpaceOnVolume(int volumeId);
 	
 	ArtifactVolume findTopByVolumeIdOrderByIdDesc(int volumeId);
+	
+	ArtifactVolume findByIdArtifactIdAndIdVolumeId(int artifactId, int volumeId);
 }

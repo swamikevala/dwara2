@@ -208,7 +208,7 @@ public class BruResponseParser {
 				org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components.File file = new org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components.File();
 
 				file.setFilePathName(fileAndAttributesRegExMatcher.group(6));
-				file.setArchiveRunningTotalDataInKB(Integer.parseInt(fileAndAttributesRegExMatcher.group(2)));
+				file.setArchiveRunningTotalDataInKB(Long.parseLong(fileAndAttributesRegExMatcher.group(2)));
 				file.setVolumeBlockOffset(Integer.parseInt(fileAndAttributesRegExMatcher.group(5)));
 				bruResponse.getFileList().add(file);
 			}

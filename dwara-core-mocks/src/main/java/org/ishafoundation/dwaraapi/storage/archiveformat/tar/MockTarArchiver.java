@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.storage.archiveformat.tar.AbstractTarArchiver;
+import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -28,4 +29,5 @@ public class MockTarArchiver extends AbstractTarArchiver {
 		testResponseFileAsString = testResponseFileAsString.replaceAll(testArtifactName, artifactName);
 		return testResponseFileAsString;
 	}
+
 }

@@ -23,13 +23,13 @@ public class FileStoragelevel implements IStoragelevel {
 	// we just need the parameters need to set based on 
 
 	@Override
-	public StorageResponse format(StoragetypeJob job) {
+	public StorageResponse format(StoragetypeJob job) throws Exception{
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
-	public StorageResponse write(StoragetypeJob job) {
+	public StorageResponse write(StoragetypeJob job) throws Exception{
 		logger.debug("File storage means doesnt use any archive, but copies straight.");
 		// Archiveformat only needed for block...
 		// invoke the copy command here...
@@ -37,19 +37,19 @@ public class FileStoragelevel implements IStoragelevel {
 	}
 	
 	@Override
-	public StorageResponse verify(StoragetypeJob job) {
+	public StorageResponse verify(StoragetypeJob job) throws Exception{
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public StorageResponse finalize(StoragetypeJob job) {
+	public StorageResponse finalize(StoragetypeJob job) throws Exception{
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
-	public StorageResponse restore(StoragetypeJob job) {
+	public StorageResponse restore(StoragetypeJob job) throws Exception{
 		// TODO Auto-generated method stub
 		return null;
 	}

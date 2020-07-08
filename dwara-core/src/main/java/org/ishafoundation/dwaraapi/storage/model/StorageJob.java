@@ -33,7 +33,6 @@ public class StorageJob {
 //
 //	// Restore stuff
 	private int fileId;
-	private String filePathname;
 	private String destinationPath;
 	private Integer volumeBlock;
 	private Integer archiveBlock;
@@ -145,12 +144,6 @@ public class StorageJob {
 	}
 	public void setFileId(int fileId) {
 		this.fileId = fileId;
-	}
-	public String getFilePathname() {
-		return filePathname;
-	}
-	public void setFilePathname(String filePathname) {
-		this.filePathname = filePathname;
 	}
 	public String getDestinationPath() {
 		return destinationPath;

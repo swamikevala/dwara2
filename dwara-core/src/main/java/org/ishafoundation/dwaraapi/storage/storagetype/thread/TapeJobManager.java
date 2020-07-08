@@ -90,10 +90,13 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				// if drive has a tape loaded that matches the joblist
 				// TODO : Tape job selection happens here
 				StorageJob selectedStorageJob = selectJob(storageJobsList, tapedriveDevice);
-				logger.debug("Job " + selectedStorageJob.getJob().getId() + " selected");
-				
-				prepareTapeJobAndContinueNextSteps(selectedStorageJob, tActivedevice, true);
- 
+				if(selectedStorageJob != null) {
+					logger.debug("Job " + selectedStorageJob.getJob().getId() + " selected");
+					
+					prepareTapeJobAndContinueNextSteps(selectedStorageJob, tActivedevice, true);
+				}else {
+					logger.debug("No more jobs");
+				}
 				// based on available tapedrives
 				
 
@@ -122,6 +125,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	}
 	
 	private StorageJob selectJob(List<StorageJob> storageJobsList, Device tapedriveDevice) {
+		if(storageJobsList.size() == 0)
+			return null;
 		StorageJob sj = storageJobsList.get(0);
 		storageJobsList.remove(0);
 		return sj;

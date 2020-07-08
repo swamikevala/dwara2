@@ -88,6 +88,7 @@ public class JobCreator_Test {
 		
 		jobCreator.createJobs(systemrequest, null);
 	}
+	
 	protected RequestDetails getSystemrequestDetails() {
 		// TODO Auto-generated method stub
 		return null;

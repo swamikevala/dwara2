@@ -6,7 +6,7 @@
   "verify": false,
   "fileParams": [
     {
-      "file_id": 67,
+      "file_id": <<file_id_1>>,
       "priority": 0
     }  
   ]

@@ -46,11 +46,11 @@ public class Verify extends AbstractStoragetaskAction{
 				.getRecord(CacheableTablesList.artifactclass.name(), artifactclassId);
 		Domain domain = artifactclass.getDomain();
 		
-		Integer inputArtifactId = writeJobToBeVerified.getInputArtifactId();
-		Artifact artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);
-		String artifactName = artifact.getName();			
-
-		storageJob.setFilePathname(artifactName); // in case of verifies file we need to restore is the artifact itself
+//		Integer inputArtifactId = writeJobToBeVerified.getInputArtifactId();
+//		Artifact artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);
+//		String artifactName = artifact.getName();			
+//
+//		storageJob.setFilePathname(artifactName); // in case of verifies file we need to restore is the artifact itself
 		
 		
 		
