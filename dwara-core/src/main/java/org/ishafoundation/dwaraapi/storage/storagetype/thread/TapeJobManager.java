@@ -136,8 +136,10 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		Job job = null;
 		try {
 			job = storageJob.getJob();
-			Volume volume = storageJob.getVolume();
 			updateJobInProgress(job);
+			
+			Volume volume = storageJob.getVolume();
+			
 			
 			Device tapedriveDevice = tActivedevice.getDevice();
 			String tapedriveUid = tapedriveDevice.getUid();

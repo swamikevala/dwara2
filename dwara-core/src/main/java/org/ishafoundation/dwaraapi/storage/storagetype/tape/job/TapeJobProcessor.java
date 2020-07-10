@@ -37,6 +37,18 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		logger.trace("Tape Head positioned for writing");
 		
 	}
+	
+	@Override
+	protected void beforeVerify(StoragetypeJob storagetypeJob) throws Exception {
+		super.beforeVerify(storagetypeJob);
+		TapeJob tapeJob = (TapeJob) storagetypeJob;
+		String tapeLibraryName = tapeJob.getTapeLibraryName();
+		int driveElementAddress = tapeJob.getTapedriveNo();
+		int blockNumberToSeek = tapeJob.getStorageJob().getArtifactStartVolumeBlock();
+		
+//		tapeDriveManager.setTapeHeadPositionForReading(tapeLibraryName, driveElementAddress, blockNumberToSeek); // FIXME - check on this, using eod, bsf 1 and fsf 1
+		logger.trace("Tape Head positioned for verifying"+ tapeLibraryName + ":" + driveElementAddress  + ":" + blockNumberToSeek);
+	}
 
 //	@Override
 //	protected void afterWrite(StoragetypeJob storageJob, ArchiveResponse ar) {

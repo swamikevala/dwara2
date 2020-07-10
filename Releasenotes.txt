@@ -1,3 +1,9 @@
+10th July - Verify flow completed
+	Drop transaction tables
+		drop table request, job, artifact1, file1, artifact2, file2, artifact1_volume, file1_volume, artifact2_volume, file2_volume;
+		
+8th July - Restore flow completed
+
 6th July - Verify and restore - WIP
 	
 5th July - FileVolume and ArtifactVolume block fixes, some DB configuration updates

@@ -2,7 +2,9 @@ package org.ishafoundation.dwaraapi.storage.archiveformat.tar;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
@@ -16,6 +18,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.File2;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
@@ -71,7 +74,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 
 		int artifactStartVolumeBlock = getArtifactStartVolumeBlock(storagetypeJob);
 		
-		int artifactTotalVolumeBlocks = 0;
+		int artifactEndVolumeBlock = 0;
 		
 		int blockingFactor = TarBlockCalculatorUtil.getBlockingFactor(archiveformatBlocksize, volumeBlocksize); 
 		
@@ -94,15 +97,15 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 				lastTaredFile = taredFile;
 		}
 		
-		artifactTotalVolumeBlocks = TarBlockCalculatorUtil.getFileVolumeBlockEnd(lastTaredFile.getFilePathName(), lastTaredFile.getArchiveBlockOffset(), lastTaredFile.getFileSize(), archiveformatBlocksize, blockingFactor);
+		artifactEndVolumeBlock = TarBlockCalculatorUtil.getFileVolumeBlockEnd(lastTaredFile.getFilePathName(), lastTaredFile.getArchiveBlockOffset(), lastTaredFile.getFileSize(), archiveformatBlocksize, blockingFactor);
 		
-		archiveResponse.setArtifactTotalVolumeBlocks(artifactTotalVolumeBlocks);
+		archiveResponse.setArtifactEndVolumeBlock(artifactEndVolumeBlock);
 		archiveResponse.setArtifactStartVolumeBlock(artifactStartVolumeBlock);
 		archiveResponse.setArchivedFileList(archivedFileList);
 		return archiveResponse;
 	}
 
-	protected int getArtifactStartVolumeBlock(StoragetypeJob storagetypeJob) {
+	private int getArtifactStartVolumeBlock(StoragetypeJob storagetypeJob) {
 		Domain domain = storagetypeJob.getStorageJob().getDomain();
 		Volume volume = storagetypeJob.getStorageJob().getVolume();
 		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
@@ -115,9 +118,39 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 		return artifactStartVolumeBlock;
 	}
 	
-	private int	getArtifactStartVolumeBlock(ArtifactVolume artifactVolume) {
-		return artifactVolume.getDetails().getStart_volume_block() + artifactVolume.getDetails().getTotal_volume_blocks();// + 1; not needed as we start on 0 // TODO: verify this === + 1, because the next file starts in a fresh block...
+	private int	getArtifactStartVolumeBlock(ArtifactVolume previousArtifactVolume) {
+		return previousArtifactVolume.getDetails().getStart_volume_block() + previousArtifactVolume.getDetails().getEnd_volume_block() + 1;// + 1; not needed as we start on 0 // TODO: verify this === + 1, because the next file starts in a fresh block...
 	}
+
+	
+	@Override
+	public ArchiveResponse verify(ArchiveformatJob archiveformatJob) throws Exception {
+		int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
+		String deviceName = archiveformatJob.getDeviceName();
+		String destinationPath = archiveformatJob.getDestinationPath();
+
+		StorageJob storageJob = archiveformatJob.getStoragetypeJob().getStorageJob();
+		String filePathNameToBeRestored = storageJob.getArtifact().getName();
+		
+		int noOfTapeBlocksToBeRead = storageJob.getArtifactEndVolumeBlock() - storageJob.getArtifactStartVolumeBlock();
+		int skipByteCount = 0;
+		
+		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, destinationPath, noOfTapeBlocksToBeRead);
+		
+		// caching the source file' checksum...
+		HashMap<String, byte[]> filePathNameToChecksumObj = new LinkedHashMap<String, byte[]>();
+		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : storageJob.getArtifactFileList()) {
+			String filePathName = nthFile.getPathname();
+			byte[] checksum = nthFile.getChecksum();
+			filePathNameToChecksumObj.put(filePathName, checksum);
+		}
+		
+		boolean isSuccess = stream(commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, destinationPath, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
+		logger.debug("verification status " + isSuccess);
+		return new ArchiveResponse();
+	}
+		
+	
 
 	@Override
 	public ArchiveResponse restore(ArchiveformatJob archiveformatJob) throws Exception {
@@ -126,23 +159,36 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 		String deviceName = archiveformatJob.getDeviceName();
 		String destinationPath = archiveformatJob.getDestinationPath();
 		
-		int bufferSize = volumeBlocksize;
-		
 		int noOfTapeBlocksToBeRead = archiveformatJob.getNoOfBlocksToBeRead();
 		
 		int skipByteCount = archiveformatJob.getSkipByteCount();
 		
-		String restoreCommand = "dd if=" + deviceName + " bs=" + bufferSize	+ " count=" + noOfTapeBlocksToBeRead;
+		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, destinationPath, noOfTapeBlocksToBeRead);
+		
+		String filePathNameToBeRestored = getFilePathNameToBeRestored(archiveformatJob.getStoragetypeJob().getStorageJob());
+		
+		stream(commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, destinationPath, null, null);
+
+		return new ArchiveResponse();
+	}
+	
+	protected abstract boolean stream(List<String> commandList, int volumeBlocksize, int skipByteCount,
+			String filePathNameWeNeed, String destinationPath, Checksumtype checksumtype,
+			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception;
+	
+	
+	private List<String> frameRestoreCommand(int volumeBlocksize, String deviceName, String destinationPath, int noOfTapeBlocksToBeRead) {
+		// FIXME: mbuffer -s 1M -m 2G -i /dev/st1 | bru -xvvvvvvvvv -b1024k -QV -C ***-f*** - 25079_Cauvery-Calling_Day15-Crowd-Shots-At-Closing-Event_CODISSIA-Cbe_17-Sep-2019_Z280V_B-Rolls
+		String restoreCommand = "dd if=" + deviceName + " bs=" + volumeBlocksize	+ " count=" + noOfTapeBlocksToBeRead;
 		logger.debug("Tar restoration - " +  restoreCommand);
-		logger.debug("Will be skipping - " +  skipByteCount);
 		logger.debug("Will be restoring to - " + destinationPath);
 		
 		List<String> commandList = new ArrayList<String>();
 		commandList.add("sh");
 		commandList.add("-c");
-		commandList.add(restoreCommand);
-
-		return new ArchiveResponse();
+		commandList.add("cd " + destinationPath + " ; " + restoreCommand);
+		
+		return commandList;
 	}
 	
 	private ArchiveformatJob getDecoratedArchiveformatJobForRestore(ArchiveformatJob archiveformatJob) throws Exception {
@@ -178,7 +224,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			if(artifact.getName().equals(filePathname)) {// if file is artifact
 				ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 				ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
-				noOfBlocksToBeRead = artifactVolume.getDetails().getTotal_volume_blocks();
+				noOfBlocksToBeRead = artifactVolume.getDetails().getEnd_volume_block();
 				skipByteCount = 0; // bang on artifact
 			}else {
 				String domainSpecificArtifactTableName = artifact.getClass().getSimpleName();
@@ -215,7 +261,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, fileIdToBeRestored, volume.getId());// lets just let users use the util consistently
 			Integer filearchiveBlock = fileVolume.getArchiveBlock();
 			noOfBlocksToBeRead = TarBlockCalculatorUtil.getFileVolumeBlockEnd(filePathname, filearchiveBlock, fileSize, archiveformatBlocksize, blockingFactor) - seekedVolumeBlock;
-			skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filePathname, filearchiveBlock, archiveformatBlocksize, seekedVolumeBlock, blockingFactor); // TODO : should this be path name or file name? 		
+			skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filePathname, filearchiveBlock, archiveformatBlocksize, seekedVolumeBlock, blockingFactor); 		
 		}
 		
 		archiveformatJob.setNoOfBlocksToBeRead(noOfBlocksToBeRead);
@@ -223,6 +269,12 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 		return archiveformatJob;
 	}
 
-	
-
+	private String getFilePathNameToBeRestored(StorageJob storageJob) {
+		Domain domain = storageJob.getDomain();
+		int fileIdToBeRestored = storageJob.getFileId();
+		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainSpecificFileRepository.findById(fileIdToBeRestored).get();
+		
+		return file.getPathname();
+	}
 }

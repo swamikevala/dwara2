@@ -1,13 +1,13 @@
 package org.ishafoundation.dwaraapi.storage.archiveformat.tar;
 
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.storage.archiveformat.tar.AbstractTarArchiver;
-import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
+import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -28,6 +28,22 @@ public class MockTarArchiver extends AbstractTarArchiver {
 		String testResponseFileAsString = FileUtils.readFileToString(new java.io.File(fileUrl.getFile()));
 		testResponseFileAsString = testResponseFileAsString.replaceAll(testArtifactName, artifactName);
 		return testResponseFileAsString;
+	}
+
+	@Override
+	protected boolean stream(List<String> commandList, int volumeBlocksize, int skipByteCount,
+			String filePathNameWeNeed, String destinationPath, Checksumtype checksumtype,
+			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
+
+		if(checksumtype != null)
+			logger.trace("Simulating verification");
+		else
+			logger.trace("Simulating restore");
+		
+		logger.debug("buffersize - " +  volumeBlocksize);
+		logger.debug("Will be skipping - " +  skipByteCount);
+		
+		return true;
 	}
 
 }

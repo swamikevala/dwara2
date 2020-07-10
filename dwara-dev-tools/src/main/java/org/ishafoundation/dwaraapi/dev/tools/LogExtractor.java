@@ -1,4 +1,4 @@
-package org.dwara.dev.tools;
+package org.ishafoundation.dwaraapi.dev.tools;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -18,12 +18,13 @@ public class LogExtractor {
 	public void prettyPrint(String log, File outputPrettyprintLogFile) throws Exception{
 		Map<String, List<String>> threadName_LogEntries_Map = new LinkedHashMap<String, List<String>>();
 		Scanner scanner = new Scanner(log);
-		Pattern threadRegExPattern = Pattern.compile("\\[(.*)\\]");
+		//2020-07-10 16:47:39,824 INFO org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor [pool-1-thread-1]
+		Pattern threadRegExPattern = Pattern.compile("([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) \\[([^ ]*)\\] (.*)");
 		while (scanner.hasNextLine()) {
 			String line = scanner.nextLine().trim();
 			Matcher threadRegExMatcher = threadRegExPattern.matcher(line);
-			if(threadRegExMatcher.find()) {
-				String threadName = threadRegExMatcher.group(1);
+			if(threadRegExMatcher.matches()) {
+				String threadName = threadRegExMatcher.group(5);
 				List<String> logEntries = threadName_LogEntries_Map.get(threadName);
 				if(logEntries == null) {
 					logEntries = new ArrayList<String>();

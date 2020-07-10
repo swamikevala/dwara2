@@ -126,7 +126,7 @@ public class JobManager {
 		if(parentJob != null) { 
 			// means a dependent job.
 			Status parentJobStatus = parentJob.getStatus();
-			if(parentJobStatus != Status.completed && parentJobStatus != Status.completed_failures)
+			if(parentJobStatus != Status.completed && parentJobStatus != Status.completed_failures)// TODO completed_failures too???
 				isJobReadyToBeProcessed = false;
 		}
 

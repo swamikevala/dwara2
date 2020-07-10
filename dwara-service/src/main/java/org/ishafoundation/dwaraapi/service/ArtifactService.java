@@ -28,8 +28,10 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.job.JobCreator;
+import org.ishafoundation.dwaraapi.utils.Md5Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -165,11 +167,13 @@ public class ArtifactService {
 			nthFileRowToBeInserted.setPathname(filePath);
 			
 			//nthFileRowToBeInserted.setArtifact(artifact);
+			
+			if(file.isFile())
+				nthFileRowToBeInserted.setChecksum(Md5Util.getChecksum(file, Checksumtype.sha256));// TODO : ??? - From where do we get the checksumtype???
+			
 			Method fileArtifactSetter = nthFileRowToBeInserted.getClass().getMethod("set" + artifact.getClass().getSimpleName(), artifact.getClass());
 			fileArtifactSetter.invoke(nthFileRowToBeInserted, artifact);
-			
-//			if(file.isFile())
-//				nthFileRowToBeInserted.setChecksum(CRCUtil.getCrc(file));
+
 			nthFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
 			toBeAddedFileTableEntries.add(nthFileRowToBeInserted);			
 		}

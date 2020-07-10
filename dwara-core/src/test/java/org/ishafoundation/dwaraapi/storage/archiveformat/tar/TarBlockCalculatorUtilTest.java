@@ -1,7 +1,5 @@
 package org.ishafoundation.dwaraapi.storage.archiveformat.tar;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
 
 public class TarBlockCalculatorUtilTest {
@@ -133,72 +131,6 @@ public class TarBlockCalculatorUtilTest {
 		//assertEquals(71, evb);
 	}
 
-	// comparing against calculating using size and validating against bru results...
-	// better to calculate against the running value - so using archiveblock than size is reliable while not easier...
-	/*
-		block 0: drwxrwxrwx root/root         0 2020-07-01 12:08 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/
-		block 1: -rwxrwxrwx root/root         0 2019-08-13 15:33 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/._.DS_Store
-		block 2: -rwxrwxrwx root/root         0 2019-08-13 15:33 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/.DS_Store
-		block 3: drwxrwxrwx root/root         0 2020-07-01 12:08 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/
-		block 4: -rwxrwxrwx root/root  12878883 2019-07-25 13:51 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074746.mp4
-		block 25160: -rwxrwxrwx root/root  24063587 2019-07-25 13:51 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074810.mp4
-		block 72161: drwxrwxrwx root/root         0 2020-07-01 12:08 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/1 CD/
-		block 72162: -rwxrwxrwx root/root   7353665 2019-07-25 13:51 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/1 CD/20190701_071239.mp4
-
-		VL:c|0|1|4096|-1|Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9
-		VL:c|0|1|0|-1|Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/._.DS_Store
-		VL:c|0|1|0|-1|Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/.DS_Store
-		VL:c|0|1|4096|-1|Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD
-		VL:c|0|1|12878883|-1|Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074746.mp4
-		VL:c|14336|1|24063587|55|Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074810.mp4
-		VL:c|41216|1|4096|160|Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/1 CD
-		VL:c|41216|1|7353665|160|Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/1 CD/20190701_071239.mp4
-	*/
-	
-	@Test	
-	public void test3() throws Exception{
-		System.out.println("****");
-//		int volumeBlocksize = 262144; //1048576;
-//		int tarBlocksize = 2048;
-		
-		//block 0: drwxrwxrwx root/root         0 2020-07-01 12:08 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/
-		String fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/";
-		Long fileSize = 0L;
-		int fileArchiveStartBlock = 0;
-		
-		int evb = TarBlockCalculatorUtil.getFileVolumeBlockEnd(fileName, tarBlocksize, fileSize, volumeBlocksize); //getEndVolumeBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
-		System.out.println(evb);
-		////assertEquals(0, evb);
-		
-		// block 4: -rwxrwxrwx root/root  12878883 2019-07-25 13:51 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074746.mp4	
-		fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074746.mp4";
-		fileSize = getUsedFileSize(12878883L);
-		fileArchiveStartBlock = 4;
-		
-		evb = TarBlockCalculatorUtil.getFileVolumeBlockEnd(fileName, tarBlocksize, fileSize, volumeBlocksize); //getEndVolumeBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
-		System.out.println(evb);
-		////assertEquals(55, evb);
-		
-		//block 25160: -rwxrwxrwx root/root  24063587 2019-07-25 13:51 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074810.mp4
-		fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074810.mp4";
-		fileSize = getUsedFileSize(24063587L);
-		fileArchiveStartBlock = 25160;
-		
-		evb = evb + TarBlockCalculatorUtil.getFileVolumeBlockEnd(fileName, tarBlocksize, fileSize, volumeBlocksize); //getEndVolumeBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
-		System.out.println(evb);
-		////assertEquals(160, evb);
-		
-
-		//block 72161: drwxrwxrwx root/root         0 2020-07-01 12:08 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/1 CD/
-		fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/1 CD/";
-		fileSize = 0L;
-		fileArchiveStartBlock = 72161;
-		
-		evb = evb + TarBlockCalculatorUtil.getFileVolumeBlockEnd(fileName, tarBlocksize, fileSize, volumeBlocksize); //getEndVolumeBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
-		System.out.println(evb); 
-		////assertEquals(160, evb);
-	}
-	
 	private Long getUsedFileSize(Long fileSize) {
 		return fileSize;
 		//return (long) (fileSize + (fileSize * 0.125));

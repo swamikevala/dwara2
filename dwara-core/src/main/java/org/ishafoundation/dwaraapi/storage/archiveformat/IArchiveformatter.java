@@ -24,7 +24,7 @@ public interface IArchiveformatter {
 //	restore
 //	
 //	
-//	public ArchiveResponse verify(String artifactSourcePath, int volumeBlocksize, int archiveformatBlocksize, String deviceName, String artifactNameToBeWritten) throws Exception;
+	public ArchiveResponse verify(ArchiveformatJob archiveformatJob) throws Exception;
 	
 //	//For Tar
 //	public abstract ArchiveResponse restore(String destinationPath, int blockSizeInKB, String deviceName, int noOfBlocksToBeRead, int skipByteCount, String filePathNameToBeRestored) throws Exception;

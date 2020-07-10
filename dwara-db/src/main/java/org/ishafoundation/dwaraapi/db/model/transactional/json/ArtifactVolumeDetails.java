@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.db.model.transactional.json;
 public class ArtifactVolumeDetails {
 	private String archive_id;
 	private Integer start_volume_block;
-	private Integer total_volume_blocks;
+	private Integer end_volume_block;
 	
 	public String getArchive_id() {
 		return archive_id;
@@ -17,11 +17,12 @@ public class ArtifactVolumeDetails {
 	public void setStart_volume_block(Integer start_volume_block) {
 		this.start_volume_block = start_volume_block;
 	}
-	public Integer getTotal_volume_blocks() {
-		return total_volume_blocks;
+	public Integer getEnd_volume_block() {
+		return end_volume_block;
 	}
-	public void setTotal_volume_blocks(Integer total_volume_blocks) {
-		this.total_volume_blocks = total_volume_blocks;
+	public void setEnd_volume_block(Integer end_volume_block) {
+		this.end_volume_block = end_volume_block;
 	}
+
 	// TODO : equals and hashCode
 }

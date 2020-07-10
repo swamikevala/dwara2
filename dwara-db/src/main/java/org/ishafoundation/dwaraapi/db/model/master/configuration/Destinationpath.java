@@ -34,6 +34,9 @@ public class Destinationpath implements Cacheable{
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
     List<ArtifactclassDestinationpath> artifactclassDestinationpath = new ArrayList<>();
+    
+    @Column(name="use_buffering")
+    private boolean useBuffering;
 	
 
 	public int getId() {
@@ -59,6 +62,14 @@ public class Destinationpath implements Cacheable{
 	public void setPath(String path) {
 		this.path = path;
 	}
+	
+	public boolean isUseBuffering() {
+		return useBuffering;
+	}
+
+	public void setUseBuffering(boolean useBuffering) {
+		this.useBuffering = useBuffering;
+	}
 
 	@JsonIgnore
 	public List<ArtifactclassDestinationpath> getArtifactclassDestinationpath() {
@@ -69,7 +80,7 @@ public class Destinationpath implements Cacheable{
 	public void setArtifactclassDestinationpath(List<ArtifactclassDestinationpath> artifactclassDestinationpath) {
 		this.artifactclassDestinationpath = artifactclassDestinationpath;
 	}
-
+	
 	@Override
     public boolean equals(Object o) {
         if (this == o) return true;

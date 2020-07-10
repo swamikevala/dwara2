@@ -1,17 +1,12 @@
 package org.ishafoundation.dwaraapi.storage.archiveformat.tar;
 
+import java.util.HashMap;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
-import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
+import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -20,9 +15,6 @@ import org.springframework.stereotype.Component;
 public class TarArchiver extends AbstractTarArchiver {
 	
 	private static final Logger logger = LoggerFactory.getLogger(TarArchiver.class);
-	
-	@Autowired
-	private DomainUtil domainUtil;
 	
 	@Override
 	protected String executeCommand(List<String> tarCommandParamsList, String artifactName, int volumeBlocksize)
@@ -38,6 +30,15 @@ public class TarArchiver extends AbstractTarArchiver {
 //		}
 		return commandOutput;
 	}
+
+	@Override
+	protected boolean stream(List<String> commandList, int volumeBlocksize, int skipByteCount,
+			String filePathNameWeNeed, String destinationPath, Checksumtype checksumtype,
+			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
+		
+		return TapeStreamer.stream(commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, destinationPath, checksumtype, filePathNameToChecksumObj);
+	}
+
 	
 //	@Override
 //	protected int getArtifactStartVolumeBlock(StoragetypeJob storagetypeJob) {

@@ -9,12 +9,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
-import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactVolumeFactory;
-import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileVolumeFactory;
+import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
@@ -30,6 +33,7 @@ import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
 import org.ishafoundation.dwaraapi.storage.storagelevel.IStoragelevel;
+import org.ishafoundation.dwaraapi.utils.Md5Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +47,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 	@Autowired
 	private DomainUtil domainUtil;
+	
+	@SuppressWarnings("rawtypes")
+	@Autowired
+	private DBMasterTablesCacheManager dBMasterTablesCacheManager;
 
 	public AbstractStoragetypeJobProcessor() {
 		logger.debug(this.getClass().getName());
@@ -118,6 +126,11 @@ public abstract class AbstractStoragetypeJobProcessor {
 		for (Iterator<File> iterator = artifactFileList.iterator(); iterator.hasNext();) {
 			File nthFile = iterator.next();
 			String filePathname = FilenameUtils.separatorsToUnix(nthFile.getPathname());
+//			if(nthFile.getChecksum() != null && StringUtils.isNotBlank(FilenameUtils.getExtension(filePathname))) { //if file is not folder
+//				String readyToIngestPath =  "C:\\data\\ingested"; // TODO Hardcoded
+//				java.io.File file = new java.io.File(readyToIngestPath + java.io.File.separator + nthFile.getPathname());
+//				nthFile.setChecksum(Md5Util.getChecksum(file, volume.getChecksumtype()));
+//			}
 			
 		    // To get an File*Volume instance dynamically, where * is domain name...
 			//FileVolume fileVolume = DomainSpecificFileVolumeFactory.getInstance(domain, nthFile.getId(), volume);
@@ -143,6 +156,9 @@ public abstract class AbstractStoragetypeJobProcessor {
 			toBeAddedFileVolumeTableEntries.add(fileVolume);
 		}
 	
+		// saving the checksum here...
+//		domainSpecificFileRepository.saveAll(artifactFileList);
+		
 	    if(toBeAddedFileVolumeTableEntries.size() > 0) {
 	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
 	    	domainSpecificFileVolumeRepository.saveAll(toBeAddedFileVolumeTableEntries);
@@ -159,11 +175,11 @@ public abstract class AbstractStoragetypeJobProcessor {
 		    
 		    ArchiveResponse archiveResponse = storageResponse.getArchiveResponse();
 			String archiveId = archiveResponse.getArchiveId();// For tar it will not be available...;
-			artifactStartVolumeBlock = archiveResponse.getArtifactStartVolumeBlock();// TODO : do we need to overwrite here or let the individual impl set this?
-		    Integer artifactTotalVolumeBlocks = archiveResponse.getArtifactTotalVolumeBlocks();
+			artifactStartVolumeBlock = archiveResponse.getArtifactStartVolumeBlock();
+		    Integer artifactEndVolumeBlock = archiveResponse.getArtifactEndVolumeBlock();
 		    artifactVolumeDetails.setArchive_id(archiveId);
 		    artifactVolumeDetails.setStart_volume_block(artifactStartVolumeBlock);
-		    artifactVolumeDetails.setTotal_volume_blocks(artifactTotalVolumeBlocks);
+		    artifactVolumeDetails.setEnd_volume_block(artifactEndVolumeBlock);
 		    
 		    artifactVolume.setDetails(artifactVolumeDetails);
 	    }
@@ -178,7 +194,44 @@ public abstract class AbstractStoragetypeJobProcessor {
 //
 //	protected abstract void beforeWrite(StorageTypeJob storagetypeJob);
 
-    protected void beforeVerify(StoragetypeJob storagetypeJob) {}
+    protected void beforeVerify(StoragetypeJob storagetypeJob) throws Exception {
+    	StorageJob storageJob = storagetypeJob.getStorageJob();
+		
+		Job job = storageJob.getJob();
+		Volume volume = storageJob.getVolume();
+    	
+    	Job writeJobToBeVerified = job.getJobRef();
+
+		Integer deviceIdWriteJobUsed = writeJobToBeVerified.getDetails().getDevice_id();
+		
+		Integer artifactclassId = job.getRequest().getDetails().getArtifactclass_id();
+		Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager
+				.getRecord(CacheableTablesList.artifactclass.name(), artifactclassId);
+		Domain domain = artifactclass.getDomain();
+		storageJob.setDomain(domain);
+		
+		Integer inputArtifactId = writeJobToBeVerified.getInputArtifactId();
+		Artifact artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);		
+		
+		storageJob.setArtifact(artifact);
+
+		
+		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
+		
+		storageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStart_volume_block());
+		storageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEnd_volume_block());
+		
+		// to where
+		String destinationPath = "C:\\data\\tmp";//"sometemplocationfromconfig";
+		storageJob.setDestinationPath(destinationPath);
+		
+		String domainSpecificArtifactTableName = artifact.getClass().getSimpleName();
+		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+		Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_ARTIFACT_ID.replace("<<DOMAIN_SPECIFIC_ARTIFACT>>", domainSpecificArtifactTableName), int.class);
+		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = (List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>) fileDaoFindAllBy.invoke(domainSpecificFileRepository, artifact.getId());
+		storageJob.setArtifactFileList(fileList);
+    }
     
 	//public StorageResponse restore(StorageJob storagetypeJob) throws Throwable{
 	public StorageResponse verify(StoragetypeJob storagetypeJob) throws Throwable{
@@ -188,9 +241,7 @@ public abstract class AbstractStoragetypeJobProcessor {
     	
     	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
     	storageResponse = iStoragelevel.verify(storagetypeJob);
-    	
-//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storagetypeJob);
-//    	ar = storageFormatter.restore(storagetypeJob);
+
     	afterVerify(storagetypeJob);
     	return storageResponse; 
    	

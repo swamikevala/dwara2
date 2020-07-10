@@ -11,7 +11,7 @@ public class ArchiveResponse {
 	
 	private int artifactStartVolumeBlock;
 	
-	private int artifactTotalVolumeBlocks;
+	private int artifactEndVolumeBlock;
 	
 	private List<ArchivedFile> archivedFileList = new ArrayList<ArchivedFile>();
 
@@ -41,12 +41,12 @@ public class ArchiveResponse {
 		this.artifactStartVolumeBlock = artifactStartVolumeBlock;
 	}
 
-	public int getArtifactTotalVolumeBlocks() {
-		return artifactTotalVolumeBlocks;
+	public int getArtifactEndVolumeBlock() {
+		return artifactEndVolumeBlock;
 	}
 
-	public void setArtifactTotalVolumeBlocks(int artifactTotalVolumeBlocks) {
-		this.artifactTotalVolumeBlocks = artifactTotalVolumeBlocks;
+	public void setArtifactEndVolumeBlock(int artifactEndVolumeBlock) {
+		this.artifactEndVolumeBlock = artifactEndVolumeBlock;
 	}
 
 	public List<ArchivedFile> getArchivedFileList() {

@@ -26,7 +26,7 @@ public class File {
 	private String pathname;
 
 	@Column(name="checksum")
-	private Long checksum;
+	private byte[] checksum;
 
 	@Column(name="size")
 	private long size;
@@ -58,11 +58,11 @@ public class File {
 		this.pathname = pathname;
 	}
 
-	public Long getChecksum() {
+	public byte[] getChecksum() {
 		return checksum;
 	}
 
-	public void setChecksum(Long checksum) {
+	public void setChecksum(byte[] checksum) {
 		this.checksum = checksum;
 	}
 

@@ -49,7 +49,7 @@ public class Restore extends AbstractStoragetaskAction{
 		int fileIdToBeRestored = request.getDetails().getFile_id();
 		storageJob.setFileId(fileIdToBeRestored);
 		
-		// From where
+		// From where - get the volume
 		Integer locationId = request.getDetails().getLocation_id();
 		if(locationId == null) {
 			Location location = locationDao.findByRestoreDefaultTrue();
@@ -60,35 +60,10 @@ public class Restore extends AbstractStoragetaskAction{
 		storageJob.setVolumeBlock(fileVolume.getVolumeBlock()); 
 		storageJob.setArchiveBlock(fileVolume.getArchiveBlock());
 		
-		Volume volume = fileVolume.getVolume();
+		Volume volume = fileVolume.getVolume(); // need the volume for job selection
 		storageJob.setVolume(volume);
 
-			
-//		//request.getCopyNumber(); 
-////			String requestedBy = request.getUser()
-////			int userId = userDao.findByName(requestedBy).getId();
-//		
-//		int userId = request.getUserId();
-//
-//		V_RestoreFile v_RestoreFile = v_RestoreFileDao.findByVolumesetLocationAndIdFileIdAndIdActionAndIdUserId(copyNumber, fileIdToBeRestored, Action.restore, userId);			
-//
 
-		
-//
-//		String uId = "V5A001";//v_RestoreFile.getId().getVolumeId();
-//		Volume volume = volumeDao.findByUid(uId);
-//		Volume volume = new Volume();
-//		volume.setVolume(volume);
-//		storageJob.setVolume(volume);
-//
-//		int block = v_RestoreFile.getFileVolumeBlock();
-//		storageJob.setBlock(block);
-//		
-//		int offset = v_RestoreFile.getFileVolumeOffset();
-//		storageJob.setOffset(offset);
-//
-//		// to where
-//		String targetLocation = request.getTargetvolume().getPath();
 		String destinationPath = null;
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.restore) {
 			destinationPath = request.getDetails().getDestinationpath();//requested destination path 
@@ -97,14 +72,6 @@ public class Restore extends AbstractStoragetaskAction{
 //			destinationPath = inputlc.path_prefix
 		}
 		storageJob.setDestinationPath(destinationPath + java.io.File.separator + request.getDetails().getOutput_folder());
-//		
-//		// how
-//		//storageJob.setOptimizeVolumeAccess(true); // TODO hardcoded for phase1
-//		storageJob.setEncrypted(v_RestoreFile.isFileVolumeEncrypted());				
-//		//storageJob.setPriority(10);  // TODO hardcoded for phase1subrequest.getPriority());
-//		Volumeset volumeset = volume.getVolumeset();
-//		Storageformat storageformat = volumeset.getStorageformat();
-//		storageJob.setStorageformat(storageformat);
 		return storageJob;
 	}
 	

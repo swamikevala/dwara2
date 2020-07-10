@@ -15,7 +15,18 @@ public class BruArchiver extends AbstractBruArchiver {
 	private static final Logger logger = LoggerFactory.getLogger(BruArchiver.class);
 
 	@Override
-	protected String executeCommand(List<String> bruCommandParamsList, String artifactName, int volumeBlocksize)
+	protected String executeWriteCommand(List<String> writeCommandParamsList, String artifactName, int volumeBlocksize)
+			throws Exception {
+		return executeCommand(writeCommandParamsList);
+	}
+
+	@Override
+	protected String executeRestoreCommand(List<String> restoreCommandParamsList) throws Exception {
+		return executeCommand(restoreCommandParamsList);
+	}
+	
+	
+	protected String executeCommand(List<String> bruCommandParamsList)
 			throws Exception {
 		String commandOutput = null;
 //		CommandLineExecutionResponse bruCopyCommandLineExecutionResponse = commandLineExecuter.executeCommand(bruCommandParamsList, commandlineExecutorErrorResponseTemporaryFilename + ".err"); // TODO Fix this output file...

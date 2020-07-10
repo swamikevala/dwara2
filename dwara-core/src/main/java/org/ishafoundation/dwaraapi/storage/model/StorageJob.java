@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.storage.model;
 
+import java.util.List;
+
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -13,67 +15,36 @@ import org.ishafoundation.dwaraapi.enumreferences.Domain;
 public class StorageJob {
 
 	private Job job; 
-//	private Storagetype storagetype;
 	private Volume volume; // Archive Operation determines choosing the volume - For Ingest a volume from pool of volumes fitting library size - Restore based on fileId and copyNumber...
 
 	private Domain domain;
+	
 	// Ingest stuff
 	private Artifact artifact;
 	private String artifactName;
 	private String artifactPrefixPath;
-	
 
-//	private Storageformat storageformat;
-//	
+	// Verify
+	private Integer artifactStartVolumeBlock;
+	private Integer artifactEndVolumeBlock;
+	private List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList;
+	
 //	private int priority = 0; // TODO Hardcoded for phase1
 //	private boolean encrypted;
-//	private int copyNumber;
-//	
 //	private boolean concurrentCopies;
 //
-//	// Restore stuff
+	// Restore stuff
 	private int fileId;
 	private String destinationPath;
 	private Integer volumeBlock;
 	private Integer archiveBlock;
-//	
-//
-//	public Storagetask getStoragetask() {
-//		return storagetask;
-//	}
-//	public void setStoragetask(Storagetask storagetask) {
-//		this.storagetask = storagetask;
-//	}
-//	public Library getLibrary() {
-//		return library;
-//	}
-//	public void setLibrary(Library library) {
-//		this.library = library;
-//	}
-//	public String getLibraryToBeCopied() {
-//		return libraryToBeCopied;
-//	}
-//	public void setLibraryToBeCopied(String libraryToBeCopied) {
-//		this.libraryToBeCopied = libraryToBeCopied;
-//	}
-//	public String getLibraryPrefixPath() {
-//		return libraryPrefixPath;
-//	}
-//	public void setLibraryPrefixPath(String libraryPrefixPath) {
-//		this.libraryPrefixPath = libraryPrefixPath;
-//	}
+
 	public Job getJob() {
 		return job;
 	}
 	public void setJob(Job job) {
 		this.job = job;
 	}
-//	public Storagetype getStoragetype() {
-//		return storagetype;
-//	}
-//	public void setStoragetype(Storagetype storagetype) {
-//		this.storagetype = storagetype;
-//	}
 	public Volume getVolume() {
 		return volume;
 	}
@@ -106,14 +77,6 @@ public class StorageJob {
 	}
 	
 
-	
-
-//	public Storageformat getStorageformat() {
-//		return storageformat;
-//	}
-//	public void setStorageformat(Storageformat storageformat) {
-//		this.storageformat = storageformat;
-//	}
 
 //	public int getPriority() {
 //		return priority;
@@ -127,13 +90,26 @@ public class StorageJob {
 //	public void setEncrypted(boolean encrypted) {
 //		this.encrypted = encrypted;
 //	}
-//	public int getCopyNumber() {
-//		return copyNumber;
-//	}
-//	public void setCopyNumber(int copyNumber) {
-//		this.copyNumber = copyNumber;
-//	}
-//	public boolean isConcurrentCopies() {
+
+	public Integer getArtifactStartVolumeBlock() {
+		return artifactStartVolumeBlock;
+	}
+	public void setArtifactStartVolumeBlock(Integer artifactStartVolumeBlock) {
+		this.artifactStartVolumeBlock = artifactStartVolumeBlock;
+	}
+	public Integer getArtifactEndVolumeBlock() {
+		return artifactEndVolumeBlock;
+	}
+	public void setArtifactEndVolumeBlock(Integer artifactEndVolumeBlock) {
+		this.artifactEndVolumeBlock = artifactEndVolumeBlock;
+	}
+	public List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getArtifactFileList() {
+		return artifactFileList;
+	}
+	public void setArtifactFileList(List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList) {
+		this.artifactFileList = artifactFileList;
+	}
+	//	public boolean isConcurrentCopies() {
 //		return concurrentCopies;
 //	}
 //	public void setConcurrentCopies(boolean concurrentCopies) {
