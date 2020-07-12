@@ -126,5 +126,14 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //		
 //	}
 //
+	protected void beforeFinalize(StoragetypeJob storagetypeJob) {
+		TapeJob tapeJob = (TapeJob) storagetypeJob;
+		String tapeLibraryName = tapeJob.getTapeLibraryName();
+		int driveElementAddress = tapeJob.getTapedriveNo();
 
+		loadTape(storagetypeJob, true);
+
+		logger.trace("Now positioning tape head for finalizing " + tapeLibraryName + ":" + driveElementAddress);
+
+	}
 }

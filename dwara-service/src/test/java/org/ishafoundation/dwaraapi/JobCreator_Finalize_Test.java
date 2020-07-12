@@ -1,10 +1,6 @@
 package org.ishafoundation.dwaraapi;
 
-import java.io.File;
-import java.net.URL;
-
-import org.apache.commons.io.FileUtils;
-import org.ishafoundation.dwaraapi.api.req.format.FormatRequest;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.service.VolumeService;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -15,9 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringRunner.class)
@@ -31,21 +24,10 @@ public class JobCreator_Finalize_Test {
 	VolumeService volumeService;
 		
 	@Test
-	public void test_Format() {
+	public void test_Finalize() {
 		try {
-			ObjectMapper mapper = new ObjectMapper();
-			URL fileUrl = this.getClass().getResource("/testcases/format/format_request.json");
-			
-			String postBodyJson = FileUtils.readFileToString(new File(fileUrl.getFile()));
-			
-			FormatRequest fr = mapper.readValue(postBodyJson, new TypeReference<FormatRequest>() {});
-			volumeService.format(fr);
-			
-			// Delete the files after the creation is done...
-//			FileUtils.deleteDirectory(new File(readyToIngestPath + File.separator + artifact_name_1));
-//			FileUtils.deleteDirectory(new File(readyToIngestPath + File.separator + artifact_name_2));
+			volumeService.finalize("V5A001", Domain.one); // TODO : Why domain needed? Filevolume and Artifactvolume are domain-ed
 		} catch (Exception e) {
-			// TODO: handle exception
 			e.printStackTrace();
 		}
 	}

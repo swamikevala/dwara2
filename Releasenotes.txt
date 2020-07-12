@@ -1,4 +1,4 @@
-12h July - Format and mapdrives flow completed - finalize WIP
+12h July - Format and mapdrives and finalize flow completed - Still some doubts/gaps and TODOs
 	Not much change in schema
 	
 10th July - Verify flow completed

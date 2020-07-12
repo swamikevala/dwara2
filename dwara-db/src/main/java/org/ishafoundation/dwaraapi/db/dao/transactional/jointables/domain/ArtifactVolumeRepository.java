@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain;
 
+import java.util.List;
+
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;
@@ -14,4 +16,6 @@ public interface ArtifactVolumeRepository<T extends ArtifactVolume> extends Crud
 	ArtifactVolume findTopByVolumeIdOrderByIdDesc(int volumeId);
 	
 	ArtifactVolume findByIdArtifactIdAndIdVolumeId(int artifactId, int volumeId);
+	
+	List<ArtifactVolume> findAllByIdVolumeId(int volumeId);
 }

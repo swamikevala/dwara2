@@ -118,6 +118,7 @@ public class DomainUtil {
 	public FileVolume getDomainSpecificFileVolumeInstance(Domain domain, int fileId, Volume volume) {
 		return DomainSpecificFileVolumeFactory.getInstance(domain, fileId, volume);
 	}
+	
 	private String getDomainName(Domain domain) {
 		String domainName = null;
 		if(domain == null) { // If domain is not available default it

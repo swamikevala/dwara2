@@ -60,7 +60,7 @@ public class RequestDetails {
 	
 	
 	// rewrite stuff
-	private int artifact_id;// artifact_id or name???
+	private Integer artifact_id;// artifact_id or name???
 	
 	private String from_volume_uid;
 	
@@ -267,11 +267,11 @@ public class RequestDetails {
 
 	/********************  REWRITE  ********************/
 	
-	public int getArtifact_id() {
+	public Integer getArtifact_id() {
 		return artifact_id;
 	}
 
-	public void setArtifact_id(int artifact_id) {
+	public void setArtifact_id(Integer artifact_id) {
 		this.artifact_id = artifact_id;
 	}
 
