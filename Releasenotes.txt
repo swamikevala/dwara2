@@ -1,3 +1,6 @@
+12h July - Format and mapdrives flow completed - finalize WIP
+	Not much change in schema
+	
 10th July - Verify flow completed
 	Drop transaction tables
 		drop table request, job, artifact1, file1, artifact2, file2, artifact1_volume, file1_volume, artifact2_volume, file2_volume;

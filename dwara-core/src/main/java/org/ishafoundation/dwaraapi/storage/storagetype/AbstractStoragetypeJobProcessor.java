@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
+import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
@@ -33,7 +33,6 @@ import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
 import org.ishafoundation.dwaraapi.storage.storagelevel.IStoragelevel;
-import org.ishafoundation.dwaraapi.utils.Md5Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,11 +51,17 @@ public abstract class AbstractStoragetypeJobProcessor {
 	@Autowired
 	private DBMasterTablesCacheManager dBMasterTablesCacheManager;
 
+	@Autowired
+	private VolumeDao volumeDao;
+
 	public AbstractStoragetypeJobProcessor() {
 		logger.debug(this.getClass().getName());
 	}
 	
-    protected void beforeFormat(StoragetypeJob storagetypeJob) {}
+    protected void beforeFormat(StoragetypeJob storagetypeJob) {
+    	
+    	
+    }
     
 	//public ArchiveResponse restore(StorageJob storagetypeJob) throws Throwable{
 	public StorageResponse format(StoragetypeJob storagetypeJob) throws Throwable{
@@ -66,14 +71,17 @@ public abstract class AbstractStoragetypeJobProcessor {
     	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
     	storageResponse = iStoragelevel.format(storagetypeJob);
     	
-//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storagetypeJob);
-//    	ar = storageFormatter.restore(storagetypeJob);
     	afterFormat(storagetypeJob);
     	return storageResponse; 
    	
     }
 	
-	protected void afterFormat(StoragetypeJob storagetypeJob) {}
+	protected void afterFormat(StoragetypeJob storagetypeJob) {
+		
+		Volume volume = storagetypeJob.getStorageJob().getVolume();
+		volumeDao.save(volume);
+		logger.trace("Volume " + volume.getUid() + " attached to dwara succesfully");
+	}
 
 	
     protected void beforeWrite(StoragetypeJob storagetypeJob) {}

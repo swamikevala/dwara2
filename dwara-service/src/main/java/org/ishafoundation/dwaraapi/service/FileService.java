@@ -1,35 +1,19 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.ishafoundation.dwaraapi.api.req.ingest.mapper.RequestToEntityObjectMapper;
 import org.ishafoundation.dwaraapi.api.req.restore.FileParams;
 import org.ishafoundation.dwaraapi.api.req.restore.UserRequest;
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactFactory;
-import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileFactory;
 import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,9 +39,6 @@ public class FileService {
 	@Autowired
 	private RequestToEntityObjectMapper requestToEntityObjectMapper; 
 	
-	@Autowired
-	private DomainUtil domainUtil;
-
 	@SuppressWarnings("rawtypes")
 	@Autowired
 	private DBMasterTablesCacheManager dBMasterTablesCacheManager;

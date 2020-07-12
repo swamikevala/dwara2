@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.api.req.ingest.mapper;
 
+import org.ishafoundation.dwaraapi.api.req.format.FormatRequest;
 import org.ishafoundation.dwaraapi.api.req.ingest.RequestParams;
 import org.ishafoundation.dwaraapi.api.req.restore.FileParams;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
@@ -16,6 +17,10 @@ public interface RequestToEntityObjectMapper {
 	
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
 	RequestDetails getRequestDetails(FileParams fileParams);
+	
+	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
+	RequestDetails getRequestDetails(FormatRequest formatRequest);
+	
 	
 	
 }

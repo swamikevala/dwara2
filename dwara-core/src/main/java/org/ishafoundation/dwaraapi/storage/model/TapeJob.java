@@ -8,8 +8,7 @@ public class TapeJob extends StoragetypeJob {
 	private TActivedevice tActivedevice;
 	private String tapeLibraryName;
 	private int tapedriveNo; // elementAddress
-	private String tapedriveUid;//
-	private boolean tapedriveAlreadyLoadedWithTape;
+	private boolean tapedriveAlreadyLoadedWithNeededTape;
 
 	public boolean isOptimizeTapeAccess() {
 		return optimizeTapeAccess;
@@ -35,18 +34,10 @@ public class TapeJob extends StoragetypeJob {
 	public void setTapedriveNo(int tapedriveNo) {
 		this.tapedriveNo = tapedriveNo;
 	}
-	public String getTapedriveUid() {
-		return tapedriveUid;
+	public boolean isTapedriveAlreadyLoadedWithNeededTape() {
+		return tapedriveAlreadyLoadedWithNeededTape;
 	}
-	public void setTapedriveUid(String tapedriveUid) {
-		this.tapedriveUid = tapedriveUid;
+	public void setTapedriveAlreadyLoadedWithNeededTape(boolean tapedriveAlreadyLoadedWithNeededTape) {
+		this.tapedriveAlreadyLoadedWithNeededTape = tapedriveAlreadyLoadedWithNeededTape;
 	}
-	public boolean isTapedriveAlreadyLoadedWithTape() {
-		return tapedriveAlreadyLoadedWithTape;
-	}
-	public void setTapedriveAlreadyLoadedWithTape(boolean tapedriveAlreadyLoadedWithTape) {
-		this.tapedriveAlreadyLoadedWithTape = tapedriveAlreadyLoadedWithTape;
-	}
-
-
 }

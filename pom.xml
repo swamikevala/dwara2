@@ -12,5 +12,6 @@
     <module>dwara-tape</module>
     <module>dwara-core-mocks</module>
     <module>dwara-dev-tools</module>
+    <module>videopub-mam</module>
   </modules>
 </project>

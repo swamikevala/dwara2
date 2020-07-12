@@ -12,4 +12,14 @@ public enum Checksumtype {
 	public String getJavaStyleChecksumtype() {
 		return javaStyleChecksumtype;
 	}
+	
+	public static Checksumtype getChecksumtype(String javaStyleChecksumtype){
+		Checksumtype checksumtype = null;
+	    for (Checksumtype ct : Checksumtype.values()) {
+	        if (ct.javaStyleChecksumtype.equals(javaStyleChecksumtype)) {
+	        	checksumtype = ct;
+	        }
+	    }
+		return checksumtype;
+	}
 }

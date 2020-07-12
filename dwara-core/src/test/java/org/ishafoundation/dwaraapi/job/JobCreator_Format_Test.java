@@ -29,7 +29,7 @@ public class JobCreator_Format_Test extends JobCreator_Test{
 		// group the volume belongs to
 		details.setVolume_group_uid("V4A");
 		
-		details.setStoragetype(Storagetype.tape);
+		//details.setStoragetype(Storagetype.tape);
 		
 		details.setGeneration(7);
 		

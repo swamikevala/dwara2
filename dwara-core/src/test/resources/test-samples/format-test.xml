@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<volumelabel version="1.0">
+   <volumeuid>ABC123</volumeuid>
+   <blocksize>524288</blocksize>
+   <owner>Isha Foundation</owner>
+   <accesslevel>1</accesslevel>
+   <labeltime>2013-02-01T18:35:47Z</labeltime>
+   <archiveformat version="18.0">bru</archiveformat>
+   <checksumalgorithm>adler-32</checksumalgorithm>
+   <encryptionalgorithm>aes-192</encryptionalgorithm>
+   <systeminfo>centos 3.10.0-1062.4.1.el7.x86_64</systeminfo>
+   <creator>dwara 2.0</creator>
+</volumelabel>

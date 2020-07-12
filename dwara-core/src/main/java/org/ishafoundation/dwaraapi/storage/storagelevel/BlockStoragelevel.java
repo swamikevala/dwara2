@@ -1,37 +1,21 @@
 package org.ishafoundation.dwaraapi.storage.storagelevel;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Archiveformat;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File1;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File2;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
-import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
-import org.ishafoundation.dwaraapi.storage.archiveformat.tar.TarBlockCalculatorUtil;
 import org.ishafoundation.dwaraapi.storage.model.ArchiveformatJob;
 import org.ishafoundation.dwaraapi.storage.model.DiskJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.label.LabelManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,11 +31,16 @@ public class BlockStoragelevel implements IStoragelevel {
 	private Map<String, IArchiveformatter> iArchiveformatterMap;
 
 	@Autowired
-	private DomainUtil domainUtil;
+	private LabelManager labelManager;
+	
+	
 	
 	@Override
-	public StorageResponse format(StoragetypeJob job) throws Exception{
-		// TODO Auto-generated method stub
+	public StorageResponse format(StoragetypeJob storagetypeJob) throws Exception{
+		
+		boolean status = labelManager.writeVolumeLabel(storagetypeJob);
+		logger.debug("Labelling success ? - " + status);
+		
 		return null;
 	}
 
@@ -147,15 +136,8 @@ public class BlockStoragelevel implements IStoragelevel {
 		VolumeDetails volumeDetails = volume.getDetails();
 		int volumeBlocksize = volumeDetails.getBlocksize();
 		int archiveformatBlocksize = volume.getArchiveformat().getBlocksize();
-		String deviceName = null;
+		String deviceName = storagetypeJob.getDeviceUid();
 		
-		if(storagetypeJob instanceof TapeJob) {
-			TapeJob tj = (TapeJob) storagetypeJob;
-			deviceName = tj.getTapedriveUid();
-		} else if(storagetypeJob instanceof DiskJob) {
-//			DiskJob dj = (DiskJob) storagetypeJob;
-			deviceName = storageJob.getVolume().getDetails().getMountpoint();
-		}
 		archiveformatJob.setVolumeBlocksize(volumeBlocksize);
 		archiveformatJob.setArchiveformatBlocksize(archiveformatBlocksize);
 		archiveformatJob.setDeviceName(deviceName);

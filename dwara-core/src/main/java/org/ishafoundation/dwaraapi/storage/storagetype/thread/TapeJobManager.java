@@ -65,14 +65,28 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			//tapeDrivePreparer
 			
 			if(storagetaskAction == Action.map_tapedrives) {
+				logger.debug("Option 1 - call TapeDriveMapper straight from here and update statuses on your own");
+				logger.debug("OR");
+				logger.debug("Option 2 - Be consistent and continue to processor and let it do the mapping and status updates... Just Note that mapping is specific to Tape");
+				boolean isOption1 = false;			
+				if(isOption1) {
+					try {
 
-				try {
-					logger.debug("Mapping drives using TapeDriveMapper");
-					//TapeDriveMapper
-					updateJobCompleted(storageJob.getJob());
-				}catch (Exception e) {
-					logger.error(e.getMessage());
-					updateJobFailed(storageJob.getJob());
+						logger.trace("Taking Option 1 Route");
+						logger.trace("Mapping drives using TapeDriveMapper");
+						//TapeDriveMapper
+						updateJobCompleted(storageJob.getJob());
+					}catch (Exception e) {
+						logger.error(e.getMessage());
+						updateJobFailed(storageJob.getJob());
+					}
+				}
+				else {
+					logger.trace("Taking Option 2 Route");
+					logger.trace("Composing Tape job");
+					TapeJob tapeJob = new TapeJob();
+					tapeJob.setStorageJob(storageJob);
+					manage(tapeJob);
 				}
 			}
 			else if(storagetaskAction == Action.format) {
@@ -146,7 +160,9 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			DeviceStatus deviceStatus = DeviceStatus.BUSY;
 			logger.debug("Marking drive " + tapedriveUid + " - " +  deviceStatus);
 			tActivedevice.setJob(job);
-			tActivedevice.setVolume(volume);
+			Action storagetaskAction = job.getStoragetaskActionId();
+			if(storagetaskAction != Action.format) // For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving device...  
+				tActivedevice.setVolume(volume);
 			tActivedevice.setDeviceStatus(deviceStatus);
 			tActivedevice = tActivedeviceDao.save(tActivedevice);
 			
@@ -163,8 +179,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			tapeJob.settActivedevice(tActivedevice);
 			tapeJob.setTapeLibraryName(tapeLibraryName);
 			tapeJob.setTapedriveNo(tapedriveNo);
-			tapeJob.setTapedriveUid(tapedriveUid);
-			tapeJob.setTapedriveAlreadyLoadedWithTape(tapedriveAlreadyLoadedWithTape);
+			tapeJob.setDeviceUid(tapedriveUid);
+			// TODO this gets set during job selection: tapeJob.setTapedriveAlreadyLoadedWithTape(tapedriveAlreadyLoadedWithTape);
 			
 			JobDetails jobDetails = new JobDetails();
 			jobDetails.setDevice_id(tapedriveDevice.getId());
@@ -180,6 +196,14 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			else {
 				logger.debug("Continuing in same thread");
 				StorageResponse storageResponse = manage(tapeJob);
+				
+				deviceStatus = DeviceStatus.AVAILABLE;
+				logger.debug("Marking back drive " + tapeJob.getDeviceUid() + " - " + deviceStatus);
+				tActivedevice.setJob(null);
+				tActivedevice.setVolume(null);
+				tActivedevice.setDeviceStatus(deviceStatus);
+				tActivedevice = tActivedeviceDao.save(tActivedevice);
+
 			}
 		}
 		catch (Exception e) {
@@ -207,7 +231,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			
 			TActivedevice tActivedevice = tapeJob.gettActivedevice();
 			DeviceStatus deviceStatus = DeviceStatus.AVAILABLE;
-			logger.debug("Marking back drive " + tapeJob.getTapedriveUid() + " - " + deviceStatus);
+			logger.debug("Marking back drive " + tapeJob.getDeviceUid() + " - " + deviceStatus);
 			tActivedevice.setJob(null);
 			tActivedevice.setVolume(null);
 			tActivedevice.setDeviceStatus(deviceStatus);

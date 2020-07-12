@@ -1,13 +1,13 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 //@Component("tapeJobProcessor")
@@ -26,11 +26,29 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //	
 //
 //	
+	public StorageResponse map_tapedrives(StoragetypeJob storagetypeJob) {
+		logger.trace("Mapping invoked from processor");
+		return new StorageResponse();
+	}
+	@Override
+	protected void beforeFormat(StoragetypeJob storagetypeJob) {
+		TapeJob tapeJob = (TapeJob) storagetypeJob;
+		String tapeLibraryName = tapeJob.getTapeLibraryName();
+		int driveElementAddress = tapeJob.getTapedriveNo();
+
+		loadTape(storagetypeJob, true);
+
+		logger.trace("Now positioning tape head for formatting " + tapeLibraryName + ":" + driveElementAddress);
+	}	
+	
 	@Override
 	protected void beforeWrite(StoragetypeJob storagetypeJob) {
 		TapeJob tapeJob = (TapeJob) storagetypeJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
+
+		loadTape(storagetypeJob);
+
 		
 		logger.trace("Now positioning tape head for writing" + tapeLibraryName + ":" + driveElementAddress);
 //		tapeDriveManager.setTapeHeadPositionForWriting(tapeLibraryName, driveElementAddress); // FIXME - check on this, using eod, bsf 1 and fsf 1
@@ -45,6 +63,8 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
 		int blockNumberToSeek = tapeJob.getStorageJob().getArtifactStartVolumeBlock();
+		
+		loadTape(storagetypeJob);
 		
 //		tapeDriveManager.setTapeHeadPositionForReading(tapeLibraryName, driveElementAddress, blockNumberToSeek); // FIXME - check on this, using eod, bsf 1 and fsf 1
 		logger.trace("Tape Head positioned for verifying"+ tapeLibraryName + ":" + driveElementAddress  + ":" + blockNumberToSeek);
@@ -63,10 +83,42 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		int driveElementAddress = tapeJob.getTapedriveNo();
 		int blockNumberToSeek = tapeJob.getStorageJob().getVolumeBlock();
 		
+		loadTape(storagetypeJob);
 //		tapeDriveManager.setTapeHeadPositionForReading(tapeLibraryName, driveElementAddress, blockNumberToSeek); // FIXME - check on this, using eod, bsf 1 and fsf 1
 		logger.trace("Tape Head positioned for reading"+ tapeLibraryName + ":" + driveElementAddress  + ":" + blockNumberToSeek);
 	}
 
+	private boolean loadTape(StoragetypeJob storagetypeJob) {
+		return loadTape(storagetypeJob, false);
+	}
+	
+	private boolean loadTape(StoragetypeJob storagetypeJob, boolean skipRightTapeCheck) {
+		TapeJob tapeJob = (TapeJob) storagetypeJob;
+		String tapeLibraryName = tapeJob.getTapeLibraryName();
+		int driveElementAddress = tapeJob.getTapedriveNo();
+	
+		Volume tapeToBeUsed = tapeJob.getStorageJob().getVolume();
+		logger.trace("Checking if drive " + driveElementAddress + " is already loaded with the needed tape");
+		
+		if(tapeJob.isTapedriveAlreadyLoadedWithNeededTape()) {
+			logger.trace("Tape " + tapeToBeUsed.getUid() + " is already loaded on to drive " + driveElementAddress);
+		}
+		else {
+			try {
+				logger.trace("Now loading tape " + tapeToBeUsed.getUid() + " on to drive " + driveElementAddress);
+//				tapeLibraryManager.locateAndLoadTapeOnToDrive(tapeToBeUsed.getUid(), tapeLibraryName, driveElementAddress);
+			} catch (Exception e) {
+				logger.error("Unable to load tape " + tapeToBeUsed.getUid() + " on to drive " + driveElementAddress, e);
+				throw e;
+			}
+		}
+		
+		if(!skipRightTapeCheck) {
+			logger.trace("Now checking if " + tapeLibraryName + ":" + driveElementAddress + " indeed have the tape " + tapeToBeUsed.getUid());
+			//isRightVolume
+		}
+		return true;
+	}
 
 //	@Override
 //	protected void afterRestore(StorageTypeJob storageJob) {
