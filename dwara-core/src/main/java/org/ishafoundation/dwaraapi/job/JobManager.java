@@ -3,12 +3,14 @@ package org.ishafoundation.dwaraapi.job;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.storage.storagetask.ImportStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator;
 import org.ishafoundation.dwaraapi.thread.executor.ImportStoragetaskSingleThreadExecutor;
@@ -37,6 +39,9 @@ public class JobManager {
 		
 	@Autowired
 	private ImportStoragetaskSingleThreadExecutor importStoragetaskSingleThreadExecutor;
+	
+	@Autowired
+	private Map<String, IProcessingTask> processingtaskActionMap;
 	
 	public void manageJobs() {
 		logger.trace("***** Managing jobs now *****");
@@ -74,6 +79,8 @@ public class JobManager {
 					// TODO : we were doing this on tasktype, but now that there is no tasktype how to differentiate? Check with Swami
 					if(processingtaskId != null) { // a non-storage process job
 						logger.trace("process job");
+						processingtaskActionMap.get(processingtaskId).execute();
+						logger.trace("done");
 //						ProcessingtaskJobManager_ThreadTask taskJobManager_ThreadTask = applicationContext.getBean(ProcessingtaskJobManager_ThreadTask.class);
 //						taskJobManager_ThreadTask.setJob(job);
 //						taskSingleThreadExecutor.getExecutor().execute(taskJobManager_ThreadTask);

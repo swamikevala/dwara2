@@ -58,7 +58,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		logger.debug(this.getClass().getName());
 	}
 	
-    protected void beforeFormat(StoragetypeJob storagetypeJob) {
+    protected void beforeFormat(StoragetypeJob storagetypeJob) throws Exception {
     	
     	
     }
@@ -84,7 +84,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	}
 
 	
-    protected void beforeWrite(StoragetypeJob storagetypeJob) {}
+    protected void beforeWrite(StoragetypeJob storagetypeJob) throws Exception {}
     
     public StorageResponse write(StoragetypeJob storagetypeJob) throws Throwable{
     	logger.info("Writing job " + storagetypeJob.getStorageJob().getJob().getId());
@@ -257,7 +257,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	protected void afterVerify(StoragetypeJob storagetypeJob) {}
     
-    protected void beforeFinalize(StoragetypeJob storagetypeJob) {}
+    protected void beforeFinalize(StoragetypeJob storagetypeJob) throws Exception {}
     
 	//public StorageResponse restore(StorageJob storagetypeJob) throws Throwable{
 	public StorageResponse finalize(StoragetypeJob storagetypeJob) throws Throwable{
@@ -277,7 +277,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	protected void afterFinalize(StoragetypeJob storagetypeJob) {}
 
 
-    protected void beforeRestore(StoragetypeJob storagetypeJob) {}
+    protected void beforeRestore(StoragetypeJob storagetypeJob) throws Exception {}
     
 	//public StorageResponse restore(StorageJob storagetypeJob) throws Throwable{
 	public StorageResponse restore(StoragetypeJob storagetypeJob) throws Throwable{

@@ -106,6 +106,8 @@ public class MtxStatusResponseParser {
 			}
 		}
 		scanner.close();
+		mtxStatus.setNoOfDrives(mtxStatus.getDteList().size());
+		mtxStatus.setNoOfSlots(mtxStatus.getSeList().size());
 		return mtxStatus;
 	}
 

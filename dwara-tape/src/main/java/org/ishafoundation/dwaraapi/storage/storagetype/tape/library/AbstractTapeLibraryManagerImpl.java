@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.enumreferences.DeviceStatus;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.TapeDriveManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveStatusDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.DataTransferElement;

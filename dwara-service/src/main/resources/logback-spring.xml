@@ -42,5 +42,10 @@
         <appender-ref ref="RollingFile" />
         <appender-ref ref="Console" />
     </logger>
+    
+    <logger name="org.ishafoundation.videopub" level="trace" additivity="false">
+        <appender-ref ref="RollingFile" />
+        <appender-ref ref="Console" />
+    </logger>
  
 </configuration>

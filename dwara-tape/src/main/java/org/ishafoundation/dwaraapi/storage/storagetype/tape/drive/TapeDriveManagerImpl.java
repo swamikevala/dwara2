@@ -43,10 +43,26 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 
 	
 	public DriveStatusDetails getDriveDetails(String dataTransferElementName) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
-	}
+		MtStatus mtStatus = getMtStatus(dataTransferElementName);
+		
+		DriveStatusDetails dsd = new DriveStatusDetails();
+//		dsd.setTapelibraryName(tapelibraryName);
+//		dsd.setDriveSNo(dataTransferElementNo);
+		dsd.setDriveName(dataTransferElementName);
+		dsd.setMtStatus(mtStatus);
+//		dsd.setDte(null);
+		
+		if(!mtStatus.isBusy()) {
 
+//			// TODO : callLowLevelCommandAndGetTheBelowDetails(); // SWAMI' Action point...
+//			dsd.setNoOfReads(5);
+//			dsd.setNoOfWrites(50);
+//			dsd.setHoursOfReads(6);
+//			dsd.setHoursOfWrites(544); 
+//			dsd.setTotalUsageInHours(550);
+		}
+		return dsd;
+	}
 	public boolean isTapeBlank(String dataTransferElementName) throws Exception {
 		// TODO Auto-generated method stub
 		return false;

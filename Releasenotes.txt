@@ -1,4 +1,13 @@
-12h July - Format and mapdrives and finalize flow completed - Still some doubts/gaps and TODOs
+13th July - Tape mech with mocks for dev env intro and sample integration - Full integration WIP
+	upgrade steps
+		drop database
+		create database
+		run the dwara-master sql script
+		run the dwara-testmock sql script
+	use the testcases in dwara-service
+	 
+
+12th July - Format and mapdrives and finalize flow completed - Still some doubts/gaps and TODOs
 	Not much change in schema
 	
 10th July - Verify flow completed
