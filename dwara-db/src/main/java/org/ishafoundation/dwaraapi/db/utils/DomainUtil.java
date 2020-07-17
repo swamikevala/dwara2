@@ -8,7 +8,9 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepositor
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
+import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactFactory;
 import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactVolumeFactory;
+import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileFactory;
 import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileVolumeFactory;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -47,6 +49,16 @@ public class DomainUtil {
 	private String volumeSuffix = "Volume";
 	private String daoSuffix = "Dao";
 	
+	/*** Artifact ***/
+	public Artifact getDomainSpecificArtifactInstance(Domain domain) {
+		return DomainSpecificArtifactFactory.getInstance(domain);
+	}
+
+	public Artifact getDomainSpecificArtifact(Domain domain, int artifactId) {
+		Artifact artifact = (Artifact) getDomainSpecificArtifactRepository(domain).findById(artifactId).get();
+		return artifact;
+	}
+	
 	@SuppressWarnings("rawtypes")
 	public ArtifactRepository getDomainSpecificArtifactRepository(Domain domain) {
 		String domainName = getDomainName(domain);
@@ -56,11 +68,16 @@ public class DomainUtil {
 		return (ArtifactRepository) artifactDaoMap.get(domainSpecificArtifactName + daoSuffix);
 	}
 	
-	public Artifact getDomainSpecificArtifact(Domain domain, int artifactId) {
-		Artifact artifact = (Artifact) getDomainSpecificArtifactRepository(domain).findById(artifactId).get();
-		return artifact;
+	/*** File ***/
+	public File getDomainSpecificFileInstance(Domain domain) {
+		return DomainSpecificFileFactory.getInstance(domain);
 	}
-	
+
+	public File getDomainSpecificFile(Domain domain, int fileId) {
+		File file = (File) getDomainSpecificFileRepository(domain).findById(fileId).get();
+		return file;
+	}
+
 	@SuppressWarnings("rawtypes")
 	public FileRepository getDomainSpecificFileRepository(Domain domain) {
 		String domainName = getDomainName(domain);
@@ -68,12 +85,22 @@ public class DomainUtil {
 		String domainSpecificFileName = File.TABLE_NAME_PREFIX + domainName;
 		return (FileRepository) fileDaoMap.get(domainSpecificFileName + daoSuffix);
 	}
-	
-	public File getDomainSpecificFile(Domain domain, int fileId) {
-		File file = (File) getDomainSpecificFileRepository(domain).findById(fileId).get();
-		return file;
+
+	/*** ArtifactVolume ***/
+	public ArtifactVolume getDomainSpecificArtifactVolumeInstance(int artifactId, Volume volume, Domain domain) { // Domain is 3rd param in method signature so that getDomainSpecificArtifactVolume and getDomainSpecificArtifactVolumeInstance are not confused for 
+		return DomainSpecificArtifactVolumeFactory.getInstance(domain, artifactId, volume);	
 	}
-	
+
+	public ArtifactVolume getDomainSpecificArtifactVolume(Domain domain, int artifactId, int volumeId) {
+		ArtifactVolume artifactVolume = (ArtifactVolume) getDomainSpecificArtifactVolumeRepository(domain).findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
+		return artifactVolume;
+	}
+
+	public ArtifactVolume getDomainSpecificArtifactVolume(Domain domain, int artifactVolumeId) {
+		ArtifactVolume artifactVolume = (ArtifactVolume) getDomainSpecificArtifactVolumeRepository(domain).findById(artifactVolumeId).get();
+		return artifactVolume;
+	}
+
 	@SuppressWarnings("rawtypes")
 	public ArtifactVolumeRepository getDomainSpecificArtifactVolumeRepository(Domain domain) {
 		String domainName = getDomainName(domain);
@@ -83,20 +110,21 @@ public class DomainUtil {
 		return (ArtifactVolumeRepository) artifactVolumeDaoMap.get(domainSpecificArtifactVolumeName + daoSuffix);
 	}
 	
-	public ArtifactVolume getDomainSpecificArtifactVolume(Domain domain, int artifactVolumeId) {
-		ArtifactVolume artifactVolume = (ArtifactVolume) getDomainSpecificArtifactVolumeRepository(domain).findById(artifactVolumeId).get();
-		return artifactVolume;
+	/*** FileVolume ***/
+	public FileVolume getDomainSpecificFileVolumeInstance(int fileId, Volume volume, Domain domain) { // Domain is 3rd param in method signature so that getDomainSpecificFileVolume and getDomainSpecificFileVolumeInstance are not confused for
+		return DomainSpecificFileVolumeFactory.getInstance(domain, fileId, volume);
 	}
 
-	public ArtifactVolume getDomainSpecificArtifactVolume(Domain domain, int artifactId, int volumeId) {
-		ArtifactVolume artifactVolume = (ArtifactVolume) getDomainSpecificArtifactVolumeRepository(domain).findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
-		return artifactVolume;
+	public FileVolume getDomainSpecificFileVolume(Domain domain, int fileId, int volumeId) {
+		FileVolume fileVolume = (FileVolume) getDomainSpecificFileVolumeRepository(domain).findByIdFileIdAndIdVolumeId(fileId, volumeId);
+		return fileVolume;
 	}
-	
-	public ArtifactVolume getDomainSpecificArtifactVolumeInstance(Domain domain, int artifactId, Volume volume) {
-		return DomainSpecificArtifactVolumeFactory.getInstance(domain, artifactId, volume);	
+
+	public FileVolume getDomainSpecificFileVolume(Domain domain, int fileVolumeId) {
+		FileVolume fileVolume = (FileVolume) getDomainSpecificFileVolumeRepository(domain).findById(fileVolumeId).get();
+		return fileVolume;
 	}
-	
+
 	@SuppressWarnings("rawtypes")
 	public FileVolumeRepository getDomainSpecificFileVolumeRepository(Domain domain) {
 		String domainName = getDomainName(domain);
@@ -105,20 +133,7 @@ public class DomainUtil {
 		return (FileVolumeRepository) fileVolumeDaoMap.get(domainSpecificFileVolumeName + daoSuffix);
 	}
 	
-	public FileVolume getDomainSpecificFileVolume(Domain domain, int fileVolumeId) {
-		FileVolume fileVolume = (FileVolume) getDomainSpecificFileVolumeRepository(domain).findById(fileVolumeId).get();
-		return fileVolume;
-	}
-	
-	public FileVolume getDomainSpecificFileVolume(Domain domain, int fileId, int volumeId) {
-		FileVolume fileVolume = (FileVolume) getDomainSpecificFileVolumeRepository(domain).findByIdFileIdAndIdVolumeId(fileId, volumeId);
-		return fileVolume;
-	}
-	
-	public FileVolume getDomainSpecificFileVolumeInstance(Domain domain, int fileId, Volume volume) {
-		return DomainSpecificFileVolumeFactory.getInstance(domain, fileId, volume);
-	}
-	
+
 	private String getDomainName(Domain domain) {
 		String domainName = null;
 		if(domain == null) { // If domain is not available default it

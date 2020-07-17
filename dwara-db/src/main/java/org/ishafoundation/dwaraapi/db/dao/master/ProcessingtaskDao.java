@@ -7,5 +7,5 @@ public interface ProcessingtaskDao extends CrudRepository<Processingtask,Integer
 	
 //	List<Processingtask> findAllByTasksetsTasksetId(int tasksetId);
 //	
-//	Processingtask findByName(String taskName);
+	Processingtask findById(String processingtaskName);
 }

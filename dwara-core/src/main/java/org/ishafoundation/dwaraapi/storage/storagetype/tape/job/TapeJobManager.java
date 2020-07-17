@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.storage.storagetype.thread;
+package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 
 import java.util.List;
 
@@ -17,6 +17,7 @@ import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.thread.executor.TapeTaskThreadPoolExecutor;
+import org.ishafoundation.dwaraapi.storage.storagetype.thread.AbstractStoragetypeJobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,9 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	
 	@Autowired
 	private TapeTaskThreadPoolExecutor tapeTaskThreadPoolExecutor;	
+	
+	@Autowired
+	private TapeJobSelector tapeJobSelector;
 	
 	@Override
     public void run() {
@@ -103,6 +107,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				// select a job for the available drive
 				// if drive has a tape loaded that matches the joblist
 				// TODO : Tape job selection happens here
+				//StorageJob selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, tapedriveDevice);
 				StorageJob selectedStorageJob = selectJob(storageJobsList, tapedriveDevice);
 				if(selectedStorageJob != null) {
 					logger.debug("Job " + selectedStorageJob.getJob().getId() + " selected");
@@ -180,7 +185,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			tapeJob.setTapeLibraryName(tapeLibraryName);
 			tapeJob.setTapedriveNo(tapedriveNo);
 			tapeJob.setDeviceUid(tapedriveUid);
-			// TODO this gets set during job selection: tapeJob.setTapedriveAlreadyLoadedWithTape(tapedriveAlreadyLoadedWithTape);
+			tapeJob.setTapedriveAlreadyLoadedWithNeededTape(tapedriveAlreadyLoadedWithTape);
 			
 			JobDetails jobDetails = new JobDetails();
 			jobDetails.setDevice_id(tapedriveDevice.getId());

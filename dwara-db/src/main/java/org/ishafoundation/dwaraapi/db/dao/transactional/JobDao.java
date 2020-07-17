@@ -12,10 +12,10 @@ public interface JobDao extends CrudRepository<Job,Integer> {
 //	@Query(value="SELECT * FROM job where status_id = 1 order by job_id", nativeQuery=true)
 //	List<Job> getAllJobsToBeProcessed();
 
-//	List<Job> findAllByJobRefIdAndStatusOrderById(int parentJobId, Status status); // Find all dependent jobs of a particular job and that too a specific status
-//	
-//	List<Job> findAllByStatusAndJobRefIsNullOrderById(Status status); // Find all queued and that too only Jobref is null
-//	
+	List<Job> findAllByJobRefId(int parentJobId); // Find all dependent jobs of a particular job
+	
+	List<Job> findAllByStatusAndProcessingtaskIdIsNotNullOrderById(Status status); // TODO: Explain why Jobref is null? 
+	
 //	List<Job> findAllBySubrequestIdOrderById(int subrequestId);
 //	
 //	List<Job> findAllBySubrequestRequestActionAndStatus(Action action, Status status);

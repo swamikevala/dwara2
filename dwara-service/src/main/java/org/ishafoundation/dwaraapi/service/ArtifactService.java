@@ -18,8 +18,6 @@ import org.ishafoundation.dwaraapi.api.req.ingest.mapper.RequestToEntityObjectMa
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactFactory;
-import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileFactory;
 import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -28,10 +26,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.job.JobCreator;
-import org.ishafoundation.dwaraapi.utils.Md5Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,7 +103,7 @@ public class ArtifactService {
 //					derivedArtifact.setArtifactclass(artifactclass);
 //					derivedArtifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(derivedArtifact);
 					
-					Artifact artifact = DomainSpecificArtifactFactory.getInstance(domain);
+					Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
 					artifact.setName(requestParams.getArtifact_name());
 					artifact.setArtifactclass(artifactclass);
 					artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
@@ -163,13 +159,13 @@ public class ArtifactService {
 			String filePath = file.getAbsolutePath();
 			filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); //filePath = filePath.replace(stagingSrcDirRoot + File1.separator, "");
 			
-			File nthFileRowToBeInserted = DomainSpecificFileFactory.getInstance(domain);
+			File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
 			nthFileRowToBeInserted.setPathname(filePath);
 			
 			//nthFileRowToBeInserted.setArtifact(artifact);
 			
-			if(file.isFile())
-				nthFileRowToBeInserted.setChecksum(Md5Util.getChecksum(file, Checksumtype.sha256));// TODO : ??? - From where do we get the checksumtype???
+//			if(file.isFile())
+//				nthFileRowToBeInserted.setChecksum(Md5Util.getChecksum(file, Checksumtype.sha256));// TODO : ??? - From where do we get the checksumtype???
 			
 			Method fileArtifactSetter = nthFileRowToBeInserted.getClass().getMethod("set" + artifact.getClass().getSimpleName(), artifact.getClass());
 			fileArtifactSetter.invoke(nthFileRowToBeInserted, artifact);

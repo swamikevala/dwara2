@@ -99,7 +99,7 @@ CREATE TABLE `actionelement` (
 
 LOCK TABLES `actionelement` WRITE;
 /*!40000 ALTER TABLE `actionelement` DISABLE KEYS */;
-INSERT INTO `actionelement` VALUES (1,NULL,'',1,'ingest',1,'\0','','write',1,NULL),(2,1,'',1,'ingest',2,'\0','','verify',1,NULL),(3,NULL,'',1,'ingest',3,'\0','','write',3,NULL),(4,3,'',1,'ingest',4,'\0','','verify',3,NULL),(5,NULL,'',1,'ingest',5,'\0','','write',10,NULL),(6,5,'',1,'ingest',6,'\0','','verify',10,NULL),(7,NULL,'',1,'ingest',7,'\0','previewproxy-video-transcoding',NULL,0,2);
+INSERT INTO `actionelement` VALUES (1,NULL,'',1,'ingest',1,'\0','checksum-generation',NULL,0,NULL),(2,1,'',1,'ingest',2,'\0','','write',1,NULL),(3,2,'',1,'ingest',3,'\0','','verify',1,NULL),(4,1,'',1,'ingest',4,'\0','','write',3,NULL),(5,4,'',1,'ingest',5,'\0','','verify',3,NULL),(6,1,'',1,'ingest',6,'\0','','write',10,NULL),(7,6,'',1,'ingest',7,'\0','','verify',10,NULL),(8,NULL,'',1,'ingest',8,'\0','previewproxy-video-transcoding',NULL,0,2),(9,8,'',1,'ingest',9,'\0','mam-updation',NULL,0,NULL);
 /*!40000 ALTER TABLE `actionelement` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -162,7 +162,7 @@ CREATE TABLE `artifactclass` (
 
 LOCK TABLES `artifactclass` WRITE;
 /*!40000 ALTER TABLE `artifactclass` DISABLE KEYS */;
-INSERT INTO `artifactclass` VALUES (1,'\0',1,'1','pub-video','C:\\data\\ingested','','pub-video',1),(2,'\0',2,'1','previewproxy-video','C:\\data\\ingested','\0','previewproxy-video',1);
+INSERT INTO `artifactclass` VALUES (1,'\0',1,'1','pub-video','C:\\data\\ingested','','pub-video',1),(2,'\0',2,'1','previewproxy-video','C:\\data\\ingested','\0','previewproxy-video',7);
 /*!40000 ALTER TABLE `artifactclass` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -327,6 +327,7 @@ CREATE TABLE `extension` (
 
 LOCK TABLES `extension` WRITE;
 /*!40000 ALTER TABLE `extension` DISABLE KEYS */;
+INSERT INTO `extension` VALUES (1,'Some MP4 description','MP4'),(2,'Some MOV description','MOV'),(3,'Some MTS description','MTS'),(4,'d','JPG'),(5,'d','TIF'),(6,'d','NEF'),(7,'d','XMP'),(8,'test','MP4_FFPROBE_OUT'),(9,'ABC desc','ABC'),(10,'some msg','MTB');
 /*!40000 ALTER TABLE `extension` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -354,6 +355,7 @@ CREATE TABLE `extension_filetype` (
 
 LOCK TABLES `extension_filetype` WRITE;
 /*!40000 ALTER TABLE `extension_filetype` DISABLE KEYS */;
+INSERT INTO `extension_filetype` VALUES ('\0',1,1),('\0',1,4),('\0',2,1),('\0',3,1),('',4,1),('\0',4,3),('',4,4),('\0',5,3),('\0',6,3),('',7,3),('',8,1),('',8,4),('\0',9,1),('\0',10,1);
 /*!40000 ALTER TABLE `extension_filetype` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -378,6 +380,7 @@ CREATE TABLE `filetype` (
 
 LOCK TABLES `filetype` WRITE;
 /*!40000 ALTER TABLE `filetype` DISABLE KEYS */;
+INSERT INTO `filetype` VALUES (2,'audio'),(3,'photo'),(1,'video'),(4,'video_prev_proxy');
 /*!40000 ALTER TABLE `filetype` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -459,6 +462,7 @@ CREATE TABLE `processingtask` (
 
 LOCK TABLES `processingtask` WRITE;
 /*!40000 ALTER TABLE `processingtask` DISABLE KEYS */;
+INSERT INTO `processingtask` VALUES ('checksum-generation','Generates checksum for ingested files ',0,NULL),('mam-updation',NULL,20,1),('previewproxy-video-transcoding','Transcodes to low resolution previewproxy video',0,1);
 /*!40000 ALTER TABLE `processingtask` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -490,7 +494,7 @@ CREATE TABLE `sequence` (
 
 LOCK TABLES `sequence` WRITE;
 /*!40000 ALTER TABLE `sequence` DISABLE KEYS */;
-INSERT INTO `sequence` VALUES (1,NULL,'\0','\0','\0',10000,NULL,NULL);
+INSERT INTO `sequence` VALUES (1,NULL,'\0','\0','\0',24533,NULL,NULL),(2,'^[A-Z]{1,2}[\\\\d]{1,4}','\0','\0','\0',999,'A',NULL),(3,NULL,'\0','\0','\0',555,'Z',NULL),(4,'^[A-Z]{1,2}[\\\\d]{1,4}','\0','\0','\0',333,NULL,NULL),(5,'^[\\\\d]{1,5}','','\0','\0',0,NULL,NULL),(6,'^[Z\\\\d]{1,6}','','\0','\0',0,NULL,NULL),(7,NULL,'\0','\0','\0',0,'L',NULL),(8,NULL,'\0','\0','\0',0,'M',NULL),(9,NULL,'\0','\0','\0',0,'V1',NULL),(10,NULL,'\0','\0','\0',0,'V2',NULL);
 /*!40000 ALTER TABLE `sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -523,7 +527,7 @@ CREATE TABLE `t_activedevice` (
 
 LOCK TABLES `t_activedevice` WRITE;
 /*!40000 ALTER TABLE `t_activedevice` DISABLE KEYS */;
-INSERT INTO `t_activedevice` VALUES (1,'AVAILABLE',2,NULL,NULL),(2,'AVAILABLE',3,NULL,NULL),(3,'AVAILABLE',4,NULL,NULL);
+INSERT INTO `t_activedevice` VALUES (1,'AVAILABLE',2,NULL,NULL),(2,'BUSY',3,NULL,NULL),(3,'BUSY',4,NULL,NULL);
 /*!40000 ALTER TABLE `t_activedevice` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -576,6 +580,7 @@ CREATE TABLE `volume` (
   `archiveformat_id` varchar(255) DEFAULT NULL,
   `location_id` int(11) DEFAULT NULL,
   `volume_ref_id` int(11) DEFAULT NULL,
+  `formatted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_mti1y5awoy6kh7txrapn7ux85` (`uid`),
   KEY `FKsw7cga5kgm5yqs2sfpq9hdidv` (`archiveformat_id`),
@@ -593,7 +598,7 @@ CREATE TABLE `volume` (
 
 LOCK TABLES `volume` WRITE;
 /*!40000 ALTER TABLE `volume` DISABLE KEYS */;
-INSERT INTO `volume` VALUES (1,2500000000000,'sha256',NULL,'\0','\0','block','tape','V5A','group','bru',1,NULL),(2,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":6}','\0','\0','block','tape','V5A001','physical','bru',1,1),(3,2500000000000,'sha256',NULL,'\0','\0','file','disk','V5B','group',NULL,2,NULL),(4,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":6}','\0','\0','file','disk','V5B001','physical',NULL,2,3),(5,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":7}','\0','\0','file','disk','V5B002','physical',NULL,2,3),(6,6000000000000,'sha256',NULL,'\0','\0','block','tape','V4A','group','bru',1,NULL),(7,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":262144,\"generation\":7}','\0','\0','block','tape','V4A001','physical','bru',1,6),(8,2500000000000,'sha256',NULL,'','','block','tape','IMP','group','bru',1,NULL),(9,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":1048576,\"generation\":6}','','','block','tape','IMP001','physical','bru',1,8),(10,6000000000000,'sha256',NULL,'\0','\0','block','tape','V5C','group','tar',3,NULL),(11,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":262144,\"generation\":7}','\0','\0','block','tape','V5C001','physical','tar',3,10),(12,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":7}','\0','\0','block','tape','V4A002','physical','tar',1,6);
+INSERT INTO `volume` VALUES (1,2500000000000,'sha256',NULL,'\0','\0','block','tape','V5A','group','bru',1,NULL,NULL),(2,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":6}','\0','\0','block','tape','V5A001','physical','bru',1,1,NULL),(3,2500000000000,'sha256',NULL,'\0','\0','file','disk','V5B','group',NULL,2,NULL,NULL),(4,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":6}','\0','\0','file','disk','V5B001','physical',NULL,2,3,NULL),(5,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":7}','\0','\0','file','disk','V5B002','physical',NULL,2,3,NULL),(6,6000000000000,'sha256',NULL,'\0','\0','block','tape','V4A','group','bru',1,NULL,NULL),(7,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":262144,\"generation\":7}','\0','\0','block','tape','V4A001','physical','bru',1,6,NULL),(8,2500000000000,'sha256',NULL,'','','block','tape','IMP','group','bru',1,NULL,NULL),(9,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":1048576,\"generation\":6}','','','block','tape','IMP001','physical','bru',1,8,NULL),(10,6000000000000,'sha256',NULL,'\0','\0','block','tape','V5C','group','tar',3,NULL,NULL),(11,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":262144,\"generation\":7}','\0','\0','block','tape','V5C001','physical','tar',3,10,NULL),(12,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":7}','\0','\0','block','tape','V4A002','physical','tar',1,6,NULL);
 /*!40000 ALTER TABLE `volume` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -606,4 +611,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-07-13 21:42:55
+-- Dump completed on 2020-07-17 21:30:58

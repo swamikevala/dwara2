@@ -11,9 +11,11 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
+import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetask.ImportStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator;
 import org.ishafoundation.dwaraapi.thread.executor.ImportStoragetaskSingleThreadExecutor;
+import org.ishafoundation.dwaraapi.thread.executor.ProcessingtaskSingleThreadExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +39,9 @@ public class JobManager {
 	@Autowired
 	private StoragetypeJobDelegator storagetypeJobDelegator;
 		
+	@Autowired
+	private ProcessingtaskSingleThreadExecutor processingtaskSingleThreadExecutor;
+	
 	@Autowired
 	private ImportStoragetaskSingleThreadExecutor importStoragetaskSingleThreadExecutor;
 	
@@ -76,14 +81,14 @@ public class JobManager {
 				boolean isJobReadyToBeProcessed = isJobReadyToBeProcessed(job);
 				logger.info("isJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
 				if(isJobReadyToBeProcessed) {
-					// TODO : we were doing this on tasktype, but now that there is no tasktype how to differentiate? Check with Swami
 					if(processingtaskId != null) { // a non-storage process job
-						logger.trace("process job");
-						processingtaskActionMap.get(processingtaskId).execute();
-						logger.trace("done");
-//						ProcessingtaskJobManager_ThreadTask taskJobManager_ThreadTask = applicationContext.getBean(ProcessingtaskJobManager_ThreadTask.class);
-//						taskJobManager_ThreadTask.setJob(job);
-//						taskSingleThreadExecutor.getExecutor().execute(taskJobManager_ThreadTask);
+//						logger.trace("process job");
+//						ProcessingJobManager 
+//						processingtaskActionMap.get(processingtaskId).execute();
+//						logger.trace("done");
+						ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
+						processingJobManager.setJob(job);
+						processingtaskSingleThreadExecutor.getExecutor().execute(processingJobManager);
 					}else {
 						if(storagetaskAction == Action.import_) {
 							ImportStoragetaskAction importStoragetaskAction = applicationContext.getBean(ImportStoragetaskAction.class);

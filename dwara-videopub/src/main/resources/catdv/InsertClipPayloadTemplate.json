@@ -1,0 +1,34 @@
+{
+	"catalogID": "configurableCatalogIDAsInt",
+	"userName": "configurableOrCurrentUser",
+	"type": "clip",
+	"underlyingType": "MXF Movie",
+	"name": "general_dt:FullName",
+	"bin": "Clip",
+	"format": "general_dt:Format",
+	"in": {
+		"fmt": "Same as FPS",
+		"secs": "x:xmpmeta.rdf:RDF.rdf:Description[0].xmpDM:startTimecode.xmpDM:timeValue"
+	},
+	"out": {
+		"fmt": "Same as FPS",	
+		"secs": "in + duration"
+	},
+	"recordedDate": "general_dt:Encoded_date_customisedToLong",
+	"catalog": {
+		"ID": "configurableCatalogIDAsInt"
+	},	
+	"media": {
+		"filePath": "x:xmpmeta.rdf:RDF.rdf:Description[2].dt:UniversalLocator",
+		"fileSize": "general_dt:File_size_customisedToLong",
+		"videoFormat": "catDVSyleConcatenatedVideoFormat_video_dt:Format+dt:Width+dt:Height+dt:Frame_rate",
+		"audioFormat": "catDVSyleConcatenatedAudioFormat_audio_dt:Format_settings__wrapping_mode+dt:Sampling_rate+dt:Bit_depth",
+		"aspectRatio": "video_dt:Display_aspect_ratio_customisedToLong",
+		"proxyPath": "proxyPathFromDrastic",
+		"fields": {
+		}
+	},
+	"importSource": {
+		"file": "same as media path"
+	}
+}

@@ -61,8 +61,15 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 			
 			DriveStatusDetails driveStatusDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
 			if(driveStatusDetails.getMtStatus().isReady()){ // means drive is not empty and has another tape - so we need to unload the other tape
-				logger.trace(toBeUsedDataTransferElementSNo + " is not empty and has another tape - so we need to unload the other tape");
+//				logger.trace(toBeUsedDataTransferElementSNo + " is not empty and has another tape - so we need to unload the other tape");
 				if(!driveStatusDetails.getMtStatus().isBusy()) {
+					DataTransferElement dte = mtxStatus.getDte(toBeUsedDataTransferElementSNo);
+					String alreadyLoadedVolumeTag = dte.getVolumeTag();
+					if(alreadyLoadedVolumeTag.equals(toBeUsedTapeBarcode)) {
+						logger.trace("Drive " + toBeUsedDataTransferElementSNo + " is already loaded with the needed tape");
+						return true;
+					}
+					logger.trace(toBeUsedDataTransferElementSNo + " is not empty and has another tape - so we need to unload the other tape");
 					logger.trace("Unloading ");
 					unload(tapeLibraryName, mtxStatus.getDte(toBeUsedDataTransferElementSNo).getStorageElementNo(), toBeUsedDataTransferElementSNo);
 					logger.trace("Unload successful ");

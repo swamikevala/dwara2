@@ -1,3 +1,12 @@
+17th July - Process intro, Checksum gen is now a process - Tape integration still in WIP
+	upgrade steps
+		drop database
+		create database
+		run the dwara-master sql script
+		run the dwara-testmock sql script
+	import new projects into eclipse
+	use the testcases in dwara-service
+	
 13th July - Tape mech with mocks for dev env intro and sample integration - Full integration WIP
 	upgrade steps
 		drop database

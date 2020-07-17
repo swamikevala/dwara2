@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.storage.storagetype.thread;
+package org.ishafoundation.dwaraapi.storage.storagetype.disk.job;
 
 import java.util.List;
 
@@ -8,6 +8,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.DiskJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
+import org.ishafoundation.dwaraapi.storage.storagetype.thread.AbstractStoragetypeJobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;

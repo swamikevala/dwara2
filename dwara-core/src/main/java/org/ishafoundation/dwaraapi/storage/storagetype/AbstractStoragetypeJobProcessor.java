@@ -143,7 +143,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		    // To get an File*Volume instance dynamically, where * is domain name...
 			//FileVolume fileVolume = DomainSpecificFileVolumeFactory.getInstance(domain, nthFile.getId(), volume);
 			//OR
-			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolumeInstance(domain, nthFile.getId(), volume);// lets just let users use the util consistently
+			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolumeInstance(nthFile.getId(), volume, domain);// lets just let users use the util consistently
 			
 			// TODO
 			//fileVolume.setVerifiedAt(verifiedAt);
@@ -177,7 +177,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    // To get an Artifact*Volume instance dynamically, where * is domain name...
 	    //ArtifactVolume artifactVolume = DomainSpecificArtifactVolumeFactory.getInstance(domain, artifact.getId(), volume);
 	    // OR
-	    ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolumeInstance(domain, artifact.getId(), volume); // lets just let users use the util consistently
+	    ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolumeInstance(artifact.getId(), volume, domain); // lets just let users use the util consistently
 	    if(volume.getStoragelevel() == Storagelevel.block) {
 		    ArtifactVolumeDetails artifactVolumeDetails = new ArtifactVolumeDetails();
 		    
@@ -274,7 +274,12 @@ public abstract class AbstractStoragetypeJobProcessor {
    	
     }
 	
-	protected void afterFinalize(StoragetypeJob storagetypeJob) {}
+	protected void afterFinalize(StoragetypeJob storagetypeJob) {
+		Volume volume = storagetypeJob.getStorageJob().getVolume();
+		volume.setFinalized(true);
+		volumeDao.save(volume);
+		logger.trace("Volume " + volume.getUid() + " finalized succesfully");
+	}
 
 
     protected void beforeRestore(StoragetypeJob storagetypeJob) throws Exception {}

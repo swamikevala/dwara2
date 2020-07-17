@@ -44,7 +44,7 @@ CREATE TABLE `zmock_data_transfer_element` (
 
 LOCK TABLES `zmock_data_transfer_element` WRITE;
 /*!40000 ALTER TABLE `zmock_data_transfer_element` DISABLE KEYS */;
-INSERT INTO `zmock_data_transfer_element` VALUES (1,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst','/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400',1,'\0',0,1,'V5A001'),(2,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1684087499-nst','/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400',2,'',1,NULL,NULL),(3,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1970448833-nst','/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400',3,'',2,NULL,NULL);
+INSERT INTO `zmock_data_transfer_element` VALUES (1,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst','/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400',1,'\0',0,11,'V5C001'),(2,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1684087499-nst','/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400',2,'',1,NULL,NULL),(3,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1970448833-nst','/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400',3,'',2,NULL,NULL);
 /*!40000 ALTER TABLE `zmock_data_transfer_element` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -102,7 +102,7 @@ CREATE TABLE `zmock_storage_element` (
 
 LOCK TABLES `zmock_storage_element` WRITE;
 /*!40000 ALTER TABLE `zmock_storage_element` DISABLE KEYS */;
-INSERT INTO `zmock_storage_element` VALUES (1,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','','\0',1,NULL),(2,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',2,'V5A002'),(3,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',3,'V5A003'),(4,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',4,'V5B003'),(5,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',5,'V5C003'),(6,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',6,'VLA003'),(7,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',7,'V4A003'),(8,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',8,'V5A004'),(9,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',9,'V5A999L7');
+INSERT INTO `zmock_storage_element` VALUES (1,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',1,'V5A001'),(2,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',2,'V5A002'),(3,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',3,'V5A003'),(4,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',4,'V5B003'),(5,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',5,'V5C003'),(6,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',6,'VLA003'),(7,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',7,'V4A003'),(8,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',8,'V5A004'),(9,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',9,'V5A999L7'),(10,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','\0','\0',10,'V5B001'),(11,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400','','\0',11,NULL);
 /*!40000 ALTER TABLE `zmock_storage_element` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -115,4 +115,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-07-13 21:45:15
+-- Dump completed on 2020-07-17 21:32:04

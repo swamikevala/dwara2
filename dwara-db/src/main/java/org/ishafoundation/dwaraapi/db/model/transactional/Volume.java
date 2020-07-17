@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 		
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 import javax.persistence.Column;
@@ -52,6 +53,9 @@ public class Volume {
 	@Enumerated(EnumType.STRING)
 	@Column(name="checksumtype")
 	private Checksumtype checksumtype;
+	
+	@Column(name="formatted_at")
+	private LocalDateTime formattedAt;
 	
 	@Column(name="finalized")
 	private boolean finalized;
@@ -127,6 +131,14 @@ public class Volume {
 
 	public void setChecksumtype(Checksumtype checksumtype) {
 		this.checksumtype = checksumtype;
+	}
+
+	public LocalDateTime getFormattedAt() {
+		return formattedAt;
+	}
+
+	public void setFormattedAt(LocalDateTime formattedAt) {
+		this.formattedAt = formattedAt;
 	}
 
 	public boolean isFinalized() {
