@@ -11,4 +11,5 @@ public interface DeviceDao extends CacheableRepository<Device> {
 	Device findByUid(String deviceName);
 	
 	List<Device> findAllByDevicetype(Devicetype devicetype);
+	
 }

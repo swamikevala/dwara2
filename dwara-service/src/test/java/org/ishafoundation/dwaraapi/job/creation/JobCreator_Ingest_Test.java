@@ -41,10 +41,14 @@ public class JobCreator_Ingest_Test{
 			
 			String testIngestArtifactName2 = "Shiva-Shambho_Everywhere_18-Nov-1980_Drone";
 			String artifact_name_2 = extractZip(testIngestArtifactName2);
-			
+
+//			String testIngestArtifactName3 = "Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoProApr6";
+//			String artifact_name_3 = extractZip(testIngestArtifactName3);
+
 			String postBodyJson = FileUtils.readFileToString(new File(fileUrl.getFile()));
 			postBodyJson = postBodyJson.replace("<<artifact_name_1>>", artifact_name_1);
 			postBodyJson = postBodyJson.replace("<<artifact_name_2>>", artifact_name_2);
+//			postBodyJson = postBodyJson.replace("<<artifact_name_3>>", artifact_name_3);
 			
 			UserRequest ur = mapper.readValue(postBodyJson, new TypeReference<UserRequest>() {});
 			artifactService.ingest(ur);

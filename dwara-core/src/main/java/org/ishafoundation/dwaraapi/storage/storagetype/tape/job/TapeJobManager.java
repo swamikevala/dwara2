@@ -12,10 +12,11 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.DeviceStatus;
-import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDeviceUtil;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.thread.executor.TapeTaskThreadPoolExecutor;
 import org.ishafoundation.dwaraapi.storage.storagetype.thread.AbstractStoragetypeJobManager;
 import org.slf4j.Logger;
@@ -42,6 +43,9 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	
 	@Autowired
 	private TapeJobSelector tapeJobSelector;
+
+	@Autowired
+	private TapeDeviceUtil tapeDeviceUtil;
 	
 	@Override
     public void run() {
@@ -51,17 +55,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 
 		StorageJob storageJob = storageJobsList.get(0); // if there is a format/mapdrive job only one job will be in the list coming from JobManager... 
 		Action storagetaskAction = storageJob.getJob().getStoragetaskActionId();
-//		Action action = storageJob.getJob().getRequest().getAction();
-//		// are we ok?
-//		if(action == Action.format || action == Action.map_tapedrives || action == Action.finalize) {
-//			logger.debug("unloading all tapes from all drives");
-//			
-//		}
-//		else if(action == Action.ingest || action == Action.restore) {
-//			
-//		}
-		// TODO : need to call tapelibrary to get the available drives also
-		List<TActivedevice> activeDeviceList = tActivedeviceDao.findAllByDeviceDevicetypeAndDeviceStatus(Devicetype.tape_drive, DeviceStatus.AVAILABLE);
+		
+		List<DriveDetails> availableDrivesDetails = tapeDeviceUtil.getAllAvailableDrivesDetails();
 
 		if(storagetaskAction == Action.map_tapedrives || storagetaskAction == Action.format) {
 			updateJobInProgress(storageJob.getJob());
@@ -94,72 +89,35 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				}
 			}
 			else if(storagetaskAction == Action.format) {
-				TActivedevice tActivedevice = activeDeviceList.get(0);
-				prepareTapeJobAndContinueNextSteps(storageJob, tActivedevice, false);
+				DriveDetails driveDetails = availableDrivesDetails.get(0);
+				prepareTapeJobAndContinueNextSteps(storageJob, driveDetails, false);
 			}
 		}
 		else {
-			logger.trace("Iterating through available drives");
-			for (TActivedevice tActivedevice : activeDeviceList) {
-				
-				Device tapedriveDevice = tActivedevice.getDevice();
-				logger.trace("Selecting Job for drive - " + tapedriveDevice.getUid());
-				// select a job for the available drive
-				// if drive has a tape loaded that matches the joblist
-				// TODO : Tape job selection happens here
-				//StorageJob selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, tapedriveDevice);
-				StorageJob selectedStorageJob = selectJob(storageJobsList, tapedriveDevice);
+			for (DriveDetails nthAvailableDriveDetails : availableDrivesDetails) {
+				StorageJob selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, nthAvailableDriveDetails);
 				if(selectedStorageJob != null) {
 					logger.debug("Job " + selectedStorageJob.getJob().getId() + " selected");
 					
-					prepareTapeJobAndContinueNextSteps(selectedStorageJob, tActivedevice, true);
+					prepareTapeJobAndContinueNextSteps(selectedStorageJob, nthAvailableDriveDetails, true);
 				}else {
 					logger.debug("No more jobs");
 				}
-				// based on available tapedrives
-				
 
 			}
 		}
-//		
-//		tActivedeviceDao.findAllByDeviceDevicetypeAndDeviceStatus(Devicetype.tape_drive, DeviceStatus.AVAILABLE);
-//		List<Device> de = deviceDao.findAllByDevicetype();
-		
-//
-//		
-//		for (Iterator<Job> iterator = getStrorJobList().iterator(); iterator.hasNext();) {
-//			Job job = (Job) iterator.next();
-//			
-//			int volumegroupId = job.getActionelement().getVolumeId();
-//			List<Volume> volumesList = volumeDao.findAllByVolumeRefId(volumegroupId);
-//			for (Volume volume : volumesList) {
-//				logger.debug("vol Id - " + volume.getUid());
-//			}
-//			
-//			
-//			//storageJobList.add(storageJobBuilder.buildStorageJob(job));
-//		}
-		
 
 	}
 	
-	private StorageJob selectJob(List<StorageJob> storageJobsList, Device tapedriveDevice) {
-		if(storageJobsList.size() == 0)
-			return null;
-		StorageJob sj = storageJobsList.get(0);
-		storageJobsList.remove(0);
-		return sj;
-	}
-
-	private void prepareTapeJobAndContinueNextSteps(StorageJob storageJob, TActivedevice tActivedevice, boolean nextStepsInSeparateThread) {
+	private void prepareTapeJobAndContinueNextSteps(StorageJob storageJob, DriveDetails driveDetails, boolean nextStepsInSeparateThread) {
 		Job job = null;
 		try {
 			job = storageJob.getJob();
 			updateJobInProgress(job);
 			
 			Volume volume = storageJob.getVolume();
-			
-			
+			TActivedevice tActivedevice = tActivedeviceDao.findByDeviceUid(driveDetails.getDriveName());
+
 			Device tapedriveDevice = tActivedevice.getDevice();
 			String tapedriveUid = tapedriveDevice.getUid();
 			DeviceStatus deviceStatus = DeviceStatus.BUSY;
@@ -172,10 +130,11 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			tActivedevice = tActivedeviceDao.save(tActivedevice);
 			
 			int tapedriveNo = tapedriveDevice.getDetails().getAutoloader_address(); // data transfer element/drive no
-			logger.trace("Getting associated tape library");
-			Device tapelibraryDevice = deviceDao.findById(tapedriveDevice.getDetails().getAutoloader_id()).get();
-			String tapeLibraryName = tapelibraryDevice.getUid();
-			
+//			logger.trace("Getting associated tape library");
+//			Device tapelibraryDevice = deviceDao.findById(tapedriveDevice.getDetails().getAutoloader_id()).get();
+//			String tapeLibraryName = tapelibraryDevice.getUid();
+			String tapeLibraryName = driveDetails.getTapelibraryName();
+					
 			boolean tapedriveAlreadyLoadedWithTape = false;
 			
 			logger.trace("Composing Tape job");
@@ -185,7 +144,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			tapeJob.setTapeLibraryName(tapeLibraryName);
 			tapeJob.setTapedriveNo(tapedriveNo);
 			tapeJob.setDeviceUid(tapedriveUid);
-			tapeJob.setTapedriveAlreadyLoadedWithNeededTape(tapedriveAlreadyLoadedWithTape);
+//			tapeJob.setTapedriveAlreadyLoadedWithNeededTape(tapedriveAlreadyLoadedWithTape);
 			
 			JobDetails jobDetails = new JobDetails();
 			jobDetails.setDevice_id(tapedriveDevice.getId());
@@ -242,12 +201,6 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			tActivedevice.setDeviceStatus(deviceStatus);
 			tActivedevice = tActivedeviceDao.save(tActivedevice);
 
-//			if current job is write dont mark the device as available as verify needs to happen
-//			tapeJob.getStorageJob().getJob().getJobRef().getStatus()
-//			if() {
-//				
-//				
-//			}
 		}
 	}
 }

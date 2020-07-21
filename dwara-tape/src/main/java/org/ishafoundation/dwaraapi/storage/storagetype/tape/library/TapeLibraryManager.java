@@ -10,9 +10,9 @@ public interface TapeLibraryManager {
 	
 	public MtxStatus getMtxStatus(String tapeLibraryName) throws Exception;
 	
-	public List<DataTransferElement> getAllDrivesList(String tapeLibraryName) throws Exception;
+	public List<DataTransferElement> getAllDataTransferElements(String tapeLibraryName) throws Exception;
 	
-	public List<StorageElement> getAllStorageElementsList(String tapeLibraryName) throws Exception;
+	public List<StorageElement> getAllStorageElements(String tapeLibraryName) throws Exception;
 	
 	public List<String> getAllLoadedTapesInTheLibrary(String tapeLibraryName) throws Exception;
 	

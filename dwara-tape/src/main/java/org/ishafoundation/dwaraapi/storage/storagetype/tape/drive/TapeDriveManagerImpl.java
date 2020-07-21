@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveStatusDetails;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.MtStatus;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.MtStatusResponseParser;
 import org.slf4j.Logger;
@@ -42,10 +42,10 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	}
 
 	
-	public DriveStatusDetails getDriveDetails(String dataTransferElementName) throws Exception {
+	public DriveDetails getDriveDetails(String dataTransferElementName) throws Exception {
 		MtStatus mtStatus = getMtStatus(dataTransferElementName);
 		
-		DriveStatusDetails dsd = new DriveStatusDetails();
+		DriveDetails dsd = new DriveDetails();
 //		dsd.setTapelibraryName(tapelibraryName);
 //		dsd.setDriveSNo(dataTransferElementNo);
 		dsd.setDriveName(dataTransferElementName);
@@ -71,8 +71,8 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	// To write Nth medialibrary the tape head should be pointing at file Number N
 	// For e.g., if 5 medialibrary already in volume and to write the 6th mediaLibrary on tape, we need to position tapeHead on FileNumber = 5 - Remember Tape fileNumbers starts with 0
 	// Reference - http://etutorials.org/Linux+systems/how+linux+works/Chapter+13+Backups/13.6+Tape+Drive+Devices/
-	public DriveStatusDetails setTapeHeadPositionForWriting(String dataTransferElementName) throws Exception {
-		DriveStatusDetails dsd = null;
+	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName) throws Exception {
+		DriveDetails dsd = null;
 		
 		try {
 			MtStatus mtStatus = getMtStatus(dataTransferElementName);
@@ -102,7 +102,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			logger.trace("after setTapeHeadPosition - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
 	
 			
-			dsd = new DriveStatusDetails();
+			dsd = new DriveDetails();
 			dsd.setDriveName(dataTransferElementName);
 			dsd.setMtStatus(mtStatus);
 		}catch (Exception e) {
@@ -112,12 +112,12 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	}
 
 	// if blockNo is not requested to be seeked...
-	public DriveStatusDetails setTapeHeadPositionForReading(String dataTransferElementName, int blockNumberToSeek)
+	public DriveDetails setTapeHeadPositionForReading(String dataTransferElementName, int blockNumberToSeek)
 			throws Exception {
 		MtStatus mtStatus = null;
-		DriveStatusDetails dsd = null;
+		DriveDetails dsd = null;
 		try {
-			dsd = new DriveStatusDetails();
+			dsd = new DriveDetails();
 			dsd.setDriveName(dataTransferElementName);
 			seek(dataTransferElementName, blockNumberToSeek);
 			
@@ -142,15 +142,15 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 		return dsd;
 	}
 	
-	public DriveStatusDetails setTapeHeadPositionForFormatting(String dataTransferElementName) throws Exception {
-		DriveStatusDetails dsd = null;
+	public DriveDetails setTapeHeadPositionForFormatting(String dataTransferElementName) throws Exception {
+		DriveDetails dsd = null;
 		
 		try {
 			rewind(dataTransferElementName);
 			logger.trace("after setTapeHeadPosition - dataTransferElementName " + dataTransferElementName);
 	
 			
-			dsd = new DriveStatusDetails();
+			dsd = new DriveDetails();
 			dsd.setDriveName(dataTransferElementName);
 			dsd.setMtStatus(getMtStatus(dataTransferElementName));
 		}catch (Exception e) {
@@ -160,7 +160,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	}
 	
 
-	public DriveStatusDetails setTapeHeadPositionForFinalizing(String dataTransferElementName) throws Exception {
+	public DriveDetails setTapeHeadPositionForFinalizing(String dataTransferElementName) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}

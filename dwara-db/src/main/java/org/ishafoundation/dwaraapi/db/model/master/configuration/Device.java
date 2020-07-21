@@ -23,7 +23,7 @@ public class Device implements Cacheable{
 	@Override
 	public String getName() {
 		// Just to make the class cacheable
-		return null;
+		return uid;
 	}
 	
 	@Id

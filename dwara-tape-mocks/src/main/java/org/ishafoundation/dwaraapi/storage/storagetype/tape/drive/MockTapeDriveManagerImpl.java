@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype.tape.drive;
 import org.ishafoundation.dwaraapi.db.dao.mocks.MockDataTransferElementDao;
 import org.ishafoundation.dwaraapi.db.model.mocks.MockDataTransferElement;
 import org.ishafoundation.dwaraapi.db.model.mocks.MockMtStatus;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveStatusDetails;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.MtStatus;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.mapper.MockZmockEntityObjectsMapper;
 import org.slf4j.Logger;
@@ -43,26 +43,26 @@ public class MockTapeDriveManagerImpl extends TapeDriveManagerImpl{
 	}
 
 	@Override
-	public DriveStatusDetails setTapeHeadPositionForWriting(String dataTransferElementName) throws Exception {
+	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public DriveStatusDetails setTapeHeadPositionForReading(String dataTransferElementName, int blockNumberToSeek)
+	public DriveDetails setTapeHeadPositionForReading(String dataTransferElementName, int blockNumberToSeek)
 			throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public DriveStatusDetails setTapeHeadPositionForFormatting(String dataTransferElementName) throws Exception {
+	public DriveDetails setTapeHeadPositionForFormatting(String dataTransferElementName) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public DriveStatusDetails setTapeHeadPositionForFinalizing(String dataTransferElementName) throws Exception {
+	public DriveDetails setTapeHeadPositionForFinalizing(String dataTransferElementName) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}

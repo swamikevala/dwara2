@@ -1,8 +1,14 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status;
 
-public class DriveStatusDetails {
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.DataTransferElement;
+
+public class DriveDetails {
 	private String driveName;
 	private MtStatus mtStatus;
+	
+	private String tapelibraryName;
+	private DataTransferElement dte;
+	
 	private int noOfWrites;
 	private int noOfReads;
 	private int hoursOfWrites;
@@ -20,6 +26,18 @@ public class DriveStatusDetails {
 	}
 	public void setMtStatus(MtStatus mtStatus) {
 		this.mtStatus = mtStatus;
+	}
+	public String getTapelibraryName() {
+		return tapelibraryName;
+	}
+	public void setTapelibraryName(String tapelibraryName) {
+		this.tapelibraryName = tapelibraryName;
+	}
+	public DataTransferElement getDte() {
+		return dte;
+	}
+	public void setDte(DataTransferElement dte) {
+		this.dte = dte;
 	}
 	public int getNoOfWrites() {
 		return noOfWrites;

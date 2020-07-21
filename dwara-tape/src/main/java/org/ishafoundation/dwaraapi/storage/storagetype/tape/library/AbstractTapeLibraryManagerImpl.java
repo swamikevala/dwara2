@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.TapeDriveManager;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveStatusDetails;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.DataTransferElement;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.StorageElement;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.status.MtxStatus;
@@ -22,12 +22,12 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 	@Autowired
 	private TapeDriveManager tapeDriveManager;
 
-	public List<DataTransferElement> getAllDrivesList(String tapeLibraryName) throws Exception{
+	public List<DataTransferElement> getAllDataTransferElements(String tapeLibraryName) throws Exception{
 		MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
 		return mtxStatus.getDteList();
 	}
 	
-	public List<StorageElement> getAllStorageElementsList(String tapeLibraryName) throws Exception {
+	public List<StorageElement> getAllStorageElements(String tapeLibraryName) throws Exception {
 		MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
 		return mtxStatus.getSeList();
 	}
@@ -59,13 +59,12 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 			MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
 			logger.trace("getting details of drive " + toBeUsedDataTransferElementSNo);
 			
-			DriveStatusDetails driveStatusDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
-			if(driveStatusDetails.getMtStatus().isReady()){ // means drive is not empty and has another tape - so we need to unload the other tape
-//				logger.trace(toBeUsedDataTransferElementSNo + " is not empty and has another tape - so we need to unload the other tape");
-				if(!driveStatusDetails.getMtStatus().isBusy()) {
+			DriveDetails driveStatusDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
+			if(driveStatusDetails.getMtStatus().isReady()){ // means drive is not empty and has a tape
+				if(!driveStatusDetails.getMtStatus().isBusy()) { // means drive is just loaded with tape but not using it
 					DataTransferElement dte = mtxStatus.getDte(toBeUsedDataTransferElementSNo);
 					String alreadyLoadedVolumeTag = dte.getVolumeTag();
-					if(alreadyLoadedVolumeTag.equals(toBeUsedTapeBarcode)) {
+					if(alreadyLoadedVolumeTag.equals(toBeUsedTapeBarcode)) { // drive is already loaded with the needed tape
 						logger.trace("Drive " + toBeUsedDataTransferElementSNo + " is already loaded with the needed tape");
 						return true;
 					}
@@ -74,7 +73,7 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 					unload(tapeLibraryName, mtxStatus.getDte(toBeUsedDataTransferElementSNo).getStorageElementNo(), toBeUsedDataTransferElementSNo);
 					logger.trace("Unload successful ");
 				}else {
-					logger.trace("Something wrong with the logic. Drive is not supposed to be busy, but seems busy");
+					logger.trace("Something wrong with the app and tapelibrary sync. Drive is not supposed to be busy, but seems busy");
 				}
 			}
 	

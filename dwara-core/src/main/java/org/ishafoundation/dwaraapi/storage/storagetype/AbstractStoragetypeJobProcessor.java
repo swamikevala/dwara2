@@ -151,7 +151,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 
 			ArchivedFile archivedFile = filePathNameToArchivedFileObj.get(filePathname);
 			if(archivedFile != null) { // if(volume.getStoragelevel() == Storagelevel.block) { - need to check if the file is archived anyway even if its block, so going with the archivedFile check alone
-				Integer volumeBlock = archivedFile.getVolumeBlockOffset();
+				Integer volumeBlock = archivedFile.getVolumeBlock();
 				if(volumeBlock == null) {
 					// need to look the previous job's last file end block and append it with current job's - volumeBlock = 
 				}
@@ -159,7 +159,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 					artifactStartVolumeBlock = volumeBlock;
 				}
 				fileVolume.setVolumeBlock(volumeBlock);
-				fileVolume.setArchiveBlock(archivedFile.getArchiveBlockOffset());
+				fileVolume.setArchiveBlock(archivedFile.getArchiveBlock());
 			}
 			toBeAddedFileVolumeTableEntries.add(fileVolume);
 		}

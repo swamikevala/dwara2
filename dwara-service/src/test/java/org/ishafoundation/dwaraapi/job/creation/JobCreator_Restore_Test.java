@@ -37,7 +37,12 @@ public class JobCreator_Restore_Test {
 			URL fileUrl = this.getClass().getResource("/testcases/restore/restore_request.json");
 			
 			String postBodyJson = FileUtils.readFileToString(new File(fileUrl.getFile()));
-			postBodyJson = postBodyJson.replace("<<file_id_1>>", "60"); //60 entire artifact// 63 - 1 CD folder // 65 - 2 CD folder // 67 - just one file 
+			// entire artifact 
+			//postBodyJson = postBodyJson.replace("<<file_id_1>>", "2");
+			// 1 folder 
+			//postBodyJson = postBodyJson.replace("<<file_id_1>>", "5");
+			postBodyJson = postBodyJson.replace("<<file_id_1>>", "7");
+			// just the 1 file postBodyJson = postBodyJson.replace("<<file_id_1>>", "8"); //60 entire artifact// 63 - 1 CD folder // 65 - 2 CD folder // 67 - just one file 
 			
 			UserRequest ur = mapper.readValue(postBodyJson, new TypeReference<UserRequest>() {});
 			fileService.restore(ur);

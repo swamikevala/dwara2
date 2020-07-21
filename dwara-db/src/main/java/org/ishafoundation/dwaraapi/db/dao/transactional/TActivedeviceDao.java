@@ -10,4 +10,8 @@ import org.springframework.data.repository.CrudRepository;
 public interface TActivedeviceDao extends CrudRepository<TActivedevice,Integer> {
 	
 	List<TActivedevice> findAllByDeviceDevicetypeAndDeviceStatus(Devicetype devicetype, DeviceStatus deviceStatus);
+	
+	TActivedevice findByDeviceId(int deviceId);
+	
+	TActivedevice findByDeviceUid(String uid);
 }

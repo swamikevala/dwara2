@@ -17,32 +17,29 @@ public class TarBlockCalculatorUtil {
 		return fileHeaderBlocks;	
 	}
 	
-	// TODO change this to private
-	// calculates a file's Archive block END based on its size
-	public static int getFileArchiveBlockEnd(int fileHeaderBlocks, int fileArchiveBlockOffset, Long fileSize, int archiveformatBlocksize) {
-		int fileArchiveBlocksCount = (int) Math.ceil(fileSize/archiveformatBlocksize);
-		return fileArchiveBlockOffset + fileHeaderBlocks + fileArchiveBlocksCount - 1; // - 1 because starts with 0 //(int) (fileSize / archiveformatBlocksize) - 1;//
+	public static int getFileVolumeBlock(int artifactStartVolumeBlock, int archiveBlock, int blockingFactor) {
+		return artifactStartVolumeBlock + archiveBlock/blockingFactor; // Not ceiling the value as we need to -1 anyway because of 0 start
 	}
 	
-	// calculates a file's Volume block END - using running archiveblockoffset...
-	public static int getFileVolumeBlockEnd(String fileName, int fileArchiveBlockOffset, Long fileSize, int archiveformatBlocksize, int blockingFactor){
+	// calculates a file's Volume END  block - using the running archiveblock of each file... where archiveBlock is the starting block of the archive...
+	public static int getFileVolumeEndBlock(String fileName, int fileArchiveBlock, Long fileSize, double archiveformatBlocksize, double blockingFactor){
 		int fileHeaderBlocks = getFileHeaderBlocks(fileName);
-			
-		int lastFileEndArchiveBlock = getFileArchiveBlockEnd(fileHeaderBlocks, fileArchiveBlockOffset, fileSize, archiveformatBlocksize);
 		
-		int fileVolumeBlocksCount = (int) Math.ceil(lastFileEndArchiveBlock/blockingFactor);
+		// Total no. of archive blocks used by the file...
+		int fileArchiveBlocksCount = (int) Math.ceil(fileSize/archiveformatBlocksize);
+		int file_Archive_EndBlock = fileArchiveBlock + fileHeaderBlocks + fileArchiveBlocksCount;
+		
+		int fileVolumeBlocksCount = (int) Math.ceil(file_Archive_EndBlock/blockingFactor);
 		int artifactTotalVolumeBlocks = fileVolumeBlocksCount;
 		
-		if(artifactTotalVolumeBlocks == 0)
-			return 0;
-		return artifactTotalVolumeBlocks -1;//TODO : starting 0 entries show as - 1; // -1 because starts with 0
+		return artifactTotalVolumeBlocks - 1; // -1 because of 0 starts 
 	}
-	
+
 	// useful when executing the restore
 	//block 136638: -rwxrwxrwx aravindhpr/aravindhpr 1638625295 2020-04-16 12:08 Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoProApr6/DCIM/104GOPRO/GOPR6925.MP4
-	// 136638 - (133 * 1024) + 3
-	public static int getSkipByteCount(String fileName, int fileArchiveBlock, int archiveformatBlockize, int seekedVolumeBlock, int blockingFactor) {
-		return (fileArchiveBlock + TarBlockCalculatorUtil.getFileHeaderBlocks(fileName)  - (seekedVolumeBlock * blockingFactor)) * archiveformatBlockize;
+	// 136638 + 3 - (133 * 1024)
+	public static int getSkipByteCount(String fileName, int fileArchiveBlock, int archiveformatBlockize, int blockingFactor) {
+		return (fileArchiveBlock + TarBlockCalculatorUtil.getFileHeaderBlocks(fileName)  - ((fileArchiveBlock/blockingFactor)  * blockingFactor)) * archiveformatBlockize;
 	}
 
 }

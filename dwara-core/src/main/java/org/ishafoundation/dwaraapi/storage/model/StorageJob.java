@@ -18,27 +18,32 @@ public class StorageJob {
 	private Volume volume; // Archive Operation determines choosing the volume - For Ingest a volume from pool of volumes fitting library size - Restore based on fileId and copyNumber...
 
 	private Domain domain;
+
+	private boolean encrypted;
 	
 	// Ingest stuff
 	private Artifact artifact;
 	private String artifactName;
 	private String artifactPrefixPath;
-
+	private boolean concurrentCopies;
+	
 	// Verify
 	private Integer artifactStartVolumeBlock;
 	private Integer artifactEndVolumeBlock;
 	private List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList;
 	
-//	private int priority = 0; // TODO Hardcoded for phase1
-//	private boolean encrypted;
-//	private boolean concurrentCopies;
-//
+
+
+
+
 	// Restore stuff
 	private int fileId;
 	private String destinationPath;
 	private Integer volumeBlock;
 	private Integer archiveBlock;
 
+	private int priority = 0; // TODO Hardcoded for phase1
+	
 	public Job getJob() {
 		return job;
 	}
@@ -78,18 +83,18 @@ public class StorageJob {
 	
 
 
-//	public int getPriority() {
-//		return priority;
-//	}
-//	public void setPriority(int priority) {
-//		this.priority = priority;
-//	}
-//	public boolean isEncrypted() {
-//		return encrypted;
-//	}
-//	public void setEncrypted(boolean encrypted) {
-//		this.encrypted = encrypted;
-//	}
+	public int getPriority() {
+		return priority;
+	}
+	public void setPriority(int priority) {
+		this.priority = priority;
+	}
+	public boolean isEncrypted() {
+		return encrypted;
+	}
+	public void setEncrypted(boolean encrypted) {
+		this.encrypted = encrypted;
+	}
 
 	public Integer getArtifactStartVolumeBlock() {
 		return artifactStartVolumeBlock;
@@ -109,12 +114,12 @@ public class StorageJob {
 	public void setArtifactFileList(List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList) {
 		this.artifactFileList = artifactFileList;
 	}
-	//	public boolean isConcurrentCopies() {
-//		return concurrentCopies;
-//	}
-//	public void setConcurrentCopies(boolean concurrentCopies) {
-//		this.concurrentCopies = concurrentCopies;
-//	}
+	public boolean isConcurrentCopies() {
+		return concurrentCopies;
+	}
+	public void setConcurrentCopies(boolean concurrentCopies) {
+		this.concurrentCopies = concurrentCopies;
+	}
 	public int getFileId() {
 		return fileId;
 	}

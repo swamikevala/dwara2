@@ -63,7 +63,7 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 	
 	protected abstract String executeWriteCommand(List<String> bruCommandParamsList, String artifactName, int volumeBlocksize) throws Exception;
 	
-	protected ArchiveResponse convertBruResponseToArchiveResponse(BruResponse bruResponse, String artifactName, int volumeBlocksize, int archiveformatBlocksize){
+	protected ArchiveResponse convertBruResponseToArchiveResponse(BruResponse bruResponse, String artifactName, int volumeBlocksize, double archiveformatBlocksize){
 		ArchiveResponse ar = new ArchiveResponse();
 		ar.setArchiveId(bruResponse.getArchiveId());
 		ar.setArtifactName(artifactName);
@@ -85,11 +85,11 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 			// 1 tape block * bruResponse.getArchiveBlocks() = how many tape blocks? * 128
 			bruResponse.getArchiveBlocks()/128 = how many tape blocks?
 		*/		
-		int blockingFactor = volumeBlocksize/archiveformatBlocksize; 
-		int artifactEndVolumeBlock = (int) Math.ceil(bruResponse.getArchiveBlocks()/blockingFactor);
-		if(artifactEndVolumeBlock > 0)
-			artifactEndVolumeBlock = artifactEndVolumeBlock - 1;
-		ar.setArtifactEndVolumeBlock(artifactEndVolumeBlock);
+		double blockingFactor = volumeBlocksize/archiveformatBlocksize; 
+		int artifactTotalVolumeBlocks = (int) Math.ceil(bruResponse.getArchiveBlocks()/blockingFactor);
+//		if(artifactTotalVolumeBlocks > 0)
+//			artifactTotalVolumeBlocks = artifactTotalVolumeBlocks - 1;
+		
 		
 		int artifactStartVolumeBlock = 0;
 		List<ArchivedFile> archivedFileList = new ArrayList<ArchivedFile>();
@@ -108,18 +108,19 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 				artifactStartVolumeBlock = volumeBlockOffset;
 			}
 			
-			af.setVolumeBlockOffset(volumeBlockOffset); 
+			af.setVolumeBlock(volumeBlockOffset); 
 			Long archiveRunningTotalDataInKB =  bruedFile.getArchiveRunningTotalDataInKB();
 			Long archiveRunningTotalDataInBytes = archiveRunningTotalDataInKB * 1024; // KB to bytes...
 			int archiveBlockOffset = (int) Math.ceil(archiveRunningTotalDataInBytes/archiveformatBlocksize);
 			if(archiveBlockOffset > 0)
 				archiveBlockOffset = archiveBlockOffset - 1; // - 1 because the first block starts with 0...
-			af.setArchiveBlockOffset(archiveBlockOffset);
+			af.setArchiveBlock(archiveBlockOffset);
 			archivedFileList.add(af);
 		}
 		ar.setArchivedFileList(archivedFileList);
 
 		ar.setArtifactStartVolumeBlock(artifactStartVolumeBlock);
+		ar.setArtifactEndVolumeBlock(artifactStartVolumeBlock + artifactTotalVolumeBlocks);
 		return ar;
 	}
 
