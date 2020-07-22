@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 @Component("tar"+DwaraConstants.ARCHIVER_SUFFIX)
 @Profile({ "dev | stage" })
-public class MockTarArchiver extends AbstractTarArchiver {
+public class MockTarArchiver extends TarArchiver {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MockTarArchiver.class);
 

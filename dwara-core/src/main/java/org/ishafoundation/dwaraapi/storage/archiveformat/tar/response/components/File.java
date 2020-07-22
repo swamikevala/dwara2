@@ -4,8 +4,8 @@ public class File {
 
 	private String filePathName;
 	private Long fileSize;
-	private int archiveBlockOffset;
-//	private int volumeBlockOffset;
+	private int archiveBlock;
+//	private int volumeBlock;
 
 
 	public String getFilePathName() {
@@ -20,21 +20,21 @@ public class File {
 	public void setFileSize(Long fileSize) {
 		this.fileSize = fileSize;
 	}
-	public int getArchiveBlockOffset() {
-		return archiveBlockOffset;
+	public int getArchiveBlock() {
+		return archiveBlock;
 	}
-	public void setArchiveBlockOffset(int archiveBlockOffset) {
-		this.archiveBlockOffset = archiveBlockOffset;
+	public void setArchiveBlock(int archiveBlock) {
+		this.archiveBlock = archiveBlock;
 	}
-//	public int getVolumeBlockOffset() {
-//		return volumeBlockOffset;
+//	public int getVolumeBlock() {
+//		return volumeBlock;
 //	}
-//	public void setVolumeBlockOffset(int volumeBlockOffset) {
-//		this.volumeBlockOffset = volumeBlockOffset;
+//	public void setVolumeBlock(int volumeBlock) {
+//		this.volumeBlock = volumeBlock;
 //	}
 	@Override
 	public String toString() {
-		//return "filePathName : " + filePathName + " archiveBlockOffset : " + archiveBlockOffset + " volumeBlockOffset : " + volumeBlockOffset;
-		return "filePathName : " + filePathName + " archiveBlockOffset : " + archiveBlockOffset;
+		//return "filePathName : " + filePathName + " archiveBlock : " + archiveBlock + " volumeBlock : " + volumeBlock;
+		return "filePathName : " + filePathName + " archiveBlock : " + archiveBlock;
 	}
 }

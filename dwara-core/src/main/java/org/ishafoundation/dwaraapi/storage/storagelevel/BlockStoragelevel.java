@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Hex;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
@@ -157,7 +158,9 @@ public class BlockStoragelevel implements IStoragelevel {
 				File file = new File();
 				file.setName(nthFile.getPathname());
 				file.setSize(nthFile.getSize());
-				file.setChecksum(Arrays.toString(nthFile.getChecksum()));
+				byte[] checksum = nthFile.getChecksum();
+				if(checksum != null)
+					file.setChecksum(Hex.encodeHexString(checksum));
 				
 				FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());// lets just let users use the util consistently
 				file.setEncrypted(fileVolume.isEncrypted());

@@ -47,66 +47,108 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	@Autowired
 	private TapeDeviceUtil tapeDeviceUtil;
 	
+	/**
+	 * 
+  		1) Get Available(Non busy) Drive list - We need to Dequeue as many jobs and Spawn as many threads For eg., If 2 free drives are available then we need to allocate 2 jobs to these drives on their own threads
+  		2) Iterate the drive list
+			a) choose a job(check for nonoptimisationjobs in the joblist and work on that job list first)
+			b) launch a thread to process the job on a drive
+			c) remove the job from the list so that the next iteration will not consider it...
+	 * @param tapeStorageJobsList
+	 */
 	@Override
     public void run() {
 		logger.trace("Tape job manager kicked off");
 		List<StorageJob> storageJobsList = getStorageJobList();
 		// execute the job
-
-		StorageJob storageJob = storageJobsList.get(0); // if there is a format/mapdrive job only one job will be in the list coming from JobManager... 
-		Action storagetaskAction = storageJob.getJob().getStoragetaskActionId();
 		
 		List<DriveDetails> availableDrivesDetails = tapeDeviceUtil.getAllAvailableDrivesDetails();
-
-		if(storagetaskAction == Action.map_tapedrives || storagetaskAction == Action.format) {
-			updateJobInProgress(storageJob.getJob());
-			logger.debug("Unloading all tapes from all drives by tapeDrivePreparer");
-			//tapeDrivePreparer
+		if(availableDrivesDetails.size() > 0) { // means drive(s) available
+			logger.trace("No. of drives available "+ availableDrivesDetails.size());
 			
-			if(storagetaskAction == Action.map_tapedrives) {
-				logger.debug("Option 1 - call TapeDriveMapper straight from here and update statuses on your own");
-				logger.debug("OR");
-				logger.debug("Option 2 - Be consistent and continue to processor and let it do the mapping and status updates... Just Note that mapping is specific to Tape");
-				boolean isOption1 = false;			
-				if(isOption1) {
-					try {
-
-						logger.trace("Taking Option 1 Route");
-						logger.trace("Mapping drives using TapeDriveMapper");
-						//TapeDriveMapper
-						updateJobCompleted(storageJob.getJob());
-					}catch (Exception e) {
-						logger.error(e.getMessage());
-						updateJobFailed(storageJob.getJob());
+			StorageJob storageJob = storageJobsList.get(0); // if there is a format/mapdrive job only one job will be in the list coming from JobManager... 
+			Action storagetaskAction = storageJob.getJob().getStoragetaskActionId();
+			
+			if(storagetaskAction == Action.map_tapedrives || storagetaskAction == Action.format) {
+				updateJobInProgress(storageJob.getJob());
+				logger.debug("Unloading all tapes from all drives by tapeDrivePreparer");
+				//tapeDrivePreparer
+				
+				if(storagetaskAction == Action.map_tapedrives) {
+					logger.debug("Option 1 - call TapeDriveMapper straight from here and update statuses on your own");
+					logger.debug("OR");
+					logger.debug("Option 2 - Be consistent and continue to processor and let it do the mapping and status updates... Just Note that mapping is specific to Tape");
+					boolean isOption1 = false;			
+					if(isOption1) {
+						try {
+	
+							logger.trace("Taking Option 1 Route");
+							logger.trace("Mapping drives using TapeDriveMapper");
+							//TapeDriveMapper
+							updateJobCompleted(storageJob.getJob());
+						}catch (Exception e) {
+							logger.error(e.getMessage());
+							updateJobFailed(storageJob.getJob());
+						}
+					}
+					else {
+						logger.trace("Taking Option 2 Route");
+						logger.trace("Composing Tape job");
+						TapeJob tapeJob = new TapeJob();
+						tapeJob.setStorageJob(storageJob);
+						manage(tapeJob);
 					}
 				}
-				else {
-					logger.trace("Taking Option 2 Route");
-					logger.trace("Composing Tape job");
-					TapeJob tapeJob = new TapeJob();
-					tapeJob.setStorageJob(storageJob);
-					manage(tapeJob);
+				else if(storagetaskAction == Action.format) {
+					DriveDetails driveDetails = availableDrivesDetails.get(0);
+					prepareTapeJobAndContinueNextSteps(storageJob, driveDetails, false);
 				}
 			}
-			else if(storagetaskAction == Action.format) {
-				DriveDetails driveDetails = availableDrivesDetails.get(0);
-				prepareTapeJobAndContinueNextSteps(storageJob, driveDetails, false);
+			else {
+				// TODO - To load balance across drives based on their usage. The usage parameters is not retrieved...
+	//			Map<Integer, DriveStatusDetails> usage_driveStatusDetails = new TreeMap<Integer, DriveStatusDetails>(); 
+	//			for (Iterator<DriveStatusDetails> driveStatusDetailsIterator = availableDrivesList.iterator(); driveStatusDetailsIterator.hasNext();) {
+	//				DriveStatusDetails driveStatusDetails = (DriveStatusDetails) driveStatusDetailsIterator.next();
+	//				usage_driveStatusDetails.put(driveStatusDetails.getTotalUsageInHours(), driveStatusDetails); // TODO Need to decide based on what parameter the load has to be balanced...
+	//			}
+	//			Set<Integer> treeSet = new TreeSet<Integer>();
+	//			treeSet.addAll(usage_driveStatusDetails.keySet());
+	//			for (Integer usageHours : treeSet) {
+	//				DriveStatusDetails driveStatusDetails = usage_driveStatusDetails.get(usageHours);
+	//				// code goes here
+	//			}
+				// STEP 1
+				for (DriveDetails nthAvailableDriveDetails : availableDrivesDetails) {
+					logger.debug("Now selecting job for drive - " + nthAvailableDriveDetails.getDriveName());
+					
+					// STEP 2a
+					StorageJob selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, nthAvailableDriveDetails);
+					
+					// STEP 2b
+					if(selectedStorageJob == null) {
+						logger.debug("No tape jobs in queue are eligible to be processed for the drive");
+						//break;
+					}
+					else if(selectedStorageJob != null) {
+						logger.debug("Job " + selectedStorageJob.getJob().getId() + " selected");
+						
+						prepareTapeJobAndContinueNextSteps(selectedStorageJob, nthAvailableDriveDetails, true);
+						
+						// STEP 3 filter the job from the next iteration
+						storageJobsList.remove(selectedStorageJob);
+					}
+	
+					if(storageJobsList.size() <= 0) {
+						logger.debug("No tape jobs in queue anymore. So skipping the loop");
+						break;
+					}
+	
+				}
 			}
 		}
 		else {
-			for (DriveDetails nthAvailableDriveDetails : availableDrivesDetails) {
-				StorageJob selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, nthAvailableDriveDetails);
-				if(selectedStorageJob != null) {
-					logger.debug("Job " + selectedStorageJob.getJob().getId() + " selected");
-					
-					prepareTapeJobAndContinueNextSteps(selectedStorageJob, nthAvailableDriveDetails, true);
-				}else {
-					logger.debug("No more jobs");
-				}
-
-			}
+			logger.info("All drives busy");
 		}
-
 	}
 	
 	private void prepareTapeJobAndContinueNextSteps(StorageJob storageJob, DriveDetails driveDetails, boolean nextStepsInSeparateThread) {
@@ -134,8 +176,6 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 //			Device tapelibraryDevice = deviceDao.findById(tapedriveDevice.getDetails().getAutoloader_id()).get();
 //			String tapeLibraryName = tapelibraryDevice.getUid();
 			String tapeLibraryName = driveDetails.getTapelibraryName();
-					
-			boolean tapedriveAlreadyLoadedWithTape = false;
 			
 			logger.trace("Composing Tape job");
 			TapeJob tapeJob = new TapeJob();

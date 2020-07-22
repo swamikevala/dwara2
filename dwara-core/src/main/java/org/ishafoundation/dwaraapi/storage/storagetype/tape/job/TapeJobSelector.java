@@ -374,7 +374,10 @@ public class TapeJobSelector {
 		logger.trace("Second step - Ordering the jobs based on storagetaskaction");
 		for (String action : actionList) {
 			Action storagetaskAction = unmarshallKey(action);
-			if(storagetaskAction == Action.verify) { // VERIFY - ordered based on seqId of the artifact... takes precedence over all other jobs
+			if(storagetaskAction == Action.finalize) {
+				orderedJobsList = storagetaskAction_storagetaskActionGroupedJobs.get(action);
+			}
+			else if(storagetaskAction == Action.verify) { // VERIFY - ordered based on seqId of the artifact... takes precedence over all other jobs
 				logger.trace("Ordering the verify jobs based on artifact seqId");
 				List<StorageJob> verifyJobs = storagetaskAction_storagetaskActionGroupedJobs.get(action);
 				orderOnArtifactSeqId(verifyJobs, orderedJobsList);
@@ -444,8 +447,8 @@ public class TapeJobSelector {
 		case write:
 			key = "3write";
 			break;
-
 		default:
+			key = storagetaskAction.name();
 			break;
 		}
 		return key;
@@ -462,8 +465,8 @@ public class TapeJobSelector {
 		case "3write":
 			key = Action.write;
 			break;
-
 		default:
+			key = Action.valueOf(storagetaskAction);
 			break;
 		}
 		return key;

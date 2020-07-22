@@ -68,7 +68,7 @@ public class TarResponseParser {
 				
 				file.setFilePathName(filePathName);
 				file.setFileSize(Long.parseLong(fileSizeAsString));
-				file.setArchiveBlockOffset(Integer.parseInt(archiveBlockOffset));
+				file.setArchiveBlock(Integer.parseInt(archiveBlockOffset));
 
 				tarResponse.getFileList().add(file);
 			}

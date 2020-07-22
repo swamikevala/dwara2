@@ -99,7 +99,7 @@ CREATE TABLE `actionelement` (
 
 LOCK TABLES `actionelement` WRITE;
 /*!40000 ALTER TABLE `actionelement` DISABLE KEYS */;
-INSERT INTO `actionelement` VALUES (1,NULL,'',1,'ingest',1,'\0','checksum-generation',NULL,0,NULL),(2,1,'',1,'ingest',2,'\0','','write',1,NULL),(3,2,'',1,'ingest',3,'\0','','verify',1,NULL),(4,1,'',1,'ingest',4,'\0','','write',3,NULL),(5,4,'',1,'ingest',5,'\0','','verify',3,NULL),(6,1,'',1,'ingest',6,'\0','','write',10,NULL),(7,6,'',1,'ingest',7,'\0','','verify',10,NULL),(8,NULL,'',1,'ingest',8,'\0','previewproxy-video-transcoding',NULL,0,2),(9,8,'',1,'ingest',9,'\0','mam-updation',NULL,0,NULL);
+INSERT INTO `actionelement` VALUES (1,NULL,'',1,'ingest',1,'\0','checksum-generation',NULL,0,NULL),(2,1,'\0',1,'ingest',2,'\0','','write',1,NULL),(3,2,'\0',1,'ingest',3,'\0','','verify',1,NULL),(4,1,'\0',1,'ingest',4,'\0','','write',3,NULL),(5,4,'\0',1,'ingest',5,'\0','','verify',3,NULL),(6,1,'',1,'ingest',6,'\0','','write',10,NULL),(7,6,'',1,'ingest',7,'\0','','verify',10,NULL),(8,NULL,'\0',1,'ingest',8,'\0','previewproxy-video-transcoding',NULL,0,2),(9,8,'\0',1,'ingest',9,'\0','mam-updation',NULL,0,NULL);
 /*!40000 ALTER TABLE `actionelement` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -527,8 +527,37 @@ CREATE TABLE `t_activedevice` (
 
 LOCK TABLES `t_activedevice` WRITE;
 /*!40000 ALTER TABLE `t_activedevice` DISABLE KEYS */;
-INSERT INTO `t_activedevice` VALUES (1,'AVAILABLE',2,NULL,NULL),(2,'BUSY',3,NULL,NULL),(3,'BUSY',4,NULL,NULL);
+INSERT INTO `t_activedevice` VALUES (1,'AVAILABLE',2,NULL,NULL),(2,'AVAILABLE',3,NULL,NULL),(3,'AVAILABLE',4,NULL,NULL);
 /*!40000 ALTER TABLE `t_activedevice` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `t_file_job`
+--
+
+DROP TABLE IF EXISTS `t_file_job`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `t_file_job` (
+  `file_id` int(11) NOT NULL,
+  `artifact_id` int(11) DEFAULT NULL,
+  `pid` int(11) DEFAULT NULL,
+  `started_at` datetime(6) DEFAULT NULL,
+  `status` varchar(255) DEFAULT NULL,
+  `job_id` int(11) NOT NULL,
+  PRIMARY KEY (`file_id`,`job_id`),
+  KEY `FK1kml96e6bp0oef8qh5o2ikd6k` (`job_id`),
+  CONSTRAINT `FK1kml96e6bp0oef8qh5o2ikd6k` FOREIGN KEY (`job_id`) REFERENCES `job` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_file_job`
+--
+
+LOCK TABLES `t_file_job` WRITE;
+/*!40000 ALTER TABLE `t_file_job` DISABLE KEYS */;
+/*!40000 ALTER TABLE `t_file_job` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -598,7 +627,7 @@ CREATE TABLE `volume` (
 
 LOCK TABLES `volume` WRITE;
 /*!40000 ALTER TABLE `volume` DISABLE KEYS */;
-INSERT INTO `volume` VALUES (1,2500000000000,'sha256',NULL,'\0','\0','block','tape','V5A','group','bru',1,NULL,NULL),(2,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":6}','\0','\0','block','tape','V5A001','physical','bru',1,1,NULL),(3,2500000000000,'sha256',NULL,'\0','\0','file','disk','V5B','group',NULL,2,NULL,NULL),(4,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":6}','\0','\0','file','disk','V5B001','physical',NULL,2,3,NULL),(5,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":7}','\0','\0','file','disk','V5B002','physical',NULL,2,3,NULL),(6,6000000000000,'sha256',NULL,'\0','\0','block','tape','V4A','group','bru',1,NULL,NULL),(7,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":262144,\"generation\":7}','\0','\0','block','tape','V4A001','physical','bru',1,6,NULL),(8,2500000000000,'sha256',NULL,'','','block','tape','IMP','group','bru',1,NULL,NULL),(9,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":1048576,\"generation\":6}','','','block','tape','IMP001','physical','bru',1,8,NULL),(10,6000000000000,'sha256',NULL,'\0','\0','block','tape','V5C','group','tar',3,NULL,NULL),(11,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":262144,\"generation\":7}','\0','\0','block','tape','V5C001','physical','tar',3,10,NULL),(12,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":7}','\0','\0','block','tape','V4A002','physical','tar',1,6,NULL);
+INSERT INTO `volume` VALUES (1,2500000000000,'sha256',NULL,'\0','\0','block','tape','V5A','group','bru',1,NULL,NULL),(2,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":6}','\0','\0','block','tape','V5A001','physical','bru',1,1,NULL),(3,2500000000000,'sha256',NULL,'\0','\0','file','disk','V5B','group',NULL,2,NULL,NULL),(4,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":6}','\0','\0','file','disk','V5B001','physical',NULL,2,3,NULL),(5,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":7}','\0','\0','file','disk','V5B002','physical',NULL,2,3,NULL),(6,6000000000000,'sha256',NULL,'\0','\0','block','tape','V4A','group','bru',1,NULL,NULL),(7,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":262144,\"generation\":7}','\0','\0','block','tape','V4A001','physical','bru',1,6,NULL),(8,2500000000000,'sha256',NULL,'','','block','tape','IMP','group','bru',1,NULL,NULL),(9,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":1048576,\"generation\":6}','','','block','tape','IMP001','physical','bru',1,8,NULL),(10,6000000000000,'sha256',NULL,'\0','\0','block','tape','V5C','group','tar',3,NULL,NULL),(11,6000000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":7}','\0','\0','block','tape','V5C001','physical','tar',3,10,NULL),(12,2500000000000,'sha256','{\"barcoded\":true,\"blocksize\":524288,\"generation\":7}','\0','\0','block','tape','V4A002','physical','tar',1,6,NULL);
 /*!40000 ALTER TABLE `volume` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -611,4 +640,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-07-17 21:30:58
+-- Dump completed on 2020-07-21 15:56:50

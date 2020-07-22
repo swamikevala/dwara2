@@ -34,7 +34,7 @@ public class JobCreator_Format_Test {
 	public void test_Format() {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
-			URL fileUrl = this.getClass().getResource("/testcases/finalize/finalize_request.json");
+			URL fileUrl = this.getClass().getResource("/testcases/format/format_request.json");
 			
 			String postBodyJson = FileUtils.readFileToString(new File(fileUrl.getFile()));
 			

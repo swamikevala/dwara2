@@ -75,55 +75,58 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 			in = proc.getInputStream();
 			err = proc.getErrorStream();
 
-			String stdOutResp = copy(in);
-			String stdErrResp = copy(in);
-			
-			if(proc.exitValue() == 0) {
-				isComplete = true;
-				commandLineExecutionResponse.setStdOutResponse(stdOutResp);	
-			} else {
-				isComplete = false;
-				failureReason = getFailureReason(stdErrResp);
-				commandLineExecutionResponse.setFailureReason(failureReason);
-				throw new Exception(failureReason);
-			}
-			
-//			byte[] tmp = new byte[1024];
-//
-//			while (true) {
-//				while (in.available() > 0) {
-//					int i = in.read(tmp, 0, 1024);
-//					if (i < 0)
-//						break;
-//					stdOutRespBuffer.append(new String(tmp, 0, i));
-//				}
-//				while (err.available() > 0) {
-//					int i = err.read(tmp, 0, 1024);
-//					if (i < 0)
-//						break;
-//					stdErrRespBuffer.append(new String(tmp, 0, i));
-//				}				
-//				if (!proc.isAlive()) {
-//					if (in.available() > 0 || err.available() > 0)
-//						continue;
-//					logger.debug("exit-status: " + proc.exitValue());
-//					break;
-//				}
-//				try {
-//					Thread.sleep(1000);
-//				} catch (Exception ee) {
-//				}
-//			}
-//
+//			String stdOutResp = copy(in);
+//			String stdErrResp = copy(in);
+//			
 //			if(proc.exitValue() == 0) {
 //				isComplete = true;
-//				commandLineExecutionResponse.setStdOutResponse(stdOutRespBuffer.toString());	
+//				commandLineExecutionResponse.setStdOutResponse(stdOutResp);	
 //			} else {
 //				isComplete = false;
-//				failureReason = getFailureReason(stdErrRespBuffer.toString());
+//				failureReason = getFailureReason(stdErrResp);
 //				commandLineExecutionResponse.setFailureReason(failureReason);
 //				throw new Exception(failureReason);
 //			}
+			
+			StringBuffer stdOutRespBuffer = new StringBuffer();
+			StringBuffer stdErrRespBuffer = new StringBuffer();
+
+			byte[] tmp = new byte[1024];
+
+			while (true) {
+				while (in.available() > 0) {
+					int i = in.read(tmp, 0, 1024);
+					if (i < 0)
+						break;
+					stdOutRespBuffer.append(new String(tmp, 0, i));
+				}
+				while (err.available() > 0) {
+					int i = err.read(tmp, 0, 1024);
+					if (i < 0)
+						break;
+					stdErrRespBuffer.append(new String(tmp, 0, i));
+				}				
+				if (!proc.isAlive()) {
+					if (in.available() > 0 || err.available() > 0)
+						continue;
+					logger.debug("exit-status: " + proc.exitValue());
+					break;
+				}
+				try {
+					Thread.sleep(1000);
+				} catch (Exception ee) {
+				}
+			}
+
+			if(proc.exitValue() == 0) {
+				isComplete = true;
+				commandLineExecutionResponse.setStdOutResponse(stdOutRespBuffer.toString());	
+			} else {
+				isComplete = false;
+				failureReason = getFailureReason(stdErrRespBuffer.toString());
+				commandLineExecutionResponse.setFailureReason(failureReason);
+				throw new Exception(failureReason);
+			}
 			commandLineExecutionResponse.setIsComplete(isComplete);			
 
 			logger.debug("end "+ commandList);

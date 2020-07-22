@@ -34,10 +34,10 @@ public class LabelManagerImpl implements LabelManager{
 	private int accesslevel = 1;
 	private Double archiveformatVersion = 1.0;
 	
-	@Value("${tape.volumelabel1.implid}")
-	private String implId;
+	@Value("${volume.label.implementationId}")
+	private String implementationId;
 	
-	@Value("${tape.volumelabel1.ownerid}")
+	@Value("${volume.label.ownerId}")
 	private String ownerId;
 
 
@@ -144,7 +144,7 @@ public class LabelManagerImpl implements LabelManager{
 		String systeminfo = SystemUtils.OS_NAME + SystemUtils.OS_VERSION + SystemUtils.OS_ARCH;
 		logger.trace(systeminfo);
 		volumelabel.setSysteminfo(systeminfo);
-		volumelabel.setCreator(implId);
+		volumelabel.setCreator(implementationId);
 		
 		XmlMapper xmlMapper = new XmlMapper();
 		return xmlMapper.writeValueAsString(volumelabel);

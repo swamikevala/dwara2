@@ -75,7 +75,7 @@ public class VolumeService {
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body("Done");
 	}
 
-	// TODO : Why domain needed? Filevolume and Artifactvolume are domain-ed
+	// TODO : Why domain needed? Filevolume and Artifactvolume needed for generating the index are domain-ed
 	public ResponseEntity<String> finalize(String volumeUid, Domain domain){
 
 		try {
