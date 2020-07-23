@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
@@ -52,10 +53,14 @@ public class TapeStreamer {
 					if(checksumtype != null) {
 						
 						byte[] originalChecksum = filePathNameToChecksumObj.get(entryPathName);
-
+						logger.trace("originalChecksum " + Hex.encodeHexString(originalChecksum));
 						byte[] checksumToBeVerified = Md5Util.getChecksum(tin, checksumtype, bufferSize);
+						logger.trace("checksumToBeVerified " + Hex.encodeHexString(checksumToBeVerified));
 						
-						if(!Arrays.equals(originalChecksum, checksumToBeVerified)) {
+						if(Arrays.equals(originalChecksum, checksumToBeVerified)) {
+							logger.trace("originalChecksum = checksumToBeVerified. All good");	
+						}
+						else {
 							success = false;
 							logger.error("checksum mismatch " + entryPathName);
 						}

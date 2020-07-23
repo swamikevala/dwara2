@@ -3,14 +3,12 @@ package org.ishafoundation.dwaraapi.job;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
-import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetask.ImportStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator;
@@ -44,9 +42,6 @@ public class JobManager {
 	
 	@Autowired
 	private ImportStoragetaskSingleThreadExecutor importStoragetaskSingleThreadExecutor;
-	
-	@Autowired
-	private Map<String, IProcessingTask> processingtaskActionMap;
 	
 	public void manageJobs() {
 		logger.trace("***** Managing jobs now *****");

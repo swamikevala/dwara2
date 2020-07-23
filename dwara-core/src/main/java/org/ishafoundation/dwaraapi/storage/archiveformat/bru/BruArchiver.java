@@ -158,7 +158,7 @@ public class BruArchiver implements IArchiveformatter {
 	}
 	
 	private boolean compareChecksum(List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList,
-			String destinationPath, String filePathNameToBeVerified, Checksumtype checksumtype) {
+			String destinationPath, String filePathNameToBeVerified, Checksumtype checksumtype) throws Exception {
 		
 		// caching the source file' checksum...
 		HashMap<String, byte[]> filePathNameToChecksumObj = new LinkedHashMap<String, byte[]>();

@@ -9,6 +9,8 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("scheduledStatusUpdaterController")
 public class ScheduledStatusUpdaterController {
+	
+	private static final Logger logger = LoggerFactory.getLogger(ScheduledStatusUpdaterController.class);
 	
 	@Autowired
 	private JobDao jobDao;
@@ -70,16 +74,21 @@ public class ScheduledStatusUpdaterController {
 				}
 				
 				if(!inProgress) {
+					Status status = null;
 					if(isAllComplete) {
 						job.setCompletedAt(LocalDateTime.now()); // Just can only give some rough completed times... 
-						job.setStatus(Status.completed);
+						status = Status.completed;
+						
 					}
 					if(hasFailures && hasAnyCompleted)
-						job.setStatus(Status.completed_failures);
+						status = Status.completed_failures;
 					
+					job.setStatus(status);
 					jobDao.save(job);
+					logger.info("Job " + job.getId() + " - " + status);
 					
 					tFileJobDao.deleteAll(jobFileList);
+					logger.info("tFileJob cleaned up files of Job " + job.getId());
 				}
 			}
 		}

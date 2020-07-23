@@ -15,7 +15,7 @@ mt -f /dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst status
 When tape writing is just complete
 
 SCSI 2 tape drive:
-File1 number=1, block number=0, partition=0.
+File number=1, block number=0, partition=0.
 Tape block size 0 bytes. Density code 0x58 (no translation).
 Soft error count since last status=0
 General status bits on (81010000):
@@ -27,7 +27,7 @@ General status bits on (81010000):
 When no tape is inside the drive
 
 SCSI 2 tape drive:
-File1 number=-1, block number=-1, partition=0.
+File number=-1, block number=-1, partition=0.
 Tape block size 0 bytes. Density code 0x0 (default).
 Soft error count since last status=0
 General status bits on (50000):
@@ -57,7 +57,7 @@ public class MtStatusResponseParser {
 				mtStatus.setBusy(true);
 			}
 			else {
-				String fileBlockNumRegEx = "File1 number=(-*[0-9]*), block number=(-*[0-9]*), partition=0.";
+				String fileBlockNumRegEx = "File number=(-*[0-9]*), block number=(-*[0-9]*), partition=0.";
 				String errorCountRegEx = "Soft error count since last status=([0-9]*)";
 				String statusRegEx = "^ ([A-Z_ ]*)";
 

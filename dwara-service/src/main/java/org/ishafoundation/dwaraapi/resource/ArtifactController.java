@@ -29,7 +29,7 @@ public class ArtifactController {
 		    @ApiResponse(code = 202, message = "Request submitted and queued up"),
 		    @ApiResponse(code = 400, message = "Error")
 	})
-	@PostMapping("/library/staging/ingest")
+	@PostMapping("/artifact/staging/ingest")
     public ResponseEntity<String> ingest(@RequestBody UserRequest userRequest){
 		artifactService.ingest(userRequest);
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body("Done");
