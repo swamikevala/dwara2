@@ -9,6 +9,8 @@ public class TapeJob extends StoragetypeJob {
 	private String tapeLibraryName;
 	private int tapedriveNo; // elementAddress
 //	private boolean tapedriveAlreadyLoadedWithNeededTape;
+	
+	private int artifactVolumeCount;
 
 	public boolean isOptimizeTapeAccess() {
 		return optimizeTapeAccess;
@@ -40,4 +42,10 @@ public class TapeJob extends StoragetypeJob {
 //	public void setTapedriveAlreadyLoadedWithNeededTape(boolean tapedriveAlreadyLoadedWithNeededTape) {
 //		this.tapedriveAlreadyLoadedWithNeededTape = tapedriveAlreadyLoadedWithNeededTape;
 //	}
+	public int getArtifactVolumeCount() {
+		return artifactVolumeCount;
+	}
+	public void setArtifactVolumeCount(int artifactVolumeCount) {
+		this.artifactVolumeCount = artifactVolumeCount;
+	}
 }

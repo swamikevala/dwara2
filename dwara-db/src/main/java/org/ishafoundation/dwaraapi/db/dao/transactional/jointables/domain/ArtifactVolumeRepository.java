@@ -13,9 +13,11 @@ public interface ArtifactVolumeRepository<T extends ArtifactVolume> extends Crud
 //	@Query("select sum(l.totalSize) from #{#entityName} lt join Library l on lt.library.id=l.id where lt.volume.id = ?1")
 //	long findUsedSpaceOnVolume(int volumeId);
 	
-	ArtifactVolume findTopByVolumeIdOrderByIdDesc(int volumeId);
+	ArtifactVolume findTopByVolumeIdOrderByIdArtifactIdDesc(int volumeId);
 	
 	ArtifactVolume findByIdArtifactIdAndIdVolumeId(int artifactId, int volumeId);
 	
 	List<ArtifactVolume> findAllByIdVolumeId(int volumeId);
+	
+	int countByIdVolumeId(int volumeId);
 }

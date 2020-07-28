@@ -11,7 +11,7 @@ public interface TapeDriveManager{
 	
 	public boolean isTapeBlank(String dataTransferElementName) throws Exception;
 	
-	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName) throws Exception;
+	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName, int fileNumberToBePositioned) throws Exception;
 	
 	public DriveDetails setTapeHeadPositionForReading(String dataTransferElementName, int blockNumberToSeek) throws Exception;
 	

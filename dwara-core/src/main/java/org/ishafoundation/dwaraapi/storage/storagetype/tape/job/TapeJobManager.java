@@ -3,15 +3,18 @@ package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TActivedeviceDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TActivedevice;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.DeviceStatus;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
@@ -33,7 +36,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
     private static final Logger logger = LoggerFactory.getLogger(TapeJobManager.class);
 	
 	@Autowired
-	private DeviceDao deviceDao;
+	private DomainUtil domainUtil;
 	
 	@Autowired
 	private TActivedeviceDao tActivedeviceDao;
@@ -177,6 +180,10 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 //			String tapeLibraryName = tapelibraryDevice.getUid();
 			String tapeLibraryName = driveDetails.getTapelibraryName();
 			
+			Domain domain = storageJob.getDomain();
+		    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+		    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(volume.getId());
+			
 			logger.trace("Composing Tape job");
 			TapeJob tapeJob = new TapeJob();
 			tapeJob.setStorageJob(storageJob);
@@ -184,6 +191,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			tapeJob.setTapeLibraryName(tapeLibraryName);
 			tapeJob.setTapedriveNo(tapedriveNo);
 			tapeJob.setDeviceUid(tapedriveUid);
+			tapeJob.setArtifactVolumeCount(artifactVolumeCount);
 //			tapeJob.setTapedriveAlreadyLoadedWithNeededTape(tapedriveAlreadyLoadedWithTape);
 			
 			JobDetails jobDetails = new JobDetails();

@@ -190,7 +190,7 @@ public class TarArchiver implements IArchiveformatter {
 		Domain domain = storagetypeJob.getStorageJob().getDomain();
 		Volume volume = storagetypeJob.getStorageJob().getVolume();
 		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findTopByVolumeIdOrderByIdDesc(volume.getId());
+		ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findTopByVolumeIdOrderByIdArtifactIdDesc(volume.getId());
 	
 		int artifactStartVolumeBlock = TarBlockCalculatorUtil.FIRSTARCHIVE_START_BLOCK; // Get the last/most recent artifact_volume records' end volume block and + 1(+1 because next archive starts a fresh)
 		if(artifactVolume != null)

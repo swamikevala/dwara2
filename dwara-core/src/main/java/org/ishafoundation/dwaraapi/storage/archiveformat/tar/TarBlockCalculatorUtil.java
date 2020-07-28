@@ -8,7 +8,7 @@ public class TarBlockCalculatorUtil {
 	public static final int TAPEMARK_BLOCK = 1;
 	public static final int NEXTARCHIVE_FRESH_START_BLOCK = 1;
 	
-	public static final int FIRSTARCHIVE_START_BLOCK = 0;// 0 + TAPELABEL_BLOCK + TAPEMARK_BLOCK;
+	public static final int FIRSTARCHIVE_START_BLOCK = 0 + TAPELABEL_BLOCK + TAPEMARK_BLOCK;
 	public static final int ZERO_START_BLOCK_ADJUSTER = 1;
 	
 	private static int FILENAME_CHARACTER_THRESHOLD_PER_TAR_BLOCK = 100;

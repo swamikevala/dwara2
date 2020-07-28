@@ -1,9 +1,12 @@
 package org.ishafoundation.dwaraapi.storage.storagelevel.block.label;
 
+import java.io.File;
 import java.time.LocalDateTime;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
+import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
@@ -26,8 +29,8 @@ public class LabelManagerImpl implements LabelManager{
 	
 	Logger logger = LoggerFactory.getLogger(LabelManagerImpl.class);
 
-//	@Autowired
-//	private CommandLineExecuter commandLineExecuter;
+	@Autowired
+	private CommandLineExecuter commandLineExecuter;
 
 	// TODO : Hardcoded stuff - Configure it...
 	private Double version = 1.0;
@@ -88,12 +91,12 @@ public class LabelManagerImpl implements LabelManager{
 		//		Option 1 - issue multiple commands
 		//		
 		//		dd << EOF of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80
-		//		getLabel(tapeBarcode) // TODO: should this storageformat specific? anyway provide a way...
+		//		getLabel(tapeBarcode)
 		//		EOF
 		
 				
 		//		Option 2 - using echo		
-		//		echo "VOL1V5A001L             LTFS                                                  4" | dd of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80
+		//		echo "^<volumelabel version="1.0"^>...THE XML BODY.." | dd of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80
 						
 				
 		//		Option 3 - using a temp file
@@ -115,12 +118,18 @@ public class LabelManagerImpl implements LabelManager{
 		
 		String label = createLabel(volumeUid, blocksize, archiveformat, checksumalgorithm, encryptionalgorithm);
 		logger.trace(label);
-//		String deviceName = storagetypeJob.getDeviceUid();
-//		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("echo \"" + label + "\" | dd of=" + deviceName + " bs=80");
-//		if(cler.isComplete()) 
-//			isSuccess = true;
-//		return isSuccess;
-		return true;
+		
+		File file = new File("/data/tmp/"+ volumeUid+"_label.txt");
+		FileUtils.writeStringToFile(file, label);
+		logger.trace(file.getAbsolutePath() + " created ");
+		String deviceName = storagetypeJob.getDeviceUid();
+		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + file.getAbsolutePath()  + " of=" + deviceName + " bs="+blocksize);
+		FileUtils.forceDelete(file);
+		logger.trace(file.getAbsolutePath() + " deleted ok.");
+		//CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("echo \"" + label + "\" | dd of=" + deviceName + " bs="+blocksize);
+		if(cler.isComplete()) 
+			isSuccess = true;
+		return isSuccess;
 	}
 	
 	private String createLabel(String volumeUid, int blocksize, String archiveformat, String checksumalgorithm, String encryptionalgorithm) throws Exception {

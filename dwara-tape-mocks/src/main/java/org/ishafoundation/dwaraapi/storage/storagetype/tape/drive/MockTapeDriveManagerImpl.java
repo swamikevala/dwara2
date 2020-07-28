@@ -43,7 +43,7 @@ public class MockTapeDriveManagerImpl extends TapeDriveManagerImpl{
 	}
 
 	@Override
-	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName) throws Exception {
+	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName, int fileNumberToBePositioned) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}

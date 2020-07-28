@@ -71,16 +71,23 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	// To write Nth medialibrary the tape head should be pointing at file Number N
 	// For e.g., if 5 medialibrary already in volume and to write the 6th mediaLibrary on tape, we need to position tapeHead on FileNumber = 5 - Remember Tape fileNumbers starts with 0
 	// Reference - http://etutorials.org/Linux+systems/how+linux+works/Chapter+13+Backups/13.6+Tape+Drive+Devices/
-	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName) throws Exception {
-		DriveDetails dsd = null;
+	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName, int fileNumberToBePositioned) throws Exception {
+		DriveDetails dsd = new DriveDetails();
+		dsd.setDriveName(dataTransferElementName);
+		
 		
 		try {
 			MtStatus mtStatus = getMtStatus(dataTransferElementName);
 			int currentFileNumberTapeHeadPointingTo = mtStatus.getFileNumber();
 			int currentBlockNoTapeHeadPointingTo = mtStatus.getBlockNumber();
-			logger.trace("b4 setTapeHeadPosition - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
+			logger.trace("b4 setTapeHeadPositionForWriting - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
 		
-		
+			if(currentFileNumberTapeHeadPointingTo == fileNumberToBePositioned && currentBlockNoTapeHeadPointingTo == 0) {
+				logger.trace("Tape head already in position");
+				dsd.setMtStatus(mtStatus);
+				return dsd;
+			}
+			
 			eod(dataTransferElementName);
 
 			mtStatus = getMtStatus(dataTransferElementName);
@@ -88,25 +95,29 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			currentBlockNoTapeHeadPointingTo = mtStatus.getBlockNumber();
 			logger.trace("after eod - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
 
-			if(currentFileNumberTapeHeadPointingTo > 0) {
+			if(currentFileNumberTapeHeadPointingTo != fileNumberToBePositioned) {
+				logger.warn("something wrong with eod, currentFileNumberTapeHeadPointingTo != expectedFileNumberToBePositioned - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
+				logger.info("rewinding and fsfing " + fileNumberToBePositioned);
+				rewind(dataTransferElementName);
+				fsf(dataTransferElementName, fileNumberToBePositioned);
+			}
+			else {
+				// TODO : Check if we need this...
+				// eod returns a nonzero blocknumber, so safely doing this...
 				bsf(dataTransferElementName, 1);
 				fsf(dataTransferElementName, 1);
 			}
-			else {
-				rewind(dataTransferElementName);
-			}
-			
+		
 			mtStatus = getMtStatus(dataTransferElementName);
 			currentFileNumberTapeHeadPointingTo = mtStatus.getFileNumber();
 			currentBlockNoTapeHeadPointingTo = mtStatus.getBlockNumber();
-			logger.trace("after setTapeHeadPosition - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
-	
-			
-			dsd = new DriveDetails();
-			dsd.setDriveName(dataTransferElementName);
+			logger.info("after setTapeHeadPositionForWriting - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
+
+			if(currentFileNumberTapeHeadPointingTo != fileNumberToBePositioned && currentBlockNoTapeHeadPointingTo != 0)
+				throw new Exception("Expected fileNumber " + fileNumberToBePositioned + ", actual " + currentFileNumberTapeHeadPointingTo + ", expected block 0, actual " + currentBlockNoTapeHeadPointingTo);
 			dsd.setMtStatus(mtStatus);
 		}catch (Exception e) {
-			logger.error("Unable to setTapeHeadPositionForWriting " + e.getMessage()); e.printStackTrace();
+			logger.error("Unable to setTapeHeadPositionForWriting " + e.getMessage(), e);
 		}
 		return dsd;
 	}

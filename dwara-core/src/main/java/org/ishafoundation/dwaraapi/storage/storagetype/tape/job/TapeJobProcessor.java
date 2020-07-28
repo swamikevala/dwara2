@@ -19,10 +19,6 @@ import org.springframework.stereotype.Component;
 public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 
 	private static final Logger logger = LoggerFactory.getLogger(TapeJobProcessor.class);
-//
-//    static {
-//    	StoragetypeJobProcessorFactory.register(Storagetype.tape.name(), TapeJobProcessor.class);
-//    }
     
 	@Autowired
 	private TapeLibraryManager tapeLibraryManager;
@@ -30,12 +26,11 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	@Autowired
 	private TapeDriveManager tapeDriveManager;
 	
-
-	
 	public StorageResponse map_tapedrives(StoragetypeJob storagetypeJob) {
 		logger.trace("Mapping invoked from processor");
 		return new StorageResponse();
 	}
+	
 	@Override
 	protected void beforeFormat(StoragetypeJob storagetypeJob) throws Exception {
 		TapeJob tapeJob = (TapeJob) storagetypeJob;
@@ -56,11 +51,11 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		TapeJob tapeJob = (TapeJob) storagetypeJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
-
+		int fileNumberToBePositioned = tapeJob.getArtifactVolumeCount() == 0 ? 1 : tapeJob.getArtifactVolumeCount(); // 1 because of label...
 		loadTape(storagetypeJob);
 		
 		logger.trace("Now positioning tape head for writing " + tapeLibraryName + ":" + tapeJob.getDeviceUid()+"("+driveElementAddress+")" );
-		tapeDriveManager.setTapeHeadPositionForWriting(tapeJob.getDeviceUid()); // FIXME - check on this, using eod, bsf 1 and fsf 1
+		tapeDriveManager.setTapeHeadPositionForWriting(tapeJob.getDeviceUid(), fileNumberToBePositioned); // FIXME - check on this, using eod, bsf 1 and fsf 1
 		logger.trace("Tape Head positioned for writing");
 		
 	}

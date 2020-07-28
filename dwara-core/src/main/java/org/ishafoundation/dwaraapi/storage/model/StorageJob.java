@@ -32,10 +32,6 @@ public class StorageJob {
 	private Integer artifactEndVolumeBlock;
 	private List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList;
 	
-
-
-
-
 	// Restore stuff
 	private int fileId;
 	private String destinationPath;
