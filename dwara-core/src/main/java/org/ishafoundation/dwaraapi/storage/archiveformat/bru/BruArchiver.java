@@ -124,10 +124,13 @@ public class BruArchiver implements IArchiveformatter {
 			
 			af.setVolumeBlock(volumeBlockOffset); 
 			Long archiveRunningTotalDataInKB =  bruedFile.getArchiveRunningTotalDataInKB();
+			//int archiveBlockOffset = archiveRunningTotalDataInKB/2;
+			
 			Long archiveRunningTotalDataInBytes = archiveRunningTotalDataInKB * 1024; // KB to bytes...
 			int archiveBlockOffset = (int) Math.ceil(archiveRunningTotalDataInBytes/archiveformatBlocksize);
 			if(archiveBlockOffset > 0)
 				archiveBlockOffset = archiveBlockOffset - 1; // - 1 because the first block starts with 0...
+			
 			af.setArchiveBlock(archiveBlockOffset);
 			archivedFileList.add(af);
 		}

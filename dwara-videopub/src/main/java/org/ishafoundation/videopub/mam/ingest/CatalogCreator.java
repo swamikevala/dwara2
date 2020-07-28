@@ -40,17 +40,16 @@ public class CatalogCreator extends CatDVInteractor {
 	
 	private String frameCreateClipPayloadFromTemplate(String catalogName, int groupId, String comment) throws Exception {
 		
-		URL fileUrl = getClass().getResource("/catdv/CreateCatalogPayloadTemplate.json");
-		java.io.File  templateFile = new java.io.File(fileUrl.getFile());
+		String templateFile = "/catdv/CreateCatalogPayloadTemplate.json";
 		String jsonDataSourceString = null;
 		try {
-			jsonDataSourceString = FileUtils.readFileToString(templateFile, "UTF-8");
-		} catch (IOException e) {
-			String errorMsg = "Unable to create catalog template " + templateFile.getAbsolutePath() + " :: "  + e.getMessage();
+			jsonDataSourceString = loadTemplate(templateFile);
+		} catch (Exception e) {
+			String errorMsg = "Unable to read template file " + templateFile + " :: "  + e.getMessage();
 			logger.error(errorMsg, e);
-			throw new Exception(errorMsg);
+			return null;
 		}
-
+		
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "name", catalogName);
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "groupID", groupId);
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "comment", comment);

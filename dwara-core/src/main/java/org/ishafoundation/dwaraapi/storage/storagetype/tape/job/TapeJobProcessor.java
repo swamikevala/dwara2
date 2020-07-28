@@ -40,6 +40,10 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		loadTape(storagetypeJob, true);
 
 		// TODO : Wher shoudld is Blank check go?
+		// validate on sequence no of tape
+		// validate on group archive format vs member archiveformat. they have to be same...
+		
+		
 		logger.trace("Now positioning tape head for formatting " + tapeLibraryName + ":" + tapeJob.getDeviceUid()+"("+driveElementAddress+")" );
 		tapeDriveManager.setTapeHeadPositionForFormatting(tapeJob.getDeviceUid());
 		logger.trace("Tape Head positioned for formatting");
@@ -51,7 +55,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		TapeJob tapeJob = (TapeJob) storagetypeJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
-		int fileNumberToBePositioned = tapeJob.getArtifactVolumeCount() == 0 ? 1 : tapeJob.getArtifactVolumeCount(); // 1 because of label...
+		int fileNumberToBePositioned = tapeJob.getArtifactVolumeCount() == 0 ? 1 : tapeJob.getArtifactVolumeCount() + 1; // +1 because of label...
 		loadTape(storagetypeJob);
 		
 		logger.trace("Now positioning tape head for writing " + tapeLibraryName + ":" + tapeJob.getDeviceUid()+"("+driveElementAddress+")" );

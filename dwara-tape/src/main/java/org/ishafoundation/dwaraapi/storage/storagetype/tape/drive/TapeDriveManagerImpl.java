@@ -118,6 +118,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			dsd.setMtStatus(mtStatus);
 		}catch (Exception e) {
 			logger.error("Unable to setTapeHeadPositionForWriting " + e.getMessage(), e);
+			throw e;
 		}
 		return dsd;
 	}
@@ -147,10 +148,9 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			return dsd;		
 		}
 		catch (Exception e) {
-			logger.error("Unable to setTapeHeadPositionForReading " + e.getMessage()); e.printStackTrace();
-			
+			logger.error("Unable to setTapeHeadPositionForReading " + e.getMessage());
+			throw e;
 		}
-		return dsd;
 	}
 	
 	public DriveDetails setTapeHeadPositionForFormatting(String dataTransferElementName) throws Exception {
@@ -165,7 +165,8 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			dsd.setDriveName(dataTransferElementName);
 			dsd.setMtStatus(getMtStatus(dataTransferElementName));
 		}catch (Exception e) {
-			logger.error("Unable to setTapeHeadPositionForWriting " + e.getMessage()); e.printStackTrace();
+			logger.error("Unable to setTapeHeadPositionForWriting " + e.getMessage());
+			throw e;
 		}
 		return dsd;	
 	}

@@ -41,11 +41,18 @@ public class ThumbnailInserter extends CatDVInteractor {
 	}
 
 	private String framePayloadFromTemplate(String imgPath) {
-		URL fileUrl = getClass().getResource("/catdv/InsertThumbnailPayloadTemplate.json");
-		File  templateFile = new File(fileUrl.getFile());
+		
+		String templateFile = "/catdv/InsertThumbnailPayloadTemplate.json";
 		String jsonDataSourceString = null;
 		try {
-			jsonDataSourceString = FileUtils.readFileToString(templateFile, "UTF-8");
+			jsonDataSourceString = loadTemplate(templateFile);
+		} catch (Exception e) {
+			String errorMsg = "Unable to read template file " + templateFile + " :: "  + e.getMessage();
+			logger.error(errorMsg, e);
+			return null;
+		}
+
+		try {
 
 			byte[] imgFileContent = FileUtils.readFileToByteArray(new File(imgPath));
 

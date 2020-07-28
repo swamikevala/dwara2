@@ -2,7 +2,7 @@
   "domain": "one",
   "location": "IIIT",
   "output_folder": "JIRA-1234-Randommm",
-  "destinationpath": "/data/restored",
+  "destinationpath": "/data/RESTORED",
   "verify": false,
   "fileParams": [
     {

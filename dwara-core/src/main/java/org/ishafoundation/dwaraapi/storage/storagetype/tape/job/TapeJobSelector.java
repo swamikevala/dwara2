@@ -47,9 +47,10 @@ public class TapeJobSelector {
 	 * @param tapeJobsList - the jobs list against which the selection happens
 	 * @param driveStatusDetails - for which drive the job is getting selected
 	 * @return
+	 * @throws Exception 
 	 */
 	
-	public StorageJob selectJob(List<StorageJob> tapeJobsList, DriveDetails driveStatusDetails) {
+	public StorageJob selectJob(List<StorageJob> tapeJobsList, DriveDetails driveStatusDetails) throws Exception {
 		if(tapeJobsList.size() <= 0)
 			return null;
 		
@@ -103,7 +104,7 @@ public class TapeJobSelector {
 
 	@returns JobToBeProcessed
 	 */
-	private StorageJob chooseAJobForTheDrive(List<StorageJob> tapeJobsList, DriveDetails driveStatusDetails){
+	private StorageJob chooseAJobForTheDrive(List<StorageJob> tapeJobsList, DriveDetails driveStatusDetails) throws Exception{
 		logger.debug("Choosing a job for the drive " + driveStatusDetails.getDriveName());
 		StorageJob chosenTapeJob = null;
 		String volumeTag = driveStatusDetails.getDte().getVolumeTag();
@@ -501,7 +502,7 @@ public class TapeJobSelector {
 			2) then jobs for artifactclass pub-video to write copy 2 and 3 should not be allowed... 
 
 	 */
-	private StorageJob chooseAJob(List<StorageJob> tapeJobsList, boolean needVerificationAgainstOtherDrives, List<DriveDetails> allAvailableDrivesList) {
+	private StorageJob chooseAJob(List<StorageJob> tapeJobsList, boolean needVerificationAgainstOtherDrives, List<DriveDetails> allAvailableDrivesList) throws Exception {
 		logger.debug("Choosing a job");
 		logger.trace("Getting the currently running tape jobs...");
 		List<StorageJob> currentlyRunningTapeJobsList = getTheCurrentlyRunningTapeJobs();
@@ -532,8 +533,12 @@ public class TapeJobSelector {
 					currentlyRunningWriteJobsList.add(runningTapeJob);
 				}
 
-				
-				String alreadyInUseTapeBarCode = runningTapeJob.getVolume().getUid();
+				Volume volumeOnUse = runningTapeJob.getVolume();
+				if(volumeOnUse == null) {
+					logger.debug("Volume used by a running job is not available. Running job must be a format job. No other job should be running when Format is on...");
+					throw new Exception("Volume used by a running job is not available. Running job must be a format job. No other job should be running when Format is on...");
+				}
+				String alreadyInUseTapeBarCode = volumeOnUse.getUid();
 				logger.debug("Tape " + alreadyInUseTapeBarCode + " is already in use by " + runningTapeJob.getJob().getId());
 				
 				// The jobs needing the same tape thats already been used by another running job are removed as we cant run 2 jobs on a same tape at a time....

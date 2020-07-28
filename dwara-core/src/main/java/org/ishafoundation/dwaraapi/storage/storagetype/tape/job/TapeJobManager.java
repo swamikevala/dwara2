@@ -125,7 +125,13 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 					logger.debug("Now selecting job for drive - " + nthAvailableDriveDetails.getDriveName());
 					
 					// STEP 2a
-					StorageJob selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, nthAvailableDriveDetails);
+					StorageJob selectedStorageJob = null;
+					try {
+						selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, nthAvailableDriveDetails);
+					} catch (Exception e) {
+						logger.error("Unable to select a job for drive - " + nthAvailableDriveDetails.getDriveName());
+						continue;
+					}
 					
 					// STEP 2b
 					if(selectedStorageJob == null) {
@@ -156,16 +162,19 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	
 	private void prepareTapeJobAndContinueNextSteps(StorageJob storageJob, DriveDetails driveDetails, boolean nextStepsInSeparateThread) {
 		Job job = null;
+		TActivedevice tActivedevice = null;
+		TapeJob tapeJob = null;
+		DeviceStatus deviceStatus = null;
 		try {
 			job = storageJob.getJob();
 			updateJobInProgress(job);
 			
 			Volume volume = storageJob.getVolume();
-			TActivedevice tActivedevice = tActivedeviceDao.findByDeviceUid(driveDetails.getDriveName());
+			tActivedevice = tActivedeviceDao.findByDeviceUid(driveDetails.getDriveName());
 
 			Device tapedriveDevice = tActivedevice.getDevice();
 			String tapedriveUid = tapedriveDevice.getUid();
-			DeviceStatus deviceStatus = DeviceStatus.BUSY;
+			deviceStatus = DeviceStatus.BUSY;
 			logger.debug("Marking drive " + tapedriveUid + " - " +  deviceStatus);
 			tActivedevice.setJob(job);
 			Action storagetaskAction = job.getStoragetaskActionId();
@@ -180,18 +189,20 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 //			String tapeLibraryName = tapelibraryDevice.getUid();
 			String tapeLibraryName = driveDetails.getTapelibraryName();
 			
-			Domain domain = storageJob.getDomain();
-		    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(volume.getId());
-			
+
 			logger.trace("Composing Tape job");
-			TapeJob tapeJob = new TapeJob();
+			tapeJob = new TapeJob();
 			tapeJob.setStorageJob(storageJob);
 			tapeJob.settActivedevice(tActivedevice);
 			tapeJob.setTapeLibraryName(tapeLibraryName);
 			tapeJob.setTapedriveNo(tapedriveNo);
 			tapeJob.setDeviceUid(tapedriveUid);
-			tapeJob.setArtifactVolumeCount(artifactVolumeCount);
+			if(storagetaskAction == Action.write) {// For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving device...
+				Domain domain = storageJob.getDomain();
+			    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+			    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(volume.getId());
+			    tapeJob.setArtifactVolumeCount(artifactVolumeCount);
+			}
 //			tapeJob.setTapedriveAlreadyLoadedWithNeededTape(tapedriveAlreadyLoadedWithTape);
 			
 			JobDetails jobDetails = new JobDetails();
@@ -215,12 +226,18 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				tActivedevice.setVolume(null);
 				tActivedevice.setDeviceStatus(deviceStatus);
 				tActivedevice = tActivedeviceDao.save(tActivedevice);
-
 			}
 		}
 		catch (Exception e) {
 			logger.error(e.getMessage());
 			updateJobFailed(job);
+
+			deviceStatus = DeviceStatus.AVAILABLE;
+			logger.debug("Marking back drive " + tapeJob.getDeviceUid() + " - " + deviceStatus);
+			tActivedevice.setJob(null);
+			tActivedevice.setVolume(null);
+			tActivedevice.setDeviceStatus(deviceStatus);
+			tActivedevice = tActivedeviceDao.save(tActivedevice);
 		}
 	}
 	

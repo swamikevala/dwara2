@@ -2,6 +2,7 @@ package org.ishafoundation.videopub.mam.authn;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
 import org.apache.commons.io.FileUtils;
@@ -39,12 +40,11 @@ public class Authenticator extends CatDVInteractor {
 	}
 
 	private String framePostBodyFromTemplate(String userID, String pwd) {
-		URL fileUrl = getClass().getResource("/catdv/AuthPayloadTemplate.json");
-		File  templateFile = new File(fileUrl.getFile());
+		String templateFile = "/catdv/AuthPayloadTemplate.json";
 		String jsonDataSourceString = null;
 		try {
-			jsonDataSourceString = FileUtils.readFileToString(templateFile, "UTF-8");
-		} catch (IOException e) {
+			jsonDataSourceString = loadTemplate(templateFile);
+		} catch (Exception e) {
 			String errorMsg = "Unable to read template file " + templateFile + " :: "  + e.getMessage();
 			logger.error(errorMsg, e);
 			return null;

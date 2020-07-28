@@ -49,6 +49,8 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		long thumbnailStartTime = System.currentTimeMillis();
 		logger.info("Thumbnail Generation start for " + containerName + " - targetLocation is - " + thumbnailTargetLocation);
 		
+		FileUtils.forceMkdir(new File(destinationDirPath));
+		
 		List<String> thumbnailGenerationCommandParamsList = getThumbnailGenerationCommand(sourceFilePathname, thumbnailTargetLocation);
 		CommandLineExecutionResponse thumbnailCommandLineExecutionResponse = commandLineExecuter.executeCommand(thumbnailGenerationCommandParamsList);
 		

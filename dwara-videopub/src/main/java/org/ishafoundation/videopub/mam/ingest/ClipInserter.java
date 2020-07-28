@@ -47,16 +47,15 @@ public class ClipInserter extends CatDVInteractor {
 	}
 	
 	private String frameCreateClipPayloadFromTemplate(int fileId, int catalogId, String metaDataJson, String highResFilePath) throws Exception {
-		
-		URL fileUrl = getClass().getResource("/catdv/InsertClipPayloadTemplate.json");
-		java.io.File  templateFile = new java.io.File(fileUrl.getFile());
+
+		String templateFile = "/catdv/InsertClipPayloadTemplate.json";
 		String jsonDataSourceString = null;
 		try {
-			jsonDataSourceString = FileUtils.readFileToString(templateFile, "UTF-8");
-		} catch (IOException e) {
-			String errorMsg = "Unable to read insert clip template " + templateFile.getAbsolutePath() + " :: "  + e.getMessage();
+			jsonDataSourceString = loadTemplate(templateFile);
+		} catch (Exception e) {
+			String errorMsg = "Unable to read template file " + templateFile + " :: "  + e.getMessage();
 			logger.error(errorMsg, e);
-			throw new Exception(errorMsg);
+			return null;
 		}
 
 		/*** format section ***/

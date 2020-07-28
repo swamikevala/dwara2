@@ -115,7 +115,7 @@ public class ArtifactService {
 					
 					// TODO - Hardcoding
 //					String readyToIngestPath =  "C:\\data\\ingested";
-					String readyToIngestPath =  "/data/ingested";
+					String readyToIngestPath =  artifactclass.getPathPrefix();
 					java.io.File libraryFileInStagingDir = new java.io.File(readyToIngestPath + java.io.File.separator + requestParams.getArtifact_name());
 			    	String junkFilesStagedDirName = ".dwara-ignored";//configuration.getJunkFilesStagedDirName(); 
 //			    	if(libraryFileInStagingDir.isDirectory())
