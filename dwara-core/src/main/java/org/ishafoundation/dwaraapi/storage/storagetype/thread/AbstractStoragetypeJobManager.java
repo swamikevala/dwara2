@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -29,6 +30,9 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 	@Autowired
 	private JobDao jobDao;	
 	
+	@Autowired
+	private Configuration configuration;
+	
 	// Not thread safe - so ensure the subclass is prototype scoped
 	private List<StorageJob> storageJobList;
 
@@ -49,6 +53,8 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 //	protected abstract StorageTypeJob selectStorageTypeJob();
 	
 	protected StorageResponse manage(StoragetypeJob storagetypeJob){
+		storagetypeJob.setJunkFilesStagedDirName(configuration.getJunkFilesStagedDirName()); // to skip junk files from writing
+		
 		Job job = null;
 		StorageResponse storageResponse = null;
 		try {

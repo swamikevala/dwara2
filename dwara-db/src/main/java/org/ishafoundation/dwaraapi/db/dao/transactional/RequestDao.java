@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.db.dao.transactional;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.custom.RequestCustom;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -15,5 +16,7 @@ public interface RequestDao extends CrudRepository<Request,Integer>, RequestCust
 	//---long countByActionIdInAndStatusIn(Collection<Action> tapedrivemappingOrFormat, Collection<Status> queuedOrInprogress);
 	
 	//List<Request> findAllByActionIdAndUserIdAndRequestedAtOrderByRequestedAtDesc(int actionId, int userId, String startDate, Pageable pageable);
+	
+	List<Request> findAllByRequestRefIdOrderByRequestIdDesc(int requestRefId);
 	
 }

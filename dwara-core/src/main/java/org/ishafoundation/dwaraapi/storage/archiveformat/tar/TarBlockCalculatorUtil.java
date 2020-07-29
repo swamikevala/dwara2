@@ -9,7 +9,8 @@ public class TarBlockCalculatorUtil {
 	public static final int NEXTARCHIVE_FRESH_START_BLOCK = 1;
 	
 	public static final int FIRSTARCHIVE_START_BLOCK = 0 + TAPELABEL_BLOCK + TAPEMARK_BLOCK;
-	public static final int ZERO_START_BLOCK_ADJUSTER = 1;
+
+	public static final int INCLUSIVE_BLOCK_ADJUSTER = 1;// + 1 so the start and end volume block boundaries are inclusive.. for eg., svb = 2, evb = 5, totalblocks = four blocks involved 2,3,4,5(so 5 - 2 + INCLUSIVE_BLOCK_ADJUSTER = 4)
 	
 	private static int FILENAME_CHARACTER_THRESHOLD_PER_TAR_BLOCK = 100;
 	
@@ -39,9 +40,7 @@ public class TarBlockCalculatorUtil {
 		int file_Archive_EndBlock = fileArchiveBlock + fileHeaderBlocks + fileArchiveBlocksCount;
 		
 		int fileVolumeBlocksCount = (int) Math.ceil(file_Archive_EndBlock/blockingFactor);
-		int artifactTotalVolumeBlocks = fileVolumeBlocksCount;
-		
-		return artifactTotalVolumeBlocks - ZERO_START_BLOCK_ADJUSTER; // -1 because of 0 starts 
+		return fileVolumeBlocksCount;
 	}
 
 	// useful when executing the restore

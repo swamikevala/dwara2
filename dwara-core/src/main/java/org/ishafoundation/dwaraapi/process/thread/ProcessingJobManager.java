@@ -12,6 +12,7 @@ import java.util.concurrent.Executor;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
@@ -63,6 +64,8 @@ public class ProcessingJobManager implements Runnable{
 	@Autowired
 	private DBMasterTablesCacheManager dBMasterTablesCacheManager;	
 
+	@Autowired
+	private Configuration configuration;
 	
 	private Job job;
 
@@ -133,7 +136,12 @@ public class ProcessingJobManager implements Runnable{
 			
 			for (Iterator<LogicalFile> iterator = selectedFileList.iterator(); iterator.hasNext();) {
 				LogicalFile logicalFile = (LogicalFile) iterator.next(); // would have an absolute file like C:\data\ingested\14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS and its sidecar files
-				logger.info("Now kicking off - " + job.getId() + " " + logicalFile.getAbsolutePath() + " task " + processingtaskId);
+				String logicalFilePath = logicalFile.getAbsolutePath();
+				logger.trace(logicalFilePath);
+				if(logicalFilePath.contains(configuration.getJunkFilesStagedDirName())) // skipping junk files
+					continue;			
+
+				logger.info("Now kicking off - " + job.getId() + " " + logicalFilePath + " task " + processingtaskId);
 				// TODO - Need to work on this for Audio where its just file..
 				String x = FilenameUtils.getFullPath(logicalFile.getAbsolutePath()) + FilenameUtils.getBaseName(logicalFile.getAbsolutePath());
 				if(logicalFile.getAbsolutePath().equals(x)) { 
@@ -142,14 +150,12 @@ public class ProcessingJobManager implements Runnable{
 				}
 				String filePathnameWithoutArtifactNamePrefixed = logicalFile.getAbsolutePath().replace(inputArtifactPath + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
 				String artifactNamePrefixedFilePathname = logicalFile.getAbsolutePath().replace(inputArtifactPath + File.separator, artifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
-				// TODO
-	//			if(path.contains(configuration.getJunkFilesStagedDirName())) // skipping junk files
-	//				continue;			
 				
 				//logger.info("Now processing - " + path);
 				org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
 				if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
 					file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
+				logger.trace("file - " + file);
 				
 				String outputFilePath = null;
 				if(outputArtifactPathname != null) {

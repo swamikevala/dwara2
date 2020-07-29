@@ -114,9 +114,10 @@ public class TarArchiver implements IArchiveformatter {
 		int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
 		int archiveformatBlocksize = archiveformatJob.getArchiveformatBlocksize();
 		String deviceName = archiveformatJob.getDeviceName();
+		String junkFilesStagedDirName = archiveformatJob.getStoragetypeJob().getJunkFilesStagedDirName();
 		
 		int tarBlockingFactor = volumeBlocksize/archiveformatBlocksize;
-		String tarCopyCommand = "tar cvvv -R -b " + tarBlockingFactor + " -f " + deviceName + " " + artifactNameToBeWritten;
+		String tarCopyCommand = "tar --exclude=" + junkFilesStagedDirName + " cvvv -R -b " + tarBlockingFactor + " -f " + deviceName + " " + artifactNameToBeWritten;
 		List<String> commandList = new ArrayList<String>();
 		commandList.add("sh");
 		commandList.add("-c");
@@ -181,7 +182,7 @@ public class TarArchiver implements IArchiveformatter {
 		artifactTotalVolumeBlocks = TarBlockCalculatorUtil.getFileVolumeEndBlock(lastTaredFile.getFilePathName(), lastTaredFile.getArchiveBlock(), lastTaredFile.getFileSize(), archiveformatBlocksize, blockingFactor);
 		
 		archiveResponse.setArtifactStartVolumeBlock(artifactStartVolumeBlock);
-		archiveResponse.setArtifactEndVolumeBlock(artifactStartVolumeBlock + artifactTotalVolumeBlocks);
+		archiveResponse.setArtifactEndVolumeBlock(artifactStartVolumeBlock + artifactTotalVolumeBlocks - TarBlockCalculatorUtil.INCLUSIVE_BLOCK_ADJUSTER); // - 1 because svb inclusive
 		archiveResponse.setArchivedFileList(archivedFileList);
 		return archiveResponse;
 	}
@@ -208,7 +209,7 @@ public class TarArchiver implements IArchiveformatter {
 		StorageJob storageJob = archiveformatJob.getStoragetypeJob().getStorageJob();
 		String filePathNameToBeRestored = storageJob.getArtifact().getName();
 		
-		int noOfTapeBlocksToBeRead = storageJob.getArtifactEndVolumeBlock() + TarBlockCalculatorUtil.TAPEMARK_BLOCK - storageJob.getArtifactStartVolumeBlock() + TarBlockCalculatorUtil.ZERO_START_BLOCK_ADJUSTER; // because of 0 start...
+		int noOfTapeBlocksToBeRead = getNoOfTapeBlocksToBeReadForArtifact(storageJob.getArtifactStartVolumeBlock(), storageJob.getArtifactEndVolumeBlock());
 		int skipByteCount = 0; // TODO Check if verify can be applied for non-artifacts. Restore and verify???
 		
 		logger.trace("Creating the directory " + destinationPath + ", if not already present");
@@ -218,11 +219,15 @@ public class TarArchiver implements IArchiveformatter {
 		
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = storageJob.getArtifactFileList();
 		HashMap<String, byte[]> filePathNameToChecksumObj = getSourceFilesChecksum(fileList);
-		boolean isSuccess = stream(commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, destinationPath, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
+		boolean isSuccess = stream(commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, false, destinationPath, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
 		logger.debug("verification status " + isSuccess);
 		return new ArchiveResponse();
 	}
-		
+	
+	private int getNoOfTapeBlocksToBeReadForArtifact(int artifactStartVolumeBlock, int artifactEndVolumeBlock) {
+		return artifactEndVolumeBlock + TarBlockCalculatorUtil.INCLUSIVE_BLOCK_ADJUSTER - artifactStartVolumeBlock;
+	}
+	
 	private HashMap<String, byte[]> getSourceFilesChecksum(List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList){
 		// caching the source file' checksum...
 		HashMap<String, byte[]> filePathNameToChecksumObj = new LinkedHashMap<String, byte[]>();
@@ -257,7 +262,7 @@ public class TarArchiver implements IArchiveformatter {
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = storageJob.getArtifactFileList();
 		HashMap<String, byte[]> filePathNameToChecksumObj = getSourceFilesChecksum(fileList);
 		
-		stream(commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, destinationPath, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
+		stream(commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, true, destinationPath, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
 
 		return new ArchiveResponse();
 	}
@@ -278,10 +283,10 @@ public class TarArchiver implements IArchiveformatter {
 
 
 	protected boolean stream(List<String> commandList, int volumeBlocksize, int skipByteCount,
-			String filePathNameWeNeed, String destinationPath, Checksumtype checksumtype,
+			String filePathNameWeNeed, boolean toBeRestored, String destinationPath, Checksumtype checksumtype,
 			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
 		
-		return TapeStreamer.stream(commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, destinationPath, checksumtype, filePathNameToChecksumObj);
+		return TapeStreamer.stream(commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, checksumtype, filePathNameToChecksumObj);
 	}
 	
 	private ArchiveformatJob getDecoratedArchiveformatJobForRestore(ArchiveformatJob archiveformatJob) throws Exception {
@@ -318,8 +323,8 @@ public class TarArchiver implements IArchiveformatter {
 		String filePathname = file.getPathname();
 		int seekedVolumeBlock = storageJob.getVolumeBlock();
 		if(StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) { //if file is folder
-			if(artifact.getName().equals(filePathname)) {// if file is artifact
-				noOfBlocksToBeRead = artifactVolume.getDetails().getEnd_volume_block() + TarBlockCalculatorUtil.TAPEMARK_BLOCK - artifactVolume.getDetails().getStart_volume_block() + TarBlockCalculatorUtil.ZERO_START_BLOCK_ADJUSTER;
+			if(artifact.getName().equals(filePathname)) {// if file is entire artifact
+				noOfBlocksToBeRead = getNoOfTapeBlocksToBeReadForArtifact(artifactVolume.getDetails().getStart_volume_block(), artifactVolume.getDetails().getEnd_volume_block());
 				skipByteCount = 0; // bang on artifact
 			}else {
 				int firstFileVolumeBlock = 0;
@@ -337,12 +342,12 @@ public class TarArchiver implements IArchiveformatter {
 						}
 						else if(filearchiveBlock > lastFileArchiveBlock) {
 							lastFileArchiveBlock = filearchiveBlock;
-							lastFileEndVolumeBlock = TarBlockCalculatorUtil.getFileVolumeEndBlock(nthArtifactFilePathname, filearchiveBlock, nthFile.getSize(), archiveformatBlocksize, blockingFactor) + TarBlockCalculatorUtil.ZERO_START_BLOCK_ADJUSTER; // + 1 because 0 start...
+							lastFileEndVolumeBlock = TarBlockCalculatorUtil.getFileVolumeEndBlock(nthArtifactFilePathname, filearchiveBlock, nthFile.getSize(), archiveformatBlocksize, blockingFactor); 
 						}
 					}
 				}
 				//noOfBlocksToBeRead = (lastFileVolumeBlock + lastFileEndVolumeBlock) - firstFileVolumeBlock;
-				noOfBlocksToBeRead = artifactVolume.getDetails().getStart_volume_block() + lastFileEndVolumeBlock - firstFileVolumeBlock; 
+				noOfBlocksToBeRead = artifactVolume.getDetails().getStart_volume_block() + lastFileEndVolumeBlock - firstFileVolumeBlock;
 			}
 			 
 		}else {
@@ -351,7 +356,7 @@ public class TarArchiver implements IArchiveformatter {
 
 			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, fileIdToBeRestored, volume.getId());// lets just let users use the util consistently
 			Integer filearchiveBlock = fileVolume.getArchiveBlock();
-			noOfBlocksToBeRead = artifactVolume.getDetails().getStart_volume_block() + TarBlockCalculatorUtil.getFileVolumeEndBlock(filePathname, filearchiveBlock, fileSize, archiveformatBlocksize, blockingFactor) + TarBlockCalculatorUtil.ZERO_START_BLOCK_ADJUSTER - seekedVolumeBlock; // + 1 because 0 start...
+			noOfBlocksToBeRead = artifactVolume.getDetails().getStart_volume_block() + TarBlockCalculatorUtil.getFileVolumeEndBlock(filePathname, filearchiveBlock, fileSize, archiveformatBlocksize, blockingFactor) - seekedVolumeBlock;
 			skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filePathname, filearchiveBlock, archiveformatBlocksize, blockingFactor); 		
 		}
 		

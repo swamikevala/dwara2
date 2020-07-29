@@ -145,7 +145,8 @@ public class ProcessingJobProcessor implements Runnable{
 	@Override
 	public void run(){
 		String identifierSuffix = "";//mediaFileId+"";//  +  "-" + VideoTasktypeingSteps.PROXY_GENERATION.toString();
-		logger.trace("running jobId - " + job.getId());
+		logger.trace("running - " + job.getId() + ":" + logicalFile.getAbsolutePath());
+		
 		String containerName = identifierSuffix;	
 		
 //		ThreadNameHelper threadNameHelper = new ThreadNameHelper();
@@ -161,7 +162,7 @@ public class ProcessingJobProcessor implements Runnable{
 		TFileJob tFileJob = null;
 		String processingtaskName = null;
 		try {
-
+			logger.trace("fileId - " + file.getId());
 			// if the current status of the job is queued - update it to inprogress and do so with the artifact status and request status...
 			Request systemGeneratedRequest = job.getRequest();
 			//Request request = systemGeneratedRequest.getRequest();
@@ -174,6 +175,9 @@ public class ProcessingJobProcessor implements Runnable{
 			else {
 				startms = System.currentTimeMillis();
 				Integer inputArtifactId = job.getInputArtifactId();
+
+				processingtaskName = job.getProcessingtaskId();
+				logger.trace(job.getId() + " " + processingtaskName);
 				
 				tFileJob = new TFileJob();
 				tFileJob.setId(new TFileJobKey(file.getId(), job.getId()));
@@ -181,13 +185,10 @@ public class ProcessingJobProcessor implements Runnable{
 				tFileJob.setArtifactId(inputArtifactId);
 				tFileJob.setStatus(Status.in_progress);
 				tFileJob.setStartedAt(LocalDateTime.now());
-				logger.debug("DB TFileJob Creation");
+				logger.debug("DB TFileJob Creation for file " + file.getId());
 				tFileJobDao.save(tFileJob);
 				logger.debug("DB TFileJob Creation - Success");
 
-				
-				processingtaskName = job.getProcessingtaskId();
-				logger.trace(job.getId() + " " + processingtaskName);
 				
 				String inputArtifactName = inputArtifact.getName();
 				Artifactclass artifactclass = inputArtifact.getArtifactclass();
@@ -278,7 +279,7 @@ public class ProcessingJobProcessor implements Runnable{
 		} catch (Exception e) {
 			staus = Status.failed;
 			failureReason = "Unable to complete " + processingtaskName + " for " + identifierSuffix + " :: " + e.getMessage();
-			logger.error(failureReason);
+			logger.error(failureReason, e);
 			
 			// TODO : Work on the threshold failures...
 			// create failed_media_file_run table

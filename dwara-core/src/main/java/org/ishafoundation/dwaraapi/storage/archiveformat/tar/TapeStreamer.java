@@ -22,7 +22,7 @@ public class TapeStreamer {
 	
 	private static final Logger logger = LoggerFactory.getLogger(TapeStreamer.class);
 	
-	public static boolean stream(List<String> commandList, int bufferSize, int skipByteCount, String filePathNameWeNeed, String destinationPath, Checksumtype checksumtype, HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
+	public static boolean stream(List<String> commandList, int bufferSize, int skipByteCount, String filePathNameWeNeed, boolean toBeRestored, String destinationPath, Checksumtype checksumtype, HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
 
 		boolean success = true;
 
@@ -40,6 +40,7 @@ public class TapeStreamer {
 			TarArchiveEntry entry = getNextTarEntry(tin);
 			while (entry != null) {
 				String entryPathName = entry.getName();
+				logger.trace("tar entry - " + entryPathName);
 				// we position to the first files right header already, so if the entry name
 				// doesnt match the folder path that means these are the tail part of the
 				// restored bytechunk which are not needed...
@@ -50,7 +51,7 @@ public class TapeStreamer {
 
 				// TODO verify this
 				if (!entry.isDirectory()) {
-					if(checksumtype != null) {
+					if(checksumtype != null) {// on the fly checksum validation...
 						
 						byte[] originalChecksum = filePathNameToChecksumObj.get(entryPathName);
 						logger.trace("originalChecksum " + Hex.encodeHexString(originalChecksum));
@@ -65,20 +66,26 @@ public class TapeStreamer {
 							logger.error("checksum mismatch " + entryPathName);
 						}
 
-					}else {
+					}
+					
+					if(toBeRestored){
 						restoreEntry(tin, bufferSize, destinationPath, entryPathName);
+						logger.info("restore completed " + entryPathName);
 					}
 				}
 
 				entry = getNextTarEntry(tin);
 			}
 			logger.trace("no more entries...");
-		} finally {
+		} catch (Exception e) {
+			logger.error("Unable to read tar stream " + e.getMessage(), e);
+			throw e;
+		}finally {
 			if (tin != null)
 				tin.close();
 			logger.trace("is proc alive : " + proc.isAlive());
-
-			logger.trace("exit : " + proc.exitValue());
+			if(!proc.isAlive())
+				logger.trace("exit : " + proc.exitValue());
 
 			proc.destroy();
 		}

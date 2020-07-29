@@ -3,14 +3,17 @@ package org.ishafoundation.dwaraapi.job;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.zip.Checksum;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetask.ImportStoragetaskAction;
+import org.ishafoundation.dwaraapi.storage.storagetask.Write;
 import org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator;
 import org.ishafoundation.dwaraapi.thread.executor.ImportStoragetaskSingleThreadExecutor;
 import org.ishafoundation.dwaraapi.thread.executor.ProcessingtaskSingleThreadExecutor;
@@ -134,7 +137,33 @@ public class JobManager {
 			// means a dependent job.
 			Status parentJobStatus = parentJob.getStatus();
 			if(parentJobStatus != Status.completed && parentJobStatus != Status.completed_failures)// TODO completed_failures too???
-				isJobReadyToBeProcessed = false;
+				return false;
+
+			/*
+			// TODO : To maintain the requested order of the artifacts while write...
+			// option 1 - Checksum and verify pair it.. but verify needs to be done only after Write...
+			
+
+			// option 2 - Request and 
+			Request currentJobRequest = job.getRequest();
+			int currentJobRequestId = currentJobRequest.getId();
+			
+			int previousSystemRequestId = currentJobRequestId - 1;
+			Request currentJobUserRequest= currentJobRequest.getRequestRef();
+			List<Request> allSystemRequestsForTheUserRequest = requestDao.findAllByRequestRefIdOrderByRequestIdDesc(currentJobUserRequest.getId());
+			Request previousSystemRequest = null;
+			for (Request request : allSystemRequestsForTheUserRequest) {
+				if(request.getId() == previousSystemRequestId) {
+					previousSystemRequest = request;
+				}
+
+			}
+			// if there is no previousSystemRequestId to the current job and this is the first..			
+			if(previousSystemRequest != null) {
+				// get all the locations write jobs and see if its complete
+				// get the job
+			}
+			*/
 		}
 
 		return isJobReadyToBeProcessed;

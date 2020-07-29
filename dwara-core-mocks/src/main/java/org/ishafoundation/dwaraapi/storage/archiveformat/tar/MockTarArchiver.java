@@ -32,7 +32,7 @@ public class MockTarArchiver extends TarArchiver {
 
 	@Override
 	protected boolean stream(List<String> commandList, int volumeBlocksize, int skipByteCount,
-			String filePathNameWeNeed, String destinationPath, Checksumtype checksumtype,
+			String filePathNameWeNeed, boolean toBeRestored, String destinationPath, Checksumtype checksumtype,
 			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
 
 		if(checksumtype != null)

@@ -39,7 +39,7 @@ public class CatDVInteractor {
 	}
  
     protected String loadTemplate(String templatePathName) throws Exception {
-		InputStream inputStream = getClass().getResourceAsStream("/catdv/AuthPayloadTemplate.json");
+		InputStream inputStream = getClass().getResourceAsStream(templatePathName);
 		return IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
     }
 }
