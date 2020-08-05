@@ -21,7 +21,7 @@ public class Finalize extends AbstractStoragetaskAction{
 	private VolumeDao volumeDao;
 	
     @Override
-    public StorageJob buildStorageJob(Job job) {
+    public StorageJob buildStorageJob(Job job) throws Exception {
     	StorageJob storageJob = super.buildStorageJob(job);
     	
     	Request request = job.getRequest();

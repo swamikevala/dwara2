@@ -7,8 +7,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
@@ -30,6 +32,9 @@ public class StoragetypeJobDelegator {
 	
 	@Autowired
 	private Map<String, AbstractStoragetypeJobManager> storageTypeJobManagerMap;
+	
+	@Autowired
+	private JobDao jobDao;	
 	
 	// TODO : shouldnt this be single thread per storagetype???
 	@Autowired
@@ -58,7 +63,15 @@ public class StoragetypeJobDelegator {
 			Action storagetaskAction = job.getStoragetaskActionId();
 			AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(storagetaskAction.name());
 			logger.trace("building storage job - " + job.getId() + ":" + storagetaskActionImpl.getClass().getSimpleName());
-			StorageJob storageJob = storagetaskActionImpl.buildStorageJob(job);
+			StorageJob storageJob = null;
+			try {
+				storageJob = storagetaskActionImpl.buildStorageJob(job);
+			} catch (Exception e) {
+				logger.error("Unable to gather necessary details for executing the job " + job.getId() + " - " + Status.failed);
+				job.setStatus(Status.failed); // fail the job so it doesnt keep looping...
+				job = jobDao.save(job);
+				continue;
+			}
 			
 			Storagetype storagetype = storageJob.getVolume().getStoragetype();
 			if(storagetype_storageTypeGroupedJobsList_Map.get(storagetype) != null) {

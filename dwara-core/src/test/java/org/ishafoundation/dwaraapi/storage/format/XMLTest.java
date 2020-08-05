@@ -18,8 +18,8 @@ public class XMLTest {
 	    String xml = FileUtils.readFileToString(new File(fileUrl.getFile()));
 	    Volumeindex vi = xmlMapper.readValue(xml, Volumeindex.class);
 
-	    System.out.println(" - " + vi.getImportinfo().getVolumesetuid());
-	    vi.getImportinfo().setVolumesetuid("some changed value");
+//	    System.out.println(" - " + vi.getImportinfo().getVolumesetuid());
+//	    vi.getImportinfo().setVolumesetuid("some changed value");
 	    String xmlFromJava = xmlMapper.writeValueAsString(vi);
 	    System.out.println(xmlFromJava);
 	    /*

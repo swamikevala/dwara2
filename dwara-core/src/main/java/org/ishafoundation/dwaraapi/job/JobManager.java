@@ -139,12 +139,31 @@ public class JobManager {
 			if(parentJobStatus != Status.completed && parentJobStatus != Status.completed_failures)// TODO completed_failures too???
 				return false;
 
+			
 			/*
 			// TODO : To maintain the requested order of the artifacts while write...
-			// option 1 - Checksum and verify pair it.. but verify needs to be done only after Write...
-			
+			 	Option 1 - checksum as part of write - Not a great idea for 1) processing framework multithreaded need to be mimicked during write 2) there are as many copy jobs and we need to generate chksum only once
+			 				 	
+			 	Option 2 - Request and previoussystemrequest
+			 	
+			 	Option 3 - Checksum and verify pair it.. but verify needs to be done only after both are completed. 
+			 		instead of write dependent on checksum
+				 		checksum 
+							write
+							verify
+			 	
+			 		let verify dependent on write/checksum but ensure both write and checksum are completed...
+					 	checksum 
+						write
+							verify - but also code check that checksum job is also completed...
 
-			// option 2 - Request and 
+			 	
+			 	Option 4 - Change schema so both checksum and write are configured as prereq for verify
+				 	checksum 
+					write
+						verify
+
+			// Option 2 - Request and 
 			Request currentJobRequest = job.getRequest();
 			int currentJobRequestId = currentJobRequest.getId();
 			
@@ -164,6 +183,17 @@ public class JobManager {
 				// get the job
 			}
 			*/
+			
+			// Option 3 - if verify job, then ensure the checksum-generation job is completed too....
+			if(job.getStoragetaskActionId() == Action.verify) {
+				if(job.getActionelement() != null) {// TODO : means it must be ingest...
+					Job checksumJob = jobDao.findByRequestIdAndProcessingtaskId(job.getRequest().getId(), "checksum-generation");
+					
+					Status checksumJobStatus = checksumJob.getStatus();
+					if(checksumJobStatus != Status.completed && checksumJobStatus != Status.completed_failures)// TODO completed_failures too???
+						return false;
+				}
+			}
 		}
 
 		return isJobReadyToBeProcessed;

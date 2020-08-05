@@ -1,3 +1,21 @@
+3rd Aug -
+	SelectedStorageJob fields updated consistently
+	Format - 
+		label tmp file is .xml
+	ingest
+		volumes in a group to be used in order of the barcode
+	verify - 
+		Filevolume verified date updated
+		Only if checksum supports streaming then do on the fly verification else do the bru way...
+	Restore and Verification logic is based on restore_verify DB field OR verify userrequest parameter
+		when restore happens have the part file named ".restoring" - Not possible not in our control. Bru does, we just feed the destPath and the filetoBeRestored  
+	Finalize
+		Volumeindex is now written to tape...
+		compress the index file - Pending
+need to add the following in dwara.properties in testenv
+	checksumType=SHA-256
+	checksumTypeSupportsStreamingVerification=true
+
 17th July - Process intro, Checksum gen is now a process - Tape integration still in WIP
 	upgrade steps
 		drop database

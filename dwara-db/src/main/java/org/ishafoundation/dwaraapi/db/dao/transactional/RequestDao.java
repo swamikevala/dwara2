@@ -17,6 +17,6 @@ public interface RequestDao extends CrudRepository<Request,Integer>, RequestCust
 	
 	//List<Request> findAllByActionIdAndUserIdAndRequestedAtOrderByRequestedAtDesc(int actionId, int userId, String startDate, Pageable pageable);
 	
-	List<Request> findAllByRequestRefIdOrderByRequestIdDesc(int requestRefId);
+	List<Request> findAllByRequestRefIdOrderByIdDesc(int requestRefId);
 	
 }

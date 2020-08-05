@@ -7,8 +7,10 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 public class Artifact {
 	
-	@JacksonXmlProperty(isAttribute = true)
-	private int archivenumber; // TODO - Do we need this...
+	@JacksonXmlProperty(isAttribute=true)
+	private int startblock; // archive start block
+	@JacksonXmlProperty(isAttribute=true)
+	private int endblock; // archive end block
 	@JacksonXmlProperty(isAttribute = true)
 	private String artifactclassuid;
 	@JacksonXmlProperty(isAttribute = true)
@@ -18,12 +20,21 @@ public class Artifact {
 	@JacksonXmlElementWrapper(useWrapping = false)
 	private List<File> file;
 	
-	public int getArchivenumber() {
-		return archivenumber;
+
+	public int getStartblock() {
+		return startblock;
 	}
 
-	public void setArchivenumber(int archivenumber) {
-		this.archivenumber = archivenumber;
+	public void setStartblock(int startblock) {
+		this.startblock = startblock;
+	}
+
+	public int getEndblock() {
+		return endblock;
+	}
+
+	public void setEndblock(int endblock) {
+		this.endblock = endblock;
 	}
 
 	public String getArtifactclassuid() {

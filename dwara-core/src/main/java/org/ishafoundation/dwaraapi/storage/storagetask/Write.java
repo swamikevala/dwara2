@@ -11,10 +11,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,8 +97,9 @@ public class Write extends AbstractStoragetaskAction{
 	private Volume getToBeUsedPhysicalVolume(int volumegroupId, long sizeOfTheLibraryToBeWritten) {
 		
 		Volume toBeUsedVolume = null;
-		List<Volume> volumesList = volumeDao.findAllByVolumeRefIdAndFinalizedIsFalse(volumegroupId);
+		List<Volume> volumesList = volumeDao.findAllByVolumeRefIdAndFinalizedIsFalseOrderByUidAsc(volumegroupId);
 		for (Volume volume : volumesList) {
+			// The chosen volume may not have enough space because of queued write jobs using space and so we may have to get the volume again just before write(job selection)...
 			//TODO if(Volume.getFree() > sizeOfTheLibraryToBeWritten) {
 				toBeUsedVolume = volume; // for now defaulting to first one...
 				break;

@@ -16,7 +16,7 @@ public class MapTapedrives extends AbstractStoragetaskAction{
     private static final Logger logger = LoggerFactory.getLogger(MapTapedrives.class);
 
     @Override
-    public StorageJob buildStorageJob(Job job) {
+    public StorageJob buildStorageJob(Job job) throws Exception {
     	StorageJob storageJob = super.buildStorageJob(job);
     	
     	// Setting dummy volume here so that the storagetype is passed on to the delegator

@@ -2,7 +2,7 @@ package org.ishafoundation.dwaraapi.storage.model;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.TActivedevice;
 
-public class TapeJob extends StoragetypeJob {
+public class TapeJob extends SelectedStorageJob {
 	
 	private boolean optimizeTapeAccess = true; // by default we need tape optimisation // TODO is an attribute of storagetype. Should fit this in storagetype
 	private TActivedevice tActivedevice;

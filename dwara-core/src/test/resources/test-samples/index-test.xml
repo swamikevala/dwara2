@@ -1,25 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<volumeindex version="1.0">
-	<importinfo>
-		<volumesetuid>AB</volumesetuid>
-		<volumetypeuid>LTO7</volumetypeuid>
-	</importinfo>
+<volumeindex xmlns="https://dwara.io">
 
-	<volumeinfo>
-		<uid>ABC123</uid>
-		<blocksize>524288</blocksize>
-		<checksumalgorithm>md5</checksumalgorithm>
-		<encryptionalgorithm>AES-128</encryptionalgorithm>
-		<!--  artifactclassuid>PV</artifactclassuid-->
-	</volumeinfo>
+    <volumeinfo>
+        <volumeuid>ABC123</volumeuid>
+        <volumeblocksize>524288</volumeblocksize>
+        <archiveformat>bru</archiveformat>
+        <archiveblocksize>2048</archiveblocksize>
+        <checksumalgorithm>md5</checksumalgorithm>
+        <encryptionalgorithm>AES-128</encryptionalgorithm>
+        <artifactclassuid>PV</artifactclassuid>
+    </volumeinfo>
 
-	<artifact archivenumber="1" artifactclassuid="ZV" sequencecode="19019" rename="Mumbai-Sathsang_12-May-2020_Cam-1">
-		<file startblock="1" size="4096">1762_Mumbai-Satsang_12-May-2020_Cam-1</file>
-		<file startblock="1" size="867238283" checksum="34c394c647d7f2a9c782546acb090395" encrypted="true">1762_Mumbai-Satsang_12-May-2020_Cam-1/BPAV/CLPR/CLPR123/A123.mp4</file>
-		<file startblock="1655" size="798" checksum="7c8a17d58909305207a06b4022e73f69" encrypted="false">1762_Mumbai-Satsang_12-May-2020_Cam-1/BPAV/CLPR/CLPR123/A123.xml</file>
-	</artifact>
+    <artifact startblock="0" endblock="3213" sequencecode="19019" rename="Mumbai-Sathsang_12-May-2020_Cam-1">
+        <file volumeblock="1" archiveblock="0" size="4096">1762_Mumbai-Satsang_12-May-2020_Cam-1</file>
+        <file volumeblock="1" archiveblock="2" size="867238283" checksum="34c394c647d7f2a9c782546acb090395" encrypted="true" bad="true">1762_Mumbai-Satsang_12-May-2020_Cam-1/BPAV/CLPR/CLPR123/A123.mp4</file>
+        <file volumeblock="1655" archiveblock="0" size="798" checksum="7c8a17d58909305207a06b4022e73f69" encrypted="false">1762_Mumbai-Satsang_12-May-2020_Cam-1/BPAV/CLPR/CLPR123/A123.xml</file>    
+    </artifact>
 
-	<artifact archivenumber="1" artifactclassuid="ZU">
-		<file startblock="3214" size="46534834" checksum="7fefde9b6164a2d72f15f2887178e569">U2312_Mumbai-Sathsang_12-May-2020_Zoom.wav</file>
-	</artifact>
+    <artifact startblock="3214" endblock="3713" artifactclassuid="ZU">
+        <file volumeblock="3214" archiveblock="0" size="46534834" checksum="7fefde9b6164a2d72f15f2887178e569">U2312_Mumbai-Sathsang_12-May-2020_Zoom.wav</file>   
+    </artifact>
+
 </volumeindex>

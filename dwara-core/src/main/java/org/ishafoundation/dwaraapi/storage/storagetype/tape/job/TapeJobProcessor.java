@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
-import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
+import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.TapeDriveManager;
@@ -26,21 +26,21 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	@Autowired
 	private TapeDriveManager tapeDriveManager;
 	
-	public StorageResponse map_tapedrives(StoragetypeJob storagetypeJob) {
+	public StorageResponse map_tapedrives(SelectedStorageJob storagetypeJob) {
 		logger.trace("Mapping invoked from processor");
 		return new StorageResponse();
 	}
 	
 	@Override
-	protected void beforeFormat(StoragetypeJob storagetypeJob) throws Exception {
+	protected void beforeFormat(SelectedStorageJob storagetypeJob) throws Exception {
 		TapeJob tapeJob = (TapeJob) storagetypeJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
 
 		loadTape(storagetypeJob, true);
 
-		// TODO : Wher shoudld is Blank check go?
-		// validate on sequence no of tape
+		// TODO : Wher shoudld is Blank check go? and force option...
+		// validate on sequence no of tape - upfront validation
 		// validate on group archive format vs member archiveformat. they have to be same...
 		
 		
@@ -51,7 +51,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	}	
 	
 	@Override
-	protected void beforeWrite(StoragetypeJob storagetypeJob) throws Exception {
+	protected void beforeWrite(SelectedStorageJob storagetypeJob) throws Exception {
 		TapeJob tapeJob = (TapeJob) storagetypeJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
@@ -65,12 +65,12 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	}
 	
 	@Override
-	protected void beforeVerify(StoragetypeJob storagetypeJob) throws Exception {
+	protected void beforeVerify(SelectedStorageJob storagetypeJob) throws Exception {
 		super.beforeVerify(storagetypeJob);
 		TapeJob tapeJob = (TapeJob) storagetypeJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
-		int blockNumberToSeek = tapeJob.getStorageJob().getArtifactStartVolumeBlock();
+		int blockNumberToSeek = tapeJob.getArtifactStartVolumeBlock();
 		
 		loadTape(storagetypeJob);
 		
@@ -85,7 +85,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //	}
 
 	@Override
-	protected void beforeRestore(StoragetypeJob storagetypeJob) throws Exception {
+	protected void beforeRestore(SelectedStorageJob storagetypeJob) throws Exception {
 		TapeJob tapeJob = (TapeJob) storagetypeJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
@@ -97,11 +97,11 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		logger.trace("Tape Head positioned for reading "+ tapeLibraryName + ":" + tapeJob.getDeviceUid()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
 	}
 
-	private boolean loadTape(StoragetypeJob storagetypeJob) throws Exception {
+	private boolean loadTape(SelectedStorageJob storagetypeJob) throws Exception {
 		return loadTape(storagetypeJob, false);
 	}
 	
-	private boolean loadTape(StoragetypeJob storagetypeJob, boolean skipRightTapeCheck) throws Exception {
+	private boolean loadTape(SelectedStorageJob storagetypeJob, boolean skipRightTapeCheck) throws Exception {
 		TapeJob tapeJob = (TapeJob) storagetypeJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
@@ -135,7 +135,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //		
 //	}
 //
-	protected void beforeFinalize(StoragetypeJob storagetypeJob) throws Exception {
+	protected void beforeFinalize(SelectedStorageJob storagetypeJob) throws Exception {
 		TapeJob tapeJob = (TapeJob) storagetypeJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();

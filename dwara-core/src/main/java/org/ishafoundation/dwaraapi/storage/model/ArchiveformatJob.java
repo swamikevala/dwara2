@@ -2,7 +2,7 @@ package org.ishafoundation.dwaraapi.storage.model;
 
 public class ArchiveformatJob {
 	
-	private StoragetypeJob storagetypeJob;
+	private SelectedStorageJob selectedStorageJob;
 
 	// Common
 	private int volumeBlocksize;
@@ -26,11 +26,11 @@ public class ArchiveformatJob {
 	
 	
 	
-	public StoragetypeJob getStoragetypeJob() {
-		return storagetypeJob;
+	public SelectedStorageJob getSelectedStorageJob() {
+		return selectedStorageJob;
 	}
-	public void setStoragetypeJob(StoragetypeJob storagetypeJob) {
-		this.storagetypeJob = storagetypeJob;
+	public void setSelectedStorageJob(SelectedStorageJob selectedStorageJob) {
+		this.selectedStorageJob = selectedStorageJob;
 	}
 	public int getVolumeBlocksize() {
 		return volumeBlocksize;

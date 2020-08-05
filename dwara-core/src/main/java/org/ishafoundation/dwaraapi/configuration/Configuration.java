@@ -20,6 +20,10 @@ public class Configuration {
 	private String readyToIngestSrcDirRoot;
 	
 	private String sshPrvKeyFileLocation;
+	
+	private String checksumType;
+	
+	private boolean checksumTypeSupportsStreamingVerification;
 
 	
 	public String getRegexAllowedChrsInFileName() {
@@ -76,5 +80,21 @@ public class Configuration {
 
 	public void setSshPrvKeyFileLocation(String sshPrvKeyFileLocation) {
 		this.sshPrvKeyFileLocation = sshPrvKeyFileLocation;
+	}
+
+	public String getChecksumType() {
+		return checksumType;
+	}
+
+	public void setChecksumType(String checksumType) {
+		this.checksumType = checksumType;
+	}
+
+	public boolean checksumTypeSupportsStreamingVerification() {
+		return checksumTypeSupportsStreamingVerification;
+	}
+
+	public void setChecksumTypeSupportsStreamingVerification(boolean checksumTypeSupportsStreamingVerification) {
+		this.checksumTypeSupportsStreamingVerification = checksumTypeSupportsStreamingVerification;
 	}
 }

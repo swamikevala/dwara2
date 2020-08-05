@@ -12,19 +12,20 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
+import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 @Component
 @Primary
-//@Profile({ "!dev & !stage" })
+@Profile({ "!dev & !stage" })
 public class LabelManagerImpl implements LabelManager{
 	
 	Logger logger = LoggerFactory.getLogger(LabelManagerImpl.class);
@@ -43,10 +44,11 @@ public class LabelManagerImpl implements LabelManager{
 	@Value("${volume.label.ownerId}")
 	private String ownerId;
 
-
+	@Value("${filesystem.temporarylocation}")
+	private String filesystemTemporarylocation;
 
 	@Override
-	public boolean isRightVolume(StoragetypeJob storagetypeJob) throws Exception {
+	public boolean isRightVolume(SelectedStorageJob storagetypeJob) throws Exception {
 		boolean isRightVolume = false;
 		
 		StorageJob storageJob = storagetypeJob.getStorageJob();
@@ -82,25 +84,30 @@ public class LabelManagerImpl implements LabelManager{
 //		return label;
 		return "";
 	}
+
+	/*
+	 	Writing a label to the tape has multiple options..
+			Option 1 - issue multiple commands
+			
+			dd << EOF of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80
+			getLabel(tapeBarcode)
+			EOF
 	
+			
+			Option 2 - using echo		
+			echo "^<volumelabel version="1.0"^>...THE XML BODY.." | dd of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80
+					
+			
+			Option 3 - using a temp file
+			dd if=/data/tmp/V5A001-Label.txt of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80		
+
+	 	We are going with - Option 3
+	 * 
+	 */
 	@Override
-	public boolean writeVolumeLabel(StoragetypeJob storagetypeJob) throws Exception {
+	public boolean writeVolumeLabel(SelectedStorageJob storagetypeJob) throws Exception {
 		boolean isSuccess = false;
 
-		// Writing a label to the tape has multiple options..
-		//		Option 1 - issue multiple commands
-		//		
-		//		dd << EOF of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80
-		//		getLabel(tapeBarcode)
-		//		EOF
-		
-				
-		//		Option 2 - using echo		
-		//		echo "^<volumelabel version="1.0"^>...THE XML BODY.." | dd of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80
-						
-				
-		//		Option 3 - using a temp file
-		//		dd if=/data/tmp/V5A001-Label.txt of=/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst bs=80		
 		StorageJob storageJob = storagetypeJob.getStorageJob();
 		Volume volume = storageJob.getVolume();
 		
@@ -119,14 +126,17 @@ public class LabelManagerImpl implements LabelManager{
 		String label = createLabel(volumeUid, blocksize, archiveformat, checksumalgorithm, encryptionalgorithm);
 		logger.trace(label);
 		
-		File file = new File("/data/tmp/"+ volumeUid+"_label.txt");
+		File file = new File(filesystemTemporarylocation + File.separator + volumeUid + "_label.xml");
 		FileUtils.writeStringToFile(file, label);
 		logger.trace(file.getAbsolutePath() + " created ");
 		String deviceName = storagetypeJob.getDeviceUid();
+		// Option 2 doesnt work well for xml - CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("echo \"" + label + "\" | dd of=" + deviceName + " bs="+blocksize);
+		
+		// Option 3
 		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + file.getAbsolutePath()  + " of=" + deviceName + " bs="+blocksize);
 		FileUtils.forceDelete(file);
 		logger.trace(file.getAbsolutePath() + " deleted ok.");
-		//CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("echo \"" + label + "\" | dd of=" + deviceName + " bs="+blocksize);
+		
 		if(cler.isComplete()) 
 			isSuccess = true;
 		return isSuccess;

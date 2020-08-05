@@ -4,9 +4,10 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
 public class File {
-	// TODO Volume block???
 	@JacksonXmlProperty(isAttribute=true)
-	private int startblock; // archive start block
+	private int volumeblock; // volume start block
+	@JacksonXmlProperty(isAttribute=true)
+	private int archiveblock; // archive start block
 	@JacksonXmlProperty(isAttribute=true) 
 	private Long size;
 	@JacksonXmlProperty(isAttribute=true)
@@ -17,11 +18,17 @@ public class File {
 	private String name;
 	
 	
-	public int getStartblock() {
-		return startblock;
+	public int getVolumeblock() {
+		return volumeblock;
 	}
-	public void setStartblock(int startblock) {
-		this.startblock = startblock;
+	public void setVolumeblock(int volumeblock) {
+		this.volumeblock = volumeblock;
+	}
+	public int getArchiveblock() {
+		return archiveblock;
+	}
+	public void setArchiveblock(int archiveblock) {
+		this.archiveblock = archiveblock;
 	}
 	public Long getSize() {
 		return size;

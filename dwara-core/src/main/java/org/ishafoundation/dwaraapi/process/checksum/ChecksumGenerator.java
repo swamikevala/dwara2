@@ -8,7 +8,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
-import org.ishafoundation.dwaraapi.utils.Md5Util;
+import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +23,7 @@ public class ChecksumGenerator implements IProcessingTask {
 			String category, String destinationDirPath) throws Exception {
 		
 		if(logicalFile.isFile())
-			file.setChecksum(Md5Util.getChecksum(logicalFile, Checksumtype.sha256));// TODO : ??? - From where do we get the checksumtype???
+			file.setChecksum(ChecksumUtil.getChecksum(logicalFile, Checksumtype.sha256));// TODO : ??? - From where do we get the checksumtype???
 
     	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
     	domainSpecificFileRepository.save(file);

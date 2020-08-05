@@ -14,7 +14,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
+import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 //	
 //	protected abstract StorageTypeJob selectStorageTypeJob();
 	
-	protected StorageResponse manage(StoragetypeJob storagetypeJob){
+	protected StorageResponse manage(SelectedStorageJob storagetypeJob){
 		storagetypeJob.setJunkFilesStagedDirName(configuration.getJunkFilesStagedDirName()); // to skip junk files from writing
 		
 		Job job = null;
@@ -65,7 +65,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 			
 			Storagetype storagetype = storagetypeJob.getStorageJob().getVolume().getStoragetype();
 			AbstractStoragetypeJobProcessor storagetypeJobProcessorImpl = storagetypeJobProcessorMap.get(storagetype.name() + DwaraConstants.STORAGETYPE_JOBPROCESSOR_SUFFIX);
-			Method storageTaskMethod = storagetypeJobProcessorImpl.getClass().getMethod(storagetaskAction.name(), StoragetypeJob.class);
+			Method storageTaskMethod = storagetypeJobProcessorImpl.getClass().getMethod(storagetaskAction.name(), SelectedStorageJob.class);
 			storageResponse = (StorageResponse) storageTaskMethod.invoke(storagetypeJobProcessorImpl, storagetypeJob);
 			
 			updateJobCompleted(job);

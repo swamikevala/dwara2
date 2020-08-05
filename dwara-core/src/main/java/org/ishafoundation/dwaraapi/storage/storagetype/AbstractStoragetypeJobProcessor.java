@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.storage.storagetype;
 
 import java.lang.reflect.Method;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,6 +11,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
@@ -30,12 +32,13 @@ import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
+import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.model.StoragetypeJob;
 import org.ishafoundation.dwaraapi.storage.storagelevel.IStoragelevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 public abstract class AbstractStoragetypeJobProcessor {
 	
@@ -53,55 +56,62 @@ public abstract class AbstractStoragetypeJobProcessor {
 
 	@Autowired
 	private VolumeDao volumeDao;
+	
+	@Value("${filesystem.temporarylocation}")
+	private String filesystemTemporarylocation;
+	
+	@Autowired
+	private DomainAttributeConverter domainAttributeConverter;
+
 
 	public AbstractStoragetypeJobProcessor() {
 		logger.debug(this.getClass().getName());
 	}
 	
-    protected void beforeFormat(StoragetypeJob storagetypeJob) throws Exception {
+    protected void beforeFormat(SelectedStorageJob selectedStorageJob) throws Exception {
     	
     	
     }
     
-	//public ArchiveResponse restore(StorageJob storagetypeJob) throws Throwable{
-	public StorageResponse format(StoragetypeJob storagetypeJob) throws Throwable{
+	//public ArchiveResponse restore(StorageJob selectedStorageJob) throws Throwable{
+	public StorageResponse format(SelectedStorageJob selectedStorageJob) throws Throwable{
 		StorageResponse storageResponse = null;
-    	beforeFormat(storagetypeJob);
+    	beforeFormat(selectedStorageJob);
     	
-    	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
-    	storageResponse = iStoragelevel.format(storagetypeJob);
+    	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
+    	storageResponse = iStoragelevel.format(selectedStorageJob);
     	
-    	afterFormat(storagetypeJob);
+    	afterFormat(selectedStorageJob);
     	return storageResponse; 
    	
     }
 	
-	protected void afterFormat(StoragetypeJob storagetypeJob) {
+	protected void afterFormat(SelectedStorageJob selectedStorageJob) {
 		
-		Volume volume = storagetypeJob.getStorageJob().getVolume();
+		Volume volume = selectedStorageJob.getStorageJob().getVolume();
 		volumeDao.save(volume);
 		logger.trace("Volume " + volume.getUid() + " attached to dwara succesfully");
 	}
 
 	
-    protected void beforeWrite(StoragetypeJob storagetypeJob) throws Exception {}
+    protected void beforeWrite(SelectedStorageJob selectedStorageJob) throws Exception {}
     
-    public StorageResponse write(StoragetypeJob storagetypeJob) throws Throwable{
-    	logger.info("Writing job " + storagetypeJob.getStorageJob().getJob().getId());
+    public StorageResponse write(SelectedStorageJob selectedStorageJob) throws Throwable{
+    	logger.info("Writing job " + selectedStorageJob.getStorageJob().getJob().getId());
     	StorageResponse storageResponse = null;
-    	beforeWrite(storagetypeJob);
+    	beforeWrite(selectedStorageJob);
     	
-    	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
-    	storageResponse = iStoragelevel.write(storagetypeJob);
+    	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
+    	storageResponse = iStoragelevel.write(selectedStorageJob);
 
-    	afterWrite(storagetypeJob, storageResponse);
+    	afterWrite(selectedStorageJob, storageResponse);
     	return storageResponse; 
     }
     
-    protected void afterWrite(StoragetypeJob storagetypeJob, StorageResponse storageResponse) throws Exception {
+    protected void afterWrite(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception {
 		List<ArchivedFile> archivedFileList = null;
 
-    	StorageJob storagejob = storagetypeJob.getStorageJob();
+    	StorageJob storagejob = selectedStorageJob.getStorageJob();
     	
 		Artifact artifact = storagejob.getArtifact();
 		int artifactId = artifact.getId();
@@ -140,9 +150,6 @@ public abstract class AbstractStoragetypeJobProcessor {
 //				nthFile.setChecksum(Md5Util.getChecksum(file, volume.getChecksumtype()));
 //			}
 			
-		    // To get an File*Volume instance dynamically, where * is domain name...
-			//FileVolume fileVolume = DomainSpecificFileVolumeFactory.getInstance(domain, nthFile.getId(), volume);
-			//OR
 			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolumeInstance(nthFile.getId(), volume, domain);// lets just let users use the util consistently
 			
 			// TODO
@@ -163,20 +170,13 @@ public abstract class AbstractStoragetypeJobProcessor {
 			}
 			toBeAddedFileVolumeTableEntries.add(fileVolume);
 		}
-	
-		// saving the checksum here...
-//		domainSpecificFileRepository.saveAll(artifactFileList);
 		
 	    if(toBeAddedFileVolumeTableEntries.size() > 0) {
 	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
 	    	domainSpecificFileVolumeRepository.saveAll(toBeAddedFileVolumeTableEntries);
 	    	logger.info("FileVolume records created successfully");
 	    }
-	    
 
-	    // To get an Artifact*Volume instance dynamically, where * is domain name...
-	    //ArtifactVolume artifactVolume = DomainSpecificArtifactVolumeFactory.getInstance(domain, artifact.getId(), volume);
-	    // OR
 	    ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolumeInstance(artifact.getId(), volume, domain); // lets just let users use the util consistently
 	    if(volume.getStoragelevel() == Storagelevel.block) {
 		    ArtifactVolumeDetails artifactVolumeDetails = new ArtifactVolumeDetails();
@@ -198,12 +198,12 @@ public abstract class AbstractStoragetypeJobProcessor {
     }
     
     // TODO Should we force this to be implemented or let it be overwritten
-//    protected abstract void afterWrite(StorageTypeJob storagetypeJob);
+//    protected abstract void afterWrite(StorageTypeJob selectedStorageJob);
 //
-//	protected abstract void beforeWrite(StorageTypeJob storagetypeJob);
+//	protected abstract void beforeWrite(StorageTypeJob selectedStorageJob);
 
-    protected void beforeVerify(StoragetypeJob storagetypeJob) throws Exception {
-    	StorageJob storageJob = storagetypeJob.getStorageJob();
+    protected void beforeVerify(SelectedStorageJob selectedStorageJob) throws Exception {
+    	StorageJob storageJob = selectedStorageJob.getStorageJob();
 		
 		Job job = storageJob.getJob();
 		Volume volume = storageJob.getVolume();
@@ -227,88 +227,150 @@ public abstract class AbstractStoragetypeJobProcessor {
 		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
 		
-		storageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStart_volume_block());
-		storageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEnd_volume_block());
+		selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStart_volume_block());
+		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEnd_volume_block());
 		
 		// to where
-		String destinationPath = "C:\\data\\tmp";//"sometemplocationfromconfig";
+		String destinationPath = filesystemTemporarylocation;
 		storageJob.setDestinationPath(destinationPath);
 		
-		String domainSpecificArtifactTableName = artifact.getClass().getSimpleName();
-		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-		Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_ARTIFACT_ID.replace("<<DOMAIN_SPECIFIC_ARTIFACT>>", domainSpecificArtifactTableName), int.class);
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = (List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>) fileDaoFindAllBy.invoke(domainSpecificFileRepository, artifact.getId());
-		storageJob.setArtifactFileList(fileList);
+		selectedStorageJob.setArtifactFileList(getArtifactFileList(artifact, domain));
     }
     
-	//public StorageResponse restore(StorageJob storagetypeJob) throws Throwable{
-	public StorageResponse verify(StoragetypeJob storagetypeJob) throws Throwable{
-		logger.info("Verifying job " + storagetypeJob.getStorageJob().getJob().getId());
+	//public StorageResponse restore(StorageJob selectedStorageJob) throws Throwable{
+	public StorageResponse verify(SelectedStorageJob selectedStorageJob) throws Throwable{
+		logger.info("Verifying job " + selectedStorageJob.getStorageJob().getJob().getId());
 		StorageResponse storageResponse = null;
-    	beforeVerify(storagetypeJob);
+    	beforeVerify(selectedStorageJob);
     	
-    	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
-    	storageResponse = iStoragelevel.verify(storagetypeJob);
+    	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
+    	storageResponse = iStoragelevel.verify(selectedStorageJob);
 
-    	afterVerify(storagetypeJob);
+    	afterVerify(selectedStorageJob);
     	return storageResponse; 
    	
     }
 	
-	protected void afterVerify(StoragetypeJob storagetypeJob) {}
+	protected void afterVerify(SelectedStorageJob selectedStorageJob) {
+		// update the verified date here...
+		updateFileVolumeVerifiedDate(selectedStorageJob);
+	}
+
+	private void updateFileVolumeVerifiedDate(SelectedStorageJob selectedStorageJob) {
+    	StorageJob storageJob = selectedStorageJob.getStorageJob();
+		
+		Volume volume = storageJob.getVolume();
+		Domain domain = storageJob.getDomain();
+		List<FileVolume> toBeAddedFileVolumeTableEntries = new ArrayList<FileVolume>();
+		
+		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileToBeRestored = selectedStorageJob.getFile();
+		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = selectedStorageJob.getArtifactFileList();
+		for (File nthFile : fileList) {
+			if(nthFile.getPathname().startsWith(fileToBeRestored.getPathname())) {
+				FileVolume fileVolume = domainUtil.getDomainSpecificFileVolumeInstance(nthFile.getId(), volume, domain);// lets just let users use the util consistently
+				
+				fileVolume.setVerifiedAt(LocalDateTime.now());
+				toBeAddedFileVolumeTableEntries.add(fileVolume);
+			}
+		}
+	    if(toBeAddedFileVolumeTableEntries.size() > 0) {
+	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
+	    	domainSpecificFileVolumeRepository.saveAll(toBeAddedFileVolumeTableEntries);
+	    	logger.info("FileVolume records updated with verified at successfully");
+	    }
+	}
+	
+    protected void beforeFinalize(SelectedStorageJob selectedStorageJob) throws Exception {}
     
-    protected void beforeFinalize(StoragetypeJob storagetypeJob) throws Exception {}
-    
-	//public StorageResponse restore(StorageJob storagetypeJob) throws Throwable{
-	public StorageResponse finalize(StoragetypeJob storagetypeJob) throws Throwable{
+	//public StorageResponse restore(StorageJob selectedStorageJob) throws Throwable{
+	public StorageResponse finalize(SelectedStorageJob selectedStorageJob) throws Throwable{
 		StorageResponse storageResponse = null;
-    	beforeFinalize(storagetypeJob);
+    	beforeFinalize(selectedStorageJob);
     	
-    	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
-    	storageResponse = iStoragelevel.finalize(storagetypeJob);
+    	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
+    	storageResponse = iStoragelevel.finalize(selectedStorageJob);
     	
-//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storagetypeJob);
-//    	ar = storageFormatter.restore(storagetypeJob);
-    	afterFinalize(storagetypeJob);
+//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(selectedStorageJob);
+//    	ar = storageFormatter.restore(selectedStorageJob);
+    	afterFinalize(selectedStorageJob);
     	return storageResponse; 
    	
     }
 	
-	protected void afterFinalize(StoragetypeJob storagetypeJob) {
-		Volume volume = storagetypeJob.getStorageJob().getVolume();
+	protected void afterFinalize(SelectedStorageJob selectedStorageJob) {
+		Volume volume = selectedStorageJob.getStorageJob().getVolume();
 		volume.setFinalized(true);
 		volumeDao.save(volume);
 		logger.trace("Volume " + volume.getUid() + " finalized succesfully");
 	}
 
 
-    protected void beforeRestore(StoragetypeJob storagetypeJob) throws Exception {}
+    protected void beforeRestore(SelectedStorageJob selectedStorageJob) throws Exception {
+    	StorageJob storageJob = selectedStorageJob.getStorageJob();
+    	
+    	Domain domain = storageJob.getDomain();
+    	int fileIdToBeRestored = storageJob.getFileId();
+		
+		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainSpecificFileRepository.findById(fileIdToBeRestored).get();
+		selectedStorageJob.setFile(file);
+		
+    	Method getArtifact = file.getClass().getMethod("getArtifact"+domainAttributeConverter.convertToDatabaseColumn(domain));
+    	Artifact artifact = (Artifact) getArtifact.invoke(file);
+		storageJob.setArtifact(artifact);
+		
+		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = getArtifactFileList(artifact, domain);
+		selectedStorageJob.setArtifactFileList(fileList);
+		selectedStorageJob.setFilePathNameToChecksum(getSourceFilesChecksum(fileList));
+    }
+
     
-	//public StorageResponse restore(StorageJob storagetypeJob) throws Throwable{
-	public StorageResponse restore(StoragetypeJob storagetypeJob) throws Throwable{
-		logger.info("Restoring job " + storagetypeJob.getStorageJob().getJob().getId());
+    private List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getArtifactFileList(Artifact artifact, Domain domain) throws Exception {
+		String domainSpecificArtifactTableName = artifact.getClass().getSimpleName();
+		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+		Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_ARTIFACT_ID.replace("<<DOMAIN_SPECIFIC_ARTIFACT>>", domainSpecificArtifactTableName), int.class);
+		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = (List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>) fileDaoFindAllBy.invoke(domainSpecificFileRepository, artifact.getId());
+		return fileList;
+    }
+    
+	private HashMap<String, byte[]> getSourceFilesChecksum(List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList){
+		// caching the source file' checksum...
+		HashMap<String, byte[]> filePathNameToChecksumObj = new LinkedHashMap<String, byte[]>();
+		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : fileList) {
+			String filePathName = nthFile.getPathname();
+			byte[] checksum = nthFile.getChecksum();
+			filePathNameToChecksumObj.put(filePathName, checksum);
+		}
+		return filePathNameToChecksumObj;
+	}
+    
+	public StorageResponse restore(SelectedStorageJob selectedStorageJob) throws Throwable{
+		logger.info("Restoring job " + selectedStorageJob.getStorageJob().getJob().getId());
 		StorageResponse storageResponse = null;
-    	beforeRestore(storagetypeJob);
+    	beforeRestore(selectedStorageJob);
     	
-    	IStoragelevel iStoragelevel = getStoragelevelImpl(storagetypeJob);
-    	storageResponse = iStoragelevel.restore(storagetypeJob);
+    	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
+    	storageResponse = iStoragelevel.restore(selectedStorageJob);
     	
-//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(storagetypeJob);
-//    	ar = storageFormatter.restore(storagetypeJob);
-    	afterRestore(storagetypeJob);
+//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(selectedStorageJob);
+//    	ar = storageFormatter.restore(selectedStorageJob);
+    	afterRestore(selectedStorageJob);
     	return storageResponse; 
    	
     }
 	
-	protected void afterRestore(StoragetypeJob storagetypeJob) {}
+	protected void afterRestore(SelectedStorageJob selectedStorageJob) {
+		if(selectedStorageJob.getStorageJob().isRestoreVerify())
+			updateFileVolumeVerifiedDate(selectedStorageJob); // update the verified date here...
+	}
 	
-	private IStoragelevel getStoragelevelImpl(StoragetypeJob storagetypeJob){
-		Storagelevel storagelevel = storagetypeJob.getStorageJob().getVolume().getStoragelevel();
+	private IStoragelevel getStoragelevelImpl(SelectedStorageJob selectedStorageJob){
+		Storagelevel storagelevel = selectedStorageJob.getStorageJob().getVolume().getStoragelevel();
 		return storagelevelMap.get(storagelevel.name()+DwaraConstants.STORAGELEVEL_SUFFIX);//+"Storagelevel");
 	}
 	
-//	protected abstract void afterRestore(StorageTypeJob storagetypeJob);
+//	protected abstract void afterRestore(StorageTypeJob selectedStorageJob);
 //
-//	protected abstract void beforeRestore(StorageTypeJob storagetypeJob);
+//	protected abstract void beforeRestore(StorageTypeJob selectedStorageJob);
 
 }

@@ -10,7 +10,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 public class Volumeindex {
 	@JacksonXmlProperty(isAttribute = true)
 	private String version;
-	private Importinfo importinfo;
+//	private Importinfo importinfo;
 	private Volumeinfo volumeinfo;
 	@JacksonXmlElementWrapper(useWrapping = false)
 	private List<Artifact> artifact;
@@ -22,12 +22,12 @@ public class Volumeindex {
 	public void setVersion(String version) {
 		this.version = version;
 	}
-	public Importinfo getImportinfo() {
-		return importinfo;
-	}
-	public void setImportinfo(Importinfo importinfo) {
-		this.importinfo = importinfo;
-	}
+//	public Importinfo getImportinfo() {
+//		return importinfo;
+//	}
+//	public void setImportinfo(Importinfo importinfo) {
+//		this.importinfo = importinfo;
+//	}
 	public Volumeinfo getVolumeinfo() {
 		return volumeinfo;
 	}

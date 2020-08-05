@@ -1,24 +1,38 @@
 package org.ishafoundation.dwaraapi.storage.storagelevel.block.index;
 
 public class Volumeinfo {
-	 private String uid;
-	 private int blocksize;
+	 private String volumeuid;
+	 private int volumeblocksize;
+	 private String archiveformat;
+	 private int archiveblocksize;
 	 private String checksumalgorithm;
 	 private String encryptionalgorithm;
-	 //private String libraryclassuid; // TODO is this still needed
+	 private String artifactclassuid;
 	 
 	 
-	public String getUid() {
-		return uid;
+	public String getVolumeuid() {
+		return volumeuid;
 	}
-	public void setUid(String uid) {
-		this.uid = uid;
+	public void setVolumeuid(String volumeuid) {
+		this.volumeuid = volumeuid;
 	}
-	public int getBlocksize() {
-		return blocksize;
+	public int getVolumeblocksize() {
+		return volumeblocksize;
 	}
-	public void setBlocksize(int blocksize) {
-		this.blocksize = blocksize;
+	public void setVolumeblocksize(int volumeblocksize) {
+		this.volumeblocksize = volumeblocksize;
+	}
+	public String getArchiveformat() {
+		return archiveformat;
+	}
+	public void setArchiveformat(String archiveformat) {
+		this.archiveformat = archiveformat;
+	}
+	public int getArchiveblocksize() {
+		return archiveblocksize;
+	}
+	public void setArchiveblocksize(int archiveblocksize) {
+		this.archiveblocksize = archiveblocksize;
 	}
 	public String getChecksumalgorithm() {
 		return checksumalgorithm;
@@ -31,6 +45,12 @@ public class Volumeinfo {
 	}
 	public void setEncryptionalgorithm(String encryptionalgorithm) {
 		this.encryptionalgorithm = encryptionalgorithm;
+	}
+	public String getArtifactclassuid() {
+		return artifactclassuid;
+	}
+	public void setArtifactclassuid(String artifactclassuid) {
+		this.artifactclassuid = artifactclassuid;
 	}
 }
 

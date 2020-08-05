@@ -1,22 +1,13 @@
 package org.ishafoundation.dwaraapi.storage.archiveformat.bru;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
@@ -24,8 +15,9 @@ import org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.BruRespons
 import org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.BruResponseParser;
 import org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components.File;
 import org.ishafoundation.dwaraapi.storage.model.ArchiveformatJob;
+import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.utils.Md5Util;
+import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,9 +29,6 @@ import org.springframework.stereotype.Component;
 public class BruArchiver implements IArchiveformatter {
 
 	private static final Logger logger = LoggerFactory.getLogger(BruArchiver.class);
-	
-	@Autowired
-	private DomainUtil domainUtil;
 	
 	@Autowired
 	private CommandLineExecuter commandLineExecuter;
@@ -55,7 +44,7 @@ public class BruArchiver implements IArchiveformatter {
 		
 		int bruBufferSize = volumeBlocksize; // in bytes...
 		
-		String bruCopyCommand = "bru -B -clOjvvvvvvvvv -QX -b " + bruBufferSize + " -f " + deviceName + " " + artifactNameToBeWritten;
+		String bruCopyCommand = "bru -B -clOjvvvvvvvvv -QX -C -b " + bruBufferSize + " -f " + deviceName + " " + artifactNameToBeWritten;
 		List<String> commandList = new ArrayList<String>();
 		commandList.add("sh");
 		commandList.add("-c");
@@ -146,54 +135,20 @@ public class BruArchiver implements IArchiveformatter {
 		int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
 		String deviceName = archiveformatJob.getDeviceName();
 		String destinationPath = archiveformatJob.getDestinationPath();
-		
-		StorageJob storageJob = archiveformatJob.getStoragetypeJob().getStorageJob();
+		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		String filePathNameToBeRestored = storageJob.getArtifact().getName();
 		
 		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, destinationPath, filePathNameToBeRestored);
 		
 		executeRestoreCommand(commandList);
 		
-		boolean success = compareChecksum(storageJob.getArtifactFileList(), destinationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
+		boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), destinationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
 		if(!success)
 			throw new Exception("Verification failed");
+		
+		
 		return new ArchiveResponse();
-	}
-	
-	private boolean compareChecksum(List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList,
-			String destinationPath, String filePathNameToBeVerified, Checksumtype checksumtype) throws Exception {
-		
-		// caching the source file' checksum...
-		HashMap<String, byte[]> filePathNameToChecksumObj = new LinkedHashMap<String, byte[]>();
-		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
-			String filePathName = nthFile.getPathname();
-			byte[] checksum = nthFile.getChecksum();
-			filePathNameToChecksumObj.put(filePathName, checksum);
-		}
-		
-		// calculating the restored file' checksum
-		boolean verify = true;
-		java.io.File artifactToBeVerified = new java.io.File(destinationPath + java.io.File.separator + filePathNameToBeVerified);
-		Collection<java.io.File> artifactFileAndDirsList = FileUtils.listFilesAndDirs(artifactToBeVerified, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
-		
-		for (java.io.File file : artifactFileAndDirsList) {
-			if(file.isDirectory())
-				continue;
-			byte[] checksum = Md5Util.getChecksum(file, checksumtype);
-			
-			String filePathName = file.getAbsolutePath();
-			filePathName = filePathName.replace(destinationPath + java.io.File.separator, "");
-			byte[] originalChecksum = filePathNameToChecksumObj.get(filePathName);
-			
-			if(!Arrays.equals(checksum, originalChecksum)) {
-				verify = false;
-				logger.error("Checksum mismatch " + filePathName + " restored checksum : " + checksum + " original checksum : " + originalChecksum);
-			}	
-		}
-		logger.debug("verification status " + verify);
-		artifactToBeVerified.delete();
-		logger.trace(artifactToBeVerified + " deleted");
-		return verify;
 	}
 	
 	@Override
@@ -201,18 +156,30 @@ public class BruArchiver implements IArchiveformatter {
 		int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
 		String deviceName = archiveformatJob.getDeviceName();
 		String destinationPath = archiveformatJob.getDestinationPath();
-		String filePathNameToBeRestored = getFilePathNameToBeRestored(archiveformatJob.getStoragetypeJob().getStorageJob());
+		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
+		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
+		String filePathNameToBeRestored = file.getPathname();
 
+		logger.trace("Creating the directory " + destinationPath + ", if not already present");
+		FileUtils.forceMkdir(new java.io.File(destinationPath));
+		
 		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, destinationPath, filePathNameToBeRestored);
 
 		executeRestoreCommand(commandList);
+
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		
+		if(storageJob.isRestoreVerify()) {
+			boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), destinationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
+			if(!success)
+				throw new Exception("Restored file's verification failed");
+		}
 		return new ArchiveResponse();
 	}
 
 	private List<String> frameRestoreCommand(int volumeBlocksize, String deviceName, String destinationPath, String filePathNameToBeRestored) {
 		// FIXME: mbuffer -s 1M -m 2G -i /dev/st1 | bru -xvvvvvvvvv -b1024k -QV -C ***-f*** - 25079_Cauvery-Calling_Day15-Crowd-Shots-At-Closing-Event_CODISSIA-Cbe_17-Sep-2019_Z280V_B-Rolls
-		String bruRestoreCommand = "bru -B -xvvvvvvvvv -QV -b " + volumeBlocksize + " -f " + deviceName + " " + filePathNameToBeRestored;
+		String bruRestoreCommand = "bru -B -xvvvvvvvvv -QV -C -b " + volumeBlocksize + " -f " + deviceName + " " + filePathNameToBeRestored;
 		logger.debug("Bru restoring to " + destinationPath + " - " +  bruRestoreCommand);
 	
 		List<String> commandList = new ArrayList<String>();
@@ -230,7 +197,7 @@ public class BruArchiver implements IArchiveformatter {
 	private String executeCommand(List<String> bruCommandParamsList)
 			throws Exception {
 		String commandOutput = null;
-		CommandLineExecutionResponse bruCopyCommandLineExecutionResponse = commandLineExecuter.executeCommand(bruCommandParamsList); // TODO Fix this output file...
+		CommandLineExecutionResponse bruCopyCommandLineExecutionResponse = commandLineExecuter.executeCommand(bruCommandParamsList);
 		if(bruCopyCommandLineExecutionResponse.isComplete()) {
 			commandOutput = bruCopyCommandLineExecutionResponse.getStdOutResponse();
 		}else {
@@ -238,14 +205,5 @@ public class BruArchiver implements IArchiveformatter {
 			throw new Exception("Unable to execute bru command successfully");
 		}
 		return commandOutput;
-	}
-	
-	private String getFilePathNameToBeRestored(StorageJob storageJob) {
-		Domain domain = storageJob.getDomain();
-		int fileIdToBeRestored = storageJob.getFileId();
-		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainSpecificFileRepository.findById(fileIdToBeRestored).get();
-		
-		return file.getPathname();
 	}
 }

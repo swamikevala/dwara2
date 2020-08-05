@@ -23,4 +23,6 @@ public interface JobDao extends CrudRepository<Job,Integer> {
 //	Job findTopByTapeBarcodeOrderByIdDesc(String tapeBarcode);
 	
 	//Job findById(int jobId);
+	
+	Job findByRequestIdAndProcessingtaskId(int requestId, String processingtaskId);
 }

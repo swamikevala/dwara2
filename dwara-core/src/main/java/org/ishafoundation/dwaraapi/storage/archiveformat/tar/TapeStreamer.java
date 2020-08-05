@@ -14,15 +14,17 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
-import org.ishafoundation.dwaraapi.utils.Md5Util;
+import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TapeStreamer {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(TapeStreamer.class);
-	
-	public static boolean stream(List<String> commandList, int bufferSize, int skipByteCount, String filePathNameWeNeed, boolean toBeRestored, String destinationPath, Checksumtype checksumtype, HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
+
+	public static boolean stream(List<String> commandList, int bufferSize, int skipByteCount, String filePathNameWeNeed,
+			boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
+			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
 
 		boolean success = true;
 
@@ -49,29 +51,54 @@ public class TapeStreamer {
 					break; // if the file we need is not what we want we break
 				}
 
-				// TODO verify this
 				if (!entry.isDirectory()) {
-					if(checksumtype != null) {// on the fly checksum validation...
-						
-						byte[] originalChecksum = filePathNameToChecksumObj.get(entryPathName);
-						logger.trace("originalChecksum " + Hex.encodeHexString(originalChecksum));
-						byte[] checksumToBeVerified = Md5Util.getChecksum(tin, checksumtype, bufferSize);
-						logger.trace("checksumToBeVerified " + Hex.encodeHexString(checksumToBeVerified));
-						
-						if(Arrays.equals(originalChecksum, checksumToBeVerified)) {
-							logger.trace("originalChecksum = checksumToBeVerified. All good");	
+					if (toBeRestored) {
+						File curfile = new File(destinationPath, entryPathName);
+						File parent = curfile.getParentFile();
+						if (!parent.exists()) {
+							parent.mkdirs();
+						}
+						FileOutputStream fos = new FileOutputStream(curfile);
+						BufferedOutputStream bos = new BufferedOutputStream(fos, bufferSize);
+
+						if (toBeVerified) { // Restore with checksum validation
+							byte[] originalChecksum = filePathNameToChecksumObj.get(entryPathName);
+							logger.trace("originalChecksum " + Hex.encodeHexString(originalChecksum));
+		
+							byte[] checksumToBeVerified = ChecksumUtil.restoreFileAndGetChecksum(tin, checksumtype, bufferSize, bos);
+							logger.trace("checksumToBeVerified " + Hex.encodeHexString(checksumToBeVerified));
+	
+							if (Arrays.equals(originalChecksum, checksumToBeVerified)) {
+								logger.trace("originalChecksum = checksumToBeVerified. All good");
+								logger.info(entryPathName + " restored to " + destinationPath);
+							} else {
+								success = false;
+								logger.error("checksum mismatch " + entryPathName);
+							}
 						}
 						else {
+							IOUtils.copy(tin, bos, bufferSize);
+							logger.info(entryPathName + " restored to " + destinationPath);
+						}
+						if (bos != null)
+							bos.close();
+
+					} else if (!toBeRestored && toBeVerified) {// Just on the fly checksum validation...
+
+						byte[] originalChecksum = filePathNameToChecksumObj.get(entryPathName);
+						logger.trace("originalChecksum " + Hex.encodeHexString(originalChecksum));
+						byte[] checksumToBeVerified = ChecksumUtil.getChecksum(tin, checksumtype, bufferSize);
+						logger.trace("checksumToBeVerified " + Hex.encodeHexString(checksumToBeVerified));
+
+						if (Arrays.equals(originalChecksum, checksumToBeVerified)) {
+							logger.trace("originalChecksum = checksumToBeVerified. All good");
+						} else {
 							success = false;
 							logger.error("checksum mismatch " + entryPathName);
 						}
 
 					}
-					
-					if(toBeRestored){
-						restoreEntry(tin, bufferSize, destinationPath, entryPathName);
-						logger.info("restore completed " + entryPathName);
-					}
+
 				}
 
 				entry = getNextTarEntry(tin);
@@ -80,11 +107,11 @@ public class TapeStreamer {
 		} catch (Exception e) {
 			logger.error("Unable to read tar stream " + e.getMessage(), e);
 			throw e;
-		}finally {
+		} finally {
 			if (tin != null)
 				tin.close();
 			logger.trace("is proc alive : " + proc.isAlive());
-			if(!proc.isAlive())
+			if (!proc.isAlive())
 				logger.trace("exit : " + proc.exitValue());
 
 			proc.destroy();
@@ -101,19 +128,5 @@ public class TapeStreamer {
 			logger.error("Most probably a Truncated TAR archive exception", e);
 		}
 		return entry;
-	}
-
-	private static void restoreEntry(TarArchiveInputStream tin, int bufferSize, String destinationPath, String entryPathName)
-			throws Exception {
-			File curfile = new File(destinationPath, entryPathName);
-			File parent = curfile.getParentFile();
-			if (!parent.exists()) {
-				parent.mkdirs();
-			}
-			FileOutputStream fos = new FileOutputStream(curfile);
-			BufferedOutputStream bos = new BufferedOutputStream(fos, bufferSize);
-			IOUtils.copy(tin, bos);
-			if (bos != null)
-				bos.close();
 	}
 }

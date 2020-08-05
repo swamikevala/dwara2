@@ -28,7 +28,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
-import org.ishafoundation.dwaraapi.utils.Md5Util;
+import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -256,7 +256,7 @@ public class ProcessingJobProcessor implements Runnable{
 						nthFileRowToBeInserted.setPathname(filePathname);
 						
 						// TODO need to be done and set after proxy file is generated
-						nthFileRowToBeInserted.setChecksum(Md5Util.getChecksum(new File(processingtaskResponse.getDestinationPathname()), Checksumtype.sha256)); 
+						nthFileRowToBeInserted.setChecksum(ChecksumUtil.getChecksum(new File(processingtaskResponse.getDestinationPathname()), Checksumtype.sha256)); 
 						nthFileRowToBeInserted.setSize(9999);// TODO Hardcoded...
 				    	logger.debug("DB File Creation");
 				    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);

@@ -63,7 +63,7 @@ public abstract class AbstractStoragetaskAction{
 	}
 
 	
-	public StorageJob buildStorageJob(Job job){
+	public StorageJob buildStorageJob(Job job) throws Exception{
 		// If needed to be overwritten by subclass implementations
 		StorageJob storageJob = new StorageJob();
 		storageJob.setJob(job);

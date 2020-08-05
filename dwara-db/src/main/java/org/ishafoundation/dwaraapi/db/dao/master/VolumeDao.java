@@ -7,7 +7,7 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface VolumeDao extends CrudRepository<Volume,Integer> {
 	
-	List<Volume> findAllByVolumeRefIdAndFinalizedIsFalse(int volumerefId);
+	List<Volume> findAllByVolumeRefIdAndFinalizedIsFalseOrderByUidAsc(int volumerefId);
 
 //	Volume findTopByVolumesetIdAndFinalizedIsFalseOrderByIdAsc(int volumesetId);
 //	

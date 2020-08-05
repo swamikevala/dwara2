@@ -64,50 +64,49 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		logger.trace("Tape job manager kicked off");
 		List<StorageJob> storageJobsList = getStorageJobList();
 		// execute the job
+		StorageJob storageJob = storageJobsList.get(0); // if there is a format/mapdrive job only one job will be in the list coming from JobManager... 
+		Action storagetaskAction = storageJob.getJob().getStoragetaskActionId();
 		
-		List<DriveDetails> availableDrivesDetails = tapeDeviceUtil.getAllAvailableDrivesDetails();
-		if(availableDrivesDetails.size() > 0) { // means drive(s) available
-			logger.trace("No. of drives available "+ availableDrivesDetails.size());
+		if(storagetaskAction == Action.map_tapedrives || storagetaskAction == Action.format) {
+			updateJobInProgress(storageJob.getJob());
+			logger.debug("Unloading all tapes from all drives");
+			List<DriveDetails> availableDrivesDetails = tapeDeviceUtil.prepareAllTapeDrivesForBlockingJobs();
 			
-			StorageJob storageJob = storageJobsList.get(0); // if there is a format/mapdrive job only one job will be in the list coming from JobManager... 
-			Action storagetaskAction = storageJob.getJob().getStoragetaskActionId();
 			
-			if(storagetaskAction == Action.map_tapedrives || storagetaskAction == Action.format) {
-				updateJobInProgress(storageJob.getJob());
-				logger.debug("Unloading all tapes from all drives by tapeDrivePreparer");
-				//tapeDrivePreparer
-				
-				if(storagetaskAction == Action.map_tapedrives) {
-					logger.debug("Option 1 - call TapeDriveMapper straight from here and update statuses on your own");
-					logger.debug("OR");
-					logger.debug("Option 2 - Be consistent and continue to processor and let it do the mapping and status updates... Just Note that mapping is specific to Tape");
-					boolean isOption1 = false;			
-					if(isOption1) {
-						try {
-	
-							logger.trace("Taking Option 1 Route");
-							logger.trace("Mapping drives using TapeDriveMapper");
-							//TapeDriveMapper
-							updateJobCompleted(storageJob.getJob());
-						}catch (Exception e) {
-							logger.error(e.getMessage());
-							updateJobFailed(storageJob.getJob());
-						}
-					}
-					else {
-						logger.trace("Taking Option 2 Route");
-						logger.trace("Composing Tape job");
-						TapeJob tapeJob = new TapeJob();
-						tapeJob.setStorageJob(storageJob);
-						manage(tapeJob);
+			if(storagetaskAction == Action.map_tapedrives) {
+				logger.debug("Option 1 - call TapeDriveMapper straight from here and update statuses on your own");
+				logger.debug("OR");
+				logger.debug("Option 2 - Be consistent and continue to processor and let it do the mapping and status updates... Just Note that mapping is specific to Tape");
+				boolean isOption1 = false;			
+				if(isOption1) {
+					try {
+
+						logger.trace("Taking Option 1 Route");
+						logger.trace("Mapping drives using TapeDriveMapper");
+						//TapeDriveMapper
+						updateJobCompleted(storageJob.getJob());
+					}catch (Exception e) {
+						logger.error(e.getMessage());
+						updateJobFailed(storageJob.getJob());
 					}
 				}
-				else if(storagetaskAction == Action.format) {
-					DriveDetails driveDetails = availableDrivesDetails.get(0);
-					prepareTapeJobAndContinueNextSteps(storageJob, driveDetails, false);
+				else {
+					logger.trace("Taking Option 2 Route");
+					logger.trace("Composing Tape job");
+					TapeJob tapeJob = new TapeJob();
+					tapeJob.setStorageJob(storageJob);
+					manage(tapeJob);
 				}
 			}
-			else {
+			else if(storagetaskAction == Action.format) {
+				DriveDetails driveDetails = availableDrivesDetails.get(0);
+				prepareTapeJobAndContinueNextSteps(storageJob, driveDetails, false);
+			}
+		}
+		else {
+			List<DriveDetails> availableDrivesDetails = tapeDeviceUtil.getAllAvailableDrivesDetails();
+			if(availableDrivesDetails.size() > 0) { // means drive(s) available
+				logger.trace("No. of drives available "+ availableDrivesDetails.size());
 				// TODO - To load balance across drives based on their usage. The usage parameters is not retrieved...
 	//			Map<Integer, DriveStatusDetails> usage_driveStatusDetails = new TreeMap<Integer, DriveStatusDetails>(); 
 	//			for (Iterator<DriveStatusDetails> driveStatusDetailsIterator = availableDrivesList.iterator(); driveStatusDetailsIterator.hasNext();) {
@@ -154,9 +153,9 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	
 				}
 			}
-		}
-		else {
-			logger.info("All drives busy");
+			else {
+				logger.info("All drives busy");
+			}
 		}
 	}
 	
@@ -197,7 +196,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			tapeJob.setTapeLibraryName(tapeLibraryName);
 			tapeJob.setTapedriveNo(tapedriveNo);
 			tapeJob.setDeviceUid(tapedriveUid);
-			if(storagetaskAction == Action.write) {// For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving device...
+			if(storagetaskAction == Action.write) {
 				Domain domain = storageJob.getDomain();
 			    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 			    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(volume.getId());
