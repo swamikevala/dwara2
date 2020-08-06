@@ -14,7 +14,7 @@ public interface FileVolumeRepository<T extends FileVolume> extends CrudReposito
 	FileVolume findByIdFileIdAndVolumeLocationId(int fileId, int locationId);
 	
 	
-	FileVolume findByIdFileIdAndIdVolumeId(int fileId, int volumeId);
+	FileVolume findByIdFileIdAndIdVolumeId(int fileId, String volumeId);
 	
 	// TODO - Which one is more performant above or below
 	//File1Volume findByIdVolumeLocationIdAndFileId()
@@ -28,5 +28,5 @@ public interface FileVolumeRepository<T extends FileVolume> extends CrudReposito
 //	
 //	List<FileVolume> findAllByFileId(int fileIdToBeRestored);
 //	
-	List<FileVolume> findAllByIdVolumeId(int volumeId);
+	List<FileVolume> findAllByIdVolumeId(String volumeId);
 }

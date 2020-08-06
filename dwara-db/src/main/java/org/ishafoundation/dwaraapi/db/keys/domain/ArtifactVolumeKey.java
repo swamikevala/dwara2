@@ -15,13 +15,13 @@ public class ArtifactVolumeKey implements Serializable {
     private int artifactId;
  
     @Column(name = "volume_id")
-    private int volumeId;
+    private String volumeId;
  
     public ArtifactVolumeKey() {}
     
     public ArtifactVolumeKey(
         int artifactId,
-        int volumeId) {
+        String volumeId) {
         this.artifactId = artifactId;
         this.volumeId = volumeId;
     }
@@ -34,11 +34,11 @@ public class ArtifactVolumeKey implements Serializable {
 		this.artifactId = artifactId;
 	}
 
-	public int getVolumeId() {
+	public String getVolumeId() {
 		return volumeId;
 	}
 
-	public void setVolumeId(int volumeId) {
+	public void setVolumeId(String volumeId) {
 		this.volumeId = volumeId;
 	}
 

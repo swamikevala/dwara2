@@ -3,17 +3,16 @@ package org.ishafoundation.dwaraapi.job;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.zip.Checksum;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
-import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobMap;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetask.ImportStoragetaskAction;
-import org.ishafoundation.dwaraapi.storage.storagetask.Write;
 import org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator;
 import org.ishafoundation.dwaraapi.thread.executor.ImportStoragetaskSingleThreadExecutor;
 import org.ishafoundation.dwaraapi.thread.executor.ProcessingtaskSingleThreadExecutor;
@@ -34,6 +33,9 @@ public class JobManager {
 	@Autowired
 	private JobDao jobDao;	
 
+	@Autowired
+	private JobMapDao jobMapDao;	
+	
 	@Autowired
 	private ApplicationContext applicationContext;
 	
@@ -128,17 +130,18 @@ public class JobManager {
 		}
 	}
 
-	// If a job is a dependent job the parent job's status should be completed for it to be ready to be taken up for processing...
+	// If a job is a dependent job the job's prerequisite job's status should be completed for it to be ready to be taken up for processing...
 	private boolean isJobReadyToBeProcessed(Job job) {
 		boolean isJobReadyToBeProcessed = true;
 
-		Job parentJob = job.getJobRef();
-		if(parentJob != null) { 
+		List<JobMap> preReqJobRefs = jobMapDao.findAllByIdJobId(job.getId());// getting all prerequisite jobss
+		for (JobMap nthPreReqJobRef : preReqJobRefs) {
 			// means a dependent job.
-			Status parentJobStatus = parentJob.getStatus();
-			if(parentJobStatus != Status.completed && parentJobStatus != Status.completed_failures)// TODO completed_failures too???
-				return false;
-
+			Status preReqJobStatus = jobDao.findById(nthPreReqJobRef.getId().getJobRefId()).get().getStatus();
+			if(preReqJobStatus != Status.completed && preReqJobStatus != Status.completed_failures)// TODO completed_failures too???
+				return false;			
+			
+		}
 			
 			/*
 			// TODO : To maintain the requested order of the artifacts while write...
@@ -185,16 +188,16 @@ public class JobManager {
 			*/
 			
 			// Option 3 - if verify job, then ensure the checksum-generation job is completed too....
-			if(job.getStoragetaskActionId() == Action.verify) {
-				if(job.getActionelement() != null) {// TODO : means it must be ingest...
-					Job checksumJob = jobDao.findByRequestIdAndProcessingtaskId(job.getRequest().getId(), "checksum-generation");
-					
-					Status checksumJobStatus = checksumJob.getStatus();
-					if(checksumJobStatus != Status.completed && checksumJobStatus != Status.completed_failures)// TODO completed_failures too???
-						return false;
-				}
-			}
-		}
+//			if(job.getStoragetaskActionId() == Action.verify) {
+//				if(job.getActionelement() != null) {// TODO : means it must be ingest...
+//					Job checksumJob = jobDao.findByRequestIdAndProcessingtaskId(job.getRequest().getId(), "checksum-generation");
+//					
+//					Status checksumJobStatus = checksumJob.getStatus();
+//					if(checksumJobStatus != Status.completed && checksumJobStatus != Status.completed_failures)// TODO completed_failures too???
+//						return false;
+//				}
+//			}
+//		}
 
 		return isJobReadyToBeProcessed;
 	}

@@ -9,40 +9,40 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.keys.ArtifactclassDestinationpathKey;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Destinationpath;
+import org.ishafoundation.dwaraapi.db.keys.ArtifactclassDestinationKey;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 
-@Entity(name = "ArtifactclassDestinationpath")
-@Table(name="artifactclass_destinationpath")
-public class ArtifactclassDestinationpath {
+@Entity(name = "ArtifactclassDestination")
+@Table(name="artifactclass_destination")
+public class ArtifactclassDestination {
 
 	@EmbeddedId
-	private ArtifactclassDestinationpathKey id;
+	private ArtifactclassDestinationKey id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("artifactclassId")
     Artifactclass artifactclass;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("destinationpathId")
-    Destinationpath destinationpath;
+    @MapsId("destinationId")
+    Destination destination;
 
-	public ArtifactclassDestinationpath() {
+	public ArtifactclassDestination() {
 		
 	}
 
-	public ArtifactclassDestinationpath(Artifactclass artifactclass, Destinationpath destinationpath) {
+	public ArtifactclassDestination(Artifactclass artifactclass, Destination destination) {
 		this.artifactclass = artifactclass;
-		this.destinationpath = destinationpath;
-		this.id = new ArtifactclassDestinationpathKey(artifactclass.getId(), destinationpath.getId());
+		this.destination = destination;
+		this.id = new ArtifactclassDestinationKey(artifactclass.getId(), destination.getId());
 	}
 	
-    public ArtifactclassDestinationpathKey getId() {
+    public ArtifactclassDestinationKey getId() {
 		return id;
 	}
 
-	public void setId(ArtifactclassDestinationpathKey id) {
+	public void setId(ArtifactclassDestinationKey id) {
 		this.id = id;
 	}
 
@@ -54,12 +54,12 @@ public class ArtifactclassDestinationpath {
 		this.artifactclass = artifactclass;
 	}
 
-	public Destinationpath getDestinationpath() {
-		return destinationpath;
+	public Destination getDestinationpath() {
+		return destination;
 	}
 
-	public void setDestinationpath(Destinationpath destinationpath) {
-		this.destinationpath = destinationpath;
+	public void setDestinationpath(Destination destination) {
+		this.destination = destination;
 	}
 
 	@Override
@@ -69,14 +69,14 @@ public class ArtifactclassDestinationpath {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        ArtifactclassDestinationpath that = (ArtifactclassDestinationpath) o;
+        ArtifactclassDestination that = (ArtifactclassDestination) o;
         return Objects.equals(artifactclass, that.artifactclass) &&
-               Objects.equals(destinationpath, that.destinationpath);
+               Objects.equals(destination, that.destination);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(artifactclass, destinationpath);
+        return Objects.hash(artifactclass, destination);
     }
 
 }

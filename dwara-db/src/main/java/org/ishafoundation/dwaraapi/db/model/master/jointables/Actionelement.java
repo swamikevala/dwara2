@@ -27,7 +27,7 @@ public class Actionelement {
 	private Action complexActionId;
 	
 	@Column(name="artifactclass_id")
-	private int artifactclassId;
+	private String artifactclassId;
 	
 	@Column(name = "storagetask_action_id")
 	private Action storagetaskActionId;// TODO : ??? How can this be 0 and will make the uniqueConstraints work???
@@ -37,10 +37,7 @@ public class Actionelement {
 	
 	// No FK relationship as this could be set to 0
 	@Column(name="volume_id")
-	private int volumeId;
-	
-	@Column(name="actionelement_ref_id")
-	private Integer actionelementRefId;
+	private String volumeId;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name="output_artifactclass_id")
@@ -72,11 +69,11 @@ public class Actionelement {
 		this.complexActionId = complexActionId;
 	}
 
-	public int getArtifactclassId() {
+	public String getArtifactclassId() {
 		return artifactclassId;
 	}
 
-	public void setArtifactclassId(int artifactclassId) {
+	public void setArtifactclassId(String artifactclassId) {
 		this.artifactclassId = artifactclassId;
 	}
 
@@ -100,11 +97,11 @@ public class Actionelement {
 		this.processingtaskId = processingtaskId;
 	}
 
-	public int getVolumeId() {
+	public String getVolumeId() {
 		return volumeId;
 	}
 
-	public void setVolumeId(int volumeId) {
+	public void setVolumeId(String volumeId) {
 		this.volumeId = volumeId;
 	}
 
@@ -130,14 +127,6 @@ public class Actionelement {
 
 	public void setActive(boolean active) {
 		this.active = active;
-	}
-
-	public Integer getActionelementRefId() {
-		return actionelementRefId;
-	}
-
-	public void setActionelementRefId(Integer actionelementRefId) {
-		this.actionelementRefId = actionelementRefId;
 	}
 
 	@JsonIgnore

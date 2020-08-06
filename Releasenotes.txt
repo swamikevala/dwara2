@@ -1,9 +1,21 @@
+4th Aug - 
+	Destination table changes
+	actionelement Map and Job Map intro
+	Device and Tactivedevice table changes...
+	Some UID to ID changes
+	
+	upgrade steps
+		drop database
+		create database
+		run the dwara-master sql script again
+	
 3rd Aug -
 	SelectedStorageJob fields updated consistently
 	Format - 
 		label tmp file is .xml
 	ingest
 		volumes in a group to be used in order of the barcode
+		soup scenario(getting the startblock from last endvolumeblock on the volume) - fixed
 	verify - 
 		Filevolume verified date updated
 		Only if checksum supports streaming then do on the fly verification else do the bru way...

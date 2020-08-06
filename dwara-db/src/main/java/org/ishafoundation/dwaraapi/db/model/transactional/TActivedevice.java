@@ -2,8 +2,6 @@ package org.ishafoundation.dwaraapi.db.model.transactional;
 		
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -13,7 +11,6 @@ import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
-import org.ishafoundation.dwaraapi.enumreferences.DeviceStatus;
 
 @Entity(name = "TActivedevice")
 @Table(name="t_activedevice")
@@ -38,12 +35,6 @@ public class TActivedevice {
 
 	@OneToOne(fetch = FetchType.LAZY)
 	private Job job;
-
-	@Enumerated(EnumType.STRING)
-	@Column(name="device_status")
-	private DeviceStatus deviceStatus;
-	
-	
 
 	public int getId() {
 		return id;
@@ -75,13 +66,5 @@ public class TActivedevice {
 
 	public void setJob(Job job) {
 		this.job = job;
-	}
-
-	public DeviceStatus getDeviceStatus() {
-		return deviceStatus;
-	}
-
-	public void setDeviceStatus(DeviceStatus deviceStatus) {
-		this.deviceStatus = deviceStatus;
 	}
 }

@@ -44,8 +44,8 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		// validate on group archive format vs member archiveformat. they have to be same...
 		
 		
-		logger.trace("Now positioning tape head for formatting " + tapeLibraryName + ":" + tapeJob.getDeviceUid()+"("+driveElementAddress+")" );
-		tapeDriveManager.setTapeHeadPositionForFormatting(tapeJob.getDeviceUid());
+		logger.trace("Now positioning tape head for formatting " + tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")" );
+		tapeDriveManager.setTapeHeadPositionForFormatting(tapeJob.getDeviceWwnId());
 		logger.trace("Tape Head positioned for formatting");
 		
 	}	
@@ -58,8 +58,8 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		int fileNumberToBePositioned = tapeJob.getArtifactVolumeCount() == 0 ? 1 : tapeJob.getArtifactVolumeCount() + 1; // +1 because of label...
 		loadTape(storagetypeJob);
 		
-		logger.trace("Now positioning tape head for writing " + tapeLibraryName + ":" + tapeJob.getDeviceUid()+"("+driveElementAddress+")" );
-		tapeDriveManager.setTapeHeadPositionForWriting(tapeJob.getDeviceUid(), fileNumberToBePositioned); // FIXME - check on this, using eod, bsf 1 and fsf 1
+		logger.trace("Now positioning tape head for writing " + tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")" );
+		tapeDriveManager.setTapeHeadPositionForWriting(tapeJob.getDeviceWwnId(), fileNumberToBePositioned); // FIXME - check on this, using eod, bsf 1 and fsf 1
 		logger.trace("Tape Head positioned for writing");
 		
 	}
@@ -74,8 +74,8 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		
 		loadTape(storagetypeJob);
 		
-		tapeDriveManager.setTapeHeadPositionForReading(tapeJob.getDeviceUid(), blockNumberToSeek);
-		logger.trace("Tape Head positioned for verifying "+ tapeLibraryName + ":" + tapeJob.getDeviceUid()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
+		tapeDriveManager.setTapeHeadPositionForReading(tapeJob.getDeviceWwnId(), blockNumberToSeek);
+		logger.trace("Tape Head positioned for verifying "+ tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
 	}
 
 //	@Override
@@ -93,8 +93,8 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		
 		loadTape(storagetypeJob);
 		
-		tapeDriveManager.setTapeHeadPositionForReading(tapeJob.getDeviceUid(), blockNumberToSeek);
-		logger.trace("Tape Head positioned for reading "+ tapeLibraryName + ":" + tapeJob.getDeviceUid()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
+		tapeDriveManager.setTapeHeadPositionForReading(tapeJob.getDeviceWwnId(), blockNumberToSeek);
+		logger.trace("Tape Head positioned for reading "+ tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
 	}
 
 	private boolean loadTape(SelectedStorageJob storagetypeJob) throws Exception {
@@ -110,20 +110,20 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //		logger.trace("Checking if drive " + driveElementAddress + " is already loaded with the needed tape");
 //		
 //		if(tapeJob.isTapedriveAlreadyLoadedWithNeededTape()) {
-//			logger.trace("Tape " + tapeToBeUsed.getUid() + " is already loaded on to drive " + driveElementAddress);
+//			logger.trace("Tape " + tapeToBeUsed.getId() + " is already loaded on to drive " + driveElementAddress);
 //		}
 //		else {
 			try {
-				logger.trace("Now locating and loading tape " + tapeToBeUsed.getUid() + " on to drive " + driveElementAddress);
-				tapeLibraryManager.locateAndLoadTapeOnToDrive(tapeToBeUsed.getUid(), tapeLibraryName, driveElementAddress, tapeJob.getDeviceUid());
+				logger.trace("Now locating and loading tape " + tapeToBeUsed.getId() + " on to drive " + driveElementAddress);
+				tapeLibraryManager.locateAndLoadTapeOnToDrive(tapeToBeUsed.getId(), tapeLibraryName, driveElementAddress, tapeJob.getDeviceWwnId());
 			} catch (Exception e) {
-				logger.error("Unable to locate and load tape " + tapeToBeUsed.getUid() + " on to drive " + driveElementAddress, e);
+				logger.error("Unable to locate and load tape " + tapeToBeUsed.getId() + " on to drive " + driveElementAddress, e);
 				throw e;
 			}
 //		}
 		
 		if(!skipRightTapeCheck) {
-			logger.trace("Now checking if " + tapeLibraryName + ":" + driveElementAddress + " indeed have the tape " + tapeToBeUsed.getUid());
+			logger.trace("Now checking if " + tapeLibraryName + ":" + driveElementAddress + " indeed have the tape " + tapeToBeUsed.getId());
 			//isRightVolume
 		}
 		return true;

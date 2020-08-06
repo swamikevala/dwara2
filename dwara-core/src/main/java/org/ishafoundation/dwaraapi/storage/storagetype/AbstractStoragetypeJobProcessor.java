@@ -14,6 +14,8 @@ import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
@@ -23,10 +25,12 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobMap;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
@@ -43,6 +47,12 @@ import org.springframework.beans.factory.annotation.Value;
 public abstract class AbstractStoragetypeJobProcessor {
 	
 	private static final Logger logger = LoggerFactory.getLogger(AbstractStoragetypeJobProcessor.class);
+	
+	@Autowired
+	private JobDao jobDao; 
+	
+	@Autowired
+	private JobMapDao jobMapDao; 
 	
 	@Autowired
 	private Map<String, IStoragelevel> storagelevelMap;
@@ -90,7 +100,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		Volume volume = selectedStorageJob.getStorageJob().getVolume();
 		volumeDao.save(volume);
-		logger.trace("Volume " + volume.getUid() + " attached to dwara succesfully");
+		logger.trace("Volume " + volume.getId() + " attached to dwara succesfully");
 	}
 
 	
@@ -208,9 +218,15 @@ public abstract class AbstractStoragetypeJobProcessor {
 		Job job = storageJob.getJob();
 		Volume volume = storageJob.getVolume();
     	
-    	Job writeJobToBeVerified = job.getJobRef();
-
-		Integer deviceIdWriteJobUsed = writeJobToBeVerified.getDetails().getDevice_id();
+		Job writeJobToBeVerified = null;
+		List<JobMap> preReqJobRefs = jobMapDao.findAllByIdJobId(job.getId());// getting all prerequisite jobss
+		for (JobMap nthPreReqJobRef : preReqJobRefs) {
+			// means a dependent job.
+			Job preReqJobRef  = jobDao.findById(nthPreReqJobRef.getId().getJobRefId()).get();
+			if(preReqJobRef != null && preReqJobRef.getStoragetaskActionId() == Action.write) {
+				writeJobToBeVerified = preReqJobRef;
+			}
+		}		
 		
 		Integer artifactclassId = job.getRequest().getDetails().getArtifactclass_id();
 		Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager
@@ -301,7 +317,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		Volume volume = selectedStorageJob.getStorageJob().getVolume();
 		volume.setFinalized(true);
 		volumeDao.save(volume);
-		logger.trace("Volume " + volume.getUid() + " finalized succesfully");
+		logger.trace("Volume " + volume.getId() + " finalized succesfully");
 	}
 
 

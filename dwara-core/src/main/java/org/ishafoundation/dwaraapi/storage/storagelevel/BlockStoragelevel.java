@@ -123,7 +123,7 @@ public class BlockStoragelevel implements IStoragelevel {
 		VolumeDetails volumeDetails = volume.getDetails();
 		int volumeBlocksize = volumeDetails.getBlocksize();
 		int archiveformatBlocksize = volume.getArchiveformat().getBlocksize();
-		String deviceName = storagetypeJob.getDeviceUid();
+		String deviceName = storagetypeJob.getDeviceWwnId();
 		
 		archiveformatJob.setVolumeBlocksize(volumeBlocksize);
 		archiveformatJob.setArchiveformatBlocksize(archiveformatBlocksize);

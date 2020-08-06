@@ -44,12 +44,12 @@ public class Write extends AbstractStoragetaskAction{
 		Artifact artifact = null;
 		String artifactName = null;
 		String pathPrefix = null;
-		int volumegroupId = 0;
+		String volumegroupId = null;
 		Volume volume = null;
 		Domain domain = null;
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.ingest) {
 			//Dont use this as for proxy copy the artifact class is more apt to be picked from action element - Integer artifactclassId = job.getRequest().getDetails().getArtifactclass_id(); 
-			Integer artifactclassId = job.getActionelement().getArtifactclassId();
+			String artifactclassId = job.getActionelement().getArtifactclassId();
 			Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager
 					.getRecord(CacheableTablesList.artifactclass.name(), artifactclassId);
 			domain = artifactclass.getDomain();
@@ -94,14 +94,14 @@ public class Write extends AbstractStoragetaskAction{
 	
 	}
 	
-	private Volume getToBeUsedPhysicalVolume(int volumegroupId, long sizeOfTheLibraryToBeWritten) {
+	private Volume getToBeUsedPhysicalVolume(String volumegroupId, long sizeOfTheLibraryToBeWritten) {
 		
 		Volume toBeUsedVolume = null;
-		List<Volume> volumesList = volumeDao.findAllByVolumeRefIdAndFinalizedIsFalseOrderByUidAsc(volumegroupId);
-		for (Volume volume : volumesList) {
+		List<Volume> physicalVolumesList = volumeDao.findAllByVolumeRefIdAndFinalizedIsFalseOrderByUidAsc(volumegroupId);
+		for (Volume nthPhysicalVolume : physicalVolumesList) {
 			// The chosen volume may not have enough space because of queued write jobs using space and so we may have to get the volume again just before write(job selection)...
 			//TODO if(Volume.getFree() > sizeOfTheLibraryToBeWritten) {
-				toBeUsedVolume = volume; // for now defaulting to first one...
+				toBeUsedVolume = nthPhysicalVolume; // for now defaulting to first one...
 				break;
 			//}
 		}

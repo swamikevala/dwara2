@@ -52,8 +52,8 @@ public class LabelManagerImpl implements LabelManager{
 		boolean isRightVolume = false;
 		
 		StorageJob storageJob = storagetypeJob.getStorageJob();
-		String volumeUid = storageJob.getVolume().getUid();
-		String deviceName = storagetypeJob.getDeviceUid();
+		String volumeUid = storageJob.getVolume().getId();
+		String deviceName = storagetypeJob.getDeviceWwnId();
 
 		Volumelabel volumelabel = readVolumeLabel(deviceName);
 		String volIdFromLabel = volumelabel.getVolumeuid();
@@ -111,7 +111,7 @@ public class LabelManagerImpl implements LabelManager{
 		StorageJob storageJob = storagetypeJob.getStorageJob();
 		Volume volume = storageJob.getVolume();
 		
-		String volumeUid = volume.getUid();
+		String volumeUid = volume.getId();
 		String archiveformat = volume.getArchiveformat().getId();
 		String checksumalgorithm = volume.getChecksumtype().name();
 		
@@ -129,7 +129,7 @@ public class LabelManagerImpl implements LabelManager{
 		File file = new File(filesystemTemporarylocation + File.separator + volumeUid + "_label.xml");
 		FileUtils.writeStringToFile(file, label);
 		logger.trace(file.getAbsolutePath() + " created ");
-		String deviceName = storagetypeJob.getDeviceUid();
+		String deviceName = storagetypeJob.getDeviceWwnId();
 		// Option 2 doesnt work well for xml - CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("echo \"" + label + "\" | dd of=" + deviceName + " bs="+blocksize);
 		
 		// Option 3

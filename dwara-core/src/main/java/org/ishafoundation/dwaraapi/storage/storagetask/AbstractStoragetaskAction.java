@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobMap;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
@@ -23,6 +25,9 @@ public abstract class AbstractStoragetaskAction{
 	
 	@Autowired
 	private JobDao jobDao;		
+
+	@Autowired
+	private JobMapDao jobMapDao;	
 	
 	protected List<org.ishafoundation.dwaraapi.enumreferences.Action> storagetaskActionList = new ArrayList<org.ishafoundation.dwaraapi.enumreferences.Action>();
 	
@@ -32,7 +37,7 @@ public abstract class AbstractStoragetaskAction{
 		if(storagetaskActionList.size() == 0) { // one action to one storage task - like format/finalize etc..
 			simpleActionJobs.add(createStoragetaskActionJob(null, request, action));
 		}
-		else { // one action to many storagetask like - rewrite to restore/write/verify
+		else { // one action to nested tree of dependent storagetasks like - rewrite to restore/write/verify
 			Job job = null;
 			for (Action nthAction : storagetaskActionList) {
 				simpleActionJobs.add(job = createStoragetaskActionJob(job, request, nthAction));
@@ -41,24 +46,18 @@ public abstract class AbstractStoragetaskAction{
 		return simpleActionJobs;
 	}
 	
-	protected Job createStoragetaskActionJob(Job parentJob, Request request, Action storagetaskAction){
+	protected Job createStoragetaskActionJob(Job preReqJob, Request request, Action storagetaskAction){
 		Job job = new Job();
 
-		if(parentJob != null)
-			job.setJobRef(parentJob);
-		
+		if(preReqJob != null) {
+			JobMap jobMap = new JobMap(job, preReqJob);
+			jobMapDao.save(jobMap);
+		}
 		job.setStoragetaskActionId(storagetaskAction);
 		job.setRequest(request);
 		// TODO needed only for sub actions - job.setInputArtifactId(subrequest.getDetails().getArtifact_id());
 		job.setCreatedAt(LocalDateTime.now());
 		job.setStatus(Status.queued);
-		// TODO ??? - here or we will do this in buildstoragejob???
-//		if(action == Action.restore) {
-//			//subrequest
-//			Volume volume = null;
-//			//getvolume related stuff from the file here...
-//			job.setVolume(volume);
-//		}
 		return saveJob(job);
 	}
 

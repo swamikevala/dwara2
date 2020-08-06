@@ -40,19 +40,27 @@ public class TapeDeviceUtil {
 	@Value("${tapedrivemapping.pollinterval}")
 	private long waitInterval;
 
+	public List<DriveDetails> getAllAvailableDrivesDetails() throws Exception{
+		return iterateDrives("getAllAvailableDrivesDetails");
+	}
+	
+	public List<DriveDetails> prepareAllTapeDrivesForBlockingJobs() throws Exception{
+		return iterateDrives("prepareAllTapeDrivesForBlockingJobs");
+	}
+	
 	// Multiple tape libraries are not needed to be supported down stream, so we are not passing library specific details...
-	public List<DriveDetails> getAllAvailableDrivesDetails(){
+	private List<DriveDetails> iterateDrives(String taskName) throws Exception{
 
 		HashMap<Integer, DataTransferElement> driveAutoloaderAddress_DataTransferElement_Map = new HashMap<Integer, DataTransferElement>();
 		
 		List<DriveDetails> driveDetailsList = new ArrayList<DriveDetails>();
-		List<Device> tapelibraryDeviceList = deviceDao.findAllByDevicetype(Devicetype.tape_autoloader);
-		List<Device> tapedriveDeviceList = deviceDao.findAllByDevicetype(Devicetype.tape_drive);
+		List<Device> tapelibraryDeviceList = deviceDao.findAllByDevicetypeAndStatusAndDefectiveIsFalse(Devicetype.tape_autoloader, DeviceStatus.ONLINE);
+		List<Device> tapedriveDeviceList = deviceDao.findAllByDevicetypeAndStatusAndDefectiveIsFalse(Devicetype.tape_drive, DeviceStatus.ONLINE);
 		
 		
 		for (Device tapelibrary : tapelibraryDeviceList) { // iterating through all libraries configured in dwara app
-			int tapelibraryId = tapelibrary.getId();
-			String tapelibraryName = tapelibrary.getUid();
+			String tapelibraryId = tapelibrary.getId();
+			String tapelibraryName = tapelibrary.getWwnId();
 			List<DataTransferElement> dteList = null;
 			try {
 				dteList = tapeLibraryManager.getAllDataTransferElements(tapelibraryName); // get the drives in the real tape library
@@ -66,132 +74,100 @@ public class TapeDeviceUtil {
 			}
 			
 			for (Device tapedriveDevice : tapedriveDeviceList) {
-				int tapedriveDeviceId = tapedriveDevice.getId();
-				String dataTransferElementName = tapedriveDevice.getUid();
+				String tapedriveDeviceId = tapedriveDevice.getId();
+				String dataTransferElementName = tapedriveDevice.getWwnId();
 				Integer driveAutoloaderAddress = tapedriveDevice.getDetails().getAutoloader_address();
 				if(tapedriveDevice.getDetails().getAutoloader_id() == tapelibraryId) { // equivalent of calling the query devicetype=drive and details.autoloader_id=X, query NOT easy with json
-					TActivedevice tActivedevice = tActivedeviceDao.findByDeviceId(tapedriveDeviceId);
-					if(tActivedevice == null) {
-						logger.error("Tactivedevice is not having the device " + tapedriveDeviceId + " configured");
-						// TODO throw new Exception("Tactivedevice is not having the device " + tapedriveDevice.getId());
-					}else {
-						if(tActivedevice.getDeviceStatus() == DeviceStatus.AVAILABLE) {// means available
-							// verify once again
-							DriveDetails driveDetails = null;
+						if(taskName.equals("getAllAvailableDrivesDetails")) {
 							try {
-								driveDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
+								getDriveDetailsIfAvailable(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map, driveDetailsList);
 							} catch (Exception e) {
-								logger.error("Unable to get tape drive details " + dataTransferElementName);
+								logger.error(e.getMessage());
 								continue;
 							}
-	
-							if(driveDetails != null && driveDetails.getMtStatus().isBusy()) {
-								logger.error("Something wrong. Driver' mt status and dwara's tactivedevice not in sync");
-								continue;
-							}
-							
-							// Attaching the real tape library and drive details
-							driveDetails.setTapelibraryName(tapelibraryName);
-							DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
-							driveDetails.setDte(dte);
-							
-							driveDetailsList.add(driveDetails);
 						}
-					}
+						else {
+							prepareDriveForBlockingJobs(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map, driveDetailsList);
+						}
+
 				}
 			}
 		}
 		return driveDetailsList;
 	}
 	
-	public List<DriveDetails> prepareAllTapeDrivesForBlockingJobs(){
-
-		logger.debug("Preparing all drives for blocking jobs like format/map drives");
-		HashMap<Integer, DataTransferElement> driveAutoloaderAddress_DataTransferElement_Map = new HashMap<Integer, DataTransferElement>();
-		
-		List<DriveDetails> driveDetailsList = new ArrayList<DriveDetails>();
-		List<Device> tapelibraryDeviceList = deviceDao.findAllByDevicetype(Devicetype.tape_autoloader);
-		List<Device> tapedriveDeviceList = deviceDao.findAllByDevicetype(Devicetype.tape_drive);
-		
-		
-		for (Device tapelibrary : tapelibraryDeviceList) { // iterating through all libraries configured in dwara app
-			int tapelibraryId = tapelibrary.getId();
-			String tapelibraryName = tapelibrary.getUid();
-			List<DataTransferElement> dteList = null;
-			try {
-				dteList = tapeLibraryManager.getAllDataTransferElements(tapelibraryName); // get the drives in the real tape library
-			} catch (Exception e) {
-				logger.error("Unable to get tape drive details for " + tapelibraryName);
-				continue;
-			}
-			
-			for (DataTransferElement dte : dteList) {
-				driveAutoloaderAddress_DataTransferElement_Map.put(dte.getsNo(), dte);
-			}
-			
-			for (Device tapedriveDevice : tapedriveDeviceList) {
-				int tapedriveDeviceId = tapedriveDevice.getId();
-				String dataTransferElementName = tapedriveDevice.getUid();
-				Integer driveAutoloaderAddress = tapedriveDevice.getDetails().getAutoloader_address();
-				if(tapedriveDevice.getDetails().getAutoloader_id() == tapelibraryId) { // equivalent of calling the query devicetype=drive and details.autoloader_id=X, query NOT easy with json
-					boolean isDriveAvailable = false;	
-					while(!isDriveAvailable) { // should we keep looping or iterate for only a specific number of times like 25 that matches the maximum time that a drive can occupy a tape...
-						TActivedevice tActivedevice = tActivedeviceDao.findByDeviceId(tapedriveDeviceId);
-						if(tActivedevice == null) {
-							logger.error("Tactivedevice is not having the device " + tapedriveDeviceId + " configured");
-							// TODO throw new Exception("Tactivedevice is not having the device " + tapedriveDevice.getId());
-						}else {
-							if(tActivedevice.getDeviceStatus() == DeviceStatus.AVAILABLE) {// means available
-								isDriveAvailable = true;
+	private void getDriveDetailsIfAvailable(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map, List<DriveDetails> driveDetailsList) throws Exception{
+		TActivedevice tActivedevice = tActivedeviceDao.findByDeviceId(tapedriveDeviceId);
 	
-								// verify once again
-								DriveDetails driveDetails = null;
-								try {
-									driveDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
-								} catch (Exception e) {
-									logger.error("Unable to get tape drive details " + dataTransferElementName);
-									continue;
-								}
+		if(tActivedevice == null) {// means available
+			// verify once again
+			DriveDetails driveDetails = null;
+			try {
+				driveDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
+			} catch (Exception e) {
+				throw new Exception("Unable to get tape drive details " + dataTransferElementName);
+			}
 		
-								if(driveDetails != null && driveDetails.getMtStatus().isBusy()) {
-									logger.error("Something wrong. Driver' mt status and dwara's tactivedevice not in sync");
-									continue;
-								}
-								DataTransferElement dataTransferElement = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
-								if(!dataTransferElement.isEmpty()) {
-									logger.debug("Drive available, and has a tape so unloading it");
-									int toBeUsedDataTransferElementSNo = dataTransferElement.getsNo();
-									int toBeUsedStorageElementNo = dataTransferElement.getStorageElementNo();
-									
-									try {
-										tapeLibraryManager.unload(tapelibraryName, toBeUsedStorageElementNo, toBeUsedDataTransferElementSNo);
-									} catch (Exception e) {
-										logger.error("Unable to unload " + tapelibraryName + ":" + toBeUsedStorageElementNo + ":" + toBeUsedDataTransferElementSNo);
-									}
-									logger.debug("Unloaded drive " + toBeUsedDataTransferElementSNo);
-									
-									// Attaching the real tape library and drive details
-									driveDetails.setTapelibraryName(tapelibraryName);
-									DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
-									driveDetails.setDte(dte);
-									
-									driveDetailsList.add(driveDetails);
-								}
-		
-							}else {
-								try {
-									logger.debug("Drive busy. Will wait " + waitInterval);
-									Thread.sleep(waitInterval);
-								} catch (InterruptedException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}								
-							}
-						}
-					}
+			if(driveDetails != null && driveDetails.getMtStatus().isBusy()) {
+				throw new Exception("Something wrong. Driver " + dataTransferElementName + " mt status and dwara's tactivedevice not in sync");
+			}
+			
+			// Attaching the real tape library and drive details
+			driveDetails.setTapelibraryName(tapelibraryName);
+			DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
+			driveDetails.setDte(dte);
+			
+			driveDetailsList.add(driveDetails);
+		}
+	}
+
+	private void prepareDriveForBlockingJobs(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map, List<DriveDetails> driveDetailsList) throws Exception{	
+		boolean isBusy = true;
+		while(isBusy){//
+			TActivedevice tActivedevice = tActivedeviceDao.findByDeviceId(tapedriveDeviceId);
+			if(tActivedevice == null) {	
+				isBusy = false; // available...
+				// verify once again
+				DriveDetails driveDetails = null;
+				try {
+					driveDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
+				} catch (Exception e) {
+					throw new Exception("Unable to get tape drive details " + dataTransferElementName);
 				}
+		
+				if(driveDetails != null && driveDetails.getMtStatus().isBusy()) {
+					throw new Exception("Something wrong. Driver " + dataTransferElementName + " mt status and dwara's tactivedevice not in sync");
+				}
+				DataTransferElement dataTransferElement = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
+				if(!dataTransferElement.isEmpty()) {
+					logger.debug("Drive available, and has a tape so unloading it");
+					int toBeUsedDataTransferElementSNo = dataTransferElement.getsNo();
+					int toBeUsedStorageElementNo = dataTransferElement.getStorageElementNo();
+					
+					try {
+						tapeLibraryManager.unload(tapelibraryName, toBeUsedStorageElementNo, toBeUsedDataTransferElementSNo);
+					} catch (Exception e) {
+						logger.error("Unable to unload " + tapelibraryName + ":" + toBeUsedStorageElementNo + ":" + toBeUsedDataTransferElementSNo);
+					}
+					logger.debug("Unloaded drive " + toBeUsedDataTransferElementSNo);
+					
+					// Attaching the real tape library and drive details
+					driveDetails.setTapelibraryName(tapelibraryName);
+					DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
+					driveDetails.setDte(dte);
+					
+					driveDetailsList.add(driveDetails);
+				}
+		
+			}else {
+				try {
+					logger.debug("Drive busy. Will wait " + waitInterval);
+					Thread.sleep(waitInterval);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}								
 			}
 		}
-		return driveDetailsList;
 	}
 }

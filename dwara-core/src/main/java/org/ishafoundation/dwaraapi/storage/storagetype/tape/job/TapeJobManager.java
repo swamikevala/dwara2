@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TActivedeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
@@ -10,10 +11,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TActivedevice;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.DeviceStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -37,6 +36,9 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	
 	@Autowired
 	private DomainUtil domainUtil;
+
+	@Autowired
+	private DeviceDao deviceDao;
 	
 	@Autowired
 	private TActivedeviceDao tActivedeviceDao;
@@ -70,7 +72,13 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		if(storagetaskAction == Action.map_tapedrives || storagetaskAction == Action.format) {
 			updateJobInProgress(storageJob.getJob());
 			logger.debug("Unloading all tapes from all drives");
-			List<DriveDetails> availableDrivesDetails = tapeDeviceUtil.prepareAllTapeDrivesForBlockingJobs();
+			List<DriveDetails> preparedDrives = null;
+			try {
+				preparedDrives = tapeDeviceUtil.prepareAllTapeDrivesForBlockingJobs();
+			} catch (Exception e1) {
+				logger.error(e1.getMessage());
+				updateJobFailed(storageJob.getJob());
+			}
 			
 			
 			if(storagetaskAction == Action.map_tapedrives) {
@@ -99,12 +107,18 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				}
 			}
 			else if(storagetaskAction == Action.format) {
-				DriveDetails driveDetails = availableDrivesDetails.get(0);
+				DriveDetails driveDetails = preparedDrives.get(0);
 				prepareTapeJobAndContinueNextSteps(storageJob, driveDetails, false);
 			}
 		}
 		else {
-			List<DriveDetails> availableDrivesDetails = tapeDeviceUtil.getAllAvailableDrivesDetails();
+			List<DriveDetails> availableDrivesDetails = null;
+			try {
+				availableDrivesDetails = tapeDeviceUtil.getAllAvailableDrivesDetails();
+			} catch (Exception e1) {
+				logger.error(e1.getMessage());
+				updateJobFailed(storageJob.getJob());
+			}
 			if(availableDrivesDetails.size() > 0) { // means drive(s) available
 				logger.trace("No. of drives available "+ availableDrivesDetails.size());
 				// TODO - To load balance across drives based on their usage. The usage parameters is not retrieved...
@@ -161,31 +175,27 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	
 	private void prepareTapeJobAndContinueNextSteps(StorageJob storageJob, DriveDetails driveDetails, boolean nextStepsInSeparateThread) {
 		Job job = null;
-		TActivedevice tActivedevice = null;
 		TapeJob tapeJob = null;
-		DeviceStatus deviceStatus = null;
+		TActivedevice tActivedevice = null;
 		try {
 			job = storageJob.getJob();
 			updateJobInProgress(job);
 			
 			Volume volume = storageJob.getVolume();
-			tActivedevice = tActivedeviceDao.findByDeviceUid(driveDetails.getDriveName());
+			
+			tActivedevice = new TActivedevice();// Challenge here...
+			Device tapedriveDevice = deviceDao.findByWwnId(driveDetails.getDriveName());
+			String tapedriveUid = tapedriveDevice.getWwnId();
 
-			Device tapedriveDevice = tActivedevice.getDevice();
-			String tapedriveUid = tapedriveDevice.getUid();
-			deviceStatus = DeviceStatus.BUSY;
-			logger.debug("Marking drive " + tapedriveUid + " - " +  deviceStatus);
+			logger.debug("Flagging drive " + tapedriveUid + " as busy, by adding tActivedevice entry" );
 			tActivedevice.setJob(job);
 			Action storagetaskAction = job.getStoragetaskActionId();
 			if(storagetaskAction != Action.format) // For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving device...  
 				tActivedevice.setVolume(volume);
-			tActivedevice.setDeviceStatus(deviceStatus);
+
 			tActivedevice = tActivedeviceDao.save(tActivedevice);
 			
 			int tapedriveNo = tapedriveDevice.getDetails().getAutoloader_address(); // data transfer element/drive no
-//			logger.trace("Getting associated tape library");
-//			Device tapelibraryDevice = deviceDao.findById(tapedriveDevice.getDetails().getAutoloader_id()).get();
-//			String tapeLibraryName = tapelibraryDevice.getUid();
 			String tapeLibraryName = driveDetails.getTapelibraryName();
 			
 
@@ -195,7 +205,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			tapeJob.settActivedevice(tActivedevice);
 			tapeJob.setTapeLibraryName(tapeLibraryName);
 			tapeJob.setTapedriveNo(tapedriveNo);
-			tapeJob.setDeviceUid(tapedriveUid);
+			tapeJob.setDeviceWwnId(tapedriveUid);
 			if(storagetaskAction == Action.write) {
 				Domain domain = storageJob.getDomain();
 			    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
@@ -203,11 +213,9 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			    tapeJob.setArtifactVolumeCount(artifactVolumeCount);
 			}
 //			tapeJob.setTapedriveAlreadyLoadedWithNeededTape(tapedriveAlreadyLoadedWithTape);
-			
-			JobDetails jobDetails = new JobDetails();
-			jobDetails.setDevice_id(tapedriveDevice.getId());
-			jobDetails.setVolume_id(volume.getId());
-			job.setDetails(jobDetails);
+
+			job.setDevice(tapedriveDevice);
+			job.setVolume(volume);
 			
 			if(nextStepsInSeparateThread) {
 				logger.debug("Launching separate tape task thread -----------");
@@ -219,24 +227,16 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				logger.debug("Continuing in same thread");
 				StorageResponse storageResponse = manage(tapeJob);
 				
-				deviceStatus = DeviceStatus.AVAILABLE;
-				logger.debug("Marking back drive " + tapeJob.getDeviceUid() + " - " + deviceStatus);
-				tActivedevice.setJob(null);
-				tActivedevice.setVolume(null);
-				tActivedevice.setDeviceStatus(deviceStatus);
-				tActivedevice = tActivedeviceDao.save(tActivedevice);
+				logger.debug("Deleting the t_activedevice record for " + tapeJob.getDeviceWwnId());
+				tActivedeviceDao.delete(tActivedevice);
 			}
 		}
 		catch (Exception e) {
 			logger.error(e.getMessage());
 			updateJobFailed(job);
 
-			deviceStatus = DeviceStatus.AVAILABLE;
-			logger.debug("Marking back drive " + tapeJob.getDeviceUid() + " - " + deviceStatus);
-			tActivedevice.setJob(null);
-			tActivedevice.setVolume(null);
-			tActivedevice.setDeviceStatus(deviceStatus);
-			tActivedevice = tActivedeviceDao.save(tActivedevice);
+			logger.debug("Deleting the t_activedevice record for " + tapeJob.getDeviceWwnId());
+			tActivedeviceDao.delete(tActivedevice);
 		}
 	}
 	
@@ -255,15 +255,12 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		@Override
 		public void run() {
 			logger.info("Now taking up Tape job - " + tapeJob.getStorageJob().getJob().getId());	
-			StorageResponse storageResponse = manage(tapeJob);
+			manage(tapeJob);
 			
 			TActivedevice tActivedevice = tapeJob.gettActivedevice();
-			DeviceStatus deviceStatus = DeviceStatus.AVAILABLE;
-			logger.debug("Marking back drive " + tapeJob.getDeviceUid() + " - " + deviceStatus);
-			tActivedevice.setJob(null);
-			tActivedevice.setVolume(null);
-			tActivedevice.setDeviceStatus(deviceStatus);
-			tActivedevice = tActivedeviceDao.save(tActivedevice);
+			logger.debug("Deleting the t_activedevice record for " + tapeJob.getDeviceWwnId());
+			tActivedeviceDao.delete(tActivedevice);
+
 
 		}
 	}

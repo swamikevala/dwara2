@@ -52,10 +52,7 @@ public class Format extends AbstractStoragetaskAction{
 		String checksumalgorithm = requestDetails.getChecksum_algorithm();
 		String encryptionalgorithm = requestDetails.getEncryption_algorithm();
 		
-		Volume latestVolumeEntry = volumeDao.findTopByOrderByIdDesc();
-		int id = latestVolumeEntry.getId() + 1;
-		volume.setId(id);
-		volume.setUid(volumeBarcode);
+		volume.setId(volumeBarcode);
 		volume.setVolumetype(Volumetype.physical);
 		
 		Volume volumeRef = volumeDao.findByUid(volumeGroupUid);

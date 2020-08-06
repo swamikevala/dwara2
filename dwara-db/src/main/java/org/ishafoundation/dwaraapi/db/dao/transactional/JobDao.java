@@ -9,8 +9,6 @@ import org.springframework.data.repository.CrudRepository;
 public interface JobDao extends CrudRepository<Job,Integer> {
 	
 	List<Job> findAllByStatusOrderById(Status status);
-//	@Query(value="SELECT * FROM job where status_id = 1 order by job_id", nativeQuery=true)
-//	List<Job> getAllJobsToBeProcessed();
 
 	List<Job> findAllByJobRefId(int parentJobId); // Find all dependent jobs of a particular job
 	

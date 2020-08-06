@@ -3,11 +3,13 @@ package org.ishafoundation.dwaraapi.db.dao.master;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.master.cache.CacheableRepository;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Destinationpath;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
+import org.springframework.data.repository.CrudRepository;
 
-public interface DestinationpathDao extends CacheableRepository<Destinationpath> {
+public interface DestinationDao extends CrudRepository<Destination,String> {
 	
-	List<Destinationpath> findAllByArtifactclassDestinationpathArtifactclassId(int artifactclassId);
+	List<Destination> findAllByArtifactclassDestinationArtifactclassId(int artifactclassId);
 
-	Destinationpath findByName(String destinationpathName);
+	Destination findByName(String destinationpathName);
 }

@@ -51,12 +51,12 @@ public class VolumeindexManager {
 		String xmlFromJava = createVolumeindex(volume, domain);
 		logger.trace(xmlFromJava);
 		
-		java.io.File file = new java.io.File(filesystemTemporarylocation + java.io.File.separator + volume.getUid() + "_index.xml");
+		java.io.File file = new java.io.File(filesystemTemporarylocation + java.io.File.separator + volume.getId() + "_index.xml");
 		FileUtils.writeStringToFile(file, xmlFromJava);
 		// TODO zip the index file...
 
 		logger.trace(file.getAbsolutePath() + " created ");
-		String deviceName = storagetypeJob.getDeviceUid();
+		String deviceName = storagetypeJob.getDeviceWwnId();
 		int blocksize = volume.getDetails().getBlocksize();
 		
 		// Option 2 doesnt work well for xml - CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("echo \"" + label + "\" | dd of=" + deviceName + " bs="+blocksize);
@@ -76,7 +76,7 @@ public class VolumeindexManager {
 	
 	private String createVolumeindex(Volume volume, Domain domain) throws Exception {
 		Volumeinfo volumeinfo = new Volumeinfo();
-		volumeinfo.setVolumeuid(volume.getUid());
+		volumeinfo.setVolumeuid(volume.getId());
 		volumeinfo.setVolumeblocksize(volume.getDetails().getBlocksize());
 		volumeinfo.setArchiveformat(volume.getArchiveformat().getId());
 		volumeinfo.setArchiveblocksize(volume.getArchiveformat().getBlocksize());

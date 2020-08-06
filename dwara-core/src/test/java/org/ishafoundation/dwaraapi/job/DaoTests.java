@@ -1,25 +1,18 @@
 package org.ishafoundation.dwaraapi.job;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
-import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
-import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -41,32 +34,32 @@ public class DaoTests{
 	@Autowired
 	private DomainUtil domainUtil;
 	
-	@Test
-	public void testDevice(){
-		List<Device> tapelibraryDeviceList = deviceDao.findAllByDevicetype(Devicetype.tape_autoloader);
-		List<Device> tapedriveDeviceList = deviceDao.findAllByDevicetype(Devicetype.tape_drive);
-
-		HashMap<String, List<Device>> tapeLibraryName_TapeDriveList_Map = new HashMap<String, List<Device>>();
-		for (Device tapelibrary : tapelibraryDeviceList) {
-			int tapelibraryId = tapelibrary.getId();
-			String tapelibraryName = tapelibrary.getUid();
-			for (Device tapedrive : tapedriveDeviceList) {
-				if(tapedrive.getDetails().getAutoloader_id() == tapelibraryId) {
-					List<Device> tapedriveListForNthTapelibrary = tapeLibraryName_TapeDriveList_Map.get(tapelibraryName);
-					if(tapedriveListForNthTapelibrary == null) {
-						tapedriveListForNthTapelibrary = new ArrayList<Device>();
-						tapeLibraryName_TapeDriveList_Map.put(tapelibraryName, tapedriveListForNthTapelibrary);
-					}
-					tapedriveListForNthTapelibrary.add(tapedrive);
-				}
-			}
-			System.out.println("tapelibraryName -- " + tapelibraryName + " drive list" + tapeLibraryName_TapeDriveList_Map.get(tapelibraryName) + "one val" + tapeLibraryName_TapeDriveList_Map.get(tapelibraryName).get(1).getUid());
-		}
-	}
+//	@Test
+//	public void testDevice(){
+//		List<Device> tapelibraryDeviceList = deviceDao.findAllByDevicetype(Devicetype.tape_autoloader);
+//		List<Device> tapedriveDeviceList = deviceDao.findAllByDevicetype(Devicetype.tape_drive);
+//
+//		HashMap<String, List<Device>> tapeLibraryName_TapeDriveList_Map = new HashMap<String, List<Device>>();
+//		for (Device tapelibrary : tapelibraryDeviceList) {
+//			int tapelibraryId = tapelibrary.getId();
+//			String tapelibraryName = tapelibrary.getWwnId();
+//			for (Device tapedrive : tapedriveDeviceList) {
+//				if(tapedrive.getDetails().getAutoloader_id() == tapelibraryId) {
+//					List<Device> tapedriveListForNthTapelibrary = tapeLibraryName_TapeDriveList_Map.get(tapelibraryName);
+//					if(tapedriveListForNthTapelibrary == null) {
+//						tapedriveListForNthTapelibrary = new ArrayList<Device>();
+//						tapeLibraryName_TapeDriveList_Map.put(tapelibraryName, tapedriveListForNthTapelibrary);
+//					}
+//					tapedriveListForNthTapelibrary.add(tapedrive);
+//				}
+//			}
+//			System.out.println("tapelibraryName -- " + tapelibraryName + " drive list" + tapeLibraryName_TapeDriveList_Map.get(tapelibraryName) + "one val" + tapeLibraryName_TapeDriveList_Map.get(tapelibraryName).get(1).getWwnId());
+//		}
+//	}
 	
 	public void testFileVolume() {
 		Volume vol = getVolume(Domain.one, 60, 3);
-		System.out.println(vol.getUid());
+		System.out.println(vol.getId());
 	}
 	
 	private Volume getVolume(Domain domain, int fileIdToBeRestored, Integer locationId) {
@@ -86,17 +79,6 @@ public class DaoTests{
 		
 		long tdOrFormatJobInFlight = requestDao.countByActionIdInAndStatus(actionList, Status.in_progress);
 		System.out.println(tdOrFormatJobInFlight);
-	}
-	
-	public void testJobDao() {		
-		Job job = new Job();
-		
-
-		JobDetails jd = new JobDetails();
-		jd.setDevice_id(1);
-		job.setDetails(jd);
-		jobDao.save(job);
-		System.out.println("Done");
 	}
 	
 }

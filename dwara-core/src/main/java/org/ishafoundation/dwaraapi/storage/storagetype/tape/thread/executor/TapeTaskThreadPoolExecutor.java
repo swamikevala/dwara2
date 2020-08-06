@@ -10,6 +10,7 @@ import javax.annotation.PostConstruct;
 
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
+import org.ishafoundation.dwaraapi.enumreferences.DeviceStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,7 +30,7 @@ public class TapeTaskThreadPoolExecutor {
 	*/
 	@PostConstruct
 	public void init() {
-		List<Device> tapedriveList = (List<Device>) deviceDao.findAllByDevicetype(Devicetype.tape_drive);
+		List<Device> tapedriveList = (List<Device>) deviceDao.findAllByDevicetypeAndStatusAndDefectiveIsFalse(Devicetype.tape_drive, DeviceStatus.ONLINE);
 		int corePoolSize = tapedriveList.size();
 		int maxPoolSize = corePoolSize;
         executor = new ThreadPoolExecutor(corePoolSize, maxPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());

@@ -10,6 +10,7 @@ import java.util.Map;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
@@ -20,6 +21,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Failure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobMap;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
@@ -53,6 +55,9 @@ public class ProcessingJobProcessor implements Runnable{
 	
 	@Autowired
 	private JobDao jobDao;	
+	
+	@Autowired
+	private JobMapDao jobMapDao;	
 	
 	@Autowired
 	private FailureDao failureDao;
@@ -231,10 +236,10 @@ public class ProcessingJobProcessor implements Runnable{
 						    logger.debug(logMsgPrefix + " - Success");	
 						    
 						    // Now setting all the dependentjobs with the tasktype generated output artifactid
-						    List<Job> jobList = jobDao.findAllByJobRefId(job.getId());
-					
-							for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
-								Job nthDependentJob = (Job) iterator.next();
+						    List<JobMap> dependentJobMapList = jobMapDao.findAllByIdJobRefId(job.getId());
+							for (JobMap nthDependentJobMap : dependentJobMapList) {
+								int nthDependentJobId = nthDependentJobMap.getId().getJobId();
+								Job nthDependentJob = jobDao.findById(nthDependentJobId).get();
 	
 								nthDependentJob.setInputArtifactId(outputArtifact.getId()); // output artifact of the current job is the input artifact of the dependent job
 								String logMsgPrefix2 = "DB Job - " + "(" + nthDependentJob.getId() + ") - Updation - InputArtifactId " + outputArtifact.getId();

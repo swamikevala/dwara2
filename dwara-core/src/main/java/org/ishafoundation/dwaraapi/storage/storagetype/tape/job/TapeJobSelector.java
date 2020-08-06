@@ -114,7 +114,7 @@ public class TapeJobSelector {
 			for (Iterator<StorageJob> tapeJobsIterator = tapeJobsList.iterator(); tapeJobsIterator.hasNext();) {
 				StorageJob tapeJob = (StorageJob) tapeJobsIterator.next();
 				Volume toBeUsedVolume = tapeJob.getVolume();
-				String toBeUsedVolumeCode = toBeUsedVolume.getUid();
+				String toBeUsedVolumeCode = toBeUsedVolume.getId();
 				// checking if the tape is needed by any of the jobs
 				if(toBeUsedVolumeCode.equals(volumeTag)) { 
 					logger.debug("Jobs in the list match the tape " + volumeTag);
@@ -256,7 +256,7 @@ public class TapeJobSelector {
 			for (Iterator<StorageJob> tapeJobIterator = tapeJobsList.iterator(); tapeJobIterator.hasNext();) {
 				StorageJob tapeJob = (StorageJob) tapeJobIterator.next();
 				if(tapeJob.getPriority() == priority) {
-					String toBeUsedVolumeCode = tapeJob.getVolume().getUid();
+					String toBeUsedVolumeCode = tapeJob.getVolume().getId();
 
 					List<StorageJob> groupedOnVolumeTagJobsList = volumeTag_volumeTagGroupedJobs.get(toBeUsedVolumeCode);
 					if(groupedOnVolumeTagJobsList != null) { // if its not already part of other priority
@@ -301,7 +301,7 @@ public class TapeJobSelector {
 			priorityOrder.add(priority); // TODO test with priority zero
 
 			// STEP 1a - Grouping Jobs based on volumeTags
-			String toBeUsedVolumeCode = tapeJob.getVolume().getUid();
+			String toBeUsedVolumeCode = tapeJob.getVolume().getId();
 			if(volumeTag_volumeTagGroupedJobs.containsKey(toBeUsedVolumeCode)) { // if map already contains volume just append the job to the list for the volume
 				List<StorageJob> groupedOnVolumeTagJobsList = volumeTag_volumeTagGroupedJobs.get(toBeUsedVolumeCode);
 				groupedOnVolumeTagJobsList.add(tapeJob);
@@ -538,7 +538,7 @@ public class TapeJobSelector {
 					logger.debug("Volume used by a running job is not available. Running job must be a format job. No other job should be running when Format is on...");
 					throw new Exception("Volume used by a running job is not available. Running job must be a format job. No other job should be running when Format is on...");
 				}
-				String alreadyInUseTapeBarCode = volumeOnUse.getUid();
+				String alreadyInUseTapeBarCode = volumeOnUse.getId();
 				logger.debug("Tape " + alreadyInUseTapeBarCode + " is already in use by " + runningTapeJob.getJob().getId());
 				
 				// The jobs needing the same tape thats already been used by another running job are removed as we cant run 2 jobs on a same tape at a time....
@@ -675,7 +675,7 @@ public class TapeJobSelector {
 
 	// Lets say for drive 1 we are choosing a job copy 3 but the tape specific to the job is already available in other drive. Then we have to skip the job from selection. This method does the verification of the tape needed by the job against drives 
 	private boolean isTapeNeededForTheJobAlreadyLoadedInAnyDrive(StorageJob tapeJob, List<DriveDetails> allAvailableDrivesList){
-		String barcode = tapeJob.getVolume().getUid();
+		String barcode = tapeJob.getVolume().getId();
 		logger.trace("Checking if the tape " + barcode + " needed by the job " + tapeJob.getJob().getId() + " is already loaded in any of the drives.");
 		
 		if(allAvailableDrivesList.size() > 0) { // means drive(s) available
@@ -694,14 +694,14 @@ public class TapeJobSelector {
 	
 	private List<StorageJob> getTheCurrentlyRunningTapeJobs(){
 		List<StorageJob> currentlyRunningTapeJobsList = new ArrayList<StorageJob>();
-		List<TActivedevice> activeDeviceList = tActivedeviceDao.findAllByDeviceDevicetypeAndDeviceStatus(Devicetype.tape_drive, DeviceStatus.BUSY);
+		List<TActivedevice> activeDeviceList = (List<TActivedevice>) tActivedeviceDao.findAll();
 		for (TActivedevice tActivedevice : activeDeviceList) {
 			
 			StorageJob tapeJob = new StorageJob();
 
 			Job job = tActivedevice.getJob();
 			int jobId = job.getId();
-			logger.trace(jobId + " currently running in " + tActivedevice.getDevice().getUid());
+			logger.trace(jobId + " currently running in " + tActivedevice.getDevice().getWwnId());
 			
 			tapeJob.setJob(job);
 

@@ -11,31 +11,32 @@ import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails;
+import org.ishafoundation.dwaraapi.enumreferences.DeviceStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
 
 
 @Entity
 @Table(name="device")
-public class Device implements Cacheable{
-	
-	@Override
-	public String getName() {
-		// Just to make the class cacheable
-		return uid;
-	}
+public class Device {
 	
 	@Id
 	@Column(name="id")
-	private int id;
+	private String id;
 	
 	@Enumerated(EnumType.STRING)
 	@Column(name="devicetype")
 	private Devicetype devicetype;
 	
-	@Column(name="uid", unique = true)
-	private String uid;
+	@Column(name="wwn_id", unique = true)
+	private String wwnId;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(name="status")
+	private DeviceStatus status;
+	
+	@Column(name="defective")
+	private boolean defective;
 
 	@Column(name="serial_number", unique = true)
 	private String serialNumber;
@@ -54,14 +55,14 @@ public class Device implements Cacheable{
 	private DeviceDetails details;
 
 
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
-	
+
 	public Devicetype getDevicetype() {
 		return devicetype;
 	}
@@ -70,12 +71,28 @@ public class Device implements Cacheable{
 		this.devicetype = devicetype;
 	}
 
-	public String getUid() {
-		return uid;
+	public String getWwnId() {
+		return wwnId;
 	}
 
-	public void setUid(String uid) {
-		this.uid = uid;
+	public void setWwnId(String wwnId) {
+		this.wwnId = wwnId;
+	}
+
+	public DeviceStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(DeviceStatus status) {
+		this.status = status;
+	}
+
+	public boolean isDefective() {
+		return defective;
+	}
+
+	public void setDefective(boolean defective) {
+		this.defective = defective;
 	}
 
 	public String getSerialNumber() {
@@ -123,12 +140,12 @@ public class Device implements Cacheable{
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Device obj = (Device) o;
-        return Objects.equals(uid, obj.uid);
+        return Objects.equals(wwnId, obj.wwnId);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(uid);
+        return Objects.hash(wwnId);
     }	
 	
 }

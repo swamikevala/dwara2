@@ -14,16 +14,15 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Actionelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
-import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 
@@ -59,9 +58,6 @@ public class Job {
 	@Column(name="output_artifact_id")
 	private Integer outputArtifactId;
 	
-	@ManyToOne(fetch = FetchType.LAZY)
-    private Job jobRef;
-	
 	@Column(name="completed_at")
 	private LocalDateTime completedAt;
 
@@ -81,9 +77,11 @@ public class Job {
 	@OneToOne(fetch = FetchType.LAZY)
 	private org.ishafoundation.dwaraapi.db.model.master.reference.Error error; 
 
-	@Lob
-	@Column(name="details")
-	private JobDetails details;
+	@OneToOne(fetch = FetchType.LAZY)
+	private Volume volume;
+	
+	@OneToOne(fetch = FetchType.LAZY)
+	private Device device;
 	
     @OneToMany(mappedBy = "job",
             cascade = CascadeType.MERGE,
@@ -139,16 +137,6 @@ public class Job {
 		this.outputArtifactId = outputArtifactId;
 	}
 
-	@JsonIgnore
-	public Job getJobRef() {
-		return jobRef;
-	}
-
-	@JsonIgnore
-	public void setJobRef(Job jobRef) {
-		this.jobRef = jobRef;
-	}
-	
 	public org.ishafoundation.dwaraapi.db.model.master.reference.Error getError() {
 		return error;
 	}
@@ -157,11 +145,9 @@ public class Job {
 		this.error = error;
 	}
 	
-	
 	public LocalDateTime getCompletedAt() {
 		return completedAt;
 	}
-
 
 	public void setCompletedAt(LocalDateTime completedAt) {
 		this.completedAt = completedAt;
@@ -201,12 +187,20 @@ public class Job {
 		this.status = status;
 	}
 
-	public JobDetails getDetails() {
-		return details;
+	public Volume getVolume() {
+		return volume;
 	}
 
-	public void setDetails(JobDetails details) {
-		this.details = details;
+	public void setVolume(Volume volume) {
+		this.volume = volume;
+	}
+
+	public Device getDevice() {
+		return device;
+	}
+
+	public void setDevice(Device device) {
+		this.device = device;
 	}
 
 	@JsonIgnore

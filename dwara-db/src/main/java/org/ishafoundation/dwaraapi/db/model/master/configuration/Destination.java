@@ -12,47 +12,36 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassDestinationpath;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassDestination;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-@Entity(name="Destinationpath")
-@Table(name="destinationpath")
-public class Destinationpath implements Cacheable{
+@Entity(name="Destination")
+@Table(name="destination")
+public class Destination{
 	
 	@Id
 	@Column(name="id")
-	private int id;
-	
-	@Column(name="name", unique = true)
-	private String name;
+	private String id;
 	
 	@Column(name="path")
 	private String path;	
 
-    @OneToMany(mappedBy = "destinationpath",
+    @OneToMany(mappedBy = "destination",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
-    List<ArtifactclassDestinationpath> artifactclassDestinationpath = new ArrayList<>();
+    List<ArtifactclassDestination> artifactclassDestination = new ArrayList<>();
     
     @Column(name="use_buffering")
     private boolean useBuffering;
-	
 
-	public int getId() {
+	
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
-	}
-	
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 	
 	public String getPath() {
@@ -72,25 +61,25 @@ public class Destinationpath implements Cacheable{
 	}
 
 	@JsonIgnore
-	public List<ArtifactclassDestinationpath> getArtifactclassDestinationpath() {
-		return artifactclassDestinationpath;
+	public List<ArtifactclassDestination> getArtifactclassDestination() {
+		return artifactclassDestination;
 	}
 	
 	@JsonIgnore
-	public void setArtifactclassDestinationpath(List<ArtifactclassDestinationpath> artifactclassDestinationpath) {
-		this.artifactclassDestinationpath = artifactclassDestinationpath;
+	public void setArtifactclassDestination(List<ArtifactclassDestination> artifactclassDestination) {
+		this.artifactclassDestination = artifactclassDestination;
 	}
 	
 	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Destinationpath destinationpath = (Destinationpath) o;
-        return Objects.equals(name, destinationpath.name);
+        Destination destination = (Destination) o;
+        return Objects.equals(id, destination.id);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(id);
     }	
 }

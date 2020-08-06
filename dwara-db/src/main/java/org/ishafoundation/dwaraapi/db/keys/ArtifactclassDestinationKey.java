@@ -7,23 +7,23 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 @Embeddable
-public class ArtifactclassDestinationpathKey implements Serializable {
+public class ArtifactclassDestinationKey implements Serializable {
  
 	private static final long serialVersionUID = -620517854806310403L;
 
 	@Column(name = "artifactclass_id")
     private int artifactclassId;
  
-    @Column(name = "destinationpath_id")
-    private int destinationpathId;
+    @Column(name = "destination_id")
+    private String destinationId;
  
-    public ArtifactclassDestinationpathKey() {}
+    public ArtifactclassDestinationKey() {}
     
-    public ArtifactclassDestinationpathKey(
+    public ArtifactclassDestinationKey(
         int artifactclassId,
-        int destinationpathId) {
+        String destinationId) {
         this.artifactclassId = artifactclassId;
-        this.destinationpathId = destinationpathId;
+        this.destinationId = destinationId;
     }
  
 	public int getArtifactclassId() {
@@ -34,12 +34,12 @@ public class ArtifactclassDestinationpathKey implements Serializable {
 		this.artifactclassId = artifactclassId;
 	}
 
-	public int getDestinationpathId() {
-		return destinationpathId;
+	public String getDestinationpathId() {
+		return destinationId;
 	}
 
-	public void setDestinationpathId(int destinationpathId) {
-		this.destinationpathId = destinationpathId;
+	public void setDestinationpathId(String destinationId) {
+		this.destinationId = destinationId;
 	}
 
 	@Override
@@ -49,13 +49,13 @@ public class ArtifactclassDestinationpathKey implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        ArtifactclassDestinationpathKey that = (ArtifactclassDestinationpathKey) o;
+        ArtifactclassDestinationKey that = (ArtifactclassDestinationKey) o;
         return Objects.equals(artifactclassId, that.artifactclassId) &&
-               Objects.equals(destinationpathId, that.destinationpathId);
+               Objects.equals(destinationId, that.destinationId);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(artifactclassId, destinationpathId);
+        return Objects.hash(artifactclassId, destinationId);
     }
 }

@@ -3,8 +3,8 @@ package org.ishafoundation.dwaraapi.storage.storagetype.disk.job;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.json.JobDetails;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.DiskJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -30,12 +30,12 @@ public class DiskJobManager extends AbstractStoragetypeJobManager {
 		Volume volume = storageJob.getVolume();
 		DiskJob dj = new DiskJob();
 		dj.setStorageJob(storageJob);
-		dj.setDeviceUid(volume.getDetails().getMountpoint());
+		dj.setDeviceWwnId(volume.getDetails().getMountpoint());
 		
-		JobDetails jobDetails = new JobDetails();
-		jobDetails.setDevice_id(null);// TODO "???"
-		jobDetails.setVolume_id(volume.getId());
-		storageJob.getJob().setDetails(jobDetails);
+		Job job = storageJob.getJob();
+		job.setDevice(null);// TODO "???"
+		job.setVolume(volume);
+
 		StorageResponse storageResponse = manage(dj);
 		
 

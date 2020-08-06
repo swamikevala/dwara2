@@ -15,13 +15,13 @@ public class FileVolumeKey implements Serializable {
     private int fileId;
  
     @Column(name = "volume_id")
-    private int volumeId;
+    private String volumeId;
  
     public FileVolumeKey() {}
     
     public FileVolumeKey(
         int fileId,
-        int volumeId) {
+        String volumeId) {
         this.fileId = fileId;
         this.volumeId = volumeId;
     }
@@ -34,11 +34,11 @@ public class FileVolumeKey implements Serializable {
 		this.fileId = fileId;
 	}
 
-	public int getVolumeId() {
+	public String getVolumeId() {
 		return volumeId;
 	}
 
-	public void setVolumeId(int volumeId) {
+	public void setVolumeId(String volumeId) {
 		this.volumeId = volumeId;
 	}
 

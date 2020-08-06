@@ -7,7 +7,7 @@ public class SelectedStorageJob {
 	
 	private StorageJob storageJob;
 	
-	private String deviceUid;
+	private String deviceWwnId;
 	
 	private String junkFilesStagedDirName;
 	
@@ -31,12 +31,12 @@ public class SelectedStorageJob {
 		this.storageJob = storageJob;
 	}
 
-	public String getDeviceUid() {
-		return deviceUid;
+	public String getDeviceWwnId() {
+		return deviceWwnId;
 	}
 
-	public void setDeviceUid(String deviceUid) {
-		this.deviceUid = deviceUid;
+	public void setDeviceWwnId(String deviceWwnId) {
+		this.deviceWwnId = deviceWwnId;
 	}
 
 	public String getJunkFilesStagedDirName() {

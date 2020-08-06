@@ -15,7 +15,7 @@ import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassActionUser;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassDestinationpath;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassDestination;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -61,7 +61,7 @@ public class Artifactclass implements Cacheable{
     @OneToMany(mappedBy = "artifactclass",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
-    private List<ArtifactclassDestinationpath> artifactclassDestinationpath = new ArrayList<>();
+    private List<ArtifactclassDestination> artifactclassDestination = new ArrayList<>();
     
     @OneToMany(mappedBy = "artifactclass",
             cascade = CascadeType.MERGE,
@@ -149,13 +149,13 @@ public class Artifactclass implements Cacheable{
 	}
 
 	@JsonIgnore
-	public List<ArtifactclassDestinationpath> getArtifactclassDestinationpath() {
-		return artifactclassDestinationpath;
+	public List<ArtifactclassDestination> getArtifactclassDestination() {
+		return artifactclassDestination;
 	}
 
 	@JsonIgnore
-	public void setArtifactclassDestinationpath(List<ArtifactclassDestinationpath> artifactclassDestinationpath) {
-		this.artifactclassDestinationpath = artifactclassDestinationpath;
+	public void setArtifactclassDestination(List<ArtifactclassDestination> artifactclassDestination) {
+		this.artifactclassDestination = artifactclassDestination;
 	}
 	
 	@JsonIgnore
@@ -189,13 +189,13 @@ public class Artifactclass implements Cacheable{
 		return pathWithOutLibrary;
 	}
 	
-    public void addDestinationpath(Destinationpath destinationpath) {
+    public void addDestinationpath(Destination destinationpath) {
     	// linking the join table entry to this owning object
-    	ArtifactclassDestinationpath artifactclassDestinationpath = new ArtifactclassDestinationpath(this, destinationpath);
-    	this.artifactclassDestinationpath.add(artifactclassDestinationpath);
+    	ArtifactclassDestination artifactclassDestination = new ArtifactclassDestination(this, destinationpath);
+    	this.artifactclassDestination.add(artifactclassDestination);
 
     	// inversing linking the join table entry to the target object
-        destinationpath.getArtifactclassDestinationpath().add(artifactclassDestinationpath);
+        destinationpath.getArtifactclassDestination().add(artifactclassDestination);
     }
      
     public void addActionUser(Action action, User user) {

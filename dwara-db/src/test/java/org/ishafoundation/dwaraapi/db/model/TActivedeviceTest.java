@@ -33,21 +33,21 @@ public class TActivedeviceTest {
 	
 	
 	
-	//@Test
-	public void test_a_InsertTActivedevice() {
-		Device device = deviceDao.findById(2).get();
-		
-		TActivedevice tActivedevice = new TActivedevice();
-		tActivedevice.setDevice(device);
-		tActivedevice.setDeviceStatus(DeviceStatus.AVAILABLE);
-		tActivedeviceDao.save(tActivedevice);
-	}
-	
-	@Test
-	public void test_b_getTActivedevice() {
-		List<TActivedevice> activeDevice = tActivedeviceDao.findAllByDeviceDevicetypeAndDeviceStatus(Devicetype.tape_drive, DeviceStatus.AVAILABLE);
-		for (TActivedevice tActivedevice : activeDevice) {
-			logger.debug(tActivedevice.getDevice().getDetails().getAutoloader_address()+"");
-		}
-	}
+//	//@Test
+//	public void test_a_InsertTActivedevice() {
+//		Device device = deviceDao.findById(2).get();
+//		
+//		TActivedevice tActivedevice = new TActivedevice();
+//		tActivedevice.setDevice(device);
+//		tActivedevice.setDeviceStatus(DeviceStatus.AVAILABLE);
+//		tActivedeviceDao.save(tActivedevice);
+//	}
+//	
+//	@Test
+//	public void test_b_getTActivedevice() {
+//		List<TActivedevice> activeDevice = tActivedeviceDao.findAllByDeviceDevicetypeAndDeviceStatus(Devicetype.tape_drive, DeviceStatus.AVAILABLE);
+//		for (TActivedevice tActivedevice : activeDevice) {
+//			logger.debug(tActivedevice.getDevice().getDetails().getAutoloader_address()+"");
+//		}
+//	}
 }

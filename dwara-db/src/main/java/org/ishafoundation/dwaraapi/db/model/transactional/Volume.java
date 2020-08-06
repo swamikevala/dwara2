@@ -27,13 +27,9 @@ import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 @Table(name="volume")
 public class Volume {
 
-	// TODO Check this out...
 	@Id
 	@Column(name="id")
-	private int id;
-	
-	@Column(name="uid", unique = true)
-	private String uid;
+	private String id; // Holds barcode for tapes and disks, bucket name for cloud, barcode prefix for volume groups
 	
 	@Enumerated(EnumType.STRING)
 	@Column(name="volumetype")
@@ -77,20 +73,12 @@ public class Volume {
 	private VolumeDetails details;
 
 
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
-	}
-
-	public String getUid() {
-		return uid;
-	}
-
-	public void setUid(String uid) {
-		this.uid = uid;
 	}
 
 	public Volumetype getVolumetype() {
@@ -194,12 +182,12 @@ public class Volume {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Volume volume = (Volume) o;
-        return Objects.equals(uid, volume.uid);
+        return Objects.equals(id, volume.id);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(uid);
+        return Objects.hash(id);
     }
 
 }
