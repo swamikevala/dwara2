@@ -7,7 +7,7 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface VolumeDao extends CrudRepository<Volume,Integer> {
 	
-	List<Volume> findAllByVolumeRefIdAndFinalizedIsFalseOrderByUidAsc(String volumerefId);
+	List<Volume> findAllByVolumeRefIdAndFinalizedIsFalseOrderByIdAsc(String volumerefId);
 
 //	Volume findTopByVolumesetIdAndFinalizedIsFalseOrderByIdAsc(int volumesetId);
 //	
@@ -17,5 +17,5 @@ public interface VolumeDao extends CrudRepository<Volume,Integer> {
 //	
 //	List<Volume> findAllByVolumesetId(int volumesetId);
 //	
-	Volume findByUid(String uId);
+	Volume findById(String id);
 }

@@ -12,7 +12,7 @@ public class ArtifactclassDestinationKey implements Serializable {
 	private static final long serialVersionUID = -620517854806310403L;
 
 	@Column(name = "artifactclass_id")
-    private int artifactclassId;
+    private String artifactclassId;
  
     @Column(name = "destination_id")
     private String destinationId;
@@ -20,17 +20,17 @@ public class ArtifactclassDestinationKey implements Serializable {
     public ArtifactclassDestinationKey() {}
     
     public ArtifactclassDestinationKey(
-        int artifactclassId,
+        String artifactclassId,
         String destinationId) {
         this.artifactclassId = artifactclassId;
         this.destinationId = destinationId;
     }
  
-	public int getArtifactclassId() {
+	public String getArtifactclassId() {
 		return artifactclassId;
 	}
 
-	public void setArtifactclassId(int artifactclassId) {
+	public void setArtifactclassId(String artifactclassId) {
 		this.artifactclassId = artifactclassId;
 	}
 

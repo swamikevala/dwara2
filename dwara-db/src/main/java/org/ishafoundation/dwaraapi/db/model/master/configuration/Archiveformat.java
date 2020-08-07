@@ -7,10 +7,12 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
+
 
 @Entity
 @Table(name="archiveformat")
-public class Archiveformat{
+public class Archiveformat implements Cacheable{
 	
 	@Id
 	@Column(name="id")

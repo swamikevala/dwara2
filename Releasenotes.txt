@@ -1,3 +1,9 @@
+7th Aug - DB Schema changes 
+	upgrade steps
+		drop database
+		create database
+		run the dwara-master sql script again
+	
 4th Aug - 
 	Destination table changes
 	actionelement Map and Job Map intro

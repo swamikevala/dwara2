@@ -25,6 +25,7 @@ public class Configuration {
 	
 	private boolean checksumTypeSupportsStreamingVerification;
 
+	private String encryptionAlgorithm;
 	
 	public String getRegexAllowedChrsInFileName() {
 		return regexAllowedChrsInFileName;
@@ -96,5 +97,13 @@ public class Configuration {
 
 	public void setChecksumTypeSupportsStreamingVerification(boolean checksumTypeSupportsStreamingVerification) {
 		this.checksumTypeSupportsStreamingVerification = checksumTypeSupportsStreamingVerification;
+	}
+
+	public String getEncryptionAlgorithm() {
+		return encryptionAlgorithm;
+	}
+
+	public void setEncryptionAlgorithm(String encryptionAlgorithm) {
+		this.encryptionAlgorithm = encryptionAlgorithm;
 	}
 }

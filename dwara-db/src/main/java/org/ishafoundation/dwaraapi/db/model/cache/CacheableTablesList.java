@@ -3,15 +3,15 @@ package org.ishafoundation.dwaraapi.db.model.cache;
 public enum CacheableTablesList {
 	
 	// reference tables
-//	action,
+	action,
 	
 	// configuration tables
-//	archiveformat,
+	archiveformat,
 	artifactclass,
-	destinationpath,
-	device,
-	domain,
+	destination,
+	device, // TODO - need to use, still uses dao
+	//domain,
 	extension,
-	location,
-	sequence
+	location // TODO - need to use, still uses dao
+	//sequence
 }

@@ -16,8 +16,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TActivedevice;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.DeviceStatus;
-import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
 import org.ishafoundation.dwaraapi.storage.model.GroupedJobsCollection;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDeviceUtil;
@@ -582,7 +580,7 @@ public class TapeJobSelector {
 						// check overlapping on concurrent writes...
 						if(!tapeJob.isConcurrentCopies()) { // if concurrent copy on the job is not allowed
 							logger.trace("Concurrent copy on this tape job not allowed. Checking if any already running write jobs overlap concurrency with this...");
-							int tapeJobArtifactClassId = tapeJob.getArtifact().getArtifactclassId();
+							String tapeJobArtifactClassId = tapeJob.getArtifact().getArtifactclass().getId();
 							
 							boolean isOverlappingConcurrency = false;
 							for (Iterator<StorageJob> currentlyRunningWriteJobsIterator = currentlyRunningWriteJobsList.iterator(); currentlyRunningWriteJobsIterator.hasNext();) {
@@ -597,7 +595,7 @@ public class TapeJobSelector {
 									return tapeJob;
 								*/
 
-								int crwjArtifactClassId = crwj.getRequest().getDetails().getArtifactclass_id();
+								String crwjArtifactClassId = crwj.getRequest().getDetails().getArtifactclass_id();
 //								Integer inputArtifactId = crwj.getInputArtifactId();
 //								Domain domain = crwj.getRequest().getDomain();
 //								Artifact artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);

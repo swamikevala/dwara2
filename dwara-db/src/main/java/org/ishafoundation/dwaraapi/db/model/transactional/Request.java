@@ -10,22 +10,26 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 
+import com.vladmihalcea.hibernate.type.json.JsonStringType;
+
 
 
 @Entity
 @Table(name="request")
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 public class Request {
 
 	
@@ -72,8 +76,8 @@ public class Request {
 	@Column(name="status")
 	private Status status;
 	
-	@Lob
-	@Column(name="details")
+	@Type(type = "json")
+	@Column(name="details", columnDefinition = "json")
 	private RequestDetails details;
 	  
 	

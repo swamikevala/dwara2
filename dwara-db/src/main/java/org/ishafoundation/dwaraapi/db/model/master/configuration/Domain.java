@@ -11,7 +11,7 @@ import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 
 @Entity(name="Domain")
 @Table(name="domain")
-public class Domain implements Cacheable{
+public class Domain{// implements Cacheable{
 	
 	@Id
 	@Column(name="id")

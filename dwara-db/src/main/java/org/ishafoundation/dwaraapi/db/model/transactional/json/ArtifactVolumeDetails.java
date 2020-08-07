@@ -1,5 +1,8 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ArtifactVolumeDetails {
 	private String archive_id;
 	private Integer start_volume_block;

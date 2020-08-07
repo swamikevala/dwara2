@@ -1,87 +1,49 @@
 package org.ishafoundation.dwaraapi.api.req.format;
 
+import org.ishafoundation.dwaraapi.enumreferences.Storagesubtype;
+
 public class FormatRequest {
 	// format
-	private String volume_uid;
+	private String volumeId;
 	
-	private String volume_group_uid; // TODO : Schema deviation - Schema to change
+	private String volumeGroupId;
 	
-	private Long capacity;
+	private Storagesubtype storagesubtype;
 	
-	private String archiveformat;
-	
-	private String checksum_algorithm;
-	
-	private String encryption_algorithm;
-
-	private Integer volume_blocksize;
-
-	private Integer generation; // Only needed for storagetype = tape // TODO : Schema deviation - Schema to change
+	private Integer volumeBlocksize;
 	
 	private Boolean force;
 
-	public String getVolume_uid() {
-		return volume_uid;
+	public String getVolumeId() {
+		return volumeId;
 	}
 
-	public void setVolume_uid(String volume_uid) {
-		this.volume_uid = volume_uid;
+	public void setVolumeId(String volumeId) {
+		this.volumeId = volumeId;
 	}
 
-	public String getVolume_group_uid() {
-		return volume_group_uid;
+	public String getVolumeGroupId() {
+		return volumeGroupId;
 	}
 
-	public void setVolume_group_uid(String volume_group_uid) {
-		this.volume_group_uid = volume_group_uid;
+	public void setVolumeGroupId(String volumeGroupId) {
+		this.volumeGroupId = volumeGroupId;
 	}
 
-	public Long getCapacity() {
-		return capacity;
+	public Storagesubtype getStoragesubtype() {
+		return storagesubtype;
 	}
 
-	public void setCapacity(Long capacity) {
-		this.capacity = capacity;
+	public void setStoragesubtype(Storagesubtype storagesubtype) {
+		this.storagesubtype = storagesubtype;
 	}
 
-	public String getArchiveformat() {
-		return archiveformat;
+	public Integer getVolumeBlocksize() {
+		return volumeBlocksize;
 	}
 
-	public void setArchiveformat(String archiveformat) {
-		this.archiveformat = archiveformat;
-	}
-
-	public String getChecksum_algorithm() {
-		return checksum_algorithm;
-	}
-
-	public void setChecksum_algorithm(String checksum_algorithm) {
-		this.checksum_algorithm = checksum_algorithm;
-	}
-
-	public String getEncryption_algorithm() {
-		return encryption_algorithm;
-	}
-
-	public void setEncryption_algorithm(String encryption_algorithm) {
-		this.encryption_algorithm = encryption_algorithm;
-	}
-
-	public Integer getVolume_blocksize() {
-		return volume_blocksize;
-	}
-
-	public void setVolume_blocksize(Integer volume_blocksize) {
-		this.volume_blocksize = volume_blocksize;
-	}
-
-	public Integer getGeneration() {
-		return generation;
-	}
-
-	public void setGeneration(Integer generation) {
-		this.generation = generation;
+	public void setVolumeBlocksize(Integer volumeBlocksize) {
+		this.volumeBlocksize = volumeBlocksize;
 	}
 
 	public Boolean getForce() {

@@ -58,11 +58,11 @@ public class DaoTests{
 //	}
 	
 	public void testFileVolume() {
-		Volume vol = getVolume(Domain.one, 60, 3);
+		Volume vol = getVolume(Domain.one, 60, "3");
 		System.out.println(vol.getId());
 	}
 	
-	private Volume getVolume(Domain domain, int fileIdToBeRestored, Integer locationId) {
+	private Volume getVolume(Domain domain, int fileIdToBeRestored, String locationId) {
     	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
     	FileVolume fileVolume = domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeLocationId(fileIdToBeRestored, locationId);
 		return fileVolume.getVolume();
@@ -77,7 +77,7 @@ public class DaoTests{
 		actionList.add(Action.map_tapedrives);
 		actionList.add(Action.format);
 		
-		long tdOrFormatJobInFlight = requestDao.countByActionIdInAndStatus(actionList, Status.in_progress);
+		long tdOrFormatJobInFlight = jobDao.countByStoragetaskActionIdInAndStatus(actionList, Status.in_progress);
 		System.out.println(tdOrFormatJobInFlight);
 	}
 	

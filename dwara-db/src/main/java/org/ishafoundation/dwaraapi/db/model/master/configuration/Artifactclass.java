@@ -27,14 +27,11 @@ public class Artifactclass implements Cacheable{
 	
 	@Id
 	@Column(name="id")
-	private int id;
+	private String id;
 	
 	@Column(name="name", unique = true)
 	private String name;
 	
-	@Column(name="uid", unique = true)
-	private String uid;
-
 	@Column(name="domain_id")
 	private org.ishafoundation.dwaraapi.enumreferences.Domain domain;
 	
@@ -69,11 +66,11 @@ public class Artifactclass implements Cacheable{
     private List<ArtifactclassActionUser> artifactclassActionUser = new ArrayList<>();   
     
 
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 	
@@ -83,14 +80,6 @@ public class Artifactclass implements Cacheable{
 
 	public void setName(String name) {
 		this.name = name;
-	}
-	
-	public String getUid() {
-		return uid;
-	}
-
-	public void setUid(String uid) {
-		this.uid = uid;
 	}
 
 	public org.ishafoundation.dwaraapi.enumreferences.Domain getDomain() {
@@ -213,11 +202,11 @@ public class Artifactclass implements Cacheable{
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Artifactclass obj = (Artifactclass) o;
-        return Objects.equals(uid, obj.uid);
+        return Objects.equals(id, obj.id);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(uid);
+        return Objects.hash(id);
     }
 }

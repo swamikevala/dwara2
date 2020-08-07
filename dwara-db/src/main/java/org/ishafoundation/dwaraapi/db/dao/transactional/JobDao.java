@@ -1,18 +1,20 @@
 package org.ishafoundation.dwaraapi.db.dao.transactional;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.springframework.data.repository.CrudRepository;
 
 public interface JobDao extends CrudRepository<Job,Integer> {
 	
 	List<Job> findAllByStatusOrderById(Status status);
-
-	List<Job> findAllByJobRefId(int parentJobId); // Find all dependent jobs of a particular job
 	
-	List<Job> findAllByStatusAndProcessingtaskIdIsNotNullOrderById(Status status); // TODO: Explain why Jobref is null? 
+	List<Job> findAllByStatusAndProcessingtaskIdIsNotNullOrderById(Status status); 
+	
+	long countByStoragetaskActionIdInAndStatus(Collection<Action> tapedrivemappingOrFormat, Status status);
 	
 //	List<Job> findAllBySubrequestIdOrderById(int subrequestId);
 //	

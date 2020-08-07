@@ -3,14 +3,13 @@ package org.ishafoundation.dwaraapi.storage.storagetask;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
-import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobMap;
+import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -35,9 +34,8 @@ public class Verify extends AbstractStoragetaskAction{
 	@Autowired
 	private DomainUtil domainUtil;
 	
-	@SuppressWarnings("rawtypes")
 	@Autowired
-	private DBMasterTablesCacheManager dBMasterTablesCacheManager;
+	private ConfigurationTablesUtil configurationTablesUtil;
 	
 	
 	@Override
@@ -60,8 +58,7 @@ public class Verify extends AbstractStoragetaskAction{
 		
 		// TODO : assuming verify is part of the complex action... Fix it so that its generally works outside actionelement/ingest partnership too
 		String artifactclassId = job.getActionelement().getArtifactclassId();
-		Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager
-				.getRecord(CacheableTablesList.artifactclass.name(), artifactclassId);
+		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 		Domain domain = artifactclass.getDomain();
 
 		Integer inputArtifactId = job.getInputArtifactId();

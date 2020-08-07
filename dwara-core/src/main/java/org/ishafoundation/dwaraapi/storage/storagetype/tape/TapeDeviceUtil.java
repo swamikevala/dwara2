@@ -54,8 +54,8 @@ public class TapeDeviceUtil {
 		HashMap<Integer, DataTransferElement> driveAutoloaderAddress_DataTransferElement_Map = new HashMap<Integer, DataTransferElement>();
 		
 		List<DriveDetails> driveDetailsList = new ArrayList<DriveDetails>();
-		List<Device> tapelibraryDeviceList = deviceDao.findAllByDevicetypeAndStatusAndDefectiveIsFalse(Devicetype.tape_autoloader, DeviceStatus.ONLINE);
-		List<Device> tapedriveDeviceList = deviceDao.findAllByDevicetypeAndStatusAndDefectiveIsFalse(Devicetype.tape_drive, DeviceStatus.ONLINE);
+		List<Device> tapelibraryDeviceList = deviceDao.findAllByDevicetypeAndStatusAndDefectiveIsFalse(Devicetype.tape_autoloader, DeviceStatus.online);
+		List<Device> tapedriveDeviceList = deviceDao.findAllByDevicetypeAndStatusAndDefectiveIsFalse(Devicetype.tape_drive, DeviceStatus.online);
 		
 		
 		for (Device tapelibrary : tapelibraryDeviceList) { // iterating through all libraries configured in dwara app
@@ -77,7 +77,7 @@ public class TapeDeviceUtil {
 				String tapedriveDeviceId = tapedriveDevice.getId();
 				String dataTransferElementName = tapedriveDevice.getWwnId();
 				Integer driveAutoloaderAddress = tapedriveDevice.getDetails().getAutoloader_address();
-				if(tapedriveDevice.getDetails().getAutoloader_id() == tapelibraryId) { // equivalent of calling the query devicetype=drive and details.autoloader_id=X, query NOT easy with json
+				if(tapedriveDevice.getDetails().getAutoloader_id().equals(tapelibraryId)) { // equivalent of calling the query devicetype=drive and details.autoloader_id=X, query NOT easy with json
 						if(taskName.equals("getAllAvailableDrivesDetails")) {
 							try {
 								getDriveDetailsIfAvailable(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map, driveDetailsList);
@@ -140,7 +140,7 @@ public class TapeDeviceUtil {
 				}
 				DataTransferElement dataTransferElement = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
 				if(!dataTransferElement.isEmpty()) {
-					logger.debug("Drive available, and has a tape so unloading it");
+					logger.debug("Available drive has a tape loaded already. so unloading it");
 					int toBeUsedDataTransferElementSNo = dataTransferElement.getsNo();
 					int toBeUsedStorageElementNo = dataTransferElement.getStorageElementNo();
 					
@@ -150,14 +150,13 @@ public class TapeDeviceUtil {
 						logger.error("Unable to unload " + tapelibraryName + ":" + toBeUsedStorageElementNo + ":" + toBeUsedDataTransferElementSNo);
 					}
 					logger.debug("Unloaded drive " + toBeUsedDataTransferElementSNo);
-					
-					// Attaching the real tape library and drive details
-					driveDetails.setTapelibraryName(tapelibraryName);
-					DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
-					driveDetails.setDte(dte);
-					
-					driveDetailsList.add(driveDetails);
 				}
+				// Attaching the real tape library and drive details
+				driveDetails.setTapelibraryName(tapelibraryName);
+				DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
+				driveDetails.setDte(dte);
+				
+				driveDetailsList.add(driveDetails);
 		
 			}else {
 				try {

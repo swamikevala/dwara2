@@ -23,7 +23,7 @@ public class Extns_FiletypeCacheUtil {
 	private void loadExtns_FiletypeMap() {
 		filetypeList = (List<Filetype>) filetypeDao.findAll();
 		for (Filetype filetype : filetypeList) {
-			String[] filetypeExtns = {};// TODO : commentiong out for now filetype.getExtensions().split(",");
+			String[] filetypeExtns = {};// TODO : commenting out for now filetype.getExtensions().split(",");
 			for (int i = 0; i < filetypeExtns.length; i++) {
 				String nthExtn = filetypeExtns[i].trim().toUpperCase();
 				if(extns_FiletypeMap.get(nthExtn) == null) // if the extn is not already mapped to a file type...

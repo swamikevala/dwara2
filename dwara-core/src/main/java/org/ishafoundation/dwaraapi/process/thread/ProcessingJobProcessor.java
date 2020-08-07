@@ -226,8 +226,19 @@ public class ProcessingJobProcessor implements Runnable{
 						    outputArtifact.setArtifactclass(outputArtifactclass);
 						    outputArtifact.setName(outputArtifactName);
 						    
-						    outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
-			
+						    try {
+						    	outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
+						    }
+						    catch (Exception e) {
+								// possibly updated by another thread already
+								outputArtifact = artifactRepository.findByName(outputArtifactName); 
+								if(outputArtifact != null)
+									logger.trace("outputArtifact details possibly updated by another thread already");
+								else
+									throw e;
+						    	
+							}
+						    
 						    // setting the current jobs output artifactid
 							String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - OutputArtifactId " + outputArtifact.getId();
 							logger.debug(logMsgPrefix);	
@@ -289,9 +300,7 @@ public class ProcessingJobProcessor implements Runnable{
 			// TODO : Work on the threshold failures...
 			// create failed_media_file_run table
 			logger.debug("DB Failure Creation");
-			Failure failure = new Failure();
-			failure.setFileId(file.getId());
-			failure.setJob(job);
+			Failure failure = new Failure(file.getId(),job);
 			failure = failureDao.save(failure);	
 			logger.debug("DB Failure Creation - " + failure.getId());   
 		}

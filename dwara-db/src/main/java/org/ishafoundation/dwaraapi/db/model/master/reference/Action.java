@@ -13,6 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionUser;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassActionUser;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
@@ -22,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name="action")
-public class Action{
+public class Action implements Cacheable{
 	@Id
 	@Column(name="id")
 	private String id;

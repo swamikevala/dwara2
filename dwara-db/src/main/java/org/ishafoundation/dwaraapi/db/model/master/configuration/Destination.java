@@ -18,7 +18,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity(name="Destination")
 @Table(name="destination")
-public class Destination{
+public class Destination implements Cacheable{
 	
 	@Id
 	@Column(name="id")

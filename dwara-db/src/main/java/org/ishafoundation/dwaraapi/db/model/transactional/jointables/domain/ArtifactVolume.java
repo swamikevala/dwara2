@@ -5,15 +5,18 @@ import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.FetchType;
-import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.MapsId;
 
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.ishafoundation.dwaraapi.db.keys.domain.ArtifactVolumeKey;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
+
+import com.vladmihalcea.hibernate.type.json.JsonStringType;
 
 /*
  * 
@@ -24,6 +27,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDet
  * 
  * 
 */
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @MappedSuperclass
 public class ArtifactVolume {
 	
@@ -40,8 +44,8 @@ public class ArtifactVolume {
     @MapsId("volumeId")
 	private Volume volume;
 	
-	@Lob
-	@Column(name="details")
+	@Type(type = "json")
+	@Column(name="details", columnDefinition = "json")
 	private ArtifactVolumeDetails details;
 
 

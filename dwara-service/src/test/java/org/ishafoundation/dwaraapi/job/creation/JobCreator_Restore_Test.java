@@ -41,7 +41,7 @@ public class JobCreator_Restore_Test {
 			//postBodyJson = postBodyJson.replace("<<file_id_1>>", "2");
 			// 1 folder 
 			//postBodyJson = postBodyJson.replace("<<file_id_1>>", "5");
-			postBodyJson = postBodyJson.replace("<<file_id_1>>", "7");
+			postBodyJson = postBodyJson.replace("<<file_id_1>>", "73");
 			// just the 1 file postBodyJson = postBodyJson.replace("<<file_id_1>>", "8"); //60 entire artifact// 63 - 1 CD folder // 65 - 2 CD folder // 67 - just one file 
 			
 			UserRequest ur = mapper.readValue(postBodyJson, new TypeReference<UserRequest>() {});

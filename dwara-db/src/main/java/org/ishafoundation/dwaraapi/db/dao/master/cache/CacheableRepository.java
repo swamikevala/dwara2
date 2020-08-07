@@ -5,6 +5,6 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 
 @NoRepositoryBean
-public interface CacheableRepository<T extends Cacheable> extends CrudRepository<T,Integer> {
+public interface CacheableRepository<T extends Cacheable> extends CrudRepository<T,String> {
 	
 }

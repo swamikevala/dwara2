@@ -7,12 +7,11 @@ import java.util.List;
 import org.ishafoundation.dwaraapi.api.req.ingest.mapper.RequestToEntityObjectMapper;
 import org.ishafoundation.dwaraapi.api.req.restore.FileParams;
 import org.ishafoundation.dwaraapi.api.req.restore.UserRequest;
-import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.slf4j.Logger;
@@ -39,9 +38,8 @@ public class FileService {
 	@Autowired
 	private RequestToEntityObjectMapper requestToEntityObjectMapper; 
 	
-	@SuppressWarnings("rawtypes")
 	@Autowired
-	private DBMasterTablesCacheManager dBMasterTablesCacheManager;
+	private ConfigurationTablesUtil configurationTablesUtil;
 
     public ResponseEntity<String> restore(UserRequest userRequest){	
     	try {
@@ -114,7 +112,7 @@ public class FileService {
 		// to get domaindefault we might need a util... or a query...
 		Location location = null; // userRequest.getlocation(); null;// from user request
 		if (requestedLocation != null) {
-			location = (Location) dBMasterTablesCacheManager.getRecord(CacheableTablesList.location.name(), requestedLocation);
+			location = configurationTablesUtil.getLocation(requestedLocation);
 		}
 		return location;
 	}

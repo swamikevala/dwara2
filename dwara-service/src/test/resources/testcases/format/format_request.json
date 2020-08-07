@@ -1,14 +1,7 @@
 {
-	"volume_group_uid": "V5C",
-	"volume_uid": "V5C007",
-	
-	"checksum_algorithm": "SHA-256",
-	"encryption_algorithm":"???",
-	
-	"archiveformat": "tar",
-	"capacity": 2500000000000,
-	
-	"volume_blocksize":524288,
-	"generation": 7,
+	"volumeGroupId": "N1",
+	"volumeId": "N10001",
+    "storagesubtype": "lto7",	
+	"volumeBlocksize":524288,
 	"force": false
 }

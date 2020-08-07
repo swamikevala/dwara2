@@ -3,14 +3,13 @@ package org.ishafoundation.dwaraapi.storage.storagetask;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
-import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -31,10 +30,9 @@ public class Write extends AbstractStoragetaskAction{
 	@Autowired
 	private VolumeDao volumeDao;
 	
-	@SuppressWarnings("rawtypes")
 	@Autowired
-	private DBMasterTablesCacheManager dBMasterTablesCacheManager;
-	
+	private ConfigurationTablesUtil configurationTablesUtil;
+		
 	@Override
 	public StorageJob buildStorageJob(Job job){
 
@@ -50,8 +48,7 @@ public class Write extends AbstractStoragetaskAction{
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.ingest) {
 			//Dont use this as for proxy copy the artifact class is more apt to be picked from action element - Integer artifactclassId = job.getRequest().getDetails().getArtifactclass_id(); 
 			String artifactclassId = job.getActionelement().getArtifactclassId();
-			Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager
-					.getRecord(CacheableTablesList.artifactclass.name(), artifactclassId);
+			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 			domain = artifactclass.getDomain();
 			pathPrefix = artifactclass.getPath();
 			
@@ -74,7 +71,7 @@ public class Write extends AbstractStoragetaskAction{
 //			volumegroupId = volume.getId();
 			// TODO domain = ??
 			String volumeUid = request.getDetails().getTo_volume_uid();
-			volume = volumeDao.findByUid(volumeUid);
+			volume = volumeDao.findById(volumeUid);
 		}
 
 		
@@ -97,7 +94,7 @@ public class Write extends AbstractStoragetaskAction{
 	private Volume getToBeUsedPhysicalVolume(String volumegroupId, long sizeOfTheLibraryToBeWritten) {
 		
 		Volume toBeUsedVolume = null;
-		List<Volume> physicalVolumesList = volumeDao.findAllByVolumeRefIdAndFinalizedIsFalseOrderByUidAsc(volumegroupId);
+		List<Volume> physicalVolumesList = volumeDao.findAllByVolumeRefIdAndFinalizedIsFalseOrderByIdAsc(volumegroupId);
 		for (Volume nthPhysicalVolume : physicalVolumesList) {
 			// The chosen volume may not have enough space because of queued write jobs using space and so we may have to get the volume again just before write(job selection)...
 			//TODO if(Volume.getFree() > sizeOfTheLibraryToBeWritten) {

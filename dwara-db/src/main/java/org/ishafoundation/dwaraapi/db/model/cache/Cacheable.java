@@ -8,7 +8,5 @@ import javax.persistence.MappedSuperclass;
 @MappedSuperclass
 public interface Cacheable {
 	
-	public int getId();
-
-	public String getName();
+	public String getId();
 }

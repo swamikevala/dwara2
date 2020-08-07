@@ -1,32 +1,28 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
+import org.ishafoundation.dwaraapi.enumreferences.Storagesubtype;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestDetails {
 	
 	private JsonNode body;
 	
 	// format
-	private String volume_uid;
+	private String volume_id;
 	
-	private String volume_group_uid; // TODO : Schema deviation - Schema to change
+	private String volume_group_id; // TODO : Schema deviation - Schema to change
 	
-	private Long capacity;
-	
-	private String archiveformat;
-	
-	private String checksum_algorithm;
-	
-	private String encryption_algorithm;
-
 	private Integer volume_blocksize;
 
-	private Integer generation; // Only needed for storagetype = tape // TODO : Schema deviation - Schema to change
+	private Storagesubtype storagesubtype;
 	
 	private Boolean force;
 
 	// ingest stuff
-	private Integer artifactclass_id;
+	private String artifactclass_id;
 	
 	private String sourcepath;
 
@@ -41,16 +37,16 @@ public class RequestDetails {
 
 	private Integer rerun_no;
 
-	private Integer[] skip_storagetasks;
+	private String[] skip_storagetask_actions;
 
-	private Integer[] skip_processingtasks;
+	private String[] skip_processingtasks;
 	
 	// restore stuff
 	private Integer file_id;
 	
 	private Integer priority;
 	
-	private Integer location_id; // specifies which location(copy) to retrieve the data from.
+	private String location_id; // specifies which location(copy) to retrieve the data from.
 	
 	private String destinationpath;
 	
@@ -77,52 +73,20 @@ public class RequestDetails {
 
 	/********************  FORMAT  ********************/
 
-	public String getVolume_uid() {
-		return volume_uid;
+	public String getVolume_id() {
+		return volume_id;
 	}
 
-	public void setVolume_uid(String volume_uid) {
-		this.volume_uid = volume_uid;
+	public void setVolume_id(String volume_id) {
+		this.volume_id = volume_id;
 	}
 
-	public String getVolume_group_uid() {
-		return volume_group_uid;
+	public String getVolume_group_id() {
+		return volume_group_id;
 	}
 
-	public void setVolume_group_uid(String volume_group_uid) {
-		this.volume_group_uid = volume_group_uid;
-	}
-
-	public Long getCapacity() {
-		return capacity;
-	}
-
-	public void setCapacity(Long capacity) {
-		this.capacity = capacity;
-	}
-
-	public String getArchiveformat() {
-		return archiveformat;
-	}
-
-	public void setArchiveformat(String archiveformat) {
-		this.archiveformat = archiveformat;
-	}
-
-	public String getChecksum_algorithm() {
-		return checksum_algorithm;
-	}
-
-	public void setChecksum_algorithm(String checksum_algorithm) {
-		this.checksum_algorithm = checksum_algorithm;
-	}
-
-	public String getEncryption_algorithm() {
-		return encryption_algorithm;
-	}
-
-	public void setEncryption_algorithm(String encryption_algorithm) {
-		this.encryption_algorithm = encryption_algorithm;
+	public void setVolume_group_id(String volume_group_id) {
+		this.volume_group_id = volume_group_id;
 	}
 
 	public Integer getVolume_blocksize() {
@@ -133,12 +97,12 @@ public class RequestDetails {
 		this.volume_blocksize = volume_blocksize;
 	}
 
-	public Integer getGeneration() {
-		return generation;
+	public Storagesubtype getStoragesubtype() {
+		return storagesubtype;
 	}
 
-	public void setGeneration(Integer generation) {
-		this.generation = generation;
+	public void setStoragesubtype(Storagesubtype storagesubtype) {
+		this.storagesubtype = storagesubtype;
 	}
 
 	public Boolean getForce() {
@@ -151,11 +115,11 @@ public class RequestDetails {
 
 	/********************  INGEST  ********************/
 	
-	public Integer getArtifactclass_id() {
+	public String getArtifactclass_id() {
 		return artifactclass_id;
 	}
 
-	public void setArtifactclass_id(Integer artifactclass_id) {
+	public void setArtifactclass_id(String artifactclass_id) {
 		this.artifactclass_id = artifactclass_id;
 	}
 
@@ -199,19 +163,19 @@ public class RequestDetails {
 		this.rerun_no = rerun_no;
 	}
 
-	public Integer[] getSkip_storagetasks() {
-		return skip_storagetasks;
+	public String[] getSkip_storagetask_actions() {
+		return skip_storagetask_actions;
 	}
 
-	public void setSkip_storagetasks(Integer[] skip_storagetasks) {
-		this.skip_storagetasks = skip_storagetasks;
+	public void setSkip_storagetask_actions(String[] skip_storagetask_actions) {
+		this.skip_storagetask_actions = skip_storagetask_actions;
 	}
 
-	public Integer[] getSkip_processingtasks() {
+	public String[] getSkip_processingtasks() {
 		return skip_processingtasks;
 	}
 
-	public void setSkip_processingtasks(Integer[] skip_processingtasks) {
+	public void setSkip_processingtasks(String[] skip_processingtasks) {
 		this.skip_processingtasks = skip_processingtasks;
 	}
 
@@ -233,11 +197,11 @@ public class RequestDetails {
 		this.priority = priority;
 	}
 
-	public Integer getLocation_id() {
+	public String getLocation_id() {
 		return location_id;
 	}
 
-	public void setLocation_id(Integer location_id) {
+	public void setLocation_id(String location_id) {
 		this.location_id = location_id;
 	}
 

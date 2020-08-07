@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobMap;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -27,9 +26,6 @@ public class JobManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(JobManager.class);
 
-	@Autowired
-	private RequestDao requestDao;	
-	
 	@Autowired
 	private JobDao jobDao;	
 
@@ -58,8 +54,8 @@ public class JobManager {
 		actionList.add(Action.format);
 
 		// If a subrequest action type is mapdrive and status is queued or inprogress skip storage jobs...
-		long blockingRequestsLinedUp = requestDao.countByActionIdInAndStatus(actionList, Status.queued);
-		long blockingRequestsInFlight = requestDao.countByActionIdInAndStatus(actionList, Status.in_progress);
+		long blockingJobsLinedUp = jobDao.countByStoragetaskActionIdInAndStatus(actionList, Status.queued);
+		long blockingJobsInFlight = jobDao.countByStoragetaskActionIdInAndStatus(actionList, Status.in_progress);
 		
 		
 		List<Job> jobList = jobDao.findAllByStatusOrderById(Status.queued); // Irrespective of the tapedrivemapping or format request non storage jobs can still be dequeued, hence we are querying it all... 
@@ -95,10 +91,10 @@ public class JobManager {
 							importStoragetaskAction.setJob(job);
 							importStoragetaskSingleThreadExecutor.getExecutor().execute(importStoragetaskAction);
 						}
-						if(blockingRequestsInFlight > 0) { // format/tape map drive request in progress, so blocking all storage jobs until the job is complete...
+						if(blockingJobsInFlight > 0) { // format/tape map drive request in progress, so blocking all storage jobs until the job is complete...
 							logger.trace("Skipping adding to storagejob collection as a blocking request " + Status.in_progress.name());
 						}
-						else if(blockingRequestsLinedUp > 0) { // if any format/tape map drive request queued up
+						else if(blockingJobsLinedUp > 0) { // if any format/tape map drive request queued up
 							// only adding one blocking job to the list
 							if(job.getRequest().getActionId() == Action.format || job.getRequest().getActionId() == Action.map_tapedrives) {
 								if(storageJobList.size() == 0) { // add only one job at a time. If already added skip adding to the list and continue loop(we still need to continue so non-storage jobs are managed)...

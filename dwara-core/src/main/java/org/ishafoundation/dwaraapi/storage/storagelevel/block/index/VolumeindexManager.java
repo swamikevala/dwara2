@@ -10,6 +10,7 @@ import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
@@ -35,12 +36,14 @@ public class VolumeindexManager {
 	
 	@Autowired
 	private DomainUtil domainUtil;
-	
-	@Value("${filesystem.temporarylocation}")
-	private String filesystemTemporarylocation;
+	@Autowired
+	private FileRepositoryUtil fileRepositoryUtil;
 
 	@Autowired
 	private CommandLineExecuter commandLineExecuter;
+	
+	@Value("${filesystem.temporarylocation}")
+	private String filesystemTemporarylocation;
 	
 	public boolean writeVolumeindex(SelectedStorageJob storagetypeJob) throws Exception {
 		boolean isSuccess = false;
@@ -105,14 +108,16 @@ public class VolumeindexManager {
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) artifactRepository.findById(artifactId).get();
 			//org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = domainUtil.getDomainSpecificArtifact(domain, artifactId);
 			
-			artifact.setArtifactclassuid(artifactDbObj.getArtifactclass().getUid());
+			artifact.setArtifactclassuid(artifactDbObj.getArtifactclass().getId());
 			artifact.setSequencecode(artifactDbObj.getSequenceCode());
 			
 			List<File> fileList = new ArrayList<File>();
-	    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-	    	Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_ARTIFACT_ID.replace("<<DOMAIN_SPECIFIC_ARTIFACT>>", artifactDbObj.getClass().getSimpleName()), int.class);
-	//    	Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod("findAllBy" + artifact.getClass().getSimpleName() + "Id", int.class);
-			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = (List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>) fileDaoFindAllBy.invoke(domainSpecificFileRepository, artifactId);
+			
+//	    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+//	    	Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_ARTIFACT_ID.replace("<<DOMAIN_SPECIFIC_ARTIFACT>>", artifactDbObj.getClass().getSimpleName()), int.class);
+//	//    	Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod("findAllBy" + artifact.getClass().getSimpleName() + "Id", int.class);
+//			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = (List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>) fileDaoFindAllBy.invoke(domainSpecificFileRepository, artifactId);
+			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactDbObj, domain);
 			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
 				File file = new File();
 				file.setName(nthFile.getPathname());

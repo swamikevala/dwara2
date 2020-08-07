@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name="user")
-public class User implements Cacheable{
+public class User {//implements Cacheable{
 	@Id
 	@Column(name="id")
 	private int id;

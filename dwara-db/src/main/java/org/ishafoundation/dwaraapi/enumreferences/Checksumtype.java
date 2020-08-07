@@ -18,6 +18,7 @@ public enum Checksumtype {
 	    for (Checksumtype ct : Checksumtype.values()) {
 	        if (ct.javaStyleChecksumtype.equals(javaStyleChecksumtype)) {
 	        	checksumtype = ct;
+	        	break;
 	        }
 	    }
 		return checksumtype;

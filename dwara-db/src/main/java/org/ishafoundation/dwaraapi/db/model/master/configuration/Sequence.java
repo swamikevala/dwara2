@@ -2,37 +2,36 @@ package org.ishafoundation.dwaraapi.db.model.master.configuration;
 		
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
+import org.ishafoundation.dwaraapi.enumreferences.SequenceType;
 
 
 @Entity
 @Table(name="sequence")
-public class Sequence implements Cacheable{
-
-	@Override
-	public String getName() {
-		// Just to make the class cacheable
-		return null;
-	}
+public class Sequence{// implements Cacheable{
 	
 	@Id
 	@Column(name="id")
 	private int id;
 	
-	@Column(name="barcode")
-	private boolean barcode;
+	@Enumerated(EnumType.STRING)
+	@Column(name="type")
+	private SequenceType type;
 	
-	// TODO - Not needed. any sequence_ref_id null is a group
 	@Column(name="\"group\"")
 	private boolean group;
 	
-	@Column(name="last_number")
-	private int lastNumber;
+	@Column(name="starting_number")
+	private Integer startingNumber;
+
+	@Column(name="current_number")
+	private int currrentNumber;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
     private Sequence sequenceRef;
@@ -54,13 +53,13 @@ public class Sequence implements Cacheable{
 	public void setId(int id) {
 		this.id = id;
 	}
-	
-	public boolean isBarcode() {
-		return barcode;
+
+	public SequenceType getType() {
+		return type;
 	}
 
-	public void setBarcode(boolean barcode) {
-		this.barcode = barcode;
+	public void setType(SequenceType type) {
+		this.type = type;
 	}
 
 	public boolean isGroup() {
@@ -71,14 +70,22 @@ public class Sequence implements Cacheable{
 		this.group = group;
 	}
 
-	public int getLastNumber() {
-		return lastNumber;
+	public Integer getStartingNumber() {
+		return startingNumber;
 	}
 
-	public void setLastNumber(int lastNumber) {
-		this.lastNumber = lastNumber;
+	public void setStartingNumber(Integer startingNumber) {
+		this.startingNumber = startingNumber;
 	}
-	
+
+	public int getCurrrentNumber() {
+		return currrentNumber;
+	}
+
+	public void setCurrrentNumber(int currrentNumber) {
+		this.currrentNumber = currrentNumber;
+	}
+
 	public Sequence getSequenceRef() {
 		return sequenceRef;
 	}
@@ -111,11 +118,11 @@ public class Sequence implements Cacheable{
 		this.artifactKeepCode = artifactKeepCode;
 	}
 
-	public void incrementLastNumber() {
-		this.lastNumber += 1;
+	public void incrementCurrentNumber() {
+		this.currrentNumber += 1;
 	}
 	
-	public void decrementLastNumber() {
-		this.lastNumber -= 1;
+	public void decrementCurrentNumber() {
+		this.currrentNumber -= 1;
 	}
 }

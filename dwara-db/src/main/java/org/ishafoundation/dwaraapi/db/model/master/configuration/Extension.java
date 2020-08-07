@@ -24,7 +24,7 @@ public class Extension implements Cacheable{
 	
 	@Id
 	@Column(name="id")
-	private int id;
+	private String id;
 	
 	@Column(name="name", unique = true)
 	private String name;
@@ -40,17 +40,17 @@ public class Extension implements Cacheable{
     public Extension() {
     }
  
-    public Extension(int id, String name, String description) {
+    public Extension(String id, String name, String description) {
     	this.id = id;
         this.name = name;
         this.description = description;
     }
 		
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 

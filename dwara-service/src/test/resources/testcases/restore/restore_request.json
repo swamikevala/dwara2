@@ -1,6 +1,6 @@
 {
   "domain": "one",
-  "location": "IIIT",
+  "location": "LR",
   "output_folder": "JIRA-1234-Randommm",
   "destinationpath": "/data/RESTORED",
   "verify": false,

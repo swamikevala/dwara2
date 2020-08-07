@@ -26,18 +26,19 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	@Autowired
 	private TapeDriveManager tapeDriveManager;
 	
-	public StorageResponse map_tapedrives(SelectedStorageJob storagetypeJob) {
+	public StorageResponse map_tapedrives(SelectedStorageJob selectedStorageJob) {
 		logger.trace("Mapping invoked from processor");
 		return new StorageResponse();
 	}
 	
 	@Override
-	protected void beforeFormat(SelectedStorageJob storagetypeJob) throws Exception {
-		TapeJob tapeJob = (TapeJob) storagetypeJob;
+	protected void beforeFormat(SelectedStorageJob selectedStorageJob) throws Exception {
+		super.beforeFormat(selectedStorageJob);
+		TapeJob tapeJob = (TapeJob) selectedStorageJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
 
-		loadTape(storagetypeJob, true);
+		loadTape(selectedStorageJob, true);
 
 		// TODO : Wher shoudld is Blank check go? and force option...
 		// validate on sequence no of tape - upfront validation
@@ -51,12 +52,13 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	}	
 	
 	@Override
-	protected void beforeWrite(SelectedStorageJob storagetypeJob) throws Exception {
-		TapeJob tapeJob = (TapeJob) storagetypeJob;
+	protected void beforeWrite(SelectedStorageJob selectedStorageJob) throws Exception {
+		super.beforeWrite(selectedStorageJob);
+		TapeJob tapeJob = (TapeJob) selectedStorageJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
 		int fileNumberToBePositioned = tapeJob.getArtifactVolumeCount() == 0 ? 1 : tapeJob.getArtifactVolumeCount() + 1; // +1 because of label...
-		loadTape(storagetypeJob);
+		loadTape(selectedStorageJob);
 		
 		logger.trace("Now positioning tape head for writing " + tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")" );
 		tapeDriveManager.setTapeHeadPositionForWriting(tapeJob.getDeviceWwnId(), fileNumberToBePositioned); // FIXME - check on this, using eod, bsf 1 and fsf 1
@@ -65,14 +67,14 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	}
 	
 	@Override
-	protected void beforeVerify(SelectedStorageJob storagetypeJob) throws Exception {
-		super.beforeVerify(storagetypeJob);
-		TapeJob tapeJob = (TapeJob) storagetypeJob;
+	protected void beforeVerify(SelectedStorageJob selectedStorageJob) throws Exception {
+		super.beforeVerify(selectedStorageJob);
+		TapeJob tapeJob = (TapeJob) selectedStorageJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
 		int blockNumberToSeek = tapeJob.getArtifactStartVolumeBlock();
 		
-		loadTape(storagetypeJob);
+		loadTape(selectedStorageJob);
 		
 		tapeDriveManager.setTapeHeadPositionForReading(tapeJob.getDeviceWwnId(), blockNumberToSeek);
 		logger.trace("Tape Head positioned for verifying "+ tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
@@ -85,24 +87,25 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //	}
 
 	@Override
-	protected void beforeRestore(SelectedStorageJob storagetypeJob) throws Exception {
-		TapeJob tapeJob = (TapeJob) storagetypeJob;
+	protected void beforeRestore(SelectedStorageJob selectedStorageJob) throws Exception {
+		super.beforeRestore(selectedStorageJob);
+		TapeJob tapeJob = (TapeJob) selectedStorageJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
 		int blockNumberToSeek = tapeJob.getStorageJob().getVolumeBlock();
 		
-		loadTape(storagetypeJob);
+		loadTape(selectedStorageJob);
 		
 		tapeDriveManager.setTapeHeadPositionForReading(tapeJob.getDeviceWwnId(), blockNumberToSeek);
 		logger.trace("Tape Head positioned for reading "+ tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
 	}
 
-	private boolean loadTape(SelectedStorageJob storagetypeJob) throws Exception {
-		return loadTape(storagetypeJob, false);
+	private boolean loadTape(SelectedStorageJob selectedStorageJob) throws Exception {
+		return loadTape(selectedStorageJob, false);
 	}
 	
-	private boolean loadTape(SelectedStorageJob storagetypeJob, boolean skipRightTapeCheck) throws Exception {
-		TapeJob tapeJob = (TapeJob) storagetypeJob;
+	private boolean loadTape(SelectedStorageJob selectedStorageJob, boolean skipRightTapeCheck) throws Exception {
+		TapeJob tapeJob = (TapeJob) selectedStorageJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
 	
@@ -135,12 +138,14 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //		
 //	}
 //
-	protected void beforeFinalize(SelectedStorageJob storagetypeJob) throws Exception {
-		TapeJob tapeJob = (TapeJob) storagetypeJob;
+	@Override
+	protected void beforeFinalize(SelectedStorageJob selectedStorageJob) throws Exception {
+		super.beforeFinalize(selectedStorageJob);
+		TapeJob tapeJob = (TapeJob) selectedStorageJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
 
-		loadTape(storagetypeJob, true);
+		loadTape(selectedStorageJob, true);
 
 		logger.trace("Now positioning tape head for finalizing " + tapeLibraryName + ":" + driveElementAddress);
 

@@ -7,12 +7,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
-import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
-import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
+import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +45,9 @@ public class LabelManagerImpl implements LabelManager{
 
 	@Value("${filesystem.temporarylocation}")
 	private String filesystemTemporarylocation;
+	
+	@Autowired
+	private Configuration configuration;
 
 	@Override
 	public boolean isRightVolume(SelectedStorageJob storagetypeJob) throws Exception {
@@ -119,9 +121,10 @@ public class LabelManagerImpl implements LabelManager{
 		VolumeDetails volumeDetails = volume.getDetails();
 		int blocksize = volumeDetails.getBlocksize();
 		
-		Request request = storageJob.getJob().getRequest();
-		RequestDetails requestDetails = request.getDetails();
-		String encryptionalgorithm = requestDetails.getEncryption_algorithm();
+//		Request request = storageJob.getJob().getRequest();
+//		RequestDetails requestDetails = request.getDetails();
+//		String encryptionalgorithm = requestDetails.getEncryption_algorithm();
+		String encryptionalgorithm = configuration.getEncryptionAlgorithm();
 		
 		String label = createLabel(volumeUid, blocksize, archiveformat, checksumalgorithm, encryptionalgorithm);
 		logger.trace(label);

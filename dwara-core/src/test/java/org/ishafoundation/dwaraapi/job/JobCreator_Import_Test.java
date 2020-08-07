@@ -1,7 +1,7 @@
 package org.ishafoundation.dwaraapi.job;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
-import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Storagesubtype;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,10 +23,10 @@ public class JobCreator_Import_Test extends JobCreator_Test{
 	protected RequestDetails getSystemrequestDetails() {
 		
 		RequestDetails details = new RequestDetails();
-		details.setVolume_uid("V4A999"); // TODO how do we validate that the volume passed is only physical and not
+		details.setVolume_id("V4A999"); // TODO how do we validate that the volume passed is only physical and not
 		// group the volume belongs to
-		details.setVolume_group_uid("V4A");
-		details.setGeneration(7);
+		details.setVolume_group_id("V4A");
+		details.setStoragesubtype(Storagesubtype.lto7);
 		return details;
 	}
 

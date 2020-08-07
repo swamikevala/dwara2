@@ -26,7 +26,7 @@ public class JobCreator_Finalize_Test extends JobCreator_Test{
 	@Override
 	protected RequestDetails getSystemrequestDetails() {
 		RequestDetails details = new RequestDetails();
-		details.setVolume_uid("V4A002");
+		details.setVolume_id("V4A002");
 		return details;
 	}
 

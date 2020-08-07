@@ -47,7 +47,7 @@ public class Restore extends AbstractStoragetaskAction{
 		storageJob.setFileId(fileIdToBeRestored);
 		
 		// From where - get the volume
-		Integer locationId = requestDetails.getLocation_id();
+		String locationId = requestDetails.getLocation_id();
 		if(locationId == null) {
 			Location location = locationDao.findByRestoreDefaultTrue();
 			locationId = location.getId();
@@ -79,7 +79,7 @@ public class Restore extends AbstractStoragetaskAction{
 	}
 	
 
-	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, Integer locationId) {
+	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, String locationId) {
     	@SuppressWarnings("unchecked")
 		FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
     	return domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeLocationId(fileIdToBeRestored, locationId);

@@ -15,15 +15,14 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.ishafoundation.dwaraapi.api.req.ingest.RequestParams;
 import org.ishafoundation.dwaraapi.api.req.ingest.UserRequest;
 import org.ishafoundation.dwaraapi.api.req.ingest.mapper.RequestToEntityObjectMapper;
-import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -55,9 +54,8 @@ public class ArtifactService {
 	@Autowired
 	private DomainUtil domainUtil;
 
-	@SuppressWarnings("rawtypes")
 	@Autowired
-	private DBMasterTablesCacheManager dBMasterTablesCacheManager;
+	private ConfigurationTablesUtil configurationTablesUtil;
 
     public ResponseEntity<String> ingest(UserRequest userRequest){	
     	try {
@@ -77,9 +75,8 @@ public class ArtifactService {
 		    	int requestId = request.getId();
 		    	logger.info("Request - " + requestId);
 	
-				// TODO - ??? - Artifactclass mismatch - api request passes string, while request.details has id...
-		    	String artifactclassName = userRequest.getArtifactclass();
-				Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager.getRecord(CacheableTablesList.artifactclass.name(), artifactclassName);
+		    	String artifactclassId = userRequest.getArtifactclass();
+				Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 				Domain domain = artifactclass.getDomain();
 		    	List<RequestParams> requestParamsList = userRequest.getArtifact();
 		    	

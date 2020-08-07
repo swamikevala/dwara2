@@ -1,5 +1,8 @@
 package org.ishafoundation.dwaraapi.db.model.master.configuration.json;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class DeviceDetails {
 	
 	//tape drive

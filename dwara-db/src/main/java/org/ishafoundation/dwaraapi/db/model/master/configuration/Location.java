@@ -14,22 +14,19 @@ import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 public class Location implements Cacheable{
 	@Id
 	@Column(name="id")
-	private int id;
+	private String id;
 	
 	@Column(name="name", unique = true)
 	private String name;
 	
-	@Column(name="description")
-	private String description;
-	
 	@Column(name="restore_default")
 	private boolean restoreDefault;
 	
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 
@@ -39,14 +36,6 @@ public class Location implements Cacheable{
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
 	}
 
 	public boolean isRestoreDefault() {

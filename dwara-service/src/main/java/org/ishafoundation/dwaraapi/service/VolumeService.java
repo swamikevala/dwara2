@@ -76,7 +76,7 @@ public class VolumeService {
 	}
 
 	// TODO : Why domain needed? Filevolume and Artifactvolume needed for generating the index are domain-ed
-	public ResponseEntity<String> finalize(String volumeUid, Domain domain){
+	public ResponseEntity<String> finalize(String volumeId, Domain domain){
 
 		try {
 
@@ -88,7 +88,7 @@ public class VolumeService {
 			request.setDomain(domain);
 			RequestDetails details = new RequestDetails();
 			ObjectMapper mapper = new ObjectMapper();
-			JsonNode postBodyJson = mapper.readValue("{\"volume_uid\":\""+volumeUid+"\"}", JsonNode.class);
+			JsonNode postBodyJson = mapper.readValue("{\"volume_id\":\""+volumeId+"\"}", JsonNode.class);
 			details.setBody(postBodyJson);
 			request.setDetails(details);
 
@@ -105,7 +105,7 @@ public class VolumeService {
 			systemrequest.setDomain(request.getDomain());
 
 			RequestDetails systemrequestDetails = new RequestDetails();
-			systemrequestDetails.setVolume_uid(volumeUid);
+			systemrequestDetails.setVolume_id(volumeId);
 			systemrequest.setDetails(systemrequestDetails);
 			systemrequest = requestDao.save(systemrequest);
 			logger.info("System request - " + systemrequest.getId());

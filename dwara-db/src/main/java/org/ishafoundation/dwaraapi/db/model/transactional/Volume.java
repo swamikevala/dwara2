@@ -9,22 +9,28 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
-import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Archiveformat;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
+import org.ishafoundation.dwaraapi.enumreferences.Storagesubtype;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 
+import com.vladmihalcea.hibernate.type.json.JsonStringType;
 
+// Reference - https://art.iyc.ishafoundation.org/x/VJCv
+	
 @Entity
 @Table(name="volume")
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 public class Volume {
 
 	@Id
@@ -38,6 +44,10 @@ public class Volume {
 	@Enumerated(EnumType.STRING)
 	@Column(name="storagetype")
 	private Storagetype storagetype;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(name="storagesubtype")
+	private Storagesubtype storagesubtype;
 	
 	@Enumerated(EnumType.STRING)
 	@Column(name="storagelevel")
@@ -68,8 +78,8 @@ public class Volume {
 	@OneToOne
 	private Location location;
 	
-	@Lob
-	@Column(name="details")
+	@Type(type = "json")
+	@Column(name="details", columnDefinition = "json")
 	private VolumeDetails details;
 
 
@@ -95,6 +105,14 @@ public class Volume {
 
 	public void setStoragetype(Storagetype storagetype) {
 		this.storagetype = storagetype;
+	}
+
+	public Storagesubtype getStoragesubtype() {
+		return storagesubtype;
+	}
+
+	public void setStoragesubtype(Storagesubtype storagesubtype) {
+		this.storagesubtype = storagesubtype;
 	}
 
 	public Storagelevel getStoragelevel() {

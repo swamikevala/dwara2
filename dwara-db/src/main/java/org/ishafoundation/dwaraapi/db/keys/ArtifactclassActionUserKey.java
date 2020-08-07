@@ -12,7 +12,7 @@ public class ArtifactclassActionUserKey implements Serializable {
 	private static final long serialVersionUID = 8894504543240809501L;
 
 	@Column(name = "artifactclass_id")
-    private int artifactclassId;
+    private String artifactclassId;
 	
 	@Column(name = "action_id")
     private String actionId;
@@ -23,7 +23,7 @@ public class ArtifactclassActionUserKey implements Serializable {
     public ArtifactclassActionUserKey() {}
     
     public ArtifactclassActionUserKey(
-        int artifactclassId,
+        String artifactclassId,
         String actionId,
         int userId) {
     	this.artifactclassId = artifactclassId;
@@ -31,11 +31,11 @@ public class ArtifactclassActionUserKey implements Serializable {
         this.userId = userId;
     }
  
-	public int getArtifactclassId() {
+	public String getArtifactclassId() {
 		return artifactclassId;
 	}
 
-	public void setArtifactclassId(int artifactclassId) {
+	public void setArtifactclassId(String artifactclassId) {
 		this.artifactclassId = artifactclassId;
 	}
 

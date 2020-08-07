@@ -8,17 +8,22 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Id;
-import javax.persistence.Lob;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
+import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails;
 import org.ishafoundation.dwaraapi.enumreferences.DeviceStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
 
+import com.vladmihalcea.hibernate.type.json.JsonStringType;
+
 
 @Entity
 @Table(name="device")
-public class Device {
+@TypeDef(name = "json", typeClass = JsonStringType.class)
+public class Device implements Cacheable{
 	
 	@Id
 	@Column(name="id")
@@ -50,8 +55,8 @@ public class Device {
 	@Column(name="model")
 	private String model;
 	
-	@Lob
-	@Column(name="details")
+	@Type(type = "json")
+	@Column(name="details", columnDefinition = "json")
 	private DeviceDetails details;
 
 

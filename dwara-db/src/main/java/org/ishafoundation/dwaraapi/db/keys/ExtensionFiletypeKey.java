@@ -12,33 +12,33 @@ public class ExtensionFiletypeKey implements Serializable {
 	private static final long serialVersionUID = -620517854806310403L;
 
 	@Column(name = "extension_id")
-    private int extensionId;
+    private String extensionId;
  
     @Column(name = "filetype_id")
-    private int filetypeId;
+    private String filetypeId;
  
     public ExtensionFiletypeKey() {}
     
     public ExtensionFiletypeKey(
-        int extensionId,
-        int filetypeId) {
+        String extensionId,
+        String filetypeId) {
         this.extensionId = extensionId;
         this.filetypeId = filetypeId;
     }
  
-    public int getExtensionId() {
+    public String getExtensionId() {
 		return extensionId;
 	}
 
-	public void setExtensionId(int extensionId) {
+	public void setExtensionId(String extensionId) {
 		this.extensionId = extensionId;
 	}
 
-	public int getFiletypeId() {
+	public String getFiletypeId() {
 		return filetypeId;
 	}
 
-	public void setFiletypeId(int filetypeId) {
+	public void setFiletypeId(String filetypeId) {
 		this.filetypeId = filetypeId;
 	}
 

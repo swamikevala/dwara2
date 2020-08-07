@@ -7,7 +7,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToOne;
 
@@ -80,17 +79,7 @@ public class Artifact {
 	public void setArtifactclass(Artifactclass artifactclass) {
 		this.artifactclass = artifactclass;
 	}
-	
-	//@JsonIgnore
-	public int getArtifactclassId() {
-		return this.artifactclass.getId();
-	}
-	
-	//@JsonIgnore
-	public String getArtifactclassName() {
-		return this.artifactclass.getName();
-	}
-	
+
 	public String getOriginalName() {
 		return originalName;
 	}
