@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
@@ -26,6 +27,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.helpers.LogicalFileHelper;
@@ -67,6 +69,9 @@ public class ProcessingJobManager implements Runnable{
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
 	
+	@Autowired
+	private JobDao jobDao;
+	
 	private Job job;
 
 	public Job getJob() {
@@ -79,7 +84,14 @@ public class ProcessingJobManager implements Runnable{
 
 	@Override
     public void run() {
-		logger.trace("managing processing job - " + job.getId());
+		logger.trace("Managing processing job - " + job.getId());
+		
+		Status jobStatus = job.getStatus();
+		if(jobStatus != Status.queued) {
+			logger.trace("Processing job - " + job.getId() + " already picked up earlier. So skipping from processing again");
+			return;
+		}
+		
 		
 		try {
 			Domain domain = getDomain();
@@ -133,6 +145,8 @@ public class ProcessingJobManager implements Runnable{
 			String processingtaskId = job.getProcessingtaskId();
 			Processingtask processingtask = processingtaskDao.findById(processingtaskId);
 			Collection<LogicalFile> selectedFileList = getLogicalFileList(processingtask.getFiletype(), inputArtifactPath);
+			if(selectedFileList.size() == 0)
+				throw new Exception("No files to process. Check supported extensions...");
 			
 			for (Iterator<LogicalFile> iterator = selectedFileList.iterator(); iterator.hasNext();) {
 				LogicalFile logicalFile = (LogicalFile) iterator.next(); // would have an absolute file like C:\data\ingested\14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS and its sidecar files
@@ -184,6 +198,10 @@ public class ProcessingJobManager implements Runnable{
 	
 		}catch (Exception e) {
 			logger.error("Unable to proceed on job - " + job.getId(), e);
+			String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - status to " + Status.failed;
+			logger.debug(logMsgPrefix);	
+			job.setStatus(Status.failed);
+			jobDao.save(job);
 		}
 	}
 

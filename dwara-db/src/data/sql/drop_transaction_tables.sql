@@ -1,0 +1,15 @@
+DROP TABLE 
+`dwara_v4_test`.`artifact1`, 
+`dwara_v4_test`.`artifact1_volume`, 
+`dwara_v4_test`.`badfile`, 
+`dwara_v4_test`.`dwara_sequences`, 
+`dwara_v4_test`.`failure`, 
+`dwara_v4_test`.`file1`, 
+`dwara_v4_test`.`file1_volume`, 
+`dwara_v4_test`.`hibernate_sequence`,
+`dwara_v4_test`.`job`, 
+`dwara_v4_test`.`job_map`, 
+`dwara_v4_test`.`request`, 
+`dwara_v4_test`.`t_activedevice`,
+`dwara_v4_test`.`t_file_job`, 
+`dwara_v4_test`.`v_restore_file`;

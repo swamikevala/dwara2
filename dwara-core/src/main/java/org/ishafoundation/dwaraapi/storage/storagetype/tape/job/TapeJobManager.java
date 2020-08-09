@@ -135,14 +135,14 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	//			}
 				// STEP 1
 				for (DriveDetails nthAvailableDriveDetails : availableDrivesDetails) {
-					logger.debug("Now selecting job for drive - " + nthAvailableDriveDetails.getDriveName());
+					logger.debug("Now selecting job for drive - " + nthAvailableDriveDetails.getDriveId());//+ nthAvailableDriveDetails.getDriveName() + "(" + nthAvailableDriveDetails.getDte().getsNo() + ")");
 					
 					// STEP 2a
 					StorageJob selectedStorageJob = null;
 					try {
 						selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, nthAvailableDriveDetails);
 					} catch (Exception e) {
-						logger.error("Unable to select a job for drive - " + nthAvailableDriveDetails.getDriveName());
+						logger.error("Unable to select a job for drive - " + nthAvailableDriveDetails.getDriveId(), e);
 						continue;
 					}
 					
@@ -186,6 +186,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			tActivedevice = new TActivedevice();// Challenge here...
 			Device tapedriveDevice = deviceDao.findByWwnId(driveDetails.getDriveName());
 			String tapedriveUid = tapedriveDevice.getWwnId();
+			tActivedevice.setDevice(tapedriveDevice);
 
 			logger.debug("Flagging drive " + tapedriveUid + " as busy, by adding tActivedevice entry" );
 			tActivedevice.setJob(job);
@@ -215,7 +216,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 //			tapeJob.setTapedriveAlreadyLoadedWithNeededTape(tapedriveAlreadyLoadedWithTape);
 
 			job.setDevice(tapedriveDevice);
-			job.setVolume(volume);
+			if(storagetaskAction != Action.format) // For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving device... 
+				job.setVolume(volume);
 			
 			if(nextStepsInSeparateThread) {
 				logger.debug("Launching separate tape task thread -----------");

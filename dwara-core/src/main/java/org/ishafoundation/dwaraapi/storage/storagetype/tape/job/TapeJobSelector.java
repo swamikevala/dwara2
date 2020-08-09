@@ -102,13 +102,13 @@ public class TapeJobSelector {
 
 	@returns JobToBeProcessed
 	 */
-	private StorageJob chooseAJobForTheDrive(List<StorageJob> tapeJobsList, DriveDetails driveStatusDetails) throws Exception{
-		logger.debug("Choosing a job for the drive " + driveStatusDetails.getDriveName());
+	private StorageJob chooseAJobForTheDrive(List<StorageJob> tapeJobsList, DriveDetails driveDetails) throws Exception{
+		logger.debug("Choosing a job for the drive " + driveDetails.getDriveId());//driveStatusDetails.getDriveName() + "(" + driveStatusDetails.getDte().getsNo() + ")");
 		StorageJob chosenTapeJob = null;
-		String volumeTag = driveStatusDetails.getDte().getVolumeTag();
+		String volumeTag = driveDetails.getDte().getVolumeTag();
 
 		if(StringUtils.isNotBlank(volumeTag)) { // means the drive has a tape already loaded
-			logger.debug("Drive " + driveStatusDetails.getDte().getsNo() + " already has the tape " + volumeTag + " loaded. Checking if the tape is needed by any of the queued jobs");
+			logger.debug("Drive " + driveDetails.getDriveId() + " already has the tape " + volumeTag + " loaded. Checking if the tape is needed by any of the queued jobs");
 			for (Iterator<StorageJob> tapeJobsIterator = tapeJobsList.iterator(); tapeJobsIterator.hasNext();) {
 				StorageJob tapeJob = (StorageJob) tapeJobsIterator.next();
 				Volume toBeUsedVolume = tapeJob.getVolume();

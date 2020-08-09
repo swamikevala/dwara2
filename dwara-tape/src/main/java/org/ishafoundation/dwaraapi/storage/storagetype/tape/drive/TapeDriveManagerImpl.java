@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype.tape.drive;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
@@ -63,8 +64,16 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 		}
 		return dsd;
 	}
+	
 	public boolean isTapeBlank(String dataTransferElementName) throws Exception {
-		// TODO Auto-generated method stub
+		rewind(dataTransferElementName);
+		CommandLineExecutionResponse fsfCommandLineExecutionResponse = fsf(dataTransferElementName, 1);
+		// if fsf fails its a blank tape for sure...
+		String failureReason = fsfCommandLineExecutionResponse.getFailureReason();
+
+		if(StringUtils.isNotBlank(failureReason)){ // when fsf command fails that means its a blank tape
+			return true;
+		}
 		return false;
 	}
 	
@@ -96,7 +105,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			logger.trace("after eod - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
 
 			if(currentFileNumberTapeHeadPointingTo != fileNumberToBePositioned) {
-				logger.warn("something wrong with eod, currentFileNumberTapeHeadPointingTo != expectedFileNumberToBePositioned - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
+				logger.warn("something wrong with eod, currentFileNumberTapeHeadPointingTo(" + currentFileNumberTapeHeadPointingTo + ") != expectedFileNumberToBePositioned(" + fileNumberToBePositioned  + ")- dataTransferElementName " + dataTransferElementName);
 				logger.info("rewinding and fsfing " + fileNumberToBePositioned);
 				rewind(dataTransferElementName);
 				fsf(dataTransferElementName, fileNumberToBePositioned);

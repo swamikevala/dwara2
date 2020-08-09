@@ -26,6 +26,12 @@ public class Configuration {
 	private boolean checksumTypeSupportsStreamingVerification;
 
 	private String encryptionAlgorithm;
+
+	private int rightVolumeCheckInterval; // in seconds
+
+	private String restoreTmpLocationForVerification;
+	
+	private String restoreInProgressFileIdentifier;
 	
 	public String getRegexAllowedChrsInFileName() {
 		return regexAllowedChrsInFileName;
@@ -105,5 +111,29 @@ public class Configuration {
 
 	public void setEncryptionAlgorithm(String encryptionAlgorithm) {
 		this.encryptionAlgorithm = encryptionAlgorithm;
+	}
+
+	public int getRightVolumeCheckInterval() {
+		return rightVolumeCheckInterval;
+	}
+
+	public void setRightVolumeCheckInterval(int rightVolumeCheckInterval) {
+		this.rightVolumeCheckInterval = rightVolumeCheckInterval;
+	}
+
+	public String getRestoreTmpLocationForVerification() {
+		return restoreTmpLocationForVerification;
+	}
+
+	public void setRestoreTmpLocationForVerification(String restoreTmpLocationForVerification) {
+		this.restoreTmpLocationForVerification = restoreTmpLocationForVerification;
+	}
+
+	public String getRestoreInProgressFileIdentifier() {
+		return restoreInProgressFileIdentifier;
+	}
+
+	public void setRestoreInProgressFileIdentifier(String restoreInProgressFileIdentifier) {
+		this.restoreInProgressFileIdentifier = restoreInProgressFileIdentifier;
 	}
 }

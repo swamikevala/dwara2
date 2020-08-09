@@ -1,3 +1,15 @@
+9th Aug
+	Restore in progress folder will be marked .restoring
+	Rightvolume check intro
+	Tapeblank check before format
+	Verification temp location changed
+	Process handling fixes
+	Tape job related fixes 
+	application.properties configuration changes
+		rightVolumeCheckInterval=60
+		restoreTmpLocationForVerification=${filesystem.temporarylocation}/restoredforverification
+		restoreInProgressFileIdentifier=.restoring
+
 7th Aug - DB Schema changes 
 	upgrade steps
 		drop database

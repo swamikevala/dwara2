@@ -42,10 +42,12 @@ public class Format extends AbstractStoragetaskAction{
 		storageJob.setJob(job);
 		
 		Request request = job.getRequest();
-
-		Volume volume = getVolume(request.getDetails());
+		RequestDetails requestDetails = request.getDetails();
+		
+		Volume volume = getVolume(requestDetails);
 		storageJob.setVolume(volume);
 
+		storageJob.setForce(requestDetails.isForce());
 		return storageJob;	
 	}
 	

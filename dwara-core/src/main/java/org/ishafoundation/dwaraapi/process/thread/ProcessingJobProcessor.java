@@ -197,7 +197,7 @@ public class ProcessingJobProcessor implements Runnable{
 				
 				String inputArtifactName = inputArtifact.getName();
 				Artifactclass artifactclass = inputArtifact.getArtifactclass();
-				String artifactCategory = "???";
+				String artifactCategory = artifactclass.getCategory(); // TODO How to distinguish pub/priv
 				
 				ProcessingtaskResponse processingtaskResponse = processingtaskActionMap.get(processingtaskName).execute(processingtaskName, inputArtifactName, file, domain, logicalFile, artifactCategory, destinationDirPath);
 				if(processingtaskResponse == null) // TODO : Handle this...

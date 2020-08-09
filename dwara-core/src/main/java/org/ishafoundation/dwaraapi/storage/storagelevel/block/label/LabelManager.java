@@ -4,7 +4,7 @@ import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 
 public interface LabelManager {
 
-	public boolean isRightVolume(SelectedStorageJob storagetypeJob) throws Exception;
+	public boolean isRightVolume(SelectedStorageJob selectedStorageJob) throws Exception;
 	
-	public boolean writeVolumeLabel(SelectedStorageJob storagetypeJob) throws Exception;
+	public boolean writeVolumeLabel(SelectedStorageJob selectedStorageJob) throws Exception;
 }

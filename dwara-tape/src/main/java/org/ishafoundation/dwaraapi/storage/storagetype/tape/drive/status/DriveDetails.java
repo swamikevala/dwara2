@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.DataTransferElement;
 
 public class DriveDetails {
+	private String driveId;
 	private String driveName;
 	private MtStatus mtStatus;
 	
@@ -15,6 +16,12 @@ public class DriveDetails {
 	private int hoursOfReads;
 	private int totalUsageInHours;
 
+	public String getDriveId() {
+		return driveId;
+	}
+	public void setDriveId(String driveId) {
+		this.driveId = driveId;
+	}
 	public String getDriveName() {
 		return driveName;
 	}

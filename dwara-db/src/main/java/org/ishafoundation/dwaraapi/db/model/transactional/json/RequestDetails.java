@@ -105,7 +105,7 @@ public class RequestDetails {
 		this.storagesubtype = storagesubtype;
 	}
 
-	public Boolean getForce() {
+	public Boolean isForce() {
 		return force;
 	}
 

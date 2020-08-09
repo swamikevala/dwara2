@@ -42,7 +42,7 @@ public class BlockStoragelevel implements IStoragelevel {
 	public StorageResponse format(SelectedStorageJob storagetypeJob) throws Exception{
 		
 		boolean status = labelManager.writeVolumeLabel(storagetypeJob);
-		logger.debug("Labelling success ? - " + status);
+		logger.debug("Labelling success? - " + status);
 		
 		return new StorageResponse();
 	}
@@ -93,7 +93,7 @@ public class BlockStoragelevel implements IStoragelevel {
 	@Override
 	public StorageResponse finalize(SelectedStorageJob storagetypeJob) throws Exception{
 		boolean status = volumeindexManager.writeVolumeindex(storagetypeJob);
-		logger.debug("Indexing success ? - " + status);
+		logger.debug("Indexing success? - " + status);
 				
 		return new StorageResponse();
 	}

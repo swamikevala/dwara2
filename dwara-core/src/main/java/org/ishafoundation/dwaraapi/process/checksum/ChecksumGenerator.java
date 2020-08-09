@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.process.checksum;
 
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
@@ -17,13 +18,16 @@ public class ChecksumGenerator implements IProcessingTask {
 
 	@Autowired
 	private DomainUtil domainUtil;
+	
+	@Autowired
+	private Configuration configuration;
 
 	@Override
 	public ProcessingtaskResponse execute(String taskName, String libraryName, File file, Domain domain, LogicalFile logicalFile,
 			String category, String destinationDirPath) throws Exception {
 		
 		if(logicalFile.isFile())
-			file.setChecksum(ChecksumUtil.getChecksum(logicalFile, Checksumtype.sha256));// TODO : ??? - From where do we get the checksumtype???
+			file.setChecksum(ChecksumUtil.getChecksum(logicalFile, Checksumtype.valueOf(configuration.getChecksumType())));
 
     	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
     	domainSpecificFileRepository.save(file);

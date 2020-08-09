@@ -4,6 +4,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
@@ -50,41 +51,47 @@ public class LabelManagerImpl implements LabelManager{
 	private Configuration configuration;
 
 	@Override
-	public boolean isRightVolume(SelectedStorageJob storagetypeJob) throws Exception {
+	public boolean isRightVolume(SelectedStorageJob selectedStorageJob) throws Exception {
 		boolean isRightVolume = false;
 		
-		StorageJob storageJob = storagetypeJob.getStorageJob();
-		String volumeUid = storageJob.getVolume().getId();
-		String deviceName = storagetypeJob.getDeviceWwnId();
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
+		Volume volume = storageJob.getVolume();
+		
+		String volumeId = volume.getId();
 
-		Volumelabel volumelabel = readVolumeLabel(deviceName);
+		VolumeDetails volumeDetails = volume.getDetails();
+		int blocksize = volumeDetails.getBlocksize();
+		
+
+		String deviceName = selectedStorageJob.getDeviceWwnId();
+
+		Volumelabel volumelabel = readVolumeLabel(deviceName, blocksize);
 		String volIdFromLabel = volumelabel.getVolumeuid();
 
-		if(volIdFromLabel.equals(volumeUid)) {
+		if(volIdFromLabel.equals(volumeId)) {
 			isRightVolume = true;
 			logger.trace("Right volume");
 		}
 		else {
-			String errorMsg = "Loaded volume " + volumeUid + " mismatches with volumeId on label " + volIdFromLabel + ". Needs admin eyes";
+			String errorMsg = "Loaded volume " + volumeId + " mismatches with volumeId on label " + volIdFromLabel + ". Needs admin eyes";
 			logger.error(errorMsg);
-			//throw new Exception(errorMsg);
+			throw new Exception(errorMsg);
 		}
 
 		return isRightVolume;
 	}
 
-	private Volumelabel readVolumeLabel(String deviceName) throws Exception{
-		String label = getLabel(deviceName);
+	private Volumelabel readVolumeLabel(String deviceName, int blocksize) throws Exception{
+		String label = getLabel(deviceName, blocksize);
 		XmlMapper xmlMapper = new XmlMapper();
 		return xmlMapper.readValue(label, Volumelabel.class);
 	}
 	
-	private String getLabel(String dataTransferElementName) {
-//		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + dataTransferElementName + " bs=80");
-//		String resp = cler.getStdOutResponse();
-//		String label = StringUtils.substring(resp, 0, 80);
-//		return label;
-		return "";
+	private String getLabel(String dataTransferElementName, int blocksize) throws Exception {
+		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + dataTransferElementName + " bs=" + blocksize);
+		String resp = cler.getStdOutResponse();
+		String label = StringUtils.substring(resp, 0, blocksize);
+		return label;
 	}
 
 	/*
@@ -107,13 +114,13 @@ public class LabelManagerImpl implements LabelManager{
 	 * 
 	 */
 	@Override
-	public boolean writeVolumeLabel(SelectedStorageJob storagetypeJob) throws Exception {
+	public boolean writeVolumeLabel(SelectedStorageJob selectedStorageJob) throws Exception {
 		boolean isSuccess = false;
 
-		StorageJob storageJob = storagetypeJob.getStorageJob();
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		Volume volume = storageJob.getVolume();
 		
-		String volumeUid = volume.getId();
+		String volumeId = volume.getId();
 		String archiveformat = volume.getArchiveformat().getId();
 		String checksumalgorithm = volume.getChecksumtype().name();
 		
@@ -126,13 +133,13 @@ public class LabelManagerImpl implements LabelManager{
 //		String encryptionalgorithm = requestDetails.getEncryption_algorithm();
 		String encryptionalgorithm = configuration.getEncryptionAlgorithm();
 		
-		String label = createLabel(volumeUid, blocksize, archiveformat, checksumalgorithm, encryptionalgorithm);
+		String label = createLabel(volumeId, blocksize, archiveformat, checksumalgorithm, encryptionalgorithm);
 		logger.trace(label);
 		
-		File file = new File(filesystemTemporarylocation + File.separator + volumeUid + "_label.xml");
+		File file = new File(filesystemTemporarylocation + File.separator + volumeId + "_label.xml");
 		FileUtils.writeStringToFile(file, label);
 		logger.trace(file.getAbsolutePath() + " created ");
-		String deviceName = storagetypeJob.getDeviceWwnId();
+		String deviceName = selectedStorageJob.getDeviceWwnId();
 		// Option 2 doesnt work well for xml - CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("echo \"" + label + "\" | dd of=" + deviceName + " bs="+blocksize);
 		
 		// Option 3

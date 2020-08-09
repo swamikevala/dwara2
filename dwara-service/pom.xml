@@ -48,7 +48,11 @@
 			<artifactId>dwara-videopub</artifactId>
 			<version>2.0</version>
 		</dependency>
-
+		<dependency>
+			<groupId>org.ishafoundation</groupId>
+			<artifactId>dwara-dev-tools</artifactId>
+			<version>2.0</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>

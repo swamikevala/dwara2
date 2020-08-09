@@ -16,6 +16,10 @@ public interface JobDao extends CrudRepository<Job,Integer> {
 	
 	long countByStoragetaskActionIdInAndStatus(Collection<Action> tapedrivemappingOrFormat, Status status);
 	
+	// volume_id only for storagetasks so not needed as filter
+	// completed at gets updated only when status=completed...
+	Job findTopByVolumeIdOrderByCompletedAtDesc(String volumeId);
+	
 //	List<Job> findAllBySubrequestIdOrderById(int subrequestId);
 //	
 //	List<Job> findAllBySubrequestRequestActionAndStatus(Action action, Status status);

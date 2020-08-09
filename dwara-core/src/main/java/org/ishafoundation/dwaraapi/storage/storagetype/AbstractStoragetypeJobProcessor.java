@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.storage.storagetype;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -9,9 +10,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
@@ -20,7 +22,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
-import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
@@ -44,7 +45,6 @@ import org.ishafoundation.dwaraapi.storage.storagelevel.IStoragelevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 public abstract class AbstractStoragetypeJobProcessor {
 	
@@ -74,9 +74,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 	@Autowired
 	private DomainAttributeConverter domainAttributeConverter;
 
-	@Value("${filesystem.temporarylocation}")
-	private String filesystemTemporarylocation;
-	
+	@Autowired
+	private Configuration configuration;
 
 	public AbstractStoragetypeJobProcessor() {
 		logger.debug(this.getClass().getName());
@@ -251,7 +250,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEnd_volume_block());
 		
 		// to where
-		String destinationPath = filesystemTemporarylocation;
+		String destinationPath = configuration.getRestoreTmpLocationForVerification();
 		storageJob.setDestinationPath(destinationPath);
 		
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
@@ -336,7 +335,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 
     protected void beforeRestore(SelectedStorageJob selectedStorageJob) throws Exception {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
-    	
+    	storageJob.setDestinationPath(storageJob.getDestinationPath() + configuration.getRestoreInProgressFileIdentifier());
     	Domain domain = storageJob.getDomain();
     	int fileIdToBeRestored = storageJob.getFileId();
 		
@@ -392,9 +391,13 @@ public abstract class AbstractStoragetypeJobProcessor {
    	
     }
 	
-	protected void afterRestore(SelectedStorageJob selectedStorageJob) {
-		if(selectedStorageJob.getStorageJob().isRestoreVerify())
+	protected void afterRestore(SelectedStorageJob selectedStorageJob) throws IOException {
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
+		if(storageJob.isRestoreVerify())
 			updateFileVolumeVerifiedDate(selectedStorageJob); // update the verified date here...
+		
+		// upon completion moving the file to the original requested dest path
+		FileUtils.moveDirectory(new java.io.File(storageJob.getDestinationPath()), new java.io.File(storageJob.getDestinationPath().replace(configuration.getRestoreInProgressFileIdentifier(), "")));
 	}
 	
 	private IStoragelevel getStoragelevelImpl(SelectedStorageJob selectedStorageJob){

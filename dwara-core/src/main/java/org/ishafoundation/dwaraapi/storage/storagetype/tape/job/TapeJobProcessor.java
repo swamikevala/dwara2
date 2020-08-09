@@ -1,10 +1,17 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.label.LabelManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.TapeDriveManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
@@ -25,6 +32,15 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private TapeDriveManager tapeDriveManager;
+
+	@Autowired
+	private LabelManager labelManager;
+	
+	@Autowired
+	private JobDao jobDao; 
+	
+	@Autowired
+	private Configuration configuration;
 	
 	public StorageResponse map_tapedrives(SelectedStorageJob selectedStorageJob) {
 		logger.trace("Mapping invoked from processor");
@@ -40,13 +56,19 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 
 		loadTape(selectedStorageJob, true);
 
-		// TODO : Wher shoudld is Blank check go? and force option...
+		String dataTransferElementName = tapeJob.getDeviceWwnId();
+
+		if(!tapeJob.getStorageJob().isForce()) { // if its not a forced format check if tape is blank and proceed
+			if(!tapeDriveManager.isTapeBlank(dataTransferElementName)) // if tape is not blank throw error and dont continue...
+				throw new Exception("Tape not blank to be formatted. If you still want to format use the \"force\" option...");
+		}
+		
 		// validate on sequence no of tape - upfront validation
 		// validate on group archive format vs member archiveformat. they have to be same...
 		
 		
-		logger.trace("Now positioning tape head for formatting " + tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")" );
-		tapeDriveManager.setTapeHeadPositionForFormatting(tapeJob.getDeviceWwnId());
+		logger.trace("Now positioning tape head for formatting " + tapeLibraryName + ":" + dataTransferElementName+"("+driveElementAddress+")" );
+		tapeDriveManager.setTapeHeadPositionForFormatting(dataTransferElementName);
 		logger.trace("Tape Head positioned for formatting");
 		
 	}	
@@ -110,6 +132,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		int driveElementAddress = tapeJob.getTapedriveNo();
 	
 		Volume tapeToBeUsed = tapeJob.getStorageJob().getVolume();
+		String tapeBarcode = tapeToBeUsed.getId();
 //		logger.trace("Checking if drive " + driveElementAddress + " is already loaded with the needed tape");
 //		
 //		if(tapeJob.isTapedriveAlreadyLoadedWithNeededTape()) {
@@ -117,17 +140,17 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //		}
 //		else {
 			try {
-				logger.trace("Now locating and loading tape " + tapeToBeUsed.getId() + " on to drive " + driveElementAddress);
-				tapeLibraryManager.locateAndLoadTapeOnToDrive(tapeToBeUsed.getId(), tapeLibraryName, driveElementAddress, tapeJob.getDeviceWwnId());
+				logger.trace("Now locating and loading tape " + tapeBarcode + " on to drive " + driveElementAddress);
+				tapeLibraryManager.locateAndLoadTapeOnToDrive(tapeBarcode, tapeLibraryName, driveElementAddress, tapeJob.getDeviceWwnId());
 			} catch (Exception e) {
-				logger.error("Unable to locate and load tape " + tapeToBeUsed.getId() + " on to drive " + driveElementAddress, e);
+				logger.error("Unable to locate and load tape " + tapeBarcode + " on to drive " + driveElementAddress, e);
 				throw e;
 			}
 //		}
 		
 		if(!skipRightTapeCheck) {
-			logger.trace("Now checking if " + tapeLibraryName + ":" + driveElementAddress + " indeed have the tape " + tapeToBeUsed.getId());
-			//isRightVolume
+			logger.trace("Now checking if " + tapeLibraryName + ":" + driveElementAddress + " indeed have the tape " + tapeBarcode);
+			isRightTape(selectedStorageJob, tapeBarcode);
 		}
 		return true;
 	}
@@ -138,6 +161,25 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //		
 //	}
 //
+	
+	private void isRightTape(SelectedStorageJob selectedStorageJob, String tapeBarcode) throws Exception {
+		// Verifying (if need be) if the tape is the right tape indeed.
+		// last job on tape
+		Job lastJobOnTape = jobDao.findTopByVolumeIdOrderByCompletedAtDesc(tapeBarcode);
+		
+		LocalDateTime lastJobCompletionTime = LocalDateTime.now();
+		if(lastJobOnTape != null)
+			lastJobCompletionTime = lastJobOnTape.getCompletedAt();
+		
+		long intervalBetweenJobsInSeconds = ChronoUnit.SECONDS.between(lastJobCompletionTime, LocalDateTime.now());
+		
+		if(intervalBetweenJobsInSeconds > configuration.getRightVolumeCheckInterval()) {
+			boolean isRightTape = labelManager.isRightVolume(selectedStorageJob);
+			if(!isRightTape)
+				throw new Exception("Not the right tape loaded " + tapeBarcode + " Something fundamentally wrong. Please contact admin.");
+		}
+	}
+	
 	@Override
 	protected void beforeFinalize(SelectedStorageJob selectedStorageJob) throws Exception {
 		super.beforeFinalize(selectedStorageJob);

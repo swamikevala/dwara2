@@ -112,10 +112,13 @@ public class TapeDeviceUtil {
 				throw new Exception("Something wrong. Driver " + dataTransferElementName + " mt status and dwara's tactivedevice not in sync");
 			}
 			
-			// Attaching the real tape library and drive details
+			
+			// Adding tape library and other details
 			driveDetails.setTapelibraryName(tapelibraryName);
+			driveDetails.setDriveId(tapedriveDeviceId);
 			DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
 			driveDetails.setDte(dte);
+			
 			
 			driveDetailsList.add(driveDetails);
 		}
@@ -151,8 +154,9 @@ public class TapeDeviceUtil {
 					}
 					logger.debug("Unloaded drive " + toBeUsedDataTransferElementSNo);
 				}
-				// Attaching the real tape library and drive details
+				// Adding tape library and other details
 				driveDetails.setTapelibraryName(tapelibraryName);
+				driveDetails.setDriveId(tapedriveDeviceId);
 				DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
 				driveDetails.setDte(dte);
 				

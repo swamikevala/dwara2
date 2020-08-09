@@ -19,6 +19,9 @@ public class StorageJob {
 
 	private boolean encrypted;
 	
+	// Format stuff
+	private boolean force;
+	
 	// Ingest stuff
 	private Artifact artifact;
 	private String artifactName;
@@ -64,6 +67,14 @@ public class StorageJob {
 
 	public void setEncrypted(boolean encrypted) {
 		this.encrypted = encrypted;
+	}
+
+	public boolean isForce() {
+		return force;
+	}
+
+	public void setForce(boolean force) {
+		this.force = force;
 	}
 
 	public Artifact getArtifact() {
