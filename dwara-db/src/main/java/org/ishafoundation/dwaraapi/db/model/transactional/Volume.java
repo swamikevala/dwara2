@@ -21,7 +21,6 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
-import org.ishafoundation.dwaraapi.enumreferences.Storagesubtype;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 
@@ -48,7 +47,7 @@ public class Volume {
 	
 	//@Enumerated(EnumType.STRING)
 	@Column(name="storagesubtype")
-	private Storagesubtype storagesubtype;
+	private String storagesubtype;
 	
 	@Enumerated(EnumType.STRING)
 	@Column(name="storagelevel")
@@ -111,11 +110,11 @@ public class Volume {
 		this.storagetype = storagetype;
 	}
 
-	public Storagesubtype getStoragesubtype() {
+	public String getStoragesubtype() {
 		return storagesubtype;
 	}
 
-	public void setStoragesubtype(Storagesubtype storagesubtype) {
+	public void setStoragesubtype(String storagesubtype) {
 		this.storagesubtype = storagesubtype;
 	}
 

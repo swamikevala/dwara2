@@ -50,6 +50,8 @@ public class ArtifactVolume {
     @MapsId("jobId")
 	private Job job;
 	
+	private String name; // artifact name on volume
+	
 	@Type(type = "json")
 	@Column(name="details", columnDefinition = "json")
 	private ArtifactVolumeDetails details;
@@ -86,6 +88,14 @@ public class ArtifactVolume {
 
 	public void setJob(Job job) {
 		this.job = job;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public ArtifactVolumeDetails getDetails() {

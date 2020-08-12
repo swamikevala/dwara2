@@ -1,15 +1,18 @@
+use dwara_v4_test;
+SET FOREIGN_KEY_CHECKS=0;
 DROP TABLE 
-`dwara_v4_test`.`artifact1`, 
-`dwara_v4_test`.`artifact1_volume`, 
-`dwara_v4_test`.`badfile`, 
-`dwara_v4_test`.`dwara_sequences`, 
-`dwara_v4_test`.`failure`, 
-`dwara_v4_test`.`file1`, 
-`dwara_v4_test`.`file1_volume`, 
-`dwara_v4_test`.`hibernate_sequence`,
-`dwara_v4_test`.`job`, 
-`dwara_v4_test`.`job_map`, 
-`dwara_v4_test`.`request`, 
-`dwara_v4_test`.`t_activedevice`,
-`dwara_v4_test`.`t_file_job`, 
-`dwara_v4_test`.`v_restore_file`;
+`artifact1`, 
+`artifact1_volume`, 
+`badfile`, 
+`dwara_sequences`, 
+`failure`, 
+`file1`, 
+`file1_volume`, 
+`hibernate_sequence`,
+`job`, 
+`job_map`, 
+`request`, 
+`t_activedevice`,
+`t_file_job`, 
+`v_restore_file`;
+SET FOREIGN_KEY_CHECKS=1;

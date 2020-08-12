@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
@@ -32,6 +33,9 @@ public class BruArchiver implements IArchiveformatter {
 	
 	@Autowired
 	private CommandLineExecuter commandLineExecuter;
+
+	@Autowired
+	private Configuration configuration;
 	
 	@Override
 	public ArchiveResponse write(ArchiveformatJob archiveformatJob) throws Exception {
@@ -178,8 +182,26 @@ public class BruArchiver implements IArchiveformatter {
 	}
 
 	private List<String> frameRestoreCommand(int volumeBlocksize, String deviceName, String destinationPath, String filePathNameToBeRestored) {
+		
+
+		
 		// FIXME: mbuffer -s 1M -m 2G -i /dev/st1 | bru -xvvvvvvvvv -b1024k -QV -C ***-f*** - 25079_Cauvery-Calling_Day15-Crowd-Shots-At-Closing-Event_CODISSIA-Cbe_17-Sep-2019_Z280V_B-Rolls
 		String bruRestoreCommand = "bru -B -xvvvvvvvvv -QV -C -b " + volumeBlocksize + " -f " + deviceName + " " + filePathNameToBeRestored;
+		if(configuration.useMbuffer()) {
+			/*
+				/usr/bin/mbuffer -i /dev/tape/by-id/scsi-35000e11167f7d001-nst -s 1M -m 2G -p 10 -e | bru -xvvvvvvvvv -b1024k -QV -C -Pf -B -f /dev/stdin $foldername
+
+				-f /dev/stdin (to read from stdin), 
+				-Pf (to get file listing order from stdin)
+				mbuffer switches: 
+					-e (to make mbuffer exit on error - needed when bru exits after finishing reading a file - mbuffer doesn't know when to stop reading the tape, so we rely on the "broken pipe" error afer bru terminates
+					-m 2G provides a buffer of 2G. for bigger files a bigger buffer is better, e.g. 100 GB file, 8GB is good
+					-s 1M basically has to match the tape volume block size
+					-p 10 means start reading from the tape when the buffer is less than 10% full. This is good because mechanically stopping/starting the tape drive is an overhead, so once the buffer becomes 100% full, this means that bru/tar will read data from the buffer until it is almost empty, and only then the tape drive will start filling up the buffer again
+
+			 */
+			bruRestoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m 2G -p 10 -e  | bru -B -xvvvvvvvvv -QV -C -Pf -b " + volumeBlocksize + " -f /dev/stdin " + filePathNameToBeRestored;
+		}
 		logger.debug("Bru restoring to " + destinationPath + " - " +  bruRestoreCommand);
 	
 		List<String> commandList = new ArrayList<String>();

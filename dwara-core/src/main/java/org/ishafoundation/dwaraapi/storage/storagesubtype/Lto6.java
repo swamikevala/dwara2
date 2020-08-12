@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-@Component("lto6")
+@Component("LTO-6")
 public class Lto6 extends AbstractStoragesubtype{
 
     private static final Logger logger = LoggerFactory.getLogger(Lto6.class);

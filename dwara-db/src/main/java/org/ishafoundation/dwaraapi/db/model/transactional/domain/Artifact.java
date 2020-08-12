@@ -27,9 +27,6 @@ public class Artifact {
 
 	@OneToOne
 	private Artifactclass artifactclass;
-
-	@Column(name="original_name", unique = true)
-	private String originalName;
 	
 	@Column(name="name", unique = true)
 	private String name;
@@ -78,14 +75,6 @@ public class Artifact {
 	@JsonIgnore
 	public void setArtifactclass(Artifactclass artifactclass) {
 		this.artifactclass = artifactclass;
-	}
-
-	public String getOriginalName() {
-		return originalName;
-	}
-
-	public void setOriginalName(String originalName) {
-		this.originalName = originalName;
 	}
 
 	public String getName() {

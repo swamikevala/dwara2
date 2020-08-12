@@ -12,7 +12,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
-import org.ishafoundation.dwaraapi.enumreferences.Storagesubtype;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagesubtype.AbstractStoragesubtype;
@@ -69,11 +68,11 @@ public class Format extends AbstractStoragetaskAction{
 		volume.setChecksumtype(Checksumtype.valueOf(checksumalgorithm));//Checksumtype.getChecksumtype(checksumalgorithm));
 		volume.setFinalized(false);
 		volume.setImported(false);
-	 	
-		Storagesubtype storagesubtype = Storagesubtype.getStoragesubtype(requestDetails.getStoragesubtype());
+
+		String storagesubtype = requestDetails.getStoragesubtype();
 		volume.setStoragesubtype(storagesubtype);
 		
-		AbstractStoragesubtype storagesubtypeImpl = storagesubtypeMap.get(storagesubtype.name());//storagesubtypeMap.get(storagesubtype.name());
+		AbstractStoragesubtype storagesubtypeImpl = storagesubtypeMap.get(storagesubtype);//storagesubtypeMap.get(storagesubtype.name());
 		volume.setCapacity(storagesubtypeImpl.getCapacity());
 		Integer generation = storagesubtypeImpl.getGeneration();
 		

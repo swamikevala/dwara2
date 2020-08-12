@@ -33,6 +33,8 @@ public class Configuration {
 	
 	private String restoreInProgressFileIdentifier;
 	
+	private boolean useMbuffer;
+	
 	public String getRegexAllowedChrsInFileName() {
 		return regexAllowedChrsInFileName;
 	}
@@ -135,5 +137,13 @@ public class Configuration {
 
 	public void setRestoreInProgressFileIdentifier(String restoreInProgressFileIdentifier) {
 		this.restoreInProgressFileIdentifier = restoreInProgressFileIdentifier;
+	}
+
+	public boolean useMbuffer() {
+		return useMbuffer;
+	}
+
+	public void setUseMbuffer(boolean useMbuffer) {
+		this.useMbuffer = useMbuffer;
 	}
 }

@@ -1,3 +1,7 @@
+12th Aug
+	Schema changes - Artifact_volume, Artifact
+	mbuffer - application.properties useMbuffer=true
+	
 11th Aug
 	Schema changes - Artifact_volume, Sequence, Volume
 	Sequence and volume table sql script

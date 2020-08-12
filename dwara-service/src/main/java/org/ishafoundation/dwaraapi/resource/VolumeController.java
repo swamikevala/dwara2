@@ -15,7 +15,7 @@ import org.ishafoundation.dwaraapi.api.resp.format.FormatResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.enumreferences.Storagesubtype;
+import org.ishafoundation.dwaraapi.enumreferences.TapeStoragesubtype;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.VolumeService;
@@ -134,7 +134,7 @@ public class VolumeController {
 
 			// #6 - Storagesubtype should be defined (enum)
 			String storagesubtypeStr = nthFormatRequest.getStoragesubtype();
-			Storagesubtype storagesubtype = Storagesubtype.getStoragesubtype(storagesubtypeStr);
+			TapeStoragesubtype storagesubtype = TapeStoragesubtype.getStoragesubtype(storagesubtypeStr);
 			if(storagesubtype == null)
 				throw new DwaraException("Storagesubtype " + storagesubtypeStr + " not supported" , null);
 			
@@ -167,10 +167,11 @@ public class VolumeController {
 		}
 		return 0;
 	}
-	@GetMapping("/volume/getAllStoragesubtypes")
+	
+	@GetMapping("/storagesubtypes")
 	public ResponseEntity<List<String>> getAllStoragesubtypes(){
 		List<String> storagesubtypeList = new ArrayList<String>();
-		for (Storagesubtype nthStoragesubtype : Storagesubtype.values()) {
+		for (TapeStoragesubtype nthStoragesubtype : TapeStoragesubtype.values()) {
 			storagesubtypeList.add(nthStoragesubtype.getJavaStyleStoragesubtype());
 		}
 		return ResponseEntity.status(HttpStatus.OK).body(storagesubtypeList);
