@@ -8,10 +8,12 @@ import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.MapsId;
+import javax.persistence.OneToOne;
 
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.ishafoundation.dwaraapi.db.keys.domain.ArtifactVolumeKey;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
@@ -43,6 +45,10 @@ public class ArtifactVolume {
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("volumeId")
 	private Volume volume;
+
+	@OneToOne(fetch = FetchType.LAZY)
+    @MapsId("jobId")
+	private Job job;
 	
 	@Type(type = "json")
 	@Column(name="details", columnDefinition = "json")
@@ -73,7 +79,15 @@ public class ArtifactVolume {
 	public void setId(ArtifactVolumeKey id) {
 		this.id = id;
 	}
-	
+
+	public Job getJob() {
+		return job;
+	}
+
+	public void setJob(Job job) {
+		this.job = job;
+	}
+
 	public ArtifactVolumeDetails getDetails() {
 		return details;
 	}

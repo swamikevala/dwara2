@@ -70,10 +70,10 @@ public class Format extends AbstractStoragetaskAction{
 		volume.setFinalized(false);
 		volume.setImported(false);
 	 	
-		Storagesubtype storagesubtype = requestDetails.getStoragesubtype();
+		Storagesubtype storagesubtype = Storagesubtype.getStoragesubtype(requestDetails.getStoragesubtype());
 		volume.setStoragesubtype(storagesubtype);
 		
-		AbstractStoragesubtype storagesubtypeImpl = storagesubtypeMap.get(storagesubtype.getJavaStyleStoragesubtype());//storagesubtypeMap.get(storagesubtype.name());
+		AbstractStoragesubtype storagesubtypeImpl = storagesubtypeMap.get(storagesubtype.name());//storagesubtypeMap.get(storagesubtype.name());
 		volume.setCapacity(storagesubtypeImpl.getCapacity());
 		Integer generation = storagesubtypeImpl.getGeneration();
 		

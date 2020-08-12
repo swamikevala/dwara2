@@ -38,8 +38,7 @@ public class MockTapeDriveManagerImpl extends TapeDriveManagerImpl{
 
 	@Override
 	public boolean isTapeBlank(String dataTransferElementName) throws Exception {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override

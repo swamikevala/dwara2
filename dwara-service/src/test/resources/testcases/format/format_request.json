@@ -1,6 +1,6 @@
 {
-	"volumeGroupId": "N1",
-	"volumeId": "N10001",
+	"volumeGroupId": "N2",
+	"volumeId": "N20001L7",
     "storagesubtype": "lto7",	
 	"volumeBlocksize":524288,
 	"force": false

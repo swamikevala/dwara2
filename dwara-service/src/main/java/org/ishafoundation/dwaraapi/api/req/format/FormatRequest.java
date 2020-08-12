@@ -1,40 +1,38 @@
 package org.ishafoundation.dwaraapi.api.req.format;
 
-import org.ishafoundation.dwaraapi.enumreferences.Storagesubtype;
-
 public class FormatRequest {
 	// format
-	private String volumeId;
+	private String volume;
 	
-	private String volumeGroupId;
+	private String volumeGroup;
 	
-	private Storagesubtype storagesubtype;
-	
+	private String storagesubtype;
+
 	private Integer volumeBlocksize;
 	
-	private Boolean force;
+	private Boolean force = false;
 
-	public String getVolumeId() {
-		return volumeId;
+	public String getVolume() {
+		return volume;
 	}
 
-	public void setVolumeId(String volumeId) {
-		this.volumeId = volumeId;
+	public void setVolume(String volume) {
+		this.volume = volume;
 	}
 
-	public String getVolumeGroupId() {
-		return volumeGroupId;
+	public String getVolumeGroup() {
+		return volumeGroup;
 	}
 
-	public void setVolumeGroupId(String volumeGroupId) {
-		this.volumeGroupId = volumeGroupId;
+	public void setVolumeGroup(String volumeGroup) {
+		this.volumeGroup = volumeGroup;
 	}
 
-	public Storagesubtype getStoragesubtype() {
+	public String getStoragesubtype() {
 		return storagesubtype;
 	}
 
-	public void setStoragesubtype(Storagesubtype storagesubtype) {
+	public void setStoragesubtype(String storagesubtype) {
 		this.storagesubtype = storagesubtype;
 	}
 

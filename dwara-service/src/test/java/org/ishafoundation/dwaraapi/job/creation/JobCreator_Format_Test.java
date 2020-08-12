@@ -38,8 +38,9 @@ public class JobCreator_Format_Test {
 			
 			String postBodyJson = FileUtils.readFileToString(new File(fileUrl.getFile()));
 			
-			FormatRequest fr = mapper.readValue(postBodyJson, new TypeReference<FormatRequest>() {});
-			volumeService.format(fr);
+			// TODO 
+//			FormatRequest fr = mapper.readValue(postBodyJson, new TypeReference<FormatRequest>() {});
+//			volumeService.format(fr);
 			
 			// Delete the files after the creation is done...
 //			FileUtils.deleteDirectory(new File(readyToIngestPath + File.separator + artifact_name_1));

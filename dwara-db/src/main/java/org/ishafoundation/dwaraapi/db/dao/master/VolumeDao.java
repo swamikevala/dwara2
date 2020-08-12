@@ -3,10 +3,11 @@ package org.ishafoundation.dwaraapi.db.dao.master;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.springframework.data.repository.CrudRepository;
 
 public interface VolumeDao extends CrudRepository<Volume,Integer> {
-	
+
 	List<Volume> findAllByVolumeRefIdAndFinalizedIsFalseOrderByIdAsc(String volumerefId);
 
 //	Volume findTopByVolumesetIdAndFinalizedIsFalseOrderByIdAsc(int volumesetId);
@@ -18,4 +19,8 @@ public interface VolumeDao extends CrudRepository<Volume,Integer> {
 //	List<Volume> findAllByVolumesetId(int volumesetId);
 //	
 	Volume findById(String id);
+	
+	Volume findByIdAndVolumetype(String id, Volumetype volumetype);
+	
+	List<Volume> findAllByVolumetype(Volumetype volumetype);
 }

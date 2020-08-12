@@ -1,6 +1,6 @@
 package org.ishafoundation.dwaraapi.resource;
 
-import org.ishafoundation.dwaraapi.api.req.restore.UserRequest;
+import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.service.FileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,7 @@ public class FileController {
 	
 	@ApiOperation(value = "Restores the list of files requested from location into the target volume grouped under the output dir")
 	@PostMapping("/file/restore")
-    public ResponseEntity<String> ingest(@RequestBody UserRequest userRequest){
+    public ResponseEntity<String> ingest(@RequestBody RestoreUserRequest userRequest){
 		fileService.restore(userRequest);
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body("Done");
 	}

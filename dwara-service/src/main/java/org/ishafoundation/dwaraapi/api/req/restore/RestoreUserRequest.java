@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 
-public class UserRequest {
+public class RestoreUserRequest {
 	/*
 	{
 		  "domain": "one",
@@ -19,20 +19,30 @@ public class UserRequest {
 		    }  
 		  ]
 	}*/
-	private Domain domain;
+//	private Domain domain;
+	private Integer domain;
 	private String location;
 	private String output_folder;
 	private String destinationpath;
 	private boolean verify;
 	private List<FileParams> fileParams;
 
-	public Domain getDomain() {
+
+	public Integer getDomain() {
 		return domain;
 	}
 
-	public void setDomain(Domain domain) {
+	public void setDomain(Integer domain) {
 		this.domain = domain;
-	}
+	}	
+
+//	public Domain getDomain() {
+//		return domain;
+//	}
+//
+//	public void setDomain(Domain domain) {
+//		this.domain = domain;
+//	}
 
 	public String getLocation() {
 		return location;
@@ -73,5 +83,4 @@ public class UserRequest {
 	public void setFileParams(List<FileParams> fileParams) {
 		this.fileParams = fileParams;
 	}
-
 }

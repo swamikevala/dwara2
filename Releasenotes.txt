@@ -1,3 +1,11 @@
+11th Aug
+	Schema changes - Artifact_volume, Sequence, Volume
+	Sequence and volume table sql script
+	Executor to ThreadpoolExecutor switch even for singlethreads so we access queue for both Storage and Process delegation
+	Some Tape admin API - Autoloader
+	Format API changes - production ready
+	Bug Sheet fixes - A6, A16, A17, Restore to use Int for Domain...
+	
 9th Aug
 	Restore in progress folder will be marked .restoring
 	Rightvolume check intro

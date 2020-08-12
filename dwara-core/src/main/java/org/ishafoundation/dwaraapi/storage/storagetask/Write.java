@@ -4,6 +4,7 @@ package org.ishafoundation.dwaraapi.storage.storagetask;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -32,9 +33,12 @@ public class Write extends AbstractStoragetaskAction{
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
+	
+	@Autowired
+	private ArtifactVolumeRepositoryUtil artifactVolumeRepositoryUtil;
 		
 	@Override
-	public StorageJob buildStorageJob(Job job){
+	public StorageJob buildStorageJob(Job job) throws Exception{
 
 		Request request = job.getRequest();
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
@@ -60,7 +64,7 @@ public class Write extends AbstractStoragetaskAction{
 			
 			String artifactpathToBeCopied = pathPrefix + java.io.File.separator + artifactName;
 			long sizeOfTheLibraryToBeWritten = 0;//TODO - FileUtils.sizeOfDirectory(new java.io.File(artifactpathToBeCopied)); 			
-			volume = getToBeUsedPhysicalVolume(volumegroupId, sizeOfTheLibraryToBeWritten);
+			volume = getToBeUsedPhysicalVolume(domain, volumegroupId, sizeOfTheLibraryToBeWritten);
 
 		}else if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.rewrite || requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.migrate) {
 			artifactName = request.getDetails().getArtifact_name();
@@ -91,7 +95,7 @@ public class Write extends AbstractStoragetaskAction{
 	
 	}
 	
-	private Volume getToBeUsedPhysicalVolume(String volumegroupId, long sizeOfTheLibraryToBeWritten) {
+	private Volume getToBeUsedPhysicalVolume(Domain domain, String volumegroupId, long sizeOfTheLibraryToBeWritten) {
 		
 		Volume toBeUsedVolume = null;
 		List<Volume> physicalVolumesList = volumeDao.findAllByVolumeRefIdAndFinalizedIsFalseOrderByIdAsc(volumegroupId);
@@ -103,5 +107,23 @@ public class Write extends AbstractStoragetaskAction{
 			//}
 		}
 		return toBeUsedVolume;		
+	}
+	
+	private long getVolumeUnusedCapacity(Domain domain, Volume volume){
+		long capacity = volume.getCapacity();
+		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(domain, volume);
+		int volumeBlocksize = volume.getDetails().getBlocksize();
+		
+		long usedCapacity = lastArtifactOnVolumeEndVolumeBlock * volumeBlocksize;
+		
+//		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+//		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeId(volume.getId());
+//		long usedCapacity = 0L;
+//		for (ArtifactVolume artifactVolume : artifactVolumeList) {
+//			long totalSize = domainUtil.getDomainSpecificArtifact(domain, artifactVolume.getId().getArtifactId()).getTotalSize();
+//			usedCapacity = usedCapacity + totalSize;
+//		}
+		return capacity - usedCapacity;
+		
 	}
 }

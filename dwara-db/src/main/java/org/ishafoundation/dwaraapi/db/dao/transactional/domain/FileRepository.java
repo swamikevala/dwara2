@@ -8,6 +8,8 @@ import org.springframework.data.repository.NoRepositoryBean;
 public interface FileRepository<T extends File> extends CrudRepository<T,Integer> {
 	
 	public static final String FIND_ALL_BY_ARTIFACT_ID = "findAllBy<<DOMAIN_SPECIFIC_ARTIFACT>>Id";
+	
+	File findByPathname(String pathname);
 
 //	List<File> findAllByArtifactId(int artifactId);
 	

@@ -1,7 +1,8 @@
 package org.ishafoundation.dwaraapi.enumreferences;
 
 public enum Storagesubtype {
-	lto7("LTO-7");
+	lto7("LTO-7"),
+	lto6("LTO-6");
 	
 	private String javaStyleStoragesubtype;
 	

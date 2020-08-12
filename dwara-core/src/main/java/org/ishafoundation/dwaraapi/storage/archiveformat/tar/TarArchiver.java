@@ -12,6 +12,7 @@ import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -103,6 +104,9 @@ public class TarArchiver implements IArchiveformatter {
 	
 	@Autowired
 	private Configuration configuration;
+	
+	@Autowired
+	private ArtifactVolumeRepositoryUtil artifactVolumeRepositoryUtil;
 
 	@Override
 	public ArchiveResponse write(ArchiveformatJob archiveformatJob) throws Exception {
@@ -190,16 +194,7 @@ public class TarArchiver implements IArchiveformatter {
 		Domain domain = storagetypeJob.getStorageJob().getDomain();
 		Volume volume = storagetypeJob.getStorageJob().getVolume();
 		
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		
-		int lastArtifactOnVolumeEndVolumeBlock = 0;
-		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeId(volume.getId());
-		for (ArtifactVolume artifactVolume : artifactVolumeList) {
-			int avEVB = artifactVolume.getDetails().getEnd_volume_block();
-			if(lastArtifactOnVolumeEndVolumeBlock < avEVB) {
-				lastArtifactOnVolumeEndVolumeBlock = avEVB;
-			}
-		}
+		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(domain, volume);
 	
 		int artifactStartVolumeBlock = TarBlockCalculatorUtil.FIRSTARCHIVE_START_BLOCK; 
 		if(lastArtifactOnVolumeEndVolumeBlock > 0)

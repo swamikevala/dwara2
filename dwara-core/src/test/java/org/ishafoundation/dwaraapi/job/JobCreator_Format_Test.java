@@ -29,7 +29,7 @@ public class JobCreator_Format_Test extends JobCreator_Test{
 		// group the volume belongs to
 		details.setVolume_group_id("V4A");
 		
-		details.setStoragesubtype(Storagesubtype.lto7);
+		details.setStoragesubtype("LTO-7");
 		
 		details.setForce(false);
 		return details;

@@ -50,8 +50,8 @@ public class Location implements Cacheable{
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Location domain = (Location) o;
-        return Objects.equals(name, domain.name);
+        Location location = (Location) o;
+        return Objects.equals(name, location.name);
     }
  
     @Override

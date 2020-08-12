@@ -4,7 +4,7 @@ import java.io.File;
 import java.net.URL;
 
 import org.apache.commons.io.FileUtils;
-import org.ishafoundation.dwaraapi.api.req.restore.UserRequest;
+import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.service.FileService;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -44,7 +44,7 @@ public class JobCreator_Restore_Test {
 			postBodyJson = postBodyJson.replace("<<file_id_1>>", "73");
 			// just the 1 file postBodyJson = postBodyJson.replace("<<file_id_1>>", "8"); //60 entire artifact// 63 - 1 CD folder // 65 - 2 CD folder // 67 - just one file 
 			
-			UserRequest ur = mapper.readValue(postBodyJson, new TypeReference<UserRequest>() {});
+			RestoreUserRequest ur = mapper.readValue(postBodyJson, new TypeReference<RestoreUserRequest>() {});
 			fileService.restore(ur);
 			
 			// Delete the files after the creation is done...

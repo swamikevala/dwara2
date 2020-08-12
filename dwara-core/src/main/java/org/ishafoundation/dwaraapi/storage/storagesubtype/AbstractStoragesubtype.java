@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.storage.storagesubtype;
 
+import org.ishafoundation.dwaraapi.exception.DwaraException;
+
 public abstract class AbstractStoragesubtype {
 	
 	protected Long capacity;
@@ -12,4 +14,6 @@ public abstract class AbstractStoragesubtype {
 	public int getGeneration(){
 		return generation;
 	}
+	
+	public abstract void validateVolumeId(String volumeId) throws DwaraException;
 }

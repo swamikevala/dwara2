@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.storage.storagelevel.block.label;
 
 import java.io.File;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +23,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 
 @Component
 @Primary
@@ -160,7 +162,9 @@ public class LabelManagerImpl implements LabelManager{
 		volumelabel.setBlocksize(blocksize);
 		volumelabel.setOwner(ownerId);
 		volumelabel.setAccesslevel(accesslevel);
-		volumelabel.setLabeltime(LocalDateTime.now().toString());
+		
+		String labeltime = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm").format(LocalDateTime.now());
+		volumelabel.setLabeltime(labeltime);
 		
 		Archiveformat archiveformatObj = new Archiveformat();
 		archiveformatObj.setVersion(archiveformatVersion);
@@ -176,6 +180,7 @@ public class LabelManagerImpl implements LabelManager{
 		volumelabel.setCreator(implementationId);
 		
 		XmlMapper xmlMapper = new XmlMapper();
+		xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true);
 		return xmlMapper.writeValueAsString(volumelabel);
 	}
 }

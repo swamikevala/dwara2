@@ -1,7 +1,5 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
-import org.ishafoundation.dwaraapi.enumreferences.Storagesubtype;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -17,7 +15,7 @@ public class RequestDetails {
 	
 	private Integer volume_blocksize;
 
-	private Storagesubtype storagesubtype;
+	private String storagesubtype;
 	
 	private Boolean force;
 
@@ -97,11 +95,11 @@ public class RequestDetails {
 		this.volume_blocksize = volume_blocksize;
 	}
 
-	public Storagesubtype getStoragesubtype() {
+	public String getStoragesubtype() {
 		return storagesubtype;
 	}
 
-	public void setStoragesubtype(Storagesubtype storagesubtype) {
+	public void setStoragesubtype(String storagesubtype) {
 		this.storagesubtype = storagesubtype;
 	}
 

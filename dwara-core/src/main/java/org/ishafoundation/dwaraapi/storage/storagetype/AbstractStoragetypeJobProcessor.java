@@ -101,9 +101,16 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	protected void afterFormat(SelectedStorageJob selectedStorageJob) {
 		
-		Volume volume = selectedStorageJob.getStorageJob().getVolume();
-		volumeDao.save(volume);
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
+		
+		Volume volume = storageJob.getVolume();
+		volume = volumeDao.save(volume);
 		logger.trace("Volume " + volume.getId() + " attached to dwara succesfully");
+		
+		Job job = storageJob.getJob();
+		job.setVolume(volume);
+		jobDao.save(job);
+		logger.trace("Job " + job.getId() + " updated with the formatted Volume " + volume.getId() + " succesfully");
 	}
 
 	

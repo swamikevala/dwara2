@@ -17,6 +17,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Archiveformat;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
@@ -45,7 +46,7 @@ public class Volume {
 	@Column(name="storagetype")
 	private Storagetype storagetype;
 	
-	@Enumerated(EnumType.STRING)
+	//@Enumerated(EnumType.STRING)
 	@Column(name="storagesubtype")
 	private Storagesubtype storagesubtype;
 	
@@ -77,6 +78,9 @@ public class Volume {
 	
 	@OneToOne
 	private Location location;
+	
+	@OneToOne
+	private Sequence sequence;
 	
 	@Type(type = "json")
 	@Column(name="details", columnDefinition = "json")
@@ -185,6 +189,14 @@ public class Volume {
 
 	public void setLocation(Location location) {
 		this.location = location;
+	}
+	
+	public Sequence getSequence() {
+		return sequence;
+	}
+
+	public void setSequence(Sequence sequence) {
+		this.sequence = sequence;
 	}
 
 	public VolumeDetails getDetails() {

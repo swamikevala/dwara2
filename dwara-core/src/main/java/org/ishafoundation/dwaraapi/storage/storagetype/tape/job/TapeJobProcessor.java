@@ -174,9 +174,12 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		long intervalBetweenJobsInSeconds = ChronoUnit.SECONDS.between(lastJobCompletionTime, LocalDateTime.now());
 		
 		if(intervalBetweenJobsInSeconds > configuration.getRightVolumeCheckInterval()) {
+			logger.trace("Past volume check threshold. Checking label...");
 			boolean isRightTape = labelManager.isRightVolume(selectedStorageJob);
 			if(!isRightTape)
 				throw new Exception("Not the right tape loaded " + tapeBarcode + " Something fundamentally wrong. Please contact admin.");
+		}else {
+			logger.trace("Well inside volume check threshold. Not checking label");
 		}
 	}
 	

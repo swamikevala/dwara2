@@ -29,7 +29,10 @@ public class Sequence{// implements Cacheable{
 	
 	@Column(name="starting_number")
 	private Integer startingNumber;
-
+	
+	@Column(name="ending_number")
+	private Integer endingNumber;
+	
 	@Column(name="current_number")
 	private int currrentNumber;
 	
@@ -43,7 +46,7 @@ public class Sequence{// implements Cacheable{
 	private String artifactExtractionRegex;
 
 	@Column(name="artifact_keep_code")
-	private boolean artifactKeepCode;
+	private Boolean artifactKeepCode;
 
 		
 	public int getId() {
@@ -76,6 +79,14 @@ public class Sequence{// implements Cacheable{
 
 	public void setStartingNumber(Integer startingNumber) {
 		this.startingNumber = startingNumber;
+	}
+	
+	public Integer getEndingNumber() {
+		return endingNumber;
+	}
+
+	public void setEndingNumber(Integer endingNumber) {
+		this.endingNumber = endingNumber;
 	}
 
 	public int getCurrrentNumber() {
@@ -110,11 +121,11 @@ public class Sequence{// implements Cacheable{
 		this.artifactExtractionRegex = artifactExtractionRegex;
 	}
 
-	public boolean isArtifactKeepCode() {
+	public Boolean isArtifactKeepCode() {
 		return artifactKeepCode;
 	}
 
-	public void setArtifactKeepCode(boolean artifactKeepCode) {
+	public void setArtifactKeepCode(Boolean artifactKeepCode) {
 		this.artifactKeepCode = artifactKeepCode;
 	}
 

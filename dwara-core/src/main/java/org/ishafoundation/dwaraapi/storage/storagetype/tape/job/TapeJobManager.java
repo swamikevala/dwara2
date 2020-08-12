@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TActivedeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
@@ -14,6 +15,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.Arti
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
@@ -51,7 +53,9 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 
 	@Autowired
 	private TapeDeviceUtil tapeDeviceUtil;
-	
+
+	@Autowired
+	private JobDao jobDao;
 	/**
 	 * 
   		1) Get Available(Non busy) Drive list - We need to Dequeue as many jobs and Spawn as many threads For eg., If 2 free drives are available then we need to allocate 2 jobs to these drives on their own threads
@@ -65,6 +69,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
     public void run() {
 		logger.trace("Tape job manager kicked off");
 		List<StorageJob> storageJobsList = getStorageJobList();
+
 		// execute the job
 		StorageJob storageJob = storageJobsList.get(0); // if there is a format/mapdrive job only one job will be in the list coming from JobManager... 
 		Action storagetaskAction = storageJob.getJob().getStoragetaskActionId();
@@ -140,7 +145,22 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 					// STEP 2a
 					StorageJob selectedStorageJob = null;
 					try {
-						selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, nthAvailableDriveDetails);
+						// Just double ensuring that pickedup job still is queued and not taken up for processing in the earlier schedule...
+						// If status of the selected job is queued we break the loop and move on to next steps
+						// If the selected job' status is not queued, then remove it from the list and do the tapejobselection again for the drive...
+						for (int i = 0; i < storageJobsList.size(); i++) {
+							selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, nthAvailableDriveDetails);
+							Job selectedJob = jobDao.findById(selectedStorageJob.getJob().getId()).get();
+							
+							if(selectedJob.getStatus() == Status.queued) {
+								logger.trace("Selected job is good for next steps");
+								break; 
+							} else {
+								logger.trace("Selected job was potentially picked up by one of the previous scheduled executor' joblist, after the current list is picked up from DB");
+								storageJobsList.remove(selectedStorageJob); // remove the already selected job from the list and do the tapejobselection again for the drive...
+							}
+						}
+						
 					} catch (Exception e) {
 						logger.error("Unable to select a job for drive - " + nthAvailableDriveDetails.getDriveId(), e);
 						continue;

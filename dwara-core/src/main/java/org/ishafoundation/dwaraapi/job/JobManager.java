@@ -3,6 +3,8 @@ package org.ishafoundation.dwaraapi.job;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
@@ -78,13 +80,22 @@ public class JobManager {
 				logger.info("isJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
 				if(isJobReadyToBeProcessed) {
 					if(processingtaskId != null) { // a non-storage process job
-//						logger.trace("process job");
-//						ProcessingJobManager 
-//						processingtaskActionMap.get(processingtaskId).execute();
-//						logger.trace("done");
-						ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
-						processingJobManager.setJob(job);
-						processingtaskSingleThreadExecutor.getExecutor().execute(processingJobManager);
+						ThreadPoolExecutor tpe = (ThreadPoolExecutor) processingtaskSingleThreadExecutor.getExecutor();
+						BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
+						boolean alreadyQueued = false;
+						for (Runnable runnable : runnableQueueList) {
+							ProcessingJobManager pjm = (ProcessingJobManager) runnable;
+							if(job.getId() == pjm.getJob().getId()) {
+								alreadyQueued = true;
+								break;
+							}
+						}
+						if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
+							ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
+							processingJobManager.setJob(job);
+
+							tpe.execute(processingJobManager);
+						}
 					}else {
 						if(storagetaskAction == Action.import_) {
 							ImportStoragetaskAction importStoragetaskAction = applicationContext.getBean(ImportStoragetaskAction.class);
@@ -134,7 +145,7 @@ public class JobManager {
 		for (JobMap nthPreReqJobRef : preReqJobRefs) {
 			// means a dependent job.
 			Status preReqJobStatus = jobDao.findById(nthPreReqJobRef.getId().getJobRefId()).get().getStatus();
-			if(preReqJobStatus != Status.completed && preReqJobStatus != Status.completed_failures)// TODO completed_failures too???
+			if(preReqJobStatus != Status.completed && preReqJobStatus != Status.partially_completed && preReqJobStatus != Status.completed_failures && preReqJobStatus != Status.marked_completed)
 				return false;			
 			
 		}

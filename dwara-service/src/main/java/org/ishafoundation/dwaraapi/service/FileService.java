@@ -6,7 +6,8 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.ingest.mapper.RequestToEntityObjectMapper;
 import org.ishafoundation.dwaraapi.api.req.restore.FileParams;
-import org.ishafoundation.dwaraapi.api.req.restore.UserRequest;
+import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
+import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -40,16 +41,19 @@ public class FileService {
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
+	
+	@Autowired
+	private DomainAttributeConverter domainAttributeConverter;
 
-    public ResponseEntity<String> restore(UserRequest userRequest){	
+
+    public ResponseEntity<String> restore(RestoreUserRequest userRequest){	
     	try {
-	    	
 		    	Request request = new Request();
 				request.setActionId(Action.restore);
 		    	// request.setUser(userDao.findByName(requestedBy));
 				// request.setUser(user);
 				request.setRequestedAt(LocalDateTime.now());
-				request.setDomain(userRequest.getDomain());
+				request.setDomain(domainAttributeConverter.convertToEntityAttribute(userRequest.getDomain()+""));
 				RequestDetails details = new RequestDetails();
 				JsonNode postBodyJson = getRequestDetails(userRequest); 
 				details.setBody(postBodyJson);
@@ -96,7 +100,7 @@ public class FileService {
     }
 	
 	// TODO - Unnecessary conversion happening...
-	private JsonNode getRequestDetails(UserRequest userRequest) {
+	private JsonNode getRequestDetails(RestoreUserRequest userRequest) {
 		JsonNode postBodyJson = null;
 		try {
 			ObjectMapper mapper = new ObjectMapper();

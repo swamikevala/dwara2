@@ -3,10 +3,10 @@ package org.ishafoundation.dwaraapi.process.thread;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
@@ -150,7 +150,19 @@ public class ProcessingJobProcessor implements Runnable{
 	@Override
 	public void run(){
 		String identifierSuffix = "";//mediaFileId+"";//  +  "-" + VideoTasktypeingSteps.PROXY_GENERATION.toString();
-		logger.trace("running - " + job.getId() + ":" + logicalFile.getAbsolutePath());
+		logger.trace("Running - " + job.getId() + ":" + logicalFile.getAbsolutePath());
+		
+		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = null;
+		if(outputArtifactName != null) {
+			String proxyTargetLocation = destinationDirPath + File.separator + FilenameUtils.getBaseName(logicalFile.getAbsolutePath()) + ".mp4";
+			String filepathname = proxyTargetLocation.replace(outputArtifactPathname, outputArtifactName);
+			domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileInQuestion = domainSpecificFileRepository.findByPathname(filepathname);
+			if(fileInQuestion != null) {
+				logger.trace(outputArtifactPathname + " already processed. Skipping it");
+				return;
+			}
+		}
 		
 		String containerName = identifierSuffix;	
 		
@@ -233,7 +245,7 @@ public class ProcessingJobProcessor implements Runnable{
 								// possibly updated by another thread already
 								outputArtifact = artifactRepository.findByName(outputArtifactName); 
 								if(outputArtifact != null)
-									logger.trace("outputArtifact details possibly updated by another thread already");
+									logger.trace("OutputArtifact details possibly updated by another thread already");
 								else
 									throw e;
 						    	
@@ -273,10 +285,18 @@ public class ProcessingJobProcessor implements Runnable{
 						
 						// TODO need to be done and set after proxy file is generated
 						nthFileRowToBeInserted.setChecksum(ChecksumUtil.getChecksum(new File(processingtaskResponse.getDestinationPathname()), Checksumtype.sha256)); 
-						nthFileRowToBeInserted.setSize(9999);// TODO Hardcoded...
+						nthFileRowToBeInserted.setSize(FileUtils.sizeOf(new File(processingtaskResponse.getDestinationPathname())));
 				    	logger.debug("DB File Creation");
-				    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-				    	domainSpecificFileRepository.save(nthFileRowToBeInserted);
+				    	try {
+				    		domainSpecificFileRepository.save(nthFileRowToBeInserted);
+				    	}
+				    	catch (Exception e) {
+				    		nthFileRowToBeInserted = domainSpecificFileRepository.findByPathname(filePathname); 
+							if(nthFileRowToBeInserted != null)
+								logger.trace("File details possibly updated by another thread already");
+							else
+								throw e;
+						}
 						logger.debug("DB File Creation - Success");
 					}
 
