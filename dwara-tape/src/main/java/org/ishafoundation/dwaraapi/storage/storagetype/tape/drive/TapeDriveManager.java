@@ -17,5 +17,7 @@ public interface TapeDriveManager{
 	
 	public DriveDetails setTapeHeadPositionForFormatting(String dataTransferElementName) throws Exception;
 	
+	public DriveDetails setTapeHeadPositionForReadingLabel(String dataTransferElementName) throws Exception;
+
 	public DriveDetails setTapeHeadPositionForFinalizing(String dataTransferElementName) throws Exception;
 }

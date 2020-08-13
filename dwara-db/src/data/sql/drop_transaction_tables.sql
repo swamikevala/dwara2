@@ -13,6 +13,5 @@ DROP TABLE
 `job_map`, 
 `request`, 
 `t_activedevice`,
-`t_file_job`, 
-`v_restore_file`;
+`t_file_job`;
 SET FOREIGN_KEY_CHECKS=1;

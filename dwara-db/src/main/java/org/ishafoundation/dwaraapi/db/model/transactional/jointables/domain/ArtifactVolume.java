@@ -47,7 +47,6 @@ public class ArtifactVolume {
 	private Volume volume;
 
 	@OneToOne(fetch = FetchType.LAZY)
-    @MapsId("jobId")
 	private Job job;
 	
 	private String name; // artifact name on volume

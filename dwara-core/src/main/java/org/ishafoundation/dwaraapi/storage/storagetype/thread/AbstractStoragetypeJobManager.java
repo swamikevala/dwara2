@@ -70,9 +70,11 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 			
 			updateJobCompleted(job);
 		}catch (Throwable e) {
+//			logger.error(e.getMessage());
+//			if(logger.isTraceEnabled())
+				logger.error(e.getMessage(), e);//printing the stacktrace
 			updateJobFailed(job);
 			// updateError Table;
-			logger.error(e.getMessage(), e);
 		}
 		return storageResponse;
 	}

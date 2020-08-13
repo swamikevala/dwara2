@@ -121,7 +121,7 @@ public class TapeJobSelector {
 					// pick a job by checking if another job is not using the tape and also verify if there is not a concurrent overlap
 					chosenTapeJob = chooseAJob(groupedAndOrderedJobsOnVolumeTagList, false, null); // needVerificationAgainstOtherDrives = false - as only the drive specific tape related jobs are in the list and hence job's tape needs no verification against other drives...
 					//chosenTapeJob.setDriveAlreadyLoadedWithTape(true);
-					logger.debug("Job chosen. Removing the same tape jobs from the list");
+					logger.debug("Removing the same tape jobs from the list");
 					tapeJobsList.removeAll(groupedAndOrderedJobsOnVolumeTagList); // removing all same tape specific jobs...
 					return chosenTapeJob;
 				}
@@ -139,6 +139,10 @@ public class TapeJobSelector {
 			List<StorageJob> groupedAndOrderedJobsList = groupAndOrderJobs(tapeJobsList);
 			List<DriveDetails> allAvailableDrivesList = tapeDeviceUtil.getAllAvailableDrivesDetails();
 			chosenTapeJob = chooseAJob(groupedAndOrderedJobsList, true, allAvailableDrivesList);
+			
+			logger.debug("Updating the original job list");
+			tapeJobsList = groupedAndOrderedJobsList; // removing all same tape specific jobs...
+
 		}
 
 		return chosenTapeJob;
@@ -649,6 +653,7 @@ public class TapeJobSelector {
 				return getFirstCandidateJob(tapeJobsList, needVerificationAgainstOtherDrives, allAvailableDrivesList);
 			}
 		}
+		logger.debug("No job selected");
 		return null;
 	}
 	

@@ -67,11 +67,16 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	
 	public boolean isTapeBlank(String dataTransferElementName) throws Exception {
 		rewind(dataTransferElementName);
-		CommandLineExecutionResponse fsfCommandLineExecutionResponse = fsf(dataTransferElementName, 1);
-		// if fsf fails its a blank tape for sure...
-		String failureReason = fsfCommandLineExecutionResponse.getFailureReason();
-
-		if(StringUtils.isNotBlank(failureReason)){ // when fsf command fails that means its a blank tape
+		try {
+			fsf(dataTransferElementName, 1);
+//			// if fsf fails its a blank tape for sure...
+//			String failureReason = fsfCommandLineExecutionResponse.getFailureReason();
+//
+//			if(StringUtils.isNotBlank(failureReason)){ // when fsf command fails that means its a blank tape
+//				return true;
+//			}
+		} catch (Exception e) {
+			logger.debug("fsf failed, means blank tape for sure");
 			return true;
 		}
 		return false;
@@ -180,6 +185,9 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 		return dsd;	
 	}
 	
+	public DriveDetails setTapeHeadPositionForReadingLabel(String dataTransferElementName) throws Exception {
+		return setTapeHeadPositionForFormatting(dataTransferElementName);
+	}
 
 	public DriveDetails setTapeHeadPositionForFinalizing(String dataTransferElementName) throws Exception {
 		// TODO Auto-generated method stub

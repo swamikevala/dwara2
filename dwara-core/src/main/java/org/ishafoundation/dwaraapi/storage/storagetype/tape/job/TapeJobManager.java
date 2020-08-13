@@ -150,14 +150,16 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 						// If the selected job' status is not queued, then remove it from the list and do the tapejobselection again for the drive...
 						for (int i = 0; i < storageJobsList.size(); i++) {
 							selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, nthAvailableDriveDetails);
-							Job selectedJob = jobDao.findById(selectedStorageJob.getJob().getId()).get();
-							
-							if(selectedJob.getStatus() == Status.queued) {
-								logger.trace("Selected job is good for next steps");
-								break; 
-							} else {
-								logger.trace("Selected job was potentially picked up by one of the previous scheduled executor' joblist, after the current list is picked up from DB");
-								storageJobsList.remove(selectedStorageJob); // remove the already selected job from the list and do the tapejobselection again for the drive...
+							if(selectedStorageJob != null) { // If any job is selected for the drive...
+								Job selectedJob = jobDao.findById(selectedStorageJob.getJob().getId()).get();
+								
+								if(selectedJob.getStatus() == Status.queued) {
+									logger.trace("Selected job is good for next steps");
+									break; 
+								} else {
+									logger.trace("Selected job was potentially picked up by one of the previous scheduled executor' joblist, after the current list is picked up from DB");
+									storageJobsList.remove(selectedStorageJob); // remove the already selected job from the list and do the tapejobselection again for the drive...
+								}
 							}
 						}
 						

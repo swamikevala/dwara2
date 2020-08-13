@@ -1,3 +1,6 @@
+13th Aug
+	Fixes for isRightVolume and isTapeBlank
+	
 12th Aug
 	Schema changes - Artifact_volume, Artifact
 	mbuffer - application.properties useMbuffer=true

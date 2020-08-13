@@ -116,7 +116,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		int driveElementAddress = tapeJob.getTapedriveNo();
 		int blockNumberToSeek = tapeJob.getStorageJob().getVolumeBlock();
 		
-		loadTape(selectedStorageJob);
+		loadTape(selectedStorageJob,true);
 		
 		tapeDriveManager.setTapeHeadPositionForReading(tapeJob.getDeviceWwnId(), blockNumberToSeek);
 		logger.trace("Tape Head positioned for reading "+ tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
@@ -148,6 +148,9 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 			}
 //		}
 		
+		// If answer for #1 is No - then Most appropriate place is locateAndLoadTapeOnToDrive - 
+		// 1) If we know tape is already loaded should we even do the right tape check
+		// 2) If loaded fresh, needs tape check definitely
 		if(!skipRightTapeCheck) {
 			logger.trace("Now checking if " + tapeLibraryName + ":" + driveElementAddress + " indeed have the tape " + tapeBarcode);
 			isRightTape(selectedStorageJob, tapeBarcode);
@@ -165,16 +168,31 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	private void isRightTape(SelectedStorageJob selectedStorageJob, String tapeBarcode) throws Exception {
 		// Verifying (if need be) if the tape is the right tape indeed.
 		// last job on tape
-		Job lastJobOnTape = jobDao.findTopByVolumeIdOrderByCompletedAtDesc(tapeBarcode);
+		Job lastJobOnTape = jobDao.findTopByVolumeIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(tapeBarcode);
 		
 		LocalDateTime lastJobCompletionTime = LocalDateTime.now();
-		if(lastJobOnTape != null)
+		boolean checkRightVolume = false;
+		if(lastJobOnTape != null) {
 			lastJobCompletionTime = lastJobOnTape.getCompletedAt();
+			
+			long intervalBetweenJobsInSeconds = ChronoUnit.SECONDS.between(lastJobCompletionTime, LocalDateTime.now());
+			if(intervalBetweenJobsInSeconds > configuration.getRightVolumeCheckInterval()) {
+				logger.trace("Past volume check threshold. Checking label...");
+				checkRightVolume = true;
+			}
+		}else
+			checkRightVolume = false;
+			
 		
-		long intervalBetweenJobsInSeconds = ChronoUnit.SECONDS.between(lastJobCompletionTime, LocalDateTime.now());
-		
-		if(intervalBetweenJobsInSeconds > configuration.getRightVolumeCheckInterval()) {
-			logger.trace("Past volume check threshold. Checking label...");
+		if(checkRightVolume) {
+			TapeJob tapeJob = (TapeJob) selectedStorageJob;
+
+			String tapeLibraryName = tapeJob.getTapeLibraryName();
+			int driveElementAddress = tapeJob.getTapedriveNo();
+
+			tapeDriveManager.setTapeHeadPositionForReadingLabel(tapeJob.getDeviceWwnId());
+			logger.trace("Tape Head positioned for reading label "+ tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")");
+			
 			boolean isRightTape = labelManager.isRightVolume(selectedStorageJob);
 			if(!isRightTape)
 				throw new Exception("Not the right tape loaded " + tapeBarcode + " Something fundamentally wrong. Please contact admin.");
@@ -190,7 +208,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
 
-		loadTape(selectedStorageJob, true);
+		loadTape(selectedStorageJob);
 
 		logger.trace("Now positioning tape head for finalizing " + tapeLibraryName + ":" + driveElementAddress);
 

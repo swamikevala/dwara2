@@ -139,7 +139,7 @@ public class VolumeController {
 				throw new DwaraException("Storagesubtype " + storagesubtypeStr + " not supported" , null);
 			
 			// #3 - Volume id validations required by the storagesubtype (e.g. L7 suffix for LTO-7 tapes)
-			storagesubtypeMap.get(storagesubtype.name()).validateVolumeId(volumeId);
+			storagesubtypeMap.get(storagesubtypeStr).validateVolumeId(volumeId);
 			
 			
 			// #4 - Volume blocksize should be multiple of 64KiB
