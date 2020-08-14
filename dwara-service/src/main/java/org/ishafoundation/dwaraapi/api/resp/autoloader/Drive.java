@@ -1,6 +1,10 @@
 package org.ishafoundation.dwaraapi.api.resp.autoloader;
 
-public class Drives
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
+@JsonInclude(Include.NON_NULL)
+public class Drive
 {
     private String id;
 

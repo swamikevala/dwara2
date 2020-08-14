@@ -4,35 +4,36 @@ import java.util.List;
 
 public class FormatResponse
 {
-    private int requestId;
+    private int userRequestId;
 
     private String action;
 
-    private String user;
+    private String requestedBy;
 
     private String requestedAt;
 
     private List<SystemRequestsForFormatResponse> systemRequests;
 
-    public void setRequestId(int requestId){
-        this.requestId = requestId;
-    }
-    public int getRequestId(){
-        return this.requestId;
-    }
-    public void setAction(String action){
-        this.action = action;
-    }
-    public String getAction(){
-        return this.action;
-    }
-    public void setUser(String user){
-        this.user = user;
-    }
-    public String getUser(){
-        return this.user;
-    }
-    public void setRequestedAt(String requestedAt){
+
+    public int getUserRequestId() {
+		return userRequestId;
+	}
+	public void setUserRequestId(int userRequestId) {
+		this.userRequestId = userRequestId;
+	}
+	public String getAction() {
+		return action;
+	}
+	public void setAction(String action) {
+		this.action = action;
+	}
+	public String getRequestedBy() {
+		return requestedBy;
+	}
+	public void setRequestedBy(String requestedBy) {
+		this.requestedBy = requestedBy;
+	}
+	public void setRequestedAt(String requestedAt){
         this.requestedAt = requestedAt;
     }
     public String getRequestedAt(){

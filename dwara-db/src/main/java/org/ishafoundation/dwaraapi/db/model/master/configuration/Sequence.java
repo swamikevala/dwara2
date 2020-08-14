@@ -34,7 +34,7 @@ public class Sequence{// implements Cacheable{
 	private Integer endingNumber;
 	
 	@Column(name="current_number")
-	private int currrentNumber;
+	private Integer currrentNumber;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
     private Sequence sequenceRef;
@@ -89,11 +89,11 @@ public class Sequence{// implements Cacheable{
 		this.endingNumber = endingNumber;
 	}
 
-	public int getCurrrentNumber() {
+	public Integer getCurrrentNumber() {
 		return currrentNumber;
 	}
 
-	public void setCurrrentNumber(int currrentNumber) {
+	public void setCurrrentNumber(Integer currrentNumber) {
 		this.currrentNumber = currrentNumber;
 	}
 

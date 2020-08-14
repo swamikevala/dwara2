@@ -5,8 +5,11 @@ import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
@@ -15,9 +18,20 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.ishafoundation.dwaraapi.api.req.ingest.RequestParams;
 import org.ishafoundation.dwaraapi.api.req.ingest.UserRequest;
 import org.ishafoundation.dwaraapi.api.req.ingest.mapper.RequestToEntityObjectMapper;
+import org.ishafoundation.dwaraapi.api.resp.artifactclass.ArtifactclassResponse;
+import org.ishafoundation.dwaraapi.api.resp.artifactclass.ComplexAction;
+import org.ishafoundation.dwaraapi.api.resp.staged.FileDetails;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementMapDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassActionUserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.Actionelement;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionelementMap;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassActionUser;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
@@ -27,23 +41,37 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.job.JobCreator;
+import org.ishafoundation.dwaraapi.staged.scan.SourceDirScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Component
-public class ArtifactService {
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
-	private static final Logger logger = LoggerFactory.getLogger(ArtifactService.class);
+@Component
+public class StagedService {
+
+	private static final Logger logger = LoggerFactory.getLogger(StagedService.class);
+
 
 	@Autowired
 	protected RequestDao requestDao;
+
+	@Autowired
+	protected ActionelementDao actionelementDao;
+	
+	@Autowired
+	protected ActionelementMapDao actionelementMapDao;
 	
 	@Autowired
 	protected JobCreator jobCreator;
@@ -56,7 +84,29 @@ public class ArtifactService {
 
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
-
+	
+	@Autowired
+	private ArtifactclassActionUserDao artifactclassActionUserDao;
+	
+	@Autowired
+	private Configuration configuration;
+	
+	@Autowired
+	private SourceDirScanner sourceDirScanner;
+	
+    public List<FileDetails> getAllIngestableFiles(String artifactclassId){
+		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
+		List<String> scanFolderBasePathList = new ArrayList<String>();
+		
+		List<ArtifactclassActionUser> artifactclassActionUserList = artifactclassActionUserDao.findAllByArtifactclassIdAndActionId(artifactclassId, Action.ingest.name());
+		for (ArtifactclassActionUser artifactclassActionUser : artifactclassActionUserList) {
+			scanFolderBasePathList.add(configuration.getReadyToIngestSrcDirRoot() + java.io.File.separator + artifactclassActionUser.getUser().getName());
+		}
+		
+		return sourceDirScanner.scanSourceDir(artifactclass, scanFolderBasePathList);
+	}
+	
+	
     public ResponseEntity<String> ingest(UserRequest userRequest){	
     	try {
 	    	
@@ -191,5 +241,6 @@ public class ArtifactService {
 	    }
 	    return libraryFileAndDirsList;
 	}
+
 }
 

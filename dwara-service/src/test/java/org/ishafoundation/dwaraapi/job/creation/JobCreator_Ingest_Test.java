@@ -5,7 +5,7 @@ import java.net.URL;
 
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.api.req.ingest.UserRequest;
-import org.ishafoundation.dwaraapi.service.ArtifactService;
+import org.ishafoundation.dwaraapi.service.StagedService;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,7 +25,7 @@ import net.lingala.zip4j.ZipFile;
 public class JobCreator_Ingest_Test{
 
 	@Autowired
-	ArtifactService artifactService;
+	StagedService artifactService;
 	
 	//String readyToIngestPath =  "C:\\data\\user\\pgurumurthy\\ingest\\pub-video";
 	String readyToIngestPath =  "C:\\data\\ingested";

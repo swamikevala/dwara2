@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity(name="Artifactclass")
 @Table(name="artifactclass")
-public class Artifactclass implements Cacheable{
+public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 	
 	@Id
 	@Column(name="id")
@@ -53,7 +53,7 @@ public class Artifactclass implements Cacheable{
 	private boolean concurrentVolumeCopies;
 	
 	@Column(name="display_order")
-	private int displayOrder;
+	private Integer displayOrder;
 	
     @OneToMany(mappedBy = "artifactclass",
             cascade = CascadeType.MERGE,
@@ -129,11 +129,11 @@ public class Artifactclass implements Cacheable{
 		this.concurrentVolumeCopies = concurrentVolumeCopies;
 	}
 
-	public int getDisplayOrder() {
+	public Integer getDisplayOrder() {
 		return displayOrder;
 	}
 
-	public void setDisplayOrder(int displayOrder) {
+	public void setDisplayOrder(Integer displayOrder) {
 		this.displayOrder = displayOrder;
 	}
 
@@ -209,4 +209,9 @@ public class Artifactclass implements Cacheable{
     public int hashCode() {
         return Objects.hash(id);
     }
+
+	@Override
+	public int compareTo(Artifactclass artifactclass) {
+		return this.getDisplayOrder().compareTo(artifactclass.getDisplayOrder());
+	}
 }

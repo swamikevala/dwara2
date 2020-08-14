@@ -71,12 +71,12 @@ public class VolumeService {
 		int requestId = request.getId();
 		logger.info("Request - " + requestId);
 		
-		formatResponse.setRequestId(requestId);
+		formatResponse.setUserRequestId(requestId);
 		formatResponse.setAction(request.getActionId().name());
 		ZonedDateTime zdt = requestedAt.atZone(ZoneId.of("UTC"));
 		String requestedAtForResponse = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm").format(zdt);
 		formatResponse.setRequestedAt(requestedAtForResponse);
-		formatResponse.setUser(requestedBy);
+		formatResponse.setRequestedBy(requestedBy);
 		List<SystemRequestsForFormatResponse> systemRequests = new ArrayList<SystemRequestsForFormatResponse>();
 		
 		for (FormatRequest nthFormatRequest : formatRequestList) {

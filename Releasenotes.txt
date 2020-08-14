@@ -1,3 +1,7 @@
+14th Aug
+	artifactclass and scan apis(DB artifactclassActionUser update needed)
+	apis produce content type application/json
+	
 13th Aug
 	Fixes for isRightVolume and isTapeBlank
 	

@@ -51,6 +51,10 @@ public class ConfigurationTablesUtil {
 		return (Archiveformat) dBMasterTablesCacheManager.getRecord(CacheableTablesList.archiveformat.name(), archiveformatId);
 	}
 
+	public List<Artifactclass> getAllArtifactclasses() {
+		return (List<Artifactclass>) dBMasterTablesCacheManager.getAllRecords(CacheableTablesList.artifactclass.name());
+	}
+	
 	public Artifactclass getArtifactclass(String artifactclassId) {
 		return (Artifactclass) dBMasterTablesCacheManager.getRecord(CacheableTablesList.artifactclass.name(), artifactclassId);
 	}

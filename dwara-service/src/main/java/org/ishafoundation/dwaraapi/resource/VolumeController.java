@@ -172,7 +172,7 @@ public class VolumeController {
 		return 0;
 	}
 	
-	@GetMapping("/storagesubtype")
+	@GetMapping(value = "/storagesubtype", produces = "application/json")
 	public ResponseEntity<Map<String, List<String>>> getAllStoragesubtypes(){
 		Map<String, List<String>> storagetype_Storagesubtypes_Map = new HashMap<String, List<String>>();
 		Storagetype[] storagetypes = Storagetype.values();
@@ -190,8 +190,8 @@ public class VolumeController {
 		return ResponseEntity.status(HttpStatus.OK).body(storagetype_Storagesubtypes_Map);
 	}	
 	
-	@GetMapping("/volume")
-	public ResponseEntity<List<VolumeResponse>> getVolumeByVolumetype(@RequestParam String type){
+	@GetMapping(value = "/volume", produces = "application/json")
+	public ResponseEntity<List<VolumeResponse>> getVolumeByVolumetype(@RequestParam("type") String type){
 		List<VolumeResponse> volumeResponseList = null;
 		try {
 			// validate
@@ -252,7 +252,7 @@ public class VolumeController {
 		return ResponseEntity.status(HttpStatus.OK).body(volumeResponseList);
 	}
 	
-	@PostMapping("/volume/finalize")
+	@PostMapping(value = "/volume/finalize", produces = "application/json")
 	public ResponseEntity<String> finalize(@RequestParam String volumeUid, @RequestParam Domain domain){
 		volumeService.finalize(volumeUid, domain);
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body("Done");

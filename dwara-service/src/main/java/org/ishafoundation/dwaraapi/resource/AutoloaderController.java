@@ -6,11 +6,11 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.resp.autoloader.AutoloaderResponse;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.DriveStatus;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.Drives;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.Drive;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.Element;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeUsageStatus;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.Tapes;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
@@ -50,13 +50,13 @@ public class AutoloaderController {
 	@Autowired
 	private VolumeDao volumeDao;
 	
-	@GetMapping("/autoloader/{autoloaderId}")
+	@GetMapping(value = "/autoloader/{autoloaderId}", produces = "application/json")
 	public ResponseEntity<AutoloaderResponse> getAutoloader(@PathVariable("autoloaderId") String autoloaderId){ // TODO is this id or uid thats going to be requested? should be uid 
 		AutoloaderResponse autoloaderResponse = new AutoloaderResponse();
 		try {
 			autoloaderResponse.setId(autoloaderId);
-			List<Drives> drives = new ArrayList<Drives>();
-			List<Tapes> tapes = new ArrayList<Tapes>();
+			List<Drive> drives = new ArrayList<Drive>();
+			List<Tape> tapes = new ArrayList<Tape>();
 			
 			Device autoloaderDevice = configurationTablesUtil.getDevice(autoloaderId);
 			if(autoloaderDevice == null) {
@@ -76,7 +76,7 @@ public class AutoloaderController {
 				String driveId = driveDetails.getDriveId();
 				Device configuredDriveDevice = deviceId_DeviceObj_Map.get(driveId);
 				
-				Drives drive = new Drives();
+				Drive drive = new Drive();
 				drive.setId(driveId);
 				drive.setAddress(configuredDriveDevice.getDetails().getAutoloader_address());
 				drive.setBarcode(driveDetails.getDte().getVolumeTag());
@@ -97,7 +97,7 @@ public class AutoloaderController {
 			}
 			List<TapeOnLibrary> tapeOnLibraryList = tapeLibraryManager.getAllLoadedTapesInTheLibrary(autoloaderDevice.getWwnId());
 			for (TapeOnLibrary tapeOnLibrary : tapeOnLibraryList) {
-				Tapes tape = new Tapes();
+				Tape tape = new Tape();
 				Element element = Element.slot;
 				if(tapeOnLibrary.isLoaded())
 					element = Element.drive;
@@ -142,22 +142,6 @@ public class AutoloaderController {
 		
 		return ResponseEntity.status(HttpStatus.OK).body(autoloaderResponse);
 	}
-
-//	  {
-//    "element": "drive",
-//    "address": 0
-//    "status": "imported" | "finalized" | "formatted" | "partially_written" | "blank" | "unknown", 
-//    "barcode": "C16835L6",
-//    "removeAfterJob": true,
-//    "usageStatus": "job_in_progress" | "job_queued" |  "no_job_queued",
-//    "location": "T_Block"
-// },
-
-
-//	public enum TapeStatus {
-//
-//		imported, finalized, formatted, partially_written, blank, unknown;
-//	}
 
 	private TapeStatus getTapeStatus(Volume volume) {
 		TapeStatus tapeStatus = null;
