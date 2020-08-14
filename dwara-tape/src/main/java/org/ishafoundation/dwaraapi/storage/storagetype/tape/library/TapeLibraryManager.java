@@ -14,7 +14,7 @@ public interface TapeLibraryManager {
 	
 	public List<StorageElement> getAllStorageElements(String tapeLibraryName) throws Exception;
 	
-	public List<String> getAllLoadedTapesInTheLibrary(String tapeLibraryName) throws Exception;
+	public List<TapeOnLibrary> getAllLoadedTapesInTheLibrary(String tapeLibraryName) throws Exception;
 	
 	public boolean load(String tapeLibraryName, int storageElementSNo, int dataTransferElementSNo) throws Exception;
 	

@@ -74,8 +74,7 @@ public class Format extends AbstractStoragetaskAction{
 		
 		AbstractStoragesubtype storagesubtypeImpl = storagesubtypeMap.get(storagesubtype);//storagesubtypeMap.get(storagesubtype.name());
 		volume.setCapacity(storagesubtypeImpl.getCapacity());
-		Integer generation = storagesubtypeImpl.getGeneration();
-		
+	
 
 		// Inherited from group
 		volume.setStoragetype(volumeGroup.getStoragetype());
@@ -89,7 +88,7 @@ public class Format extends AbstractStoragetaskAction{
 		VolumeDetails volumeDetails = new VolumeDetails();
 		volumeDetails.setBarcoded(true);
 		volumeDetails.setBlocksize(blocksize);
-		volumeDetails.setGeneration(generation);
+		
 
 //		String mountpoint = requestDetails.getMountpoint();
 //		volumeDetails.setMountpoint(mountpoint);

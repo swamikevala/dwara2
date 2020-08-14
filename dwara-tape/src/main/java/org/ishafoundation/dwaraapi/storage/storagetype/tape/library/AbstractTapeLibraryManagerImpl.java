@@ -31,28 +31,38 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 		MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
 		return mtxStatus.getSeList();
 	}
-
-	public List<String> getAllLoadedTapesInTheLibrary(String tapeLibraryName) throws Exception{
+	  
+	public List<TapeOnLibrary> getAllLoadedTapesInTheLibrary(String tapeLibraryName) throws Exception{
 		MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
-		List<String> tapeList = new ArrayList<String>();
+		List<TapeOnLibrary> tapeOnLibraryList = new ArrayList<TapeOnLibrary>();
 		
 		List<DataTransferElement> dteList = mtxStatus.getDteList();
 		for (DataTransferElement nthDataTransferElement : dteList) {
 			String vt = nthDataTransferElement.getVolumeTag();
-			if(vt != null)
-				tapeList.add(vt);
+			if(vt != null) {
+				TapeOnLibrary tol = new TapeOnLibrary();
+				tol.setAddress(nthDataTransferElement.getsNo());
+				tol.setLoaded(true);
+				tol.setVolumeTag(vt);
+				tapeOnLibraryList.add(tol);
+			}
 		}
 		
 		List<StorageElement> seList = mtxStatus.getSeList();
 		for (StorageElement nthStorageElement : seList) {
 			String vt = nthStorageElement.getVolumeTag();
-			if(vt != null)
-				tapeList.add(vt);
+			if(vt != null) {
+				TapeOnLibrary tol = new TapeOnLibrary();
+				tol.setAddress(nthStorageElement.getsNo());
+				tol.setLoaded(false);
+				tol.setVolumeTag(vt);
+				tapeOnLibraryList.add(tol);
+			}
 		}
 		
-		return tapeList;
+		return tapeOnLibraryList;
 	}
-	
+
 	public synchronized boolean locateAndLoadTapeOnToDrive(String toBeUsedTapeBarcode, String tapeLibraryName, int toBeUsedDataTransferElementSNo, String dataTransferElementName) throws Exception{
 		boolean isSuccess = false;
 		try {

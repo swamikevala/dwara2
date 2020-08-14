@@ -26,7 +26,7 @@ public class VolumeTest {
 		VolumeDetails volumeDetails = new VolumeDetails();
 		volumeDetails.setBarcoded(true);
 		volumeDetails.setBlocksize(1024);
-		volumeDetails.setGeneration(7);
+//		volumeDetails.setGeneration(7);
 //		volumeDetails.setMountpoint(mountpoint);
 //		volumeDetails.setProvider_id(provider_id);
 		volume.setDetails(volumeDetails);

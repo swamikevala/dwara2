@@ -1,11 +1,13 @@
 package org.ishafoundation.dwaraapi.storage.archiveformat.bru;
 
 import java.io.File;
-import java.net.URL;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.slf4j.Logger;
@@ -23,8 +25,8 @@ public class MockBruArchiver extends BruArchiver {
 	protected String executeWriteCommand(List<String> writeCommandParamsList, String artifactName, int volumeBlocksize) throws Exception {
 		logger.trace("Simulating command execution inside mock bru archiver");
 		String testArtifactName = StringUtils.substringBeforeLast(artifactName,"_");
-		URL fileUrl = this.getClass().getResource("/responses/bru/ingest-response/" + volumeBlocksize + "/" +  testArtifactName + ".txt");
-		String testResponseFileAsString = FileUtils.readFileToString(new java.io.File(fileUrl.getFile()));
+		InputStream inputStream = this.getClass().getResourceAsStream("/responses/bru/ingest-response/" + volumeBlocksize + "/" +  testArtifactName + ".txt");
+		String testResponseFileAsString = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
 		testResponseFileAsString = testResponseFileAsString.replaceAll(testArtifactName, artifactName);
 
 		return testResponseFileAsString;	

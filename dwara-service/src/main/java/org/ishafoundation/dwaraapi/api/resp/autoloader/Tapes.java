@@ -1,5 +1,5 @@
-
 package org.ishafoundation.dwaraapi.api.resp.autoloader;
+
 public class Tapes
 {
     private Element element;
@@ -10,7 +10,7 @@ public class Tapes
 
     private String barcode;
 
-    private boolean removeAfterJob;
+    private Boolean removeAfterJob;
 
     private TapeUsageStatus usageStatus;
 
@@ -49,11 +49,11 @@ public class Tapes
 		this.barcode = barcode;
 	}
 
-	public boolean isRemoveAfterJob() {
+	public Boolean isRemoveAfterJob() {
 		return removeAfterJob;
 	}
 
-	public void setRemoveAfterJob(boolean removeAfterJob) {
+	public void setRemoveAfterJob(Boolean removeAfterJob) {
 		this.removeAfterJob = removeAfterJob;
 	}
 

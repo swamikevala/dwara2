@@ -39,7 +39,11 @@ public class TapeDeviceUtil {
 	
 	@Value("${tapedrivemapping.pollinterval}")
 	private long waitInterval;
-
+	
+	public List<DriveDetails> getAllDrivesDetails() throws Exception{
+		return iterateDrives("getAllDrivesDetails");
+	}
+	
 	public List<DriveDetails> getAllAvailableDrivesDetails() throws Exception{
 		return iterateDrives("getAllAvailableDrivesDetails");
 	}
@@ -78,60 +82,76 @@ public class TapeDeviceUtil {
 				String dataTransferElementName = tapedriveDevice.getWwnId();
 				Integer driveAutoloaderAddress = tapedriveDevice.getDetails().getAutoloader_address();
 				if(tapedriveDevice.getDetails().getAutoloader_id().equals(tapelibraryId)) { // equivalent of calling the query devicetype=drive and details.autoloader_id=X, query NOT easy with json
-						if(taskName.equals("getAllAvailableDrivesDetails")) {
-							try {
-								getDriveDetailsIfAvailable(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map, driveDetailsList);
-							} catch (Exception e) {
-								logger.error(e.getMessage());
-								continue;
-							}
+					DriveDetails driveDetails = null;
+					if(taskName.equals("getAllDrivesDetails")) {
+						try {
+							driveDetails = getDriveDetails(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map);
+						} catch (Exception e) {
+							logger.error(e.getMessage());
+							continue;
 						}
-						else {
-							prepareDriveForBlockingJobs(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map, driveDetailsList);
+					}
+					else if(taskName.equals("getAllAvailableDrivesDetails")) {
+						try {
+							driveDetails = getDriveDetailsIfAvailable(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map);
+						} catch (Exception e) {
+							logger.error(e.getMessage());
+							continue;
 						}
-
+					}
+					else {
+						try {
+							driveDetails = prepareDriveForBlockingJobs(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map);
+						} catch (Exception e) {
+							logger.error(e.getMessage());
+							continue;
+						}
+					}
+					driveDetailsList.add(driveDetails);
 				}
 			}
 		}
 		return driveDetailsList;
 	}
 	
-	private void getDriveDetailsIfAvailable(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map, List<DriveDetails> driveDetailsList) throws Exception{
+	private DriveDetails getDriveDetailsIfAvailable(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map) throws Exception{
 		TActivedevice tActivedevice = tActivedeviceDao.findByDeviceId(tapedriveDeviceId);
-	
+		DriveDetails driveDetails = null;
 		if(tActivedevice == null) {// means available
 			// verify once again
-			DriveDetails driveDetails = null;
-			try {
-				driveDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
-			} catch (Exception e) {
-				throw new Exception("Unable to get tape drive details " + dataTransferElementName);
-			}
+			driveDetails = getDriveDetails(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map);
 		
 			if(driveDetails != null && driveDetails.getMtStatus().isBusy()) {
 				throw new Exception("Something wrong. Driver " + dataTransferElementName + " mt status and dwara's tactivedevice not in sync");
 			}
-			
-			
-			// Adding tape library and other details
-			driveDetails.setTapelibraryName(tapelibraryName);
-			driveDetails.setDriveId(tapedriveDeviceId);
-			DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
-			driveDetails.setDte(dte);
-			
-			
-			driveDetailsList.add(driveDetails);
 		}
+		return driveDetails;
 	}
 
-	private void prepareDriveForBlockingJobs(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map, List<DriveDetails> driveDetailsList) throws Exception{	
+	private DriveDetails getDriveDetails(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map) throws Exception{
+		DriveDetails driveDetails = null;
+		try {
+			driveDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
+		} catch (Exception e) {
+			throw new Exception("Unable to get tape drive details " + dataTransferElementName);
+		}
+		
+		// Adding tape library and other details
+		driveDetails.setTapelibraryName(tapelibraryName);
+		driveDetails.setDriveId(tapedriveDeviceId);
+		DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
+		driveDetails.setDte(dte);
+		return driveDetails;
+	}
+	
+	private DriveDetails prepareDriveForBlockingJobs(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map) throws Exception{	
+		DriveDetails driveDetails = null;
 		boolean isBusy = true;
 		while(isBusy){//
 			TActivedevice tActivedevice = tActivedeviceDao.findByDeviceId(tapedriveDeviceId);
 			if(tActivedevice == null) {	
 				isBusy = false; // available...
 				// verify once again
-				DriveDetails driveDetails = null;
 				try {
 					driveDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
 				} catch (Exception e) {
@@ -159,9 +179,6 @@ public class TapeDeviceUtil {
 				driveDetails.setDriveId(tapedriveDeviceId);
 				DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
 				driveDetails.setDte(dte);
-				
-				driveDetailsList.add(driveDetails);
-		
 			}else {
 				try {
 					logger.debug("Drive busy. Will wait " + waitInterval);
@@ -172,5 +189,6 @@ public class TapeDeviceUtil {
 				}								
 			}
 		}
+		return driveDetails;
 	}
 }

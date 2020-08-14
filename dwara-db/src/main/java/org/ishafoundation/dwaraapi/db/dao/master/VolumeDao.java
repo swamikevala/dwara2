@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.db.dao.master;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.springframework.data.repository.CrudRepository;
 
@@ -23,4 +24,6 @@ public interface VolumeDao extends CrudRepository<Volume,Integer> {
 	Volume findByIdAndVolumetype(String id, Volumetype volumetype);
 	
 	List<Volume> findAllByVolumetype(Volumetype volumetype);
+	
+	List<Volume> findAllByStoragetypeAndVolumetype(Storagetype storagetype, Volumetype volumetype);
 }

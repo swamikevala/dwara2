@@ -12,9 +12,13 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.req.format.FormatRequest;
 import org.ishafoundation.dwaraapi.api.resp.format.FormatResponse;
+import org.ishafoundation.dwaraapi.api.resp.volume.Details;
+import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.enumreferences.TapeStoragesubtype;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -168,17 +172,88 @@ public class VolumeController {
 		return 0;
 	}
 	
-	@GetMapping("/storagesubtypes")
-	public ResponseEntity<List<String>> getAllStoragesubtypes(){
-		List<String> storagesubtypeList = new ArrayList<String>();
-		for (TapeStoragesubtype nthStoragesubtype : TapeStoragesubtype.values()) {
-			storagesubtypeList.add(nthStoragesubtype.getJavaStyleStoragesubtype());
+	@GetMapping("/storagesubtype")
+	public ResponseEntity<Map<String, List<String>>> getAllStoragesubtypes(){
+		Map<String, List<String>> storagetype_Storagesubtypes_Map = new HashMap<String, List<String>>();
+		Storagetype[] storagetypes = Storagetype.values();
+		for (int i = 0; i < storagetypes.length; i++) {
+			Storagetype storagetype = storagetypes[i];
+
+			List<String> storagesubtypeList = new ArrayList<String>();
+			if(storagetype == Storagetype.tape) {
+				for (TapeStoragesubtype nthStoragesubtype : TapeStoragesubtype.values()) {
+					storagesubtypeList.add(nthStoragesubtype.getJavaStyleStoragesubtype());
+				}
+			}
+			storagetype_Storagesubtypes_Map.put(storagetype.name(), storagesubtypeList);
 		}
-		return ResponseEntity.status(HttpStatus.OK).body(storagesubtypeList);
+		return ResponseEntity.status(HttpStatus.OK).body(storagetype_Storagesubtypes_Map);
 	}	
 	
+	@GetMapping("/volume")
+	public ResponseEntity<List<VolumeResponse>> getVolumeByVolumetype(@RequestParam String type){
+		List<VolumeResponse> volumeResponseList = null;
+		try {
+			// validate
+			Volumetype neededVolumetype = Volumetype.valueOf(type);
+			
+			volumeResponseList = new ArrayList<VolumeResponse>();
+			List<Volume> volumeGroupList = volumeDao.findAllByVolumetype(neededVolumetype);
+			for (Volume volume : volumeGroupList) {
+				VolumeResponse volResp = new VolumeResponse();
+				volResp.setId(volume.getId());
+				volResp.setVolumetype(volume.getVolumetype().name());
+				volResp.setStoragetype(volume.getStoragetype().name());
+				volResp.setStoragelevel(volume.getStoragelevel().name());
+				//volResp.setVolumeRef(volumeRef);
+				//volResp.setChecksumtype(checksumtype);
+				//volResp.setFormattedAt(formattedAt);
+				volResp.setFinalized(volume.isFinalized());
+				volResp.setImported(volume.isImported());
+				if(volume.getArchiveformat() != null)
+					volResp.setArchiveformat(volume.getArchiveformat().getId());
+
+				/* TODO
+				volResp.setTotalCapacity(totalCapacity);
+				volResp.setUsedCapacity(usedCapacity);
+				volResp.setUnusedCapacity(unusedCapacity);
+				volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity);
+				volResp.setSizeUnit(sizeUnit);
+				*/
+				volResp.setLocation(volume.getLocation().getName());
+				
+				VolumeDetails volumeDetails = volume.getDetails();
+				if(volumeDetails != null) {
+					Details details = new Details();
+					
+					//details.setBarcoded(volumeDetails.isBarcoded());
+					if(volumeDetails.getBlocksize() != null)
+						details.setBlocksize(volumeDetails.getBlocksize()/1024);
+					details.setBlocksizeUnit("KiB");
+					
+					details.setStoragesubtype(volume.getStoragesubtype());
+					//details.setMountPoint(mountPoint);
+					//details.setProvider(provider);
+					//details.setRemoveAfterJob(removeAfterJob);
+					volResp.setDetails(details);
+				}
+				volumeResponseList.add(volResp);
+			}
+		}catch (Exception e) {
+			String errorMsg = "Unable to get Volume details - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(volumeResponseList);
+	}
+	
 	@PostMapping("/volume/finalize")
-	public ResponseEntity<String> finalize(@RequestParam String volumeUid,@RequestParam Domain domain){
+	public ResponseEntity<String> finalize(@RequestParam String volumeUid, @RequestParam Domain domain){
 		volumeService.finalize(volumeUid, domain);
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body("Done");
 	}

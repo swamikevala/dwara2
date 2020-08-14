@@ -141,7 +141,7 @@ public class BruResponseParser {
 			// VL:<<Mode>>|<<archive running total data KB>>|?|<<file size>>|<<volume start block>>|<<file path name>>
 			// c - copy/write mode
 			// 75008 - running total of the amount of space used in kilobytes thus far - excludes the current file size - start of the
-			// 1 - ? It shows always 1 - Volume Id perhaps???
+			// 1 - ? It shows always 1 - Volume Id perhaps??
 			// 1105188303 - file size in bytes
 			// 20154 - Volume start block of the file
 			// 99999_Daily-Mystic-Quote_Le-Meridien-Chennai_21-Dec-2019_FS7_4K/Clip/LMA122789_01.MP4 - file path name
@@ -150,18 +150,18 @@ public class BruResponseParser {
 			
 			
 			// Execution summary stuff
-			String errorDescriptionRegEx = "bru: \\[([A-Z][0-9]{3})\\](.*)";
-			String startedRegEx = "Started: *(.*)";
-			String completedRegEx = "Completed: *(.*)";
-			String messagesRegEx = "Messages: *([0-9]*) warnings,  ([0-9]*) errors";
-			String blocksWrittenRegEx = "Archive I/O: *([0-9]*) blocks \\(([0-9]*)KB\\) written"; // Archive I/O:            211328 blocks (422656KB) written
-			String filesWrittenRegEx = "Files written: *([0-9]*) files \\(([0-9]*) regular, ([0-9]*) other\\)"; // Files written:          13 files (6 regular, 7 other)
-			String blocksReadRegEx = "Archive I/O: *([0-9]*) blocks \\(([0-9]*)KB\\) read"; // Archive I/O:            0 blocks (0KB) read
-			String filesReadRegEx = "Files read: *([0-9]*) files \\(([0-9]*) regular, ([0-9]*) other\\)"; // Files read:             0 files (0 regular, 0 other)
-			String filesSkippedRegEx = "Files skipped: *([0-9]*) files"; // Files skipped:          0 files
-			String writeErrorsRegEx = "Write errors: *([0-9]*) soft,  ([0-9]*) hard";
-			String readErrorsRegEx = "Read errors: *([0-9]*) soft,  ([0-9]*) hard";
-			String checksumErrorsRegEx = "Checksum errors: *([0-9]*)";
+			String errorDescriptionRegEx = "bru:\\s+\\[([A-Z][0-9]{3})\\](.*)";
+			String startedRegEx = "Started:\\s+(.*)";
+			String completedRegEx = "Completed:\\s+(.*)";
+			String messagesRegEx = "Messages:\\s+([0-9]*) warnings,  ([0-9]*) errors";
+			String blocksWrittenRegEx = "Archive I/O:\\s+([0-9]*) blocks \\(([0-9]*)KB\\) written"; // Archive I/O:            211328 blocks (422656KB) written
+			String filesWrittenRegEx = "Files written:\\s+([0-9]*) files \\(([0-9]*) regular, ([0-9]*) other\\)"; // Files written:          13 files (6 regular, 7 other)
+			String blocksReadRegEx = "Archive I/O:\\s+([0-9]*) blocks \\(([0-9]*)KB\\) read"; // Archive I/O:            0 blocks (0KB) read
+			String filesReadRegEx = "Files read:\\s+([0-9]*) files \\(([0-9]*) regular, ([0-9]*) other\\)"; // Files read:             0 files (0 regular, 0 other)
+			String filesSkippedRegEx = "Files skipped:\\s+([0-9]*) files"; // Files skipped:          0 files
+			String writeErrorsRegEx = "Write errors:\\s+([0-9]*) soft,  ([0-9]*) hard";
+			String readErrorsRegEx = "Read errors:\\s+([0-9]*) soft,  ([0-9]*) hard";
+			String checksumErrorsRegEx = "Checksum errors:\\s+([0-9]*)";
 
 			Pattern archiveIdRegExPattern = Pattern.compile(archiveIdRegEx);
 			Pattern bufferSizeRegExPattern = Pattern.compile(bufferSizeRegEx);
