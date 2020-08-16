@@ -1,3 +1,9 @@
+16th Aug
+	Login changes from Dong anna
+	Scan API - Note response structure changed, Removed ActionUser table but retain ArtifactclassActionUser table.
+	Ingest API - With ingest core changes moving files from user to app, move junkfiles, sequence no gen etc., Moved out all pre-ingest valdation like supported extensions and artifact sizing - to scan...
+	 
+	
 14th Aug
 	artifactclass and scan apis(DB artifactclassActionUser update needed)
 	apis produce content type application/json

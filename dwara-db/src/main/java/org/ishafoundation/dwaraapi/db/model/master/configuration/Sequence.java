@@ -129,11 +129,15 @@ public class Sequence{// implements Cacheable{
 		this.artifactKeepCode = artifactKeepCode;
 	}
 
-	public void incrementCurrentNumber() {
-		this.currrentNumber += 1;
+	public Integer incrementCurrentNumber() {
+		if(currrentNumber != null)
+			this.currrentNumber += 1;
+		return currrentNumber;
 	}
 	
-	public void decrementCurrentNumber() {
-		this.currrentNumber -= 1;
+	public Integer decrementCurrentNumber() {
+		if(currrentNumber != null)
+			this.currrentNumber -= 1;
+		return currrentNumber;
 	}
 }

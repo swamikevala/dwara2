@@ -70,54 +70,54 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 	}
 
 	@Test
-	public void test_b_Ingest() {
-		try {
-			JsonNode body = request.getDetails().getBody();
-			String artifactclassName = body.get("artifactclass").textValue();
-			Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager
-					.getRecord(CacheableTablesList.artifactclass.name(), artifactclassName);
-			Domain domain = artifactclass.getDomain();
-			Iterator<JsonNode> artifacts = body.get("artifact").elements();
-			while (artifacts.hasNext()) {
-				Request systemrequest = new Request();
-				systemrequest.setRequestRef(request);
-				systemrequest.setActionId(request.getActionId());
-				systemrequest.setRequestedAt(LocalDateTime.now());
-				
-				JsonNode artifactJsonNode = (JsonNode) artifacts.next();
-				String artifact_name = artifactJsonNode.get("artifact_name").textValue();
-				
-				RequestDetails details = new RequestDetails();
-				details.setArtifactclass_id(artifactclass.getId());
-				details.setSourcepath("some sourcepath");
-				details.setArtifact_name(artifact_name);
-				details.setPrev_sequence_code("some prev_sequence_code");
-
-				systemrequest.setDetails(details);
-				systemrequest = requestDao.save(systemrequest);
-
-				Artifact artifact = DomainSpecificArtifactFactory.getInstance(domain);
-				artifact.setName(artifact_name);
-				artifact.setArtifactclass(artifactclass);
-				domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
-	
-				// TODO File related changes go here...
-				
-				
-	
-				logger.debug("successfully tested domain specific table testing");
-				jobCreator.createJobs(systemrequest, artifact);
-				
-				IDatabaseConnection  dbUnitDbConnection = dbUnitDatabaseConnection.getObject();		// Passing the connection so its reused...
-				
-				validateDBDataForIngestJobCreation(systemrequest, dbUnitDbConnection);
-			}
-
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		}
-	}
+//	public void test_b_Ingest() {
+//		try {
+//			JsonNode body = request.getDetails().getBody();
+//			String artifactclassName = body.get("artifactclass").textValue();
+//			Artifactclass artifactclass = (Artifactclass) dBMasterTablesCacheManager
+//					.getRecord(CacheableTablesList.artifactclass.name(), artifactclassName);
+//			Domain domain = artifactclass.getDomain();
+//			Iterator<JsonNode> artifacts = body.get("artifact").elements();
+//			while (artifacts.hasNext()) {
+//				Request systemrequest = new Request();
+//				systemrequest.setRequestRef(request);
+//				systemrequest.setActionId(request.getActionId());
+//				systemrequest.setRequestedAt(LocalDateTime.now());
+//				
+//				JsonNode artifactJsonNode = (JsonNode) artifacts.next();
+//				String artifact_name = artifactJsonNode.get("artifact_name").textValue();
+//				
+//				RequestDetails details = new RequestDetails();
+//				details.setArtifactclass_id(artifactclass.getId());
+//				details.setSourcepath("some sourcepath");
+//				details.setArtifact_name(artifact_name);
+//				details.setPrev_sequence_code("some prev_sequence_code");
+//
+//				systemrequest.setDetails(details);
+//				systemrequest = requestDao.save(systemrequest);
+//
+//				Artifact artifact = DomainSpecificArtifactFactory.getInstance(domain);
+//				artifact.setName(artifact_name);
+//				artifact.setArtifactclass(artifactclass);
+//				domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
+//	
+//				// TODO File related changes go here...
+//				
+//				
+//	
+//				logger.debug("successfully tested domain specific table testing");
+//				jobCreator.createJobs(systemrequest, artifact);
+//				
+//				IDatabaseConnection  dbUnitDbConnection = dbUnitDatabaseConnection.getObject();		// Passing the connection so its reused...
+//				
+//				validateDBDataForIngestJobCreation(systemrequest, dbUnitDbConnection);
+//			}
+//
+//		} catch (Exception e) {
+//			// TODO: handle exception
+//			e.printStackTrace();
+//		}
+//	}
 
 	private void validateDBDataForIngestJobCreation(Request systemrequest, IDatabaseConnection  dbUnitDbConnection) throws Exception{
 		// Assert Request table

@@ -1,8 +1,8 @@
-package org.ishafoundation.dwaraapi.api.req.ingest.mapper;
+package org.ishafoundation.dwaraapi.resource.mapper;
 
-import org.ishafoundation.dwaraapi.api.req.format.FormatRequest;
-import org.ishafoundation.dwaraapi.api.req.ingest.RequestParams;
+import org.ishafoundation.dwaraapi.api.req.format.FormatUserRequest;
 import org.ishafoundation.dwaraapi.api.req.restore.FileParams;
+import org.ishafoundation.dwaraapi.api.req.staged.ingest.StagedFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -14,11 +14,15 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 @Mapper(componentModel = "spring")
 public interface RequestToEntityObjectMapper {
 	
+	@Mappings({
+        @Mapping(source = "path", target = "stagedFilepath"),
+        @Mapping(source = "name", target = "stagedFilename")
+    })
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
-	RequestDetails getRequestDetails(RequestParams requestParams);
+	RequestDetails getRequestDetailsForIngest(StagedFile stagedFile);
 	
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
-	RequestDetails getRequestDetails(FileParams fileParams);
+	RequestDetails getRequestDetailsForRestore(FileParams fileParams);
 	
 	@Mappings({
         @Mapping(source = "volume", target = "volume_id"),
@@ -26,9 +30,7 @@ public interface RequestToEntityObjectMapper {
         @Mapping(source = "volumeBlocksize", target = "volume_blocksize")
     })
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
-	RequestDetails getRequestDetails(FormatRequest formatRequest);
-	
-	
+	RequestDetails getRequestDetailsForFormat(FormatUserRequest formatRequest);
 	
 }
 

@@ -1,7 +1,6 @@
 package org.ishafoundation.dwaraapi.db.model.master.configuration;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -14,9 +13,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassActionUser;
-import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionUser;
-import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -37,10 +33,10 @@ public class User {//implements Cacheable{
 	@ManyToOne
 	private Priorityband priorityband;
 	
-    @OneToMany(mappedBy = "user",
-            cascade = CascadeType.MERGE,
-            orphanRemoval = true)
-    private List<ActionUser> actions = new ArrayList<>();
+//    @OneToMany(mappedBy = "user",
+//            cascade = CascadeType.MERGE,
+//            orphanRemoval = true)
+//    private List<ActionUser> actions = new ArrayList<>();
 
     @OneToMany(mappedBy = "user",
             cascade = CascadeType.MERGE,
@@ -83,37 +79,37 @@ public class User {//implements Cacheable{
 		this.priorityband = priorityband;
 	}
 	
-	@JsonIgnore
-    public List<ActionUser> getActions() {
-		return actions;
-	}
-
-	@JsonIgnore
-	public void setActions(List<ActionUser> actions) {
-		this.actions = actions;
-	}
-
-	public void addAction(Action action, int permissionLevel) {
-        ActionUser actionUser = new ActionUser(action, this);
-        actionUser.setPermissionLevel(permissionLevel);
-        actions.add(actionUser);
-        action.getUsers().add(actionUser);
-    }
-    
-    public void removeAction(Action action) {
-        for (Iterator<ActionUser> iterator = actions.iterator();
-             iterator.hasNext(); ) {
-            ActionUser actionUser = iterator.next();
- 
-            if (actionUser.getUser().equals(this) &&
-                    actionUser.getAction().equals(action)) {
-                iterator.remove();
-                actionUser.getAction().getUsers().remove(actionUser);
-                actionUser.setUser(null);
-                actionUser.setAction(null);
-            }
-        }
-    }
+//	@JsonIgnore
+//    public List<ActionUser> getActions() {
+//		return actions;
+//	}
+//
+//	@JsonIgnore
+//	public void setActions(List<ActionUser> actions) {
+//		this.actions = actions;
+//	}
+//
+//	public void addAction(Action action, int permissionLevel) {
+//        ActionUser actionUser = new ActionUser(action, this);
+//        actionUser.setPermissionLevel(permissionLevel);
+//        actions.add(actionUser);
+//        action.getUsers().add(actionUser);
+//    }
+//    
+//    public void removeAction(Action action) {
+//        for (Iterator<ActionUser> iterator = actions.iterator();
+//             iterator.hasNext(); ) {
+//            ActionUser actionUser = iterator.next();
+// 
+//            if (actionUser.getUser().equals(this) &&
+//                    actionUser.getAction().equals(action)) {
+//                iterator.remove();
+//                actionUser.getAction().getUsers().remove(actionUser);
+//                actionUser.setUser(null);
+//                actionUser.setAction(null);
+//            }
+//        }
+//    }
 	
 	@JsonIgnore
 	public List<ArtifactclassActionUser> getArtifactclassActionUser() {

@@ -8,7 +8,7 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface ActionelementDao extends CrudRepository<Actionelement,Integer> {
 	
-	
+//	List<Actionelement> findAllByArtifactclassId(String artifactclassId);
 	
 //	Actionelement findByActionAndTaskIdAndTasktypeAndArtifactclassIdAndVolumesetId(Action action, int taskId, Tasktype tasktype, int artifactclassId, Integer volumesetId);
 	

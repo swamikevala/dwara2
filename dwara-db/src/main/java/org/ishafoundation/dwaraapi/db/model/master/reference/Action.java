@@ -14,7 +14,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionUser;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassActionUser;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
 
@@ -35,10 +34,10 @@ public class Action implements Cacheable{
 	@Column(name="description")
 	private String description;
 	
-    @OneToMany(mappedBy = "action",
-            cascade = CascadeType.MERGE,
-            orphanRemoval = true)
-    private List<ActionUser> users = new ArrayList<>();
+//    @OneToMany(mappedBy = "action",
+//            cascade = CascadeType.MERGE,
+//            orphanRemoval = true)
+//    private List<ActionUser> users = new ArrayList<>();
     
     @OneToMany(mappedBy = "action",
             cascade = CascadeType.MERGE,
@@ -68,16 +67,16 @@ public class Action implements Cacheable{
 	public void setDescription(String description) {
 		this.description = description;
 	}
-
-	@JsonIgnore
-	public List<ActionUser> getUsers() {
-		return users;
-	}
-	
-	@JsonIgnore
-	public void setUsers(List<ActionUser> users) {
-		this.users = users;
-	}
+//
+//	@JsonIgnore
+//	public List<ActionUser> getUsers() {
+//		return users;
+//	}
+//	
+//	@JsonIgnore
+//	public void setUsers(List<ActionUser> users) {
+//		this.users = users;
+//	}
 	
 	@JsonIgnore
 	public List<ArtifactclassActionUser> getArtifactclassActionUser() {

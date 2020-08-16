@@ -51,7 +51,7 @@ public class JobCreator_Ingest_Test{
 //			postBodyJson = postBodyJson.replace("<<artifact_name_3>>", artifact_name_3);
 			
 			UserRequest ur = mapper.readValue(postBodyJson, new TypeReference<UserRequest>() {});
-			artifactService.ingest(ur);
+			//artifactService.ingest(ur);
 			
 			// Delete the files after the creation is done...
 //			FileUtils.deleteDirectory(new File(readyToIngestPath + File.separator + artifact_name_1));

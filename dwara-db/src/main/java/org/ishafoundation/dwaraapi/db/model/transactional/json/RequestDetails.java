@@ -1,6 +1,9 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -9,10 +12,13 @@ public class RequestDetails {
 	private JsonNode body;
 	
 	// format
+	@JsonProperty("volume_id")
 	private String volume_id;
 	
-	private String volume_group_id; // TODO : Schema deviation - Schema to change
+	@JsonProperty("volume_group_id")
+	private String volume_group_id;
 	
+	@JsonProperty("volume_blocksize")
 	private Integer volume_blocksize;
 
 	private String storagesubtype;
@@ -20,25 +26,26 @@ public class RequestDetails {
 	private Boolean force;
 
 	// ingest stuff
-	private String artifactclass_id;
+	@JsonProperty("artifactclass_id")
+	private String artifactclassId;
 	
-	private String sourcepath;
+	@JsonProperty("staged_filepath")
+	private String stagedFilepath;
 
-	
 	// TODO not needed for ingest may be for rename or delete - private Integer artifact_id;
 	
-	private String artifact_name;
+	@JsonProperty("staged_filename")
+	private String stagedFilename;
 
-	private String prev_sequence_code;
+	@JsonProperty("prev_sequence_code")
+	private String prevSequenceCode;
 
-	private Boolean rerun;
+	@JsonProperty("rerun_no")
+	private Integer rerunNo;
 
-	private Integer rerun_no;
+	@JsonProperty("skip_actionelements")
+	private List<Integer> skipActionelements;
 
-	private String[] skip_storagetask_actions;
-
-	private String[] skip_processingtasks;
-	
 	// restore stuff
 	private Integer file_id;
 	
@@ -113,68 +120,52 @@ public class RequestDetails {
 
 	/********************  INGEST  ********************/
 	
-	public String getArtifactclass_id() {
-		return artifactclass_id;
+	public String getArtifactclassId() {
+		return artifactclassId;
 	}
 
-	public void setArtifactclass_id(String artifactclass_id) {
-		this.artifactclass_id = artifactclass_id;
+	public void setArtifactclassId(String artifactclassId) {
+		this.artifactclassId = artifactclassId;
 	}
 
-	public String getSourcepath() {
-		return sourcepath;
+	public String getStagedFilepath() {
+		return stagedFilepath;
 	}
 
-	public void setSourcepath(String sourcepath) {
-		this.sourcepath = sourcepath;
+	public void setStagedFilepath(String stagedFilepath) {
+		this.stagedFilepath = stagedFilepath;
 	}
 
-	public String getArtifact_name() {
-		return artifact_name;
+	public String getStagedFilename() {
+		return stagedFilename;
 	}
 
-	public void setArtifact_name(String artifact_name) {
-		this.artifact_name = artifact_name;
+	public void setStagedFilename(String stagedFilename) {
+		this.stagedFilename = stagedFilename;
 	}
 
-	public String getPrev_sequence_code() {
-		return prev_sequence_code;
+	public String getPrevSequenceCode() {
+		return prevSequenceCode;
 	}
 
-	public void setPrev_sequence_code(String prev_sequence_code) {
-		this.prev_sequence_code = prev_sequence_code;
+	public void setPrevSequenceCode(String prevSequenceCode) {
+		this.prevSequenceCode = prevSequenceCode;
 	}
 
-	public Boolean getRerun() {
-		return rerun;
+	public Integer getRerunNo() {
+		return rerunNo;
 	}
 
-	public void setRerun(Boolean rerun) {
-		this.rerun = rerun;
+	public void setRerunNo(Integer rerunNo) {
+		this.rerunNo = rerunNo;
 	}
 
-	public Integer getRerun_no() {
-		return rerun_no;
+	public List<Integer> getSkipActionelements() {
+		return skipActionelements;
 	}
 
-	public void setRerun_no(Integer rerun_no) {
-		this.rerun_no = rerun_no;
-	}
-
-	public String[] getSkip_storagetask_actions() {
-		return skip_storagetask_actions;
-	}
-
-	public void setSkip_storagetask_actions(String[] skip_storagetask_actions) {
-		this.skip_storagetask_actions = skip_storagetask_actions;
-	}
-
-	public String[] getSkip_processingtasks() {
-		return skip_processingtasks;
-	}
-
-	public void setSkip_processingtasks(String[] skip_processingtasks) {
-		this.skip_processingtasks = skip_processingtasks;
+	public void setSkipActionelements(List<Integer> skipActionelements) {
+		this.skipActionelements = skipActionelements;
 	}
 
 	/********************  RESTORE  ********************/

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.api.req.ingest.mapper.RequestToEntityObjectMapper;
 import org.ishafoundation.dwaraapi.api.req.restore.FileParams;
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
@@ -15,6 +14,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.job.JobCreator;
+import org.ishafoundation.dwaraapi.resource.mapper.RequestToEntityObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,7 +75,7 @@ public class FileService {
 					systemrequest.setRequestedAt(LocalDateTime.now());
 					systemrequest.setDomain(request.getDomain());
 
-		    		RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetails(fileParams);
+		    		RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForRestore(fileParams);
 		    		String requestedLocation = userRequest.getLocation();
 		    		Location location = getLocation(requestedLocation);
 					systemrequestDetails.setLocation_id(location.getId());

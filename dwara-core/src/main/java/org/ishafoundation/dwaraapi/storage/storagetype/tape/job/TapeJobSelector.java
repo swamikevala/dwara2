@@ -599,7 +599,7 @@ public class TapeJobSelector {
 									return tapeJob;
 								*/
 
-								String crwjArtifactClassId = crwj.getRequest().getDetails().getArtifactclass_id();
+								String crwjArtifactClassId = crwj.getRequest().getDetails().getArtifactclassId();
 //								Integer inputArtifactId = crwj.getInputArtifactId();
 //								Domain domain = crwj.getRequest().getDomain();
 //								Artifact artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);

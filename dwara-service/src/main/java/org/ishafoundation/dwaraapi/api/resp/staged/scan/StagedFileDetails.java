@@ -1,6 +1,10 @@
-package org.ishafoundation.dwaraapi.api.resp.staged;
+package org.ishafoundation.dwaraapi.api.resp.staged.scan;
 
-public class FileDetails {
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
+@JsonInclude(Include.NON_NULL)
+public class StagedFileDetails {
 	private String path;
 	private String name;
 	private String suggestedName;

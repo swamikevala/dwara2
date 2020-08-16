@@ -35,7 +35,7 @@ public class Artifact {
 	private String sequenceCode;
 	
 	@Column(name="prev_sequence_code")
-	private String prev_sequence_code;
+	private String prevSequenceCode;
 	
 	@Column(name="file_count")
 	private int fileCount;
@@ -49,6 +49,10 @@ public class Artifact {
 	@Column(name="file_structure_md5")
 	private String fileStructureMd5;
 
+	@OneToOne
+	@JoinColumn(name="creation_request_id") 
+	private Request creationRequest;	
+	
  	// Causes cyclic associations 
  	// Many subrequest could have happened on the same library. Like rerun etc., But this holds the most recent subrequest so that it can be queried easily
 	@OneToOne
@@ -93,12 +97,12 @@ public class Artifact {
 		this.sequenceCode = sequenceCode;
 	}
 
-	public String getPrev_sequence_code() {
-		return prev_sequence_code;
+	public String getPrevSequenceCode() {
+		return prevSequenceCode;
 	}
 
-	public void setPrev_sequence_code(String prev_sequence_code) {
-		this.prev_sequence_code = prev_sequence_code;
+	public void setPrevSequenceCode(String prevSequenceCode) {
+		this.prevSequenceCode = prevSequenceCode;
 	}
 
 	public int getFileCount() {
@@ -131,6 +135,16 @@ public class Artifact {
 
 	public void setFileStructureMd5(String fileStructureMd5) {
 		this.fileStructureMd5 = fileStructureMd5;
+	}
+	
+	@JsonIgnore
+	public Request getCreationRequest() {
+		return creationRequest;
+	}
+
+	@JsonIgnore
+	public void setCreationRequest(Request creationRequest) {
+		this.creationRequest = creationRequest;
 	}
 
 	@JsonIgnore

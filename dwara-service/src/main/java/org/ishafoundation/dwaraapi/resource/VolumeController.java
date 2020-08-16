@@ -10,13 +10,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.api.req.format.FormatRequest;
+import org.ishafoundation.dwaraapi.api.req.format.FormatUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.format.FormatResponse;
-import org.ishafoundation.dwaraapi.api.resp.volume.Details;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.enumreferences.TapeStoragesubtype;
@@ -61,7 +59,7 @@ public class VolumeController {
 		    @ApiResponse(code = 400, message = "Error")
 	})
 	@PostMapping(value = "/volume/format", produces = "application/json")
-    public ResponseEntity<FormatResponse> format(@RequestBody List<FormatRequest> formatRequestList){
+    public ResponseEntity<FormatResponse> format(@RequestBody List<FormatUserRequest> formatRequestList){
 		
 		FormatResponse formatResponse = null;
 		try {
@@ -91,7 +89,7 @@ public class VolumeController {
 	Volume Group should be defined (db)
 	Storagesubtype should be defined (enum)
 	*/
-	private void validateUserRequest(List<FormatRequest> formatRequestList) {
+	private void validateUserRequest(List<FormatUserRequest> formatRequestList) {
 		// Caching the volume Groups so can be accessed in the for loop below
 		List<Volume> volumeGroupList = volumeDao.findAllByVolumetype(Volumetype.group); 
 		Map<String, Volume> volumeGroupId_Volume_Map = new HashMap<String, Volume>();
@@ -100,8 +98,8 @@ public class VolumeController {
 		}
 
 		// Ordering the formatRequests by sequence Number
-		Map<Integer, FormatRequest> volumeNumericSequence_FormatRequest = new HashMap<Integer, FormatRequest>();
-		for (FormatRequest nthFormatRequest : formatRequestList) {
+		Map<Integer, FormatUserRequest> volumeNumericSequence_FormatRequest = new HashMap<Integer, FormatUserRequest>();
+		for (FormatUserRequest nthFormatRequest : formatRequestList) {
 			String volumeId = nthFormatRequest.getVolume();
 			int sequenceOnLabel = getSequenceUsedOnVolumeLabel(volumeId, null);
 			volumeNumericSequence_FormatRequest.put(sequenceOnLabel, nthFormatRequest);
@@ -113,8 +111,10 @@ public class VolumeController {
 
 		int numericSequenceIncrementCounter = 1;
 		for (Integer volumeNumericSequence : volumeNumericSequenceList) {
-			FormatRequest nthFormatRequest = volumeNumericSequence_FormatRequest.get(volumeNumericSequence);
+			FormatUserRequest nthFormatRequest = volumeNumericSequence_FormatRequest.get(volumeNumericSequence);
 			String volumeId = nthFormatRequest.getVolume();
+			if(nthFormatRequest.getForce())
+				throw new DwaraException("Force option not supported just yet. Volume " + volumeId, null);
 			
 			// #1 - Volume ids should not be in use
 			Volume volume = volumeDao.findById(volumeId); // TODO: if force=true, means we are trying to reformat an existing tape. How about that???
@@ -191,54 +191,10 @@ public class VolumeController {
 	}	
 	
 	@GetMapping(value = "/volume", produces = "application/json")
-	public ResponseEntity<List<VolumeResponse>> getVolumeByVolumetype(@RequestParam("type") String type){
+	public ResponseEntity<List<VolumeResponse>> getVolumeByVolumetype(@RequestParam("type") String volumetype){
 		List<VolumeResponse> volumeResponseList = null;
 		try {
-			// validate
-			Volumetype neededVolumetype = Volumetype.valueOf(type);
-			
-			volumeResponseList = new ArrayList<VolumeResponse>();
-			List<Volume> volumeGroupList = volumeDao.findAllByVolumetype(neededVolumetype);
-			for (Volume volume : volumeGroupList) {
-				VolumeResponse volResp = new VolumeResponse();
-				volResp.setId(volume.getId());
-				volResp.setVolumetype(volume.getVolumetype().name());
-				volResp.setStoragetype(volume.getStoragetype().name());
-				volResp.setStoragelevel(volume.getStoragelevel().name());
-				//volResp.setVolumeRef(volumeRef);
-				//volResp.setChecksumtype(checksumtype);
-				//volResp.setFormattedAt(formattedAt);
-				volResp.setFinalized(volume.isFinalized());
-				volResp.setImported(volume.isImported());
-				if(volume.getArchiveformat() != null)
-					volResp.setArchiveformat(volume.getArchiveformat().getId());
-
-				/* TODO
-				volResp.setTotalCapacity(totalCapacity);
-				volResp.setUsedCapacity(usedCapacity);
-				volResp.setUnusedCapacity(unusedCapacity);
-				volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity);
-				volResp.setSizeUnit(sizeUnit);
-				*/
-				volResp.setLocation(volume.getLocation().getName());
-				
-				VolumeDetails volumeDetails = volume.getDetails();
-				if(volumeDetails != null) {
-					Details details = new Details();
-					
-					//details.setBarcoded(volumeDetails.isBarcoded());
-					if(volumeDetails.getBlocksize() != null)
-						details.setBlocksize(volumeDetails.getBlocksize()/1024);
-					details.setBlocksizeUnit("KiB");
-					
-					details.setStoragesubtype(volume.getStoragesubtype());
-					//details.setMountPoint(mountPoint);
-					//details.setProvider(provider);
-					//details.setRemoveAfterJob(removeAfterJob);
-					volResp.setDetails(details);
-				}
-				volumeResponseList.add(volResp);
-			}
+			volumeResponseList = volumeService.getVolumeByVolumetype(volumetype);
 		}catch (Exception e) {
 			String errorMsg = "Unable to get Volume details - " + e.getMessage();
 			logger.error(errorMsg, e);

@@ -23,7 +23,7 @@ import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
  * 
  * 
 */
-@Entity(name = "ActionUser")
+//@Entity(name = "ActionUser")
 @Table(name="action_user")
 public class ActionUser {
 

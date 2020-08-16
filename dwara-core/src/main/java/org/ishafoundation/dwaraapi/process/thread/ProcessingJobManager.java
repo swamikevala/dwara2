@@ -208,7 +208,7 @@ public class ProcessingJobManager implements Runnable{
 	private Domain getDomain() {
 		Domain domain = null;
 		try {
-			String artifactclassId = job.getRequest().getDetails().getArtifactclass_id();
+			String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
 			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 			domain = artifactclass.getDomain();
 			
@@ -257,7 +257,7 @@ public class ProcessingJobManager implements Runnable{
 			List<ExtensionFiletype> extn_Filetype_List = filetype.getExtensions(); //extensionFiletypeDao.findAllByFiletypeId(filetype.getId());
 			for (ExtensionFiletype extensionFiletype : extn_Filetype_List) {
 				// TODO - do i need to filter out on the filetype or will the join automatically filter it based on the filetype
-				String extensionName = extensionFiletype.getExtension().getName();
+				String extensionName = extensionFiletype.getExtension().getId();
 				
 				if(extensionFiletype.isSidecar()) {
 					sidecarExtensions.add(extensionName);

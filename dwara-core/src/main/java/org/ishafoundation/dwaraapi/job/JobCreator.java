@@ -112,12 +112,7 @@ public class JobCreator {
 			logger.debug("Calling storage task impl " + actionName);
 			AbstractStoragetaskAction actionImpl = storagetaskActionMap.get(actionName);
 			
-			try {
-				jobList.addAll(actionImpl.createJobsForStoragetaskAction(request, requestedBusinessAction));
-			} catch (Throwable e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			jobList.addAll(actionImpl.createJobsForStoragetaskAction(request, requestedBusinessAction));
 		}
 		return jobList;
 	}

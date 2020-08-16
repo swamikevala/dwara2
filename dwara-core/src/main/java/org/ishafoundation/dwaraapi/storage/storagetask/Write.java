@@ -67,7 +67,7 @@ public class Write extends AbstractStoragetaskAction{
 			volume = getToBeUsedPhysicalVolume(domain, volumegroupId, sizeOfTheLibraryToBeWritten);
 
 		}else if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.rewrite || requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.migrate) {
-			artifactName = request.getDetails().getArtifact_name();
+			artifactName = request.getDetails().getStagedFilename();
 			pathPrefix = "whereverRestoredByThePrecedingRestoreJob";//artifactclass.getPath();
 			// TODO have a util for Group Uid to Uid 
 //			String volumegroupUid = request.getDetails().getVolume_group_uid();

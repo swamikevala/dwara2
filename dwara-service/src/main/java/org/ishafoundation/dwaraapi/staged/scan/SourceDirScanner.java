@@ -13,11 +13,12 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.api.resp.staged.FileDetails;
+import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
+import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.slf4j.Logger;
@@ -48,7 +49,7 @@ public class SourceDirScanner {
 		allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
 	}
 	
-	public List<FileDetails> scanSourceDir(Artifactclass artifactclass, List<String> scanFolderBasePathList) {
+	public List<StagedFileDetails> scanSourceDir(Artifactclass artifactclass, List<String> scanFolderBasePathList) {
 		//int libraryclassId = artifactclass.getId();
     	String libraryclassName = artifactclass.getName();
         int sequenceId = artifactclass.getSequenceId(); // getting the primary key of the Sequence table which holds the lastsequencenumber for this group...
@@ -62,7 +63,7 @@ public class SourceDirScanner {
     	String extractionRegex = sequence.getArtifactExtractionRegex();
     	boolean isKeepExtractedCode = sequence.isArtifactKeepCode();
     	
-        List<FileDetails> ingestReadyFileList = new ArrayList<FileDetails>();
+        List<StagedFileDetails> ingestReadyFileList = new ArrayList<StagedFileDetails>();
     	for (String nthScanFolderBasePath : scanFolderBasePathList) {
 			String sourcePath = nthScanFolderBasePath + File.separator + Action.ingest.name() + File.separator + libraryclassName;
 			
@@ -76,7 +77,7 @@ public class SourceDirScanner {
 				allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(notCancelledFolderFilter, notDeletedFolderFilter);
 	    	File[] ingestableFiles = new File(sourcePath).listFiles(allFilesExcludingCancelledAndDeletedDirectoryFilter);
 	    	if(ingestableFiles != null) {
-	    		List<FileDetails> nthScanFolderBaseIngestDirectoryList = scanForIngestableFiles(sequence, extractionRegex, isKeepExtractedCode, sourcePath, ingestableFiles);
+	    		List<StagedFileDetails> nthScanFolderBaseIngestDirectoryList = scanForIngestableFiles(sequence, extractionRegex, isKeepExtractedCode, sourcePath, ingestableFiles);
 	    		ingestReadyFileList.addAll(nthScanFolderBaseIngestDirectoryList);
 	    	}
 	    	
@@ -84,7 +85,7 @@ public class SourceDirScanner {
 	    	String cancelledOriginSourceDir = sourcePath + File.separator + Status.cancelled.toString();
 	    	File[] cancelledIngestableFiles = new File(cancelledOriginSourceDir).listFiles();
 	    	if(cancelledIngestableFiles != null) {
-	    		List<FileDetails> nthScanFolderBaseCancelledDirectoryIngestFileList = scanForIngestableFiles(sequence, extractionRegex, isKeepExtractedCode, cancelledOriginSourceDir, cancelledIngestableFiles);
+	    		List<StagedFileDetails> nthScanFolderBaseCancelledDirectoryIngestFileList = scanForIngestableFiles(sequence, extractionRegex, isKeepExtractedCode, cancelledOriginSourceDir, cancelledIngestableFiles);
 	    		ingestReadyFileList.addAll(nthScanFolderBaseCancelledDirectoryIngestFileList);
 	    	}	
 	    	
@@ -92,7 +93,7 @@ public class SourceDirScanner {
 	    	String deletedOriginSourceDir = sourcePath + File.separator + DELETED;
 	    	File[] deletedIngestableFiles = new File(deletedOriginSourceDir).listFiles();
 	    	if(deletedIngestableFiles != null) {
-	    		List<FileDetails> nthScanFolderBaseDeletedDirectoryIngestFileList = scanForIngestableFiles(sequence, extractionRegex, isKeepExtractedCode, deletedOriginSourceDir, deletedIngestableFiles);
+	    		List<StagedFileDetails> nthScanFolderBaseDeletedDirectoryIngestFileList = scanForIngestableFiles(sequence, extractionRegex, isKeepExtractedCode, deletedOriginSourceDir, deletedIngestableFiles);
 	    		ingestReadyFileList.addAll(nthScanFolderBaseDeletedDirectoryIngestFileList);
 	    	}		    	
 		}
@@ -100,19 +101,19 @@ public class SourceDirScanner {
 		return ingestReadyFileList;
 	}
 	
-	private List<FileDetails> scanForIngestableFiles(Sequence sequence, String extractionRegex, boolean isKeepExtractedCode, String sourcePath, File[] ingestableFiles) {
+	private List<StagedFileDetails> scanForIngestableFiles(Sequence sequence, String extractionRegex, boolean isKeepExtractedCode, String sourcePath, File[] ingestableFiles) {
 		
-		List<FileDetails> ingestFileList = new ArrayList<FileDetails>();
+		List<StagedFileDetails> ingestFileList = new ArrayList<StagedFileDetails>();
     	for (int i = 0; i < ingestableFiles.length; i++) {
 			File nthIngestableFile = ingestableFiles[i];
-			FileDetails nthIngestFile = getFileAttributes(nthIngestableFile, sequence, extractionRegex, isKeepExtractedCode, sourcePath);
+			StagedFileDetails nthIngestFile = getFileAttributes(nthIngestableFile, sequence, extractionRegex, isKeepExtractedCode, sourcePath);
 			ingestFileList.add(nthIngestFile);
 		}
     	return ingestFileList;
 	}
 
 	
-	private FileDetails getFileAttributes(File nthIngestableFile, Sequence sequence, String extractionRegex, boolean isKeepExtractedCode, String sourcePath) {
+	private StagedFileDetails getFileAttributes(File nthIngestableFile, Sequence sequence, String extractionRegex, boolean isKeepExtractedCode, String sourcePath) {
         long size = 0;
         String warning = null;
         int fileCount = 0;
@@ -149,7 +150,7 @@ public class SourceDirScanner {
 		// TODO : Talk to swami - we still need old filename and new filename...
 		String customFileName = getCustomLibraryName(fileName, prevSeqCode, sequence, isKeepExtractedCode);
 		
-		FileDetails nthIngestFile = new FileDetails();
+		StagedFileDetails nthIngestFile = new StagedFileDetails();
 		
 		nthIngestFile.setPath(sourcePath);
 		nthIngestFile.setFileCount(fileCount);
@@ -159,7 +160,8 @@ public class SourceDirScanner {
 		if(StringUtils.isNotBlank(extractionRegex) && isKeepExtractedCode) // if regex present and useExtractCode is true but prevSeqCode is null then throw error...
 			nthIngestFile.setPrevSequenceCodeExpected(true);
 		nthIngestFile.setName(fileName);
-		nthIngestFile.setSuggestedName(customFileName);
+		if(!fileName.equals(customFileName))
+			nthIngestFile.setSuggestedName(customFileName);
 		String errorType = null;
 		if(warning != null)
 			errorType = "Warning";// TODO hardcoded for now - fetch it from error type table...
@@ -194,16 +196,7 @@ public class SourceDirScanner {
 			else {
 				// if there isnt a prevSeqCode then use lastSequenceId
 				folderNameToBe = folderName;
-				Integer currentNumber = null; 
-				if(sequence.getSequenceRef() != null) {
-					sequence.getSequenceRef().incrementCurrentNumber();
-					currentNumber = sequence.getSequenceRef().getCurrrentNumber();
-				}
-				else {
-					sequence.incrementCurrentNumber();
-					currentNumber = sequence.getCurrrentNumber();
-				}
-				System.out.println(currentNumber);
+				Integer currentNumber = SequenceUtil.incrementCurrentNumber(sequence);
 				seqIdPrefix = sequence.getPrefix() + currentNumber;
 			}
 			Matcher m = folderNameWithoutPrevSeqCodePattern.matcher(folderNameToBe); 	

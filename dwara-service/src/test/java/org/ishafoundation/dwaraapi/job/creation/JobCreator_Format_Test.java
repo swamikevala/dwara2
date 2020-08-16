@@ -4,7 +4,7 @@ import java.io.File;
 import java.net.URL;
 
 import org.apache.commons.io.FileUtils;
-import org.ishafoundation.dwaraapi.api.req.format.FormatRequest;
+import org.ishafoundation.dwaraapi.api.req.format.FormatUserRequest;
 import org.ishafoundation.dwaraapi.service.VolumeService;
 import org.junit.FixMethodOrder;
 import org.junit.Test;

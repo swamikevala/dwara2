@@ -241,7 +241,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 			}
 		}		
 		
-		String artifactclassId = job.getRequest().getDetails().getArtifactclass_id();
+		String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 		Domain domain = artifactclass.getDomain();
 		storageJob.setDomain(domain);

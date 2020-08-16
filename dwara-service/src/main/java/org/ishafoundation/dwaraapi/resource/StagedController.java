@@ -2,8 +2,12 @@ package org.ishafoundation.dwaraapi.resource;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.api.req.ingest.UserRequest;
-import org.ishafoundation.dwaraapi.api.resp.staged.FileDetails;
+import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
+import org.ishafoundation.dwaraapi.api.req.staged.rename.StagedRenameUserRequest;
+import org.ishafoundation.dwaraapi.api.resp.staged.ingest.IngestResponse;
+import org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameResponse;
+import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
+import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.StagedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +40,9 @@ public class StagedController {
 		    @ApiResponse(code = 200, message = "Ok"),
 		    @ApiResponse(code = 404, message = "Not Found")
 	})
-	@GetMapping(value="/staged", produces = "application/json")
-    public ResponseEntity<List<FileDetails>> getAllIngestableFiles(@RequestParam("artifactclass") String artifactclassId){
-		List<FileDetails> ingestFileList = stagedService.getAllIngestableFiles(artifactclassId);
+	@GetMapping(value="/staged/scan", produces = "application/json")
+    public ResponseEntity<List<StagedFileDetails>> getAllIngestableFiles(@RequestParam("artifactclass") String artifactclassId){
+		List<StagedFileDetails> ingestFileList = stagedService.getAllIngestableFiles(artifactclassId);
 		
 		if (ingestFileList.size() > 0) {
 			return ResponseEntity.ok(ingestFileList);
@@ -47,15 +51,37 @@ public class StagedController {
 		}
 	}
 	
+	@ApiOperation(value = "Renames the staged file on the physcial file system (before ingesting)")
+	@ApiResponses(value = { 
+		    @ApiResponse(code = 200, message = "Ok, Request processed but check for any failures on rename in the response body")
+	})
+	@PostMapping(value = "/staged/rename", produces = "application/json")
+    public ResponseEntity<StagedRenameResponse> renameStagedFile(@RequestBody StagedRenameUserRequest stagedRenameUserRequest){
+		StagedRenameResponse stagedRenameResponse = stagedService.renameStagedFiles(stagedRenameUserRequest);
+		return ResponseEntity.ok(stagedRenameResponse);
+	}
+	
 	@ApiOperation(value = "Ingest comment goes here")
 	@ApiResponses(value = { 
 		    @ApiResponse(code = 202, message = "Request submitted and queued up"),
 		    @ApiResponse(code = 400, message = "Error")
 	})
 	@PostMapping(value="/artifact/staging/ingest", produces = "application/json")
-    public ResponseEntity<String> ingest(@RequestBody UserRequest userRequest){
-		stagedService.ingest(userRequest);
-		return ResponseEntity.status(HttpStatus.ACCEPTED).body("Done");
+    public ResponseEntity<IngestResponse> ingest(@RequestBody IngestUserRequest ingestUserRequest){
+		IngestResponse ingestResponse = null;
+		try {
+			ingestResponse = stagedService.ingest(ingestUserRequest);
+		}catch (Exception e) {
+			String errorMsg = "Unable to ingest - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+		
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(ingestResponse);
 	}
 	
 }	

@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.authn;
 
+import java.util.Arrays;
+
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +13,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
-import org.springframework.security.web.session.SessionManagementFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -23,16 +27,11 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private DataSource dataSource;
 
-    @Bean
-    CorsFilter corsFilter(){
-        CorsFilter filter = new CorsFilter();
-        return filter;
-    }
-
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .addFilterBefore(corsFilter(), SessionManagementFilter.class) //adds your custom CorsFilter
+                .cors().and()
+                // .addFilterBefore(corsFilter(), SessionManagementFilter.class) //adds your custom CorsFilter
                 .exceptionHandling().authenticationEntryPoint(authEntryPoint)
 
 //                .and()
@@ -63,6 +62,16 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and().httpBasic()
                 .authenticationEntryPoint(authEntryPoint);
     }
+
+    @Bean
+	CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration configuration = new CorsConfiguration();
+		configuration.setAllowedOrigins(Arrays.asList("*"));
+		configuration.setAllowedMethods(Arrays.asList("GET","POST"));
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
+		return source;
+	}
 
     @Bean
     public JdbcUserDetailsManager jdbcUserDetailsManager() throws Exception {
