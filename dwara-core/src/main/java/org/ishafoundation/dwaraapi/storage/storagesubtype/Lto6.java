@@ -14,6 +14,10 @@ public class Lto6 extends AbstractStoragesubtype{
     public Lto6() {
     	capacity = 2500000000000L;
     	generation = 6;
+    	int[] writeSupportedGenerations = {5,6};
+    	this.writeSupportedGenerations = writeSupportedGenerations;
+    	int[] readSupportedGenerations = {4,5,6};
+    	this.readSupportedGenerations = readSupportedGenerations;
 	}
 
 	@Override

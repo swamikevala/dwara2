@@ -1,5 +1,8 @@
 package org.ishafoundation.dwaraapi.api.resp.staged.ingest;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Artifact {
 	
 	private int artifactId;

@@ -153,12 +153,7 @@ public class StagedService extends DwaraService{
     			java.io.File srcFile = FileUtils.getFile(sourcePath, oldFileName);
     			java.io.File destFile = FileUtils.getFile(sourcePath, newFileName);
     			
-    			if(srcFile.isDirectory())
-    				FileUtils.moveDirectory(srcFile, destFile);
-    			else if(srcFile.isFile())
-    				FileUtils.moveFile(srcFile, destFile);
-    			else
-    				throw new Exception("File not found " + srcFile);
+    			moveFile(srcFile, destFile);
     			
     			stagedRenameFileResponse.setStatus(Status.completed.name());
     			hasCompleted = true;
@@ -218,12 +213,23 @@ public class StagedService extends DwaraService{
 	    		String stagedFileName = stagedFile.getName();
 	    		String stagedFilePath = stagedFile.getPath();
 
+	        	// STEP 1 - Moves the file from User's Staging directory to Application's ReadyToIngest directory
+	        	java.io.File stagedFileObj = FileUtils.getFile(stagedFilePath, stagedFileName);
+	        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, stagedFileName);
+	        	try {
+	        		moveFile(stagedFileObj, appReadyToIngestFileObj);
+	    		} catch (Exception e) {
+	    			// If this fails - its possible the setperms or the watcher service thing is not functional and so all the stagedfiles would have the same problem... 
+	    			logger.error("TODO : How to handle this move file failure scenario " + e.getMessage(), e);
+	    			throw new DwaraException("Check if the file permisions are set properly using /opt/dwara/bin/setperm", null);
+	    		}
+	        	
 				Sequence sequence = artifactclass.getSequence();
 		        boolean isUseExtractedCodeInFolderName = sequence.isArtifactKeepCode();
 		        String sequenceCode = null;
 		        String prevSeqCode = null;
 		        if(isUseExtractedCodeInFolderName) 
-		        	sequenceCode = prevSeqCode; // TODO prevSeqCode needed from the API
+		        	sequenceCode = prevSeqCode; // TODO prevSeqCode is needed from the Ingest API
 		        else { // if using extracted code, then we dont want a new code
 		        	synchronized (stagedFile) {
 		        		Integer incrementedCurrentNumber = SequenceUtil.incrementCurrentNumber(sequence);
@@ -232,15 +238,8 @@ public class StagedService extends DwaraService{
 		        	}
 		        }
 		        
-	        	// STEP 1 - Moves the file from User's Staging directory to Application's ReadyToIngest directory
-	    		java.io.File stagedFileInAppReadyToIngest = null;
-	        	java.io.File stagedFileObj = FileUtils.getFile(stagedFilePath, stagedFileName);
-	        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, sequenceCode + "_" + stagedFileName);
-	        	try {
-	        		stagedFileInAppReadyToIngest = moveFileToStaging(stagedFileObj, appReadyToIngestFileObj);
-	    		} catch (Exception e) {
-	    			logger.error("TODO : How to handle this move file failure scenario " + e.getMessage(), e);
-	    		}
+		        // Renames the directory prefixing sequencecode...
+		        java.io.File stagedFileInAppReadyToIngest = moveFile(appReadyToIngestFileObj, FileUtils.getFile(readyToIngestPath, sequenceCode + "_" + stagedFileName));
 	    		
 	        	// STEP 2 - Moves Junk files
 		    	String junkFilesStagedDirName = configuration.getJunkFilesStagedDirName(); 
@@ -316,21 +315,20 @@ public class StagedService extends DwaraService{
     	return ingestResponse;
     }
 
-    // Moves the file from User's Staging directory to Application's ReadyToIngest directory
-    private java.io.File moveFileToStaging(java.io.File stagedFileObj, java.io.File appReadyToIngestFileObj) throws Exception {
+    private java.io.File moveFile(java.io.File src, java.io.File dest) throws Exception {
 		// TODO USE MOVE using commandline
     	try {
-    		if(stagedFileObj.isDirectory())
-    			FileUtils.moveDirectory(stagedFileObj, appReadyToIngestFileObj);
-    		else if(stagedFileObj.isFile())
-    			FileUtils.moveFile(stagedFileObj, appReadyToIngestFileObj);
+    		if(src.isDirectory())
+    			FileUtils.moveDirectory(src, dest);
+    		else if(src.isFile())
+    			FileUtils.moveFile(src, dest);
 		} catch (IOException e) {
-			String errorMsg = "Unable to move file " + stagedFileObj + " to " + appReadyToIngestFileObj + " - " + e.getMessage();
+			String errorMsg = "Unable to move file " + src + " to " + dest + " - " + e.getMessage();
 			logger.error(errorMsg, e);
 			throw new Exception(errorMsg);
 		}
 
-		return appReadyToIngestFileObj;
+		return dest;
 	}
     
 	private void createFilesAndExtensions(String pathPrefix, Domain domain, Artifact artifact, Collection<java.io.File> libraryFileAndDirsList) throws Exception {

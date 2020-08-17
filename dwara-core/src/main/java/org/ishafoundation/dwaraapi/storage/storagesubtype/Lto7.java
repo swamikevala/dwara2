@@ -14,6 +14,10 @@ public class Lto7 extends AbstractStoragesubtype{
     public Lto7() {
     	capacity = 6000000000000L;
     	generation = 7;
+    	int[] writeSupportedGenerations = {6,7};
+    	this.writeSupportedGenerations = writeSupportedGenerations;
+    	int[] readSupportedGenerations = {5,6,7};
+    	this.readSupportedGenerations = readSupportedGenerations;
 	}
 
 	@Override

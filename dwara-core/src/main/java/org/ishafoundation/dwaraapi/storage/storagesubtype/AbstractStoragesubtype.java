@@ -6,6 +6,8 @@ public abstract class AbstractStoragesubtype {
 	
 	protected Long capacity;
 	protected int generation;
+	protected int[] writeSupportedGenerations;
+	protected int[] readSupportedGenerations;
 	
 	public Long getCapacity(){
 		return capacity;
@@ -13,6 +15,14 @@ public abstract class AbstractStoragesubtype {
 
 	public int getGeneration(){
 		return generation;
+	}
+	
+	public int[] getWriteSupportedGenerations() {
+		return writeSupportedGenerations;
+	}
+
+	public int[] getReadSupportedGenerations() {
+		return readSupportedGenerations;
 	}
 	
 	public abstract void validateVolumeId(String volumeId) throws DwaraException;

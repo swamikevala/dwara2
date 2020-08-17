@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
@@ -21,6 +22,8 @@ import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDeviceUtil;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeOnLibrary;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.thread.executor.TapeTaskThreadPoolExecutor;
 import org.ishafoundation.dwaraapi.storage.storagetype.thread.AbstractStoragetypeJobManager;
 import org.slf4j.Logger;
@@ -55,6 +58,9 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	private TapeDeviceUtil tapeDeviceUtil;
 
 	@Autowired
+	private TapeLibraryManager tapeLibraryManager;
+	
+	@Autowired
 	private JobDao jobDao;
 	/**
 	 * 
@@ -71,18 +77,18 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		List<StorageJob> storageJobsList = getStorageJobList();
 
 		// execute the job
-		StorageJob storageJob = storageJobsList.get(0); // if there is a format/mapdrive job only one job will be in the list coming from JobManager... 
-		Action storagetaskAction = storageJob.getJob().getStoragetaskActionId();
+		StorageJob firstStorageJob = storageJobsList.get(0); // if there is a format/mapdrive job only one job will be in the list coming from JobManager... 
+		Action storagetaskAction = firstStorageJob.getJob().getStoragetaskActionId();
 		
 		if(storagetaskAction == Action.map_tapedrives || storagetaskAction == Action.format) {
-			updateJobInProgress(storageJob.getJob());
+			updateJobInProgress(firstStorageJob.getJob());
 			logger.debug("Unloading all tapes from all drives");
 			List<DriveDetails> preparedDrives = null;
 			try {
 				preparedDrives = tapeDeviceUtil.prepareAllTapeDrivesForBlockingJobs();
 			} catch (Exception e1) {
 				logger.error(e1.getMessage());
-				updateJobFailed(storageJob.getJob());
+				updateJobFailed(firstStorageJob.getJob());
 			}
 			
 			
@@ -97,35 +103,45 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 						logger.trace("Taking Option 1 Route");
 						logger.trace("Mapping drives using TapeDriveMapper");
 						//TapeDriveMapper
-						updateJobCompleted(storageJob.getJob());
+						updateJobCompleted(firstStorageJob.getJob());
 					}catch (Exception e) {
 						logger.error(e.getMessage());
-						updateJobFailed(storageJob.getJob());
+						updateJobFailed(firstStorageJob.getJob());
 					}
 				}
 				else {
 					logger.trace("Taking Option 2 Route");
 					logger.trace("Composing Tape job");
 					TapeJob tapeJob = new TapeJob();
-					tapeJob.setStorageJob(storageJob);
+					tapeJob.setStorageJob(firstStorageJob);
 					manage(tapeJob);
 				}
 			}
 			else if(storagetaskAction == Action.format) {
 				DriveDetails driveDetails = preparedDrives.get(0);
-				prepareTapeJobAndContinueNextSteps(storageJob, driveDetails, false);
+				prepareTapeJobAndContinueNextSteps(firstStorageJob, driveDetails, false);
 			}
 		}
 		else {
+
 			List<DriveDetails> availableDrivesDetails = null;
 			try {
 				availableDrivesDetails = tapeDeviceUtil.getAllAvailableDrivesDetails();
 			} catch (Exception e1) {
-				logger.error(e1.getMessage());
-				updateJobFailed(storageJob.getJob());
+				logger.error("Unable to get Drives info. Skipping storage jobs...",e1.getMessage());
+				//updateJobFailed(storageJob.getJob());
 			}
 			if(availableDrivesDetails.size() > 0) { // means drive(s) available
 				logger.trace("No. of drives available "+ availableDrivesDetails.size());
+
+				// Remove jobs that dont have tapes yet in the library
+				removeJobsThatDontHaveNeededTapeOnLibrary(storageJobsList, availableDrivesDetails);
+				
+				if(storageJobsList.size() == 0) {
+					logger.debug("No eligible tape jobs in queue.");
+					return;
+				}
+				
 				// TODO - To load balance across drives based on their usage. The usage parameters is not retrieved...
 	//			Map<Integer, DriveStatusDetails> usage_driveStatusDetails = new TreeMap<Integer, DriveStatusDetails>(); 
 	//			for (Iterator<DriveStatusDetails> driveStatusDetailsIterator = availableDrivesList.iterator(); driveStatusDetailsIterator.hasNext();) {
@@ -194,7 +210,39 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			}
 		}
 	}
+
+	private void removeJobsThatDontHaveNeededTapeOnLibrary(List<StorageJob> storageJobsList,
+			List<DriveDetails> availableDrivesDetails) {
+		// For now assuming just one tape libarary is supported
+		String tapeLibraryName = availableDrivesDetails.get(0).getTapelibraryName();
+		List<TapeOnLibrary> tapeOnLibraryObjList = null;
+		try {
+			tapeOnLibraryObjList = tapeLibraryManager.getAllLoadedTapesInTheLibrary(tapeLibraryName);
+		} catch (Exception e) {
+			logger.error("Unable to get list of tapes on library " + tapeLibraryName + ". So not able to removeJobsThatDontHaveNeededTapeOnLibrary");
+			return;
+		}
+		List<String> tapeOnLibraryList =  new ArrayList<String>();
+		for (TapeOnLibrary tapeOnLibrary : tapeOnLibraryObjList) {
+			tapeOnLibraryList.add(tapeOnLibrary.getVolumeTag());
+		}
+		
+		List<StorageJob> onlyTapeOnLibraryStorageJobsList = new ArrayList<StorageJob>(); 
+		for (int i = 0; i < storageJobsList.size(); i++) {
+			StorageJob nthStorageJob = storageJobsList.get(i);
+			String volumeTag = nthStorageJob.getVolume().getId();
+			if(tapeOnLibraryList.contains(volumeTag)) {// Tape not on library - don't pick it up
+				onlyTapeOnLibraryStorageJobsList.add(nthStorageJob);
+			}
+			else {
+				logger.info(volumeTag + " not in library " + tapeLibraryName +" . Skipping job - " + nthStorageJob.getJob().getId()); 
+			}
+		}
 	
+		if(onlyTapeOnLibraryStorageJobsList.size() > 0) {
+			storageJobsList = onlyTapeOnLibraryStorageJobsList;
+		}
+	}
 	private void prepareTapeJobAndContinueNextSteps(StorageJob storageJob, DriveDetails driveDetails, boolean nextStepsInSeparateThread) {
 		Job job = null;
 		TapeJob tapeJob = null;

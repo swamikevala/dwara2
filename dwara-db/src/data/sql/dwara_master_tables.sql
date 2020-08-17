@@ -1,8 +1,8 @@
 -- MySQL dump 10.13  Distrib 5.7.17, for Win64 (x86_64)
 --
--- Host: 127.0.0.1    Database: dwara_v5_test
+-- Host: localhost    Database: dwara_v4_test
 -- ------------------------------------------------------
--- Server version	5.7.11
+-- Server version	5.7.28
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -71,7 +71,7 @@ CREATE TABLE `actionelement` (
 
 LOCK TABLES `actionelement` WRITE;
 /*!40000 ALTER TABLE `actionelement` DISABLE KEYS */;
-INSERT INTO `actionelement` VALUES (1,'','pub-video','ingest',1,'\0','checksum-generation',NULL,NULL,NULL),(2,'','pub-video','ingest',2,'\0',NULL,'write','N1',NULL),(3,'','pub-video','ingest',3,'\0',NULL,'verify','N1',NULL),(4,'\0','pub-video','ingest',4,'\0',NULL,'write','N2',NULL),(5,'\0','pub-video','ingest',5,'\0',NULL,'verify','N2',NULL),(6,'\0','pub-video','ingest',6,'\0',NULL,'write','N3',NULL),(7,'\0','pub-video','ingest',7,'\0',NULL,'verify','N3',NULL),(8,'\0','pub-video','ingest',8,'\0','previewproxy-video-transcoding',NULL,NULL,'previewproxy-video'),(9,'\0','pub-video','ingest',9,'\0','mam-updation',NULL,NULL,NULL);
+INSERT INTO `actionelement` VALUES (1,'','pub-video','ingest',1,'\0','checksum-generation',NULL,NULL,NULL),(2,'','pub-video','ingest',2,'\0',NULL,'write','N1',NULL),(3,'','pub-video','ingest',3,'\0',NULL,'verify','N1',NULL),(4,'','pub-video','ingest',4,'\0',NULL,'write','N2',NULL),(5,'','pub-video','ingest',5,'\0',NULL,'verify','N2',NULL),(6,'\0','pub-video','ingest',6,'\0',NULL,'write','N3',NULL),(7,'\0','pub-video','ingest',7,'\0',NULL,'verify','N3',NULL),(8,'','pub-video','ingest',8,'\0','previewproxy-video-transcoding',NULL,NULL,'previewproxy-video'),(9,'','pub-video','ingest',9,'\0','mam-updation',NULL,NULL,NULL);
 /*!40000 ALTER TABLE `actionelement` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -156,8 +156,64 @@ CREATE TABLE `artifactclass` (
 
 LOCK TABLES `artifactclass` WRITE;
 /*!40000 ALTER TABLE `artifactclass` DISABLE KEYS */;
-INSERT INTO `artifactclass` VALUES ('previewproxy-video','\0',2,'1','previewproxy-video','C:\\data\\transcoded','\0',7),('pub-video','\0',1,'1','pub-video','C:\\data\\ingested','',1);
+INSERT INTO `artifactclass` VALUES ('previewproxy-video','\0',2,'1','previewproxy-video','/data/transcoded','\0',7),('pub-video','\0',1,'1','pub-video','/data/ingested','',1);
 /*!40000 ALTER TABLE `artifactclass` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `artifactclass_action_user`
+--
+
+DROP TABLE IF EXISTS `artifactclass_action_user`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `artifactclass_action_user` (
+  `action_id` varchar(255) NOT NULL,
+  `artifactclass_id` varchar(255) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  PRIMARY KEY (`action_id`,`artifactclass_id`,`user_id`),
+  KEY `FK50220j7rqiw5bqmox91swc49k` (`artifactclass_id`),
+  KEY `FKg3emxoq9y0uf3a383s0pkifvb` (`user_id`),
+  CONSTRAINT `FK50220j7rqiw5bqmox91swc49k` FOREIGN KEY (`artifactclass_id`) REFERENCES `artifactclass` (`id`),
+  CONSTRAINT `FKg3emxoq9y0uf3a383s0pkifvb` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `FKn2cj0wmkfkpajkmqfp7mi6hbd` FOREIGN KEY (`action_id`) REFERENCES `action` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `artifactclass_action_user`
+--
+
+LOCK TABLES `artifactclass_action_user` WRITE;
+/*!40000 ALTER TABLE `artifactclass_action_user` DISABLE KEYS */;
+INSERT INTO `artifactclass_action_user` VALUES ('ingest','pub-video',1);
+/*!40000 ALTER TABLE `artifactclass_action_user` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `artifactclass_destination`
+--
+
+DROP TABLE IF EXISTS `artifactclass_destination`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `artifactclass_destination` (
+  `artifactclass_id` varchar(255) NOT NULL,
+  `destination_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`artifactclass_id`,`destination_id`),
+  KEY `FK90k9ovbcafjeemb32gwnr845u` (`destination_id`),
+  CONSTRAINT `FK4djwomf3rwcpmsggge0379hs6` FOREIGN KEY (`artifactclass_id`) REFERENCES `artifactclass` (`id`),
+  CONSTRAINT `FK90k9ovbcafjeemb32gwnr845u` FOREIGN KEY (`destination_id`) REFERENCES `destination` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `artifactclass_destination`
+--
+
+LOCK TABLES `artifactclass_destination` WRITE;
+/*!40000 ALTER TABLE `artifactclass_destination` DISABLE KEYS */;
+/*!40000 ALTER TABLE `artifactclass_destination` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -214,7 +270,7 @@ CREATE TABLE `device` (
 
 LOCK TABLES `device` WRITE;
 /*!40000 ALTER TABLE `device` DISABLE KEYS */;
-INSERT INTO `device` VALUES ('LTO5_1','\0','{\"type\": \"LTO\", \"standalone\": false, \"autoloader_id\": \"XL80\", \"autoloader_address\": 0}','tape_drive',NULL,NULL,NULL,'online',NULL,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst'),('LTO5_2','\0','{\"type\": \"LTO\", \"standalone\": false, \"autoloader_id\": \"XL80\", \"autoloader_address\": 1}','tape_drive',NULL,NULL,NULL,'online',NULL,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1684087499-nst'),('LTO5_3','\0','{\"type\": \"LTO\", \"standalone\": false, \"autoloader_id\": \"XL80\", \"autoloader_address\": 2}','tape_drive',NULL,NULL,NULL,'online',NULL,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1970448833-nst'),('XL80','\0','{\"slots\": 24, \"max_drives\": 3, \"generations_supported\": [6, 7]}','tape_autoloader',NULL,NULL,NULL,'online',NULL,'/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400');
+INSERT INTO `device` VALUES ('DEV_LTO5_1','\0','{\"type\": \"LTO\", \"standalone\": false, \"autoloader_id\": \"DEV_XL80\", \"autoloader_address\": 0}','tape_drive',NULL,NULL,NULL,'online',NULL,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_0777143630-nst'),('DEV_LTO5_2','\0','{\"type\": \"LTO\", \"standalone\": false, \"autoloader_id\": \"DEV_XL80\", \"autoloader_address\": 1}','tape_drive',NULL,NULL,NULL,'online',NULL,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_0005618080-nst'),('DEV_LTO5_3','\0','{\"type\": \"LTO\", \"standalone\": false, \"autoloader_id\": \"DEV_XL80\", \"autoloader_address\": 2}','tape_drive',NULL,NULL,NULL,'online',NULL,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_0574047035-nst'),('DEV_LTO5_4','\0','{\"type\": \"LTO\", \"standalone\": false, \"autoloader_id\": \"DEV_XL80\", \"autoloader_address\": 3}','tape_drive',NULL,NULL,NULL,'online',NULL,'/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_0257880063-nst'),('DEV_XL80','\0','{\"slots\": 24, \"max_drives\": 3, \"generations_supported\": [6, 7]}','tape_autoloader',NULL,NULL,NULL,'online',NULL,'/dev/tape/by-id/scsi-1IBM_03584L32_0000077866630400');
 /*!40000 ALTER TABLE `device` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -266,7 +322,7 @@ CREATE TABLE `extension` (
 
 LOCK TABLES `extension` WRITE;
 /*!40000 ALTER TABLE `extension` DISABLE KEYS */;
-INSERT INTO `extension` VALUES ('ABC','ABC desc','ABC'),('JPG','d','JPG'),('MOV','Some MOV description','MOV'),('MP4','Some MP4 description','MP4'),('MP4_FFPROBE_OUT','test','MP4_FFPROBE_OUT'),('MTB','some msg','MTB'),('MTS','Some MTS description','MTS'),('NEF','d','NEF'),('TIF','d','TIF'),('XMP','d','XMP');
+INSERT INTO `extension` VALUES ('',NULL,NULL),('ABC','ABC desc','ABC'),('JPG','d','JPG'),('LRV',NULL,NULL),('MOV','Some MOV description','MOV'),('MP4','Some MP4 description','MP4'),('MP4_FFPROBE_OUT','test','MP4_FFPROBE_OUT'),('MTB','some msg','MTB'),('MTS','Some MTS description','MTS'),('MXF','MXF container','MXF'),('NEF','d','NEF'),('THM',NULL,NULL),('TIF','d','TIF'),('XMP','d','XMP');
 /*!40000 ALTER TABLE `extension` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -294,7 +350,7 @@ CREATE TABLE `extension_filetype` (
 
 LOCK TABLES `extension_filetype` WRITE;
 /*!40000 ALTER TABLE `extension_filetype` DISABLE KEYS */;
-INSERT INTO `extension_filetype` VALUES ('\0','ABC','video'),('\0','JPG','photo'),('','JPG','video'),('','JPG','video_prev_proxy'),('\0','MOV','video'),('\0','MP4','video'),('\0','MP4','video_prev_proxy'),('','MP4_FFPROBE_OUT','video'),('','MP4_FFPROBE_OUT','video_prev_proxy'),('\0','MTB','video'),('\0','MTS','video'),('\0','NEF','photo'),('\0','TIF','photo'),('','XMP','photo');
+INSERT INTO `extension_filetype` VALUES ('\0','ABC','video'),('\0','JPG','photo'),('','JPG','video'),('','JPG','video_prev_proxy'),('\0','MOV','video'),('\0','MP4','video'),('\0','MP4','video_prev_proxy'),('','MP4_FFPROBE_OUT','video'),('','MP4_FFPROBE_OUT','video_prev_proxy'),('\0','MTB','video'),('\0','MTS','video'),('\0','MXF','video'),('\0','NEF','photo'),('\0','TIF','photo'),('','XMP','photo');
 /*!40000 ALTER TABLE `extension_filetype` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -374,6 +430,7 @@ CREATE TABLE `priorityband` (
 
 LOCK TABLES `priorityband` WRITE;
 /*!40000 ALTER TABLE `priorityband` DISABLE KEYS */;
+INSERT INTO `priorityband` VALUES (1,10,'Band 1','',5);
 /*!40000 ALTER TABLE `priorityband` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -422,6 +479,7 @@ CREATE TABLE `sequence` (
   `starting_number` int(11) DEFAULT NULL,
   `type` varchar(255) DEFAULT NULL,
   `sequence_ref_id` int(11) DEFAULT NULL,
+  `ending_number` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FK5v8kpxq28gqfbgrsmaermgfrc` (`sequence_ref_id`),
   CONSTRAINT `FK5v8kpxq28gqfbgrsmaermgfrc` FOREIGN KEY (`sequence_ref_id`) REFERENCES `sequence` (`id`)
@@ -434,7 +492,7 @@ CREATE TABLE `sequence` (
 
 LOCK TABLES `sequence` WRITE;
 /*!40000 ALTER TABLE `sequence` DISABLE KEYS */;
-INSERT INTO `sequence` VALUES (1,NULL,'\0',24533,'\0',NULL,NULL,'artifact',NULL),(2,'^[A-Z]{1,2}[\\\\d]{1,4}','\0',999,'\0','A',NULL,'artifact',NULL),(3,NULL,'\0',555,'\0','Z',NULL,'artifact',NULL),(4,'^[A-Z]{1,2}[\\\\d]{1,4}','\0',333,'\0',NULL,NULL,'artifact',NULL),(5,'^[\\\\d]{1,5}','',0,'\0',NULL,NULL,'artifact',NULL),(6,'^[Z\\\\d]{1,6}','',0,'\0',NULL,NULL,'artifact',NULL),(7,NULL,'\0',0,'\0','L',NULL,'artifact',NULL),(8,NULL,'\0',0,'\0','M',NULL,'artifact',NULL),(9,NULL,'\0',0,'\0','V1',NULL,'artifact',NULL),(10,NULL,'\0',0,'\0','V2',NULL,'artifact',NULL);
+INSERT INTO `sequence` VALUES (1,NULL,'\0',NULL,'\0','N',NULL,'artifact',13,NULL),(2,'^[A-Z]{1,2}[\\\\d]{1,4}','\0',999,'\0','A',NULL,'artifact',NULL,NULL),(3,NULL,'\0',555,'\0','Z',NULL,'artifact',NULL,NULL),(4,'^[A-Z]{1,2}[\\\\d]{1,4}','\0',333,'\0',NULL,NULL,'artifact',NULL,NULL),(5,'^[\\\\d]{1,5}','',0,'\0',NULL,NULL,'artifact',NULL,NULL),(6,'^[Z\\\\d]{1,6}','',0,'\0',NULL,NULL,'artifact',NULL,NULL),(7,NULL,'\0',0,'\0','L',NULL,'artifact',NULL,NULL),(8,NULL,'\0',0,'\0','M',NULL,'artifact',NULL,NULL),(9,NULL,'\0',NULL,'\0','P',NULL,'artifact',13,NULL),(10,NULL,'\0',NULL,'\0','X',NULL,'artifact',13,NULL),(11,NULL,NULL,10001,'\0','N',10000,'volume',NULL,18999),(12,NULL,NULL,20002,'\0','N',20000,'volume',NULL,29999),(13,NULL,NULL,24533,'',NULL,24500,'artifact',NULL,NULL),(14,NULL,NULL,19000,'\0','P',19000,'volume',NULL,19999);
 /*!40000 ALTER TABLE `sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -463,6 +521,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
+INSERT INTO `user` VALUES (1,'$2a$10$70nZ.1zvmmgAXQZ5qDFHxe08eTijEejJ5HRZAtwRcPuMjw4MfRley','pgurumurthy',1);
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -488,11 +547,14 @@ CREATE TABLE `volume` (
   `archiveformat_id` varchar(255) DEFAULT NULL,
   `location_id` varchar(255) DEFAULT NULL,
   `volume_ref_id` varchar(255) DEFAULT NULL,
+  `sequence_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FKsw7cga5kgm5yqs2sfpq9hdidv` (`archiveformat_id`),
   KEY `FK5k6g9ueuvb8e330dfvr88agfk` (`location_id`),
   KEY `FKqg73ij1twrjwxpc1me5xhpa21` (`volume_ref_id`),
+  KEY `FK94srhb48x080eknhc0yx0ad2o` (`sequence_id`),
   CONSTRAINT `FK5k6g9ueuvb8e330dfvr88agfk` FOREIGN KEY (`location_id`) REFERENCES `location` (`id`),
+  CONSTRAINT `FK94srhb48x080eknhc0yx0ad2o` FOREIGN KEY (`sequence_id`) REFERENCES `sequence` (`id`),
   CONSTRAINT `FKqg73ij1twrjwxpc1me5xhpa21` FOREIGN KEY (`volume_ref_id`) REFERENCES `volume` (`id`),
   CONSTRAINT `FKsw7cga5kgm5yqs2sfpq9hdidv` FOREIGN KEY (`archiveformat_id`) REFERENCES `archiveformat` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -504,7 +566,7 @@ CREATE TABLE `volume` (
 
 LOCK TABLES `volume` WRITE;
 /*!40000 ALTER TABLE `volume` DISABLE KEYS */;
-INSERT INTO `volume` VALUES ('IMP1',2500000000000,'sha256',NULL,'',NULL,'','block',NULL,'tape','group','bru','LR',NULL),('N1',6000000000000,'sha256',NULL,'\0',NULL,'\0','block',NULL,'tape','group','tar','LR',NULL),('N10001',6000000000000,'sha256','{\"barcoded\": true, \"blocksize\": 524288, \"generation\": 7}','\0',NULL,'\0','block','lto7','tape','physical','tar','LR','N1'),('N2',2500000000000,'sha256',NULL,'\0',NULL,'\0','block',NULL,'tape','group','bru','TB',NULL),('N3',2500000000000,'sha256',NULL,'\0',NULL,'\0','file',NULL,'disk','group',NULL,'IIIT',NULL),('P1',6000000000000,'sha256',NULL,'\0',NULL,'\0','block',NULL,'tape','group','bru','LR',NULL);
+INSERT INTO `volume` VALUES ('IMP1',2500000000000,'sha256',NULL,'',NULL,'','block',NULL,'tape','group','bru','LR',NULL,NULL),('N1',6000000000000,'sha256',NULL,'\0',NULL,'\0','block',NULL,'tape','group','tar','LR',NULL,11),('N10001L7',6000000000000,'sha256','{\"barcoded\": true, \"blocksize\": 524288}','\0','2020-08-08 17:16:34.481000','\0','block','lto7','tape','physical','tar','LR','N1',NULL),('N2',2500000000000,'sha256',NULL,'\0',NULL,'\0','block',NULL,'tape','group','bru','TB',NULL,12),('N20001L7',6000000000000,'sha256','{\"barcoded\": true, \"blocksize\": 524288}','\0','2020-08-08 17:14:34.438000','\0','block','lto7','tape','physical','bru','TB','N2',NULL),('N20003L7',6000000000000,'sha256','{\"barcoded\": true, \"blocksize\": 524288}','\0','2020-08-13 07:09:39.606000','\0','block','LTO-7','tape','physical','bru','TB','N2',NULL),('N3',2500000000000,'sha256',NULL,'\0',NULL,'\0','file',NULL,'disk','group',NULL,'IIIT',NULL,NULL),('P1',6000000000000,'sha256',NULL,'\0',NULL,'\0','block',NULL,'tape','group','bru','LR',NULL,NULL);
 /*!40000 ALTER TABLE `volume` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -517,4 +579,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-08-07 13:34:31
+-- Dump completed on 2020-08-16 20:49:16
