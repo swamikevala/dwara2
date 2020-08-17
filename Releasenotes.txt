@@ -1,3 +1,7 @@
+17th Aug
+	Ignores jobs needing tapes not in library
+	TapeJobSelection Fix to check if needed tape is already loaded on any drive
+
 16th Aug
 	Login changes from Dong anna
 	Scan API - Note response structure changed, Removed ActionUser table but retain ArtifactclassActionUser table.

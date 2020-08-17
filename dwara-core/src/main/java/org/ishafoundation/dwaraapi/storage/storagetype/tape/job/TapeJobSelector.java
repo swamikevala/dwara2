@@ -43,27 +43,25 @@ public class TapeJobSelector {
 	 * else choose a job from the exhaustive list 
 	 * 
 	 * @param tapeJobsList - the jobs list against which the selection happens
-	 * @param driveStatusDetails - for which drive the job is getting selected
+	 * @param driveDetails - for which drive the job is getting selected
 	 * @return
 	 * @throws Exception 
 	 */
 	
-	public StorageJob selectJob(List<StorageJob> tapeJobsList, DriveDetails driveStatusDetails) throws Exception {
+	public StorageJob selectJob(List<StorageJob> tapeJobsList, DriveDetails driveDetails) throws Exception {
 		if(tapeJobsList.size() <= 0)
 			return null;
 		
 		List<StorageJob> ignoreOptimisationTapeJobsList = getIgnoreOptimisationTapeJobsList(tapeJobsList);
-		
-		// TODO For now defaulting it to the first one...
-		//StorageJob archiveJob = tapeStorageJobsList.get(0);
+
 		StorageJob tapeJob = null;
 		if(ignoreOptimisationTapeJobsList.size() > 0) { // are there IgnoreVolumeOptimisation jobs
 			logger.debug("Contains Ignore Tape Optimisation jobs");
 			// if yes then get a job that is optimised - Yes we need optimisation even on the ignoreVolumeOptimisation job list...
-			tapeJob = chooseAJobForTheDrive(ignoreOptimisationTapeJobsList, driveStatusDetails);
+			tapeJob = chooseAJobForTheDrive(ignoreOptimisationTapeJobsList, driveDetails);
 		} else {
 			logger.debug("Doesnt contain any Ignore Tape Optimisation jobs");// Optimise Tape Access - true");
-			tapeJob = chooseAJobForTheDrive(tapeJobsList, driveStatusDetails);
+			tapeJob = chooseAJobForTheDrive(tapeJobsList, driveDetails);
 		}
 		
 
@@ -103,7 +101,11 @@ public class TapeJobSelector {
 	@returns JobToBeProcessed
 	 */
 	private StorageJob chooseAJobForTheDrive(List<StorageJob> tapeJobsList, DriveDetails driveDetails) throws Exception{
-		logger.debug("Choosing a job for the drive " + driveDetails.getDriveId());//driveStatusDetails.getDriveName() + "(" + driveStatusDetails.getDte().getsNo() + ")");
+		logger.debug("Choosing a job for the drive " + driveDetails.getDriveId());//driveDetails.getDriveName() + "(" + driveDetails.getDte().getsNo() + ")");
+		// TODO :  Filtering job which involves a tape' generation not supported by the Drive
+		// tapedrive and tape linked via device.details.type(LTO7) and volume.details.storagesubtype(LTO7)...
+//			driveDetails.getDriveId();
+		
 		StorageJob chosenTapeJob = null;
 		String volumeTag = driveDetails.getDte().getVolumeTag();
 
@@ -137,8 +139,9 @@ public class TapeJobSelector {
 				logger.debug("Drive not already loaded with a Tape");
 			// TODO : Check if we have to groupAndOrderJobs on Priority and volumetag... 
 			List<StorageJob> groupedAndOrderedJobsList = groupAndOrderJobs(tapeJobsList);
-			List<DriveDetails> allAvailableDrivesList = tapeDeviceUtil.getAllAvailableDrivesDetails();
-			chosenTapeJob = chooseAJob(groupedAndOrderedJobsList, true, allAvailableDrivesList);
+			// NOTE : It might be tempting to move this out as for every tapejobselection call(which is per drive), we are getting the drivedetails - but is needed so we get the latest correct status
+			List<DriveDetails> allDrivesList = tapeDeviceUtil.getAllDrivesDetails();
+			chosenTapeJob = chooseAJob(groupedAndOrderedJobsList, true, allDrivesList);
 			
 			logger.debug("Updating the original job list");
 			tapeJobsList = groupedAndOrderedJobsList; // removing all same tape specific jobs...
@@ -504,14 +507,14 @@ public class TapeJobSelector {
 			2) then jobs for artifactclass pub-video to write copy 2 and 3 should not be allowed... 
 
 	 */
-	private StorageJob chooseAJob(List<StorageJob> tapeJobsList, boolean needVerificationAgainstOtherDrives, List<DriveDetails> allAvailableDrivesList) throws Exception {
+	private StorageJob chooseAJob(List<StorageJob> tapeJobsList, boolean needVerificationAgainstOtherDrives, List<DriveDetails> allDrivesList) throws Exception {
 		logger.debug("Choosing a job");
 		logger.trace("Getting the currently running tape jobs...");
 		List<StorageJob> currentlyRunningTapeJobsList = getTheCurrentlyRunningTapeJobs();
 		if(currentlyRunningTapeJobsList == null || currentlyRunningTapeJobsList.size() == 0) {
 			// no jobs currently running and hence need not worry about concurrency checks or same tape being used in another job
 			logger.debug("No jobs currently running.");
-			return getFirstCandidateJob(tapeJobsList, needVerificationAgainstOtherDrives, allAvailableDrivesList);
+			return getFirstCandidateJob(tapeJobsList, needVerificationAgainstOtherDrives, allDrivesList);
 		}
 		else {
 			// means there are jobs running...
@@ -625,7 +628,7 @@ public class TapeJobSelector {
 								logger.debug(tapeJob.getJob().getId() + " has not got a concurrent copy already in writing.");
 								if(needVerificationAgainstOtherDrives) {
 									logger.debug("Verifying if the tape needed by the job is already loaded in any other Drive");
-									if(isTapeNeededForTheJobAlreadyLoadedInAnyDrive(tapeJob, allAvailableDrivesList)) {
+									if(isTapeNeededForTheJobAlreadyLoadedInAnyDrive(tapeJob, allDrivesList)) {
 										logger.debug("Skipped, as tape is available in other drive");
 										continue;
 									}
@@ -638,7 +641,7 @@ public class TapeJobSelector {
 							logger.debug("Concurrent copy on the job " + tapeJob.getJob().getId() + " allowed.");
 							if(needVerificationAgainstOtherDrives) {
 								logger.debug("Verifying if the tape needed by the job is already loaded in any other Drive");
-								if(isTapeNeededForTheJobAlreadyLoadedInAnyDrive(tapeJob, allAvailableDrivesList)) {
+								if(isTapeNeededForTheJobAlreadyLoadedInAnyDrive(tapeJob, allDrivesList)) {
 									logger.debug("Skipped, as tape is available in other drive");
 									continue;
 								}
@@ -650,21 +653,21 @@ public class TapeJobSelector {
 				}
 			}else {
 				logger.debug("No write jobs currently ON.");
-				return getFirstCandidateJob(tapeJobsList, needVerificationAgainstOtherDrives, allAvailableDrivesList);
+				return getFirstCandidateJob(tapeJobsList, needVerificationAgainstOtherDrives, allDrivesList);
 			}
 		}
 		logger.debug("No job selected");
 		return null;
 	}
 	
-	private StorageJob getFirstCandidateJob(List<StorageJob> tapeJobsList, boolean needVerificationAgainstOtherDrives, List<DriveDetails> allAvailableDrivesList) {
+	private StorageJob getFirstCandidateJob(List<StorageJob> tapeJobsList, boolean needVerificationAgainstOtherDrives, List<DriveDetails> allDrivesList) {
 		logger.debug("Getting the first candidate job");
 		StorageJob chosenJob = null;
 		if(needVerificationAgainstOtherDrives) {
 			// verifying if the tape needed by the to be selected job is not already loaded in other drives...
 			for (Iterator<StorageJob> iterator = tapeJobsList.iterator(); iterator.hasNext();) {
 				StorageJob tapeJob = (StorageJob) iterator.next();
-				if(!isTapeNeededForTheJobAlreadyLoadedInAnyDrive(tapeJob, allAvailableDrivesList)) {
+				if(!isTapeNeededForTheJobAlreadyLoadedInAnyDrive(tapeJob, allDrivesList)) {
 					chosenJob = tapeJob;
 					break;
 				}
@@ -677,15 +680,15 @@ public class TapeJobSelector {
 	}
 
 	// Lets say for drive 1 we are choosing a job copy 3 but the tape specific to the job is already available in other drive. Then we have to skip the job from selection. This method does the verification of the tape needed by the job against drives 
-	private boolean isTapeNeededForTheJobAlreadyLoadedInAnyDrive(StorageJob tapeJob, List<DriveDetails> allAvailableDrivesList){
+	private boolean isTapeNeededForTheJobAlreadyLoadedInAnyDrive(StorageJob tapeJob, List<DriveDetails> allDrivesList){
 		String barcode = tapeJob.getVolume().getId();
 		logger.trace("Checking if the tape " + barcode + " needed by the job " + tapeJob.getJob().getId() + " is already loaded in any of the drives.");
 		
-		if(allAvailableDrivesList.size() > 0) { // means drive(s) available
-			for (Iterator<DriveDetails> driveStatusDetailsIterator = allAvailableDrivesList.iterator(); driveStatusDetailsIterator.hasNext();) {
-				DriveDetails driveStatusDetails = (DriveDetails) driveStatusDetailsIterator.next();
-				if(barcode.equals(driveStatusDetails.getDte().getVolumeTag())) {
-					logger.trace("Already loaded in drive " + driveStatusDetails.getDte().getsNo());
+		if(allDrivesList.size() > 0) { // means drive(s) available
+			for (Iterator<DriveDetails> driveDetailsIterator = allDrivesList.iterator(); driveDetailsIterator.hasNext();) {
+				DriveDetails driveDetails = (DriveDetails) driveDetailsIterator.next();
+				if(barcode.equals(driveDetails.getDte().getVolumeTag())) {
+					logger.trace("Already loaded in drive " + driveDetails.getDte().getsNo());
 					return true;
 				}
 			}
