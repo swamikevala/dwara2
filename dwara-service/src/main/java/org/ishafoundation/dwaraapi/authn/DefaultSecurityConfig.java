@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
+import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -27,11 +28,17 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private DataSource dataSource;
 
+    //@Bean
+    CorsFilter corsFilter(){
+        CorsFilter filter = new CorsFilter();
+        return filter;
+    }
+    
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .cors().and()
-                // .addFilterBefore(corsFilter(), SessionManagementFilter.class) //adds your custom CorsFilter
+               .cors().and()
+                //.addFilterBefore(corsFilter(), SessionManagementFilter.class) //adds your custom CorsFilter
                 .exceptionHandling().authenticationEntryPoint(authEntryPoint)
 
 //                .and()
@@ -51,27 +58,30 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .and()
                 .csrf().disable()
-                .authorizeRequests().antMatchers("/getIngestListJson").permitAll()
+                .authorizeRequests().antMatchers("/login").permitAll()
+                .and().authorizeRequests().antMatchers("/corsSupportedGreeting").permitAll()
+                .and().authorizeRequests().antMatchers("/corsNotSupportedGreeting").permitAll()
+                .and().authorizeRequests().antMatchers("/v2/api-docs", "/configuration/**", "/swagger*/**", "/webjars/**").permitAll()
                 .and().authorizeRequests().antMatchers("/register").permitAll()
                 .and().authorizeRequests().antMatchers("/setpassword").permitAll()
-                .and().authorizeRequests().antMatchers("/admin/**").permitAll().anyRequest().hasRole("ADMIN")
-                .and().authorizeRequests().antMatchers("/ingest/**").permitAll().anyRequest().hasRole("USER")
-                .and().authorizeRequests().antMatchers("/contentgroup/**").permitAll().anyRequest().hasRole("USER")
-                .and().authorizeRequests().antMatchers("/sequencescheme/**").permitAll().anyRequest().hasRole("USER")
                 .anyRequest().authenticated()
                 .and().httpBasic()
                 .authenticationEntryPoint(authEntryPoint);
     }
-
+    
     @Bean
-	CorsConfigurationSource corsConfigurationSource() {
-		CorsConfiguration configuration = new CorsConfiguration();
-		configuration.setAllowedOrigins(Arrays.asList("*"));
-		configuration.setAllowedMethods(Arrays.asList("GET","POST"));
-		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", configuration);
-		return source;
-	}
+    CorsConfigurationSource corsConfigurationSource()
+    {
+	    CorsConfiguration configuration = new CorsConfiguration();
+	    //configuration.applyPermitDefaultValues();
+//	    configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://172.18.1.222:8010", "http://172.18.1.223:8010", "http://172.18.1.23:8010"));
+//	    configuration.setAllowedMethods(Arrays.asList("GET","POST"));
+	    configuration.setAllowedOrigins(Arrays.asList("http://localhost:8010", "http://192.168.200.34:4200", "http://172.18.1.222:8010", "http://172.18.1.223:8010", "http://172.18.1.23:8010"));
+	    configuration.setAllowedMethods(Arrays.asList("GET","POST","PUT","OPTIONS"));
+	    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+	    source.registerCorsConfiguration("/**", configuration);
+	    return source;
+    }
 
     @Bean
     public JdbcUserDetailsManager jdbcUserDetailsManager() throws Exception {

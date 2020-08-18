@@ -271,7 +271,7 @@ public class StagedService extends DwaraService{
 				Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
 				artifact.setCreationRequest(userRequest); // User request goes here...
 				artifact.setqLatestRequest(systemrequest);
-				artifact.setName(stagedFileName);
+				artifact.setName(sequenceCode + "_" + stagedFileName);
 				artifact.setArtifactclass(artifactclass);
 				artifact.setFileCount(fileCount);
 				artifact.setTotalSize(size);
