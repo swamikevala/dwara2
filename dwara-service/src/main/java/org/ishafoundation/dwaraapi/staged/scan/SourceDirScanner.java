@@ -3,20 +3,30 @@ package org.ishafoundation.dwaraapi.staged.scan;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
+import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
+import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Extension;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -33,7 +43,13 @@ public class SourceDirScanner {
 	
 	@Autowired
     private SequenceDao sequenceDao;
-    
+
+	@Autowired
+    private ExtensionDao extensionDao;
+	
+	@Autowired
+    private CommandLineExecuter commandLineExecuter;
+	
 	@Autowired
     private Configuration configuration;
 	
@@ -43,15 +59,22 @@ public class SourceDirScanner {
 	
     private String regexAllowedChrsInFileName = null;
 	Pattern allowedChrsInFileNamePattern = null;
+	private List<Pattern> excludedFileNamesRegexList = null;
+	
 	@PostConstruct
 	private void loadConfigEntries() {
 		regexAllowedChrsInFileName = configuration.getRegexAllowedChrsInFileName();
 		allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
+		excludedFileNamesRegexList = new ArrayList<Pattern>();
+		for (int i = 0; i < configuration.getJunkFilesFinderRegexPatternList().length; i++) {
+			Pattern nthJunkFilesFinderRegexPattern = Pattern.compile(configuration.getJunkFilesFinderRegexPatternList()[i]);
+			excludedFileNamesRegexList.add(nthJunkFilesFinderRegexPattern);
+		}
 	}
 	
 	public List<StagedFileDetails> scanSourceDir(Artifactclass artifactclass, List<String> scanFolderBasePathList) {
-		//int libraryclassId = artifactclass.getId();
-    	String libraryclassName = artifactclass.getName();
+		//int artifactclassId = artifactclass.getId();
+    	String artifactclassName = artifactclass.getName();
         int sequenceId = artifactclass.getSequenceId(); // getting the primary key of the Sequence table which holds the lastsequencenumber for this group...
         Sequence sequence = null;
         try {
@@ -61,27 +84,27 @@ public class SourceDirScanner {
         	return null;
 		}
     	String extractionRegex = sequence.getArtifactExtractionRegex();
-    	boolean isKeepExtractedCode = sequence.isArtifactKeepCode();
+    	Boolean isKeepExtractedCode = sequence.isArtifactKeepCode();
     	
         List<StagedFileDetails> ingestReadyFileList = new ArrayList<StagedFileDetails>();
     	for (String nthScanFolderBasePath : scanFolderBasePathList) {
-			String sourcePath = nthScanFolderBasePath + File.separator + Action.ingest.name() + File.separator + libraryclassName;
+			String sourcePath = nthScanFolderBasePath + File.separator + Action.ingest.name() + File.separator + artifactclassName;
 			
-			IOFileFilter dirFilter = FileFilterUtils.directoryFileFilter();
+			//IOFileFilter dirFilter = FileFilterUtils.directoryFileFilter(); We need not show only directories but can also show files - Like Audio and 
 			IOFileFilter notCancelledFolderFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(Status.cancelled.toString()));
 			IOFileFilter notDeletedFolderFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(DELETED));
 			
 			//FileFilter allDirectoriesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(dirFilter, notCancelledFolderFilter, notDeletedFolderFilter);
-			FileFilter allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(dirFilter, notCancelledFolderFilter, notDeletedFolderFilter);
-			if(libraryclassName.contains("audio"))
-				allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(notCancelledFolderFilter, notDeletedFolderFilter);
+			FileFilter allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(notCancelledFolderFilter, notDeletedFolderFilter);//FileFilterUtils.and(dirFilter, notCancelledFolderFilter, notDeletedFolderFilter);
+//			if(artifactclassName.contains("audio"))
+//				allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(notCancelledFolderFilter, notDeletedFolderFilter);
 	    	File[] ingestableFiles = new File(sourcePath).listFiles(allFilesExcludingCancelledAndDeletedDirectoryFilter);
 	    	if(ingestableFiles != null) {
 	    		List<StagedFileDetails> nthScanFolderBaseIngestDirectoryList = scanForIngestableFiles(sequence, extractionRegex, isKeepExtractedCode, sourcePath, ingestableFiles);
 	    		ingestReadyFileList.addAll(nthScanFolderBaseIngestDirectoryList);
 	    	}
 	    	
-	    	// All cancelled medialibrary...
+	    	// All cancelled mediaartifact...
 	    	String cancelledOriginSourceDir = sourcePath + File.separator + Status.cancelled.toString();
 	    	File[] cancelledIngestableFiles = new File(cancelledOriginSourceDir).listFiles();
 	    	if(cancelledIngestableFiles != null) {
@@ -89,7 +112,7 @@ public class SourceDirScanner {
 	    		ingestReadyFileList.addAll(nthScanFolderBaseCancelledDirectoryIngestFileList);
 	    	}	
 	    	
-	    	// All deleted medialibrary...
+	    	// All deleted mediaartifact...
 	    	String deletedOriginSourceDir = sourcePath + File.separator + DELETED;
 	    	File[] deletedIngestableFiles = new File(deletedOriginSourceDir).listFiles();
 	    	if(deletedIngestableFiles != null) {
@@ -115,8 +138,9 @@ public class SourceDirScanner {
 	
 	private StagedFileDetails getFileAttributes(File nthIngestableFile, Sequence sequence, String extractionRegex, boolean isKeepExtractedCode, String sourcePath) {
         long size = 0;
-        String warning = null;
         int fileCount = 0;
+        
+        String fileName = nthIngestableFile.getName();
         
         // added to try catch for the test api not to throw an error when looking for a non-existing folder
         try {
@@ -135,42 +159,189 @@ public class SourceDirScanner {
         	fileCount = 1;
         }
 		
-		String fileName = nthIngestableFile.getName();
-		if(fileName.length() > 150)
-			warning = (StringUtils.isNotBlank(warning) ? warning + " & " : "" ) + "File Name gt 150 characters";
-		
-		Matcher m = allowedChrsInFileNamePattern.matcher(fileName);
-		if(!m.matches())
-			warning = (StringUtils.isNotBlank(warning) ? warning + " & " : "" ) + "File Name contains spl characters";
-        
-		String prevSeqCode = null;
-		if(StringUtils.isNotBlank(extractionRegex)) {
-			prevSeqCode = getExistingSeqCodeFromLibraryName(fileName, extractionRegex);
-		}
-		// TODO : Talk to swami - we still need old filename and new filename...
-		String customFileName = getCustomLibraryName(fileName, prevSeqCode, sequence, isKeepExtractedCode);
-		
 		StagedFileDetails nthIngestFile = new StagedFileDetails();
-		
+		nthIngestFile.setName(fileName);		
 		nthIngestFile.setPath(sourcePath);
 		nthIngestFile.setFileCount(fileCount);
 		nthIngestFile.setTotalSize(size);
 		//nthIngestDirectory.setFileSizeInMBytes(totalSizeInMB);
+		
+		String warning = validate(nthIngestFile).toString();
+		if(warning != null) {
+			String errorType = null;
+			errorType = "Warning";// TODO hardcoded for now - fetch it from error type table...
+			nthIngestFile.setErrorType(errorType);
+			nthIngestFile.setErrorMessage(warning);
+		}
+
+		String prevSeqCode = null;
+		if(StringUtils.isNotBlank(extractionRegex)) {
+			prevSeqCode = getExistingSeqCodeFromArtifactName(fileName, extractionRegex);
+		}
+		
+		// TODO : Talk to swami - we still need suggested filename...
+		String customFileName = getCustomArtifactName(fileName, prevSeqCode, sequence, isKeepExtractedCode);
+
 		nthIngestFile.setPrevSequenceCode(prevSeqCode);
 		if(StringUtils.isNotBlank(extractionRegex) && isKeepExtractedCode) // if regex present and useExtractCode is true but prevSeqCode is null then throw error...
 			nthIngestFile.setPrevSequenceCodeExpected(true);
-		nthIngestFile.setName(fileName);
+		
 		if(!fileName.equals(customFileName))
 			nthIngestFile.setSuggestedName(customFileName);
-		String errorType = null;
-		if(warning != null)
-			errorType = "Warning";// TODO hardcoded for now - fetch it from error type table...
-		nthIngestFile.setErrorType(errorType);
-		nthIngestFile.setErrorMessage(warning);
+		
 		return nthIngestFile;
 	}
+
+	private StringBuffer validate(StagedFileDetails stagedFileDetails) {
+		StringBuffer messageBuilder = new StringBuffer();
+		
+//    	File mediaLibraryFile = FileUtils.getFile(stagedFileDetails.getPath(), stagedFileDetails.getName());
+//    	if(!mediaLibraryFile.exists())
+//    		appendMessage(messageBuilder, "The following artifact doesnt exist - " + mediaLibraryFile.getAbsolutePath());
+
+		// validateCount
+		if(stagedFileDetails.getFileCount() == 0)
+			appendMessage(messageBuilder, "Folder has no files inside");
+		
+		// validateSize
+		// TODO whats the size?
+		long configuredSize = 1024; 
+		if(stagedFileDetails.getTotalSize() < configuredSize) {
+			appendMessage(messageBuilder, "Folder is less than " + configuredSize);
+		};
+		
+		//messageBuilder = validateName(stagedFileDetails.getName(), messageBuilder);
+		validateName(stagedFileDetails.getName(), messageBuilder);
+		
+		checkUnsupportedExtensions(stagedFileDetails, messageBuilder);
+		
+		setPermissions(stagedFileDetails, messageBuilder);
+		
+		return messageBuilder;
+	}
 	
-	public String getExistingSeqCodeFromLibraryName(String folderName, String extractionRegex){
+	private void appendMessage(StringBuffer messageBuilder, String message) {
+		if(messageBuilder.length() > 0)
+			messageBuilder.append(" & ");
+		
+		messageBuilder.append(message);
+	}
+	
+	private StringBuffer validateName(String fileName, StringBuffer messageBuilder) {
+		if(fileName.length() > 150)
+			appendMessage(messageBuilder, "File Name gt 150 characters");
+
+
+		Matcher m = allowedChrsInFileNamePattern.matcher(fileName);
+		if(!m.matches()) {
+
+			appendMessage(messageBuilder, "File Name contains spl characters");
+		}
+		return messageBuilder;
+	}
+
+
+	private void checkUnsupportedExtensions(StagedFileDetails stagedFileDetails, StringBuffer messageBuilder) {
+		Iterable<Extension> extensionList = extensionDao.findAll();
+		Set<String> supportedExtns =  new TreeSet<String>();
+		for (Extension extension : extensionList) {
+			supportedExtns.add(extension.getId().toUpperCase());
+			supportedExtns.add(extension.getId().toLowerCase());
+		}
+
+    	// Step 2 - Iterate through all Files under the artifact Directory and check if their extensions are supported in our system.
+    	String artifactName = stagedFileDetails.getName();
+    	String originFolderPath = stagedFileDetails.getPath();
+    	
+    	File mediaLibraryFile = FileUtils.getFile(originFolderPath, artifactName);
+    	
+		Collection<File> allFilesInTheSystem = null;
+        if(mediaLibraryFile.isDirectory()) {
+        	allFilesInTheSystem = FileUtils.listFiles(mediaLibraryFile, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
+	    }else {
+	    	allFilesInTheSystem = new ArrayList<File>();
+	    	allFilesInTheSystem.add(mediaLibraryFile);
+	    }
+        
+		Set<String> unSupportedExtns =  new TreeSet<String>();
+		// iterate the files and get extensions
+		for (Iterator<File> iterator = allFilesInTheSystem.iterator(); iterator.hasNext();) {
+			File nthFile = (File) iterator.next();
+			String nthFileName = nthFile.getName();
+			String nthFileExtn = FilenameUtils.getExtension(nthFileName);
+			
+//			// excluding known useless files
+//			String[] excludedExtns = config.getFileExtensionsToBeExcludedFromValidation();
+//			List<String> supportedVideoExtnsAsList =  new ArrayList<String>(Arrays.asList(excludedExtns));
+//			if (supportedVideoExtnsAsList.contains(nthFileExtn.toUpperCase())) 
+//				continue;
+			
+			// skipping junk files...
+			boolean isJunkFile = false;
+			for (Iterator<Pattern> iterator2 = excludedFileNamesRegexList.iterator(); iterator2.hasNext();) {
+				Pattern nthJunkFilesFinderRegexPattern = iterator2.next();
+				Matcher m = nthJunkFilesFinderRegexPattern.matcher(nthFileName);
+				if(m.matches()) {
+					isJunkFile = true;
+					break;
+				}
+			}
+			if(isJunkFile) 
+				continue;
+			
+			// validate against the supported list of extensions in the system we have
+			if(!supportedExtns.contains(nthFileExtn))
+				unSupportedExtns.add(nthFileExtn);
+		}
+		
+    	// Step 3 - Throw exception with unsupported extns list	
+		if(unSupportedExtns.size() > 0)
+			appendMessage(messageBuilder, "There are unSupported Extns in the list. Please review them..." + unSupportedExtns);
+		
+	}
+	
+	private void setPermissions(StagedFileDetails stagedFileDetails, StringBuffer messageBuilder) {
+		if(configuration.isLibraryFileSystemPermissionsNeedToBeSet()) {
+		
+			String script = configuration.getLibraryFile_ChangePermissionsScriptPath();
+			String artifactName = stagedFileDetails.getName();
+			String sourcePath = stagedFileDetails.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
+			File toBeIngestedFile = FileUtils.getFile(sourcePath, artifactName);
+			
+			CommandLineExecutionResponse setPermsCommandLineExecutionResponse = null;
+			try {
+				setPermsCommandLineExecutionResponse = changeFilePermissions(script, sourcePath, artifactName);
+				
+				if(!setPermsCommandLineExecutionResponse.isComplete()) {					
+					appendMessage(messageBuilder, "Unable to set permissions to " + toBeIngestedFile + ". " + setPermsCommandLineExecutionResponse.getFailureReason());
+				}
+
+			} catch (Exception e) {
+				String message = "Unable to set permissions to " + toBeIngestedFile + " : " + e.getMessage();
+				appendMessage(messageBuilder, message);
+				logger.warn(message);
+			}
+			
+		}
+	}
+	
+    private CommandLineExecutionResponse changeFilePermissions(String script, String sourcePath, String artifactName) throws Exception {
+		String parts[] = sourcePath.split("/");
+		String user = parts[3];
+		String artifactclassName = parts[5];
+
+		List<String> setFilePermissionsCommandParamsList = new ArrayList<String>();
+		setFilePermissionsCommandParamsList.add("sudo");
+		setFilePermissionsCommandParamsList.add(script);
+		setFilePermissionsCommandParamsList.add(user);
+		setFilePermissionsCommandParamsList.add(artifactclassName);
+		setFilePermissionsCommandParamsList.add(artifactName);
+
+		CommandLineExecutionResponse setPermsCommandLineExecutionResponse = commandLineExecuter.executeCommand(setFilePermissionsCommandParamsList);
+		return setPermsCommandLineExecutionResponse;
+    }
+    
+	public String getExistingSeqCodeFromArtifactName(String folderName, String extractionRegex){
 		String existingSeqCodeFromFolderName = null;
 		
 		Pattern p = Pattern.compile(extractionRegex);
@@ -183,7 +354,7 @@ public class SourceDirScanner {
 	// All isha specific logic should go out...
 	// TODO - make it generic - 
 	// TODO - Also at the time of scanning compare against the seq code and err out
-	private String getCustomLibraryName(String folderName, String prevSeqCode, Sequence sequence, boolean isKeepExtractedCode){
+	private String getCustomArtifactName(String folderName, String prevSeqCode, Sequence sequence, boolean isKeepExtractedCode){
 		String customFolderName = folderName;
 		if(isKeepExtractedCode) { // For contentgroups where isKeepExtractedCode is true just use the prevSeqCode(seqId that was in the folder name originally)
 			String folderNameToBe = null;
@@ -234,7 +405,7 @@ public class SourceDirScanner {
 	 * 
 	 * @param args[0] - The content Group seed json file
 	 * @param args[1] - The scanFolderBase seed json file
-	 * @param args[2] - libraryclassId from the contentgroupseed file used in args[0] of the specific contentgroup that need to be tested
+	 * @param args[2] - artifactclassId from the contentgroupseed file used in args[0] of the specific contentgroup that need to be tested
 	 * @param args[3] - The file containing entries of all ingestableDirectories from all scanfolderbases that has the contentgroup allowed. Mimicks the behaviour of iterating through all scanfolderbase and the list of files copied over to be backed up - signifies this is for testing and not iterating through the scanfolderbase list...
 	 * @throws Exception 
 	 */
@@ -242,19 +413,19 @@ public class SourceDirScanner {
 //		SourceDirScanner sds = new SourceDirScanner();
 //		//ReflectionTestUtils sds
 //		
-//		String libraryclassSeedDataJsonFilePath = args[0]; 
+//		String artifactclassSeedDataJsonFilePath = args[0]; 
 //		String scanFolderBaseSeedDataJsonFilePath = args[1];
-//		String libraryclassId = args[2];
+//		String artifactclassId = args[2];
 //		String ingestableDirectoriesList4TestPath = args.length == 4 ? args[3] : null;
 //
 //		ObjectMapper mapper = new ObjectMapper(); 
 //		mapper.enable(SerializationFeature.INDENT_OUTPUT); 
-//		Iterable<Artifactclass> libraryclassList = mapper.readValue(new File(libraryclassSeedDataJsonFilePath), new TypeReference<Iterable<Artifactclass>>(){}); 
+//		Iterable<Artifactclass> artifactclassList = mapper.readValue(new File(artifactclassSeedDataJsonFilePath), new TypeReference<Iterable<Artifactclass>>(){}); 
 //		Iterable<ScanFolderBase> scanFolderBaseList = mapper.readValue(new File(scanFolderBaseSeedDataJsonFilePath), new TypeReference<Iterable<ScanFolderBase>>(){});
 //
 //		Artifactclass cg = null;
-//		for (Artifactclass artifactclass : libraryclassList) {
-//			if(artifactclass.getContentGroupId() == Integer.parseInt(libraryclassId))
+//		for (Artifactclass artifactclass : artifactclassList) {
+//			if(artifactclass.getContentGroupId() == Integer.parseInt(artifactclassId))
 //				cg = artifactclass;
 //		}
 //		
@@ -270,7 +441,7 @@ public class SourceDirScanner {
 //				cnt += 1;
 //			}
 //			
-//			// This mimicks the sequenceNumberHelper.getPrefixedLastSequenceId(libraryclassId);
+//			// This mimicks the sequenceNumberHelper.getPrefixedLastSequenceId(artifactclassId);
 //			String seqId = null;
 //			Sequence sequence = new Sequence();
 //			sequence.incrementLastNumber();

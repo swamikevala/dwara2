@@ -1,3 +1,9 @@
+19th Aug
+	sequence.is_keep_extractedcode for artifact is right now mandatory - Made optional even for artifacts...
+	scan dir to pull files also and not just directories
+		scan validations including highlighting new extensions and setperms 
+	cache table list - controller introduced to clear and reload
+
 17th Aug
 	Ignores jobs needing tapes not in library
 	TapeJobSelection Fix to check if needed tape is already loaded on any drive

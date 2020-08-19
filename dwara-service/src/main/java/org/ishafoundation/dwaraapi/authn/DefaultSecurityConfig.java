@@ -73,11 +73,7 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
     CorsConfigurationSource corsConfigurationSource()
     {
 	    CorsConfiguration configuration = new CorsConfiguration();
-	    //configuration.applyPermitDefaultValues();
-//	    configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "http://172.18.1.222:8010", "http://172.18.1.223:8010", "http://172.18.1.23:8010"));
-//	    configuration.setAllowedMethods(Arrays.asList("GET","POST"));
-	    configuration.setAllowedOrigins(Arrays.asList("http://localhost:8010", "http://192.168.200.34:4200", "http://172.18.1.222:8010", "http://172.18.1.223:8010", "http://172.18.1.23:8010"));
-	    configuration.setAllowedMethods(Arrays.asList("GET","POST","PUT","OPTIONS"));
+	    configuration.applyPermitDefaultValues();
 	    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 	    source.registerCorsConfiguration("/**", configuration);
 	    return source;

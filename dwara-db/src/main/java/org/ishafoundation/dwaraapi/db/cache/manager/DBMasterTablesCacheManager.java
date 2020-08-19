@@ -20,6 +20,7 @@ public class DBMasterTablesCacheManager<T> {
 	private static final String DAO_SUFFIX = "Dao";
 	private static final Logger logger = LoggerFactory.getLogger(DBMasterTablesCacheManager.class);
 	
+	@SuppressWarnings("rawtypes")
 	@Autowired
 	private Map<String, CacheableRepository> cacheableReposMap;
 	
