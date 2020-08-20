@@ -21,15 +21,9 @@ public class AuthenticationEntryPoint extends BasicAuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authEx)
             throws IOException, ServletException {
-//        response.addHeader("WWW-Authenticate", "Basic realm=" +getRealmName());
-//        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authEx.getMessage());
-//        PrintWriter writer = response.getWriter();
-//        writer.println("HTTP Status 401 - " + authEx.getMessage());
-    	
     	response.setStatus(HttpStatus.BAD_REQUEST.value());
     	HashMap<String, Object> data = new HashMap<String, Object>();
     	data.put("message", authEx.getMessage());
-//    	data.put("message", "Wrong user name or password!");
 		ObjectMapper objectMapper = new ObjectMapper();
 		response.getOutputStream().println(objectMapper.writeValueAsString(data));
     }
@@ -39,5 +33,4 @@ public class AuthenticationEntryPoint extends BasicAuthenticationEntryPoint {
         setRealmName("DwaraDevRealm");
         super.afterPropertiesSet();
     }
-
 }

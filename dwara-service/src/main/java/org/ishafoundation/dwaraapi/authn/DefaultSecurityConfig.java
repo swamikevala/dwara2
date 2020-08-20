@@ -1,7 +1,5 @@
 package org.ishafoundation.dwaraapi.authn;
 
-import java.util.Arrays;
-
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +11,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
-import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,17 +25,29 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private DataSource dataSource;
 
-    //@Bean
-    CorsFilter corsFilter(){
-        CorsFilter filter = new CorsFilter();
-        return filter;
+    // Angular + SB -
+    // https://medium.com/@rameez.s.shaikh/angular-7-spring-boot-basic-authentication-example-98455b73d033
+    // http://www.masterspringboot.com/security/authentication/configuring-spring-boot-authentication-using-in-memory-and-database-providers
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+    	// TODO Brief swami on default schema from spring security
+    	// a) its user table structure and the enabled field/column in the table
+    	// b) and authorities table...
+
+    	
+    	// JdbcUserDetailsManagerConfigurer accepts only 3 columns defined in the default spring security schema like 
+    	// select username,password,enabled from users where username = ?
+    	// using the app specific custom schema here 
+    	auth.jdbcAuthentication().dataSource(dataSource)
+    	.usersByUsernameQuery("select name, hash, true " + " from user where name=?")
+    	.authoritiesByUsernameQuery("select name, 'ROLE_ADMIN' from user where name=?")
+    	.passwordEncoder(new BCryptPasswordEncoder());
     }
     
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
                .cors().and()
-                //.addFilterBefore(corsFilter(), SessionManagementFilter.class) //adds your custom CorsFilter
                 .exceptionHandling().authenticationEntryPoint(authEntryPoint)
 
 //                .and()
@@ -68,6 +77,13 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and().httpBasic()
                 .authenticationEntryPoint(authEntryPoint);
     }
+
+    @Bean
+    public JdbcUserDetailsManager jdbcUserDetailsManager() throws Exception {
+    	JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager();
+    	jdbcUserDetailsManager.setDataSource(dataSource);
+    	return jdbcUserDetailsManager;
+    }
     
     @Bean
     CorsConfigurationSource corsConfigurationSource()
@@ -78,32 +94,4 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
 	    source.registerCorsConfiguration("/**", configuration);
 	    return source;
     }
-
-    @Bean
-    public JdbcUserDetailsManager jdbcUserDetailsManager() throws Exception {
-    	JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager();
-    	jdbcUserDetailsManager.setDataSource(dataSource);
-    	return jdbcUserDetailsManager;
-    }
-
-    // Angular + SB -
-    // https://medium.com/@rameez.s.shaikh/angular-7-spring-boot-basic-authentication-example-98455b73d033
-    // http://www.masterspringboot.com/security/authentication/configuring-spring-boot-authentication-using-in-memory-and-database-providers
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-    	// TODO Brief swami on default schema from spring security
-    	// a) its user table structure and the enabled field/column in the table
-    	// b) and authorities table...
-
-    	
-    	// JdbcUserDetailsManagerConfigurer accepts only 3 columns defined in the default spring security schema like 
-    	// select username,password,enabled from users where username = ?
-    	// using the app specific custom schema here 
-    	auth.jdbcAuthentication().dataSource(dataSource)
-    	.usersByUsernameQuery("select name, hash, true " + " from user where name=?")
-    	.authoritiesByUsernameQuery("select name, 'ROLE_ADMIN' from user where name=?")
-    	.passwordEncoder(new BCryptPasswordEncoder());
-    }
-
-
 }

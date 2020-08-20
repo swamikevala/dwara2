@@ -207,7 +207,7 @@ public class TarArchiver implements IArchiveformatter {
 	public ArchiveResponse verify(ArchiveformatJob archiveformatJob) throws Exception {
 		int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
 		String deviceName = archiveformatJob.getDeviceName();
-		String destinationPath = archiveformatJob.getDestinationPath();
+		String targetLocationPath = archiveformatJob.getTargetLocationPath();
 
 		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
@@ -216,13 +216,13 @@ public class TarArchiver implements IArchiveformatter {
 		int noOfTapeBlocksToBeRead = getNoOfTapeBlocksToBeReadForArtifact(selectedStorageJob.getArtifactStartVolumeBlock(), selectedStorageJob.getArtifactEndVolumeBlock());
 		int skipByteCount = 0; // TODO Check if verify can be applied for non-artifacts. Restore and verify???
 		
-		logger.trace("Creating the directory " + destinationPath + ", if not already present");
-		FileUtils.forceMkdir(new java.io.File(destinationPath));
+		logger.trace("Creating the directory " + targetLocationPath + ", if not already present");
+		FileUtils.forceMkdir(new java.io.File(targetLocationPath));
 		
-		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, destinationPath, noOfTapeBlocksToBeRead);
+		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, false, targetLocationPath, noOfTapeBlocksToBeRead);
 
 		HashMap<String, byte[]> filePathNameToChecksumObj = selectedStorageJob.getFilePathNameToChecksum();
-		boolean isSuccess = stream(commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, false, destinationPath, true, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
+		boolean isSuccess = stream(commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, false, targetLocationPath, true, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
 		logger.debug("verification status " + isSuccess);
 		return new ArchiveResponse();
 	}
@@ -236,20 +236,24 @@ public class TarArchiver implements IArchiveformatter {
 		archiveformatJob = getDecoratedArchiveformatJobForRestore(archiveformatJob);
 		int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
 		String deviceName = archiveformatJob.getDeviceName();
-		String destinationPath = archiveformatJob.getDestinationPath();
+		String targetLocationPath = archiveformatJob.getTargetLocationPath();
 		
 		int noOfTapeBlocksToBeRead = archiveformatJob.getNoOfBlocksToBeRead();
 		
 		int skipByteCount = archiveformatJob.getSkipByteCount();
 		
-		logger.trace("Creating the directory " + destinationPath + ", if not already present");
-		FileUtils.forceMkdir(new java.io.File(destinationPath));
+		logger.trace("Creating the directory " + targetLocationPath + ", if not already present");
+		FileUtils.forceMkdir(new java.io.File(targetLocationPath));
 		
-		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, destinationPath, noOfTapeBlocksToBeRead);
+		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
+		// TODO : Support buffering for tar...
+		if(selectedStorageJob.isUseBuffering())
+			throw new Exception("Buffering still not supported in Tar");
+		
+		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, selectedStorageJob.isUseBuffering(), targetLocationPath, noOfTapeBlocksToBeRead);
 		
 		String filePathNameToBeRestored = archiveformatJob.getFilePathNameToBeRestored();
 		
-		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		
 		HashMap<String, byte[]> filePathNameToChecksumObj = selectedStorageJob.getFilePathNameToChecksum();
@@ -260,17 +264,17 @@ public class TarArchiver implements IArchiveformatter {
 			if(configuration.checksumTypeSupportsStreamingVerification()) // if stream verify supported by checksumtype, then set the streamverify = true
 				streamVerify = true;
 		}
-		stream(commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, true, destinationPath, streamVerify, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
+		stream(commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, true, targetLocationPath, streamVerify, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
 
 		if(storageJob.isRestoreVerify() && !streamVerify) { // TO be verified using standard approach but not the on the fly streaming and verifying
-			boolean success = ChecksumUtil.compareChecksum(filePathNameToChecksumObj, destinationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
+			boolean success = ChecksumUtil.compareChecksum(filePathNameToChecksumObj, targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
 			if(!success)
 				throw new Exception("Restored file's verification failed");
 		}
 		return new ArchiveResponse();
 	}
 	
-	private List<String> frameRestoreCommand(int volumeBlocksize, String deviceName, String destinationPath, int noOfTapeBlocksToBeRead) {
+	private List<String> frameRestoreCommand(int volumeBlocksize, String deviceName, boolean useBuffering, String destinationPath, int noOfTapeBlocksToBeRead) {
 		// FIXME: mbuffer -s 1M -m 2G -i /dev/st1 | bru -xvvvvvvvvv -b1024k -QV -C ***-f*** - 25079_Cauvery-Calling_Day15-Crowd-Shots-At-Closing-Event_CODISSIA-Cbe_17-Sep-2019_Z280V_B-Rolls
 		String restoreCommand = "dd if=" + deviceName + " bs=" + volumeBlocksize	+ " count=" + noOfTapeBlocksToBeRead;
 		logger.debug("Tar restoration - " +  restoreCommand);

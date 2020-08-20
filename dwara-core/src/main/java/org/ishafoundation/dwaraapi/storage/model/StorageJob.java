@@ -31,6 +31,8 @@ public class StorageJob {
 	// Restore stuff
 	private int fileId;
 	private String destinationPath;
+	private String outputFolder;
+	private String targetLocationPath;
 	private Integer volumeBlock;
 	private Integer archiveBlock;
 	private boolean restoreVerify;
@@ -125,6 +127,22 @@ public class StorageJob {
 		this.destinationPath = destinationPath;
 	}
 
+	public String getOutputFolder() {
+		return outputFolder;
+	}
+
+	public void setOutputFolder(String outputFolder) {
+		this.outputFolder = outputFolder;
+	}
+
+	public String getTargetLocationPath() {
+		return targetLocationPath;
+	}
+
+	public void setTargetLocationPath(String targetLocationPath) {
+		this.targetLocationPath = targetLocationPath;
+	}
+	
 	public Integer getVolumeBlock() {
 		return volumeBlock;
 	}

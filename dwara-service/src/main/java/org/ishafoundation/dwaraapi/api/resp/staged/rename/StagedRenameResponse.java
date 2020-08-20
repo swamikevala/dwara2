@@ -5,7 +5,7 @@ import java.util.List;
 public class StagedRenameResponse {
 	private int userRequestId;
 	private String status;
-	private List<StagedRenameFile> stagedFiles;
+	private List<StagedRenameFileForResponse> stagedFiles;
 	
 	public int getUserRequestId() {
 		return userRequestId;
@@ -19,10 +19,10 @@ public class StagedRenameResponse {
 	public void setStatus(String status) {
 		this.status = status;
 	}
-	public List<StagedRenameFile> getStagedFiles() {
+	public List<StagedRenameFileForResponse> getStagedFiles() {
 		return stagedFiles;
 	}
-	public void setStagedFiles(List<StagedRenameFile> stagedFiles) {
+	public void setStagedFiles(List<StagedRenameFileForResponse> stagedFiles) {
 		this.stagedFiles = stagedFiles;
 	}
 }

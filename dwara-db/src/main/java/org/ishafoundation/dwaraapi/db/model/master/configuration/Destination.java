@@ -24,7 +24,7 @@ public class Destination implements Cacheable{
 	@Column(name="id")
 	private String id;
 	
-	@Column(name="path")
+	@Column(name="path", unique = true)
 	private String path;	
 
     @OneToMany(mappedBy = "destination",

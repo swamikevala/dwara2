@@ -33,8 +33,6 @@ public class Configuration {
 	
 	private String restoreInProgressFileIdentifier;
 	
-	private boolean useMbuffer;
-	
 	public String getRegexAllowedChrsInFileName() {
 		return regexAllowedChrsInFileName;
 	}
@@ -47,7 +45,7 @@ public class Configuration {
 		return isLibraryFileSystemPermissionsNeedToBeSet;
 	}
 
-	public void setLibraryFileSystemPermissionsNeedToBeSet(boolean isLibraryFileSystemPermissionsNeedToBeSet) {
+	public void setIsLibraryFileSystemPermissionsNeedToBeSet(boolean isLibraryFileSystemPermissionsNeedToBeSet) {
 		this.isLibraryFileSystemPermissionsNeedToBeSet = isLibraryFileSystemPermissionsNeedToBeSet;
 	}
 
@@ -137,13 +135,5 @@ public class Configuration {
 
 	public void setRestoreInProgressFileIdentifier(String restoreInProgressFileIdentifier) {
 		this.restoreInProgressFileIdentifier = restoreInProgressFileIdentifier;
-	}
-
-	public boolean useMbuffer() {
-		return useMbuffer;
-	}
-
-	public void setUseMbuffer(boolean useMbuffer) {
-		this.useMbuffer = useMbuffer;
 	}
 }

@@ -82,7 +82,7 @@ public class BlockStoragelevel implements IStoragelevel {
     	IArchiveformatter archiveFormatter = iArchiveformatterMap.get(archiveformat.getId() + DwaraConstants.ARCHIVER_SUFFIX);
 		StorageResponse storageResponse = new StorageResponse();
     	ArchiveformatJob archiveformatJob = instantiateArchiveJobWithCommonFields(storagetypeJob);
-    	archiveformatJob.setDestinationPath(storageJob.getDestinationPath());
+    	archiveformatJob.setTargetLocationPath(storageJob.getTargetLocationPath());
 	
 		ArchiveResponse archiveResponse = archiveFormatter.verify(archiveformatJob);
 		storageResponse.setArchiveResponse(archiveResponse);
@@ -108,7 +108,7 @@ public class BlockStoragelevel implements IStoragelevel {
     	IArchiveformatter archiveFormatter = iArchiveformatterMap.get(archiveformat.getId() + DwaraConstants.ARCHIVER_SUFFIX);
     	
     	ArchiveformatJob archiveformatJob = instantiateArchiveJobWithCommonFields(storagetypeJob);
-    	archiveformatJob.setDestinationPath(storageJob.getDestinationPath());
+    	archiveformatJob.setTargetLocationPath(storageJob.getTargetLocationPath());
 		ArchiveResponse archiveResponse = archiveFormatter.restore(archiveformatJob);
 		storageResponse.setArchiveResponse(archiveResponse);
 		return storageResponse;

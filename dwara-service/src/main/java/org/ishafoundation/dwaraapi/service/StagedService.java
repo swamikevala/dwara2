@@ -19,7 +19,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.StagedFile;
 import org.ishafoundation.dwaraapi.api.req.staged.rename.StagedRenameFile;
-import org.ishafoundation.dwaraapi.api.req.staged.rename.StagedRenameUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.staged.ingest.IngestResponse;
 import org.ishafoundation.dwaraapi.api.resp.staged.ingest.IngestSystemRequest;
 import org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameResponse;
@@ -123,7 +122,7 @@ public class StagedService extends DwaraService{
 		return sourceDirScanner.scanSourceDir(artifactclass, scanFolderBasePathList);
 	}
 	
-    public StagedRenameResponse renameStagedFiles(StagedRenameUserRequest stagedRenameUserRequest) throws DwaraException{
+    public StagedRenameResponse renameStagedFiles(List<StagedRenameFile> stagedRenameFileList) throws DwaraException{
     	StagedRenameResponse stagedRenameResponse= new StagedRenameResponse();
 
     	Request request = new Request();
@@ -132,19 +131,18 @@ public class StagedService extends DwaraService{
 		request.setRequestedAt(LocalDateTime.now());
 		
 		RequestDetails details = new RequestDetails();
-		JsonNode postBodyJson = getRequestDetails(stagedRenameUserRequest); 
+		JsonNode postBodyJson = getRequestDetails(stagedRenameFileList); 
 		details.setBody(postBodyJson);
 		request.setDetails(details);
     	
-		List<org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameFile> stagedRenameFileResponseList = new ArrayList<org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameFile>();
-    	List<StagedRenameFile> stagedRenameFileList = stagedRenameUserRequest.getStagedRenameFileList();
+		List<org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameFileForResponse> stagedRenameFileResponseList = new ArrayList<org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameFileForResponse>();
     	boolean hasCompleted = false;
     	boolean hasFailures = false;
     	for (StagedRenameFile stagedRenameFile : stagedRenameFileList) {
         	String sourcePath = stagedRenameFile.getPath();
     		String oldFileName = stagedRenameFile.getOldName();
     		String newFileName = stagedRenameFile.getNewName();
-    		org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameFile stagedRenameFileResponse = new  org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameFile();
+    		org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameFileForResponse stagedRenameFileResponse = new  org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameFileForResponse();
     		stagedRenameFileResponse.setPath(sourcePath);
     		stagedRenameFileResponse.setOldName(oldFileName);
     		stagedRenameFileResponse.setNewName(newFileName);

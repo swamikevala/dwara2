@@ -1,3 +1,7 @@
+20th Aug
+	scan and rename api changes
+	destination buffering changes - Drop Destination table and configure again - Path unique constraint added
+
 19th Aug
 	sequence.is_keep_extractedcode for artifact is right now mandatory - Made optional even for artifacts...
 	scan dir to pull files also and not just directories

@@ -15,6 +15,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
+import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
@@ -23,6 +24,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUti
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -55,6 +57,12 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private JobMapDao jobMapDao; 
+
+	@Autowired
+	private VolumeDao volumeDao;
+	
+	@Autowired
+	private DestinationDao destinationDao;
 	
 	@Autowired
 	private Map<String, IStoragelevel> storagelevelMap;
@@ -64,9 +72,6 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
-
-	@Autowired
-	private VolumeDao volumeDao;
 	
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
@@ -259,8 +264,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEnd_volume_block());
 		
 		// to where
-		String destinationPath = configuration.getRestoreTmpLocationForVerification();
-		storageJob.setDestinationPath(destinationPath);
+		String targetLocationPath = configuration.getRestoreTmpLocationForVerification();
+		storageJob.setTargetLocationPath(targetLocationPath);
 		
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
 		selectedStorageJob.setArtifactFileList(fileList);
@@ -344,13 +349,16 @@ public abstract class AbstractStoragetypeJobProcessor {
 
     protected void beforeRestore(SelectedStorageJob selectedStorageJob) throws Exception {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
-    	storageJob.setDestinationPath(storageJob.getDestinationPath() + configuration.getRestoreInProgressFileIdentifier());
+    	storageJob.setTargetLocationPath(storageJob.getTargetLocationPath() + configuration.getRestoreInProgressFileIdentifier());
     	Domain domain = storageJob.getDomain();
     	int fileIdToBeRestored = storageJob.getFileId();
 		
 		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainSpecificFileRepository.findById(fileIdToBeRestored).get();
 		selectedStorageJob.setFile(file);
+		
+		Destination destination = destinationDao.findByPath(storageJob.getDestinationPath());
+		selectedStorageJob.setUseBuffering(destination.isUseBuffering());
 		
     	Method getArtifact = file.getClass().getMethod("getArtifact"+domainAttributeConverter.convertToDatabaseColumn(domain));
     	Artifact artifact = (Artifact) getArtifact.invoke(file);
@@ -406,7 +414,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 			updateFileVolumeVerifiedDate(selectedStorageJob); // update the verified date here...
 		
 		// upon completion moving the file to the original requested dest path
-		FileUtils.moveDirectory(new java.io.File(storageJob.getDestinationPath()), new java.io.File(storageJob.getDestinationPath().replace(configuration.getRestoreInProgressFileIdentifier(), "")));
+		FileUtils.moveDirectory(new java.io.File(storageJob.getTargetLocationPath()), new java.io.File(storageJob.getTargetLocationPath().replace(configuration.getRestoreInProgressFileIdentifier(), "")));
 	}
 	
 	private IStoragelevel getStoragelevelImpl(SelectedStorageJob selectedStorageJob){

@@ -1,5 +1,8 @@
 package org.ishafoundation.dwaraapi.api.resp.staged.scan;
 
+import java.util.List;
+
+import org.ishafoundation.dwaraapi.staged.scan.Error;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -13,8 +16,7 @@ public class StagedFileDetails {
 	private long fileSizeInBytes;
 	private String prevSequenceCode;
 	private boolean prevSequenceCodeExpected;
-	private String errorType;
-	private String errorMessage;
+	private List<Error> errors;
 	
 	public String getPath() {
 		return path;
@@ -64,16 +66,10 @@ public class StagedFileDetails {
 	public void setPrevSequenceCodeExpected(boolean prevSequenceCodeExpected) {
 		this.prevSequenceCodeExpected = prevSequenceCodeExpected;
 	}
-	public String getErrorType() {
-		return errorType;
+	public List<Error> getErrors() {
+		return errors;
 	}
-	public void setErrorType(String errorType) {
-		this.errorType = errorType;
-	}
-	public String getErrorMessage() {
-		return errorMessage;
-	}
-	public void setErrorMessage(String errorMessage) {
-		this.errorMessage = errorMessage;
+	public void setErrors(List<Error> errors) {
+		this.errors = errors;
 	}
 }

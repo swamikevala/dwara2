@@ -5,4 +5,6 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 
 public interface DestinationDao extends CacheableRepository<Destination>{//CrudRepository<Destination,String> {
 	
+	Destination findByPath(String path);
+	
 }

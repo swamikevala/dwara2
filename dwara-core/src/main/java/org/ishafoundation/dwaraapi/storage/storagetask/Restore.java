@@ -74,7 +74,10 @@ public class Restore extends AbstractStoragetaskAction{
 		else {//if(action == org.ishafoundation.dwaraapi.enumreferences.Action.restore_process || action == org.ishafoundation.dwaraapi.enumreferences.Action.process) {
 //			destinationPath = inputlc.path_prefix
 		}
-		storageJob.setDestinationPath(destinationPath + java.io.File.separator + request.getDetails().getOutput_folder());
+		storageJob.setDestinationPath(destinationPath);
+		String outputFolder = request.getDetails().getOutput_folder();
+		storageJob.setOutputFolder(outputFolder);
+		storageJob.setTargetLocationPath(destinationPath + java.io.File.separator + outputFolder);
 		return storageJob;
 	}
 	

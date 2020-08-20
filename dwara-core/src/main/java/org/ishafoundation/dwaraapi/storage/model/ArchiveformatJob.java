@@ -14,7 +14,7 @@ public class ArchiveformatJob {
 	private String artifactNameToBeWritten;
 	
 	// Restore
-	private String destinationPath;
+	private String targetLocationPath;
 	// TAR
 	private int noOfBlocksToBeRead;
 	private int skipByteCount;
@@ -62,11 +62,11 @@ public class ArchiveformatJob {
 	public void setArtifactNameToBeWritten(String artifactNameToBeWritten) {
 		this.artifactNameToBeWritten = artifactNameToBeWritten;
 	}
-	public String getDestinationPath() {
-		return destinationPath;
+	public String getTargetLocationPath() {
+		return targetLocationPath;
 	}
-	public void setDestinationPath(String destinationPath) {
-		this.destinationPath = destinationPath;
+	public void setTargetLocationPath(String targetLocationPath) {
+		this.targetLocationPath = targetLocationPath;
 	}
 	public int getNoOfBlocksToBeRead() {
 		return noOfBlocksToBeRead;

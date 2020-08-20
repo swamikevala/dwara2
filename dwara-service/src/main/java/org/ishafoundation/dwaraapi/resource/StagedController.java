@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.resource;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
-import org.ishafoundation.dwaraapi.api.req.staged.rename.StagedRenameUserRequest;
+import org.ishafoundation.dwaraapi.api.req.staged.rename.StagedRenameFile;
 import org.ishafoundation.dwaraapi.api.resp.staged.ingest.IngestResponse;
 import org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameResponse;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
@@ -56,7 +56,7 @@ public class StagedController {
 		    @ApiResponse(code = 200, message = "Ok, Request processed but check for any failures on rename in the response body")
 	})
 	@PostMapping(value = "/staged/rename", produces = "application/json")
-    public ResponseEntity<StagedRenameResponse> renameStagedFile(@RequestBody StagedRenameUserRequest stagedRenameUserRequest){
+    public ResponseEntity<StagedRenameResponse> renameStagedFile(@RequestBody List<StagedRenameFile> stagedRenameUserRequest){
 		StagedRenameResponse stagedRenameResponse = stagedService.renameStagedFiles(stagedRenameUserRequest);
 		return ResponseEntity.ok(stagedRenameResponse);
 	}

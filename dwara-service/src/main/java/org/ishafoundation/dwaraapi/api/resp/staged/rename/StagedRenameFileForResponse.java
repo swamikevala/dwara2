@@ -1,6 +1,6 @@
 package org.ishafoundation.dwaraapi.api.resp.staged.rename;
 
-public class StagedRenameFile extends  org.ishafoundation.dwaraapi.api.req.staged.rename.StagedRenameFile{
+public class StagedRenameFileForResponse extends  org.ishafoundation.dwaraapi.api.req.staged.rename.StagedRenameFile{
 	private String status;
 	private String errorMessage;
 	

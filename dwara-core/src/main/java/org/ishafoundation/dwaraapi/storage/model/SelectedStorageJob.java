@@ -17,6 +17,7 @@ public class SelectedStorageJob {
 
 	// restore stuff
 	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File file;
+	private boolean useBuffering;
 	
 	// common for both verify and restore
 	private List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList;
@@ -69,6 +70,14 @@ public class SelectedStorageJob {
 	
 	public void setFile(org.ishafoundation.dwaraapi.db.model.transactional.domain.File file) {
 		this.file = file;
+	}
+
+	public boolean isUseBuffering() {
+		return useBuffering;
+	}
+
+	public void setUseBuffering(boolean useBuffering) {
+		this.useBuffering = useBuffering;
 	}
 
 	public List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getArtifactFileList() {

@@ -138,16 +138,16 @@ public class BruArchiver implements IArchiveformatter {
 	public ArchiveResponse verify(ArchiveformatJob archiveformatJob) throws Exception {
 		int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
 		String deviceName = archiveformatJob.getDeviceName();
-		String destinationPath = archiveformatJob.getDestinationPath();
+		String targetLocationPath = archiveformatJob.getTargetLocationPath();
 		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		String filePathNameToBeRestored = storageJob.getArtifact().getName();
 		
-		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, destinationPath, filePathNameToBeRestored);
+		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, false, 0, targetLocationPath, filePathNameToBeRestored);
 		
 		executeRestoreCommand(commandList);
 		
-		boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), destinationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
+		boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
 		if(!success)
 			throw new Exception("Verification failed");
 		
@@ -159,35 +159,33 @@ public class BruArchiver implements IArchiveformatter {
 	public ArchiveResponse restore(ArchiveformatJob archiveformatJob) throws Exception {
 		int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
 		String deviceName = archiveformatJob.getDeviceName();
-		String destinationPath = archiveformatJob.getDestinationPath();
+		String targetLocationPath = archiveformatJob.getTargetLocationPath();
 		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
 		String filePathNameToBeRestored = file.getPathname();
+		long filesize = file.getSize();
 
-		logger.trace("Creating the directory " + destinationPath + ", if not already present");
-		FileUtils.forceMkdir(new java.io.File(destinationPath));
+		logger.trace("Creating the directory " + targetLocationPath + ", if not already present");
+		FileUtils.forceMkdir(new java.io.File(targetLocationPath));
 		
-		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, destinationPath, filePathNameToBeRestored);
+		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, selectedStorageJob.isUseBuffering(), filesize, targetLocationPath, filePathNameToBeRestored);
 
 		executeRestoreCommand(commandList);
 
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		
 		if(storageJob.isRestoreVerify()) {
-			boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), destinationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
+			boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
 			if(!success)
 				throw new Exception("Restored file's verification failed");
 		}
 		return new ArchiveResponse();
 	}
 
-	private List<String> frameRestoreCommand(int volumeBlocksize, String deviceName, String destinationPath, String filePathNameToBeRestored) {
-		
-
-		
-		// FIXME: mbuffer -s 1M -m 2G -i /dev/st1 | bru -xvvvvvvvvv -b1024k -QV -C ***-f*** - 25079_Cauvery-Calling_Day15-Crowd-Shots-At-Closing-Event_CODISSIA-Cbe_17-Sep-2019_Z280V_B-Rolls
+	private List<String> frameRestoreCommand(int volumeBlocksize, String deviceName, boolean useBuffering, long fileSize, String destinationPath, String filePathNameToBeRestored) {
 		String bruRestoreCommand = "bru -B -xvvvvvvvvv -QV -C -b " + volumeBlocksize + " -f " + deviceName + " " + filePathNameToBeRestored;
-		if(configuration.useMbuffer()) {
+
+		if(useBuffering) {
 			/*
 				/usr/bin/mbuffer -i /dev/tape/by-id/scsi-35000e11167f7d001-nst -s 1M -m 2G -p 10 -e | bru -xvvvvvvvvv -b1024k -QV -C -Pf -B -f /dev/stdin $foldername
 
@@ -195,12 +193,20 @@ public class BruArchiver implements IArchiveformatter {
 				-Pf (to get file listing order from stdin)
 				mbuffer switches: 
 					-e (to make mbuffer exit on error - needed when bru exits after finishing reading a file - mbuffer doesn't know when to stop reading the tape, so we rely on the "broken pipe" error afer bru terminates
-					-m 2G provides a buffer of 2G. for bigger files a bigger buffer is better, e.g. 100 GB file, 8GB is good
-					-s 1M basically has to match the tape volume block size
-					-p 10 means start reading from the tape when the buffer is less than 10% full. This is good because mechanically stopping/starting the tape drive is an overhead, so once the buffer becomes 100% full, this means that bru/tar will read data from the buffer until it is almost empty, and only then the tape drive will start filling up the buffer again
+					-m 2G - provides a buffer of 2G. for bigger files a bigger buffer is better, e.g. 100 GB file, 8GB is good
+					-s 1M - basically has to match the tape volume block size
+					-p 10 - means start reading from the tape when the buffer is less than 10% full. This is good because mechanically stopping/starting the tape drive is an overhead, so once the buffer becomes 100% full, this means that bru/tar will read data from the buffer until it is almost empty, and only then the tape drive will start filling up the buffer again
 
 			 */
-			bruRestoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m 2G -p 10 -e  | bru -B -xvvvvvvvvv -QV -C -Pf -b " + volumeBlocksize + " -f /dev/stdin " + filePathNameToBeRestored;
+			
+			// mbuffer -m value calculation
+			// max(1G, round_to_nearest_gb(filesize/16))
+			
+			int fileSizeInGiB = (int) (fileSize/1073741824);  // 1 GiB = 1073741824 bytes...
+			int m = Math.max(1, Math.round(fileSizeInGiB/16));
+			String mValue = m + "G";
+			
+			bruRestoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e  | bru -B -xvvvvvvvvv -QV -C -Pf -b " + volumeBlocksize + " -f /dev/stdin " + filePathNameToBeRestored;
 		}
 		logger.debug("Bru restoring to " + destinationPath + " - " +  bruRestoreCommand);
 	
