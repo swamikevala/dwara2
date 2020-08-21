@@ -86,25 +86,25 @@ public abstract class AbstractStoragetypeJobProcessor {
 		logger.debug(this.getClass().getName());
 	}
 	
-    protected void beforeFormat(SelectedStorageJob selectedStorageJob) throws Exception {
+    protected void beforeInitialize(SelectedStorageJob selectedStorageJob) throws Exception {
     	
     	
     }
     
 	//public ArchiveResponse restore(StorageJob selectedStorageJob) throws Throwable{
-	public StorageResponse format(SelectedStorageJob selectedStorageJob) throws Throwable{
+	public StorageResponse initialize(SelectedStorageJob selectedStorageJob) throws Throwable{
 		StorageResponse storageResponse = null;
-    	beforeFormat(selectedStorageJob);
+    	beforeInitialize(selectedStorageJob);
     	
     	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
-    	storageResponse = iStoragelevel.format(selectedStorageJob);
+    	storageResponse = iStoragelevel.initialize(selectedStorageJob);
     	
-    	afterFormat(selectedStorageJob);
+    	afterInitialize(selectedStorageJob);
     	return storageResponse; 
    	
     }
 	
-	protected void afterFormat(SelectedStorageJob selectedStorageJob) {
+	protected void afterInitialize(SelectedStorageJob selectedStorageJob) {
 		
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		

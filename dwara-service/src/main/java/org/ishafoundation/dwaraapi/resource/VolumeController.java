@@ -98,22 +98,22 @@ public class VolumeController {
 		}
 
 		// Ordering the formatRequests by sequence Number
-		Map<Integer, InitializeUserRequest> volumeNumericSequence_FormatRequest = new HashMap<Integer, InitializeUserRequest>();
-		for (InitializeUserRequest nthFormatRequest : formatRequestList) {
-			String volumeId = nthFormatRequest.getVolume();
+		Map<Integer, InitializeUserRequest> volumeNumericSequence_InitializeRequest = new HashMap<Integer, InitializeUserRequest>();
+		for (InitializeUserRequest nthInitializeRequest : formatRequestList) {
+			String volumeId = nthInitializeRequest.getVolume();
 			int sequenceOnLabel = getSequenceUsedOnVolumeLabel(volumeId, null);
-			volumeNumericSequence_FormatRequest.put(sequenceOnLabel, nthFormatRequest);
+			volumeNumericSequence_InitializeRequest.put(sequenceOnLabel, nthInitializeRequest);
 		}
-		Set<Integer> volumeNumericSequenceSet = volumeNumericSequence_FormatRequest.keySet();
+		Set<Integer> volumeNumericSequenceSet = volumeNumericSequence_InitializeRequest.keySet();
 		List<Integer> volumeNumericSequenceList = new ArrayList<Integer>(volumeNumericSequenceSet) ;        //set -> list
 		//Sort the list
 		Collections.sort(volumeNumericSequenceList);
 
 		int numericSequenceIncrementCounter = 1;
 		for (Integer volumeNumericSequence : volumeNumericSequenceList) {
-			InitializeUserRequest nthFormatRequest = volumeNumericSequence_FormatRequest.get(volumeNumericSequence);
-			String volumeId = nthFormatRequest.getVolume();
-			if(nthFormatRequest.getForce())
+			InitializeUserRequest nthInitializeRequest = volumeNumericSequence_InitializeRequest.get(volumeNumericSequence);
+			String volumeId = nthInitializeRequest.getVolume();
+			if(nthInitializeRequest.getForce())
 				throw new DwaraException("Force option not supported just yet. Volume " + volumeId, null);
 			
 			// #1 - Volume ids should not be in use
@@ -122,7 +122,7 @@ public class VolumeController {
 				throw new DwaraException("Volume " + volumeId + " already in use" , null);
 
 			// #5 - Volume Group should be defined (db)
-			String volumeGroupId = nthFormatRequest.getVolumeGroup();
+			String volumeGroupId = nthInitializeRequest.getVolumeGroup();
 			Volume volumeGroup = volumeGroupId_Volume_Map.get(volumeGroupId);
 			if(volumeGroup == null)
 				throw new DwaraException("Volume Group " + volumeGroupId + " doesnt exist" , null);
@@ -137,7 +137,7 @@ public class VolumeController {
 				throw new DwaraException("Volume " + volumeId + " sequence number is not contiguous. Expected numeric sequence - " + expectedSequenceOnLabel, null);
 
 			// #6 - Storagesubtype should be defined (enum)
-			String storagesubtypeStr = nthFormatRequest.getStoragesubtype();
+			String storagesubtypeStr = nthInitializeRequest.getStoragesubtype();
 			TapeStoragesubtype storagesubtype = TapeStoragesubtype.getStoragesubtype(storagesubtypeStr);
 			if(storagesubtype == null)
 				throw new DwaraException("Storagesubtype " + storagesubtypeStr + " not supported" , null);
@@ -148,7 +148,7 @@ public class VolumeController {
 			
 			// #4 - Volume blocksize should be multiple of 64KiB
 			int divisorInBytes = 65536; // 64 * 1024
-			Integer volumeBlocksize = nthFormatRequest.getVolumeBlocksize();
+			Integer volumeBlocksize = nthInitializeRequest.getVolumeBlocksize();
 			if(volumeBlocksize%divisorInBytes != 0) {
 				throw new DwaraException("Volume " + volumeId + " blocksize is not in multiple of 64KiB" , null);
 			}

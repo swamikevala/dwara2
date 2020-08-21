@@ -11,7 +11,7 @@ public class VolumeResponse {
 	private String storagelevel;
 	private String volumeRef;
 	private String checksumtype;
-	private String formattedAt;
+	private String initializedAt;
 	private boolean finalized;
 	private boolean imported;
 	private String archiveformat;
@@ -59,11 +59,11 @@ public class VolumeResponse {
 	public void setChecksumtype(String checksumtype) {
 		this.checksumtype = checksumtype;
 	}
-	public String getFormattedAt() {
-		return formattedAt;
+	public String getInitializedAt() {
+		return initializedAt;
 	}
-	public void setFormattedAt(String formattedAt) {
-		this.formattedAt = formattedAt;
+	public void setInitializedAt(String initializedAt) {
+		this.initializedAt = initializedAt;
 	}
 	public boolean isFinalized() {
 		return finalized;

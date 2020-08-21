@@ -5,7 +5,7 @@ import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 
 public interface IStoragelevel {
 	
-	public StorageResponse format(SelectedStorageJob job) throws Exception;
+	public StorageResponse initialize(SelectedStorageJob job) throws Exception;
 	
 	public StorageResponse write(SelectedStorageJob job) throws Exception;
 	

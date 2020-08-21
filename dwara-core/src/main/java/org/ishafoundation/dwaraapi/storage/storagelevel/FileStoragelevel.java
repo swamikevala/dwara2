@@ -23,7 +23,7 @@ public class FileStoragelevel implements IStoragelevel {
 	// we just need the parameters need to set based on 
 
 	@Override
-	public StorageResponse format(SelectedStorageJob job) throws Exception{
+	public StorageResponse initialize(SelectedStorageJob job) throws Exception{
 		// TODO Auto-generated method stub
 		return null;
 	}

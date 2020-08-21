@@ -14,7 +14,7 @@ public interface JobDao extends CrudRepository<Job,Integer> {
 	
 	List<Job> findAllByStatusAndProcessingtaskIdIsNotNullOrderById(Status status); 
 	
-	long countByStoragetaskActionIdInAndStatus(Collection<Action> tapedrivemappingOrFormat, Status status);
+	long countByStoragetaskActionIdInAndStatus(Collection<Action> tapedrivemappingOrInitialize, Status status);
 	
 	// volume_id only for storagetasks, so storagetasks as a filter not needed - applicable for any storagetask like write/verify/restore
 	// completed at gets updated only when status=completed, but is Null and gets picked up by the query...

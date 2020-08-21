@@ -39,7 +39,7 @@ public class BlockStoragelevel implements IStoragelevel {
 	private String filesystemTemporarylocation;
 
 	@Override
-	public StorageResponse format(SelectedStorageJob storagetypeJob) throws Exception{
+	public StorageResponse initialize(SelectedStorageJob storagetypeJob) throws Exception{
 		
 		boolean status = labelManager.writeVolumeLabel(storagetypeJob);
 		logger.debug("Labelling success? - " + status);

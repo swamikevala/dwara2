@@ -36,8 +36,35 @@ CREATE TABLE `action` (
 
 LOCK TABLES `action` WRITE;
 /*!40000 ALTER TABLE `action` DISABLE KEYS */;
-INSERT INTO `action` VALUES ('abort',NULL,'sync'),('cancel',NULL,'sync'),('delete',NULL,'sync'),('diagnostics',NULL,'sync'),('finalize',NULL,'storage_task'),('format',NULL,'storage_task'),('hold',NULL,'sync'),('import',NULL,'storage_task'),('ingest',NULL,'complex'),('list',NULL,'sync'),('map_tapedrives',NULL,'storage_task'),('migrate',NULL,'storage_task'),('process',NULL,'complex'),('release',NULL,'sync'),('rename',NULL,'sync'),('restore',NULL,'storage_task'),('restore_process',NULL,'complex'),('rewrite',NULL,'storage_task'),('verify',NULL,'storage_task'),('write',NULL,'storage_task');
+INSERT INTO `action` VALUES ('abort',NULL,'sync'),('cancel',NULL,'sync'),('delete',NULL,'sync'),('diagnostics',NULL,'sync'),('finalize',NULL,'storage_task'),('hold',NULL,'sync'),('import',NULL,'storage_task'),('ingest',NULL,'complex'),('initialize',NULL,'storage_task'),('list',NULL,'sync'),('map_tapedrives',NULL,'storage_task'),('migrate',NULL,'storage_task'),('process',NULL,'complex'),('release',NULL,'sync'),('rename',NULL,'sync'),('restore',NULL,'storage_task'),('restore_process',NULL,'complex'),('rewrite',NULL,'storage_task'),('verify',NULL,'storage_task'),('write',NULL,'storage_task');
 /*!40000 ALTER TABLE `action` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `action_user`
+--
+
+DROP TABLE IF EXISTS `action_user`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `action_user` (
+  `permission_level` int(11) DEFAULT NULL,
+  `action_id` varchar(255) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  PRIMARY KEY (`action_id`,`user_id`),
+  KEY `FK6bb095i1f07tksvwtiya0ckmp` (`user_id`),
+  CONSTRAINT `FK6bb095i1f07tksvwtiya0ckmp` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `FKh6bm2brktaltqqbj4nm6ar1uw` FOREIGN KEY (`action_id`) REFERENCES `action` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `action_user`
+--
+
+LOCK TABLES `action_user` WRITE;
+/*!40000 ALTER TABLE `action_user` DISABLE KEYS */;
+/*!40000 ALTER TABLE `action_user` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -217,30 +244,6 @@ LOCK TABLES `artifactclass_destination` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `destination`
---
-
-DROP TABLE IF EXISTS `destination`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `destination` (
-  `id` varchar(255) NOT NULL,
-  `path` varchar(255) DEFAULT NULL,
-  `use_buffering` bit(1) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `destination`
---
-
-LOCK TABLES `destination` WRITE;
-/*!40000 ALTER TABLE `destination` DISABLE KEYS */;
-/*!40000 ALTER TABLE `destination` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `device`
 --
 
@@ -311,6 +314,7 @@ CREATE TABLE `extension` (
   `id` varchar(255) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
+  `ignore` bit(1) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_gmfbyygelvk6j16w8p3h54a9m` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -322,7 +326,7 @@ CREATE TABLE `extension` (
 
 LOCK TABLES `extension` WRITE;
 /*!40000 ALTER TABLE `extension` DISABLE KEYS */;
-INSERT INTO `extension` VALUES ('',NULL,NULL),('ABC','ABC desc','ABC'),('JPG','d','JPG'),('LRV',NULL,NULL),('MOV','Some MOV description','MOV'),('MP4','Some MP4 description','MP4'),('MP4_FFPROBE_OUT','test','MP4_FFPROBE_OUT'),('MTB','some msg','MTB'),('MTS','Some MTS description','MTS'),('MXF','MXF container','MXF'),('NEF','d','NEF'),('THM',NULL,NULL),('TIF','d','TIF'),('XMP','d','XMP');
+INSERT INTO `extension` VALUES ('',NULL,NULL,NULL),('ABC','ABC desc','ABC',NULL),('BIM',NULL,NULL,NULL),('JPG','d','JPG',NULL),('LRV',NULL,NULL,NULL),('MOV','Some MOV description','MOV',NULL),('MP4','Some MP4 description','MP4',NULL),('MP4_FFPROBE_OUT','test','MP4_FFPROBE_OUT',NULL),('MTB','some msg','MTB',NULL),('MTS','Some MTS description','MTS',NULL),('MXF','MXF container','MXF',NULL),('NEF','d','NEF',NULL),('sav',NULL,NULL,NULL),('THM',NULL,NULL,NULL),('TIF','d','TIF',NULL),('txt',NULL,NULL,NULL),('XML',NULL,NULL,NULL),('XMP','d','XMP',NULL);
 /*!40000 ALTER TABLE `extension` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -492,7 +496,7 @@ CREATE TABLE `sequence` (
 
 LOCK TABLES `sequence` WRITE;
 /*!40000 ALTER TABLE `sequence` DISABLE KEYS */;
-INSERT INTO `sequence` VALUES (1,NULL,'\0',NULL,'\0','N',NULL,'artifact',13,NULL),(2,'^[A-Z]{1,2}[\\\\d]{1,4}','\0',999,'\0','A',NULL,'artifact',NULL,NULL),(3,NULL,'\0',555,'\0','Z',NULL,'artifact',NULL,NULL),(4,'^[A-Z]{1,2}[\\\\d]{1,4}','\0',333,'\0',NULL,NULL,'artifact',NULL,NULL),(5,'^[\\\\d]{1,5}','',0,'\0',NULL,NULL,'artifact',NULL,NULL),(6,'^[Z\\\\d]{1,6}','',0,'\0',NULL,NULL,'artifact',NULL,NULL),(7,NULL,'\0',0,'\0','L',NULL,'artifact',NULL,NULL),(8,NULL,'\0',0,'\0','M',NULL,'artifact',NULL,NULL),(9,NULL,'\0',NULL,'\0','P',NULL,'artifact',13,NULL),(10,NULL,'\0',NULL,'\0','X',NULL,'artifact',13,NULL),(11,NULL,NULL,10001,'\0','N',10000,'volume',NULL,18999),(12,NULL,NULL,20002,'\0','N',20000,'volume',NULL,29999),(13,NULL,NULL,24533,'',NULL,24500,'artifact',NULL,NULL),(14,NULL,NULL,19000,'\0','P',19000,'volume',NULL,19999);
+INSERT INTO `sequence` VALUES (1,NULL,'\0',NULL,'\0','N',NULL,'artifact',13,NULL),(2,'^[A-Z]{1,2}[\\\\d]{1,4}','\0',999,'\0','A',NULL,'artifact',NULL,NULL),(3,NULL,'\0',555,'\0','Z',NULL,'artifact',NULL,NULL),(4,'^[A-Z]{1,2}[\\\\d]{1,4}','\0',333,'\0',NULL,NULL,'artifact',NULL,NULL),(5,'^[\\\\d]{1,5}','',0,'\0',NULL,NULL,'artifact',NULL,NULL),(6,'^[Z\\\\d]{1,6}','',0,'\0',NULL,NULL,'artifact',NULL,NULL),(7,NULL,'\0',0,'\0','L',NULL,'artifact',NULL,NULL),(8,NULL,'\0',0,'\0','M',NULL,'artifact',NULL,NULL),(9,NULL,'\0',NULL,'\0','P',NULL,'artifact',13,NULL),(10,NULL,'\0',NULL,'\0','X',NULL,'artifact',13,NULL),(11,NULL,NULL,10004,'\0','N',10000,'volume',NULL,18999),(12,NULL,NULL,20003,'\0','N',20000,'volume',NULL,29999),(13,NULL,NULL,24534,'',NULL,24500,'artifact',NULL,NULL),(14,NULL,NULL,19000,'\0','P',19000,'volume',NULL,19999);
 /*!40000 ALTER TABLE `sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -508,6 +512,7 @@ CREATE TABLE `user` (
   `hash` varchar(255) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
   `priorityband_id` int(11) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_gj2fy3dcix7ph7k8684gka40c` (`name`),
   KEY `FK73fruhbqpgrll696tv7y2ygxh` (`priorityband_id`),
@@ -521,7 +526,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES (1,'$2a$10$70nZ.1zvmmgAXQZ5qDFHxe08eTijEejJ5HRZAtwRcPuMjw4MfRley','pgurumurthy',1);
+INSERT INTO `user` VALUES (1,'$2a$10$70nZ.1zvmmgAXQZ5qDFHxe08eTijEejJ5HRZAtwRcPuMjw4MfRley','pgurumurthy',1,NULL);
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -538,7 +543,6 @@ CREATE TABLE `volume` (
   `checksumtype` varchar(255) DEFAULT NULL,
   `details` json DEFAULT NULL,
   `finalized` bit(1) DEFAULT NULL,
-  `formatted_at` datetime(6) DEFAULT NULL,
   `imported` bit(1) DEFAULT NULL,
   `storagelevel` varchar(255) DEFAULT NULL,
   `storagesubtype` varchar(255) DEFAULT NULL,
@@ -548,6 +552,7 @@ CREATE TABLE `volume` (
   `location_id` varchar(255) DEFAULT NULL,
   `volume_ref_id` varchar(255) DEFAULT NULL,
   `sequence_id` int(11) DEFAULT NULL,
+  `initialized_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FKsw7cga5kgm5yqs2sfpq9hdidv` (`archiveformat_id`),
   KEY `FK5k6g9ueuvb8e330dfvr88agfk` (`location_id`),
@@ -566,7 +571,7 @@ CREATE TABLE `volume` (
 
 LOCK TABLES `volume` WRITE;
 /*!40000 ALTER TABLE `volume` DISABLE KEYS */;
-INSERT INTO `volume` VALUES ('IMP1',2500000000000,'sha256',NULL,'',NULL,'','block',NULL,'tape','group','bru','LR',NULL,NULL),('N1',6000000000000,'sha256',NULL,'\0',NULL,'\0','block',NULL,'tape','group','tar','LR',NULL,11),('N10001L7',6000000000000,'sha256','{\"barcoded\": true, \"blocksize\": 524288}','\0','2020-08-08 17:16:34.481000','\0','block','lto7','tape','physical','tar','LR','N1',NULL),('N2',2500000000000,'sha256',NULL,'\0',NULL,'\0','block',NULL,'tape','group','bru','TB',NULL,12),('N20001L7',6000000000000,'sha256','{\"barcoded\": true, \"blocksize\": 524288}','\0','2020-08-08 17:14:34.438000','\0','block','lto7','tape','physical','bru','TB','N2',NULL),('N20003L7',6000000000000,'sha256','{\"barcoded\": true, \"blocksize\": 524288}','\0','2020-08-13 07:09:39.606000','\0','block','LTO-7','tape','physical','bru','TB','N2',NULL),('N3',2500000000000,'sha256',NULL,'\0',NULL,'\0','file',NULL,'disk','group',NULL,'IIIT',NULL,NULL),('P1',6000000000000,'sha256',NULL,'\0',NULL,'\0','block',NULL,'tape','group','bru','LR',NULL,NULL);
+INSERT INTO `volume` VALUES ('IMP1',2500000000000,'sha256',NULL,'','','block',NULL,'tape','group','bru','LR',NULL,NULL,NULL),('N1',6000000000000,'sha256',NULL,'\0','\0','block',NULL,'tape','group','tar','LR',NULL,11,NULL),('N2',2500000000000,'sha256',NULL,'\0','\0','block',NULL,'tape','group','bru','TB',NULL,12,NULL),('N3',2500000000000,'sha256',NULL,'\0','\0','file',NULL,'disk','group',NULL,'IIIT',NULL,NULL,NULL),('P1',6000000000000,'sha256',NULL,'\0','\0','block',NULL,'tape','group','bru','LR',NULL,NULL,NULL);
 /*!40000 ALTER TABLE `volume` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -579,4 +584,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-08-16 20:49:16
+-- Dump completed on 2020-08-21 15:13:03

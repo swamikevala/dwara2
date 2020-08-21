@@ -167,7 +167,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 		}
 	}
 	
-	public DriveDetails setTapeHeadPositionForFormatting(String dataTransferElementName) throws Exception {
+	public DriveDetails setTapeHeadPositionForInitializing(String dataTransferElementName) throws Exception {
 		DriveDetails dsd = null;
 		
 		try {
@@ -186,7 +186,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	}
 	
 	public DriveDetails setTapeHeadPositionForReadingLabel(String dataTransferElementName) throws Exception {
-		return setTapeHeadPositionForFormatting(dataTransferElementName);
+		return setTapeHeadPositionForInitializing(dataTransferElementName);
 	}
 
 	public DriveDetails setTapeHeadPositionForFinalizing(String dataTransferElementName) throws Exception {

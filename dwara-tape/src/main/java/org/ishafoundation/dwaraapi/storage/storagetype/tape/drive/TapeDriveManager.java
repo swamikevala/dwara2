@@ -15,7 +15,7 @@ public interface TapeDriveManager{
 	
 	public DriveDetails setTapeHeadPositionForReading(String dataTransferElementName, int blockNumberToSeek) throws Exception;
 	
-	public DriveDetails setTapeHeadPositionForFormatting(String dataTransferElementName) throws Exception;
+	public DriveDetails setTapeHeadPositionForInitializing(String dataTransferElementName) throws Exception;
 	
 	public DriveDetails setTapeHeadPositionForReadingLabel(String dataTransferElementName) throws Exception;
 

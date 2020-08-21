@@ -48,8 +48,8 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	}
 	
 	@Override
-	protected void beforeFormat(SelectedStorageJob selectedStorageJob) throws Exception {
-		super.beforeFormat(selectedStorageJob);
+	protected void beforeInitialize(SelectedStorageJob selectedStorageJob) throws Exception {
+		super.beforeInitialize(selectedStorageJob);
 		TapeJob tapeJob = (TapeJob) selectedStorageJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
@@ -68,7 +68,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		
 		
 		logger.trace("Now positioning tape head for formatting " + tapeLibraryName + ":" + dataTransferElementName+"("+driveElementAddress+")" );
-		tapeDriveManager.setTapeHeadPositionForFormatting(dataTransferElementName);
+		tapeDriveManager.setTapeHeadPositionForInitializing(dataTransferElementName);
 		logger.trace("Tape Head positioned for formatting");
 		
 	}	

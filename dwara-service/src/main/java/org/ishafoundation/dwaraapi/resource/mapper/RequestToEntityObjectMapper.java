@@ -30,7 +30,7 @@ public interface RequestToEntityObjectMapper {
         @Mapping(source = "volumeBlocksize", target = "volume_blocksize")
     })
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
-	RequestDetails getRequestDetailsForInitialize(InitializeUserRequest formatRequest);
+	RequestDetails getRequestDetailsForInitialize(InitializeUserRequest initializeUserRequest);
 	
 }
 

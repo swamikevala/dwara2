@@ -66,7 +66,7 @@ public class VolumeService extends DwaraService {
 				volResp.setStoragelevel(volume.getStoragelevel().name());
 				//volResp.setVolumeRef(volumeRef);
 				//volResp.setChecksumtype(checksumtype);
-				//volResp.setFormattedAt(formattedAt);
+				//volResp.setInitializedAt(formattedAt);
 				volResp.setFinalized(volume.isFinalized());
 				volResp.setImported(volume.isImported());
 				if(volume.getArchiveformat() != null)
@@ -124,7 +124,7 @@ public class VolumeService extends DwaraService {
 		
 		List<SystemRequestsForInitializeResponse> systemRequests = new ArrayList<SystemRequestsForInitializeResponse>();
 		
-		for (InitializeUserRequest nthFormatRequest : formatRequestList) {
+		for (InitializeUserRequest nthInitializeRequest : formatRequestList) {
 			Request systemrequest = new Request();
 			systemrequest.setRequestRef(request);
 			systemrequest.setActionId(request.getActionId());
@@ -134,7 +134,7 @@ public class VolumeService extends DwaraService {
 			systemrequest.setDomain(request.getDomain());
 
 
-			RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForInitialize(nthFormatRequest);
+			RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForInitialize(nthInitializeRequest);
 
 			systemrequest.setDetails(systemrequestDetails);
 			systemrequest = requestDao.save(systemrequest);
@@ -144,13 +144,13 @@ public class VolumeService extends DwaraService {
 			int jobId = job.getId();
 			Status status = job.getStatus();
 			
-			SystemRequestsForInitializeResponse systemRequestsForFormatResponse = new SystemRequestsForInitializeResponse();
-			systemRequestsForFormatResponse.setId(systemrequest.getId());
-			systemRequestsForFormatResponse.setJobId(jobId);
-			systemRequestsForFormatResponse.setStatus(status);
-			systemRequestsForFormatResponse.setVolume(nthFormatRequest.getVolume());
+			SystemRequestsForInitializeResponse systemRequestsForInitializeResponse = new SystemRequestsForInitializeResponse();
+			systemRequestsForInitializeResponse.setId(systemrequest.getId());
+			systemRequestsForInitializeResponse.setJobId(jobId);
+			systemRequestsForInitializeResponse.setStatus(status);
+			systemRequestsForInitializeResponse.setVolume(nthInitializeRequest.getVolume());
 			
-			systemRequests.add(systemRequestsForFormatResponse);
+			systemRequests.add(systemRequestsForInitializeResponse);
 		}
 		
 		// Framing the response object here...

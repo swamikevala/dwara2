@@ -151,8 +151,8 @@ public class AutoloaderController {
 			tapeStatus = TapeStatus.finalized;
 		}else if(hasAnyArtifactOnVolume(volume)) { // any artifact_volume record means partially_written
 			tapeStatus = TapeStatus.partially_written;
-		}else if(isFormatted(volume)) {
-			tapeStatus = TapeStatus.formatted;
+		}else if(isInitialized(volume)) {
+			tapeStatus = TapeStatus.initialized;
 		}else {
 			tapeStatus = TapeStatus.unknown;
 		}
@@ -169,9 +169,9 @@ public class AutoloaderController {
 		return hasAnyArtifactOnVolume;
 	}
 	
-	private boolean isFormatted(Volume volume){
-		boolean isFormatted = true;
-		return isFormatted;
+	private boolean isInitialized(Volume volume){
+		boolean isInitialized = true;
+		return isInitialized;
 	}
 	
 	private TapeUsageStatus getTapeUsageStatus(Volume volume) {
