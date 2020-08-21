@@ -44,6 +44,7 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.job.JobCreator;
@@ -126,8 +127,9 @@ public class StagedService extends DwaraService{
     	StagedRenameResponse stagedRenameResponse= new StagedRenameResponse();
 
     	Request request = new Request();
-		request.setActionId(Action.ingest);
-    	request.setUser(getUserObjFromContext());
+    	request.setType(RequestType.user);
+		request.setActionId(Action.rename_staged);
+    	request.setRequestedBy(getUserObjFromContext());
 		request.setRequestedAt(LocalDateTime.now());
 		
 		RequestDetails details = new RequestDetails();
@@ -176,7 +178,8 @@ public class StagedService extends DwaraService{
     	request = requestDao.save(request);
     	int requestId = request.getId();
     	logger.info("Request - " + requestId);
-
+    	stagedRenameResponse.setUserRequestId(requestId);
+    	stagedRenameResponse.setStatus(request.getStatus().name());
 		return stagedRenameResponse;
 	}
     
@@ -184,11 +187,18 @@ public class StagedService extends DwaraService{
     	IngestResponse ingestResponse = new IngestResponse();
     	try{
 			String artifactclassId = ingestUserRequest.getArtifactclass();
+			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
+			String readyToIngestPath =  artifactclass.getPathPrefix();
+			Domain domain = artifactclass.getDomain();
+			
 			List<Integer> actionelementsToBeSkipped = ingestUserRequest.getSkipActionelements();
 			
 	    	Request userRequest = new Request();
+	    	userRequest.setType(RequestType.user);
 			userRequest.setActionId(Action.ingest);
-	    	userRequest.setUser(getUserObjFromContext());
+			userRequest.setDomain(domain);
+			userRequest.setStatus(Status.queued);
+	    	userRequest.setRequestedBy(getUserObjFromContext());
 			userRequest.setRequestedAt(LocalDateTime.now());
 			
 			RequestDetails details = new RequestDetails();
@@ -201,9 +211,7 @@ public class StagedService extends DwaraService{
 	    	logger.info("Request - " + userRequestId);
 	
 	    	
-			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
-			String readyToIngestPath =  artifactclass.getPathPrefix();
-			Domain domain = artifactclass.getDomain();
+
 			
 			List<IngestSystemRequest> ingestSystemRequests = new ArrayList<IngestSystemRequest>();
 	    	List<StagedFile> stagedFileList = ingestUserRequest.getStagedFiles();
@@ -217,9 +225,10 @@ public class StagedService extends DwaraService{
 	        	try {
 	        		moveFile(stagedFileObj, appReadyToIngestFileObj);
 	    		} catch (Exception e) {
-	    			// If this fails - its possible the setperms or the watcher service thing is not functional and so all the stagedfiles would have the same problem... 
-	    			logger.error("TODO : How to handle this move file failure scenario " + e.getMessage(), e);
-	    			throw new DwaraException("Check if the file permisions are set properly using /opt/dwara/bin/setperm", null);
+	    			// If this fails - its possible the setperms not functional and so all the stagedfiles requested to be ingested would have the same problem... So we err out...
+	    			String errorMsg = "Unable to move file. " + e.getMessage() + " Check if the file permisions are set properly";
+	    			logger.error(errorMsg);
+	    			throw new DwaraException(errorMsg, null);
 	    		}
 	        	
 				Sequence sequence = artifactclass.getSequence();
@@ -232,7 +241,10 @@ public class StagedService extends DwaraService{
 		        	synchronized (stagedFile) {
 		        		Integer incrementedCurrentNumber = SequenceUtil.incrementCurrentNumber(sequence);
 		        		sequenceCode = (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + incrementedCurrentNumber;
-		        		sequence = sequenceDao.save(sequence);
+		        		if(sequence.getSequenceRef() != null)
+		        			sequenceDao.save(sequence.getSequenceRef());
+		        		else
+		        			sequenceDao.save(sequence);
 		        	}
 		        }
 		        
@@ -245,11 +257,13 @@ public class StagedService extends DwaraService{
 		    		junkFilesMover.moveJunkFilesFromMediaLibrary(stagedFileInAppReadyToIngest.getAbsolutePath());
 
 				Request systemrequest = new Request();
+				systemrequest.setType(RequestType.system);
 				systemrequest.setRequestRef(userRequest);
+				systemrequest.setStatus(Status.queued);
 				systemrequest.setActionId(userRequest.getActionId());
-				systemrequest.setUser(userRequest.getUser());
+				systemrequest.setRequestedBy(userRequest.getRequestedBy());
 				systemrequest.setRequestedAt(LocalDateTime.now());
-				
+				systemrequest.setDomain(domain);
 	
 	    		RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForIngest(stagedFile);
 	    		
@@ -267,7 +281,7 @@ public class StagedService extends DwaraService{
 		        long size = FileUtils.sizeOf(stagedFileInAppReadyToIngest);
 
 				Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
-				artifact.setCreationRequest(userRequest); // User request goes here...
+				artifact.setIngestRequest(systemrequest);
 				artifact.setqLatestRequest(systemrequest);
 				artifact.setName(sequenceCode + "_" + stagedFileName);
 				artifact.setArtifactclass(artifactclass);
@@ -303,7 +317,7 @@ public class StagedService extends DwaraService{
 	    	ingestResponse.setAction(userRequest.getActionId().name());
 	    	ingestResponse.setArtifactclass(artifactclassId);
 	    	ingestResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
-	    	ingestResponse.setRequestedBy(userRequest.getUser().getName());
+	    	ingestResponse.setRequestedBy(userRequest.getRequestedBy().getName());
 	    	ingestResponse.setSystemRequests(ingestSystemRequests);
     	}
     	catch (Exception e) {

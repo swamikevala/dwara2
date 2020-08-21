@@ -21,6 +21,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
@@ -56,12 +57,16 @@ public class Request {
 	 pkColumnValue="request_id", allocationSize = 1)
 	@Column(name="id")
 	private int id;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(name="type")
+	private RequestType type;
 
 	@Column(name="action_id")
 	private Action actionId;
 	
 	@OneToOne(fetch = FetchType.LAZY)
-	private User user;
+	private User requestedBy;
 	
 	@Column(name="requested_at")
 	private LocalDateTime requestedAt;
@@ -89,6 +94,14 @@ public class Request {
 		this.id = id;
 	}
 
+	public RequestType getType() {
+		return type;
+	}
+
+	public void setType(RequestType type) {
+		this.type = type;
+	}
+	
 	public Action getActionId() {
 		return actionId;
 	}
@@ -97,12 +110,12 @@ public class Request {
 		this.actionId = actionId;
 	}
 
-	public User getUser() {
-		return user;
+	public User getRequestedBy() {
+		return requestedBy;
 	}
 
-	public void setUser(User user) {
-		this.user = user;
+	public void setRequestedBy(User requestedBy) {
+		this.requestedBy = requestedBy;
 	}
 
 	public LocalDateTime getRequestedAt() {

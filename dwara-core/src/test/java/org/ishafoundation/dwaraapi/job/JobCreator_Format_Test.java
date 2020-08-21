@@ -15,7 +15,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class JobCreator_Format_Test extends JobCreator_Test{
 
 	public JobCreator_Format_Test() {
-		action = Action.format.name();
+		action = Action.initialize.name();
 		requestInputFilePath = "/testcases/format_request.json";
 	}
 	

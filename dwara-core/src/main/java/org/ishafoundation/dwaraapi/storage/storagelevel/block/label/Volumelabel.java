@@ -7,11 +7,11 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 public class Volumelabel {
 	@JacksonXmlProperty(isAttribute=true)
 	private Double version;
-	private String volumeuid;
+	private String volume;
+	private String volumegroup;
 	private int blocksize;
 	private String owner;
-	private int accesslevel;
-	private String labeltime;
+	private String initializedAt;
 	private Archiveformat archiveformat;
 	private String checksumalgorithm;
 	private String encryptionalgorithm;
@@ -25,11 +25,17 @@ public class Volumelabel {
 	public void setVersion(Double version) {
 		this.version = version;
 	}
-	public String getVolumeuid() {
-		return volumeuid;
+	public String getVolume() {
+		return volume;
 	}
-	public void setVolumeuid(String volumeuid) {
-		this.volumeuid = volumeuid;
+	public void setVolume(String volume) {
+		this.volume = volume;
+	}
+	public String getVolumegroup() {
+		return volumegroup;
+	}
+	public void setVolumegroup(String volumegroup) {
+		this.volumegroup = volumegroup;
 	}
 	public int getBlocksize() {
 		return blocksize;
@@ -43,17 +49,11 @@ public class Volumelabel {
 	public void setOwner(String owner) {
 		this.owner = owner;
 	}
-	public int getAccesslevel() {
-		return accesslevel;
+	public String getInitializedAt() {
+		return initializedAt;
 	}
-	public void setAccesslevel(int accesslevel) {
-		this.accesslevel = accesslevel;
-	}
-	public String getLabeltime() {
-		return labeltime;
-	}
-	public void setLabeltime(String labeltime) {
-		this.labeltime = labeltime;
+	public void setInitializedAt(String initializedAt) {
+		this.initializedAt = initializedAt;
 	}
 	public Archiveformat getArchiveformat() {
 		return archiveformat;

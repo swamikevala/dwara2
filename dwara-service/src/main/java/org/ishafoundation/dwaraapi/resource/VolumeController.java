@@ -10,8 +10,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.api.req.format.FormatUserRequest;
-import org.ishafoundation.dwaraapi.api.resp.format.FormatResponse;
+import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
+import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
@@ -58,13 +58,13 @@ public class VolumeController {
 		    @ApiResponse(code = 202, message = "Request submitted and queued up"),
 		    @ApiResponse(code = 400, message = "Error")
 	})
-	@PostMapping(value = "/volume/format", produces = "application/json")
-    public ResponseEntity<FormatResponse> format(@RequestBody List<FormatUserRequest> formatRequestList){
+	@PostMapping(value = "/tape/initialize", produces = "application/json")
+    public ResponseEntity<InitializeResponse> format(@RequestBody List<InitializeUserRequest> formatRequestList){
 		
-		FormatResponse formatResponse = null;
+		InitializeResponse formatResponse = null;
 		try {
 			validateUserRequest(formatRequestList); // throws exception...
-			formatResponse = volumeService.format(formatRequestList);
+			formatResponse = volumeService.initialize(formatRequestList);
 		}catch (Exception e) {
 			String errorMsg = "Unable to format - " + e.getMessage();
 			logger.error(errorMsg, e);
@@ -89,7 +89,7 @@ public class VolumeController {
 	Volume Group should be defined (db)
 	Storagesubtype should be defined (enum)
 	*/
-	private void validateUserRequest(List<FormatUserRequest> formatRequestList) {
+	private void validateUserRequest(List<InitializeUserRequest> formatRequestList) {
 		// Caching the volume Groups so can be accessed in the for loop below
 		List<Volume> volumeGroupList = volumeDao.findAllByVolumetype(Volumetype.group); 
 		Map<String, Volume> volumeGroupId_Volume_Map = new HashMap<String, Volume>();
@@ -98,8 +98,8 @@ public class VolumeController {
 		}
 
 		// Ordering the formatRequests by sequence Number
-		Map<Integer, FormatUserRequest> volumeNumericSequence_FormatRequest = new HashMap<Integer, FormatUserRequest>();
-		for (FormatUserRequest nthFormatRequest : formatRequestList) {
+		Map<Integer, InitializeUserRequest> volumeNumericSequence_FormatRequest = new HashMap<Integer, InitializeUserRequest>();
+		for (InitializeUserRequest nthFormatRequest : formatRequestList) {
 			String volumeId = nthFormatRequest.getVolume();
 			int sequenceOnLabel = getSequenceUsedOnVolumeLabel(volumeId, null);
 			volumeNumericSequence_FormatRequest.put(sequenceOnLabel, nthFormatRequest);
@@ -111,7 +111,7 @@ public class VolumeController {
 
 		int numericSequenceIncrementCounter = 1;
 		for (Integer volumeNumericSequence : volumeNumericSequenceList) {
-			FormatUserRequest nthFormatRequest = volumeNumericSequence_FormatRequest.get(volumeNumericSequence);
+			InitializeUserRequest nthFormatRequest = volumeNumericSequence_FormatRequest.get(volumeNumericSequence);
 			String volumeId = nthFormatRequest.getVolume();
 			if(nthFormatRequest.getForce())
 				throw new DwaraException("Force option not supported just yet. Volume " + volumeId, null);

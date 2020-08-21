@@ -14,4 +14,6 @@ public interface RequestDao extends CrudRepository<Request,Integer>, RequestCust
 	
 	List<Request> findAllByRequestRefIdOrderByIdDesc(int requestRefId);
 	
+	//List<Request> findAllByTypeAndActionIdAndStatusInOrderByIdDesc(RequestType requestType, Action actionId, List<Status> statusList);
+	
 }

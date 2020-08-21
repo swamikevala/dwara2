@@ -20,11 +20,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component("format")
+@Component("initialize")
 //@Profile({ "!dev & !stage" })
-public class Format extends AbstractStoragetaskAction{
+public class Initialize extends AbstractStoragetaskAction{
 
-    private static final Logger logger = LoggerFactory.getLogger(Format.class);
+    private static final Logger logger = LoggerFactory.getLogger(Initialize.class);
 	
 	@Autowired
 	private VolumeDao volumeDao;
@@ -81,7 +81,7 @@ public class Format extends AbstractStoragetaskAction{
 		volume.setStoragelevel(volumeGroup.getStoragelevel());
 		volume.setLocation(volumeGroup.getLocation());
 		volume.setArchiveformat(volumeGroup.getArchiveformat());
-		volume.setFormattedAt(LocalDateTime.now());
+		volume.setInitializedAt(LocalDateTime.now());
 		
 		Integer blocksize = requestDetails.getVolume_blocksize();
 		

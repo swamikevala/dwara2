@@ -32,6 +32,9 @@ public class Extension implements Cacheable{
 	@Column(name="description")
 	private String description;
 	
+	@Column(name="\"ignore\"")
+	private Boolean ignore;
+	
     @OneToMany(mappedBy = "extension",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
@@ -68,6 +71,14 @@ public class Extension implements Cacheable{
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public Boolean getIgnore() {
+		return ignore;
+	}
+
+	public void setIgnore(Boolean ignore) {
+		this.ignore = ignore;
 	}
 
 	@JsonIgnore

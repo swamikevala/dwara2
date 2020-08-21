@@ -60,8 +60,8 @@ public class Volume {
 	@Column(name="checksumtype")
 	private Checksumtype checksumtype;
 	
-	@Column(name="formatted_at")
-	private LocalDateTime formattedAt;
+	@Column(name="initialized_at")
+	private LocalDateTime initializedAt;
 	
 	@Column(name="finalized")
 	private boolean finalized;
@@ -142,12 +142,12 @@ public class Volume {
 		this.checksumtype = checksumtype;
 	}
 
-	public LocalDateTime getFormattedAt() {
-		return formattedAt;
+	public LocalDateTime getInitializedAt() {
+		return initializedAt;
 	}
 
-	public void setFormattedAt(LocalDateTime formattedAt) {
-		this.formattedAt = formattedAt;
+	public void setInitializedAt(LocalDateTime initializedAt) {
+		this.initializedAt = initializedAt;
 	}
 
 	public boolean isFinalized() {

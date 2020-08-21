@@ -1,8 +1,8 @@
-package org.ishafoundation.dwaraapi.api.resp.format;
+package org.ishafoundation.dwaraapi.api.resp.initialize;
 
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 
-public class SystemRequestsForFormatResponse
+public class SystemRequestsForInitializeResponse
 {
     private int id;
 

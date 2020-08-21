@@ -9,9 +9,7 @@ public class Configuration {
 	
 	private String regexAllowedChrsInFileName;
 	
-	private boolean isLibraryFileSystemPermissionsNeedToBeSet;
-
-	private String libraryFile_ChangePermissionsScriptPath;
+	private boolean setArtifactFileSystemPermissions;
 	
 	private String[] junkFilesFinderRegexPatternList;
 
@@ -41,22 +39,14 @@ public class Configuration {
 		this.regexAllowedChrsInFileName = regexAllowedChrsInFileName;
 	}
 
-	public boolean isLibraryFileSystemPermissionsNeedToBeSet() {
-		return isLibraryFileSystemPermissionsNeedToBeSet;
+	public boolean isSetArtifactFileSystemPermissions() {
+		return setArtifactFileSystemPermissions;
 	}
 
-	public void setIsLibraryFileSystemPermissionsNeedToBeSet(boolean isLibraryFileSystemPermissionsNeedToBeSet) {
-		this.isLibraryFileSystemPermissionsNeedToBeSet = isLibraryFileSystemPermissionsNeedToBeSet;
+	public void setSetArtifactFileSystemPermissions(boolean setArtifactFileSystemPermissions) {
+		this.setArtifactFileSystemPermissions = setArtifactFileSystemPermissions;
 	}
-
-	public String getLibraryFile_ChangePermissionsScriptPath() {
-		return libraryFile_ChangePermissionsScriptPath;
-	}
-
-	public void setLibraryFile_ChangePermissionsScriptPath(String libraryFile_ChangePermissionsScriptPath) {
-		this.libraryFile_ChangePermissionsScriptPath = libraryFile_ChangePermissionsScriptPath;
-	}
-
+	
 	public String[] getJunkFilesFinderRegexPatternList() {
 		return junkFilesFinderRegexPatternList;
 	}
@@ -136,4 +126,5 @@ public class Configuration {
 	public void setRestoreInProgressFileIdentifier(String restoreInProgressFileIdentifier) {
 		this.restoreInProgressFileIdentifier = restoreInProgressFileIdentifier;
 	}
+
 }

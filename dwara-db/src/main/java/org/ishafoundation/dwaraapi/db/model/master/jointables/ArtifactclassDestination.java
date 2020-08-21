@@ -10,8 +10,8 @@ import javax.persistence.MapsId;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.keys.ArtifactclassDestinationKey;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 
 @Entity(name = "ArtifactclassDestination")
 @Table(name="artifactclass_destination")
@@ -27,7 +27,7 @@ public class ArtifactclassDestination {
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("destinationId")
     Destination destination;
-
+	
 	public ArtifactclassDestination() {
 		
 	}

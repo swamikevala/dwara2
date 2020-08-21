@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.job;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,12 +8,15 @@ import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,6 +37,30 @@ public class DaoTests{
 	
 	@Autowired
 	private DomainUtil domainUtil;
+	
+	@Test
+	public void testRequestCustomDao() {
+
+		
+		List<Action> actionList = new ArrayList<Action>();
+		actionList.add(Action.map_tapedrives);
+		actionList.add(Action.initialize);
+		RequestType requestType = RequestType.system; 
+		Action action = Action.ingest;
+		List<Status> statusList = new ArrayList<Status>();
+		statusList.add(Status.queued);
+		statusList.add(Status.in_progress);
+		String user = null;
+		LocalDateTime fromDate = null;
+		LocalDateTime toDate = null;
+		int pageNumber = 0;
+		int pageSize = 0;
+
+		List<Request> requestLit = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, fromDate, toDate, pageNumber, pageSize);
+		for (Request request : requestLit) {
+			System.out.println(request.getId() + ":" + request.getActionId());
+		}
+	}
 	
 //	@Test
 //	public void testDevice(){
@@ -75,7 +103,7 @@ public class DaoTests{
 		
 		List<Action> actionList = new ArrayList<Action>();
 		actionList.add(Action.map_tapedrives);
-		actionList.add(Action.format);
+		actionList.add(Action.initialize);
 		
 		long tdOrFormatJobInFlight = jobDao.countByStoragetaskActionIdInAndStatus(actionList, Status.in_progress);
 		System.out.println(tdOrFormatJobInFlight);

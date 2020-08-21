@@ -1,11 +1,15 @@
 package org.ishafoundation.dwaraapi.db.dao.transactional.custom;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-import org.ishafoundation.dwaraapi.model.WrappedRequestList;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 public interface RequestCustom {
 	
-	WrappedRequestList findAllByActionAndUserIdAndRequestedAtOrderByLatest(Integer actionId, Integer userId, LocalDateTime fromDate, LocalDateTime toDate, int pageNumber, int pageSize);
+	List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, Action action, List<Status> statusList, String user, LocalDateTime fromDate, LocalDateTime toDate, int pageNumber, int pageSize);
 
 }

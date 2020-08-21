@@ -80,7 +80,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		StorageJob firstStorageJob = storageJobsList.get(0); // if there is a format/mapdrive job only one job will be in the list coming from JobManager... 
 		Action storagetaskAction = firstStorageJob.getJob().getStoragetaskActionId();
 		
-		if(storagetaskAction == Action.map_tapedrives || storagetaskAction == Action.format) {
+		if(storagetaskAction == Action.map_tapedrives || storagetaskAction == Action.initialize) {
 			updateJobInProgress(firstStorageJob.getJob());
 			logger.debug("Unloading all tapes from all drives");
 			List<DriveDetails> preparedDrives = null;
@@ -117,7 +117,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 					manage(tapeJob);
 				}
 			}
-			else if(storagetaskAction == Action.format) {
+			else if(storagetaskAction == Action.initialize) {
 				DriveDetails driveDetails = preparedDrives.get(0);
 				prepareTapeJobAndContinueNextSteps(firstStorageJob, driveDetails, false);
 			}
@@ -261,7 +261,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			logger.debug("Flagging drive " + tapedriveUid + " as busy, by adding tActivedevice entry" );
 			tActivedevice.setJob(job);
 			Action storagetaskAction = job.getStoragetaskActionId();
-			if(storagetaskAction != Action.format) // For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving device...  
+			if(storagetaskAction != Action.initialize) // For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving device...  
 				tActivedevice.setVolume(volume);
 
 			tActivedevice = tActivedeviceDao.save(tActivedevice);
@@ -286,7 +286,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 //			tapeJob.setTapedriveAlreadyLoadedWithNeededTape(tapedriveAlreadyLoadedWithTape);
 
 			job.setDevice(tapedriveDevice);
-			if(storagetaskAction != Action.format) // For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving device... 
+			if(storagetaskAction != Action.initialize) // For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving device... 
 				job.setVolume(volume);
 			
 			if(nextStepsInSeparateThread) {

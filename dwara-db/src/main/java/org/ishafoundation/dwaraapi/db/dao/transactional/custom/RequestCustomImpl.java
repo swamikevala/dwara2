@@ -8,11 +8,14 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.model.WrappedRequestList;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 public class RequestCustomImpl implements RequestCustom {
 
@@ -20,53 +23,72 @@ public class RequestCustomImpl implements RequestCustom {
     private EntityManager entityManager;
     
     /*
-     * args[0] - actionId - the request type
-     * args[1] - userId - filter on who created the request
-     * args[2,3] - fromDate, toDate - the date range within which the request is requested
-     * args[4] - pageNumber - the nth pagenumber that need to be shown...
-     * args[5] - pageSize - no. or rows that should be returned in the resultset
+     * args[0] - type - the request type
+     * args[1] - action - the requested action
+     * args[2] - status - status List
+     * args[3] - userId - filter on who created the request
+     * args[4,5] - fromDate, toDate - the date range within which the request is requested
+     * args[6] - pageNumber - the nth pagenumber that need to be shown...
+     * args[7] - pageSize - no. or rows that should be returned in the resultset
      */
     
 	@Override
-	public WrappedRequestList findAllByActionAndUserIdAndRequestedAtOrderByLatest(Integer actionId, Integer userId, LocalDateTime fromDate, LocalDateTime toDate, int pageNumber, int pageSize) {
+	public List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, Action action, List<Status> statusList, String user, LocalDateTime fromDate, LocalDateTime toDate, int pageNumber, int pageSize) {
 		
 		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 		
-		Long count = null;
-		CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
-		Root<Request> requestRootForCount = countQuery.from(Request.class);
-		
-		List<Predicate> predicates = getFramedPredicates(requestRootForCount, cb, actionId, userId, fromDate, toDate);
-		countQuery.select(cb.count(requestRootForCount)).where(cb.and(predicates.toArray(new Predicate[0])));
-		
-		count = entityManager.createQuery(countQuery).getSingleResult();
+//		Long count = null;
+//		CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+//		Root<Request> requestRootForCount = countQuery.from(Request.class);
+//		
+//		List<Predicate> predicates = getFramedPredicates(requestRootForCount, cb, actionId, userId, fromDate, toDate);
+//		countQuery.select(cb.count(requestRootForCount)).where(cb.and(predicates.toArray(new Predicate[0])));
+//		
+//		count = entityManager.createQuery(countQuery).getSingleResult();
 		
         CriteriaQuery<Request> query = cb.createQuery(Request.class);
         Root<Request> requestRoot = query.from(Request.class);
         
-        predicates = getFramedPredicates(requestRoot, cb, actionId, userId, fromDate, toDate);
+        List<Predicate> predicates = getFramedPredicates(requestRoot, cb, requestType, action, statusList, user, fromDate, toDate);
        	query.select(requestRoot).where(cb.and(predicates.toArray(new Predicate[0])));
        	query.orderBy(cb.desc(requestRoot.get("id"))); // default orderby most recent first
-        List<Request> requestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
+        //List<Request> requestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
+       	List<Request> requestList = entityManager.createQuery(query).getResultList();
         
-        WrappedRequestList wrappedRequestList = new WrappedRequestList();
-        wrappedRequestList.setPage(pageNumber);
-        wrappedRequestList.setPageSize(pageSize);
-        wrappedRequestList.setTotal(count);
-        wrappedRequestList.setRequestList(requestList);
-        return wrappedRequestList;
+//        WrappedRequestList wrappedRequestList = new WrappedRequestList();
+//        wrappedRequestList.setPage(pageNumber);
+//        wrappedRequestList.setPageSize(pageSize);
+//        wrappedRequestList.setTotal(count);
+//        wrappedRequestList.setRequestList(requestList);
+        return requestList;
 	}
 
-	private List<Predicate> getFramedPredicates(Root<Request> requestRoot, CriteriaBuilder cb, Integer actionId, Integer userId,
+
+	
+	private List<Predicate> getFramedPredicates(Root<Request> requestRoot, CriteriaBuilder cb, RequestType requestType, Action action, List<Status> statusList, String user,
 			LocalDateTime fromDate, LocalDateTime toDate) {
         
         
 	    List<Predicate> predicates = new ArrayList<>();
-		if(actionId != null) {
-			predicates.add(cb.equal(requestRoot.get("action"), actionId));
+		if(requestType != null) {
+			predicates.add(cb.equal(requestRoot.get("type"), requestType));
 		}
-		if(userId != null) {
-			predicates.add(cb.equal(requestRoot.get("user"), userId));
+
+		if(action != null) {
+			predicates.add(cb.equal(requestRoot.get("actionId"), action));
+		}
+
+	    if(statusList != null) {
+		    Path<String> statusIdPath = requestRoot.get("status");
+		    List<Predicate> statusPredicates = new ArrayList<>();
+		    for (Status status : statusList) {
+				statusPredicates.add(cb.equal(statusIdPath, status));
+			}
+			predicates.add(cb.or(statusPredicates.toArray(new Predicate[statusPredicates.size()])));
+	    } 
+	    
+		if(user != null) {
+			predicates.add(cb.equal(requestRoot.get("requestedBy"), user));
 		}
 		if(fromDate != null) {
 			if(toDate == null)

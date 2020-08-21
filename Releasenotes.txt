@@ -1,3 +1,11 @@
+21st Aug
+	All recent Schema changes
+	Action table and enum
+	Format to initialize changes
+	Tape Label changes
+	Request and Job APIs
+	New Setperms integration
+
 20th Aug
 	scan and rename api changes
 	destination buffering changes - Drop Destination table and configure again - Path unique constraint added

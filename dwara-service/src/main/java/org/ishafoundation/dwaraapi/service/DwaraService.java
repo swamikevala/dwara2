@@ -1,14 +1,11 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
-import org.ishafoundation.dwaraapi.api.req.format.FormatUserRequest;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,8 +41,12 @@ public class DwaraService {
 		return postBodyJson;
 	}
 
-	protected String getDateForUI(LocalDateTime requestedAt) {
-		ZonedDateTime zdt = requestedAt.atZone(ZoneId.of("UTC"));
-		return DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm").format(zdt);
+	protected String getDateForUI(LocalDateTime _tedAt) { // requestedAt, createdAt, startedAt
+		String dateForUI = null;
+		if(_tedAt != null) {
+			ZonedDateTime zdt = _tedAt.atZone(ZoneId.of("UTC"));
+			dateForUI = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm").format(zdt);
+		}
+		return dateForUI;
 	}
 }

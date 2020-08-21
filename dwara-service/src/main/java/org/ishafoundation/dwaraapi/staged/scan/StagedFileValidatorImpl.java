@@ -15,10 +15,12 @@ import javax.annotation.PostConstruct;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.configuration.FilesystemPermissionsConfiguration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Extension;
 import org.slf4j.Logger;
@@ -39,6 +41,9 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 	
 	@Autowired
     private Configuration configuration;
+
+	@Autowired
+    private FilesystemPermissionsConfiguration fileSystemPermissionsConfiguration;
 	
     private String regexAllowedChrsInFileName = null;
 	Pattern allowedChrsInFileNamePattern = null;
@@ -80,9 +85,13 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 		//messageBuilder = validateName(stagedFileDetails.getName(), messageBuilder);
 		errorList.addAll(validateName(stagedFileDetails.getName()));
 		
-		errorList.add(checkUnsupportedExtensions(stagedFileDetails));
+		Error extnError = checkUnsupportedExtensions(stagedFileDetails);
+		if(extnError != null)
+			errorList.add(extnError);
 		
-		errorList.add(setPermissions(stagedFileDetails));
+		Error permError = setPermissions(stagedFileDetails);
+		if(permError != null)
+			errorList.add(permError);
 		
 		// TODO dupe check on size 
 		
@@ -173,8 +182,8 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 	}
 	
 	private Error setPermissions(StagedFileDetails stagedFileDetails) {
-		if(configuration.isLibraryFileSystemPermissionsNeedToBeSet()) {
-			String script = configuration.getLibraryFile_ChangePermissionsScriptPath();
+		if(configuration.isSetArtifactFileSystemPermissions()) {
+			String script = fileSystemPermissionsConfiguration.getScriptPath();
 			String artifactName = stagedFileDetails.getName();
 			String sourcePath = stagedFileDetails.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
 			File toBeIngestedFile = FileUtils.getFile(sourcePath, artifactName);
@@ -203,6 +212,7 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 		return null;
 	}
 	
+	// Returns something like /opt/dwara/bin/setperms -b /data/user -u pgurumurthy -c pub-video -a Shots-Of-Sadhanapada-Particpants-Volunteering-In-BSP_SPH-IYC_24-Oct-2019_Z280V_9 -g dwara -d 0775 -f 0664 -r
     private CommandLineExecutionResponse changeFilePermissions(String script, String sourcePath, String artifactName) throws Exception {
 		String parts[] = sourcePath.split("/");
 		String user = parts[3];
@@ -211,9 +221,27 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 		List<String> setFilePermissionsCommandParamsList = new ArrayList<String>();
 		setFilePermissionsCommandParamsList.add("sudo");
 		setFilePermissionsCommandParamsList.add(script);
+		setFilePermissionsCommandParamsList.add("-b");
+		setFilePermissionsCommandParamsList.add(StringUtils.substringBefore(sourcePath, user));
+		setFilePermissionsCommandParamsList.add("-u");
 		setFilePermissionsCommandParamsList.add(user);
+		setFilePermissionsCommandParamsList.add("-c");
 		setFilePermissionsCommandParamsList.add(artifactclassName);
+		setFilePermissionsCommandParamsList.add("-a");
 		setFilePermissionsCommandParamsList.add(artifactName);
+		String owner = fileSystemPermissionsConfiguration.getOwner();
+		if(StringUtils.isNotBlank(owner)) {
+			setFilePermissionsCommandParamsList.add("-o");
+			setFilePermissionsCommandParamsList.add(owner);
+		}
+		setFilePermissionsCommandParamsList.add("-g");
+		setFilePermissionsCommandParamsList.add(fileSystemPermissionsConfiguration.getGroup());
+		setFilePermissionsCommandParamsList.add("-d");
+		setFilePermissionsCommandParamsList.add(fileSystemPermissionsConfiguration.getDirectoryMode());
+		setFilePermissionsCommandParamsList.add("-f");
+		setFilePermissionsCommandParamsList.add(fileSystemPermissionsConfiguration.getFileMode());
+		setFilePermissionsCommandParamsList.add("-r");
+		
 		
 		CommandLineExecutionResponse setPermsCommandLineExecutionResponse = commandLineExecuter.executeCommand(setFilePermissionsCommandParamsList);
 		return setPermsCommandLineExecutionResponse;

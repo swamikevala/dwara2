@@ -37,7 +37,6 @@ public class LabelManagerImpl implements LabelManager{
 
 	// TODO : Hardcoded stuff - Configure it...
 	private Double version = 1.0;
-	private int accesslevel = 1;
 	private Double archiveformatVersion = 1.0;
 	
 	@Value("${volume.label.implementationId}")
@@ -68,7 +67,7 @@ public class LabelManagerImpl implements LabelManager{
 		String deviceName = selectedStorageJob.getDeviceWwnId();
 
 		Volumelabel volumelabel = readVolumeLabel(deviceName, blocksize);
-		String volIdFromLabel = volumelabel.getVolumeuid();
+		String volIdFromLabel = volumelabel.getVolume();
 
 		if(volIdFromLabel.equals(volumeId)) {
 			isRightVolume = true;
@@ -130,12 +129,14 @@ public class LabelManagerImpl implements LabelManager{
 		VolumeDetails volumeDetails = volume.getDetails();
 		int blocksize = volumeDetails.getBlocksize();
 		
+		String volumeGroup = volume.getVolumeRef().getId();
+		
 //		Request request = storageJob.getJob().getRequest();
 //		RequestDetails requestDetails = request.getDetails();
 //		String encryptionalgorithm = requestDetails.getEncryption_algorithm();
 		String encryptionalgorithm = configuration.getEncryptionAlgorithm();
 		
-		String label = createLabel(volumeId, blocksize, archiveformat, checksumalgorithm, encryptionalgorithm);
+		String label = createLabel(volumeGroup, volumeId, blocksize, archiveformat, checksumalgorithm, encryptionalgorithm);
 		logger.trace(label);
 		
 		File file = new File(filesystemTemporarylocation + File.separator + volumeId + "_label.xml");
@@ -154,17 +155,17 @@ public class LabelManagerImpl implements LabelManager{
 		return isSuccess;
 	}
 	
-	private String createLabel(String volumeUid, int blocksize, String archiveformat, String checksumalgorithm, String encryptionalgorithm) throws Exception {
+	private String createLabel(String volumeGroup, String volume, int blocksize, String archiveformat, String checksumalgorithm, String encryptionalgorithm) throws Exception {
 		
 		Volumelabel volumelabel = new Volumelabel();
 		volumelabel.setVersion(version);
-		volumelabel.setVolumeuid(volumeUid);
+		volumelabel.setVolume(volume);
+		volumelabel.setVolumegroup(volumeGroup);
 		volumelabel.setBlocksize(blocksize);
 		volumelabel.setOwner(ownerId);
-		volumelabel.setAccesslevel(accesslevel);
 		
 		String labeltime = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm").format(LocalDateTime.now());
-		volumelabel.setLabeltime(labeltime);
+		volumelabel.setInitializedAt(labeltime);
 		
 		Archiveformat archiveformatObj = new Archiveformat();
 		archiveformatObj.setVersion(archiveformatVersion);

@@ -1,6 +1,6 @@
 package org.ishafoundation.dwaraapi.resource.mapper;
 
-import org.ishafoundation.dwaraapi.api.req.format.FormatUserRequest;
+import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
 import org.ishafoundation.dwaraapi.api.req.restore.FileParams;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.StagedFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
@@ -30,7 +30,7 @@ public interface RequestToEntityObjectMapper {
         @Mapping(source = "volumeBlocksize", target = "volume_blocksize")
     })
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
-	RequestDetails getRequestDetailsForFormat(FormatUserRequest formatRequest);
+	RequestDetails getRequestDetailsForInitialize(InitializeUserRequest formatRequest);
 	
 }
 

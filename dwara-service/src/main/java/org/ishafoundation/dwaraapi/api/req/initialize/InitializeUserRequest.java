@@ -1,9 +1,9 @@
-package org.ishafoundation.dwaraapi.api.req.format;
+package org.ishafoundation.dwaraapi.api.req.initialize;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class FormatUserRequest {
+public class InitializeUserRequest {
 	// format
 	private String volume;
 	

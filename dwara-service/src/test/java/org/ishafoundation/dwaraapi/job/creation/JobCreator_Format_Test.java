@@ -4,7 +4,6 @@ import java.io.File;
 import java.net.URL;
 
 import org.apache.commons.io.FileUtils;
-import org.ishafoundation.dwaraapi.api.req.format.FormatUserRequest;
 import org.ishafoundation.dwaraapi.service.VolumeService;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -16,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)

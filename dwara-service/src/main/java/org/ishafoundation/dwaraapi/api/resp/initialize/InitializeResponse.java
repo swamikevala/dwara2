@@ -1,8 +1,8 @@
-package org.ishafoundation.dwaraapi.api.resp.format;
+package org.ishafoundation.dwaraapi.api.resp.initialize;
 
 import java.util.List;
 
-public class FormatResponse
+public class InitializeResponse
 {
     private int userRequestId;
 
@@ -12,7 +12,7 @@ public class FormatResponse
 
     private String requestedAt;
 
-    private List<SystemRequestsForFormatResponse> systemRequests;
+    private List<SystemRequestsForInitializeResponse> systemRequests;
 
 
     public int getUserRequestId() {
@@ -39,10 +39,10 @@ public class FormatResponse
     public String getRequestedAt(){
         return this.requestedAt;
     }
-	public List<SystemRequestsForFormatResponse> getSystemRequests() {
+	public List<SystemRequestsForInitializeResponse> getSystemRequests() {
 		return systemRequests;
 	}
-	public void setSystemRequests(List<SystemRequestsForFormatResponse> systemRequests) {
+	public void setSystemRequests(List<SystemRequestsForInitializeResponse> systemRequests) {
 		this.systemRequests = systemRequests;
 	}
 

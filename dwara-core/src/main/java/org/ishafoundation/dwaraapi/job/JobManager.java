@@ -53,7 +53,7 @@ public class JobManager {
 		// Need to block all storage jobs from picked up for processing, when there is a queued/inprogress mapdrive/format request... 
 		List<Action> actionList = new ArrayList<Action>();
 		actionList.add(Action.map_tapedrives);
-		actionList.add(Action.format);
+		actionList.add(Action.initialize);
 
 		// If a subrequest action type is mapdrive and status is queued or inprogress skip storage jobs...
 		long blockingJobsLinedUp = jobDao.countByStoragetaskActionIdInAndStatus(actionList, Status.queued);
@@ -107,7 +107,7 @@ public class JobManager {
 						}
 						else if(blockingJobsLinedUp > 0) { // if any format/tape map drive request queued up
 							// only adding one blocking job to the list
-							if(job.getRequest().getActionId() == Action.format || job.getRequest().getActionId() == Action.map_tapedrives) {
+							if(job.getRequest().getActionId() == Action.initialize || job.getRequest().getActionId() == Action.map_tapedrives) {
 								if(storageJobList.size() == 0) { // add only one job at a time. If already added skip adding to the list and continue loop(we still need to continue so non-storage jobs are managed)...
 									storageJobList.add(job);
 									logger.trace("Added to storagejob collection");

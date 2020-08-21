@@ -33,6 +33,10 @@ public class User {//implements Cacheable{
 	@ManyToOne
 	private Priorityband priorityband;
 	
+	@Column(name="email")
+	private String email;
+
+	
 //    @OneToMany(mappedBy = "user",
 //            cascade = CascadeType.MERGE,
 //            orphanRemoval = true)
@@ -78,7 +82,14 @@ public class User {//implements Cacheable{
 	public void setPriorityband(Priorityband priorityband) {
 		this.priorityband = priorityband;
 	}
-	
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
 //	@JsonIgnore
 //    public List<ActionUser> getActions() {
 //		return actions;

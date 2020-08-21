@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.api.req.format.FormatUserRequest;
-import org.ishafoundation.dwaraapi.api.resp.format.FormatResponse;
-import org.ishafoundation.dwaraapi.api.resp.format.SystemRequestsForFormatResponse;
+import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
+import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
+import org.ishafoundation.dwaraapi.api.resp.initialize.SystemRequestsForInitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.Details;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
@@ -19,6 +19,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.job.JobCreator;
@@ -100,11 +101,12 @@ public class VolumeService extends DwaraService {
 		return volumeResponseList;
 	}
 
-	public FormatResponse format(List<FormatUserRequest> formatRequestList) throws Exception{	
-		FormatResponse formatResponse = new FormatResponse();
+	public InitializeResponse initialize(List<InitializeUserRequest> formatRequestList) throws Exception{	
+		InitializeResponse formatResponse = new InitializeResponse();
 		Request request = new Request();
-		request.setActionId(Action.format);
-    	
+		request.setType(RequestType.user);
+		request.setActionId(Action.initialize);
+		request.setStatus(Status.queued);
     	User user = getUserObjFromContext();
     	String requestedBy = user.getName();
 
@@ -120,18 +122,19 @@ public class VolumeService extends DwaraService {
 		int requestId = request.getId();
 		logger.info("Request - " + requestId);
 		
-		List<SystemRequestsForFormatResponse> systemRequests = new ArrayList<SystemRequestsForFormatResponse>();
+		List<SystemRequestsForInitializeResponse> systemRequests = new ArrayList<SystemRequestsForInitializeResponse>();
 		
-		for (FormatUserRequest nthFormatRequest : formatRequestList) {
+		for (InitializeUserRequest nthFormatRequest : formatRequestList) {
 			Request systemrequest = new Request();
 			systemrequest.setRequestRef(request);
 			systemrequest.setActionId(request.getActionId());
-			systemrequest.setUser(request.getUser());
+			systemrequest.setStatus(Status.queued);
+			systemrequest.setRequestedBy(request.getRequestedBy());
 			systemrequest.setRequestedAt(LocalDateTime.now());
 			systemrequest.setDomain(request.getDomain());
 
 
-			RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForFormat(nthFormatRequest);
+			RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForInitialize(nthFormatRequest);
 
 			systemrequest.setDetails(systemrequestDetails);
 			systemrequest = requestDao.save(systemrequest);
@@ -141,7 +144,7 @@ public class VolumeService extends DwaraService {
 			int jobId = job.getId();
 			Status status = job.getStatus();
 			
-			SystemRequestsForFormatResponse systemRequestsForFormatResponse = new SystemRequestsForFormatResponse();
+			SystemRequestsForInitializeResponse systemRequestsForFormatResponse = new SystemRequestsForInitializeResponse();
 			systemRequestsForFormatResponse.setId(systemrequest.getId());
 			systemRequestsForFormatResponse.setJobId(jobId);
 			systemRequestsForFormatResponse.setStatus(status);
@@ -165,8 +168,9 @@ public class VolumeService extends DwaraService {
 		try {
 
 			Request request = new Request();
+			request.setType(RequestType.user);
 			request.setActionId(Action.finalize);
-			request.setUser(getUserObjFromContext());
+			request.setRequestedBy(getUserObjFromContext());
 			request.setRequestedAt(LocalDateTime.now());
 			request.setDomain(domain);
 			RequestDetails details = new RequestDetails();
@@ -183,7 +187,7 @@ public class VolumeService extends DwaraService {
 			Request systemrequest = new Request();
 			systemrequest.setRequestRef(request);
 			systemrequest.setActionId(request.getActionId());
-			systemrequest.setUser(request.getUser());
+			systemrequest.setRequestedBy(request.getRequestedBy());
 			systemrequest.setRequestedAt(LocalDateTime.now());
 			systemrequest.setDomain(request.getDomain());
 

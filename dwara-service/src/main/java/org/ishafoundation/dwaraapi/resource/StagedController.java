@@ -66,7 +66,7 @@ public class StagedController {
 		    @ApiResponse(code = 202, message = "Request submitted and queued up"),
 		    @ApiResponse(code = 400, message = "Error")
 	})
-	@PostMapping(value="/artifact/staging/ingest", produces = "application/json")
+	@PostMapping(value="/staged/ingest", produces = "application/json")
     public ResponseEntity<IngestResponse> ingest(@RequestBody IngestUserRequest ingestUserRequest){
 		IngestResponse ingestResponse = null;
 		try {

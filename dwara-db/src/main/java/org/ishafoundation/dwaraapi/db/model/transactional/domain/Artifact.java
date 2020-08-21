@@ -50,8 +50,8 @@ public class Artifact {
 	private String fileStructureMd5;
 
 	@OneToOne
-	@JoinColumn(name="creation_request_id") 
-	private Request creationRequest;	
+	@JoinColumn(name="ingest_request_id") 
+	private Request ingestRequest;	
 	
  	// Causes cyclic associations 
  	// Many subrequest could have happened on the same library. Like rerun etc., But this holds the most recent subrequest so that it can be queried easily
@@ -138,13 +138,13 @@ public class Artifact {
 	}
 	
 	@JsonIgnore
-	public Request getCreationRequest() {
-		return creationRequest;
+	public Request getIngestRequest() {
+		return ingestRequest;
 	}
 
 	@JsonIgnore
-	public void setCreationRequest(Request creationRequest) {
-		this.creationRequest = creationRequest;
+	public void setIngestRequest(Request ingestRequest) {
+		this.ingestRequest = ingestRequest;
 	}
 
 	@JsonIgnore

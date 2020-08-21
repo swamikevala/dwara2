@@ -7,6 +7,7 @@ package org.ishafoundation.dwaraapi.enumreferences;
  * if this enum is changed please ensure ActionAttributeConverter reflects the change too.
  */
 public enum Action {
+	rename_staged,
 	ingest,
 	write,
 	restore,
@@ -22,7 +23,7 @@ public enum Action {
 	migrate,
 	process,
 	restore_process,
-	format,
+	initialize,
 	finalize,
 	import_,
 	map_tapedrives,

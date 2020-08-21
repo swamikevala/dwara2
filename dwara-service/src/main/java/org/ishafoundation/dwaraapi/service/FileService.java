@@ -13,6 +13,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.resource.mapper.RequestToEntityObjectMapper;
 import org.slf4j.Logger;
@@ -49,6 +50,7 @@ public class FileService {
     public ResponseEntity<String> restore(RestoreUserRequest userRequest){	
     	try {
 		    	Request request = new Request();
+		    	request.setType(RequestType.user);
 				request.setActionId(Action.restore);
 		    	// request.setUser(userDao.findByName(requestedBy));
 				// request.setUser(user);
@@ -69,9 +71,10 @@ public class FileService {
 		    	
 		    	for (FileParams fileParams : fileParamsList) {
 					Request systemrequest = new Request();
+					systemrequest.setType(RequestType.system);
 					systemrequest.setRequestRef(request);
 					systemrequest.setActionId(request.getActionId());
-					systemrequest.setUser(request.getUser());
+					systemrequest.setRequestedBy(request.getRequestedBy());
 					systemrequest.setRequestedAt(LocalDateTime.now());
 					systemrequest.setDomain(request.getDomain());
 
