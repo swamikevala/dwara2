@@ -57,11 +57,11 @@ public class VolumeService extends DwaraService {
 			Volumetype neededVolumetype = Volumetype.valueOf(volumetype);
 			
 			volumeResponseList = new ArrayList<VolumeResponse>();
-			List<Volume> volumeGroupList = volumeDao.findAllByVolumetype(neededVolumetype);
+			List<Volume> volumeGroupList = volumeDao.findAllByType(neededVolumetype);
 			for (Volume volume : volumeGroupList) {
 				VolumeResponse volResp = new VolumeResponse();
 				volResp.setId(volume.getId());
-				volResp.setVolumetype(volume.getVolumetype().name());
+				volResp.setVolumetype(volume.getType().name());
 				volResp.setStoragetype(volume.getStoragetype().name());
 				volResp.setStoragelevel(volume.getStoragelevel().name());
 				//volResp.setVolumeRef(volumeRef);

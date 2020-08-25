@@ -1,10 +1,8 @@
 package org.ishafoundation.dwaraapi.storage.storagetask;
 
 
-import java.util.List;
-
+import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -14,6 +12,7 @@ import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
+import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +34,7 @@ public class Write extends AbstractStoragetaskAction{
 	private ConfigurationTablesUtil configurationTablesUtil;
 	
 	@Autowired
-	private ArtifactVolumeRepositoryUtil artifactVolumeRepositoryUtil;
+	private VolumeUtil volumeUtil;
 		
 	@Override
 	public StorageJob buildStorageJob(Job job) throws Exception{
@@ -49,6 +48,7 @@ public class Write extends AbstractStoragetaskAction{
 		String volumegroupId = null;
 		Volume volume = null;
 		Domain domain = null;
+		long artifactSize = 0L;
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.ingest) {
 			//Dont use this as for proxy copy the artifact class is more apt to be picked from action element - Integer artifactclassId = job.getRequest().getDetails().getArtifactclass_id(); 
 			String artifactclassId = job.getActionelement().getArtifactclassId();
@@ -60,12 +60,11 @@ public class Write extends AbstractStoragetaskAction{
 			artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);
 			artifactName = artifact.getName();			
 
-			volumegroupId = job.getActionelement().getVolumeId();
+			volumegroupId = job.getVolume().getId(); // TODO 
 			
 			String artifactpathToBeCopied = pathPrefix + java.io.File.separator + artifactName;
-			long sizeOfTheLibraryToBeWritten = 0;//TODO - FileUtils.sizeOfDirectory(new java.io.File(artifactpathToBeCopied)); 			
-			volume = getToBeUsedPhysicalVolume(domain, volumegroupId, sizeOfTheLibraryToBeWritten);
-
+			artifactSize = FileUtils.sizeOf(new java.io.File(artifactpathToBeCopied)); 
+			volume = volumeUtil.getToBeUsedPhysicalVolume(domain, volumegroupId, artifactSize);
 		}else if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.rewrite || requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.migrate) {
 			artifactName = request.getDetails().getStagedFilename();
 			pathPrefix = "whereverRestoredByThePrecedingRestoreJob";//artifactclass.getPath();
@@ -87,43 +86,12 @@ public class Write extends AbstractStoragetaskAction{
 		storageJob.setArtifact(artifact);
 		storageJob.setArtifactPrefixPath(pathPrefix);
 		storageJob.setArtifactName(artifactName);
-
+		storageJob.setArtifactSize(artifactSize);
 		// to where
 		storageJob.setVolume(volume);
 		
 		return storageJob;
 	
 	}
-	
-	private Volume getToBeUsedPhysicalVolume(Domain domain, String volumegroupId, long sizeOfTheLibraryToBeWritten) {
-		
-		Volume toBeUsedVolume = null;
-		List<Volume> physicalVolumesList = volumeDao.findAllByVolumeRefIdAndFinalizedIsFalseOrderByIdAsc(volumegroupId);
-		for (Volume nthPhysicalVolume : physicalVolumesList) {
-			// The chosen volume may not have enough space because of queued write jobs using space and so we may have to get the volume again just before write(job selection)...
-			//TODO if(Volume.getFree() > sizeOfTheLibraryToBeWritten) {
-				toBeUsedVolume = nthPhysicalVolume; // for now defaulting to first one...
-				break;
-			//}
-		}
-		return toBeUsedVolume;		
-	}
-	
-	private long getVolumeUnusedCapacity(Domain domain, Volume volume){
-		long capacity = volume.getCapacity();
-		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(domain, volume);
-		int volumeBlocksize = volume.getDetails().getBlocksize();
-		
-		long usedCapacity = lastArtifactOnVolumeEndVolumeBlock * volumeBlocksize;
-		
-//		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-//		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeId(volume.getId());
-//		long usedCapacity = 0L;
-//		for (ArtifactVolume artifactVolume : artifactVolumeList) {
-//			long totalSize = domainUtil.getDomainSpecificArtifact(domain, artifactVolume.getId().getArtifactId()).getTotalSize();
-//			usedCapacity = usedCapacity + totalSize;
-//		}
-		return capacity - usedCapacity;
-		
-	}
+
 }

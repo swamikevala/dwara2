@@ -26,6 +26,7 @@ public class StorageJob {
 	private Artifact artifact;
 	private String artifactName;
 	private String artifactPrefixPath;
+	private long artifactSize;
 	private boolean concurrentCopies;
 	
 	// Restore stuff
@@ -101,6 +102,14 @@ public class StorageJob {
 
 	public void setArtifactPrefixPath(String artifactPrefixPath) {
 		this.artifactPrefixPath = artifactPrefixPath;
+	}
+
+	public long getArtifactSize() {
+		return artifactSize;
+	}
+
+	public void setArtifactSize(long artifactSize) {
+		this.artifactSize = artifactSize;
 	}
 
 	public boolean isConcurrentCopies() {

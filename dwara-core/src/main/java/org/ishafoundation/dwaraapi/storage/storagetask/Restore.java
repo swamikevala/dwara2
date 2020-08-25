@@ -9,6 +9,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -22,13 +23,12 @@ import org.springframework.stereotype.Component;
 public class Restore extends AbstractStoragetaskAction{
 
     private static final Logger logger = LoggerFactory.getLogger(Restore.class);
-    
-	@Autowired
-	private LocationDao locationDao;
 	
 	@Autowired
 	private DomainUtil domainUtil;
 	
+	@Autowired
+	private ConfigurationTablesUtil configurationTablesUtil;
 	
 	@Override
 	public StorageJob buildStorageJob(Job job) throws Exception {
@@ -49,7 +49,7 @@ public class Restore extends AbstractStoragetaskAction{
 		// From where - get the volume
 		String locationId = requestDetails.getLocation_id();
 		if(locationId == null) {
-			Location location = locationDao.findByRestoreDefaultTrue();
+			Location location = configurationTablesUtil.getDefaultLocation();
 			locationId = location.getId();
 		}
 

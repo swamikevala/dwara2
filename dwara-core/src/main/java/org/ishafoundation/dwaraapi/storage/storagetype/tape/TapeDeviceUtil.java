@@ -58,8 +58,8 @@ public class TapeDeviceUtil {
 		HashMap<Integer, DataTransferElement> driveAutoloaderAddress_DataTransferElement_Map = new HashMap<Integer, DataTransferElement>();
 		
 		List<DriveDetails> driveDetailsList = new ArrayList<DriveDetails>();
-		List<Device> tapelibraryDeviceList = deviceDao.findAllByDevicetypeAndStatusAndDefectiveIsFalse(Devicetype.tape_autoloader, DeviceStatus.online);
-		List<Device> tapedriveDeviceList = deviceDao.findAllByDevicetypeAndStatusAndDefectiveIsFalse(Devicetype.tape_drive, DeviceStatus.online);
+		List<Device> tapelibraryDeviceList = deviceDao.findAllByTypeAndStatusAndDefectiveIsFalse(Devicetype.tape_autoloader, DeviceStatus.online);
+		List<Device> tapedriveDeviceList = deviceDao.findAllByTypeAndStatusAndDefectiveIsFalse(Devicetype.tape_drive, DeviceStatus.online);
 		
 		
 		for (Device tapelibrary : tapelibraryDeviceList) { // iterating through all libraries configured in dwara app

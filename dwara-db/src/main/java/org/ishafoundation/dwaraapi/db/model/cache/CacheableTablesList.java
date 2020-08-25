@@ -9,9 +9,9 @@ public enum CacheableTablesList {
 	archiveformat,
 	artifactclass,
 	destination,
-	device, // TODO - need to use, still uses dao
+	device,
 	//domain,
 	extension,
-	location // TODO - need to use, still uses dao
-	//sequence
+	location,
+	sequence
 }

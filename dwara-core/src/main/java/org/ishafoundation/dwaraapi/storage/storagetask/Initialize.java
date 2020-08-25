@@ -6,11 +6,13 @@ import java.util.Map;
 
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
+import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -31,6 +33,9 @@ public class Initialize extends AbstractStoragetaskAction{
 	
 	@Autowired
 	private Configuration configuration;
+	
+	@Autowired
+	private ConfigurationTablesUtil configurationTablesUtil;
 	
 	@Autowired
 	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
@@ -59,9 +64,9 @@ public class Initialize extends AbstractStoragetaskAction{
 		
 		
 		volume.setId(volumeBarcode);
-		volume.setVolumetype(Volumetype.physical);
+		volume.setType(Volumetype.physical);
 		
-		volume.setVolumeRef(volumeGroup);
+		volume.setGroupRef(volumeGroup);
 
 		String checksumalgorithm = configuration.getChecksumType();
 
@@ -75,11 +80,15 @@ public class Initialize extends AbstractStoragetaskAction{
 		AbstractStoragesubtype storagesubtypeImpl = storagesubtypeMap.get(storagesubtype);//storagesubtypeMap.get(storagesubtype.name());
 		volume.setCapacity(storagesubtypeImpl.getCapacity());
 	
+		// setting to default location
+		// During initialisation the physical tape actually is in the default location where tape library is even though its expected to be in the 
+		// There will be some other action that will reset this location and use the volumeGroup.getLocation();
+		Location location = configurationTablesUtil.getDefaultLocation(); //volumeGroup.getLocation();
+		volume.setLocation(location);
 
 		// Inherited from group
 		volume.setStoragetype(volumeGroup.getStoragetype());
 		volume.setStoragelevel(volumeGroup.getStoragelevel());
-		volume.setLocation(volumeGroup.getLocation());
 		volume.setArchiveformat(volumeGroup.getArchiveformat());
 		volume.setInitializedAt(LocalDateTime.now());
 		

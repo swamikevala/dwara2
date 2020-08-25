@@ -39,7 +39,7 @@ public class Verify extends AbstractStoragetaskAction{
 	
 	
 	@Override
-	public StorageJob buildStorageJob(Job job){
+	public StorageJob buildStorageJob(Job job) throws Exception{
 		StorageJob storageJob = new StorageJob();
 		storageJob.setJob(job);
 		
@@ -53,6 +53,9 @@ public class Verify extends AbstractStoragetaskAction{
 				writeJobToBeVerified = preReqJobRef;
 			}
 		}		
+		
+		if(writeJobToBeVerified == null)
+			throw new Exception("Action write is a prerequisite for verify. Please ensure the dependency is mapped in actionelement_map");
 		
 		storageJob.setVolume(writeJobToBeVerified.getVolume());
 		

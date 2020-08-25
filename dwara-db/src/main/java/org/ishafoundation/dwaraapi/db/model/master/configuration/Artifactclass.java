@@ -16,6 +16,7 @@ import javax.persistence.Table;
 import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassActionUser;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassDestination;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -35,6 +36,12 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 	@Column(name="domain_id")
 	private org.ishafoundation.dwaraapi.enumreferences.Domain domain;
 	
+	@Column(name="\"group\"")
+	private boolean group;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	private Artifactclass groupRef;	
+
 	@Column(name="path_prefix")
 	private String pathPrefix;	
 
@@ -44,13 +51,13 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
     private Sequence sequence;
 
 	@Column(name="source")
-	private boolean source;
+	private Boolean source;
 	
 //	@Column(name="preservation_version")
 //	private boolean preservationVersion;
 
 	@Column(name="concurrent_volume_copies")
-	private boolean concurrentVolumeCopies;
+	private Boolean concurrentVolumeCopies;
 	
 	@Column(name="display_order")
 	private Integer displayOrder;
@@ -64,7 +71,11 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
     private List<ArtifactclassActionUser> artifactclassActionUser = new ArrayList<>();   
-    
+
+    @OneToMany(mappedBy = "artifactclass",
+            cascade = CascadeType.MERGE,
+            orphanRemoval = true)
+    private List<ArtifactclassVolume> artifactclassVolume = new ArrayList<>();   
 
 	public String getId() {
 		return id;
@@ -89,7 +100,23 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 	public void setDomain(org.ishafoundation.dwaraapi.enumreferences.Domain domain) {
 		this.domain = domain;
 	}
+	
+	public boolean isGroup() {
+		return group;
+	}
 
+	public void setGroup(boolean group) {
+		this.group = group;
+	}
+
+	public Artifactclass getGroupRef() {
+		return groupRef;
+	}
+
+	public void setGroupRef(Artifactclass groupRef) {
+		this.groupRef = groupRef;
+	}
+	
 	public String getPathPrefix() {
 		return pathPrefix;
 	}
@@ -109,7 +136,7 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 		this.sequence = sequence;
 	}
 
-	public int getSequenceId() {
+	public String getSequenceId() {
 		return sequence.getId();
 	}
 	
@@ -157,6 +184,16 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 		this.artifactclassActionUser = artifactclassActionUser;
 	}
 
+	@JsonIgnore
+	public List<ArtifactclassVolume> getArtifactclassVolume() {
+		return artifactclassVolume;
+	}
+
+	@JsonIgnore
+	public void setArtifactclassVolume(List<ArtifactclassVolume> artifactclassVolume) {
+		this.artifactclassVolume = artifactclassVolume;
+	}
+	
 	//@JsonIgnore
 	public String getCategory() {
 		String category = "public";

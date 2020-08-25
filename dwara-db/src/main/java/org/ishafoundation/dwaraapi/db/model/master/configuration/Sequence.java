@@ -9,16 +9,17 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 import org.ishafoundation.dwaraapi.enumreferences.SequenceType;
 
 
 @Entity
 @Table(name="sequence")
-public class Sequence{// implements Cacheable{
+public class Sequence implements Cacheable{
 	
 	@Id
 	@Column(name="id")
-	private int id;
+	private String id;
 	
 	@Enumerated(EnumType.STRING)
 	@Column(name="type")
@@ -42,18 +43,21 @@ public class Sequence{// implements Cacheable{
 	@Column(name="prefix")
 	private String prefix;
 
-	@Column(name="artifact_extraction_regex")
-	private String artifactExtractionRegex;
+	@Column(name="artifact_code_regex")
+	private String artifactCodeRegex;
 
-	@Column(name="artifact_keep_code")
-	private Boolean artifactKeepCode;
+	@Column(name="artifact_number_regex")
+	private String artifactNumberRegex;
+	
+	@Column(name="artifact_keep")
+	private Boolean artifactKeep;
 
 		
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 
@@ -113,20 +117,28 @@ public class Sequence{// implements Cacheable{
 		this.prefix = prefix;
 	}
 	
-	public String getArtifactExtractionRegex() {
-		return artifactExtractionRegex;
+	public String getArtifactCodeRegex() {
+		return artifactCodeRegex;
 	}
 
-	public void setArtifactExtractionRegex(String artifactExtractionRegex) {
-		this.artifactExtractionRegex = artifactExtractionRegex;
+	public void setArtifactCodeRegex(String artifactCodeRegex) {
+		this.artifactCodeRegex = artifactCodeRegex;
 	}
 
-	public Boolean isArtifactKeepCode() {
-		return artifactKeepCode;
+	public String getArtifactNumberRegex() {
+		return artifactNumberRegex;
 	}
 
-	public void setArtifactKeepCode(Boolean artifactKeepCode) {
-		this.artifactKeepCode = artifactKeepCode;
+	public void setArtifactNumberRegex(String artifactNumberRegex) {
+		this.artifactNumberRegex = artifactNumberRegex;
+	}
+
+	public Boolean isArtifactKeep() {
+		return artifactKeep;
+	}
+
+	public void setArtifactKeep(Boolean artifactKeep) {
+		this.artifactKeep = artifactKeep;
 	}
 
 	public Integer incrementCurrentNumber() {

@@ -74,7 +74,8 @@ public class ProcessingJobProcessor implements Runnable{
 	protected Job job;
 	protected Domain domain;
 	protected Artifact inputArtifact;
-	
+	protected int fileCount;
+	protected long totalSize;
 	protected org.ishafoundation.dwaraapi.db.model.transactional.domain.File file;
 	protected LogicalFile logicalFile;
 	
@@ -105,6 +106,22 @@ public class ProcessingJobProcessor implements Runnable{
 
 	public void setInputArtifact(Artifact inputArtifact) {
 		this.inputArtifact = inputArtifact;
+	}
+
+	public int getFileCount() {
+		return fileCount;
+	}
+
+	public void setFileCount(int fileCount) {
+		this.fileCount = fileCount;
+	}
+
+	public long getTotalSize() {
+		return totalSize;
+	}
+
+	public void setTotalSize(long totalSize) {
+		this.totalSize = totalSize;
 	}
 
 	public org.ishafoundation.dwaraapi.db.model.transactional.domain.File getFile() {
@@ -231,8 +248,9 @@ public class ProcessingJobProcessor implements Runnable{
 							Method artifactRefSetter = outputArtifact.getClass().getMethod("set" + outputArtifact.getClass().getSimpleName() + "Ref", outputArtifact.getClass());
 							artifactRefSetter.invoke(outputArtifact, inputArtifact); //sourceArtifactId
 							
-						    outputArtifact.setFileCount(1111111);
-						    outputArtifact.setFileStructureMd5("not needed");
+							outputArtifact.setTotalSize(totalSize);
+						    outputArtifact.setFileCount(fileCount);
+						    //outputArtifact.setFileStructureMd5("not needed");
 						    
 						    Artifactclass outputArtifactclass = job.getActionelement().getOutputArtifactclass();
 						    outputArtifact.setArtifactclass(outputArtifactclass);

@@ -79,7 +79,7 @@ public class StagedService extends DwaraService{
 	protected ExtensionDao extensionDao;
 	
 	@Autowired
-	protected SequenceDao sequenceDao;
+	protected SequenceUtil sequenceUtil;
 	
 	@Autowired
 	protected JobCreator jobCreator;
@@ -232,21 +232,7 @@ public class StagedService extends DwaraService{
 	    		}
 	        	
 				Sequence sequence = artifactclass.getSequence();
-		        boolean isUseExtractedCodeInFolderName = sequence.isArtifactKeepCode();
-		        String sequenceCode = null;
-		        String prevSeqCode = null;
-		        if(isUseExtractedCodeInFolderName) 
-		        	sequenceCode = prevSeqCode; // TODO prevSeqCode is needed from the Ingest API
-		        else { // if using extracted code, then we dont want a new code
-		        	synchronized (stagedFile) {
-		        		Integer incrementedCurrentNumber = SequenceUtil.incrementCurrentNumber(sequence);
-		        		sequenceCode = (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + incrementedCurrentNumber;
-		        		if(sequence.getSequenceRef() != null)
-		        			sequenceDao.save(sequence.getSequenceRef());
-		        		else
-		        			sequenceDao.save(sequence);
-		        	}
-		        }
+				String sequenceCode = sequenceUtil.getSequenceCode(sequence, stagedFileName);
 		        
 		        // Renames the directory prefixing sequencecode...
 		        java.io.File stagedFileInAppReadyToIngest = moveFile(appReadyToIngestFileObj, FileUtils.getFile(readyToIngestPath, sequenceCode + "_" + stagedFileName));

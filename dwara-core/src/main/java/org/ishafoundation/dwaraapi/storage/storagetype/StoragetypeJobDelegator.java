@@ -93,14 +93,14 @@ public class StoragetypeJobDelegator {
 			try {
 				storageJob = storagetaskActionImpl.buildStorageJob(job);
 			} catch (Exception e) {
-				logger.error("Unable to gather necessary details for executing the job " + job.getId() + " - " + Status.failed);
+				logger.error("Unable to gather necessary details for executing the job " + job.getId() + " - " + Status.failed, e);
 				job.setStatus(Status.failed); // fail the job so it doesnt keep looping...
 				job = jobDao.save(job);
 				continue;
 			}
 			Volume volume = storageJob.getVolume();
 			if(volume == null) {
-				logger.error("No volume available just yet for job "  + job.getId() + ". So skipping this job this schedule...");
+				logger.info("No volume available just yet for job "  + job.getId() + ". So skipping this job this schedule...");
 				continue;
 			}
 			Storagetype storagetype = volume.getStoragetype();

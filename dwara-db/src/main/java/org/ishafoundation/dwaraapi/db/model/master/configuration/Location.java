@@ -19,8 +19,9 @@ public class Location implements Cacheable{
 	@Column(name="name", unique = true)
 	private String name;
 	
-	@Column(name="restore_default")
-	private boolean restoreDefault;
+	@Column(name="\"default\"")
+	private boolean default_;
+
 	
 	public String getId() {
 		return id;
@@ -38,12 +39,12 @@ public class Location implements Cacheable{
 		this.name = name;
 	}
 
-	public boolean isRestoreDefault() {
-		return restoreDefault;
+	public boolean isDefault_() {
+		return default_;
 	}
 
-	public void setRestoreDefault(boolean restoreDefault) {
-		this.restoreDefault = restoreDefault;
+	public void setDefault_(boolean default_) {
+		this.default_ = default_;
 	}
 
 	@Override

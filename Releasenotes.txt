@@ -1,3 +1,18 @@
+23rd Aug
+	Swagger login fixed
+	Admin
+		API for clearcache
+		API for adding user to artifactclass and create directories
+	Hibernate sequence for domain specific tables
+	Capacity utils
+	Autoloader[]
+	Schema and related changes
+	setperms
+		move setperms out of scan and put it in ingest
+		setperms -r optional
+
+	
+	
 21st Aug
 	All recent Schema changes
 	Action table and enum

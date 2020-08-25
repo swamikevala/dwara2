@@ -22,11 +22,11 @@ public class ArtifactclassDestination {
 
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("artifactclassId")
-    Artifactclass artifactclass;
+	private Artifactclass artifactclass;
 
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("destinationId")
-    Destination destination;
+	private Destination destination;
 	
 	public ArtifactclassDestination() {
 		

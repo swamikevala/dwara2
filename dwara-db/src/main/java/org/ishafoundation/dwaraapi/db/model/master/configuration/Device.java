@@ -30,8 +30,8 @@ public class Device implements Cacheable{
 	private String id;
 	
 	@Enumerated(EnumType.STRING)
-	@Column(name="devicetype")
-	private Devicetype devicetype;
+	@Column(name="type")
+	private Devicetype type;
 	
 	@Column(name="wwn_id", unique = true)
 	private String wwnId;
@@ -68,12 +68,12 @@ public class Device implements Cacheable{
 		this.id = id;
 	}
 
-	public Devicetype getDevicetype() {
-		return devicetype;
+	public Devicetype getType() {
+		return type;
 	}
 
-	public void setDevicetype(Devicetype devicetype) {
-		this.devicetype = devicetype;
+	public void setType(Devicetype devicetype) {
+		this.type = devicetype;
 	}
 
 	public String getWwnId() {

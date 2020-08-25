@@ -20,6 +20,8 @@ import org.ishafoundation.dwaraapi.storage.model.GroupedJobsCollection;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDeviceUtil;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
+import org.ishafoundation.dwaraapi.utils.CapacityCalculatorUtil;
+import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,11 @@ public class TapeJobSelector {
 	@Autowired
 	private TActivedeviceDao tActivedeviceDao;
 
+	@Autowired
+	private VolumeUtil volumeUtil;
+	
+	@Autowired
+	private CapacityCalculatorUtil capacityCalculatorUtil;
 	/**
 	 * Method responsible for getting a job for the drive
 	 * 
@@ -51,20 +58,30 @@ public class TapeJobSelector {
 	public StorageJob selectJob(List<StorageJob> tapeJobsList, DriveDetails driveDetails) throws Exception {
 		if(tapeJobsList.size() <= 0)
 			return null;
-		
+		StorageJob tapeJob = null;
+		/*
 		List<StorageJob> ignoreOptimisationTapeJobsList = getIgnoreOptimisationTapeJobsList(tapeJobsList);
 
-		StorageJob tapeJob = null;
+		
 		if(ignoreOptimisationTapeJobsList.size() > 0) { // are there IgnoreVolumeOptimisation jobs
 			logger.debug("Contains Ignore Tape Optimisation jobs");
 			// if yes then get a job that is optimised - Yes we need optimisation even on the ignoreVolumeOptimisation job list...
 			tapeJob = chooseAJobForTheDrive(ignoreOptimisationTapeJobsList, driveDetails);
 		} else {
-			logger.debug("Doesnt contain any Ignore Tape Optimisation jobs");// Optimise Tape Access - true");
+			logger.debug("Doesnt contain any Ignore Tape Optimisation jobs");// Optimise Tape Access - true");*/
 			tapeJob = chooseAJobForTheDrive(tapeJobsList, driveDetails);
+		/*}*/
+		
+		// checking the volume capacity against the artifact size
+		if(tapeJob != null && tapeJob.getJob().getStoragetaskActionId() == Action.write) {
+			long projectedArtifactSize = volumeUtil.getProjectedArtifactSize(tapeJob.getArtifactSize(), tapeJob.getVolume());
+			if(capacityCalculatorUtil.getVolumeUnusedCapacity(tapeJob.getDomain(), tapeJob.getVolume()) <= projectedArtifactSize) {
+				logger.debug("Seletected job " + tapeJob.getJob().getId() + " volume doesnt have enough capacity to hold the artifact. Removing it from the list so it can be picked up in next schedule and selecting job again");
+				tapeJobsList.remove(tapeJob);
+				tapeJob = selectJob(tapeJobsList, driveDetails);
+			}
 		}
 		
-
 		return tapeJob;
 	}
 
@@ -518,7 +535,7 @@ public class TapeJobSelector {
 		}
 		else {
 			// means there are jobs running...
-			logger.debug("There are jobs running currently. Filtering same tape jobs and concurrent jobs");
+			logger.debug("There are jobs running currently. Filtering same tape jobs and the concurrent jobs that are running");
 			// check if there are any writing jobs currently ON...
 			List<StorageJob> currentlyRunningWriteJobsList = new ArrayList<StorageJob>();
 			
@@ -527,7 +544,7 @@ public class TapeJobSelector {
 			GroupedJobsCollection gjc = groupJobsOnVolumeTag(tapeJobsList);
 			Map<String, List<StorageJob>> volumeTag_volumeTagGroupedJobs = gjc.getVolumeTag_volumeTagGroupedJobs();
 
-			logger.trace("Checking if any other queued job need the same tape and filtering it.");
+			logger.trace("Checking if any queued job need the same tape as a currently running job and filtering it.");
 			// checking if there are jobs that all need to use the same tape as a currently running job... if yes remove them from the candidate list...
 			for (Iterator<StorageJob> iterator = currentlyRunningTapeJobsList.iterator(); iterator.hasNext();) {
 				StorageJob runningTapeJob = (StorageJob) iterator.next();
@@ -572,7 +589,7 @@ public class TapeJobSelector {
 			// How about copy 1 working on artifact 2 and copy 2 working on artifact 1 - Will it still affect the tapes? 
 			if(isWriteJobsOn) {
 				logger.trace("There are write jobs running.");
-				logger.debug("Checking and filtering concurrent overlapping writes");
+				logger.debug("Choosing a job that isnt concurrent overlapping copy");
 				List<StorageJob> revisedTapeJobsList = new ArrayList<StorageJob>(); //  jobs list that holds the exhaustive tapejobs but subsequently gets removed of the concurrent overlapping write jobs
 				revisedTapeJobsList.addAll(tapeJobsList);
 				// NOTE that archiveJobsList now contains entries after removing the jobs that all need to use the same tape as a currently running job...
@@ -650,12 +667,26 @@ public class TapeJobSelector {
 							return tapeJob; // return the current job as its a non concurrent write job...
 						}
 					}
+					else {
+						
+						logger.debug(tapeJob.getJob().getId() + " is not a write job");
+						if(needVerificationAgainstOtherDrives) {
+							logger.debug("Verifying if the tape needed by the job is already loaded in any other Drive");
+							if(isTapeNeededForTheJobAlreadyLoadedInAnyDrive(tapeJob, allDrivesList)) {
+								logger.debug("Skipped, as tape is available in other drive");
+								continue;
+							}
+						}
+						logger.debug("Selected");
+						return tapeJob;
+					}
 				}
 			}else {
 				logger.debug("No write jobs currently ON.");
 				return getFirstCandidateJob(tapeJobsList, needVerificationAgainstOtherDrives, allDrivesList);
 			}
 		}
+		
 		logger.debug("No job selected");
 		return null;
 	}

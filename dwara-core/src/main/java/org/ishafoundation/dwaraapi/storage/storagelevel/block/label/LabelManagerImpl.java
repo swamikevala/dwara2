@@ -129,7 +129,7 @@ public class LabelManagerImpl implements LabelManager{
 		VolumeDetails volumeDetails = volume.getDetails();
 		int blocksize = volumeDetails.getBlocksize();
 		
-		String volumeGroup = volume.getVolumeRef().getId();
+		String volumeGroup = volume.getGroupRef().getId();
 		
 //		Request request = storageJob.getJob().getRequest();
 //		RequestDetails requestDetails = request.getDetails();

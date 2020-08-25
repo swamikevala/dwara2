@@ -12,6 +12,7 @@ public class FilesystemPermissionsConfiguration {
 	private String group;
 	private String directoryMode;
 	private String fileMode;
+	private boolean recursive;
 	
 	public String getScriptPath() {
 		return scriptPath;
@@ -42,5 +43,11 @@ public class FilesystemPermissionsConfiguration {
 	}
 	public void setFileMode(String fileMode) {
 		this.fileMode = fileMode;
+	}
+	public boolean isRecursive() {
+		return recursive;
+	}
+	public void setRecursive(boolean recursive) {
+		this.recursive = recursive;
 	}
 }

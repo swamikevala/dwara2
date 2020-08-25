@@ -15,7 +15,7 @@ public class AdminController {
 	@Autowired
 	private DBMasterTablesCacheManager dBMasterTablesCacheManager;
 	
-	@RequestMapping(value = "/clearAndReload", method = RequestMethod.GET) // TODO : need to be post RequestMethod.POST) 
+	@RequestMapping(value = "/clearAndReload", method = RequestMethod.POST) 
 	public ResponseEntity<String> clearAndReload() {
 		dBMasterTablesCacheManager.clearAll();
 		dBMasterTablesCacheManager.loadAll();

@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.db.model.transactional.domain;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactFactory;
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
 @Entity
+@SequenceGenerator(initialValue = 1, name = "artifact")
 @Table(name=Artifact.TABLE_NAME_PREFIX + "2")
 public class Artifact2 extends Artifact {
     static {

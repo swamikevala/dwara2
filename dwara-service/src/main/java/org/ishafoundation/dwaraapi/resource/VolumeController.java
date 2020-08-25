@@ -91,7 +91,7 @@ public class VolumeController {
 	*/
 	private void validateUserRequest(List<InitializeUserRequest> formatRequestList) {
 		// Caching the volume Groups so can be accessed in the for loop below
-		List<Volume> volumeGroupList = volumeDao.findAllByVolumetype(Volumetype.group); 
+		List<Volume> volumeGroupList = volumeDao.findAllByType(Volumetype.group); 
 		Map<String, Volume> volumeGroupId_Volume_Map = new HashMap<String, Volume>();
 		for (Volume volume : volumeGroupList) {
 			volumeGroupId_Volume_Map.put(volume.getId(), volume);

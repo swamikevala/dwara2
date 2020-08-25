@@ -50,8 +50,35 @@ public class AutoloaderController {
 	@Autowired
 	private VolumeDao volumeDao;
 	
+	@GetMapping(value = "/autoloader", produces = "application/json")
+	public ResponseEntity<List<AutoloaderResponse>> getAllAutoloaders(){
+		List<AutoloaderResponse> autoloaderResponseList = new ArrayList<AutoloaderResponse>();
+		try {
+			List<Device> autoloaderDevices = configurationTablesUtil.getAllConfiguredAutoloaderDevices();
+			for (Device autoloaderDevice : autoloaderDevices) {
+				String autoloaderId = autoloaderDevice.getId();
+				AutoloaderResponse autoloaderResponse = getAutoloader_Internal(autoloaderId);
+				autoloaderResponseList.add(autoloaderResponse);
+			}
+		}catch (Exception e) {
+			String errorMsg = "Unable to get autoloader details - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(autoloaderResponseList);
+	}
+	
 	@GetMapping(value = "/autoloader/{autoloaderId}", produces = "application/json")
 	public ResponseEntity<AutoloaderResponse> getAutoloader(@PathVariable("autoloaderId") String autoloaderId){ // TODO is this id or uid thats going to be requested? should be uid 
+		AutoloaderResponse autoloaderResponse = getAutoloader_Internal(autoloaderId);
+		return ResponseEntity.status(HttpStatus.OK).body(autoloaderResponse);
+	}
+
+	private AutoloaderResponse getAutoloader_Internal(String autoloaderId) {
 		AutoloaderResponse autoloaderResponse = new AutoloaderResponse();
 		try {
 			autoloaderResponse.setId(autoloaderId);
@@ -90,7 +117,7 @@ public class AutoloaderController {
 			}
 			autoloaderResponse.setDrives(drives);
 			
-			Iterable<Volume> volumeList = volumeDao.findAllByStoragetypeAndVolumetype(Storagetype.tape, Volumetype.physical);
+			Iterable<Volume> volumeList = volumeDao.findAllByStoragetypeAndType(Storagetype.tape, Volumetype.physical);
 			HashMap<String, Volume> volumeId_VolumeObj_Map = new HashMap<String, Volume>();
 			for (Volume volume : volumeList) {
 				volumeId_VolumeObj_Map.put(volume.getId(), volume);
@@ -131,7 +158,7 @@ public class AutoloaderController {
 			
 			autoloaderResponse.setTapes(tapes);
 		}catch (Exception e) {
-			String errorMsg = "Unable to format - " + e.getMessage();
+			String errorMsg = "Unable to get autoloader details - " + e.getMessage();
 			logger.error(errorMsg, e);
 			
 			if(e instanceof DwaraException)
@@ -139,10 +166,8 @@ public class AutoloaderController {
 			else
 				throw new DwaraException(errorMsg, null);
 		}
-		
-		return ResponseEntity.status(HttpStatus.OK).body(autoloaderResponse);
+		return autoloaderResponse;
 	}
-
 	private TapeStatus getTapeStatus(Volume volume) {
 		TapeStatus tapeStatus = null;
 		if(volume.isImported()) {

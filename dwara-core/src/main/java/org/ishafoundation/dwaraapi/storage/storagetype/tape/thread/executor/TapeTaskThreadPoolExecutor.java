@@ -30,7 +30,7 @@ public class TapeTaskThreadPoolExecutor {
 	*/
 	@PostConstruct
 	public void init() {
-		List<Device> tapedriveList = (List<Device>) deviceDao.findAllByDevicetypeAndStatusAndDefectiveIsFalse(Devicetype.tape_drive, DeviceStatus.online);
+		List<Device> tapedriveList = (List<Device>) deviceDao.findAllByTypeAndStatusAndDefectiveIsFalse(Devicetype.tape_drive, DeviceStatus.online);
 		int corePoolSize = tapedriveList.size();
 		int maxPoolSize = corePoolSize;
         executor = new ThreadPoolExecutor(corePoolSize, maxPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());

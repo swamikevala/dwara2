@@ -116,10 +116,11 @@ public class FileService {
 	}
 	
 	private Location getLocation(String requestedLocation) {
-		// to get domaindefault we might need a util... or a query...
-		Location location = null; // userRequest.getlocation(); null;// from user request
+		Location location = null; 
 		if (requestedLocation != null) {
 			location = configurationTablesUtil.getLocation(requestedLocation);
+		} else {
+			location = configurationTablesUtil.getDefaultLocation();
 		}
 		return location;
 	}

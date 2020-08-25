@@ -11,27 +11,11 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-
-//public enum CacheableTablesList {
-//	
-//	// reference tables
-//	action,
-//	
-//	// configuration tables
-//	archiveformat,
-//	artifactclass,
-//	destination,
-//	device,
-//	//domain,
-//	extension,
-//	location
-//	//sequence
-//}
 
 @Component
 public class ConfigurationTablesUtil {
@@ -76,7 +60,7 @@ public class ConfigurationTablesUtil {
 		List<Device> autoloaders = new ArrayList<Device>();
 		List<Device> allDeviceList = getAllDevices();
 		for (Device device : allDeviceList) {
-			if(device.getDevicetype() == Devicetype.tape_autoloader) {
+			if(device.getType() == Devicetype.tape_autoloader) {
 				autoloaders.add(device);
 			}
 		}
@@ -87,7 +71,7 @@ public class ConfigurationTablesUtil {
 		List<Device> drives = new ArrayList<Device>();
 		List<Device> allDeviceList = getAllDevices();
 		for (Device device : allDeviceList) {
-			if(device.getDevicetype() == Devicetype.tape_drive) {
+			if(device.getType() == Devicetype.tape_drive) {
 				drives.add(device);
 			}
 		}
@@ -98,6 +82,17 @@ public class ConfigurationTablesUtil {
 		return (Location) dBMasterTablesCacheManager.getRecord(CacheableTablesList.location.name(), requestedLocation);
 	}
 	
+	public Location getDefaultLocation() {
+		Location defaultLocation = null;
+		List<Location> allConfiguredLocations = dBMasterTablesCacheManager.getAllRecords(CacheableTablesList.location.name());
+		for (Location location : allConfiguredLocations) {
+			if(location.isDefault_())
+				defaultLocation = location;
+		}
+		return defaultLocation; 
+	}	
 	
-	
+	public Sequence getSequence(String sequenceId) {
+		return (Sequence) dBMasterTablesCacheManager.getRecord(CacheableTablesList.sequence.name(), sequenceId);
+	}
 }

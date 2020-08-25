@@ -13,7 +13,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
-import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
@@ -47,10 +46,7 @@ public class ProcessingJobManager implements Runnable{
 	
 	@Autowired
     private ProcessingtaskDao processingtaskDao;
-	
-	@Autowired
-	private SequenceDao sequenceDao;
-	
+		
 	@Autowired
 	private DomainUtil domainUtil;
 
@@ -145,7 +141,8 @@ public class ProcessingJobManager implements Runnable{
 			String processingtaskId = job.getProcessingtaskId();
 			Processingtask processingtask = processingtaskDao.findById(processingtaskId);
 			Collection<LogicalFile> selectedFileList = getLogicalFileList(processingtask.getFiletype(), inputArtifactPath);
-			if(selectedFileList.size() == 0)
+			int filesToBeProcessedCount = selectedFileList.size();
+			if(filesToBeProcessedCount == 0)
 				throw new Exception("No files to process. Check supported extensions...");
 			
 			for (Iterator<LogicalFile> iterator = selectedFileList.iterator(); iterator.hasNext();) {
@@ -183,7 +180,8 @@ public class ProcessingJobManager implements Runnable{
 				processingJobProcessor.setJob(job);
 				processingJobProcessor.setDomain(domain);
 				processingJobProcessor.setInputArtifact(inputArtifact);
-				
+				processingJobProcessor.setFileCount(filesToBeProcessedCount);
+				processingJobProcessor.setTotalSize(0); // TODO How to calculate this?
 				processingJobProcessor.setFile(file);
 				processingJobProcessor.setLogicalFile(logicalFile);
 				
@@ -221,8 +219,8 @@ public class ProcessingJobManager implements Runnable{
 	}
 
 	private String getOutputArtifactName(Artifactclass outputArtifactclass, String inputArtifactName){
-		int outputArtifactClassSequenceId = outputArtifactclass.getSequenceId();
-		String outputArtifactNamePrefix = sequenceDao.findById(outputArtifactClassSequenceId).get().getPrefix();
+		String outputArtifactClassSequenceId = outputArtifactclass.getSequenceId();
+		String outputArtifactNamePrefix = configurationTablesUtil.getSequence(outputArtifactClassSequenceId).getPrefix();
 		return outputArtifactNamePrefix + inputArtifactName;
 	}
 

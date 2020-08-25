@@ -131,7 +131,7 @@ public class ArtifactclassService {
 						Action storagetask = actionelement.getStoragetaskActionId();
 						if(storagetask != null) {
 							actionelementReponse.setStoragetaskAction(storagetask.name());
-							actionelementReponse.setVolume(actionelement.getVolumeId());
+							//actionelementReponse.setVolume(actionelement.getVolumeId());
 						}else {
 							actionelementReponse.setProcessingTask(actionelement.getProcessingtaskId());
 						}

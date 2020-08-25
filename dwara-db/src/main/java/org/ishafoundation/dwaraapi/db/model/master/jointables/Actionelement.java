@@ -16,7 +16,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity(name = "Actionelement")
-@Table(name = "actionelement", uniqueConstraints={@UniqueConstraint(columnNames = {"complex_action_id","artifactclass_id", "storagetask_action_id", "processingtask_id","volume_id"})})
+@Table(name = "actionelement", uniqueConstraints={@UniqueConstraint(columnNames = {"complex_action_id","artifactclass_id", "storagetask_action_id", "processingtask_id"})})
 public class Actionelement {
 
 	@Id
@@ -35,16 +35,9 @@ public class Actionelement {
 	@Column(name = "processingtask_id")
 	private String processingtaskId;
 	
-	// No FK relationship as this could be set to 0
-	@Column(name="volume_id")
-	private String volumeId;
-	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name="output_artifactclass_id")
 	private Artifactclass outputArtifactclass;
-
-	@Column(name = "encryption")
-	private boolean encryption;
 
 	@Column(name = "display_order")
 	private int displayOrder;
@@ -95,22 +88,6 @@ public class Actionelement {
 		if(processingtaskId == null)
 			processingtaskId = "";// We do this so that uniqueness constraint works...
 		this.processingtaskId = processingtaskId;
-	}
-
-	public String getVolumeId() {
-		return volumeId;
-	}
-
-	public void setVolumeId(String volumeId) {
-		this.volumeId = volumeId;
-	}
-
-	public boolean isEncryption() {
-		return encryption;
-	}
-
-	public void setEncryption(boolean encryption) {
-		this.encryption = encryption;
 	}
 
 	public int getDisplayOrder() {

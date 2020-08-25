@@ -11,6 +11,6 @@ public interface DeviceDao extends CacheableRepository<Device>{//CrudRepository<
 	
 	Device findByWwnId(String deviceName);
 	
-	List<Device> findAllByDevicetypeAndStatusAndDefectiveIsFalse(Devicetype devicetype, DeviceStatus status);
+	List<Device> findAllByTypeAndStatusAndDefectiveIsFalse(Devicetype devicetype, DeviceStatus status);
 	
 }

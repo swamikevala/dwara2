@@ -5,12 +5,14 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileFactory;
 
 
 @Entity
+@SequenceGenerator(initialValue = 1, name = "file")
 @Table(name=File.TABLE_NAME_PREFIX + "2")
 public class File2 extends File {
     static {

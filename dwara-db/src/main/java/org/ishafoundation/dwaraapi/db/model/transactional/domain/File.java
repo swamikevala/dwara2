@@ -14,7 +14,7 @@ public class File {
 	public static final String TABLE_NAME_PREFIX = "file";
 	
 	@Id
-	@GeneratedValue(strategy=GenerationType.SEQUENCE)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator = "file")
 	@Column(name="id")
 	private int id;
 	

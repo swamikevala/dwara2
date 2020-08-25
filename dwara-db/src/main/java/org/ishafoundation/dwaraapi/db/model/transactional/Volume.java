@@ -38,8 +38,8 @@ public class Volume {
 	private String id; // Holds barcode for tapes and disks, bucket name for cloud, barcode prefix for volume groups
 	
 	@Enumerated(EnumType.STRING)
-	@Column(name="volumetype")
-	private Volumetype volumetype;
+	@Column(name="type")
+	private Volumetype type;
 	
 	@Enumerated(EnumType.STRING)
 	@Column(name="storagetype")
@@ -53,8 +53,11 @@ public class Volume {
 	@Column(name="storagelevel")
 	private Storagelevel storagelevel;
 
+	@Column(name="copy_number")
+	private Integer copyNumber;
+	
 	@ManyToOne(fetch = FetchType.LAZY)
-    private Volume volumeRef;
+    private Volume groupRef;
 	
 	@Enumerated(EnumType.STRING)
 	@Column(name="checksumtype")
@@ -94,12 +97,12 @@ public class Volume {
 		this.id = id;
 	}
 
-	public Volumetype getVolumetype() {
-		return volumetype;
+	public Volumetype getType() {
+		return type;
 	}
 
-	public void setVolumetype(Volumetype volumetype) {
-		this.volumetype = volumetype;
+	public void setType(Volumetype type) {
+		this.type = type;
 	}
 
 	public Storagetype getStoragetype() {
@@ -126,12 +129,20 @@ public class Volume {
 		this.storagelevel = storagelevel;
 	}
 
-	public Volume getVolumeRef() {
-		return volumeRef;
+	public Integer getCopyNumber() {
+		return copyNumber;
 	}
 
-	public void setVolumeRef(Volume volumeRef) {
-		this.volumeRef = volumeRef;
+	public void setCopyNumber(Integer copyNumber) {
+		this.copyNumber = copyNumber;
+	}
+
+	public Volume getGroupRef() {
+		return groupRef;
+	}
+
+	public void setGroupRef(Volume groupRef) {
+		this.groupRef = groupRef;
 	}
 	
 	public Checksumtype getChecksumtype() {

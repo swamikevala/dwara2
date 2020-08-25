@@ -240,7 +240,9 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 		setFilePermissionsCommandParamsList.add(fileSystemPermissionsConfiguration.getDirectoryMode());
 		setFilePermissionsCommandParamsList.add("-f");
 		setFilePermissionsCommandParamsList.add(fileSystemPermissionsConfiguration.getFileMode());
-		setFilePermissionsCommandParamsList.add("-r");
+		
+		if(fileSystemPermissionsConfiguration.isRecursive())
+			setFilePermissionsCommandParamsList.add("-r");
 		
 		
 		CommandLineExecutionResponse setPermsCommandLineExecutionResponse = commandLineExecuter.executeCommand(setFilePermissionsCommandParamsList);
