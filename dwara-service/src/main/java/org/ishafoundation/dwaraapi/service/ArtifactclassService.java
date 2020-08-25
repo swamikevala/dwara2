@@ -109,7 +109,8 @@ public class ArtifactclassService {
 			String artifactclassId = artifactclass.getId();
 			artifactclassResponse.setId(artifactclassId);
 			artifactclassResponse.setName(artifactclass.getName());
-			artifactclassResponse.setDomain(Integer.parseInt(domainAttributeConverter.convertToDatabaseColumn(artifactclass.getDomain()))); // FIXME - Domain - Parsing as Integer
+			if(artifactclass.getDomain() != null)
+				artifactclassResponse.setDomain(Integer.parseInt(domainAttributeConverter.convertToDatabaseColumn(artifactclass.getDomain()))); // FIXME - Domain - Parsing as Integer
 			artifactclassResponse.setSource(artifactclass.isSource());
 			artifactclassResponse.setDisplayOrder(artifactclass.getDisplayOrder());
 			

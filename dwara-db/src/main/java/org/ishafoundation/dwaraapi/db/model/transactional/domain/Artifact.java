@@ -21,7 +21,7 @@ public class Artifact {
 	public static final String TABLE_NAME_PREFIX = "artifact";
 	
 	@Id
-	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator = "artifact")
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator = "artifact_sequence")
 	@Column(name="id")
 	private int id;
 

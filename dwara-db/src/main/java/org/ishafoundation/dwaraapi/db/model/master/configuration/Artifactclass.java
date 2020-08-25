@@ -140,11 +140,11 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 		return sequence.getId();
 	}
 	
-	public boolean isSource() {
+	public Boolean isSource() {
 		return source;
 	}
 
-	public void setSource(boolean source) {
+	public void setSource(Boolean source) {
 		this.source = source;
 	}
 	

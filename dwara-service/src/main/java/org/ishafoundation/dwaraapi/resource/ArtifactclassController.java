@@ -38,7 +38,7 @@ public class ArtifactclassController {
 		try {
 			artifactclassResponseList = artifactclassService.getAllArtifactClasses();
 		}catch (Exception e) {
-			String errorMsg = "Unable to format - " + e.getMessage();
+			String errorMsg = "Unable to get all artifactclasses - " + e.getMessage();
 			logger.error(errorMsg, e);
 			
 			if(e instanceof DwaraException)

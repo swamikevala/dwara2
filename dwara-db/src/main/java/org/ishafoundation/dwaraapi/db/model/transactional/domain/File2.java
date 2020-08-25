@@ -12,7 +12,7 @@ import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileFactory;
 
 
 @Entity
-@SequenceGenerator(initialValue = 1, name = "file")
+@SequenceGenerator(initialValue = 1000, name = "file_sequence", allocationSize = 1)
 @Table(name=File.TABLE_NAME_PREFIX + "2")
 public class File2 extends File {
     static {

@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
 @Entity
-@SequenceGenerator(initialValue = 1, name = "artifact")
+@SequenceGenerator(initialValue = 1000, name = "artifact_sequence", allocationSize = 1)
 @Table(name=Artifact.TABLE_NAME_PREFIX + "1")
 public class Artifact1 extends Artifact{
     static {

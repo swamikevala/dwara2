@@ -45,7 +45,9 @@ public class JobResponse {
     private String status;
     @JsonProperty("volume")
     private String volume;
-
+    @JsonProperty("copyNumber")
+    private Integer copyNumber;
+    
     @JsonProperty("id")
     public Integer getId() {
         return id;
@@ -164,5 +166,15 @@ public class JobResponse {
     @JsonProperty("volume")
     public void setVolume(String volume) {
         this.volume = volume;
+    }
+    
+    @JsonProperty("copyNumber")
+    public Integer getCopyNumber() {
+        return copyNumber;
+    }
+
+    @JsonProperty("copyNumber")
+    public void setCopyNumber(Integer copyNumber) {
+        this.copyNumber = copyNumber;
     }
 }
