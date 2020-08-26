@@ -10,6 +10,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,12 +47,27 @@ public class JobService extends DwaraService{
 			jobResponse.setCreatedAt(getDateForUI(job.getCreatedAt()));
 			jobResponse.setStartedAt(getDateForUI(job.getStartedAt()));
 			jobResponse.setCompletedAt(getDateForUI(job.getCompletedAt()));
-			jobResponse.setStatus(job.getStatus().name());
+			if(job.getStatus() != null)
+				jobResponse.setStatus(job.getStatus().name());
 			
 			Volume volume = job.getVolume();
 			if(volume != null) {
-				jobResponse.setVolume(volume.getId());
-				jobResponse.setCopyNumber(volume.getCopyNumber());
+				if(volume.getType() == Volumetype.group) {
+					// For groups dont show the volume details to the user...
+					jobResponse.setCopyNumber(volume.getCopyNumber());
+				}
+				else {
+					jobResponse.setVolume(volume.getId());
+					if(volume.getType() == Volumetype.physical) {
+						Volume volumeGroup = volume.getGroupRef();
+						if(volumeGroup != null)
+							jobResponse.setCopyNumber(volumeGroup.getCopyNumber());
+					}
+					else if(volume.getType() == Volumetype.provisioned) {
+						jobResponse.setCopyNumber(volume.getCopyNumber());
+					}
+
+				}
 			}
 			jobResponseList.add(jobResponse);
 		}

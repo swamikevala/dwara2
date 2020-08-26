@@ -53,20 +53,20 @@ public class VolumeController {
 	@Autowired
 	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
 	
-	@ApiOperation(value = "Ingest comment goes here")
+	@ApiOperation(value = "Initialization comment goes here")
 	@ApiResponses(value = { 
 		    @ApiResponse(code = 202, message = "Request submitted and queued up"),
 		    @ApiResponse(code = 400, message = "Error")
 	})
-	@PostMapping(value = "/tape/initialize", produces = "application/json")
-    public ResponseEntity<InitializeResponse> format(@RequestBody List<InitializeUserRequest> formatRequestList){
+	@PostMapping(value = "/tape/initialize", produces = "application/json") // TODO API URL shouldnt be having tape but volume
+    public ResponseEntity<InitializeResponse> initialize(@RequestBody List<InitializeUserRequest> initializeRequestList){
 		
-		InitializeResponse formatResponse = null;
+		InitializeResponse initializeResponse = null;
 		try {
-			validateUserRequest(formatRequestList); // throws exception...
-			formatResponse = volumeService.initialize(formatRequestList);
+			validateUserRequest(initializeRequestList); // throws exception...
+			initializeResponse = volumeService.initialize(initializeRequestList);
 		}catch (Exception e) {
-			String errorMsg = "Unable to format - " + e.getMessage();
+			String errorMsg = "Unable to initialize - " + e.getMessage();
 			logger.error(errorMsg, e);
 			
 			if(e instanceof DwaraException)
@@ -75,7 +75,7 @@ public class VolumeController {
 				throw new DwaraException(errorMsg, null);
 		}
 
-		return ResponseEntity.status(HttpStatus.ACCEPTED).body(formatResponse);
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(initializeResponse);
 	}
 	
 
@@ -89,7 +89,7 @@ public class VolumeController {
 	Volume Group should be defined (db)
 	Storagesubtype should be defined (enum)
 	*/
-	private void validateUserRequest(List<InitializeUserRequest> formatRequestList) {
+	private void validateUserRequest(List<InitializeUserRequest> initializeRequestList) {
 		// Caching the volume Groups so can be accessed in the for loop below
 		List<Volume> volumeGroupList = volumeDao.findAllByType(Volumetype.group); 
 		Map<String, Volume> volumeGroupId_Volume_Map = new HashMap<String, Volume>();
@@ -97,9 +97,9 @@ public class VolumeController {
 			volumeGroupId_Volume_Map.put(volume.getId(), volume);
 		}
 
-		// Ordering the formatRequests by sequence Number
+		// Ordering the initializeRequests by sequence Number
 		Map<Integer, InitializeUserRequest> volumeNumericSequence_InitializeRequest = new HashMap<Integer, InitializeUserRequest>();
-		for (InitializeUserRequest nthInitializeRequest : formatRequestList) {
+		for (InitializeUserRequest nthInitializeRequest : initializeRequestList) {
 			String volumeId = nthInitializeRequest.getVolume();
 			int sequenceOnLabel = getSequenceUsedOnVolumeLabel(volumeId, null);
 			volumeNumericSequence_InitializeRequest.put(sequenceOnLabel, nthInitializeRequest);
@@ -117,7 +117,7 @@ public class VolumeController {
 				throw new DwaraException("Force option not supported just yet. Volume " + volumeId, null);
 			
 			// #1 - Volume ids should not be in use
-			Volume volume = volumeDao.findById(volumeId); // TODO: if force=true, means we are trying to reformat an existing tape. How about that???
+			Volume volume = volumeDao.findById(volumeId); // TODO: if force=true, means we are trying to reinitialize an existing tape. How about that???
 			if(volume != null)
 				throw new DwaraException("Volume " + volumeId + " already in use" , null);
 
@@ -208,9 +208,28 @@ public class VolumeController {
 		return ResponseEntity.status(HttpStatus.OK).body(volumeResponseList);
 	}
 	
+	
+	@ApiOperation(value = "Finalization comment goes here")
+	@ApiResponses(value = { 
+		    @ApiResponse(code = 202, message = "Request submitted and queued up"),
+		    @ApiResponse(code = 400, message = "Error")
+	})
 	@PostMapping(value = "/volume/finalize", produces = "application/json")
-	public ResponseEntity<String> finalize(@RequestParam String volumeUid, @RequestParam Domain domain){
-		volumeService.finalize(volumeUid, domain);
-		return ResponseEntity.status(HttpStatus.ACCEPTED).body("Done");
+	public ResponseEntity<String> finalize(@RequestParam String volume, @RequestParam Domain domain){
+		
+		String finalizeResponse = null;
+		try {
+			finalizeResponse = volumeService.finalize(volume, domain);
+		}catch (Exception e) {
+			String errorMsg = "Unable to finalize - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(finalizeResponse);
 	}
 }

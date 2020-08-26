@@ -24,15 +24,13 @@ import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.resource.mapper.RequestToEntityObjectMapper;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeFinalizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class VolumeService extends DwaraService {
@@ -48,6 +46,9 @@ public class VolumeService extends DwaraService {
 	@Autowired
 	private JobCreator jobCreator;
 
+	@Autowired
+	private VolumeFinalizer volumeFinalizer;
+	
 	@Autowired
 	private RequestToEntityObjectMapper requestToEntityObjectMapper; 
 
@@ -162,48 +163,9 @@ public class VolumeService extends DwaraService {
 		return formatResponse;	
 	}
 	
-	// TODO : Why domain needed? Filevolume and Artifactvolume needed for generating the index are domain-ed
-	public ResponseEntity<String> finalize(String volumeId, Domain domain){
-
-		try {
-
-			Request request = new Request();
-			request.setType(RequestType.user);
-			request.setActionId(Action.finalize);
-			request.setRequestedBy(getUserObjFromContext());
-			request.setRequestedAt(LocalDateTime.now());
-			request.setDomain(domain);
-			RequestDetails details = new RequestDetails();
-			ObjectMapper mapper = new ObjectMapper();
-			JsonNode postBodyJson = mapper.readValue("{\"volume_id\":\""+volumeId+"\"}", JsonNode.class);
-			details.setBody(postBodyJson);
-			request.setDetails(details);
-
-			request = requestDao.save(request);
-			int requestId = request.getId();
-			logger.info("Request - " + requestId);
-
-
-			Request systemrequest = new Request();
-			systemrequest.setRequestRef(request);
-			systemrequest.setActionId(request.getActionId());
-			systemrequest.setRequestedBy(request.getRequestedBy());
-			systemrequest.setRequestedAt(LocalDateTime.now());
-			systemrequest.setDomain(request.getDomain());
-
-			RequestDetails systemrequestDetails = new RequestDetails();
-			systemrequestDetails.setVolume_id(volumeId);
-			systemrequest.setDetails(systemrequestDetails);
-			systemrequest = requestDao.save(systemrequest);
-			logger.info("System request - " + systemrequest.getId());
-
-
-			jobCreator.createJobs(systemrequest, null);
-		}catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return ResponseEntity.status(HttpStatus.ACCEPTED).body("Done");
+	// TODO : Why domain needed? ANS: Filevolume and Artifactvolume needed for generating the index are "domain-ed"
+	public String finalize(String volumeId, Domain domain) throws Exception{
+		return volumeFinalizer.finalize(volumeId, getUserObjFromContext(), domain);
 	}
 }
 

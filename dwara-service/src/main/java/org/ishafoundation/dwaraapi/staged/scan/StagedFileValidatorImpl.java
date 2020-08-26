@@ -15,12 +15,8 @@ import javax.annotation.PostConstruct;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
-import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
-import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.configuration.FilesystemPermissionsConfiguration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Extension;
 import org.slf4j.Logger;
@@ -37,13 +33,7 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
     private ExtensionDao extensionDao;
 	
 	@Autowired
-    private CommandLineExecuter commandLineExecuter;
-	
-	@Autowired
     private Configuration configuration;
-
-	@Autowired
-    private FilesystemPermissionsConfiguration fileSystemPermissionsConfiguration;
 	
     private String regexAllowedChrsInFileName = null;
 	Pattern allowedChrsInFileNamePattern = null;
@@ -88,10 +78,6 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 		Error extnError = checkUnsupportedExtensions(stagedFileDetails);
 		if(extnError != null)
 			errorList.add(extnError);
-		
-		Error permError = setPermissions(stagedFileDetails);
-		if(permError != null)
-			errorList.add(permError);
 		
 		// TODO dupe check on size 
 		
@@ -180,72 +166,4 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 		}
 		return null;
 	}
-	
-	private Error setPermissions(StagedFileDetails stagedFileDetails) {
-		if(configuration.isSetArtifactFileSystemPermissions()) {
-			String script = fileSystemPermissionsConfiguration.getScriptPath();
-			String artifactName = stagedFileDetails.getName();
-			String sourcePath = stagedFileDetails.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
-			File toBeIngestedFile = FileUtils.getFile(sourcePath, artifactName);
-			
-			CommandLineExecutionResponse setPermsCommandLineExecutionResponse = null;
-			try {
-				setPermsCommandLineExecutionResponse = changeFilePermissions(script, sourcePath, artifactName);
-				
-				if(!setPermsCommandLineExecutionResponse.isComplete()) {					
-					String message = "Unable to set permissions to " + toBeIngestedFile + ". " + setPermsCommandLineExecutionResponse.getFailureReason() + ". Please contact Admin";
-					Error error = new Error();
-					error.setType(Errortype.Error);
-					error.setMessage(message);
-					logger.warn(message);
-				}
-
-			} catch (Exception e) {
-				String message = "Unable to set permissions to " + toBeIngestedFile + " : " + e.getMessage() + ". Please contact Admin";
-				Error error = new Error();
-				error.setType(Errortype.Error);
-				error.setMessage(message);
-
-				logger.warn(message);
-			}
-		}
-		return null;
-	}
-	
-	// Returns something like /opt/dwara/bin/setperms -b /data/user -u pgurumurthy -c pub-video -a Shots-Of-Sadhanapada-Particpants-Volunteering-In-BSP_SPH-IYC_24-Oct-2019_Z280V_9 -g dwara -d 0775 -f 0664 -r
-    private CommandLineExecutionResponse changeFilePermissions(String script, String sourcePath, String artifactName) throws Exception {
-		String parts[] = sourcePath.split("/");
-		String user = parts[3];
-		String artifactclassName = parts[5];
-
-		List<String> setFilePermissionsCommandParamsList = new ArrayList<String>();
-		setFilePermissionsCommandParamsList.add("sudo");
-		setFilePermissionsCommandParamsList.add(script);
-		setFilePermissionsCommandParamsList.add("-b");
-		setFilePermissionsCommandParamsList.add(StringUtils.substringBefore(sourcePath, user));
-		setFilePermissionsCommandParamsList.add("-u");
-		setFilePermissionsCommandParamsList.add(user);
-		setFilePermissionsCommandParamsList.add("-c");
-		setFilePermissionsCommandParamsList.add(artifactclassName);
-		setFilePermissionsCommandParamsList.add("-a");
-		setFilePermissionsCommandParamsList.add(artifactName);
-		String owner = fileSystemPermissionsConfiguration.getOwner();
-		if(StringUtils.isNotBlank(owner)) {
-			setFilePermissionsCommandParamsList.add("-o");
-			setFilePermissionsCommandParamsList.add(owner);
-		}
-		setFilePermissionsCommandParamsList.add("-g");
-		setFilePermissionsCommandParamsList.add(fileSystemPermissionsConfiguration.getGroup());
-		setFilePermissionsCommandParamsList.add("-d");
-		setFilePermissionsCommandParamsList.add(fileSystemPermissionsConfiguration.getDirectoryMode());
-		setFilePermissionsCommandParamsList.add("-f");
-		setFilePermissionsCommandParamsList.add(fileSystemPermissionsConfiguration.getFileMode());
-		
-		if(fileSystemPermissionsConfiguration.isRecursive())
-			setFilePermissionsCommandParamsList.add("-r");
-		
-		
-		CommandLineExecutionResponse setPermsCommandLineExecutionResponse = commandLineExecuter.executeCommand(setFilePermissionsCommandParamsList);
-		return setPermsCommandLineExecutionResponse;
-    }
 }

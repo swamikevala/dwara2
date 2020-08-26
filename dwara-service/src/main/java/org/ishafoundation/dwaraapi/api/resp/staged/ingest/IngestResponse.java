@@ -1,7 +1,8 @@
 package org.ishafoundation.dwaraapi.api.resp.staged.ingest;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 
 public class IngestResponse {
 
@@ -10,7 +11,9 @@ public class IngestResponse {
 	private String artifactclass;
 	private String requestedBy;
 	private String requestedAt;
-	private List<IngestSystemRequest> systemRequests = new ArrayList<IngestSystemRequest>();
+	private List<IngestSystemRequest> systemRequests;
+	private List<StagedFileDetails> stagedFiles;
+	
 	public int getUserRequestId() {
 		return userRequestId;
 	}
@@ -46,5 +49,11 @@ public class IngestResponse {
 	}
 	public void setSystemRequests(List<IngestSystemRequest> systemRequests) {
 		this.systemRequests = systemRequests;
+	}
+	public List<StagedFileDetails> getStagedFiles() {
+		return stagedFiles;
+	}
+	public void setStagedFiles(List<StagedFileDetails> stagedFiles) {
+		this.stagedFiles = stagedFiles;
 	}
 }

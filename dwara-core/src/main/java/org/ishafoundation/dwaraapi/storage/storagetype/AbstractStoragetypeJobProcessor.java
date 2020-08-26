@@ -44,6 +44,8 @@ import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagelevel.IStoragelevel;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeFinalizer;
+import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +77,12 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
+	
+	@Autowired
+	private VolumeUtil volumeUtil;
+	
+	@Autowired
+	private VolumeFinalizer volumeFinalizer;
 	
 	@Autowired
 	private DomainAttributeConverter domainAttributeConverter;
@@ -222,7 +230,14 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 	    artifactVolume = domainSpecificArtifactVolumeRepository.save(artifactVolume);
     	logger.info("ArtifactVolume - " + artifactVolume.getId());
-
+    	
+    	boolean isVolumeNeedToBeFinalized = volumeUtil.isVolumeNeedToBeFinalized(domain, volume);
+    	if(isVolumeNeedToBeFinalized) {
+    		logger.info("Triggering a finalization request for volume - " + volume.getId());
+    		
+			// TODO Need to set the system as the user - How?
+    		volumeFinalizer.finalize(volume.getId(), null, domain);
+    	}
     }
     
     // TODO Should we force this to be implemented or let it be overwritten

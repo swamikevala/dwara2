@@ -1,3 +1,7 @@
+26th Aug - (application.properties need to be updated)
+	setperms 
+	autofinalizer
+	
 23rd Aug
 	Swagger login fixed
 	Admin

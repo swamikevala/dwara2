@@ -20,7 +20,6 @@ import org.ishafoundation.dwaraapi.storage.model.GroupedJobsCollection;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDeviceUtil;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
-import org.ishafoundation.dwaraapi.utils.CapacityCalculatorUtil;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +40,6 @@ public class TapeJobSelector {
 	@Autowired
 	private VolumeUtil volumeUtil;
 	
-	@Autowired
-	private CapacityCalculatorUtil capacityCalculatorUtil;
 	/**
 	 * Method responsible for getting a job for the drive
 	 * 
@@ -75,7 +72,7 @@ public class TapeJobSelector {
 		// checking the volume capacity against the artifact size
 		if(tapeJob != null && tapeJob.getJob().getStoragetaskActionId() == Action.write) {
 			long projectedArtifactSize = volumeUtil.getProjectedArtifactSize(tapeJob.getArtifactSize(), tapeJob.getVolume());
-			if(capacityCalculatorUtil.getVolumeUnusedCapacity(tapeJob.getDomain(), tapeJob.getVolume()) <= projectedArtifactSize) {
+			if(volumeUtil.getVolumeUnusedCapacity(tapeJob.getDomain(), tapeJob.getVolume()) <= projectedArtifactSize) {
 				logger.debug("Seletected job " + tapeJob.getJob().getId() + " volume doesnt have enough capacity to hold the artifact. Removing it from the list so it can be picked up in next schedule and selecting job again");
 				tapeJobsList.remove(tapeJob);
 				tapeJob = selectJob(tapeJobsList, driveDetails);

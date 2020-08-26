@@ -15,7 +15,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.StagedFile;
 import org.ishafoundation.dwaraapi.api.req.staged.rename.StagedRenameFile;
@@ -25,7 +24,6 @@ import org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameResponse;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
-import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementMapDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassActionUserDao;
@@ -50,6 +48,9 @@ import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.resource.mapper.MiscObjectMapper;
 import org.ishafoundation.dwaraapi.resource.mapper.RequestToEntityObjectMapper;
+import org.ishafoundation.dwaraapi.staged.StagedFileOperations;
+import org.ishafoundation.dwaraapi.staged.scan.Error;
+import org.ishafoundation.dwaraapi.staged.scan.Errortype;
 import org.ishafoundation.dwaraapi.staged.scan.SourceDirScanner;
 import org.ishafoundation.dwaraapi.utils.ExtensionsUtil;
 import org.ishafoundation.dwaraapi.utils.JunkFilesMover;
@@ -79,6 +80,9 @@ public class StagedService extends DwaraService{
 	protected ExtensionDao extensionDao;
 	
 	@Autowired
+	private ArtifactclassActionUserDao artifactclassActionUserDao;
+	
+	@Autowired
 	protected SequenceUtil sequenceUtil;
 	
 	@Autowired
@@ -103,13 +107,13 @@ public class StagedService extends DwaraService{
 	private ConfigurationTablesUtil configurationTablesUtil;
 	
 	@Autowired
-	private ArtifactclassActionUserDao artifactclassActionUserDao;
-	
-	@Autowired
 	private Configuration configuration;
 	
 	@Autowired
 	private SourceDirScanner sourceDirScanner;
+
+	@Autowired
+    private StagedFileOperations stagedFileOperations;
 	
     public List<StagedFileDetails> getAllIngestableFiles(String artifactclassId){
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
@@ -150,11 +154,9 @@ public class StagedService extends DwaraService{
     		stagedRenameFileResponse.setNewName(newFileName);
   
         	try {
-    			java.io.File srcFile = FileUtils.getFile(sourcePath, oldFileName);
-    			java.io.File destFile = FileUtils.getFile(sourcePath, newFileName);
-    			
-    			moveFile(srcFile, destFile);
-    			
+        		Error error = stagedFileOperations.rename(sourcePath, oldFileName, newFileName);
+        		if(error != null)
+        			throw new Exception(error.getMessage());
     			stagedRenameFileResponse.setStatus(Status.completed.name());
     			hasCompleted = true;
     		}
@@ -209,102 +211,165 @@ public class StagedService extends DwaraService{
 	    	userRequest = requestDao.save(userRequest);
 	    	int userRequestId = userRequest.getId();
 	    	logger.info("Request - " + userRequestId);
-	
 	    	
-
-			
-			List<IngestSystemRequest> ingestSystemRequests = new ArrayList<IngestSystemRequest>();
+	    	// Validation Level 1 - For empty folders
+	    	boolean isLevel1Pass = true;
+	    	List<StagedFileDetails> stagedFileDetailsList = new ArrayList<StagedFileDetails>();
+	    	
 	    	List<StagedFile> stagedFileList = ingestUserRequest.getStagedFiles();
 	    	for (StagedFile stagedFile : stagedFileList) {
-	    		String stagedFileName = stagedFile.getName();
-	    		String stagedFilePath = stagedFile.getPath();
-
-	        	// STEP 1 - Moves the file from User's Staging directory to Application's ReadyToIngest directory
-	        	java.io.File stagedFileObj = FileUtils.getFile(stagedFilePath, stagedFileName);
-	        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, stagedFileName);
-	        	try {
-	        		moveFile(stagedFileObj, appReadyToIngestFileObj);
-	    		} catch (Exception e) {
-	    			// If this fails - its possible the setperms not functional and so all the stagedfiles requested to be ingested would have the same problem... So we err out...
-	    			String errorMsg = "Unable to move file. " + e.getMessage() + " Check if the file permisions are set properly";
-	    			logger.error(errorMsg);
-	    			throw new DwaraException(errorMsg, null);
-	    		}
-	        	
-				Sequence sequence = artifactclass.getSequence();
-				String sequenceCode = sequenceUtil.getSequenceCode(sequence, stagedFileName);
+				String artifactName = stagedFile.getName();
+				String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
+				
+				java.io.File nthIngestableFile = new java.io.File(path, artifactName);
+				int fileCount = 0;
+		        if(nthIngestableFile.isDirectory()) {
+		            try {
+		            	fileCount = FileUtils.listFiles(nthIngestableFile, null, true).size();
+		            }catch (Exception e) {
+						// swallowing it...
+					}
+		        }
 		        
-		        // Renames the directory prefixing sequencecode...
-		        java.io.File stagedFileInAppReadyToIngest = moveFile(appReadyToIngestFileObj, FileUtils.getFile(readyToIngestPath, sequenceCode + "_" + stagedFileName));
-	    		
-	        	// STEP 2 - Moves Junk files
-		    	String junkFilesStagedDirName = configuration.getJunkFilesStagedDirName(); 
-		    	if(stagedFileInAppReadyToIngest.isDirectory())
-		    		junkFilesMover.moveJunkFilesFromMediaLibrary(stagedFileInAppReadyToIngest.getAbsolutePath());
-
-				Request systemrequest = new Request();
-				systemrequest.setType(RequestType.system);
-				systemrequest.setRequestRef(userRequest);
-				systemrequest.setStatus(Status.queued);
-				systemrequest.setActionId(userRequest.getActionId());
-				systemrequest.setRequestedBy(userRequest.getRequestedBy());
-				systemrequest.setRequestedAt(LocalDateTime.now());
-				systemrequest.setDomain(domain);
+		        if(fileCount == 0) {
+		        	isLevel1Pass = false;
+		        	List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
+		        	
+					Error error = new Error();
+					error.setType(Errortype.Error);
+					error.setMessage(nthIngestableFile.getAbsolutePath() + " has no files inside");
+					errorList.add(error);
+					
+					StagedFileDetails sfd = new StagedFileDetails();
+					
+					sfd.setPath(path);
+					sfd.setName(artifactName);
+					sfd.setErrors(errorList);
+					
+					stagedFileDetailsList.add(sfd);
+		        }
+	    	}
+	    	
+	    	boolean isLevel2Pass = true;
+	    	if(!isLevel1Pass)
+	    		ingestResponse.setStagedFiles(stagedFileDetailsList);
+	    	else { // Validation Level 2 - Set permissions - Only when level 1 is success we continue...
+		    	for (StagedFile stagedFile : stagedFileList) {
+		    		
+					String artifactName = stagedFile.getName();
+					String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
+					Error error = stagedFileOperations.setPermissions(path, artifactName);
+					if(error != null) {
+						isLevel2Pass = false;
+						List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
+						errorList.add(error);
+						
+						StagedFileDetails sfd = new StagedFileDetails();
+						
+						sfd.setPath(path);
+						sfd.setName(artifactName);
+						sfd.setErrors(errorList);
+						
+						stagedFileDetailsList.add(sfd);
+					}
+				}
+	    	}
+	    	
+	    	if(!isLevel2Pass)
+	    		ingestResponse.setStagedFiles(stagedFileDetailsList);
+	    	else { // Next steps on Ingest - Only when level 2 validation succeeds...
+		    	List<IngestSystemRequest> ingestSystemRequests = new ArrayList<IngestSystemRequest>();
+		    	for (StagedFile stagedFile : stagedFileList) {
+		    		String stagedFileName = stagedFile.getName();
+		    		String stagedFilePath = stagedFile.getPath();
 	
-	    		RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForIngest(stagedFile);
-	    		
-	    		// transitioning from global level on the request to artifact level...
-	    		systemrequestDetails.setArtifactclassId(artifactclassId); 
-	    		systemrequestDetails.setSkipActionelements(actionelementsToBeSkipped);
-	    		
-				systemrequest.setDetails(systemrequestDetails);
-				
-				systemrequest = requestDao.save(systemrequest);
-				logger.info("System request - " + systemrequest.getId());
-
-		    	Collection<java.io.File> libraryFileAndDirsList = getFileList(stagedFileInAppReadyToIngest, junkFilesStagedDirName);
-		    	int fileCount = libraryFileAndDirsList.size();
-		        long size = FileUtils.sizeOf(stagedFileInAppReadyToIngest);
-
-				Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
-				artifact.setIngestRequest(systemrequest);
-				artifact.setqLatestRequest(systemrequest);
-				artifact.setName(sequenceCode + "_" + stagedFileName);
-				artifact.setArtifactclass(artifactclass);
-				artifact.setFileCount(fileCount);
-				artifact.setTotalSize(size);
-				artifact.setSequenceCode(sequenceCode);
-				artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
-				
-				logger.info(artifact.getClass().getSimpleName() + " - " + artifact.getId());
-				
-		        createFilesAndExtensions(readyToIngestPath, domain, artifact, libraryFileAndDirsList);
-				
-				jobCreator.createJobs(systemrequest, artifact);
-				
-				// framing output for response
-				IngestSystemRequest ingestSystemRequest = new IngestSystemRequest();
-				ingestSystemRequest.setId(systemrequest.getId());
-				ingestSystemRequest.setStagedFilePath(systemrequest.getDetails().getStagedFilepath());
-				ingestSystemRequest.setSkippedActionElements(actionelementsToBeSkipped);
-				int rerunNo = 0; // TODO Hardcoded
-				ingestSystemRequest.setRerunNo(rerunNo);
-				
-				org.ishafoundation.dwaraapi.api.resp.staged.ingest.Artifact artifactForResponse = miscObjectMapper.getArtifactForIngestResponse(artifact);
-				artifactForResponse.setArtifactclass(artifactclassId);
-				// TODO Needs work - artifactForResponse.setArtifactIdRef(artifactIdRef);
-				ingestSystemRequest.setArtifact(artifactForResponse);
-				
-				ingestSystemRequests.add(ingestSystemRequest);
-			}
+		        	// STEP 1 - Moves the file from User's Staging directory to Application's ReadyToIngest directory
+		        	java.io.File stagedFileObj = FileUtils.getFile(stagedFilePath, stagedFileName);
+		        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, stagedFileName);
+//		        	try {
+		        		moveFile(stagedFileObj, appReadyToIngestFileObj);
+//		    		} catch (Exception e) {
+//		    			// If this fails - its possible the setperms not functional and so all the stagedfiles requested to be ingested would have the same problem... So we err out...
+//		    			String errorMsg = "Unable to move file. " + e.getMessage() + " Check if the file permisions are set properly";
+//		    			logger.error(errorMsg);
+//		    			throw new DwaraException(errorMsg, null);
+//		    		}
+		        	
+					Sequence sequence = artifactclass.getSequence();
+					String sequenceCode = sequenceUtil.getSequenceCode(sequence, stagedFileName);
+			        
+			        // Renames the directory prefixing sequencecode...
+			        java.io.File stagedFileInAppReadyToIngest = moveFile(appReadyToIngestFileObj, FileUtils.getFile(readyToIngestPath, sequenceCode + "_" + stagedFileName));
+		    		
+		        	// STEP 2 - Moves Junk files
+			    	String junkFilesStagedDirName = configuration.getJunkFilesStagedDirName(); 
+			    	if(stagedFileInAppReadyToIngest.isDirectory())
+			    		junkFilesMover.moveJunkFilesFromMediaLibrary(stagedFileInAppReadyToIngest.getAbsolutePath());
 	
+					Request systemrequest = new Request();
+					systemrequest.setType(RequestType.system);
+					systemrequest.setRequestRef(userRequest);
+					systemrequest.setStatus(Status.queued);
+					systemrequest.setActionId(userRequest.getActionId());
+					systemrequest.setRequestedBy(userRequest.getRequestedBy());
+					systemrequest.setRequestedAt(LocalDateTime.now());
+					systemrequest.setDomain(domain);
+		
+		    		RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForIngest(stagedFile);
+		    		
+		    		// transitioning from global level on the request to artifact level...
+		    		systemrequestDetails.setArtifactclassId(artifactclassId); 
+		    		systemrequestDetails.setSkipActionelements(actionelementsToBeSkipped);
+		    		
+					systemrequest.setDetails(systemrequestDetails);
+					
+					systemrequest = requestDao.save(systemrequest);
+					logger.info("System request - " + systemrequest.getId());
+	
+			    	Collection<java.io.File> libraryFileAndDirsList = getFileList(stagedFileInAppReadyToIngest, junkFilesStagedDirName);
+			    	int fileCount = libraryFileAndDirsList.size();
+			        long size = FileUtils.sizeOf(stagedFileInAppReadyToIngest);
+	
+					Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
+					artifact.setIngestRequest(systemrequest);
+					artifact.setqLatestRequest(systemrequest);
+					artifact.setName(sequenceCode + "_" + stagedFileName);
+					artifact.setArtifactclass(artifactclass);
+					artifact.setFileCount(fileCount);
+					artifact.setTotalSize(size);
+					artifact.setSequenceCode(sequenceCode);
+					artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
+					
+					logger.info(artifact.getClass().getSimpleName() + " - " + artifact.getId());
+					
+			        createFilesAndExtensions(readyToIngestPath, domain, artifact, libraryFileAndDirsList);
+					
+					jobCreator.createJobs(systemrequest, artifact);
+					
+					// framing output for response
+					IngestSystemRequest ingestSystemRequest = new IngestSystemRequest();
+					ingestSystemRequest.setId(systemrequest.getId());
+					ingestSystemRequest.setStagedFilePath(systemrequest.getDetails().getStagedFilepath());
+					ingestSystemRequest.setSkippedActionElements(actionelementsToBeSkipped);
+					int rerunNo = 0; // TODO Hardcoded
+					ingestSystemRequest.setRerunNo(rerunNo);
+					
+					org.ishafoundation.dwaraapi.api.resp.staged.ingest.Artifact artifactForResponse = miscObjectMapper.getArtifactForIngestResponse(artifact);
+					artifactForResponse.setArtifactclass(artifactclassId);
+					// TODO Needs work - artifactForResponse.setArtifactIdRef(artifactIdRef);
+					
+					ingestSystemRequest.setArtifact(artifactForResponse);
+					ingestSystemRequests.add(ingestSystemRequest);
+				}
+		    	ingestResponse.setSystemRequests(ingestSystemRequests);
+	    	}	
 	    	
 	    	ingestResponse.setUserRequestId(userRequestId);
 	    	ingestResponse.setAction(userRequest.getActionId().name());
 	    	ingestResponse.setArtifactclass(artifactclassId);
 	    	ingestResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
 	    	ingestResponse.setRequestedBy(userRequest.getRequestedBy().getName());
-	    	ingestResponse.setSystemRequests(ingestSystemRequests);
+	    	
     	}
     	catch (Exception e) {
     		logger.error(e.getMessage(), e);

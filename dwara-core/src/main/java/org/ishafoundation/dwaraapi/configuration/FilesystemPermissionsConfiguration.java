@@ -6,20 +6,13 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix="filesystem-permissions")
 public class FilesystemPermissionsConfiguration {
-			
-	private String scriptPath;
+	
 	private String owner;
 	private String group;
 	private String directoryMode;
 	private String fileMode;
 	private boolean recursive;
-	
-	public String getScriptPath() {
-		return scriptPath;
-	}
-	public void setScriptPath(String scriptPath) {
-		this.scriptPath = scriptPath;
-	}
+
 	public String getOwner() {
 		return owner;
 	}

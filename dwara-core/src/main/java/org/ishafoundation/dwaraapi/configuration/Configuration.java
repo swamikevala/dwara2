@@ -11,6 +11,8 @@ public class Configuration {
 	
 	private boolean setArtifactFileSystemPermissions;
 	
+	private String stagingOpsScriptPath;
+	
 	private String[] junkFilesFinderRegexPatternList;
 
 	private String junkFilesStagedDirName;
@@ -47,6 +49,14 @@ public class Configuration {
 		this.setArtifactFileSystemPermissions = setArtifactFileSystemPermissions;
 	}
 	
+	public String getStagingOpsScriptPath() {
+		return stagingOpsScriptPath;
+	}
+
+	public void setStagingOpsScriptPath(String stagingOpsScriptPath) {
+		this.stagingOpsScriptPath = stagingOpsScriptPath;
+	}
+
 	public String[] getJunkFilesFinderRegexPatternList() {
 		return junkFilesFinderRegexPatternList;
 	}

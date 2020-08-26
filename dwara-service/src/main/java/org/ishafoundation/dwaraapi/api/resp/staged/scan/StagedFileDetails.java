@@ -11,11 +11,11 @@ public class StagedFileDetails {
 	private String path;
 	private String name;
 	private String suggestedName;
-	private int fileCount;
-	private long totalSize;
-	private long fileSizeInBytes;
+	private Integer fileCount;
+	private Long totalSize;
+	private Long fileSizeInBytes;
 	private String prevSequenceCode;
-	private boolean prevSequenceCodeExpected;
+	private Boolean prevSequenceCodeExpected;
 	private List<Error> errors;
 	
 	public String getPath() {
@@ -36,22 +36,22 @@ public class StagedFileDetails {
 	public void setSuggestedName(String suggestedName) {
 		this.suggestedName = suggestedName;
 	}
-	public int getFileCount() {
+	public Integer getFileCount() {
 		return fileCount;
 	}
-	public void setFileCount(int fileCount) {
+	public void setFileCount(Integer fileCount) {
 		this.fileCount = fileCount;
 	}
-	public long getTotalSize() {
+	public Long getTotalSize() {
 		return totalSize;
 	}
-	public void setTotalSize(long totalSize) {
+	public void setTotalSize(Long totalSize) {
 		this.totalSize = totalSize;
 	}
-	public long getFileSizeInBytes() {
+	public Long getFileSizeInBytes() {
 		return fileSizeInBytes;
 	}
-	public void setFileSizeInBytes(long fileSizeInBytes) {
+	public void setFileSizeInBytes(Long fileSizeInBytes) {
 		this.fileSizeInBytes = fileSizeInBytes;
 	}
 	public String getPrevSequenceCode() {
@@ -60,10 +60,10 @@ public class StagedFileDetails {
 	public void setPrevSequenceCode(String prevSequenceCode) {
 		this.prevSequenceCode = prevSequenceCode;
 	}
-	public boolean isPrevSequenceCodeExpected() {
+	public Boolean getPrevSequenceCodeExpected() {
 		return prevSequenceCodeExpected;
 	}
-	public void setPrevSequenceCodeExpected(boolean prevSequenceCodeExpected) {
+	public void setPrevSequenceCodeExpected(Boolean prevSequenceCodeExpected) {
 		this.prevSequenceCodeExpected = prevSequenceCodeExpected;
 	}
 	public List<Error> getErrors() {
