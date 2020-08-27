@@ -64,11 +64,11 @@ public class JobCreator_Restore_Test extends JobCreator_Test {
 		int fileId = fileParamsJsonNode.get("file_id").intValue();		
 		
 		RequestDetails details = new RequestDetails();
-		details.setFile_id(fileId);
+		details.setFileId(fileId);
 		// details.setPriority(priority);
-		details.setLocation_id(location.getId());
-		details.setOutput_folder(outputFolder);
-		details.setDestinationpath(destinationpath);
+		details.setLocationId(location.getId());
+		details.setOutputFolder(outputFolder);
+		details.setDestinationPath(destinationpath);
 		details.setVerify(verify); // overwriting default archiveformat.verify during restore
 		return details;
 	}

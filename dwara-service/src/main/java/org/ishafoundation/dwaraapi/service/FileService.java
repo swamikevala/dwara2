@@ -2,20 +2,27 @@ package org.ishafoundation.dwaraapi.service;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.api.req.restore.FileParams;
+import org.apache.commons.codec.binary.Hex;
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
+import org.ishafoundation.dwaraapi.api.resp.restore.File;
+import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
+import org.ishafoundation.dwaraapi.db.dao.master.DomainDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
-import org.ishafoundation.dwaraapi.resource.mapper.RequestToEntityObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,18 +34,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
-public class FileService {
+public class FileService extends DwaraService{
 
 	private static final Logger logger = LoggerFactory.getLogger(FileService.class);
-
+	
+	@Autowired
+	protected DomainDao domainDao;
+	
 	@Autowired
 	protected RequestDao requestDao;
 	
 	@Autowired
 	protected JobCreator jobCreator;
-
+	
 	@Autowired
-	private RequestToEntityObjectMapper requestToEntityObjectMapper; 
+	protected DomainUtil domainUtil;
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
@@ -47,59 +57,101 @@ public class FileService {
 	private DomainAttributeConverter domainAttributeConverter;
 
 
-    public ResponseEntity<String> restore(RestoreUserRequest userRequest){	
-    	try {
-		    	Request request = new Request();
-		    	request.setType(RequestType.user);
-				request.setActionId(Action.restore);
-		    	// request.setUser(userDao.findByName(requestedBy));
-				// request.setUser(user);
-				request.setRequestedAt(LocalDateTime.now());
-				request.setDomain(domainAttributeConverter.convertToEntityAttribute(userRequest.getDomain()+""));
-				RequestDetails details = new RequestDetails();
-				JsonNode postBodyJson = getRequestDetails(userRequest); 
-				details.setBody(postBodyJson);
-				request.setDetails(details);
-				
-		    	request = requestDao.save(request);
-		    	int requestId = request.getId();
-		    	logger.info("Request - " + requestId);
-	
-			
-				
-		    	List<FileParams> fileParamsList = userRequest.getFileParams();
+    public RestoreResponse restore(RestoreUserRequest restoreUserRequest) throws Exception{	
+    	RestoreResponse restoreResponse = new RestoreResponse();
 		    	
-		    	for (FileParams fileParams : fileParamsList) {
-					Request systemrequest = new Request();
-					systemrequest.setType(RequestType.system);
-					systemrequest.setRequestRef(request);
-					systemrequest.setActionId(request.getActionId());
-					systemrequest.setRequestedBy(request.getRequestedBy());
-					systemrequest.setRequestedAt(LocalDateTime.now());
-					systemrequest.setDomain(request.getDomain());
+		Request userRequest = new Request();
+    	userRequest.setType(RequestType.user);
+		userRequest.setActionId(Action.restore);
+		userRequest.setStatus(Status.queued);
+    	User user = getUserObjFromContext();
+    	String requestedBy = user.getName();
+    	userRequest.setRequestedBy(user);
+		userRequest.setRequestedAt(LocalDateTime.now());
+		Domain domain = null;
+		if(restoreUserRequest.getDomain() != null)
+			domain = domainAttributeConverter.convertToEntityAttribute(restoreUserRequest.getDomain()+"");
+		else {
+			org.ishafoundation.dwaraapi.db.model.master.configuration.Domain domainFromDB = domainDao.findByDefaultTrue();
+			domain = domainAttributeConverter.convertToEntityAttribute(domainFromDB.getName());
+		}
+		userRequest.setDomain(domain);
+		RequestDetails details = new RequestDetails();
+		JsonNode postBodyJson = getRequestDetails(restoreUserRequest); 
+		details.setBody(postBodyJson);
+		userRequest.setDetails(details);
+		
+    	userRequest = requestDao.save(userRequest);
+    	int userRequestId = userRequest.getId();
+    	logger.info("Request - " + userRequestId);
 
-		    		RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForRestore(fileParams);
-		    		String requestedLocation = userRequest.getLocation();
-		    		Location location = getLocation(requestedLocation);
-					systemrequestDetails.setLocation_id(location.getId());
-					systemrequestDetails.setOutput_folder(userRequest.getOutput_folder());
-					systemrequestDetails.setDestinationpath(userRequest.getDestinationpath());
-					systemrequestDetails.setVerify(userRequest.isVerify()); // overwriting default archiveformat.verify during restore
+	
+    	String requestedLocation = restoreUserRequest.getLocation();
+    	Location location = getLocation(requestedLocation);
+    	String outputFolder = restoreUserRequest.getOutputFolder();
+    	String destinationPath = restoreUserRequest.getDestinationPath();
+    	boolean verify = restoreUserRequest.isVerify();
+    	List<File> files = new ArrayList<File>();
+    	
+    	List<Integer> fileIds = restoreUserRequest.getFileIds();
+    	int counter = 1;
+    	for (Integer nthFileId : fileIds) {
+    		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(domain, nthFileId);
+    		
+			Request systemRequest = new Request();
+			systemRequest.setType(RequestType.system);
+			systemRequest.setRequestRef(userRequest);
+			systemRequest.setActionId(userRequest.getActionId());
+			systemRequest.setRequestedBy(userRequest.getRequestedBy());
+			systemRequest.setRequestedAt(LocalDateTime.now());
+			systemRequest.setDomain(userRequest.getDomain());
 
-					systemrequest.setDetails(systemrequestDetails);
-					systemrequest = requestDao.save(systemrequest);
-					logger.info("System request - " + systemrequest.getId());
-					
-					
-					jobCreator.createJobs(systemrequest, null);
-				}
+    		RequestDetails systemrequestDetails = new RequestDetails();
+    		systemrequestDetails.setFileId(nthFileId);
+    		
+    		
+			systemrequestDetails.setLocationId(location.getId());
+			systemrequestDetails.setOutputFolder(outputFolder);
+			systemrequestDetails.setDestinationPath(destinationPath);
+			systemrequestDetails.setVerify(verify); // overwriting default archiveformat.verify during restore
 
+			systemRequest.setDetails(systemrequestDetails);
+			systemRequest = requestDao.save(systemRequest);
+			logger.info("System request - " + systemRequest.getId());
 			
-		}catch (Exception e) {
-			e.printStackTrace();
+			
+			jobCreator.createJobs(systemRequest, null);
+			
+			File file = new File();
+			//file.setArtifactclass(artifactclass);
+			
+			byte[] checksum = fileFromDB.getChecksum();
+			if(checksum != null)
+				file.setChecksum(Hex.encodeHexString(checksum));
+			
+			//file.setChecksumType(fileFromDB.getChecksum());
+			file.setId(fileFromDB.getId());
+			file.setPathname(fileFromDB.getPathname());
+			file.setPriority(counter);
+			file.setSize(fileFromDB.getSize());
+			file.setSystemRequestId(systemRequest.getId());
+			files.add(file);
+			counter = counter + 1;
 		}
 
-    	return ResponseEntity.status(HttpStatus.ACCEPTED).body("Done");
+    	
+    	restoreResponse.setUserRequestId(userRequestId);
+    	restoreResponse.setAction(userRequest.getActionId().name());
+    	restoreResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
+    	restoreResponse.setRequestedBy(userRequest.getRequestedBy().getName());
+
+    	restoreResponse.setDestinationPath(destinationPath);
+    	restoreResponse.setLocation(location.getName());
+    	restoreResponse.setVerify(verify);
+    	restoreResponse.setOutputFolder(outputFolder);
+    	
+    	restoreResponse.setFiles(files);    	
+    	return restoreResponse;
     }
 	
 	// TODO - Unnecessary conversion happening...

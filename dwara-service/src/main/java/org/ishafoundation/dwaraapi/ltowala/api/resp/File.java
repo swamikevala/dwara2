@@ -5,9 +5,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class File {
 	
+	private int id;
 	private String pathname;
 	private long size; // This should be file written size = 12.5%
 	
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
+	}
 	public String getPathname() {
 		return pathname;
 	}

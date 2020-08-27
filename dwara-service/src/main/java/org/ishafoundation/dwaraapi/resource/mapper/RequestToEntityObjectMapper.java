@@ -1,7 +1,6 @@
 package org.ishafoundation.dwaraapi.resource.mapper;
 
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
-import org.ishafoundation.dwaraapi.api.req.restore.FileParams;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.StagedFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.mapstruct.BeanMapping;
@@ -20,9 +19,6 @@ public interface RequestToEntityObjectMapper {
     })
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
 	RequestDetails getRequestDetailsForIngest(StagedFile stagedFile);
-	
-	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
-	RequestDetails getRequestDetailsForRestore(FileParams fileParams);
 	
 	@Mappings({
         @Mapping(source = "volume", target = "volume_id"),

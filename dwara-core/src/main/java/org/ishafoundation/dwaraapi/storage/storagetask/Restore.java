@@ -43,11 +43,11 @@ public class Restore extends AbstractStoragetaskAction{
 		
 		RequestDetails requestDetails = request.getDetails();
 		// what need to be restored
-		int fileIdToBeRestored = requestDetails.getFile_id();
+		int fileIdToBeRestored = requestDetails.getFileId();
 		storageJob.setFileId(fileIdToBeRestored);
 		
 		// From where - get the volume
-		String locationId = requestDetails.getLocation_id();
+		String locationId = requestDetails.getLocationId();
 		if(locationId == null) {
 			Location location = configurationTablesUtil.getDefaultLocation();
 			locationId = location.getId();
@@ -69,13 +69,13 @@ public class Restore extends AbstractStoragetaskAction{
 		
 		String destinationPath = null;
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.restore) {
-			destinationPath = requestDetails.getDestinationpath();//requested destination path 
+			destinationPath = requestDetails.getDestinationPath();//requested destination path 
 		}
 		else {//if(action == org.ishafoundation.dwaraapi.enumreferences.Action.restore_process || action == org.ishafoundation.dwaraapi.enumreferences.Action.process) {
 //			destinationPath = inputlc.path_prefix
 		}
 		storageJob.setDestinationPath(destinationPath);
-		String outputFolder = request.getDetails().getOutput_folder();
+		String outputFolder = request.getDetails().getOutputFolder();
 		storageJob.setOutputFolder(outputFolder);
 		storageJob.setTargetLocationPath(destinationPath + java.io.File.separator + outputFolder);
 		return storageJob;

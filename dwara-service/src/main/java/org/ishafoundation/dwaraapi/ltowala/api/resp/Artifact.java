@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class Artifact {
 	
 	private String name;
+	private String artifactclass;
 	private int fileCount;
 	private long totalSize; // This should be file written size = 12.5%
 	private String completedAt;
@@ -19,6 +20,12 @@ public class Artifact {
 	}
 	public void setName(String name) {
 		this.name = name;
+	}
+	public String getArtifactclass() {
+		return artifactclass;
+	}
+	public void setArtifactclass(String artifactclass) {
+		this.artifactclass = artifactclass;
 	}
 	public int getFileCount() {
 		return fileCount;

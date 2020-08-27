@@ -2,30 +2,14 @@ package org.ishafoundation.dwaraapi.api.req.restore;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
-
 public class RestoreUserRequest {
-	/*
-	{
-		  "domain": "one",
-		  "location": "IIIT",
-		  "output_folder": "JIRA-1234-Randommm",
-		  "destinationpath": "/data/restored",
-		  "verify": false,
-		  "fileParams": [
-		    {
-		      "file_id": 67,
-		      "priority": 0
-		    }  
-		  ]
-	}*/
-//	private Domain domain;
 	private Integer domain;
 	private String location;
-	private String output_folder;
-	private String destinationpath;
+	private Integer copyNumber;
+	private String outputFolder;
+	private String destinationPath;
 	private boolean verify;
-	private List<FileParams> fileParams;
+	private List<Integer> fileIds;
 
 
 	public Integer getDomain() {
@@ -36,14 +20,6 @@ public class RestoreUserRequest {
 		this.domain = domain;
 	}	
 
-//	public Domain getDomain() {
-//		return domain;
-//	}
-//
-//	public void setDomain(Domain domain) {
-//		this.domain = domain;
-//	}
-
 	public String getLocation() {
 		return location;
 	}
@@ -52,20 +28,28 @@ public class RestoreUserRequest {
 		this.location = location;
 	}
 
-	public String getOutput_folder() {
-		return output_folder;
+	public Integer getCopyNumber() {
+		return copyNumber;
 	}
 
-	public void setOutput_folder(String output_folder) {
-		this.output_folder = output_folder;
+	public void setCopyNumber(Integer copyNumber) {
+		this.copyNumber = copyNumber;
 	}
 
-	public String getDestinationpath() {
-		return destinationpath;
+	public String getOutputFolder() {
+		return outputFolder;
 	}
 
-	public void setDestinationpath(String destinationpath) {
-		this.destinationpath = destinationpath;
+	public void setOutputFolder(String outputFolder) {
+		this.outputFolder = outputFolder;
+	}
+
+	public String getDestinationPath() {
+		return destinationPath;
+	}
+
+	public void setDestinationPath(String destinationPath) {
+		this.destinationPath = destinationPath;
 	}
 
 	public boolean isVerify() {
@@ -76,11 +60,11 @@ public class RestoreUserRequest {
 		this.verify = verify;
 	}
 
-	public List<FileParams> getFileParams() {
-		return fileParams;
+	public List<Integer> getFileIds() {
+		return fileIds;
 	}
 
-	public void setFileParams(List<FileParams> fileParams) {
-		this.fileParams = fileParams;
+	public void setFileIds(List<Integer> fileIds) {
+		this.fileIds = fileIds;
 	}
 }

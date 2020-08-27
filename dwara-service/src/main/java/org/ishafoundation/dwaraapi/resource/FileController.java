@@ -1,6 +1,8 @@
 package org.ishafoundation.dwaraapi.resource;
 
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
+import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
+import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.FileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,15 +20,27 @@ import io.swagger.annotations.ApiOperation;
 @RestController
 public class FileController {
 	private static final Logger logger = LoggerFactory.getLogger(FileController.class);
-	
+
 	@Autowired
 	FileService fileService;
-	
+
 	@ApiOperation(value = "Restores the list of files requested from location into the target volume grouped under the output dir")
 	@PostMapping("/file/restore")
-    public ResponseEntity<String> ingest(@RequestBody RestoreUserRequest userRequest){
-		fileService.restore(userRequest);
-		return ResponseEntity.status(HttpStatus.ACCEPTED).body("Done");
+	public ResponseEntity<RestoreResponse> ingest(@RequestBody RestoreUserRequest restoreUserRequest){
+		RestoreResponse restoreResponse = null;
+		try {
+			restoreResponse = fileService.restore(restoreUserRequest);
+		}catch (Exception e) {
+			String errorMsg = "Unable to get data for ltowala - " + e.getMessage();
+			logger.error(errorMsg, e);
+
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(restoreResponse);
 	}
-	
+
 }

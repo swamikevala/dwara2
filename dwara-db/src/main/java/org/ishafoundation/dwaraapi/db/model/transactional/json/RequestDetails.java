@@ -47,15 +47,17 @@ public class RequestDetails {
 	private List<Integer> skipActionelements;
 
 	// restore stuff
-	private Integer file_id;
+	@JsonProperty("file_id")
+	private Integer fileId;
 	
-	private Integer priority;
+	@JsonProperty("location_id")
+	private String locationId; // specifies which location(copy) to retrieve the data from.
 	
-	private String location_id; // specifies which location(copy) to retrieve the data from.
+	@JsonProperty("destinationpath")
+	private String destinationPath;
 	
-	private String destinationpath;
-	
-	private String output_folder;
+	@JsonProperty("output_folder")
+	private String outputFolder;
 	
 	private Boolean verify; // overwrites whatever is configured in archiveformat.restore_verify = true
 	
@@ -170,44 +172,36 @@ public class RequestDetails {
 
 	/********************  RESTORE  ********************/
 	
-	public Integer getFile_id() {
-		return file_id;
+	public Integer getFileId() {
+		return fileId;
 	}
 
-	public void setFile_id(Integer file_id) {
-		this.file_id = file_id;
+	public void setFileId(Integer fileId) {
+		this.fileId = fileId;
 	}
 
-	public Integer getPriority() {
-		return priority;
+	public String getLocationId() {
+		return locationId;
 	}
 
-	public void setPriority(Integer priority) {
-		this.priority = priority;
+	public void setLocationId(String locationId) {
+		this.locationId = locationId;
 	}
 
-	public String getLocation_id() {
-		return location_id;
+	public String getDestinationPath() {
+		return destinationPath;
 	}
 
-	public void setLocation_id(String location_id) {
-		this.location_id = location_id;
+	public void setDestinationPath(String destinationPath) {
+		this.destinationPath = destinationPath;
 	}
 
-	public String getDestinationpath() {
-		return destinationpath;
+	public String getOutputFolder() {
+		return outputFolder;
 	}
 
-	public void setDestinationpath(String destinationpath) {
-		this.destinationpath = destinationpath;
-	}
-
-	public String getOutput_folder() {
-		return output_folder;
-	}
-
-	public void setOutput_folder(String output_folder) {
-		this.output_folder = output_folder;
+	public void setOutputFolder(String outputFolder) {
+		this.outputFolder = outputFolder;
 	}
 
 	public Boolean getVerify() {

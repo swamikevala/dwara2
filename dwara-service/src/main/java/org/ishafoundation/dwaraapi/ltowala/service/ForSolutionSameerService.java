@@ -62,6 +62,7 @@ public class ForSolutionSameerService extends DwaraService {
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactFromDb = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) artifactRepository.findById(artifactId).get();
 			String artifactName = artifactFromDb.getName();
 			artifact.setName(artifactName);
+			artifact.setArtifactclass(artifactFromDb.getArtifactclass().getName());
 			artifact.setTotalSize(artifactFromDb.getTotalSize());
 			artifact.setCompletedAt(getDateForUI(job.getCompletedAt())); // TODO Change the field name
 			artifact.setFileCount(artifactFromDb.getFileCount());
@@ -70,6 +71,7 @@ public class ForSolutionSameerService extends DwaraService {
 			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactFromDb, domain);
 			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
 				File file = new File();
+				file.setId(nthFile.getId());
 				file.setPathname(nthFile.getPathname());
 				file.setSize(nthFile.getSize());
 				
