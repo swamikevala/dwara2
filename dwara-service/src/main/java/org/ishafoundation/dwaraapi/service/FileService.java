@@ -87,6 +87,7 @@ public class FileService extends DwaraService{
 
 	
     	String requestedLocation = restoreUserRequest.getLocation();
+    	Integer copyNumber = restoreUserRequest.getCopyNumber();
     	Location location = getLocation(requestedLocation);
     	String outputFolder = restoreUserRequest.getOutputFolder();
     	String destinationPath = restoreUserRequest.getDestinationPath();
@@ -109,7 +110,7 @@ public class FileService extends DwaraService{
     		RequestDetails systemrequestDetails = new RequestDetails();
     		systemrequestDetails.setFileId(nthFileId);
     		
-    		
+    		systemrequestDetails.setCopyNumber(copyNumber);
 			systemrequestDetails.setLocationId(location.getId());
 			systemrequestDetails.setOutputFolder(outputFolder);
 			systemrequestDetails.setDestinationPath(destinationPath);

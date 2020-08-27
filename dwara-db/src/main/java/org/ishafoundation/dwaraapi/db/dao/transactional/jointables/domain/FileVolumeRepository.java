@@ -13,6 +13,7 @@ public interface FileVolumeRepository<T extends FileVolume> extends CrudReposito
 	//	SELECT * FROM dwara_v4_test.volume join dwara_v4_test.file1_volume on id = dwara_v4_test.file1_volume.volume_id where  dwara_v4_test.volume.location_id = 3 and  dwara_v4_test.file1_volume. file_id = 60;
 	FileVolume findByIdFileIdAndVolumeLocationId(int fileId, String locationId);
 	
+	FileVolume findByIdFileIdAndVolumeCopyNumber(int fileId, int copyNumber);
 	
 	FileVolume findByIdFileIdAndIdVolumeId(int fileId, String volumeId);
 	

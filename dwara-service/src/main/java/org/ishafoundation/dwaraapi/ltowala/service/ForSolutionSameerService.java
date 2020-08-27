@@ -43,6 +43,9 @@ public class ForSolutionSameerService extends DwaraService {
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
 	
+	// TODO : Which copyNumber lto wala is interested in
+	private int copyNumber = 2;
+	
 	public LtoWalaResponse dataForLtoWala(LocalDateTime startDateTime, LocalDateTime endDateTime) throws Exception {
 		
 		
@@ -51,7 +54,7 @@ public class ForSolutionSameerService extends DwaraService {
 		ltoWalaResponse.setEndDate(getDateForUI(endDateTime));
 		
 		List<Artifact> artifactList = new ArrayList<Artifact>();
-		List<Job> jobList = jobDao.findAllByCompletedAtBetweenAndStoragetaskActionIdAndVolumeGroupRefCopyNumber(startDateTime, endDateTime, Action.write, 2);
+		List<Job> jobList = jobDao.findAllByCompletedAtBetweenAndStoragetaskActionIdAndVolumeGroupRefCopyNumber(startDateTime, endDateTime, Action.write, copyNumber);
 		for (Job job : jobList) {
 			Artifact artifact = new Artifact();
 			int artifactId = job.getInputArtifactId();

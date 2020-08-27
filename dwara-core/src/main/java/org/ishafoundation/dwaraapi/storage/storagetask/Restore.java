@@ -47,15 +47,25 @@ public class Restore extends AbstractStoragetaskAction{
 		storageJob.setFileId(fileIdToBeRestored);
 		
 		// From where - get the volume
-		String locationId = requestDetails.getLocationId();
-		if(locationId == null) {
-			Location location = configurationTablesUtil.getDefaultLocation();
-			locationId = location.getId();
+		Integer copyNumber = requestDetails.getCopyNumber();
+		if(copyNumber == null) {
+			copyNumber = 1;// TODO : we need to default it
 		}
-
-		FileVolume fileVolume  = getFileVolume(domain, fileIdToBeRestored, locationId);
+		FileVolume fileVolume  = getFileVolume(domain, fileIdToBeRestored, copyNumber);
 		if(fileVolume == null)
-			throw new Exception("Not able to retrieve filevolume record for domain " + domain + " filedId " + fileIdToBeRestored + " location " + locationId);
+			throw new Exception("Not able to retrieve filevolume record for domain " + domain + " filedId " + fileIdToBeRestored + " copyNumber " + copyNumber);
+
+		
+//		String locationId = requestDetails.getLocationId();
+//		if(locationId == null) {
+//			Location location = configurationTablesUtil.getDefaultLocation();
+//			locationId = location.getId();
+//		}
+
+//		FileVolume fileVolume  = getFileVolume(domain, fileIdToBeRestored, locationId);
+//		if(fileVolume == null)
+//			throw new Exception("Not able to retrieve filevolume record for domain " + domain + " filedId " + fileIdToBeRestored + " location " + locationId);
+		
 		storageJob.setVolumeBlock(fileVolume.getVolumeBlock()); 
 		storageJob.setArchiveBlock(fileVolume.getArchiveBlock());
 		
@@ -82,9 +92,15 @@ public class Restore extends AbstractStoragetaskAction{
 	}
 	
 
-	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, String locationId) {
+//	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, String locationId) {
+//    	@SuppressWarnings("unchecked")
+//		FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
+//    	return domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeLocationId(fileIdToBeRestored, locationId);
+//	}
+	
+	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, int copyNumber) {
     	@SuppressWarnings("unchecked")
 		FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-    	return domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeLocationId(fileIdToBeRestored, locationId);
+    	return domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeCopyNumber(fileIdToBeRestored, copyNumber);
 	}
 }

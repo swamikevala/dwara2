@@ -49,6 +49,9 @@ public class RequestDetails {
 	// restore stuff
 	@JsonProperty("file_id")
 	private Integer fileId;
+
+	@JsonProperty("copy_number")
+	private Integer copyNumber;
 	
 	@JsonProperty("location_id")
 	private String locationId; // specifies which location(copy) to retrieve the data from.
@@ -178,6 +181,14 @@ public class RequestDetails {
 
 	public void setFileId(Integer fileId) {
 		this.fileId = fileId;
+	}
+	
+	public Integer getCopyNumber() {
+		return copyNumber;
+	}
+
+	public void setCopyNumber(Integer copyNumber) {
+		this.copyNumber = copyNumber;
 	}
 
 	public String getLocationId() {
