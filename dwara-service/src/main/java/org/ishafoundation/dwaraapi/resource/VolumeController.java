@@ -109,7 +109,6 @@ public class VolumeController {
 		//Sort the list
 		Collections.sort(volumeNumericSequenceList);
 
-		int numericSequenceIncrementCounter = 1;
 		for (Integer volumeNumericSequence : volumeNumericSequenceList) {
 			InitializeUserRequest nthInitializeRequest = volumeNumericSequence_InitializeRequest.get(volumeNumericSequence);
 			String volumeId = nthInitializeRequest.getVolume();
@@ -130,7 +129,7 @@ public class VolumeController {
 
 			// #2 - Volume id sequence numbers should be contiguous
 			int currentNumber = volumeGroup.getSequence().getCurrrentNumber();
-			int expectedSequenceOnLabel = currentNumber + numericSequenceIncrementCounter;
+			int expectedSequenceOnLabel = volumeGroup.getSequence().incrementCurrentNumber();
 			String prefix = volumeGroup.getSequence().getPrefix();
 			int sequenceOnLabel = getSequenceUsedOnVolumeLabel(volumeId, prefix);
 			if(sequenceOnLabel != expectedSequenceOnLabel)
@@ -154,7 +153,6 @@ public class VolumeController {
 			}
 			
 			logger.trace("All validation good for " + volumeId);
-			numericSequenceIncrementCounter++;
 		}	
 	}
 

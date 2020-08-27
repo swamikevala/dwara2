@@ -32,8 +32,9 @@ public class VolumeUtil {
 	public long getVolumeUsedCapacity(Domain domain, Volume volume){ 
 		// works only for blocks - TODO need to address other storagelevels...
 		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(domain, volume);
+		logger.trace("lastArtifactOnVolumeEndVolumeBlock " + lastArtifactOnVolumeEndVolumeBlock);
 		int volumeBlocksize = volume.getDetails().getBlocksize();
-
+		logger.trace("volumeBlocksize " + volumeBlocksize);
 //		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 //		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeId(volume.getId());
 //		long usedCapacity = 0L;
@@ -41,7 +42,7 @@ public class VolumeUtil {
 //			long totalSize = domainUtil.getDomainSpecificArtifact(domain, artifactVolume.getId().getArtifactId()).getTotalSize();
 //			usedCapacity = usedCapacity + totalSize;
 //		}
-		long volumeUsedCapacity = lastArtifactOnVolumeEndVolumeBlock * volumeBlocksize; 
+		long volumeUsedCapacity = (long) lastArtifactOnVolumeEndVolumeBlock * volumeBlocksize; 
 		logger.trace("volumeUsedCapacity " + volumeUsedCapacity);
 		return volumeUsedCapacity;
 	}
@@ -49,18 +50,20 @@ public class VolumeUtil {
 	// returns - in bytes...
 	public long getVolumeUnusedCapacity(Domain domain, Volume volume){
 		long capacity = volume.getCapacity(); // something like 6TB
+		logger.trace("capacity " + capacity);
 		// but we dont use the full capacity but only till high water mark...
 		long useableCapacity = (long) (capacity * watermarkHigh);
-		
+		logger.trace("useableCapacity " + useableCapacity);
 		long usedCapacity = getVolumeUsedCapacity(domain, volume);
 		long volumeUnUsedCapacity = useableCapacity - usedCapacity;
 		logger.trace("volumeUnUsedCapacity " + volumeUnUsedCapacity);
 		return volumeUnUsedCapacity;
 	}
 		
-	public boolean isVolumeNeedToBeFinalized(Domain domain, Volume volume){
+	public boolean isVolumeNeedToBeFinalized(Domain domain, Volume volume, long usedCapacity){
 		boolean isReadyToBeFinalized = false;
-		long usedCapacity = getVolumeUsedCapacity(domain, volume);
+//		long usedCapacity = 
+				getVolumeUsedCapacity(domain, volume);
 		
 		long capacity = volume.getCapacity(); // something like 6TB
 		long volumeWatermarkLow = (long) (capacity * watermarkLow);
@@ -84,10 +87,10 @@ public class VolumeUtil {
 			// The chosen volume may not have enough space because of queued write jobs using it and so we may have to get the volume again just before write(job selection)...
 			if(volumeUnusedCapacity > projectedArtifactSize) {
 				toBeUsedVolume = nthPhysicalVolume;
-				logger.trace(toBeUsedVolume + " has enough space. Selecting it");
+				logger.trace(toBeUsedVolume.getId() + " has enough space. Selecting it");
 				break;
 			}else {
-				logger.trace(nthPhysicalVolume + " hasnt got enough space to fit this artifact. Skipping it");
+				logger.trace(nthPhysicalVolume.getId() + " hasnt got enough space to fit this artifact. Skipping it");
 			}
 		}
 		return toBeUsedVolume;		
@@ -107,7 +110,8 @@ public class VolumeUtil {
 				filesizeIncreaseConst = configuredFilesizeIncreaseConst;
 		}
 		
-		long projectedArtifactSize = artifactSize + (long) (artifactSize * filesizeIncreaseRate) + filesizeIncreaseConst; 
+		long projectedArtifactSize = artifactSize + (long) (artifactSize * filesizeIncreaseRate) + filesizeIncreaseConst;
+		logger.trace("artifactSize " + artifactSize + ", filesizeIncreaseRate " + filesizeIncreaseRate + ", filesizeIncreaseConst " + filesizeIncreaseConst);
 		logger.trace("projectedArtifactSize " + projectedArtifactSize);
 		return projectedArtifactSize;
 	}

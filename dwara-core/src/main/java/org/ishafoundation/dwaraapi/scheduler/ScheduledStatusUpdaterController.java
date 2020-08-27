@@ -85,9 +85,12 @@ public class ScheduledStatusUpdaterController {
 						job.setCompletedAt(LocalDateTime.now()); // Just can only give some rough completed times... 
 						status = Status.completed;
 					}
-					if(hasFailures && hasAnyCompleted)
-						status = Status.completed_failures;
-					
+					if(hasFailures) {
+						if(hasAnyCompleted)
+							status = Status.completed_failures;
+						else
+							status = Status.failed;
+					}
 					job.setStatus(status);
 					jobDao.save(job);
 					logger.info("Job " + job.getId() + " - " + status);

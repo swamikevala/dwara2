@@ -80,8 +80,12 @@ public class StagedController {
 			else
 				throw new DwaraException(errorMsg, null);
 		}
+
+		HttpStatus status = HttpStatus.ACCEPTED;
+		if(ingestResponse.getStagedFiles() != null)
+			status = HttpStatus.BAD_REQUEST;
 		
-		return ResponseEntity.status(HttpStatus.ACCEPTED).body(ingestResponse);
+		return ResponseEntity.status(status).body(ingestResponse);
 	}
 	
 }	

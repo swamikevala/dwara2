@@ -166,7 +166,7 @@ public class ProcessingJobManager implements Runnable{
 				org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
 				if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
 					file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
-				logger.trace("file - " + file);
+				logger.trace("file - " + file.getId());
 				
 				String outputFilePath = null;
 				if(outputArtifactPathname != null) {

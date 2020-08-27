@@ -229,9 +229,14 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    }
 	    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 	    artifactVolume = domainSpecificArtifactVolumeRepository.save(artifactVolume);
-    	logger.info("ArtifactVolume - " + artifactVolume.getId());
-    	
-    	boolean isVolumeNeedToBeFinalized = volumeUtil.isVolumeNeedToBeFinalized(domain, volume);
+	    
+    	logger.info("ArtifactVolume - " + artifactVolume.getId().getArtifactId() + " " + artifactVolume.getName() + " " + artifactVolume.getId().getVolumeId() + " " + artifactVolume.getDetails().getStart_volume_block() + " " + artifactVolume.getDetails().getEnd_volume_block());
+    	int lastArtifactOnVolumeEndVolumeBlock = artifactVolume.getDetails().getEnd_volume_block();
+    	logger.trace("lastArtifactOnVolumeEndVolumeBlock " + lastArtifactOnVolumeEndVolumeBlock);
+    	logger.trace("volume.getDetails().getBlocksize() - " + volume.getDetails().getBlocksize());
+    	long usedCapacity = (long) volume.getDetails().getBlocksize() * lastArtifactOnVolumeEndVolumeBlock;
+    	logger.trace("usedCapacity - " + usedCapacity);
+    	boolean isVolumeNeedToBeFinalized = volumeUtil.isVolumeNeedToBeFinalized(domain, volume, usedCapacity);
     	if(isVolumeNeedToBeFinalized) {
     		logger.info("Triggering a finalization request for volume - " + volume.getId());
     		

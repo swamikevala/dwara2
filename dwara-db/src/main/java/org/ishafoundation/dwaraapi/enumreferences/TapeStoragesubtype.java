@@ -2,7 +2,8 @@ package org.ishafoundation.dwaraapi.enumreferences;
 
 public enum TapeStoragesubtype {
 	lto7("LTO-7"),
-	lto6("LTO-6");
+	lto6("LTO-6"),
+	lto5("LTO-5");
 	
 	private String javaStyleStoragesubtype;
 	

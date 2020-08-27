@@ -9,8 +9,10 @@ import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.initialize.SystemRequestsForInitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.Details;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
+import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -44,6 +46,9 @@ public class VolumeService extends DwaraService {
 	private RequestDao requestDao;
 	
 	@Autowired
+	private SequenceDao sequenceDao;
+	
+	@Autowired
 	private JobCreator jobCreator;
 
 	@Autowired
@@ -67,7 +72,7 @@ public class VolumeService extends DwaraService {
 				volResp.setStoragelevel(volume.getStoragelevel().name());
 				//volResp.setVolumeRef(volumeRef);
 				//volResp.setChecksumtype(checksumtype);
-				//volResp.setInitializedAt(formattedAt);
+				//volResp.setInitializedAt(initializetedAt);
 				volResp.setFinalized(volume.isFinalized());
 				volResp.setImported(volume.isImported());
 				if(volume.getArchiveformat() != null)
@@ -102,8 +107,8 @@ public class VolumeService extends DwaraService {
 		return volumeResponseList;
 	}
 
-	public InitializeResponse initialize(List<InitializeUserRequest> formatRequestList) throws Exception{	
-		InitializeResponse formatResponse = new InitializeResponse();
+	public InitializeResponse initialize(List<InitializeUserRequest> initializeRequestList) throws Exception{	
+		InitializeResponse initializeResponse = new InitializeResponse();
 		Request request = new Request();
 		request.setType(RequestType.user);
 		request.setActionId(Action.initialize);
@@ -115,7 +120,7 @@ public class VolumeService extends DwaraService {
 		request.setRequestedAt(requestedAt);
 		
 		RequestDetails details = new RequestDetails();
-		JsonNode postBodyJson = getRequestDetails(formatRequestList); 
+		JsonNode postBodyJson = getRequestDetails(initializeRequestList); 
 		details.setBody(postBodyJson);
 		request.setDetails(details);
 
@@ -125,7 +130,7 @@ public class VolumeService extends DwaraService {
 		
 		List<SystemRequestsForInitializeResponse> systemRequests = new ArrayList<SystemRequestsForInitializeResponse>();
 		
-		for (InitializeUserRequest nthInitializeRequest : formatRequestList) {
+		for (InitializeUserRequest nthInitializeRequest : initializeRequestList) {
 			Request systemrequest = new Request();
 			systemrequest.setRequestRef(request);
 			systemrequest.setActionId(request.getActionId());
@@ -141,9 +146,15 @@ public class VolumeService extends DwaraService {
 			systemrequest = requestDao.save(systemrequest);
 			logger.info("System request - " + systemrequest.getId());
 
-			Job job = jobCreator.createJobs(systemrequest, null).get(0);
+			Job job = jobCreator.createJobs(systemrequest, null).get(0); // Initialize generates just one job
 			int jobId = job.getId();
 			Status status = job.getStatus();
+			
+			Volume volumeGroup = volumeDao.findById(nthInitializeRequest.getVolumeGroup());
+			Sequence sequence = volumeGroup.getSequence();
+			sequence.incrementCurrentNumber();
+			sequenceDao.save(sequence);
+			logger.info("Sequence for - " + volumeGroup.getId() + " updated to " + sequence.getCurrrentNumber());
 			
 			SystemRequestsForInitializeResponse systemRequestsForInitializeResponse = new SystemRequestsForInitializeResponse();
 			systemRequestsForInitializeResponse.setId(systemrequest.getId());
@@ -155,12 +166,12 @@ public class VolumeService extends DwaraService {
 		}
 		
 		// Framing the response object here...
-		formatResponse.setUserRequestId(requestId);
-		formatResponse.setAction(request.getActionId().name());
-		formatResponse.setRequestedAt(getDateForUI(requestedAt));
-		formatResponse.setRequestedBy(requestedBy);
-		formatResponse.setSystemRequests(systemRequests);
-		return formatResponse;	
+		initializeResponse.setUserRequestId(requestId);
+		initializeResponse.setAction(request.getActionId().name());
+		initializeResponse.setRequestedAt(getDateForUI(requestedAt));
+		initializeResponse.setRequestedBy(requestedBy);
+		initializeResponse.setSystemRequests(systemRequests);
+		return initializeResponse;	
 	}
 	
 	// TODO : Why domain needed? ANS: Filevolume and Artifactvolume needed for generating the index are "domain-ed"

@@ -62,7 +62,7 @@ public class StagedFileOperations {
 				error = new Error();
 				error.setType(Errortype.Error);
 				error.setMessage(message);
-				logger.warn(message);
+				logger.error(message);
 			}
 	
 		} catch (Exception e) {
@@ -71,7 +71,7 @@ public class StagedFileOperations {
 			error.setType(Errortype.Error);
 			error.setMessage(message);
 	
-			logger.warn(message);
+			logger.error(message);
 		}
 		
 		return error;
