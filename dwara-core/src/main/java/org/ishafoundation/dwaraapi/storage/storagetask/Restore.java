@@ -101,6 +101,6 @@ public class Restore extends AbstractStoragetaskAction{
 	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, int copyNumber) {
     	@SuppressWarnings("unchecked")
 		FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-    	return domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeCopyNumber(fileIdToBeRestored, copyNumber);
+    	return domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeGroupRefCopyNumber(fileIdToBeRestored, copyNumber);
 	}
 }
