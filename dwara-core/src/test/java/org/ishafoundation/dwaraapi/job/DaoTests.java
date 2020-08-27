@@ -86,7 +86,7 @@ public class DaoTests{
 //	}
 	
 	public void testFileVolume() {
-		Volume vol = getVolume(Domain.one, 60, "3");
+		Volume vol = getVolume(Domain.main, 60, "3");
 		System.out.println(vol.getId());
 	}
 	

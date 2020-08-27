@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.db.dao.transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,4 +32,7 @@ public interface JobDao extends CrudRepository<Job,Integer> {
 	Job findByRequestIdAndProcessingtaskId(int requestId, String processingtaskId); // TODO : Note this could be a list too if there are failed jobs...
 	
 	List<Job> findAllByRequestId(int requestId);
+	
+	// Used for LtoWala
+	List<Job> findAllByCompletedAtBetweenAndStoragetaskActionIdAndVolumeGroupRefCopyNumber(LocalDateTime startDateTime, LocalDateTime endDataTime, Action action, Integer copyNumber);
 }

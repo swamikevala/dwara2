@@ -16,11 +16,11 @@ public class DomainAttributeConverter implements AttributeConverter<Domain, Stri
 			return null;
 
 		switch (attribute) {
-		case one:
+		case main:
 			return "1";
-		case two:
+		case other:
 			return "2";
-		case three:
+		case test:
 			return "3";
 
 		default:
@@ -35,11 +35,11 @@ public class DomainAttributeConverter implements AttributeConverter<Domain, Stri
 
 		switch (dbData) {
 		case "1":
-			return Domain.one;
+			return Domain.main;
 		case "2":
-			return Domain.two;
+			return Domain.other;
 		case "3":
-			return Domain.three;
+			return Domain.test;
 
 		default:
 			throw new IllegalArgumentException(dbData + " not supported.");

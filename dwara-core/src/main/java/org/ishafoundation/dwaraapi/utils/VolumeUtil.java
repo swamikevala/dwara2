@@ -93,6 +93,8 @@ public class VolumeUtil {
 				logger.trace(nthPhysicalVolume.getId() + " hasnt got enough space to fit this artifact. Skipping it");
 			}
 		}
+		if(toBeUsedVolume == null)
+			logger.warn(volumegroupId + " hasnt got enough capacity. Bump it");
 		return toBeUsedVolume;		
 	}
 

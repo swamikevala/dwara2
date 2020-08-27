@@ -150,11 +150,12 @@ public class VolumeService extends DwaraService {
 			int jobId = job.getId();
 			Status status = job.getStatus();
 			
-			Volume volumeGroup = volumeDao.findById(nthInitializeRequest.getVolumeGroup());
-			Sequence sequence = volumeGroup.getSequence();
-			sequence.incrementCurrentNumber();
-			sequenceDao.save(sequence);
-			logger.info("Sequence for - " + volumeGroup.getId() + " updated to " + sequence.getCurrrentNumber());
+//			The updated sequence no for a volume group in initialize is saved along with Job...
+//			Volume volumeGroup = volumeDao.findById(nthInitializeRequest.getVolumeGroup());
+//			Sequence sequence = volumeGroup.getSequence();
+//			sequence.incrementCurrentNumber();
+//			sequenceDao.save(sequence);
+//			logger.info("Sequence for - " + volumeGroup.getId() + " updated to " + sequence.getCurrrentNumber());
 			
 			SystemRequestsForInitializeResponse systemRequestsForInitializeResponse = new SystemRequestsForInitializeResponse();
 			systemRequestsForInitializeResponse.setId(systemrequest.getId());
