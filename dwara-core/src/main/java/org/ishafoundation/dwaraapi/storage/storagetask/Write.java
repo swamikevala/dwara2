@@ -60,7 +60,7 @@ public class Write extends AbstractStoragetaskAction{
 			artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);
 			artifactName = artifact.getName();			
 
-			volumegroupId = job.getVolume().getId(); // TODO 
+			volumegroupId = job.getGroupVolume().getId(); 
 			
 			String artifactpathToBeCopied = pathPrefix + java.io.File.separator + artifactName;
 			artifactSize = FileUtils.sizeOf(new java.io.File(artifactpathToBeCopied)); 

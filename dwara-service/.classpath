@@ -20,8 +20,8 @@
 	</classpathentry>
 	<classpathentry excluding="**" kind="src" output="target/test-classes" path="src/test/resources">
 		<attributes>
-			<attribute name="maven.pomderived" value="true"/>
 			<attribute name="test" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
@@ -34,5 +34,13 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry combineaccessrules="false" kind="src" path="/dwara-core"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dwara-commons"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dwara-core-mocks"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dwara-db"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dwara-dev-tools"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dwara-tape"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dwara-tape-mocks"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/dwara-videopub"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

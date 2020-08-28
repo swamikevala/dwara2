@@ -286,7 +286,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 //			tapeJob.setTapedriveAlreadyLoadedWithNeededTape(tapedriveAlreadyLoadedWithTape);
 
 			job.setDevice(tapedriveDevice);
-			if(storagetaskAction != Action.initialize) // For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving device... 
+			if(storagetaskAction != Action.initialize) // For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving... 
 				job.setVolume(volume);
 			
 			if(nextStepsInSeparateThread) {

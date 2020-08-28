@@ -99,7 +99,6 @@ public abstract class AbstractStoragetypeJobProcessor {
     	
     }
     
-	//public ArchiveResponse restore(StorageJob selectedStorageJob) throws Throwable{
 	public StorageResponse initialize(SelectedStorageJob selectedStorageJob) throws Throwable{
 		StorageResponse storageResponse = null;
     	beforeInitialize(selectedStorageJob);
@@ -246,10 +245,6 @@ public abstract class AbstractStoragetypeJobProcessor {
     }
     
     // TODO Should we force this to be implemented or let it be overwritten
-//    protected abstract void afterWrite(StorageTypeJob selectedStorageJob);
-//
-//	protected abstract void beforeWrite(StorageTypeJob selectedStorageJob);
-
     protected void beforeVerify(SelectedStorageJob selectedStorageJob) throws Exception {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
 		
@@ -299,7 +294,6 @@ public abstract class AbstractStoragetypeJobProcessor {
 		}
     }
     
-	//public StorageResponse restore(StorageJob selectedStorageJob) throws Throwable{
 	public StorageResponse verify(SelectedStorageJob selectedStorageJob) throws Throwable{
 		logger.info("Verifying job " + selectedStorageJob.getStorageJob().getJob().getId());
 		StorageResponse storageResponse = null;
@@ -344,19 +338,15 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
     protected void beforeFinalize(SelectedStorageJob selectedStorageJob) throws Exception {}
     
-	//public StorageResponse restore(StorageJob selectedStorageJob) throws Throwable{
 	public StorageResponse finalize(SelectedStorageJob selectedStorageJob) throws Throwable{
 		StorageResponse storageResponse = null;
     	beforeFinalize(selectedStorageJob);
     	
     	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
     	storageResponse = iStoragelevel.finalize(selectedStorageJob);
-    	
-//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(selectedStorageJob);
-//    	ar = storageFormatter.restore(selectedStorageJob);
+
     	afterFinalize(selectedStorageJob);
     	return storageResponse; 
-   	
     }
 	
 	protected void afterFinalize(SelectedStorageJob selectedStorageJob) {
@@ -369,7 +359,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 
     protected void beforeRestore(SelectedStorageJob selectedStorageJob) throws Exception {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
-    	storageJob.setTargetLocationPath(storageJob.getTargetLocationPath() + configuration.getRestoreInProgressFileIdentifier());
+    	storageJob.setTargetLocationPath(storageJob.getTargetLocationPath() + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier());
     	Domain domain = storageJob.getDomain();
     	int fileIdToBeRestored = storageJob.getFileId();
 		
@@ -377,6 +367,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainSpecificFileRepository.findById(fileIdToBeRestored).get();
 		selectedStorageJob.setFile(file);
 		
+		// TODO : Not sure if we need to pass the destination id or path -- Destination destination = configurationTablesUtil.getDestination(storageJob.getDestination());
 		Destination destination = destinationDao.findByPath(storageJob.getDestinationPath());
 		selectedStorageJob.setUseBuffering(destination.isUseBuffering());
 		
@@ -420,12 +411,9 @@ public abstract class AbstractStoragetypeJobProcessor {
     	
     	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
     	storageResponse = iStoragelevel.restore(selectedStorageJob);
-    	
-//    	AbstractStorageformatArchiver storageFormatter = getStorageformatArchiver(selectedStorageJob);
-//    	ar = storageFormatter.restore(selectedStorageJob);
+
     	afterRestore(selectedStorageJob);
     	return storageResponse; 
-   	
     }
 	
 	protected void afterRestore(SelectedStorageJob selectedStorageJob) throws IOException {
@@ -434,7 +422,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 			updateFileVolumeVerifiedDate(selectedStorageJob); // update the verified date here...
 		
 		// upon completion moving the file to the original requested dest path
-		FileUtils.moveDirectory(new java.io.File(storageJob.getTargetLocationPath()), new java.io.File(storageJob.getTargetLocationPath().replace(configuration.getRestoreInProgressFileIdentifier(), "")));
+		FileUtils.moveDirectory(new java.io.File(storageJob.getTargetLocationPath()), new java.io.File(storageJob.getTargetLocationPath().replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "")));
 	}
 	
 	private IStoragelevel getStoragelevelImpl(SelectedStorageJob selectedStorageJob){

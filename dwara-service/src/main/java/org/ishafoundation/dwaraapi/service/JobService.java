@@ -50,25 +50,17 @@ public class JobService extends DwaraService{
 			if(job.getStatus() != null)
 				jobResponse.setStatus(job.getStatus().name());
 			
-			Volume volume = job.getVolume();
-			if(volume != null) {
-				if(volume.getType() == Volumetype.group) {
-					// For groups dont show the volume details to the user...
+			Volume groupVolume = job.getGroupVolume();
+			
+			if(groupVolume != null) {
+				jobResponse.setCopyNumber(groupVolume.getCopyNumber());
+			}
+			else {
+				Volume volume = job.getVolume();
+				if(volume != null && volume.getType() == Volumetype.provisioned) {
 					jobResponse.setCopyNumber(volume.getCopyNumber());
 				}
-				else {
-					jobResponse.setVolume(volume.getId());
-					if(volume.getType() == Volumetype.physical) {
-						Volume volumeGroup = volume.getGroupRef();
-						if(volumeGroup != null)
-							jobResponse.setCopyNumber(volumeGroup.getCopyNumber());
-					}
-					else if(volume.getType() == Volumetype.provisioned) {
-						jobResponse.setCopyNumber(volume.getCopyNumber());
-					}
-
-				}
-			}
+			}				
 			jobResponseList.add(jobResponse);
 		}
 		return jobResponseList;

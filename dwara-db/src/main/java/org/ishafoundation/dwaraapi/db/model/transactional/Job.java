@@ -81,6 +81,12 @@ public class Job {
 	private Volume volume;
 	
 	@OneToOne(fetch = FetchType.LAZY)
+	private Volume groupVolume;
+	
+	@Column(name="encrypted")
+	private boolean encrypted;
+	
+	@OneToOne(fetch = FetchType.LAZY)
 	private Device device;
 	
     @OneToMany(mappedBy = "job",
@@ -193,6 +199,22 @@ public class Job {
 
 	public void setVolume(Volume volume) {
 		this.volume = volume;
+	}
+	
+	public Volume getGroupVolume() {
+		return groupVolume;
+	}
+
+	public void setGroupVolume(Volume groupVolume) {
+		this.groupVolume = groupVolume;
+	}
+
+	public boolean isEncrypted() {
+		return encrypted;
+	}
+
+	public void setEncrypted(boolean encrypted) {
+		this.encrypted = encrypted;
 	}
 
 	public Device getDevice() {

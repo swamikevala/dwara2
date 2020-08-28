@@ -2,6 +2,9 @@ package org.ishafoundation.dwaraapi.api.resp.restore;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RestoreResponse {
 	private int userRequestId;
 	private String action;

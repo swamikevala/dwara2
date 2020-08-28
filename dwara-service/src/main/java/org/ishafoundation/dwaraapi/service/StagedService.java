@@ -331,7 +331,7 @@ public class StagedService extends DwaraService{
 			        long size = FileUtils.sizeOf(stagedFileInAppReadyToIngest);
 	
 					Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
-					artifact.setIngestRequest(systemrequest);
+					artifact.setWriteRequest(systemrequest);
 					artifact.setqLatestRequest(systemrequest);
 					artifact.setName(sequenceCode + "_" + stagedFileName);
 					artifact.setArtifactclass(artifactclass);

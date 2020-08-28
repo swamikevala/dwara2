@@ -95,7 +95,7 @@ public class JobCreator {
 								job.setRequest(request);				
 								job.setCreatedAt(LocalDateTime.now());
 								job.setStatus(Status.queued);
-								job.setVolume(volume);
+								job.setGroupVolume(volume);
 								job = saveJob(job);
 								
 								

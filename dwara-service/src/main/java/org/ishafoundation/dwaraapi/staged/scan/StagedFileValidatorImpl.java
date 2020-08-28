@@ -72,7 +72,6 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 			errorList.add(error);
 		};
 		
-		//messageBuilder = validateName(stagedFileDetails.getName(), messageBuilder);
 		errorList.addAll(validateName(stagedFileDetails.getName()));
 		
 		Error extnError = checkUnsupportedExtensions(stagedFileDetails);

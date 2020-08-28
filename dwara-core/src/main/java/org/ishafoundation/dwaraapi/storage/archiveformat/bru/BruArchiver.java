@@ -202,8 +202,9 @@ public class BruArchiver implements IArchiveformatter {
 			// mbuffer -m value calculation
 			// max(1G, round_to_nearest_gb(filesize/16))
 			
-			int fileSizeInGiB = (int) (fileSize/1073741824);  // 1 GiB = 1073741824 bytes...
-			int m = Math.max(1, Math.round(fileSizeInGiB/16));
+			// TODO : Should there by any max cap for the buffer ???
+			float fileSizeInGiB = (float) (fileSize/1073741824.0);  // 1 GiB = 1073741824 bytes...
+			int m = (int) Math.max(1, Math.round(fileSizeInGiB/16.0));
 			String mValue = m + "G";
 			
 			bruRestoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e  | bru -B -xvvvvvvvvv -QV -C -Pf -b " + volumeBlocksize + " -f /dev/stdin " + filePathNameToBeRestored;

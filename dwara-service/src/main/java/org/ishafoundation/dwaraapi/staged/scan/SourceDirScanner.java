@@ -111,6 +111,7 @@ public class SourceDirScanner {
         	size = FileUtils.sizeOf(nthIngestableFile);
         }catch (Exception e) {
 			// swallowing it...
+        	logger.trace("Unable to calculate size for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
 		}
         
         if(nthIngestableFile.isDirectory()) {
@@ -118,6 +119,7 @@ public class SourceDirScanner {
             	fileCount = FileUtils.listFiles(nthIngestableFile, null, true).size();
             }catch (Exception e) {
 				// swallowing it...
+            	logger.trace("Unable to list files for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
 			}
         }else {
         	fileCount = 1;

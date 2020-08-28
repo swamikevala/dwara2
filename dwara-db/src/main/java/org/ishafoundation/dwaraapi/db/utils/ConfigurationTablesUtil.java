@@ -46,6 +46,10 @@ public class ConfigurationTablesUtil {
 	public Destination getDestination(String destinationId) {
 		return (Destination) dBMasterTablesCacheManager.getRecord(CacheableTablesList.destination.name(), destinationId);
 	}
+	
+	public List<Destination> getAllDestinations() {
+		return (List<Destination>) dBMasterTablesCacheManager.getAllRecords(CacheableTablesList.destination.name());
+	}
 
 	public List<Device> getAllDevices() { 
 		return (List<Device>) dBMasterTablesCacheManager.getAllRecords(CacheableTablesList.device.name());

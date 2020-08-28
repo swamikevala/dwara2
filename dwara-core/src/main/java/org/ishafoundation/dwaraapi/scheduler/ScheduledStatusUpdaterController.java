@@ -111,24 +111,29 @@ public class ScheduledStatusUpdaterController {
 		for (Request nthRequest : requestList) {
 			List<Job> nthRequestJobs = jobDao.findAllByRequestId(nthRequest.getId());
 			
+			boolean anyQueued = false;
 			boolean anyInProgress = false;
 			boolean hasFailures = false;
 			boolean isAllComplete = true;
 						
 			for (Job nthJob : nthRequestJobs) {
 				Status status = nthJob.getStatus();
-				if(status == Status.in_progress) {
+				if(status == Status.queued) {
+					isAllComplete = false;
+					anyQueued = true;
+				}
+				else if(status == Status.in_progress) {
 					anyInProgress = true;
 					isAllComplete = false;
 					break;
 				}
-				if(status == Status.failed) {
+				else if(status == Status.failed) {
 					isAllComplete = false;
 					hasFailures = true;
 				}
 			}
 	
-			if(!anyInProgress) {
+			if(!anyQueued && !anyInProgress) {
 				if(isAllComplete) {
 					nthRequest.setStatus(Status.completed); 
 				}
@@ -139,6 +144,7 @@ public class ScheduledStatusUpdaterController {
 		}
 	}
 	
+	// TODO When updating the status ensure for restore jobs the .restoring folder is cleaned up...
 	private void updateUserRequestStatus(List<Request> userRequestList) {
 		for (Request nthUserRequest : userRequestList) {
 			int userRequestId = nthUserRequest.getId();

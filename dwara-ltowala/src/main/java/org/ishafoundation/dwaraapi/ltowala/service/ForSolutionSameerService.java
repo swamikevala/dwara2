@@ -1,6 +1,9 @@
 package org.ishafoundation.dwaraapi.ltowala.service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,10 +13,8 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -21,12 +22,11 @@ import org.ishafoundation.dwaraapi.ltowala.api.resp.Artifact;
 import org.ishafoundation.dwaraapi.ltowala.api.resp.File;
 import org.ishafoundation.dwaraapi.ltowala.api.resp.LtoWalaResponse;
 import org.ishafoundation.dwaraapi.ltowala.api.resp.Volume;
-import org.ishafoundation.dwaraapi.service.DwaraService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ForSolutionSameerService extends DwaraService {
+public class ForSolutionSameerService {
 
 	@Autowired
 	private JobDao jobDao;
@@ -43,10 +43,10 @@ public class ForSolutionSameerService extends DwaraService {
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
 	
-	// TODO : Which copyNumber lto wala is interested in
-	private int copyNumber = 2;
+	// To narrow down the job to a specific copy
+	private int copyNumber = 1; // Could be any copy...
 	
-	public LtoWalaResponse dataForLtoWala(LocalDateTime startDateTime, LocalDateTime endDateTime) throws Exception {
+	public LtoWalaResponse dataForLtoWala(LocalDateTime startDateTime, LocalDateTime endDateTime, boolean listFiles, boolean needVolumeDetails) throws Exception {
 		
 		
 		LtoWalaResponse ltoWalaResponse = new LtoWalaResponse();
@@ -54,7 +54,7 @@ public class ForSolutionSameerService extends DwaraService {
 		ltoWalaResponse.setEndDate(getDateForUI(endDateTime));
 		
 		List<Artifact> artifactList = new ArrayList<Artifact>();
-		List<Job> jobList = jobDao.findAllByCompletedAtBetweenAndStoragetaskActionIdAndVolumeGroupRefCopyNumber(startDateTime, endDateTime, Action.write, copyNumber);
+		List<Job> jobList = jobDao.findAllByCompletedAtBetweenAndStoragetaskActionIdAndGroupVolumeCopyNumber(startDateTime, endDateTime, Action.write, copyNumber);
 		for (Job job : jobList) {
 			Artifact artifact = new Artifact();
 			int artifactId = job.getInputArtifactId();
@@ -73,24 +73,33 @@ public class ForSolutionSameerService extends DwaraService {
 			List<File> fileList = new ArrayList<File>();
 			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactFromDb, domain);
 			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
-				File file = new File();
-				file.setId(nthFile.getId());
-				file.setPathname(nthFile.getPathname());
-				file.setSize(nthFile.getSize());
-				
-				fileList.add(file);
+				String filePathname = nthFile.getPathname();
+				if(listFiles || (!listFiles && filePathname.equals(artifactName))) {
+					File file = new File();
+					
+					file.setId(nthFile.getId());
+					file.setPathname(filePathname);
+					file.setSize(nthFile.getSize());
+					
+					fileList.add(file);
+					
+					if(!listFiles)
+						break;
+				}
 			}
 			artifact.setFile(fileList);
 			
-			Volume volume = new Volume();
-			String volumeId = job.getVolume().getId();
-			volume.setBarcode(volumeId);
-			ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-			ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
-
-			volume.setStartBlock(artifactVolume.getDetails().getStart_volume_block());
-			
-			artifact.setVolume(volume);
+			if(needVolumeDetails) {
+				Volume volume = new Volume();
+				String volumeId = job.getVolume().getId();
+				volume.setBarcode(volumeId);
+				ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+				ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
+	
+				volume.setStartBlock(artifactVolume.getDetails().getStart_volume_block());
+				
+				artifact.setVolume(volume);
+			}
 			artifactList.add(artifact);
 		}
 		
@@ -100,4 +109,12 @@ public class ForSolutionSameerService extends DwaraService {
 		return ltoWalaResponse;
 	}
 	
+	protected String getDateForUI(LocalDateTime _tedAt) { // requestedAt, createdAt, startedAt
+		String dateForUI = null;
+		if(_tedAt != null) {
+			ZonedDateTime zdt = _tedAt.atZone(ZoneId.of("UTC"));
+			dateForUI = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm").format(zdt);
+		}
+		return dateForUI;
+	}
 }
