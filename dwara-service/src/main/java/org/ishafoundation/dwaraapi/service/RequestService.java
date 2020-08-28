@@ -73,7 +73,7 @@ public class RequestService extends DwaraService{
 				Domain domain = request.getDomain();
 				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 
-				Artifact systemArtifact = artifactRepository.findByIngestRequestId(requestId); 
+				Artifact systemArtifact = artifactRepository.findByWriteRequestId(requestId); 
 				if(systemArtifact != null) {
 					org.ishafoundation.dwaraapi.api.resp.request.Artifact artifactForResponse = new org.ishafoundation.dwaraapi.api.resp.request.Artifact();
 					artifactForResponse.setArtifactclass(systemArtifact.getArtifactclass().getId());

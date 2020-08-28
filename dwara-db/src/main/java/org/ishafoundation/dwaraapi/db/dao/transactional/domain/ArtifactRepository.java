@@ -7,7 +7,7 @@ import org.springframework.data.repository.NoRepositoryBean;
 @NoRepositoryBean
 public interface ArtifactRepository<T extends Artifact> extends CrudRepository<T,Integer> {
 
-	Artifact findByIngestRequestId(int ingestRequestId);
+	Artifact findByWriteRequestId(int ingestRequestId);
 
 	Artifact findByName(String artifactName);
 	

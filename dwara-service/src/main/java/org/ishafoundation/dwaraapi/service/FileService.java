@@ -56,6 +56,38 @@ public class FileService extends DwaraService{
 	@Autowired
 	private DomainAttributeConverter domainAttributeConverter;
 
+	public List<File> list(List<Integer> fileIds){
+		List<File> fileList = new ArrayList<File>();
+		int counter = 1;
+		Domain domain = null;
+//		if(restoreUserRequest.getDomain() != null)
+//			domain = domainAttributeConverter.convertToEntityAttribute(restoreUserRequest.getDomain()+"");
+//		else {
+			org.ishafoundation.dwaraapi.db.model.master.configuration.Domain domainFromDB = domainDao.findByDefaultTrue();
+			domain = domainAttributeConverter.convertToEntityAttribute(domainFromDB.getName());
+//		}
+
+		for (Integer nthFileId : fileIds) {
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(domain, nthFileId);
+			
+			File file = new File();
+			byte[] checksum = fileFromDB.getChecksum();
+			if(checksum != null)
+				file.setChecksum(Hex.encodeHexString(checksum));
+			
+			//file.setChecksumType(fileFromDB.getChecksum());
+			file.setId(fileFromDB.getId());
+			file.setPathname(fileFromDB.getPathname());
+			file.setPriority(counter);
+			file.setSize(fileFromDB.getSize());
+			fileList.add(file);
+			counter = counter + 1;
+		}
+		
+		return fileList;
+		
+	}
+	
 
     public RestoreResponse restore(RestoreUserRequest restoreUserRequest) throws Exception{	
     	RestoreResponse restoreResponse = new RestoreResponse();
