@@ -51,7 +51,8 @@ public class JobService extends DwaraService{
 				jobResponse.setStatus(job.getStatus().name());
 			
 			Volume volume = job.getVolume();
-			jobResponse.setVolume(volume.getId());
+			if(volume != null)
+				jobResponse.setVolume(volume.getId());
 			
 			Volume groupVolume = job.getGroupVolume();
 			if(groupVolume != null) {
