@@ -212,6 +212,7 @@ public class StagedService extends DwaraService{
 	    	int userRequestId = userRequest.getId();
 	    	logger.info("Request - " + userRequestId);
 	    	
+	    	// TODO Move it to validation class
 	    	// Validation Level 1 - For empty folders
 	    	boolean isLevel1Pass = true;
 	    	List<StagedFileDetails> stagedFileDetailsList = new ArrayList<StagedFileDetails>();
@@ -222,28 +223,50 @@ public class StagedService extends DwaraService{
 				String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
 				
 				java.io.File nthIngestableFile = new java.io.File(path, artifactName);
-				int fileCount = 0;
+				
+		        long size = 0;
+		        int fileCount = 0;
+		        
+		        try {
+		        	size = FileUtils.sizeOf(nthIngestableFile);
+		        }catch (Exception e) {
+					// swallowing it...
+		        	logger.trace("Unable to calculate size for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
+				}
+		        
 		        if(nthIngestableFile.isDirectory()) {
 		            try {
 		            	fileCount = FileUtils.listFiles(nthIngestableFile, null, true).size();
 		            }catch (Exception e) {
 						// swallowing it...
+		            	logger.trace("Unable to list files for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
 					}
+		        }else {
+		        	fileCount = 1;
 		        }
 		        
-		        if(fileCount == 0) {
+		        if(fileCount == 0 || size == 0) {
 		        	isLevel1Pass = false;
-		        	List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
-		        	
-					Error error = new Error();
-					error.setType(Errortype.Error);
-					error.setMessage(nthIngestableFile.getAbsolutePath() + " has no files inside");
-					errorList.add(error);
-					
 					StagedFileDetails sfd = new StagedFileDetails();
 					
 					sfd.setPath(path);
 					sfd.setName(artifactName);
+
+		        	List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
+		        
+		        	if(size == 0) {
+						Error error = new Error();
+						error.setType(Errortype.Error);
+						error.setMessage(artifactName + " size is 0");
+						errorList.add(error);
+		        	}
+		        	
+		        	if(fileCount == 0) {
+						Error error = new Error();
+						error.setType(Errortype.Error);
+						error.setMessage(artifactName + " has no files inside");
+						errorList.add(error);
+			        	}
 					sfd.setErrors(errorList);
 					
 					stagedFileDetailsList.add(sfd);

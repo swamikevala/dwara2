@@ -5,7 +5,4 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 
 public interface ArtifactclassDao extends CacheableRepository<Artifactclass> {
 	
-	Artifactclass findByName(String name);
-	
-	//List<Artifactclass> findAllByArtifactclassTargetvolumeTargetvolumeId(int targetvolumeId);
 }

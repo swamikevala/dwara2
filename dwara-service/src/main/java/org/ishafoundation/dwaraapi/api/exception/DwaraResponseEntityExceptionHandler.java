@@ -16,8 +16,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class DwaraResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
 	
   @ExceptionHandler(DwaraException.class)
-  public final ResponseEntity<ExceptionResponse> handleNotFoundException(DwaraException ex, WebRequest request) {
-    ExceptionResponse exceptionResponse = new ExceptionResponse(new Date(), HttpStatus.BAD_REQUEST.value(), ex.getMessage(), request.getDescription(false), ex.getDetails());
+  public final ResponseEntity<ExceptionResponse> handleNotFoundException(DwaraException dwaraException, WebRequest request) {
+    ExceptionResponse exceptionResponse = new ExceptionResponse(request.getDescription(false), new Date(), HttpStatus.BAD_REQUEST.value(), dwaraException.getExceptionType().name(), dwaraException.getMessage(), dwaraException.getDetails());
     return new ResponseEntity<ExceptionResponse>(exceptionResponse, HttpStatus.BAD_REQUEST);
   }
 }

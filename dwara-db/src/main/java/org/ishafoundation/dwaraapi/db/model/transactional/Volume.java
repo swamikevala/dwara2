@@ -76,7 +76,7 @@ public class Volume {
 	private Archiveformat archiveformat;
 	
 	@Column(name="capacity")
-	private long capacity;
+	private Long capacity;
 	
 	@OneToOne
 	private Location location;
@@ -185,11 +185,11 @@ public class Volume {
 		this.archiveformat = archiveformat;
 	}
 
-	public long getCapacity() {
+	public Long getCapacity() {
 		return capacity;
 	}
 
-	public void setCapacity(long capacity) {
+	public void setCapacity(Long capacity) {
 		this.capacity = capacity;
 	}
 

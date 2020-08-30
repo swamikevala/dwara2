@@ -63,9 +63,15 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 		}
 		
 		// validateSize
+		long stagedFileSize = stagedFileDetails.getTotalSize();
 		// TODO whats the size we need to compare against?
 		long configuredSize = 1048576; // 1MB
-		if(stagedFileDetails.getTotalSize() < configuredSize) {
+		if(stagedFileSize == 0) {
+			Error error = new Error();
+			error.setType(Errortype.Error);
+			error.setMessage("Artifact size is 0");
+			errorList.add(error);
+		}else if(stagedFileSize < configuredSize) {
 			Error error = new Error();
 			error.setType(Errortype.Warning);
 			error.setMessage("Artifact is less than 1 MiB");

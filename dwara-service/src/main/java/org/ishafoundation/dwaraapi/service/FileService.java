@@ -64,7 +64,7 @@ public class FileService extends DwaraService{
 //			domain = domainAttributeConverter.convertToEntityAttribute(restoreUserRequest.getDomain()+"");
 //		else {
 			org.ishafoundation.dwaraapi.db.model.master.configuration.Domain domainFromDB = domainDao.findByDefaultTrue();
-			domain = domainAttributeConverter.convertToEntityAttribute(domainFromDB.getName());
+			domain = domainAttributeConverter.convertToEntityAttribute(domainFromDB.getId()+"");
 //		}
 
 		for (Integer nthFileId : fileIds) {
@@ -105,7 +105,7 @@ public class FileService extends DwaraService{
 			domain = domainAttributeConverter.convertToEntityAttribute(restoreUserRequest.getDomain()+"");
 		else {
 			org.ishafoundation.dwaraapi.db.model.master.configuration.Domain domainFromDB = domainDao.findByDefaultTrue();
-			domain = domainAttributeConverter.convertToEntityAttribute(domainFromDB.getName());
+			domain = domainAttributeConverter.convertToEntityAttribute(domainFromDB.getId()+"");
 		}
 		userRequest.setDomain(domain);
 		RequestDetails details = new RequestDetails();

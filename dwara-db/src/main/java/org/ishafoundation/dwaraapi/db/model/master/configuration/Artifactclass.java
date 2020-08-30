@@ -198,7 +198,7 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 	public String getCategory() {
 		String category = "public";
 		// TODO : should this be private1/2/3 
-		if(getName().toLowerCase().startsWith("private")) {
+		if(getId().toLowerCase().contains("priv")) {
 			category = "private";
 		}
 		return category;

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class File {
 	private int id;
-	private int systemRequestId;
+	private Integer systemRequestId;
 	private int priority;
 	private String artifactclass;
 	private String pathname;
@@ -19,10 +19,10 @@ public class File {
 	public void setId(int id) {
 		this.id = id;
 	}
-	public int getSystemRequestId() {
+	public Integer getSystemRequestId() {
 		return systemRequestId;
 	}
-	public void setSystemRequestId(int systemRequestId) {
+	public void setSystemRequestId(Integer systemRequestId) {
 		this.systemRequestId = systemRequestId;
 	}
 	public int getPriority() {

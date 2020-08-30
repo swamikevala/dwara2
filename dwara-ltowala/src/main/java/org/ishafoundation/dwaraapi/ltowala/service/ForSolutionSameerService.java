@@ -65,7 +65,7 @@ public class ForSolutionSameerService {
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactFromDb = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) artifactRepository.findById(artifactId).get();
 			String artifactName = artifactFromDb.getName();
 			artifact.setName(artifactName);
-			artifact.setArtifactclass(artifactFromDb.getArtifactclass().getName());
+			artifact.setArtifactclass(artifactFromDb.getArtifactclass().getId());
 			artifact.setTotalSize(artifactFromDb.getTotalSize());
 			artifact.setCompletedAt(getDateForUI(job.getCompletedAt())); // TODO Change the field name
 			artifact.setFileCount(artifactFromDb.getFileCount());

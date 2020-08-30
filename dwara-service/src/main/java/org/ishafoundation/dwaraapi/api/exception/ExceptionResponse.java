@@ -5,20 +5,31 @@ import java.util.Date;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class ExceptionResponse {
-	  private Date timestamp;
-	  private Integer status;
-	  private String error;
-	  private String message;
-	  private JsonNode details;
-	  
-	  public ExceptionResponse(Date timestamp, Integer status, String error, String message, JsonNode detailsJsonNode) {
-	    super();
-	    this.timestamp = timestamp;
-	    this.status = status;
-	    this.error = error;
-	    this.message = message;
-	    this.details = detailsJsonNode;
-	  }
+	private String request;
+	private Date timestamp;
+	private Integer status;
+	private String error;
+	private String message;
+	private JsonNode details;
+
+
+	public ExceptionResponse(String request, Date timestamp, Integer status, String error, String message, JsonNode detailsJsonNode) {
+		super();
+		this.request = request;
+		this.timestamp = timestamp;
+		this.status = status;
+		this.error = error;
+		this.message = message;
+		this.details = detailsJsonNode;
+	}
+
+	public String getRequest() {
+		return request;
+	}
+
+	public void setRequest(String request) {
+		this.request = request;
+	}
 
 	public Date getTimestamp() {
 		return timestamp;

@@ -42,7 +42,7 @@ public class SourceDirScanner {
 	
 	public List<StagedFileDetails> scanSourceDir(Artifactclass artifactclass, List<String> scanFolderBasePathList) {
 		//int artifactclassId = artifactclass.getId();
-    	String artifactclassName = artifactclass.getName();
+    	String artifactclassName = artifactclass.getId();
         String sequenceId = artifactclass.getSequenceId(); // getting the primary key of the Sequence table which holds the lastsequencenumber for this group...
         Sequence sequence = configurationTablesUtil.getSequence(sequenceId);
         if(sequence == null) {
