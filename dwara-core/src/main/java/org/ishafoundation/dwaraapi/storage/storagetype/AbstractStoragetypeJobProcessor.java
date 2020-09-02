@@ -422,7 +422,12 @@ public abstract class AbstractStoragetypeJobProcessor {
 			updateFileVolumeVerifiedDate(selectedStorageJob); // update the verified date here...
 		
 		// upon completion moving the file to the original requested dest path
-		FileUtils.moveDirectory(new java.io.File(storageJob.getTargetLocationPath()), new java.io.File(storageJob.getTargetLocationPath().replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "")));
+		String srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + storageJob.getArtifact().getName();
+		String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");
+		
+		logger.trace("src " + srcPath);
+		logger.trace("dest " + destPath);
+		FileUtils.moveDirectory(new java.io.File(srcPath), new java.io.File(destPath));
 	}
 	
 	private IStoragelevel getStoragelevelImpl(SelectedStorageJob selectedStorageJob){
