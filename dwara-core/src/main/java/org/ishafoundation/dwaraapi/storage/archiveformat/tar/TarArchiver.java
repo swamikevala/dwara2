@@ -219,7 +219,7 @@ public class TarArchiver implements IArchiveformatter {
 		logger.trace("Creating the directory " + targetLocationPath + ", if not already present");
 		FileUtils.forceMkdir(new java.io.File(targetLocationPath));
 		
-		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, false, targetLocationPath, noOfTapeBlocksToBeRead);
+		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, false, 0, targetLocationPath, noOfTapeBlocksToBeRead);
 
 		HashMap<String, byte[]> filePathNameToChecksumObj = selectedStorageJob.getFilePathNameToChecksum();
 		boolean isSuccess = stream(commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, false, targetLocationPath, true, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
@@ -246,11 +246,10 @@ public class TarArchiver implements IArchiveformatter {
 		FileUtils.forceMkdir(new java.io.File(targetLocationPath));
 		
 		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
-		// TODO : Support buffering for tar...
-		if(selectedStorageJob.isUseBuffering())
-			throw new Exception("Buffering still not supported in Tar");
+		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
+		long fileSize = file.getSize();
 		
-		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, selectedStorageJob.isUseBuffering(), targetLocationPath, noOfTapeBlocksToBeRead);
+		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, selectedStorageJob.isUseBuffering(), fileSize, targetLocationPath, noOfTapeBlocksToBeRead);
 		
 		String filePathNameToBeRestored = archiveformatJob.getFilePathNameToBeRestored();
 		
@@ -274,9 +273,34 @@ public class TarArchiver implements IArchiveformatter {
 		return new ArchiveResponse();
 	}
 	
-	private List<String> frameRestoreCommand(int volumeBlocksize, String deviceName, boolean useBuffering, String destinationPath, int noOfTapeBlocksToBeRead) {
-		// FIXME: mbuffer -s 1M -m 2G -i /dev/st1 | bru -xvvvvvvvvv -b1024k -QV -C ***-f*** - 25079_Cauvery-Calling_Day15-Crowd-Shots-At-Closing-Event_CODISSIA-Cbe_17-Sep-2019_Z280V_B-Rolls
+	private List<String> frameRestoreCommand(int volumeBlocksize, String deviceName, boolean useBuffering, long fileSize, String destinationPath, int noOfTapeBlocksToBeRead) {
 		String restoreCommand = "dd if=" + deviceName + " bs=" + volumeBlocksize	+ " count=" + noOfTapeBlocksToBeRead;
+		
+
+		if(useBuffering) {
+			/*
+				/usr/bin/mbuffer -i /dev/tape/by-id/scsi-35000e11167f7d001-nst -s 1M -m 2G -p 10 -e | dd -f /dev/stdin bs=512k count=200
+
+				-f /dev/stdin (to read from stdin), 
+				-Pf (to get file listing order from stdin)
+				mbuffer switches: 
+					-e (to make mbuffer exit on error - needed when bru exits after finishing reading a file - mbuffer doesn't know when to stop reading the tape, so we rely on the "broken pipe" error afer bru terminates
+					-m 2G - provides a buffer of 2G. for bigger files a bigger buffer is better, e.g. 100 GB file, 8GB is good
+					-s 1M - basically has to match the tape volume block size
+					-p 10 - means start reading from the tape when the buffer is less than 10% full. This is good because mechanically stopping/starting the tape drive is an overhead, so once the buffer becomes 100% full, this means that bru/tar will read data from the buffer until it is almost empty, and only then the tape drive will start filling up the buffer again
+
+			 */
+			
+			// mbuffer -m value calculation
+			// max(1G, round_to_nearest_gb(filesize/16))
+			
+			// TODO : Should there by any max cap for the buffer ???
+			float fileSizeInGiB = (float) (fileSize/1073741824.0);  // 1 GiB = 1073741824 bytes...
+			int m = (int) Math.max(1, Math.round(fileSizeInGiB/16.0));
+			String mValue = m + "G";
+			
+			restoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e  | dd -f /dev/stdin " + " bs=" + volumeBlocksize	+ " count=" + noOfTapeBlocksToBeRead;
+		}
 		logger.debug("Tar restoration - " +  restoreCommand);
 		logger.debug("Will be restoring to - " + destinationPath);
 		
@@ -287,6 +311,7 @@ public class TarArchiver implements IArchiveformatter {
 		
 		return commandList;
 	}
+
 
 
 	protected boolean stream(List<String> commandList, int volumeBlocksize, int skipByteCount,
