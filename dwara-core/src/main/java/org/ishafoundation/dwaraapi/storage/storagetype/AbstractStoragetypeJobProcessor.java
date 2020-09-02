@@ -421,13 +421,25 @@ public abstract class AbstractStoragetypeJobProcessor {
 		if(storageJob.isRestoreVerify())
 			updateFileVolumeVerifiedDate(selectedStorageJob); // update the verified date here...
 		
-		// upon completion moving the file to the original requested dest path
-		String srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + storageJob.getArtifact().getName();
+		// upon completion moving the file to the original requested dest path		
+		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
+		String restoredFilePathName = file.getPathname();
+		
+		String srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName;
 		String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");
 		
 		logger.trace("src " + srcPath);
 		logger.trace("dest " + destPath);
-		FileUtils.moveDirectory(new java.io.File(srcPath), new java.io.File(destPath));
+		
+		java.io.File srcFile = new java.io.File(srcPath);
+		java.io.File destFile = new java.io.File(destPath);
+		//String destDirPath = storageJob.getTargetLocationPath().replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");
+		//logger.trace("destDirPath " + destDirPath);
+		//FileUtils.moveToDirectory(srcFile, new java.io.File(destDirPath), false); // doesn't create the full path... hence the if condition on directory or file...
+		if(srcFile.isDirectory())
+			FileUtils.moveDirectory(srcFile, destFile);
+		else
+			FileUtils.moveFile(srcFile, destFile);
 	}
 	
 	private IStoragelevel getStoragelevelImpl(SelectedStorageJob selectedStorageJob){
