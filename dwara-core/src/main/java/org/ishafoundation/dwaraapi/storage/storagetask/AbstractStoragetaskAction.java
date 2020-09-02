@@ -1,16 +1,12 @@
 package org.ishafoundation.dwaraapi.storage.storagetask;
 
-
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobMap;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
@@ -25,9 +21,6 @@ public abstract class AbstractStoragetaskAction{
 	
 	@Autowired
 	private JobDao jobDao;		
-
-	@Autowired
-	private JobMapDao jobMapDao;	
 	
 	protected List<org.ishafoundation.dwaraapi.enumreferences.Action> storagetaskActionList = new ArrayList<org.ishafoundation.dwaraapi.enumreferences.Action>();
 	
@@ -50,8 +43,12 @@ public abstract class AbstractStoragetaskAction{
 		Job job = new Job();
 
 		if(preReqJob != null) {
-			JobMap jobMap = new JobMap(job, preReqJob);
-			jobMapDao.save(jobMap);
+			List<Integer> dependencies = job.getDependencies();
+			if(dependencies == null) {
+				dependencies = new ArrayList<Integer>();
+			}
+			dependencies.add(preReqJob.getId());
+			job.setDependencies(dependencies);
 		}
 		job.setStoragetaskActionId(storagetaskAction);
 		job.setRequest(request);

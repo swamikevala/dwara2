@@ -24,9 +24,9 @@ public class JobCreator_Format_Test extends JobCreator_Test{
 		RequestDetails details = new RequestDetails();
 		
 		// TODO: Get it from json/Request body...
-		details.setVolume_id("V4A002"); // TODO how do we validate that the volume passed is only physical and not
+		details.setVolumeId("V4A002"); // TODO how do we validate that the volume passed is only physical and not
 		// group the volume belongs to
-		details.setVolume_group_id("V4A");
+		details.setVolumeGroupId("V4A");
 		
 		details.setStoragesubtype("LTO-7");
 		

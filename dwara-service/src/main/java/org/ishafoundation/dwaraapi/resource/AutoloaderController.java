@@ -5,16 +5,17 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.resp.autoloader.AutoloaderResponse;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.DriveStatus;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.Drive;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.DriveStatus;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.Element;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeUsageStatus;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
+import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -37,24 +38,25 @@ import org.springframework.web.bind.annotation.RestController;
 public class AutoloaderController {
 
 	private static final Logger logger = LoggerFactory.getLogger(AutoloaderController.class);
+
+	@Autowired
+	private DeviceDao deviceDao;
+	
+	@Autowired
+	private VolumeDao volumeDao;
 	
 	@Autowired
 	private TapeDeviceUtil tapeDeviceUtil;
 
 	@Autowired
-	private ConfigurationTablesUtil configurationTablesUtil;
-
-	@Autowired
 	private TapeLibraryManager tapeLibraryManager;
-	
-	@Autowired
-	private VolumeDao volumeDao;
 	
 	@GetMapping(value = "/autoloader", produces = "application/json")
 	public ResponseEntity<List<AutoloaderResponse>> getAllAutoloaders(){
 		List<AutoloaderResponse> autoloaderResponseList = new ArrayList<AutoloaderResponse>();
 		try {
-			List<Device> autoloaderDevices = configurationTablesUtil.getAllConfiguredAutoloaderDevices();
+			//List<Device> autoloaderDevices = configurationTablesUtil.getAllConfiguredAutoloaderDevices();
+			List<Device> autoloaderDevices = deviceDao.findAllByType(Devicetype.tape_autoloader);
 			for (Device autoloaderDevice : autoloaderDevices) {
 				String autoloaderId = autoloaderDevice.getId();
 				AutoloaderResponse autoloaderResponse = getAutoloader_Internal(autoloaderId);
@@ -85,13 +87,14 @@ public class AutoloaderController {
 			List<Drive> drives = new ArrayList<Drive>();
 			List<Tape> tapes = new ArrayList<Tape>();
 			
-			Device autoloaderDevice = configurationTablesUtil.getDevice(autoloaderId);
+//			Device autoloaderDevice = configurationTablesUtil.getDevice(autoloaderId);
+			Device autoloaderDevice = deviceDao.findById(autoloaderId).get();
 			if(autoloaderDevice == null) {
 				throw new DwaraException(autoloaderId + " does not exist in the system", null);
 			}
-			
-			List<Device> allDrives = configurationTablesUtil.getAllConfiguredDriveDevices();
-			
+
+//			List<Device> allDrives = configurationTablesUtil.getAllConfiguredDriveDevices();
+			List<Device> allDrives = deviceDao.findAllByType(Devicetype.tape_drive);
 			HashMap<String, Device> deviceId_DeviceObj_Map = new HashMap<String, Device>();
 			for (Device device : allDrives) {
 				deviceId_DeviceObj_Map.put(device.getId(), device);
@@ -105,7 +108,7 @@ public class AutoloaderController {
 				
 				Drive drive = new Drive();
 				drive.setId(driveId);
-				drive.setAddress(configuredDriveDevice.getDetails().getAutoloader_address());
+				drive.setAddress(configuredDriveDevice.getDetails().getAutoloaderAddress());
 				drive.setBarcode(driveDetails.getDte().getVolumeTag());
 				drive.setEmpty(driveDetails.getDte().isEmpty());
 				DriveStatus status = DriveStatus.available;
@@ -137,8 +140,8 @@ public class AutoloaderController {
 				
 				Volume volume = volumeId_VolumeObj_Map.get(barcode);
 				if(volume != null) { // If its not regd in dwara yet, it means its either blank(not formatted) or unknown 
-					tape.setLocation(volume.getLocation().getName());
-					tape.setRemoveAfterJob(volume.getDetails().getRemove_after_job());
+					tape.setLocation(volume.getLocation().getId());
+					tape.setRemoveAfterJob(volume.getDetails().getRemoveAfterJob());
 					
 					TapeStatus tapeStatus = getTapeStatus(volume);
 					tape.setStatus(tapeStatus);

@@ -21,16 +21,16 @@ public class VolumeTest {
 	
 	@Test
 	public void test_a_UpdateVolumeDetails() {
-		Volume volume = volumeDao.findById(2).get();
-		
-		VolumeDetails volumeDetails = new VolumeDetails();
-		volumeDetails.setBarcoded(true);
-		volumeDetails.setBlocksize(1024);
-//		volumeDetails.setGeneration(7);
-//		volumeDetails.setMountpoint(mountpoint);
-//		volumeDetails.setProvider_id(provider_id);
-		volume.setDetails(volumeDetails);
-		volumeDao.save(volume);
+//		Volume volume = volumeDao.findById(2).get();
+//		
+//		VolumeDetails volumeDetails = new VolumeDetails();
+//		volumeDetails.setBarcoded(true);
+//		volumeDetails.setBlocksize(1024);
+////		volumeDetails.setGeneration(7);
+////		volumeDetails.setMountpoint(mountpoint);
+////		volumeDetails.setProvider_id(provider_id);
+//		volume.setDetails(volumeDetails);
+//		volumeDao.save(volume);
 	}
 	
 

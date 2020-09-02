@@ -43,15 +43,17 @@ public class Sequence implements Cacheable{
 	@Column(name="prefix")
 	private String prefix;
 
-	@Column(name="artifact_code_regex")
-	private String artifactCodeRegex;
+	@Column(name="code_regex")
+	private String codeRegex;
 
-	@Column(name="artifact_number_regex")
-	private String artifactNumberRegex;
+	@Column(name="number_regex")
+	private String numberRegex;
 	
-	@Column(name="artifact_keep")
-	private Boolean artifactKeep;
-
+	@Column(name="force_match")
+	private Boolean forceMatch;
+	
+	@Column(name="keep_code")
+	private Boolean keepCode;
 		
 	public String getId() {
 		return id;
@@ -116,29 +118,37 @@ public class Sequence implements Cacheable{
 	public void setPrefix(String prefix) {
 		this.prefix = prefix;
 	}
-	
-	public String getArtifactCodeRegex() {
-		return artifactCodeRegex;
+
+	public String getCodeRegex() {
+		return codeRegex;
 	}
 
-	public void setArtifactCodeRegex(String artifactCodeRegex) {
-		this.artifactCodeRegex = artifactCodeRegex;
+	public void setCodeRegex(String codeRegex) {
+		this.codeRegex = codeRegex;
 	}
 
-	public String getArtifactNumberRegex() {
-		return artifactNumberRegex;
+	public String getNumberRegex() {
+		return numberRegex;
 	}
 
-	public void setArtifactNumberRegex(String artifactNumberRegex) {
-		this.artifactNumberRegex = artifactNumberRegex;
+	public void setNumberRegex(String numberRegex) {
+		this.numberRegex = numberRegex;
 	}
 
-	public Boolean isArtifactKeep() {
-		return artifactKeep;
+	public Boolean getForceMatch() {
+		return forceMatch;
 	}
 
-	public void setArtifactKeep(Boolean artifactKeep) {
-		this.artifactKeep = artifactKeep;
+	public void setForceMatch(Boolean forceMatch) {
+		this.forceMatch = forceMatch;
+	}
+
+	public Boolean isKeepCode() {
+		return keepCode;
+	}
+
+	public void setKeepCode(Boolean keepCode) {
+		this.keepCode = keepCode;
 	}
 
 	public Integer incrementCurrentNumber() {

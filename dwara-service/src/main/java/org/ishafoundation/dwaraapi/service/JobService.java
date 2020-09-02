@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.Actionelement;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
@@ -39,9 +39,9 @@ public class JobService extends DwaraService{
 			if(storagetaskAction != null)
 				jobResponse.setStoragetaskAction(storagetaskAction.name());
 			jobResponse.setProcessingTask(job.getProcessingtaskId());
-			Actionelement actionelement = job.getActionelement();
-			if(actionelement != null)
-				jobResponse.setActionelementId(actionelement.getId());
+			Flowelement flowelement = job.getFlowelement();
+			if(flowelement != null)
+				jobResponse.setActionelementId(flowelement.getId());
 			jobResponse.setInputArtifactId(job.getInputArtifactId());
 			jobResponse.setOutputArtifactId(job.getOutputArtifactId());
 			jobResponse.setCreatedAt(getDateForUI(job.getCreatedAt()));
@@ -56,11 +56,11 @@ public class JobService extends DwaraService{
 			
 			Volume groupVolume = job.getGroupVolume();
 			if(groupVolume != null) {
-				jobResponse.setCopyNumber(groupVolume.getCopyNumber());
+				jobResponse.setCopy(groupVolume.getCopy().getId());
 			}
 			else {
 				if(volume != null && volume.getType() == Volumetype.provisioned) {
-					jobResponse.setCopyNumber(volume.getCopyNumber());
+					jobResponse.setCopy(volume.getCopy().getId());
 				}
 			}				
 			jobResponseList.add(jobResponse);

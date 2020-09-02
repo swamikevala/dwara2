@@ -58,10 +58,6 @@ public class Artifact {
 	@OneToOne
 	@JoinColumn(name="q_latest_request_id") 
 	private Request qLatestRequest;
-//	
-// 	@ManyToOne
-//	@JoinColumn(name="artifact_ref_id")
-//	private Artifact artifactRef;
 
 	public int getId() {
 		return id;
@@ -156,16 +152,6 @@ public class Artifact {
 	public void setqLatestRequest(Request qLatestRequest) {
 		this.qLatestRequest = qLatestRequest;
 	}
-//	
-//	@JsonIgnore
-//	public Artifact getArtifactRef() {
-//		return artifactRef;
-//	}
-//
-//	@JsonIgnore
-//	public void setArtifactRef(Artifact artifactRef) {
-//		this.artifactRef = artifactRef;
-//	}
 
 	@Override
     public boolean equals(Object o) {

@@ -51,36 +51,36 @@ public class ConfigurationTablesUtil {
 		return (List<Destination>) dBMasterTablesCacheManager.getAllRecords(CacheableTablesList.destination.name());
 	}
 
-	public List<Device> getAllDevices() { 
-		return (List<Device>) dBMasterTablesCacheManager.getAllRecords(CacheableTablesList.device.name());
-	}
-	
-	public Device getDevice(String deviceId) {
-		return (Device) dBMasterTablesCacheManager.getRecord(CacheableTablesList.device.name(), deviceId);
-	}
-	
-	
-	public List<Device> getAllConfiguredAutoloaderDevices() throws Exception{
-		List<Device> autoloaders = new ArrayList<Device>();
-		List<Device> allDeviceList = getAllDevices();
-		for (Device device : allDeviceList) {
-			if(device.getType() == Devicetype.tape_autoloader) {
-				autoloaders.add(device);
-			}
-		}
-		return autoloaders;
-	}
-	
-	public List<Device> getAllConfiguredDriveDevices() throws Exception{
-		List<Device> drives = new ArrayList<Device>();
-		List<Device> allDeviceList = getAllDevices();
-		for (Device device : allDeviceList) {
-			if(device.getType() == Devicetype.tape_drive) {
-				drives.add(device);
-			}
-		}
-		return drives;
-	}
+//	public List<Device> getAllDevices() { 
+//		return (List<Device>) dBMasterTablesCacheManager.getAllRecords(CacheableTablesList.device.name());
+//	}
+//	
+//	public Device getDevice(String deviceId) {
+//		return (Device) dBMasterTablesCacheManager.getRecord(CacheableTablesList.device.name(), deviceId);
+//	}
+//	
+//	
+//	public List<Device> getAllConfiguredAutoloaderDevices() throws Exception{
+//		List<Device> autoloaders = new ArrayList<Device>();
+//		List<Device> allDeviceList = getAllDevices();
+//		for (Device device : allDeviceList) {
+//			if(device.getType() == Devicetype.tape_autoloader) {
+//				autoloaders.add(device);
+//			}
+//		}
+//		return autoloaders;
+//	}
+//	
+//	public List<Device> getAllConfiguredDriveDevices() throws Exception{
+//		List<Device> drives = new ArrayList<Device>();
+//		List<Device> allDeviceList = getAllDevices();
+//		for (Device device : allDeviceList) {
+//			if(device.getType() == Devicetype.tape_drive) {
+//				drives.add(device);
+//			}
+//		}
+//		return drives;
+//	}
 	
 	public Location getLocation(String requestedLocation) {
 		return (Location) dBMasterTablesCacheManager.getRecord(CacheableTablesList.location.name(), requestedLocation);

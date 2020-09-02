@@ -2,21 +2,12 @@ package org.ishafoundation.dwaraapi.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.ishafoundation.dwaraapi.api.resp.artifactclass.ArtifactclassResponse;
-import org.ishafoundation.dwaraapi.api.resp.artifactclass.ComplexAction;
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementMapDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.Actionelement;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionelementMap;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,12 +17,6 @@ import org.springframework.stereotype.Component;
 public class ArtifactclassService {
 
 	private static final Logger logger = LoggerFactory.getLogger(ArtifactclassService.class);
-
-	@Autowired
-	private ActionelementDao actionelementDao;
-	
-	@Autowired
-	private ActionelementMapDao actionelementMapDao;
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
@@ -40,6 +25,9 @@ public class ArtifactclassService {
 	private DomainAttributeConverter domainAttributeConverter;
 	
 	public List<ArtifactclassResponse> getAllArtifactClasses(){
+		/*
+		 * TODO Action element - breaking change
+		 * 
 		// *** Caching actionelement and actionelementmaps start ***
 		
 		// artifactclass, actions, actionelements
@@ -83,7 +71,7 @@ public class ArtifactclassService {
 		}
 		
 		// *** Caching actionelement and actionelementmaps end ***
-		
+		*/
 		List<ArtifactclassResponse> artifactclassResponseList = new ArrayList<ArtifactclassResponse>();
 		List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
 		
@@ -108,13 +96,13 @@ public class ArtifactclassService {
 			ArtifactclassResponse artifactclassResponse = new ArtifactclassResponse();
 			String artifactclassId = artifactclass.getId();
 			artifactclassResponse.setId(artifactclassId);
-			artifactclassResponse.setName(artifactclass.getName());
+			artifactclassResponse.setName(artifactclass.getDescription());// artifactclassResponse.setName(artifactclass.getName());
 			if(artifactclass.getDomain() != null)
 				artifactclassResponse.setDomain(Integer.parseInt(domainAttributeConverter.convertToDatabaseColumn(artifactclass.getDomain()))); // FIXME - Domain - Parsing as Integer
 			artifactclassResponse.setSource(artifactclass.isSource());
 			artifactclassResponse.setDisplayOrder(artifactclass.getDisplayOrder());
 			
-			
+			/* TODO Action element - breaking change
 			Map<String, List<Actionelement>> artifactclassSpecificAction_ActionelementObj_Map = artifactclass_Action_ActionelementObj_Map.get(artifactclassId);
 			if(artifactclassSpecificAction_ActionelementObj_Map != null) {
 				Set<String> actions = artifactclassSpecificAction_ActionelementObj_Map.keySet();
@@ -145,7 +133,7 @@ public class ArtifactclassService {
 				}
 				artifactclassResponse.setComplexActions(complexActions);
 			}
-			
+			*/
 			artifactclassResponseList.add(artifactclassResponse);
 		}
 		return artifactclassResponseList;

@@ -24,15 +24,13 @@ import org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameResponse;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementMapDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassActionUserDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassUserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Extension;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassActionUser;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassUser;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
@@ -69,18 +67,12 @@ public class StagedService extends DwaraService{
 
 	@Autowired
 	protected RequestDao requestDao;
-
-	@Autowired
-	protected ActionelementDao actionelementDao;
-	
-	@Autowired
-	protected ActionelementMapDao actionelementMapDao;
 	
 	@Autowired
 	protected ExtensionDao extensionDao;
 	
 	@Autowired
-	private ArtifactclassActionUserDao artifactclassActionUserDao;
+	private ActionArtifactclassUserDao artifactclassActionUserDao;
 	
 	@Autowired
 	protected SequenceUtil sequenceUtil;
@@ -119,8 +111,8 @@ public class StagedService extends DwaraService{
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 		List<String> scanFolderBasePathList = new ArrayList<String>();
 		
-		List<ArtifactclassActionUser> artifactclassActionUserList = artifactclassActionUserDao.findAllByArtifactclassIdAndActionId(artifactclassId, Action.ingest.name());
-		for (ArtifactclassActionUser artifactclassActionUser : artifactclassActionUserList) {
+		List<ActionArtifactclassUser> artifactclassActionUserList = artifactclassActionUserDao.findAllByArtifactclassIdAndActionId(artifactclassId, Action.ingest.name());
+		for (ActionArtifactclassUser artifactclassActionUser : artifactclassActionUserList) {
 			scanFolderBasePathList.add(configuration.getReadyToIngestSrcDirRoot() + java.io.File.separator + artifactclassActionUser.getUser().getName());
 		}
 		

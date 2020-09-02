@@ -27,13 +27,13 @@ public class Destination implements Cacheable{
 	@Column(name="path", unique = true)
 	private String path;	
 
+    @Column(name="use_buffering")
+    private boolean useBuffering;
+    
     @OneToMany(mappedBy = "destination",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
     List<ArtifactclassDestination> artifactclassDestination = new ArrayList<>();
-    
-    @Column(name="use_buffering")
-    private boolean useBuffering;
 
 	
 	public String getId() {

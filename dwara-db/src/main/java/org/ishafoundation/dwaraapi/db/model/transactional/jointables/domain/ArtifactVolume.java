@@ -38,10 +38,6 @@ public class ArtifactVolume {
 	@EmbeddedId
 	private ArtifactVolumeKey id;
 
-//	@ManyToOne(fetch = FetchType.LAZY)
-//    @MapsId("artifact1Id")
-//	private Artifact1 artifact1;
-
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("volumeId")
 	private Volume volume;

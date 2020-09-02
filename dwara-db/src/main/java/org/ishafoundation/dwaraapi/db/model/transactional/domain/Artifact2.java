@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.domain;
 		
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
@@ -13,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @SequenceGenerator(initialValue = 1, name = "artifact_sequence", allocationSize = 1)
-@Table(name=Artifact.TABLE_NAME_PREFIX + "2")
+@Table(name=Artifact.TABLE_NAME_PREFIX + "2", indexes = {@Index(columnList = "total_size")})
 public class Artifact2 extends Artifact {
     static {
     	DomainSpecificArtifactFactory.register(TABLE_NAME_PREFIX + "2", Artifact2.class);

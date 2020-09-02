@@ -13,17 +13,27 @@ public class RequestDetails {
 	
 	// format
 	@JsonProperty("volume_id")
-	private String volume_id;
+	private String volumeId;
 	
 	@JsonProperty("volume_group_id")
-	private String volume_group_id;
+	private String volumeGroupId;
 	
 	@JsonProperty("volume_blocksize")
-	private Integer volume_blocksize;
+	private Integer volumeBlocksize;
 
 	private String storagesubtype;
 	
 	private Boolean force;
+
+	// NOT NEEDED AS WE JUST STORE USERREQUEST AND FOR ALL USERREQUESTS WE ONLY HAVE THE FREEFORM BODY JSONNODE
+//	// Rename
+//	
+//	@JsonProperty("old_name")
+//	private String oldName;
+//	
+//	@JsonProperty("new_name")
+//	private String newName;
+	
 
 	// ingest stuff
 	@JsonProperty("artifactclass_id")
@@ -50,11 +60,8 @@ public class RequestDetails {
 	@JsonProperty("file_id")
 	private Integer fileId;
 
-	@JsonProperty("copy_number")
-	private Integer copyNumber;
-	
-	@JsonProperty("location_id")
-	private String locationId; // specifies which location(copy) to retrieve the data from.
+	@JsonProperty("copy_id")
+	private Integer copyId;
 	
 	@JsonProperty("destinationpath")
 	private String destinationPath;
@@ -83,34 +90,35 @@ public class RequestDetails {
 
 	/********************  FORMAT  ********************/
 
-	public String getVolume_id() {
-		return volume_id;
+
+	public String getVolumeId() {
+		return volumeId;
 	}
 
-	public void setVolume_id(String volume_id) {
-		this.volume_id = volume_id;
+	public void setVolumeId(String volumeId) {
+		this.volumeId = volumeId;
 	}
 
-	public String getVolume_group_id() {
-		return volume_group_id;
+	public String getVolumeGroupId() {
+		return volumeGroupId;
 	}
 
-	public void setVolume_group_id(String volume_group_id) {
-		this.volume_group_id = volume_group_id;
+	public void setVolumeGroupId(String volumeGroupId) {
+		this.volumeGroupId = volumeGroupId;
 	}
 
-	public Integer getVolume_blocksize() {
-		return volume_blocksize;
+	public Integer getVolumeBlocksize() {
+		return volumeBlocksize;
 	}
 
-	public void setVolume_blocksize(Integer volume_blocksize) {
-		this.volume_blocksize = volume_blocksize;
+	public void setVolumeBlocksize(Integer volumeBlocksize) {
+		this.volumeBlocksize = volumeBlocksize;
 	}
 
 	public String getStoragesubtype() {
 		return storagesubtype;
 	}
-
+	
 	public void setStoragesubtype(String storagesubtype) {
 		this.storagesubtype = storagesubtype;
 	}
@@ -122,6 +130,24 @@ public class RequestDetails {
 	public void setForce(Boolean force) {
 		this.force = force;
 	}
+	
+	/********************  RENAME  ********************/
+
+//	public String getOldName() {
+//		return oldName;
+//	}
+//
+//	public void setOldName(String oldName) {
+//		this.oldName = oldName;
+//	}
+//
+//	public String getNewName() {
+//		return newName;
+//	}
+//
+//	public void setNewName(String newName) {
+//		this.newName = newName;
+//	}
 
 	/********************  INGEST  ********************/
 	
@@ -183,20 +209,12 @@ public class RequestDetails {
 		this.fileId = fileId;
 	}
 	
-	public Integer getCopyNumber() {
-		return copyNumber;
+	public Integer getCopyId() {
+		return copyId;
 	}
 
-	public void setCopyNumber(Integer copyNumber) {
-		this.copyNumber = copyNumber;
-	}
-
-	public String getLocationId() {
-		return locationId;
-	}
-
-	public void setLocationId(String locationId) {
-		this.locationId = locationId;
+	public void setCopyId(Integer copyId) {
+		this.copyId = copyId;
 	}
 
 	public String getDestinationPath() {

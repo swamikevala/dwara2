@@ -14,7 +14,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassActionUser;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassUser;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassDestination;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
@@ -30,17 +30,11 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 	@Column(name="id")
 	private String id;
 	
-	@Column(name="name", unique = true)
-	private String name;
+	@Column(name="description")
+	private String description;
 	
 	@Column(name="domain_id")
 	private org.ishafoundation.dwaraapi.enumreferences.Domain domain;
-	
-	@Column(name="\"group\"")
-	private boolean group;
-
-	@ManyToOne(fetch = FetchType.LAZY)
-	private Artifactclass groupRef;	
 
 	@Column(name="path_prefix")
 	private String pathPrefix;	
@@ -53,8 +47,12 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 	@Column(name="source")
 	private Boolean source;
 	
-//	@Column(name="preservation_version")
-//	private boolean preservationVersion;
+	// Many derived artifact classes like preview/mezz proxy can refer to the source artifactclass...
+	@ManyToOne(fetch = FetchType.LAZY)
+	private Artifactclass artifactclassRef;
+	
+	@Column(name="import_only")
+	private Boolean importOnly;
 
 	@Column(name="concurrent_volume_copies")
 	private Boolean concurrentVolumeCopies;
@@ -70,7 +68,7 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
     @OneToMany(mappedBy = "artifactclass",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
-    private List<ArtifactclassActionUser> artifactclassActionUser = new ArrayList<>();   
+    private List<ActionArtifactclassUser> artifactclassActionUser = new ArrayList<>();   
 
     @OneToMany(mappedBy = "artifactclass",
             cascade = CascadeType.MERGE,
@@ -85,12 +83,40 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 		this.id = id;
 	}
 	
-    public String getName() {
-		return name;
+	public String getDescription() {
+		return description;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public Artifactclass getArtifactclassRef() {
+		return artifactclassRef;
+	}
+
+	public void setArtifactclassRef(Artifactclass artifactclassRef) {
+		this.artifactclassRef = artifactclassRef;
+	}
+
+	public Boolean getImportOnly() {
+		return importOnly;
+	}
+
+	public void setImportOnly(Boolean importOnly) {
+		this.importOnly = importOnly;
+	}
+
+	public Boolean getConcurrentVolumeCopies() {
+		return concurrentVolumeCopies;
+	}
+
+	public void setConcurrentVolumeCopies(Boolean concurrentVolumeCopies) {
+		this.concurrentVolumeCopies = concurrentVolumeCopies;
+	}
+
+	public Boolean getSource() {
+		return source;
 	}
 
 	public org.ishafoundation.dwaraapi.enumreferences.Domain getDomain() {
@@ -101,21 +127,7 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 		this.domain = domain;
 	}
 	
-	public boolean isGroup() {
-		return group;
-	}
 
-	public void setGroup(boolean group) {
-		this.group = group;
-	}
-
-	public Artifactclass getGroupRef() {
-		return groupRef;
-	}
-
-	public void setGroupRef(Artifactclass groupRef) {
-		this.groupRef = groupRef;
-	}
 	
 	public String getPathPrefix() {
 		return pathPrefix;
@@ -175,12 +187,12 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 	}
 	
 	@JsonIgnore
-	public List<ArtifactclassActionUser> getArtifactclassActionUser() {
+	public List<ActionArtifactclassUser> getArtifactclassActionUser() {
 		return artifactclassActionUser;
 	}
 
 	@JsonIgnore
-	public void setArtifactclassActionUser(List<ArtifactclassActionUser> artifactclassActionUser) {
+	public void setArtifactclassActionUser(List<ActionArtifactclassUser> artifactclassActionUser) {
 		this.artifactclassActionUser = artifactclassActionUser;
 	}
 
@@ -226,7 +238,7 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
      
     public void addActionUser(Action action, User user) {
     	// linking the join table entry to this owning object
-    	ArtifactclassActionUser artifactclassActionUser = new ArtifactclassActionUser(this, action, user);
+    	ActionArtifactclassUser artifactclassActionUser = new ActionArtifactclassUser(action, this, user);
     	this.artifactclassActionUser.add(artifactclassActionUser);
 
     	// inversing linking the join table entry to the target object

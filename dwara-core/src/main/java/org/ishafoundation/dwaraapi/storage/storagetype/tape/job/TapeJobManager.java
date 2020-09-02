@@ -266,7 +266,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 
 			tActivedevice = tActivedeviceDao.save(tActivedevice);
 			
-			int tapedriveNo = tapedriveDevice.getDetails().getAutoloader_address(); // data transfer element/drive no
+			int tapedriveNo = tapedriveDevice.getDetails().getAutoloaderAddress(); // data transfer element/drive no
 			String tapeLibraryName = driveDetails.getTapelibraryName();
 			
 

@@ -37,8 +37,8 @@ public class ImportStoragetaskAction implements Runnable {
 		try {
 			updateJobInProgress(job);
 			RequestDetails rd = job.getRequest().getDetails();
-			String volUid = rd.getVolume_id();
-			String volGrpUid = rd.getVolume_group_id();
+			String volUid = rd.getVolumeId();
+			String volGrpUid = rd.getVolumeGroupId();
 			logger.trace("Importing catalog for - " + volUid);
 			
 			logger.trace("Attaching " + volUid + " to " + volGrpUid);

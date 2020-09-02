@@ -18,7 +18,6 @@ import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAt
 import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
@@ -29,7 +28,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobMap;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
@@ -56,9 +54,6 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private JobDao jobDao; 
-	
-	@Autowired
-	private JobMapDao jobMapDao; 
 
 	@Autowired
 	private VolumeDao volumeDao;
@@ -220,17 +215,17 @@ public abstract class AbstractStoragetypeJobProcessor {
 			String archiveId = archiveResponse.getArchiveId();// For tar it will not be available...;
 			artifactStartVolumeBlock = archiveResponse.getArtifactStartVolumeBlock();
 		    Integer artifactEndVolumeBlock = archiveResponse.getArtifactEndVolumeBlock();
-		    artifactVolumeDetails.setArchive_id(archiveId);
-		    artifactVolumeDetails.setStart_volume_block(artifactStartVolumeBlock);
-		    artifactVolumeDetails.setEnd_volume_block(artifactEndVolumeBlock);
+		    artifactVolumeDetails.setArchiveId(archiveId);
+		    artifactVolumeDetails.setStartVolumeBlock(artifactStartVolumeBlock);
+		    artifactVolumeDetails.setEndVolumeBlock(artifactEndVolumeBlock);
 		    
 		    artifactVolume.setDetails(artifactVolumeDetails);
 	    }
 	    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 	    artifactVolume = domainSpecificArtifactVolumeRepository.save(artifactVolume);
 	    
-    	logger.info("ArtifactVolume - " + artifactVolume.getId().getArtifactId() + " " + artifactVolume.getName() + " " + artifactVolume.getId().getVolumeId() + " " + artifactVolume.getDetails().getStart_volume_block() + " " + artifactVolume.getDetails().getEnd_volume_block());
-    	int lastArtifactOnVolumeEndVolumeBlock = artifactVolume.getDetails().getEnd_volume_block();
+    	logger.info("ArtifactVolume - " + artifactVolume.getId().getArtifactId() + " " + artifactVolume.getName() + " " + artifactVolume.getId().getVolumeId() + " " + artifactVolume.getDetails().getStartVolumeBlock() + " " + artifactVolume.getDetails().getEndVolumeBlock());
+    	int lastArtifactOnVolumeEndVolumeBlock = artifactVolume.getDetails().getEndVolumeBlock();
     	logger.trace("lastArtifactOnVolumeEndVolumeBlock " + lastArtifactOnVolumeEndVolumeBlock);
     	logger.trace("volume.getDetails().getBlocksize() - " + volume.getDetails().getBlocksize());
     	long usedCapacity = (long) volume.getDetails().getBlocksize() * lastArtifactOnVolumeEndVolumeBlock;
@@ -252,14 +247,15 @@ public abstract class AbstractStoragetypeJobProcessor {
 		Volume volume = storageJob.getVolume();
     	
 		Job writeJobToBeVerified = null;
-		List<JobMap> preReqJobRefs = jobMapDao.findAllByIdJobId(job.getId());// getting all prerequisite jobss
-		for (JobMap nthPreReqJobRef : preReqJobRefs) {
-			// means a dependent job.
-			Job preReqJobRef  = jobDao.findById(nthPreReqJobRef.getId().getJobRefId()).get();
-			if(preReqJobRef != null && preReqJobRef.getStoragetaskActionId() == Action.write) {
-				writeJobToBeVerified = preReqJobRef;
+		List<Integer> dependencies = job.getDependencies();
+		if(dependencies != null) {
+			for (Integer nthPreReqJobId : dependencies) {
+				Job preReqJobRef  = jobDao.findById(nthPreReqJobId).get();
+				if(preReqJobRef != null && preReqJobRef.getStoragetaskActionId() == Action.write) {
+					writeJobToBeVerified = preReqJobRef;
+				}
 			}
-		}		
+		}
 		
 		String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
@@ -275,8 +271,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
 		
-		selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStart_volume_block());
-		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEnd_volume_block());
+		selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStartVolumeBlock());
+		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEndVolumeBlock());
 		
 		// to where
 		String targetLocationPath = configuration.getRestoreTmpLocationForVerification();
@@ -421,8 +417,25 @@ public abstract class AbstractStoragetypeJobProcessor {
 		if(storageJob.isRestoreVerify())
 			updateFileVolumeVerifiedDate(selectedStorageJob); // update the verified date here...
 		
-		// upon completion moving the file to the original requested dest path
-		FileUtils.moveDirectory(new java.io.File(storageJob.getTargetLocationPath()), new java.io.File(storageJob.getTargetLocationPath().replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "")));
+		// upon completion moving the file to the original requested dest path		
+		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
+		String restoredFilePathName = file.getPathname();
+		
+		String srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName;
+		String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");
+		
+		logger.trace("src " + srcPath);
+		logger.trace("dest " + destPath);
+		
+		java.io.File srcFile = new java.io.File(srcPath);
+		java.io.File destFile = new java.io.File(destPath);
+		//String destDirPath = storageJob.getTargetLocationPath().replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");
+		//logger.trace("destDirPath " + destDirPath);
+		//FileUtils.moveToDirectory(srcFile, new java.io.File(destDirPath), false); // doesn't create the full path... hence the if condition on directory or file...
+		if(srcFile.isDirectory())
+			FileUtils.moveDirectory(srcFile, destFile);
+		else
+			FileUtils.moveFile(srcFile, destFile);
 	}
 	
 	private IStoragelevel getStoragelevelImpl(SelectedStorageJob selectedStorageJob){

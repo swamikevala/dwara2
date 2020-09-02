@@ -69,7 +69,7 @@ public class TapeJobSelector {
 			tapeJob = chooseAJobForTheDrive(tapeJobsList, driveDetails);
 		/*}*/
 		
-		// checking the volume capacity against the artifact size
+		// checking the selected Job's volume capacity against the artifact size
 		if(tapeJob != null && tapeJob.getJob().getStoragetaskActionId() == Action.write) {
 			long projectedArtifactSize = volumeUtil.getProjectedArtifactSize(tapeJob.getArtifactSize(), tapeJob.getVolume());
 			if(volumeUtil.getVolumeUnusedCapacity(tapeJob.getDomain(), tapeJob.getVolume()) <= projectedArtifactSize) {
@@ -99,15 +99,15 @@ public class TapeJobSelector {
 	
 	/*
 	checks if drive has a tape
-	 	yes
-			check if any job in the job list need to use the same tape
-				yes
-					group the job list based on the same tape
-					order the job list within a tape 
-					choose a job
-				no
-					goto !~!
-		no!~!
+	 	1 yes
+			a check if any job in the job list need to use the same tape
+				i	yes
+					*	group the job list based on the same tape
+					*	order the job list within a tape 
+					*	choose a job
+				ii	no
+						goto !~!
+		2 no !~!
 			group the job list based on tapes
 			order the job list within a tape 
 			choose a job

@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.api.resp.job;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -45,8 +47,10 @@ public class JobResponse {
     private String status;
     @JsonProperty("volume")
     private String volume;
-    @JsonProperty("copyNumber")
-    private Integer copyNumber;
+    @JsonProperty("copy")
+    private Integer copy;
+    @JsonProperty("errors")
+    private List<String> errors; // failure reason
     
     @JsonProperty("id")
     public Integer getId() {
@@ -167,14 +171,20 @@ public class JobResponse {
     public void setVolume(String volume) {
         this.volume = volume;
     }
-    
-    @JsonProperty("copyNumber")
-    public Integer getCopyNumber() {
-        return copyNumber;
-    }
 
-    @JsonProperty("copyNumber")
-    public void setCopyNumber(Integer copyNumber) {
-        this.copyNumber = copyNumber;
-    }
+	public Integer getCopy() {
+		return copy;
+	}
+
+	public void setCopy(Integer copy) {
+		this.copy = copy;
+	}
+
+	public List<String> getErrors() {
+		return errors;
+	}
+
+	public void setErrors(List<String> errors) {
+		this.errors = errors;
+	}
 }

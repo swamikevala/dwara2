@@ -24,7 +24,7 @@ public class ArtifactVolumeRepositoryUtil {
 		int lastArtifactOnVolumeEndVolumeBlock = 0;
 		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeId(volume.getId());
 		for (ArtifactVolume artifactVolume : artifactVolumeList) {
-			int avEVB = artifactVolume.getDetails().getEnd_volume_block();
+			int avEVB = artifactVolume.getDetails().getEndVolumeBlock();
 			if(lastArtifactOnVolumeEndVolumeBlock < avEVB) {
 				lastArtifactOnVolumeEndVolumeBlock = avEVB;
 			}

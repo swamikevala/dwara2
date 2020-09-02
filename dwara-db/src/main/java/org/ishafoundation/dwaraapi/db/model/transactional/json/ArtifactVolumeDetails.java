@@ -1,30 +1,34 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ArtifactVolumeDetails {
-	private String archive_id;
-	private Integer start_volume_block;
-	private Integer end_volume_block;
+	@JsonProperty("archive_id")
+	private String archiveId;
+	@JsonProperty("start_volume_block")
+	private Integer startVolumeBlock;
+	@JsonProperty("end_volume_block")
+	private Integer endVolumeBlock;
 	
-	public String getArchive_id() {
-		return archive_id;
+	public String getArchiveId() {
+		return archiveId;
 	}
-	public void setArchive_id(String archive_id) {
-		this.archive_id = archive_id;
+	public void setArchiveId(String archiveId) {
+		this.archiveId = archiveId;
 	}
-	public Integer getStart_volume_block() {
-		return start_volume_block;
+	public Integer getStartVolumeBlock() {
+		return startVolumeBlock;
 	}
-	public void setStart_volume_block(Integer start_volume_block) {
-		this.start_volume_block = start_volume_block;
+	public void setStartVolumeBlock(Integer startVolumeBlock) {
+		this.startVolumeBlock = startVolumeBlock;
 	}
-	public Integer getEnd_volume_block() {
-		return end_volume_block;
+	public Integer getEndVolumeBlock() {
+		return endVolumeBlock;
 	}
-	public void setEnd_volume_block(Integer end_volume_block) {
-		this.end_volume_block = end_volume_block;
+	public void setEndVolumeBlock(Integer endVolumeBlock) {
+		this.endVolumeBlock = endVolumeBlock;
 	}
 
 	// TODO : equals and hashCode

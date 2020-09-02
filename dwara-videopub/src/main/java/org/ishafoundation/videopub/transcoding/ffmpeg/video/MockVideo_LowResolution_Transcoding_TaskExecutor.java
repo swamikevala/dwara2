@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Component("previewproxy-video-transcoding")
+@Component("video-proxy-low-gen")
 @Profile({ "dev | stage" })
 public class MockVideo_LowResolution_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
     private static final Logger logger = LoggerFactory.getLogger(MockVideo_LowResolution_Transcoding_TaskExecutor.class);

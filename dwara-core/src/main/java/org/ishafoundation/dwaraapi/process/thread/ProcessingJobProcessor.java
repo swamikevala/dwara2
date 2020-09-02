@@ -8,29 +8,27 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.ishafoundation.dwaraapi.db.dao.transactional.FailureDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
-import org.ishafoundation.dwaraapi.db.model.transactional.Failure;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobMap;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
-import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,10 +55,10 @@ public class ProcessingJobProcessor implements Runnable{
 	private JobDao jobDao;	
 	
 	@Autowired
-	private JobMapDao jobMapDao;	
+	private FlowelementDao flowelementDao;	
 	
 	@Autowired
-	private FailureDao failureDao;
+	private ProcessingFailureDao failureDao;
     
 	@Autowired
 	private TFileJobDao tFileJobDao;
@@ -71,17 +69,18 @@ public class ProcessingJobProcessor implements Runnable{
 	@Autowired
 	private DomainUtil domainUtil;
 
-	protected Job job;
-	protected Domain domain;
-	protected Artifact inputArtifact;
-	protected int fileCount;
-	protected long totalSize;
-	protected org.ishafoundation.dwaraapi.db.model.transactional.domain.File file;
-	protected LogicalFile logicalFile;
+	private Job job;
+	private Domain domain;
+	private Artifact inputArtifact;
+	private int fileCount;
+	private long totalSize;
+	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File file;
+	private LogicalFile logicalFile;
 	
-	protected String outputArtifactName;
-	protected String outputArtifactPathname;
-	protected String destinationDirPath;
+	private Artifactclass outputArtifactclass;
+	private String outputArtifactName;
+	private String outputArtifactPathname;
+	private String destinationDirPath;
 	
 
 	public Job getJob() {
@@ -138,6 +137,14 @@ public class ProcessingJobProcessor implements Runnable{
 
 	public void setLogicalFile(LogicalFile logicalFile) {
 		this.logicalFile = logicalFile;
+	}
+
+	public Artifactclass getOutputArtifactclass() {
+		return outputArtifactclass;
+	}
+
+	public void setOutputArtifactclass(Artifactclass outputArtifactclass) {
+		this.outputArtifactclass = outputArtifactclass;
 	}
 
 	public String getOutputArtifactName() {
@@ -251,8 +258,6 @@ public class ProcessingJobProcessor implements Runnable{
 							outputArtifact.setTotalSize(totalSize);
 						    outputArtifact.setFileCount(fileCount);
 						    //outputArtifact.setFileStructureMd5("not needed");
-						    
-						    Artifactclass outputArtifactclass = job.getActionelement().getOutputArtifactclass();
 						    outputArtifact.setArtifactclass(outputArtifactclass);
 						    outputArtifact.setName(outputArtifactName);
 						    
@@ -277,17 +282,8 @@ public class ProcessingJobProcessor implements Runnable{
 						    logger.debug(logMsgPrefix + " - Success");	
 						    
 						    // Now setting all the dependentjobs with the tasktype generated output artifactid
-						    List<JobMap> dependentJobMapList = jobMapDao.findAllByIdJobRefId(job.getId());
-							for (JobMap nthDependentJobMap : dependentJobMapList) {
-								int nthDependentJobId = nthDependentJobMap.getId().getJobId();
-								Job nthDependentJob = jobDao.findById(nthDependentJobId).get();
-	
-								nthDependentJob.setInputArtifactId(outputArtifact.getId()); // output artifact of the current job is the input artifact of the dependent job
-								String logMsgPrefix2 = "DB Job - " + "(" + nthDependentJob.getId() + ") - Updation - InputArtifactId " + outputArtifact.getId();
-								logger.debug(logMsgPrefix2);	
-							    jobDao.save(nthDependentJob);
-							    logger.debug(logMsgPrefix2 + " - Success");
-							}	    		
+						    setInputArtifactForDependentJobs(job.getFlowelement().getFlow().getId(), outputArtifact);
+    		
 						}	    
 
 					    org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
@@ -302,7 +298,7 @@ public class ProcessingJobProcessor implements Runnable{
 						nthFileRowToBeInserted.setPathname(filePathname);
 						
 						// TODO need to be done and set after proxy file is generated
-						nthFileRowToBeInserted.setChecksum(ChecksumUtil.getChecksum(new File(processingtaskResponse.getDestinationPathname()), Checksumtype.sha256)); 
+						//nthFileRowToBeInserted.setChecksum(ChecksumUtil.getChecksum(new File(processingtaskResponse.getDestinationPathname()), Checksumtype.sha256)); 
 						nthFileRowToBeInserted.setSize(FileUtils.sizeOf(new File(processingtaskResponse.getDestinationPathname())));
 				    	logger.debug("DB File Creation");
 				    	try {
@@ -336,9 +332,8 @@ public class ProcessingJobProcessor implements Runnable{
 			logger.error(failureReason, e);
 			
 			// TODO : Work on the threshold failures...
-			// create failed_media_file_run table
 			logger.debug("DB Failure Creation");
-			Failure failure = new Failure(file.getId(),job);
+			ProcessingFailure failure = new ProcessingFailure(file.getId(), job, e.getMessage());
 			failure = failureDao.save(failure);	
 			logger.debug("DB Failure Creation - " + failure.getId());   
 		}
@@ -352,8 +347,24 @@ public class ProcessingJobProcessor implements Runnable{
 //			threadNameHelper.resetThreadName();
 		}
 	}
+
+	private void setInputArtifactForDependentJobs(String flowId, Artifact inputArtifactForDependentJobs) {
+		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndActiveTrueOrderByDisplayOrderAsc(flowId);
+		for (Flowelement nthFlowelement : flowelementList) {
+			if(nthFlowelement.getFlowRef() != null) {
+				setInputArtifactForDependentJobs(nthFlowelement.getFlowRef().getId(), inputArtifactForDependentJobs);
+			}
+			else {
+				Job nthDependentJob = jobDao.findByFlowelementIdAndStatus(nthFlowelement.getId(), Status.queued);
+				String logMsgPrefix2 = "DB Job - " + "(" + nthDependentJob.getId() + ") - Updation - InputArtifactId " + inputArtifactForDependentJobs.getId();
+				logger.debug(logMsgPrefix2);	
+			    jobDao.save(nthDependentJob);
+			    logger.debug(logMsgPrefix2 + " - Success");
+			}
+		}
+	}
 	
-	protected synchronized Job checkAndUpdateStatusToInProgress(Job job, Request systemGeneratedRequest){
+	private synchronized Job checkAndUpdateStatusToInProgress(Job job, Request systemGeneratedRequest){
 		if(job.getStatus() == Status.queued) {
 			Status status = Status.in_progress;
 			

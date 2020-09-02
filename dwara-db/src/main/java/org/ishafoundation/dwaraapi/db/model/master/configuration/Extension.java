@@ -25,9 +25,6 @@ public class Extension implements Cacheable{
 	@Id
 	@Column(name="id")
 	private String id;
-	
-	@Column(name="name", unique = true)
-	private String name;
 
 	@Column(name="description")
 	private String description;
@@ -43,9 +40,8 @@ public class Extension implements Cacheable{
     public Extension() {
     }
  
-    public Extension(String id, String name, String description) {
+    public Extension(String id, String description) {
     	this.id = id;
-        this.name = name;
         this.description = description;
     }
 		
@@ -55,14 +51,6 @@ public class Extension implements Cacheable{
 
 	public void setId(String id) {
 		this.id = id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 	
 	public String getDescription() {
@@ -111,20 +99,18 @@ public class Extension implements Cacheable{
             }
         }
     }
-    
-
 
 	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Extension extension = (Extension) o;
-        return Objects.equals(name, extension.name);
+        return Objects.equals(id, extension.id);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(id);
     }	
 	
 }

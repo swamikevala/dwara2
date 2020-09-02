@@ -12,7 +12,6 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails;
 import org.ishafoundation.dwaraapi.enumreferences.DeviceStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
@@ -23,7 +22,7 @@ import com.vladmihalcea.hibernate.type.json.JsonStringType;
 @Entity
 @Table(name="device")
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-public class Device implements Cacheable{
+public class Device{// implements Cacheable{
 	
 	@Id
 	@Column(name="id")

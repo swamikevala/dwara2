@@ -29,14 +29,6 @@ public class File {
 
 	@Column(name="deleted")
 	private boolean deleted;
-	
-//	// Many file1s from the same artifact1
-//	@ManyToOne(fetch = FetchType.LAZY)
-//	private Artifact artifact;
-//
-//	@OneToOne
-//	@JoinColumn(name="file_ref_id")
-//	private File fileRef;
 
 	public int getId() {
 		return id;
@@ -77,22 +69,6 @@ public class File {
 	public void setDeleted(boolean deleted) {
 		this.deleted = deleted;
 	}
-
-//	public Artifact getArtifact() {
-//		return artifact;
-//	}
-//
-//	public void setArtifact(Artifact artifact) {
-//		this.artifact = artifact;
-//	}
-//
-//	public File getFileRef() {
-//		return fileRef;
-//	}
-//
-//	public void setFileRef(File fileRef) {
-//		this.fileRef = fileRef;
-//	}
 
 	@Override
     public boolean equals(Object o) {

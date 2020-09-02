@@ -3,24 +3,23 @@ package org.ishafoundation.dwaraapi.job;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionelementMapDao;
+import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.Actionelement;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionelementMap;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Flow;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassFlow;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobMap;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
@@ -33,140 +32,185 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JobCreator {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(JobCreator.class);
 
 	@Autowired
 	private JobDao jobDao;
 
 	@Autowired
-	private JobMapDao jobMapDao;
-	
-	@Autowired
-	private ActionelementDao actionelementDao;
+	private ActionArtifactclassFlowDao actionArtifactclassFlowDao;
 
 	@Autowired
-	private ActionelementMapDao actionelementMapDao;
+	private FlowelementDao flowelementDao;
 
 	@Autowired
 	private ArtifactclassVolumeDao artifactclassVolumeDao;
-	
+
+	@Autowired
+    private ProcessingtaskDao processingtaskDao;
+
 	@Autowired
 	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
-	
+
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
-	
-	
+
+
 	// only if action is async create job should be called...
-	public List<Job> createJobs(Request request, Artifact artifact) throws Exception{
+	public List<Job> createJobs(Request request, Artifact sourceArtifact) throws Exception{
 		Action requestedBusinessAction = request.getActionId();
-		List<Integer>  actionelementsToBeSkipped = request.getDetails().getSkipActionelements();
+		List<Integer>  flowelementsToBeSkipped = request.getDetails().getSkipActionelements();
 		org.ishafoundation.dwaraapi.db.model.master.reference.Action action = configurationTablesUtil.getAction(requestedBusinessAction);
-		
+
 		if(action == null)
 			throw new Exception("Action for " + requestedBusinessAction.name() + " not configured in DB properly. Please set it first");
-		
+
 		List<Job> jobList = new ArrayList<Job>();
-		
+
 		if(Actiontype.complex == action.getType()) {
-			Map<Integer, Job> actionelementId_Job_Map = new HashMap<>();// used for getting referenced jobs
-			Map<String, Job> actionelementId_CopyNumber_Job_Map = new HashMap<>();
-			List<Actionelement> actionelementList = actionelementDao.findAllByComplexActionIdAndArtifactclassIdAndActiveTrueOrderByDisplayOrderAsc(requestedBusinessAction, artifact.getArtifactclass().getId());
-			for (Iterator<Actionelement> iterator = actionelementList.iterator(); iterator.hasNext();) {
-				Actionelement actionelement = (Actionelement) iterator.next();
-				
-				if(!actionelementsToBeSkipped.contains(actionelement.getId())){ // if the current actionelement needs to be skipped...
-					Action storagetaskAction = actionelement.getStoragetaskActionId();
-					if(storagetaskAction == Action.write || storagetaskAction == Action.verify) {
-						Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(actionelement.getArtifactclassId());
-						Artifactclass artifactclassGroup = artifactclass.getGroupRef();
-						
-						List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclass(artifactclassGroup);
-						for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {
-							if(artifactclassVolume.isActive()) {
-								Volume volume = artifactclassVolume.getVolume();
-								Job job = new Job();
-								job.setStoragetaskActionId(storagetaskAction);
-								
-								List<ActionelementMap> preRequesiteActionelementMaps = actionelementMapDao.findAllByIdActionelementId(actionelement.getId());
-								job.setInputArtifactId(artifact.getId());
-								job.setActionelement(actionelement);
-								job.setRequest(request);				
-								job.setCreatedAt(LocalDateTime.now());
-								job.setStatus(Status.queued);
-								job.setGroupVolume(volume);
-								job = saveJob(job);
-								
-								
-								// saving all the pre requisite jobs needed for this job...
-								if(preRequesiteActionelementMaps.size() > 0) {
-									for (ActionelementMap nthPreRequesiteActionelementMap : preRequesiteActionelementMaps) {
-										int nthPreRequesiteActionelementId = nthPreRequesiteActionelementMap.getId().getActionelementRefId();
-										Actionelement nthPreRequesiteActionelement = actionelementDao.findById(nthPreRequesiteActionelementId).get();
-										Job nthPreRequesiteJob = null;
-										if(nthPreRequesiteActionelement.getStoragetaskActionId() == Action.write)
-											nthPreRequesiteJob = actionelementId_CopyNumber_Job_Map.get(nthPreRequesiteActionelementMap.getId().getActionelementRefId() + "_" + volume.getCopyNumber());
-										else
-											nthPreRequesiteJob = actionelementId_Job_Map.get(nthPreRequesiteActionelementMap.getId().getActionelementRefId());
-										JobMap jobMap = new JobMap(job, nthPreRequesiteJob);
-										jobMapDao.save(jobMap);
-									}
-								}
-								jobList.add(job);
-								
-								actionelementId_CopyNumber_Job_Map.put(actionelement.getId() + "_" + volume.getCopyNumber(), job);
-								actionelementId_Job_Map.put(actionelement.getId(), job);		
-							}
-						}
-					}
-					else {
-						String processingtaskId = actionelement.getProcessingtaskId();
-						
-						Job job = new Job();
-						if(storagetaskAction != null)
-							job.setStoragetaskActionId(storagetaskAction);
-						if(processingtaskId != null)
-							job.setProcessingtaskId(processingtaskId);
-						
-						List<ActionelementMap> preRequesiteActionelementMaps = actionelementMapDao.findAllByIdActionelementId(actionelement.getId());
-						if(storagetaskAction != null || (processingtaskId != null && preRequesiteActionelementMaps.size() == 0)) {
-							// If a processing task contains prerequisite task that means its a derived one, for which the input library id needs to set by the prerequisite/parent task's job at the time of its processing and not at the time of job creation...
-							// for eg., Mezz copy wont have a input library id upfront, which will be generated by its prerequisite/parent Mezz Transcoding job...
-							job.setInputArtifactId(artifact.getId());
-						}
-						job.setActionelement(actionelement);
-						job.setRequest(request);				
-						job.setCreatedAt(LocalDateTime.now());
-						job.setStatus(Status.queued);
-		
-						job = saveJob(job);
-						
-						
-						// saving all the pre requisite jobs needed for this job...
-						if(preRequesiteActionelementMaps != null) {
-							for (ActionelementMap nthPreRequesiteActionelementMap : preRequesiteActionelementMaps) {
-								Job nthPreRequesiteJob = actionelementId_Job_Map.get(nthPreRequesiteActionelementMap.getId().getActionelementRefId());
-								JobMap jobMap = new JobMap(job, nthPreRequesiteJob);
-								jobMapDao.save(jobMap);
-							}
-						}
-						jobList.add(job);
-						actionelementId_Job_Map.put(actionelement.getId(), job);
-					}
-				}
+			String sourceArtifactclassId = sourceArtifact.getArtifactclass().getId();
+			// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
+			List<ActionArtifactclassFlow> actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByArtifactclassIdOrArtifactclassIdAndActionIdAndActiveTrue("_all_", sourceArtifactclassId, requestedBusinessAction.name()); //
+			for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
+				String nthFlowId = actionArtifactclassFlow.getFlow().getId();
+
+				// TODO Skip individual flow - How? Need to be defined
+
+				Map<String, Job> flowelementId_Job_Map = new HashMap<>();// used for getting referenced jobs
+				Map<String, Job> flowelementId_CopyNumber_Job_Map = new HashMap<>();
+
+				iterateFlow(request, sourceArtifactclassId, sourceArtifact.getId(), nthFlowId, null, jobList, flowelementId_Job_Map, flowelementId_CopyNumber_Job_Map);
+
 			}
 		}
 		else if(Actiontype.storage_task == action.getType()){
 			String actionName = requestedBusinessAction.name();
 			logger.debug("Calling storage task impl " + actionName);
 			AbstractStoragetaskAction actionImpl = storagetaskActionMap.get(actionName);
-			
+
 			jobList.addAll(actionImpl.createJobsForStoragetaskAction(request, requestedBusinessAction));
 		}
 		return jobList;
 	}
 
+	private void iterateFlow(Request request, String artifactclassId, Integer artifactId, String nthFlowId, Flowelement flowRefFlowelement, List<Job> jobList,
+			Map<String, Job> flowelementId_Job_Map, Map<String, Job> flowelementId_CopyNumber_Job_Map) {
+		//  get all the flow elements for the flow
+		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndActiveTrueOrderByDisplayOrderAsc(nthFlowId);
+		for (Flowelement nthFlowelement : flowelementList) {
+			Flow flowRef = nthFlowelement.getFlowRef();
+			if(flowRef != null) {
+				// TODO : for now assuming that the prereq for the flowelement with flowref is going to have only one dependency and that too a process task..
+				Flowelement prereqFlowelement = flowelementDao.findById(nthFlowelement.getDependencies().get(0)).get();
+				String processingtaskId = prereqFlowelement.getProcessingtaskId();  
+				Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+				String outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix();
+				String outputArtifactclassId = request.getDetails().getArtifactclassId() + outputArtifactclassSuffix;
+				iterateFlow(request, outputArtifactclassId, null, flowRef.getId(), nthFlowelement, jobList, flowelementId_Job_Map, flowelementId_CopyNumber_Job_Map);
+			} else {
+				createJob(request, artifactclassId, artifactId, flowRefFlowelement, nthFlowelement, jobList, flowelementId_Job_Map, flowelementId_CopyNumber_Job_Map);
+			}
+		}
+	}
+
+	private void createJob(Request request,  String artifactclassId, Integer artifactId, Flowelement flowRefFlowelement, Flowelement nthFlowelement, List<Job> jobList,
+			Map<String, Job> flowelementId_Job_Map, Map<String, Job> flowelementId_CopyNumber_Job_Map) {
+
+		String putKeyPrefix="";
+		String getKeyPrefix = "";
+		List<Integer> preRequesiteFlowelements = null;
+		if(flowRefFlowelement == null) {
+			preRequesiteFlowelements = nthFlowelement.getDependencies();
+		}
+		else {
+			putKeyPrefix = flowRefFlowelement.getId() + "_";
+			if(nthFlowelement.getDependencies() == null)
+				preRequesiteFlowelements = flowRefFlowelement.getDependencies();
+			if(nthFlowelement.getDependencies() != null) {
+				preRequesiteFlowelements = nthFlowelement.getDependencies();
+				getKeyPrefix = flowRefFlowelement.getId() + "_";
+			}
+		}
+		// TODO Skip individual flow elements - How? Need to be defined
+		Action storagetaskAction = nthFlowelement.getStoragetaskActionId();
+
+		if(storagetaskAction == Action.write || storagetaskAction == Action.verify) {
+			List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassId(artifactclassId);
+			for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {
+				if(artifactclassVolume.isActive()) {
+					Volume volume = artifactclassVolume.getVolume();
+					Job job = new Job();
+					job.setStoragetaskActionId(storagetaskAction);
+					job.setInputArtifactId(artifactId);
+					job.setFlowelement(nthFlowelement);
+					job.setRequest(request);				
+					job.setCreatedAt(LocalDateTime.now());
+					job.setStatus(Status.queued);
+					job.setGroupVolume(volume); // we dont know the physical volume yet... How about provisioned volumes?
+
+					// saving all the pre requisite jobs needed for this job...
+					List<Integer> dependentJobIds = new ArrayList<Integer>();
+					if(preRequesiteFlowelements != null) {
+						for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
+							Job nthPreRequesiteJob = null;
+							Flowelement nthPreRequesiteFlowelement = flowelementDao.findById(nthPreRequesiteFlowelementId).get(); // TODO Cache it
+							if(nthPreRequesiteFlowelement.getStoragetaskActionId() == Action.write)
+								nthPreRequesiteJob = flowelementId_CopyNumber_Job_Map.get(getKeyPrefix + nthPreRequesiteFlowelement.getId() + "_" + volume.getCopy().getId());
+							else
+								nthPreRequesiteJob = flowelementId_Job_Map.get(getKeyPrefix + nthPreRequesiteFlowelement.getId());
+
+
+							dependentJobIds.add(nthPreRequesiteJob.getId());
+						}
+					}
+					if(dependentJobIds.size() > 0)
+						job.setDependencies(dependentJobIds);
+					job = saveJob(job);
+					jobList.add(job);
+
+					flowelementId_CopyNumber_Job_Map.put(putKeyPrefix + nthFlowelement.getId() + "_" + volume.getCopy().getId(), job);
+					flowelementId_Job_Map.put(putKeyPrefix + nthFlowelement.getId(), job);		
+				}
+			}
+		}
+		else {
+			String processingtaskId = nthFlowelement.getProcessingtaskId();
+
+			Job job = new Job();
+			if(storagetaskAction != null)
+				job.setStoragetaskActionId(storagetaskAction);
+			if(processingtaskId != null)
+				job.setProcessingtaskId(processingtaskId);
+
+
+			if(storagetaskAction != null || (processingtaskId != null && preRequesiteFlowelements == null)) {
+				// If a processing task contains prerequisite task that means its a derived one, for which the input library id needs to set by the prerequisite/parent task's job at the time of its processing and not at the time of job creation...
+				// for eg., Mezz copy wont have a input library id upfront, which will be generated by its prerequisite/parent Mezz Transcoding job...
+				job.setInputArtifactId(artifactId);
+			}
+			job.setFlowelement(nthFlowelement);
+			job.setRequest(request);				
+			job.setCreatedAt(LocalDateTime.now());
+			job.setStatus(Status.queued);
+			List<Integer> dependentJobIds = new ArrayList<Integer>();
+			if(preRequesiteFlowelements != null) {
+				for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
+					Job nthPreRequesiteJob = null;
+					//					Flowelement nthPreRequesiteFlowelement = flowelementDao.findById(nthPreRequesiteFlowelementId).get(); // TODO Cache it
+					//					nthPreRequesiteJob = flowelementId_Job_Map.get(nthPreRequesiteFlowelement.getId());
+					nthPreRequesiteJob = flowelementId_Job_Map.get(getKeyPrefix + nthPreRequesiteFlowelementId);
+					dependentJobIds.add(nthPreRequesiteJob.getId());
+				}
+				job.setDependencies(dependentJobIds);
+			}
+			
+			job = saveJob(job);
+			jobList.add(job);
+			flowelementId_Job_Map.put(putKeyPrefix + nthFlowelement.getId(), job);
+		}
+
+	}
 	private Job saveJob(Job job) {
 		//logger.debug("DB Job row Creation");   
 		job = jobDao.save(job);
@@ -174,4 +218,4 @@ public class JobCreator {
 		return job;
 	}
 }
-	
+

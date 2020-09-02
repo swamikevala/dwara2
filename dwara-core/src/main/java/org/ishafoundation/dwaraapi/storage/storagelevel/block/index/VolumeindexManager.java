@@ -102,8 +102,8 @@ public class VolumeindexManager {
 			if(artifactVolume.getDetails().getArchive_id() != null)
 				artifact.setArchivenumber(artifactVolume.getDetails().getArchive_id());
 			*/
-			artifact.setStartblock(artifactVolume.getDetails().getStart_volume_block());
-			artifact.setEndblock(artifactVolume.getDetails().getEnd_volume_block());
+			artifact.setStartblock(artifactVolume.getDetails().getStartVolumeBlock());
+			artifact.setEndblock(artifactVolume.getDetails().getEndVolumeBlock());
 			int artifactId = artifactVolume.getId().getArtifactId();
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) artifactRepository.findById(artifactId).get();
 			//org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = domainUtil.getDomainSpecificArtifact(domain, artifactId);

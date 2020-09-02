@@ -1,21 +1,33 @@
 package org.ishafoundation.dwaraapi.db.model.master.configuration.json;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DeviceDetails {
 	
 	//tape drive
 	private String type; //	e.g. LTO
+	
+	@JsonProperty("interface")
 	private String interface_;	
-	private String autoloader_id; //	Which autoloader the drive is connected to
-	private Integer autoloader_address; //	Which autoloader data transfer element the drive is associated with
+	
+	@JsonProperty("autoloader_id")
+	private String autoloaderId; //	Which autoloader the drive is connected to
+	
+	@JsonProperty("autoloader_address")
+	private Integer autoloaderAddress; //	Which autoloader data transfer element the drive is associated with
+	
 	private Boolean standalone;//	Is the drive a standalone drive
 	
 	//tape autoloader
 	private Integer slots; //	
-	private Integer max_drives;	
-	private Integer[] generations_supported;
+	
+	@JsonProperty("max_drives")
+	private Integer maxDrives;
+	
+	@JsonProperty("generations_supported")
+	private Integer[] generationsSupported;
 	
 	
 	public String getType() {
@@ -30,17 +42,17 @@ public class DeviceDetails {
 	public void setInterface_(String interface_) {
 		this.interface_ = interface_;
 	}
-	public String getAutoloader_id() {
-		return autoloader_id;
+	public String getAutoloaderId() {
+		return autoloaderId;
 	}
-	public void setAutoloader_id(String autoloader_id) {
-		this.autoloader_id = autoloader_id;
+	public void setAutoloaderId(String autoloaderId) {
+		this.autoloaderId = autoloaderId;
 	}
-	public Integer getAutoloader_address() {
-		return autoloader_address;
+	public Integer getAutoloaderAddress() {
+		return autoloaderAddress;
 	}
-	public void setAutoloader_address(Integer autoloader_address) {
-		this.autoloader_address = autoloader_address;
+	public void setAutoloaderAddress(Integer autoloaderAddress) {
+		this.autoloaderAddress = autoloaderAddress;
 	}
 	public Boolean getStandalone() {
 		return standalone;
@@ -54,16 +66,16 @@ public class DeviceDetails {
 	public void setSlots(Integer slots) {
 		this.slots = slots;
 	}
-	public Integer getMax_drives() {
-		return max_drives;
+	public Integer getMaxDrives() {
+		return maxDrives;
 	}
-	public void setMax_drives(Integer max_drives) {
-		this.max_drives = max_drives;
+	public void setMaxDrives(Integer maxDrives) {
+		this.maxDrives = maxDrives;
 	}
-	public Integer[] getGenerations_supported() {
-		return generations_supported;
+	public Integer[] getGenerationsSupported() {
+		return generationsSupported;
 	}
-	public void setGenerations_supported(Integer[] generations_supported) {
-		this.generations_supported = generations_supported;
+	public void setGenerationsSupported(Integer[] generationsSupported) {
+		this.generationsSupported = generationsSupported;
 	}
 }

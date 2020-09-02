@@ -9,7 +9,7 @@ public enum CacheableTablesList {
 	archiveformat,
 	artifactclass,
 	destination,
-	device,
+	//device,
 	//domain,
 	extension,
 	location,

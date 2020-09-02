@@ -47,7 +47,7 @@ public class Restore extends AbstractStoragetaskAction{
 		storageJob.setFileId(fileIdToBeRestored);
 		
 		// From where - get the volume
-		Integer copyNumber = requestDetails.getCopyNumber();
+		Integer copyNumber = requestDetails.getCopyId();
 		if(copyNumber == null) {
 			copyNumber = 1;// TODO : we need to default it
 		}
@@ -101,6 +101,6 @@ public class Restore extends AbstractStoragetaskAction{
 	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, int copyNumber) {
     	@SuppressWarnings("unchecked")
 		FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-    	return domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeGroupRefCopyNumber(fileIdToBeRestored, copyNumber);
+    	return domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeGroupRefCopyId(fileIdToBeRestored, copyNumber);
 	}
 }

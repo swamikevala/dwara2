@@ -73,6 +73,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 //			logger.error(e.getMessage());
 //			if(logger.isTraceEnabled())
 				logger.error(e.getMessage(), e);//printing the stacktrace
+			job.setErrorMsg(e.getMessage());
 			updateJobFailed(job);
 			// updateError Table;
 		}

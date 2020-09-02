@@ -64,7 +64,7 @@ public class VolumeFinalizer {
 			systemrequest.setDomain(request.getDomain());
 
 			RequestDetails systemrequestDetails = new RequestDetails();
-			systemrequestDetails.setVolume_id(volumeId);
+			systemrequestDetails.setVolumeId(volumeId);
 			systemrequest.setDetails(systemrequestDetails);
 			systemrequest = requestDao.save(systemrequest);
 			logger.info("System request - " + systemrequest.getId());

@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Component("previewproxy-video-transcoding")
+@Component("video-proxy-low-gen")
 @Primary
 @Profile({ "!dev & !stage" })
 public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{

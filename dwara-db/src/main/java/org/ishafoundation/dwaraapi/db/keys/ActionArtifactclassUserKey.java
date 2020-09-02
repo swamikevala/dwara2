@@ -7,7 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 @Embeddable
-public class ArtifactclassActionUserKey implements Serializable {
+public class ActionArtifactclassUserKey implements Serializable {
 	
 	private static final long serialVersionUID = 8894504543240809501L;
 
@@ -20,11 +20,11 @@ public class ArtifactclassActionUserKey implements Serializable {
     @Column(name = "user_id")
     private int userId;
  
-    public ArtifactclassActionUserKey() {}
+    public ActionArtifactclassUserKey() {}
     
-    public ArtifactclassActionUserKey(
-        String artifactclassId,
-        String actionId,
+    public ActionArtifactclassUserKey(
+		String actionId,
+		String artifactclassId,
         int userId) {
     	this.artifactclassId = artifactclassId;
         this.actionId = actionId;
@@ -62,7 +62,7 @@ public class ArtifactclassActionUserKey implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        ArtifactclassActionUserKey that = (ArtifactclassActionUserKey) o;
+        ActionArtifactclassUserKey that = (ActionArtifactclassUserKey) o;
         return Objects.equals(artifactclassId, that.artifactclassId) && 
         		Objects.equals(actionId, that.actionId) &&
         		Objects.equals(userId, that.userId);

@@ -1,44 +1,44 @@
 package org.ishafoundation.dwaraapi.db.model.master.jointables;
 
+import java.util.List;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapsId;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.hibernate.annotations.Type;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Flow;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-@Entity(name = "Actionelement")
-@Table(name = "actionelement", uniqueConstraints={@UniqueConstraint(columnNames = {"complex_action_id","artifactclass_id", "storagetask_action_id", "processingtask_id"})})
-public class Actionelement {
+@Entity(name = "Flowelement")
+@Table(name = "flowelement")
+public class Flowelement {
 
 	@Id
 	@Column(name="id")
 	private int id;
-	
-	@Column(name = "complex_action_id")
-	private Action complexActionId;
-	
-	@Column(name="artifactclass_id")
-	private String artifactclassId;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	private Flow flow;
 	
 	@Column(name = "storagetask_action_id")
-	private Action storagetaskActionId;// TODO : ??? How can this be 0 and will make the uniqueConstraints work???
+	private Action storagetaskActionId;
 
 	@Column(name = "processingtask_id")
 	private String processingtaskId;
 	
+	@Type(type = "json")
+	@Column(name="dependencies", columnDefinition = "json")
+	private List<Integer> dependencies;
+	
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name="output_artifactclass_id")
-	private Artifactclass outputArtifactclass;
-
+	private Flow flowRef;
+	
 	@Column(name = "display_order")
 	private int displayOrder;
 
@@ -54,20 +54,12 @@ public class Actionelement {
 		this.id = id;
 	}
 
-	public Action getComplexActionId() {
-		return complexActionId;
+	public Flow getFlow() {
+		return flow;
 	}
 
-	public void setComplexActionId(Action complexActionId) {
-		this.complexActionId = complexActionId;
-	}
-
-	public String getArtifactclassId() {
-		return artifactclassId;
-	}
-
-	public void setArtifactclassId(String artifactclassId) {
-		this.artifactclassId = artifactclassId;
+	public void setFlow(Flow flow) {
+		this.flow = flow;
 	}
 
 	public Action getStoragetaskActionId() {
@@ -89,6 +81,22 @@ public class Actionelement {
 			processingtaskId = "";// We do this so that uniqueness constraint works...
 		this.processingtaskId = processingtaskId;
 	}
+//
+//	public String getFlowRefId() {
+//		return flowRefId;
+//	}
+//
+//	public void setFlowRefId(String flowRefId) {
+//		this.flowRefId = flowRefId;
+//	}
+
+	public List<Integer> getDependencies() {
+		return dependencies;
+	}
+
+	public void setDependencies(List<Integer> dependencies) {
+		this.dependencies = dependencies;
+	}
 
 	public int getDisplayOrder() {
 		return displayOrder;
@@ -98,6 +106,14 @@ public class Actionelement {
 		this.displayOrder = displayOrder;
 	}
 
+	public Flow getFlowRef() {
+		return flowRef;
+	}
+
+	public void setFlowRef(Flow flowRef) {
+		this.flowRef = flowRef;
+	}
+
 	public boolean isActive() {
 		return active;
 	}
@@ -105,15 +121,4 @@ public class Actionelement {
 	public void setActive(boolean active) {
 		this.active = active;
 	}
-
-	@JsonIgnore
-	public Artifactclass getOutputArtifactclass() {
-		return outputArtifactclass;
-	}
-
-	@JsonIgnore
-	public void setOutputArtifactclass(Artifactclass outputArtifactclass) {
-		this.outputArtifactclass = outputArtifactclass;
-	}
-
 }

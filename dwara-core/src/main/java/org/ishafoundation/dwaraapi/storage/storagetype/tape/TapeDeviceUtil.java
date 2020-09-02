@@ -80,8 +80,8 @@ public class TapeDeviceUtil {
 			for (Device tapedriveDevice : tapedriveDeviceList) {
 				String tapedriveDeviceId = tapedriveDevice.getId();
 				String dataTransferElementName = tapedriveDevice.getWwnId();
-				Integer driveAutoloaderAddress = tapedriveDevice.getDetails().getAutoloader_address();
-				if(tapedriveDevice.getDetails().getAutoloader_id().equals(tapelibraryId)) { // equivalent of calling the query devicetype=drive and details.autoloader_id=X, query NOT easy with json
+				Integer driveAutoloaderAddress = tapedriveDevice.getDetails().getAutoloaderAddress();
+				if(tapedriveDevice.getDetails().getAutoloaderId().equals(tapelibraryId)) { // equivalent of calling the query devicetype=drive and details.autoloader_id=X, query NOT easy with json
 					DriveDetails driveDetails = null;
 					if(taskName.equals("getAllDrivesDetails")) {
 						try {

@@ -81,6 +81,9 @@ public class Request {
 	@Column(name="status")
 	private Status status;
 	
+	@Column(name="external_ref")
+	private String externalRef;
+	
 	@Type(type = "json")
 	@Column(name="details", columnDefinition = "json")
 	private RequestDetails details;
@@ -148,6 +151,14 @@ public class Request {
 
 	public void setStatus(Status status) {
 		this.status = status;
+	}
+
+	public String getExternalRef() {
+		return externalRef;
+	}
+
+	public void setExternalRef(String externalRef) {
+		this.externalRef = externalRef;
 	}
 
 	public RequestDetails getDetails() {

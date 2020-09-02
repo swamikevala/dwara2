@@ -1,3 +1,15 @@
+2nd Sep - (application.properties need to be updated)
+	Schema changes
+		flowelement replaces actionelement, actionelementmap and jobmap
+	Errormsg on failures - 
+	Restore fix - 
+	application.properties - threadpool matching process names
+	Artifactclass - breaking change - skip actionelement wont show
+	sequence changes - regexes still not working - Report to Swami
+	Write failure setting device and tape as suspect...
+	Dont overwrite existing checksums
+	Copy failure - mt status when busy
+	
 26th Aug - (application.properties need to be updated)
 	setperms 
 	autofinalizer

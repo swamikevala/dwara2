@@ -22,9 +22,9 @@ public class JobCreator_Import_Test extends JobCreator_Test{
 	protected RequestDetails getSystemrequestDetails() {
 		
 		RequestDetails details = new RequestDetails();
-		details.setVolume_id("V4A999"); // TODO how do we validate that the volume passed is only physical and not
+		details.setVolumeId("V4A999"); // TODO how do we validate that the volume passed is only physical and not
 		// group the volume belongs to
-		details.setVolume_group_id("V4A");
+		details.setVolumeGroupId("V4A");
 		details.setStoragesubtype("LTO-7");
 		return details;
 	}

@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class VolumeDetails {
@@ -9,7 +10,8 @@ public class VolumeDetails {
 	private Integer blocksize; // Only applicable for block based storage volumes
 	private String mountpoint; // Mount point for disks
 	private Integer provider;
-	private Boolean remove_after_job; // Set this for tapes which should be removed from the autoloader as soon as any job is completed. Used for managing the security of tapes that hold confidential data.
+	@JsonProperty("remove_after_job")
+	private Boolean removeAfterJob; // Set this for tapes which should be removed from the autoloader as soon as any job is completed. Used for managing the security of tapes that hold confidential data.
 	public Boolean getBarcoded() {
 		return barcoded;
 	}
@@ -34,11 +36,11 @@ public class VolumeDetails {
 	public void setProvider(Integer provider) {
 		this.provider = provider;
 	}
-	public Boolean getRemove_after_job() {
-		return remove_after_job;
+	public Boolean getRemoveAfterJob() {
+		return removeAfterJob;
 	}
-	public void setRemove_after_job(Boolean remove_after_job) {
-		this.remove_after_job = remove_after_job;
+	public void setRemoveAfterJob(Boolean removeAfterJob) {
+		this.removeAfterJob = removeAfterJob;
 	}
 	// TODO : equals and hashCode
 }

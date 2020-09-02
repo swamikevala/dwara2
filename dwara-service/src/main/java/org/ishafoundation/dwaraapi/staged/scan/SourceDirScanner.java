@@ -9,7 +9,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
@@ -134,15 +133,15 @@ public class SourceDirScanner {
 
 		nthIngestFile.setErrors(stagedFileValidator.validate(nthIngestFile));
 		
-		String artifactCodeRegex = sequence.getArtifactCodeRegex();
-		String artifactNumberRegex = sequence.getArtifactNumberRegex();
-    	Boolean isKeepExtractedCode = sequence.isArtifactKeep();
+		Boolean isKeepExtractedCode = sequence.isKeepCode();
+		Boolean isForceMatch = sequence.getForceMatch();
 		
-		String prevSeqCode = sequenceUtil.getExtractedCode(sequence, fileName);
-		nthIngestFile.setPrevSequenceCode(prevSeqCode);
-		if((StringUtils.isNotBlank(artifactCodeRegex) || StringUtils.isNotBlank(artifactNumberRegex)) && isKeepExtractedCode) // if regex present and useExtractCode is true but prevSeqCode is null then throw error...
+		if(!isKeepExtractedCode) {
+			String prevSeqCode = sequenceUtil.getExtractedCode(sequence, fileName);
+			nthIngestFile.setPrevSequenceCode(prevSeqCode);
+		}	
+		if(isForceMatch != null && isForceMatch)
 			nthIngestFile.setPrevSequenceCodeExpected(true);
-
 		
 		// TODO : Talk to swami - do we still need suggested filename now that we are not migrating
 //		String customFileName = getCustomArtifactName(fileName, prevSeqCode, sequence, isKeepExtractedCode);

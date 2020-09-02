@@ -54,7 +54,7 @@ public class ForSolutionSameerService {
 		ltoWalaResponse.setEndDate(getDateForUI(endDateTime));
 		
 		List<Artifact> artifactList = new ArrayList<Artifact>();
-		List<Job> jobList = jobDao.findAllByCompletedAtBetweenAndStoragetaskActionIdAndGroupVolumeCopyNumber(startDateTime, endDateTime, Action.write, copyNumber);
+		List<Job> jobList = jobDao.findAllByCompletedAtBetweenAndStoragetaskActionIdAndGroupVolumeCopyId(startDateTime, endDateTime, Action.write, copyNumber);
 		for (Job job : jobList) {
 			Artifact artifact = new Artifact();
 			int artifactId = job.getInputArtifactId();
@@ -96,7 +96,7 @@ public class ForSolutionSameerService {
 				ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 				ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
 	
-				volume.setStartBlock(artifactVolume.getDetails().getStart_volume_block());
+				volume.setStartBlock(artifactVolume.getDetails().getStartVolumeBlock());
 				
 				artifact.setVolume(volume);
 			}

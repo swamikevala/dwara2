@@ -116,7 +116,7 @@ public class VolumeController {
 				throw new DwaraException("Force option not supported just yet. Volume " + volumeId, null);
 			
 			// #1 - Volume ids should not be in use
-			Volume volume = volumeDao.findById(volumeId); // TODO: if force=true, means we are trying to reinitialize an existing tape. How about that???
+			Volume volume = volumeDao.findById(volumeId).get(); // TODO: if force=true, means we are trying to reinitialize an existing tape. How about that???
 			if(volume != null)
 				throw new DwaraException("Volume " + volumeId + " already in use" , null);
 

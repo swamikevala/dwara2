@@ -25,8 +25,8 @@ public class Finalize extends AbstractStoragetaskAction{
     	StorageJob storageJob = super.buildStorageJob(job);
     	
     	Request request = job.getRequest();
-		String volumeUid = request.getDetails().getVolume_id();
-    	Volume volume = volumeDao.findById(volumeUid);
+		String volumeUid = request.getDetails().getVolumeId();
+    	Volume volume = volumeDao.findById(volumeUid).get();
     	
     	storageJob.setVolume(volume);
     	return storageJob;

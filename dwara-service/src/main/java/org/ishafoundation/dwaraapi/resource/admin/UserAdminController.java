@@ -6,11 +6,11 @@ import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.PrioritybandDao;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassActionUserDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassUserDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Priorityband;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassActionUser;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassUser;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.utils.FilePermissionsUtil;
@@ -39,7 +39,7 @@ public class UserAdminController {
 	private PrioritybandDao prioritybandDao;
 	
 	@Autowired
-	private ArtifactclassActionUserDao artifactclassActionUserDao;
+	private ActionArtifactclassUserDao artifactclassActionUserDao;
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
@@ -81,7 +81,7 @@ public class UserAdminController {
 			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 			Action actionObj = configurationTablesUtil.getAction(org.ishafoundation.dwaraapi.enumreferences.Action.valueOf(action));
 			User user = userDao.findByName(username);
-			ArtifactclassActionUser artifactclassActionUser = new ArtifactclassActionUser(artifactclass, actionObj, user);
+			ActionArtifactclassUser artifactclassActionUser = new ActionArtifactclassUser(actionObj, artifactclass, user);
 			artifactclassActionUserDao.save(artifactclassActionUser);
 			logger.trace("artifactclassActionUser created");
 		}catch (Exception e) {

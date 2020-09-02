@@ -5,6 +5,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
@@ -49,8 +50,15 @@ public class DwaraApiApplication {
 			String corePoolSizePropName = propertyNamePrefix + ".corePoolSize";
 			String maxPoolSizePropName = propertyNamePrefix + ".maxPoolSize";
 			
-			int corePoolSize = Integer.parseInt(env.getProperty(corePoolSizePropName));
-			int maxPoolSize = Integer.parseInt(env.getProperty(maxPoolSizePropName));
+			String configuredCorePoolSize = env.getProperty(corePoolSizePropName);
+			if(StringUtils.isBlank(configuredCorePoolSize))
+				configuredCorePoolSize = "1";
+			int corePoolSize = Integer.parseInt(configuredCorePoolSize);
+			
+			String configuredMaxPoolSize = env.getProperty(maxPoolSizePropName);
+			if(StringUtils.isBlank(configuredMaxPoolSize))
+				configuredMaxPoolSize = "1";
+			int maxPoolSize = Integer.parseInt(configuredMaxPoolSize);
 			
 			Executor executor = new ThreadPoolExecutor(corePoolSize, maxPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 			IProcessingTask.taskName_executor_map.put(processingtaskName, executor);

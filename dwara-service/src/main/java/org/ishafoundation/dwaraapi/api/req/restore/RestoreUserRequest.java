@@ -4,8 +4,7 @@ import java.util.List;
 
 public class RestoreUserRequest {
 	private Integer domain;
-	private String location;
-	private Integer copyNumber;
+	private Integer copy;
 	private String outputFolder;
 	private String destinationPath;
 	private boolean verify;
@@ -20,20 +19,12 @@ public class RestoreUserRequest {
 		this.domain = domain;
 	}	
 
-	public String getLocation() {
-		return location;
+	public Integer getCopy() {
+		return copy;
 	}
 
-	public void setLocation(String location) {
-		this.location = location;
-	}
-
-	public Integer getCopyNumber() {
-		return copyNumber;
-	}
-
-	public void setCopyNumber(Integer copyNumber) {
-		this.copyNumber = copyNumber;
+	public void setCopy(Integer copy) {
+		this.copy = copy;
 	}
 
 	public String getOutputFolder() {

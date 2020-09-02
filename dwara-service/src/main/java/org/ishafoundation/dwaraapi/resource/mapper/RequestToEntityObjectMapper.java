@@ -21,9 +21,9 @@ public interface RequestToEntityObjectMapper {
 	RequestDetails getRequestDetailsForIngest(StagedFile stagedFile);
 	
 	@Mappings({
-        @Mapping(source = "volume", target = "volume_id"),
-        @Mapping(source = "volumeGroup", target = "volume_group_id"),
-        @Mapping(source = "volumeBlocksize", target = "volume_blocksize")
+        @Mapping(source = "volume", target = "volumeId"),
+        @Mapping(source = "volumeGroup", target = "volumeGroupId"),
+        @Mapping(source = "volumeBlocksize", target = "volumeBlocksize")
     })
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
 	RequestDetails getRequestDetailsForInitialize(InitializeUserRequest initializeUserRequest);

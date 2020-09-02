@@ -7,9 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobMap;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
@@ -30,9 +28,6 @@ public class JobManager {
 
 	@Autowired
 	private JobDao jobDao;	
-
-	@Autowired
-	private JobMapDao jobMapDao;	
 	
 	@Autowired
 	private ApplicationContext applicationContext;
@@ -141,70 +136,14 @@ public class JobManager {
 	private boolean isJobReadyToBeProcessed(Job job) {
 		boolean isJobReadyToBeProcessed = true;
 
-		List<JobMap> preReqJobRefs = jobMapDao.findAllByIdJobId(job.getId());// getting all prerequisite jobss
-		for (JobMap nthPreReqJobRef : preReqJobRefs) {
-			// means a dependent job.
-			Status preReqJobStatus = jobDao.findById(nthPreReqJobRef.getId().getJobRefId()).get().getStatus();
-			if(preReqJobStatus != Status.completed && preReqJobStatus != Status.partially_completed && preReqJobStatus != Status.completed_failures && preReqJobStatus != Status.marked_completed)
-				return false;			
-			
+		List<Integer> dependencies = job.getDependencies();
+		if(dependencies != null) {
+			for (Integer nthPreReqJobId : dependencies) {
+				Status preReqJobStatus = jobDao.findById(nthPreReqJobId).get().getStatus();
+				if(preReqJobStatus != Status.completed && preReqJobStatus != Status.partially_completed && preReqJobStatus != Status.completed_failures && preReqJobStatus != Status.marked_completed)
+					return false;			
+			}
 		}
-			
-			/*
-			// TODO : To maintain the requested order of the artifacts while write...
-			 	Option 1 - checksum as part of write - Not a great idea for 1) processing framework multithreaded need to be mimicked during write 2) there are as many copy jobs and we need to generate chksum only once
-			 				 	
-			 	Option 2 - Request and previoussystemrequest
-			 	
-			 	Option 3 - Checksum and verify pair it.. but verify needs to be done only after both are completed. 
-			 		instead of write dependent on checksum
-				 		checksum 
-							write
-							verify
-			 	
-			 		let verify dependent on write/checksum but ensure both write and checksum are completed...
-					 	checksum 
-						write
-							verify - but also code check that checksum job is also completed...
-
-			 	
-			 	Option 4 - Change schema so both checksum and write are configured as prereq for verify
-				 	checksum 
-					write
-						verify
-
-			// Option 2 - Request and 
-			Request currentJobRequest = job.getRequest();
-			int currentJobRequestId = currentJobRequest.getId();
-			
-			int previousSystemRequestId = currentJobRequestId - 1;
-			Request currentJobUserRequest= currentJobRequest.getRequestRef();
-			List<Request> allSystemRequestsForTheUserRequest = requestDao.findAllByRequestRefIdOrderByRequestIdDesc(currentJobUserRequest.getId());
-			Request previousSystemRequest = null;
-			for (Request request : allSystemRequestsForTheUserRequest) {
-				if(request.getId() == previousSystemRequestId) {
-					previousSystemRequest = request;
-				}
-
-			}
-			// if there is no previousSystemRequestId to the current job and this is the first..			
-			if(previousSystemRequest != null) {
-				// get all the locations write jobs and see if its complete
-				// get the job
-			}
-			*/
-			
-			// Option 3 - if verify job, then ensure the checksum-generation job is completed too....
-//			if(job.getStoragetaskActionId() == Action.verify) {
-//				if(job.getActionelement() != null) {// TODO : means it must be ingest...
-//					Job checksumJob = jobDao.findByRequestIdAndProcessingtaskId(job.getRequest().getId(), "checksum-generation");
-//					
-//					Status checksumJobStatus = checksumJob.getStatus();
-//					if(checksumJobStatus != Status.completed && checksumJobStatus != Status.completed_failures)// TODO completed_failures too???
-//						return false;
-//				}
-//			}
-//		}
 
 		return isJobReadyToBeProcessed;
 	}

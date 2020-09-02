@@ -132,7 +132,7 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 			logger.debug("end "+ commandList);
 		}
 		catch (Exception ee) {
-			logger.error("Unable to execute command " + commandList + " : " + ee.getMessage(), ee);
+			logger.error(commandList + " execution failed : " + ee.getMessage(), ee);
 			commandLineExecutionResponse.setFailureReason(ee.getMessage());
 			throw ee;
 		}finally {

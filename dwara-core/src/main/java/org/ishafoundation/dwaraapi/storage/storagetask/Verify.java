@@ -3,12 +3,12 @@ package org.ishafoundation.dwaraapi.storage.storagetask;
 
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.JobMapDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobMap;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -29,8 +29,8 @@ public class Verify extends AbstractStoragetaskAction{
 	private JobDao jobDao; 
 	
 	@Autowired
-	private JobMapDao jobMapDao; 
-    
+	private ProcessingtaskDao processingtaskDao;
+	
 	@Autowired
 	private DomainUtil domainUtil;
 	
@@ -45,22 +45,30 @@ public class Verify extends AbstractStoragetaskAction{
 		
 		Job writeJobToBeVerified = null;
 		
-		List<JobMap> preReqJobRefs = jobMapDao.findAllByIdJobId(job.getId());// getting all prerequisite jobss
-		for (JobMap nthPreReqJobRef : preReqJobRefs) {
-			// means a dependent job.
-			Job preReqJobRef  = jobDao.findById(nthPreReqJobRef.getId().getJobRefId()).get();
-			if(preReqJobRef != null && preReqJobRef.getStoragetaskActionId() == Action.write) {
-				writeJobToBeVerified = preReqJobRef;
+		List<Integer> dependencies = job.getDependencies();
+		if(dependencies != null) {
+			for (Integer nthPreReqJobId : dependencies) {
+				Job preReqJobRef  = jobDao.findById(nthPreReqJobId).get();
+				if(preReqJobRef != null && preReqJobRef.getStoragetaskActionId() == Action.write) {
+					writeJobToBeVerified = preReqJobRef;
+				}
 			}
 		}		
 		
 		if(writeJobToBeVerified == null)
-			throw new Exception("Action write is a prerequisite for verify. Please ensure the dependency is mapped in actionelement_map");
+			throw new Exception("Action write is a prerequisite for verify. Please ensure the dependency is mapped in flowelement.dependencies");
 		
 		storageJob.setVolume(writeJobToBeVerified.getVolume());
 		
-		// TODO : assuming verify is part of the complex action... Fix it so that its generally works outside actionelement/ingest partnership too
-		String artifactclassId = job.getActionelement().getArtifactclassId();
+		String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
+		List<Integer> preReqJobIdsOfWriteJobToBeVerified = writeJobToBeVerified.getDependencies();
+		if(preReqJobIdsOfWriteJobToBeVerified != null) {
+			String processingtaskId = writeJobToBeVerified.getProcessingtaskId();  
+			Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+			String outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix();
+			artifactclassId = artifactclassId + outputArtifactclassSuffix;
+		}	
+		
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 		Domain domain = artifactclass.getDomain();
 

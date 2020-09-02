@@ -10,6 +10,4 @@ public interface ArtifactRepository<T extends Artifact> extends CrudRepository<T
 	Artifact findByWriteRequestId(int ingestRequestId);
 
 	Artifact findByName(String artifactName);
-	
-	
 }

@@ -16,6 +16,7 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Archiveformat;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Copy;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
@@ -53,11 +54,14 @@ public class Volume {
 	@Column(name="storagelevel")
 	private Storagelevel storagelevel;
 
-	@Column(name="copy_number")
-	private Integer copyNumber;
+	@ManyToOne(fetch = FetchType.LAZY)
+    private Copy copy;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
     private Volume groupRef;
+	
+	@OneToOne
+	private Sequence sequence;
 	
 	@Enumerated(EnumType.STRING)
 	@Column(name="checksumtype")
@@ -71,7 +75,13 @@ public class Volume {
 
 	@Column(name="imported")
 	private boolean imported;
-	
+
+	@Column(name="suspect")
+	private Boolean suspect; // Not on VolumeGroups
+
+	@Column(name="defective")
+	private Boolean defective; // Not on VolumeGroups
+
 	@OneToOne
 	private Archiveformat archiveformat;
 	
@@ -80,9 +90,6 @@ public class Volume {
 	
 	@OneToOne
 	private Location location;
-	
-	@OneToOne
-	private Sequence sequence;
 	
 	@Type(type = "json")
 	@Column(name="details", columnDefinition = "json")
@@ -129,12 +136,12 @@ public class Volume {
 		this.storagelevel = storagelevel;
 	}
 
-	public Integer getCopyNumber() {
-		return copyNumber;
+	public Copy getCopy() {
+		return copy;
 	}
 
-	public void setCopyNumber(Integer copyNumber) {
-		this.copyNumber = copyNumber;
+	public void setCopy(Copy copy) {
+		this.copy = copy;
 	}
 
 	public Volume getGroupRef() {
@@ -175,6 +182,22 @@ public class Volume {
 
 	public void setImported(boolean imported) {
 		this.imported = imported;
+	}
+
+	public Boolean getSuspect() {
+		return suspect;
+	}
+
+	public void setSuspect(Boolean suspect) {
+		this.suspect = suspect;
+	}
+
+	public Boolean getDefective() {
+		return defective;
+	}
+
+	public void setDefective(Boolean defective) {
+		this.defective = defective;
 	}
 
 	public Archiveformat getArchiveformat() {

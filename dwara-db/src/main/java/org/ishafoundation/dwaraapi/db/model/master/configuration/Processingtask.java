@@ -31,6 +31,8 @@ public class Processingtask{
 	@ManyToOne(fetch = FetchType.LAZY)
 	private Filetype filetype;
 	
+	@Column(name="output_artifactclass_suffix")
+	private String outputArtifactclassSuffix;
 	
     public String getId() {
 		return id;
@@ -64,7 +66,15 @@ public class Processingtask{
 		this.filetype = filetype;
 	}
 	
-    @Override
+    public String getOutputArtifactclassSuffix() {
+		return outputArtifactclassSuffix;
+	}
+
+	public void setOutputArtifactclassSuffix(String outputArtifactclassSuffix) {
+		this.outputArtifactclassSuffix = outputArtifactclassSuffix;
+	}
+
+	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
  

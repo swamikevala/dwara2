@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
@@ -38,7 +40,20 @@ public class DaoTests{
 	@Autowired
 	private DomainUtil domainUtil;
 	
+	@Autowired
+	private FlowelementDao flowelementDao;
+	
 	@Test
+	public void testFlowelementDao() {
+		Flowelement flowelement = flowelementDao.findById(3).get();
+		
+		List<Integer> dependencies = new ArrayList<Integer>();
+		dependencies.add(1);
+		dependencies.add(2);
+		flowelement.setDependencies(dependencies);
+		flowelementDao.save(flowelement);
+	}
+
 	public void testRequestCustomDao() {
 
 		
@@ -85,16 +100,16 @@ public class DaoTests{
 //		}
 //	}
 	
-	public void testFileVolume() {
-		Volume vol = getVolume(Domain.main, 60, "3");
-		System.out.println(vol.getId());
-	}
-	
-	private Volume getVolume(Domain domain, int fileIdToBeRestored, String locationId) {
-    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-    	FileVolume fileVolume = domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeLocationId(fileIdToBeRestored, locationId);
-		return fileVolume.getVolume();
-	}
+//	public void testFileVolume() {
+//		Volume vol = getVolume(Domain.main, 60, "3");
+//		System.out.println(vol.getId());
+//	}
+//	
+//	private Volume getVolume(Domain domain, int fileIdToBeRestored, String locationId) {
+//    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
+//    	FileVolume fileVolume = domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeLocationId(fileIdToBeRestored, locationId);
+//		return fileVolume.getVolume();
+//	}
 	
 	public void testRequestDao() {
 		List<Status> statusList = new ArrayList<Status>();

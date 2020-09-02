@@ -12,7 +12,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassActionUser;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassUser;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -45,7 +45,7 @@ public class User {//implements Cacheable{
     @OneToMany(mappedBy = "user",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
-    private List<ArtifactclassActionUser> artifactclassActionUser = new ArrayList<>();     
+    private List<ActionArtifactclassUser> artifactclassActionUser = new ArrayList<>();     
     
 	public int getId() {
 		return id;
@@ -123,12 +123,12 @@ public class User {//implements Cacheable{
 //    }
 	
 	@JsonIgnore
-	public List<ArtifactclassActionUser> getArtifactclassActionUser() {
+	public List<ActionArtifactclassUser> getArtifactclassActionUser() {
 		return artifactclassActionUser;
 	}
 
 	@JsonIgnore
-	public void setArtifactclassActionUser(List<ArtifactclassActionUser> artifactclassActionUser) {
+	public void setArtifactclassActionUser(List<ActionArtifactclassUser> artifactclassActionUser) {
 		this.artifactclassActionUser = artifactclassActionUser;
 	}
 	

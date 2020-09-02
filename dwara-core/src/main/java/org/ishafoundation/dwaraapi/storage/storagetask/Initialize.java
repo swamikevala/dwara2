@@ -58,9 +58,9 @@ public class Initialize extends AbstractStoragetaskAction{
 	private Volume getVolume(RequestDetails requestDetails) {
 		Volume volume = new Volume();
 		
-		String volumeBarcode = requestDetails.getVolume_id();
-		String volumeGroupId = requestDetails.getVolume_group_id();
-		Volume volumeGroup = volumeDao.findById(volumeGroupId);
+		String volumeBarcode = requestDetails.getVolumeId();
+		String volumeGroupId = requestDetails.getVolumeGroupId();
+		Volume volumeGroup = volumeDao.findById(volumeGroupId).get();
 		
 		
 		volume.setId(volumeBarcode);
@@ -92,7 +92,7 @@ public class Initialize extends AbstractStoragetaskAction{
 		volume.setArchiveformat(volumeGroup.getArchiveformat());
 		volume.setInitializedAt(LocalDateTime.now());
 		
-		Integer blocksize = requestDetails.getVolume_blocksize();
+		Integer blocksize = requestDetails.getVolumeBlocksize();
 		
 		VolumeDetails volumeDetails = new VolumeDetails();
 		volumeDetails.setBarcoded(true);

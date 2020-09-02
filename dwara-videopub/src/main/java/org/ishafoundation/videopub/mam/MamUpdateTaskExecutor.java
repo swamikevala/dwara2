@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 
 import com.jcraft.jsch.Session;
 
-@Component("mam-updation")
+@Component("video-mam-update")
 @Primary
 @Profile({ "!dev & !stage" })
 public class MamUpdateTaskExecutor implements IProcessingTask {

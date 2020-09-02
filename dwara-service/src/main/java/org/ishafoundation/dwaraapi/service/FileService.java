@@ -118,9 +118,7 @@ public class FileService extends DwaraService{
     	logger.info("Request - " + userRequestId);
 
 	
-    	String requestedLocation = restoreUserRequest.getLocation();
-    	Integer copyNumber = restoreUserRequest.getCopyNumber();
-    	Location location = getLocation(requestedLocation);
+    	Integer copyNumber = restoreUserRequest.getCopy();
     	String outputFolder = restoreUserRequest.getOutputFolder();
     	String destinationPath = restoreUserRequest.getDestinationPath();
     	boolean verify = restoreUserRequest.isVerify();
@@ -142,8 +140,7 @@ public class FileService extends DwaraService{
     		RequestDetails systemrequestDetails = new RequestDetails();
     		systemrequestDetails.setFileId(nthFileId);
     		
-    		systemrequestDetails.setCopyNumber(copyNumber);
-			systemrequestDetails.setLocationId(location.getId());
+    		systemrequestDetails.setCopyId(copyNumber);
 			systemrequestDetails.setOutputFolder(outputFolder);
 			systemrequestDetails.setDestinationPath(destinationPath);
 			systemrequestDetails.setVerify(verify); // overwriting default archiveformat.verify during restore
@@ -179,7 +176,6 @@ public class FileService extends DwaraService{
     	restoreResponse.setRequestedBy(userRequest.getRequestedBy().getName());
 
     	restoreResponse.setDestinationPath(destinationPath);
-    	restoreResponse.setLocation(location.getName());
     	restoreResponse.setVerify(verify);
     	restoreResponse.setOutputFolder(outputFolder);
     	
@@ -198,16 +194,6 @@ public class FileService extends DwaraService{
 			e1.printStackTrace();
 		}
 		return postBodyJson;
-	}
-	
-	private Location getLocation(String requestedLocation) {
-		Location location = null; 
-		if (requestedLocation != null) {
-			location = configurationTablesUtil.getLocation(requestedLocation);
-		} else {
-			location = configurationTablesUtil.getDefaultLocation();
-		}
-		return location;
 	}
 }
 

@@ -19,12 +19,13 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUti
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.Actionelement;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
@@ -58,7 +59,10 @@ public class ProcessingJobManager implements Runnable{
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
-
+	
+	@Autowired
+	private SequenceUtil sequenceUtil;
+	
 	@Autowired
 	private Configuration configuration;
 
@@ -90,9 +94,22 @@ public class ProcessingJobManager implements Runnable{
 		
 		
 		try {
-			Domain domain = getDomain();
-			if(domain == null)
-				return;
+			String processingtaskId = job.getProcessingtaskId();
+			Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+			
+			Domain domain = null;
+			Artifactclass outputArtifactclass = null;
+			
+			String outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix();
+			if(outputArtifactclassSuffix != null) { // For processing tasks like checksum-gen this will be null...
+				String outputArtifactclassId = job.getRequest().getDetails().getArtifactclassId() + outputArtifactclassSuffix;
+				outputArtifactclass = configurationTablesUtil.getArtifactclass(outputArtifactclassId);
+				domain = outputArtifactclass.getDomain();
+			}
+			else{
+				domain = job.getRequest().getDomain();
+			}
+			
 			
 			ArtifactRepository artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 			
@@ -112,34 +129,15 @@ public class ProcessingJobManager implements Runnable{
 			
 			String outputArtifactName = null;
 			String outputArtifactPathname = null; // holds where to generate the files in the physical system...
-//			WE WONT HAVE THE OUTPUTARTIFACT CREATED JUST YET...
-//			Integer outputArtifactId = job.getOutputArtifactId();
-//			
-//			Artifact outputArtifact = null;
-//			if(outputArtifactId != null)
-//				outputArtifact = (Artifact) artifactRepository.findById(outputArtifactId).get();
-//			
-//			if(outputArtifact != null) {
-//				Artifactclass outputArtifactclass = outputArtifact.getArtifactclass();
-//	
-//				outputArtifactName = getOutputArtifactName(outputArtifactclass, artifactName);
-//				outputArtifactPathname = getOutputArtifactPathname(outputArtifactclass, outputArtifactName);
-//			}
-			
-			Actionelement actionelement = job.getActionelement();
-			if(actionelement != null) {
-				Artifactclass outputArtifactclass = actionelement.getOutputArtifactclass();
-				
-				if(outputArtifactclass != null) {
-					outputArtifactName = getOutputArtifactName(outputArtifactclass, artifactName);
-					outputArtifactPathname = getOutputArtifactPathname(outputArtifactclass, outputArtifactName);
-				}
+			if(outputArtifactclass != null) {
+				outputArtifactName = getOutputArtifactName(outputArtifactclass, artifactName);
+				outputArtifactPathname = getOutputArtifactPathname(outputArtifactclass, outputArtifactName);
 			}
+			
 			
 			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, inputArtifact);
 	
-			String processingtaskId = job.getProcessingtaskId();
-			Processingtask processingtask = processingtaskDao.findById(processingtaskId);
+
 			Collection<LogicalFile> selectedFileList = getLogicalFileList(processingtask.getFiletype(), inputArtifactPath);
 			int filesToBeProcessedCount = selectedFileList.size();
 			if(filesToBeProcessedCount == 0)
@@ -185,6 +183,7 @@ public class ProcessingJobManager implements Runnable{
 				processingJobProcessor.setFile(file);
 				processingJobProcessor.setLogicalFile(logicalFile);
 				
+				processingJobProcessor.setOutputArtifactclass(outputArtifactclass);
 				processingJobProcessor.setOutputArtifactName(outputArtifactName);
 				processingJobProcessor.setOutputArtifactPathname(outputArtifactPathname);
 				processingJobProcessor.setDestinationDirPath(outputFilePath);
@@ -203,25 +202,25 @@ public class ProcessingJobManager implements Runnable{
 		}
 	}
 
-	private Domain getDomain() {
-		Domain domain = null;
-		try {
-			String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
-			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
-			domain = artifactclass.getDomain();
-			
-			if(domain == null)
-				domain = job.getRequest().getDomain();
-		}catch (Exception e) {
-			logger.error("Unable to get domain from the request", e);
-		}
-		return domain;
-	}
+//	private Domain getDomain() {
+//		Domain domain = null;
+//		try {
+//			String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
+//			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
+//			domain = artifactclass.getDomain();
+//			
+//			if(domain == null)
+//				domain = job.getRequest().getDomain();
+//		}catch (Exception e) {
+//			logger.error("Unable to get domain from the request", e);
+//		}
+//		return domain;
+//	}
 
 	private String getOutputArtifactName(Artifactclass outputArtifactclass, String inputArtifactName){
 		String outputArtifactClassSequenceId = outputArtifactclass.getSequenceId();
-		String outputArtifactNamePrefix = configurationTablesUtil.getSequence(outputArtifactClassSequenceId).getPrefix();
-		return outputArtifactNamePrefix + inputArtifactName;
+		Sequence sequence = configurationTablesUtil.getSequence(outputArtifactClassSequenceId);
+		return sequenceUtil.getSequenceCode(sequence, inputArtifactName);
 	}
 
 	private String getOutputArtifactPathname(Artifactclass outputArtifactclass, String outputArtifactName) {
@@ -254,7 +253,6 @@ public class ProcessingJobManager implements Runnable{
 			sidecarExtensions = new ArrayList<String>();
 			List<ExtensionFiletype> extn_Filetype_List = filetype.getExtensions(); //extensionFiletypeDao.findAllByFiletypeId(filetype.getId());
 			for (ExtensionFiletype extensionFiletype : extn_Filetype_List) {
-				// TODO - do i need to filter out on the filetype or will the join automatically filter it based on the filetype
 				String extensionName = extensionFiletype.getExtension().getId();
 				
 				if(extensionFiletype.isSidecar()) {

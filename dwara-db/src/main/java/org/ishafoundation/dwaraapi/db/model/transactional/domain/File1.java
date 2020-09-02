@@ -43,31 +43,7 @@ public class File1 extends File{
 	public void setFile1Ref(File1 file1Ref) {
 		this.file1Ref = file1Ref;
 	}
-	
-//	// Many file1s from the same artifact1
-//	@ManyToOne(fetch = FetchType.LAZY)
-//	private Artifact1 artifact;
-//
-//	@OneToOne
-//	@JoinColumn(name="file_ref_id")
-//	private File1 fileRef;
-//
-//	public Artifact1 getArtifact() {
-//		return artifact;
-//	}
-//
-//	public void setArtifact(Artifact1 artifact) {
-//		this.artifact = artifact;
-//	}
-//
-//	public File1 getFileRef() {
-//		return fileRef;
-//	}
-//
-//	public void setFileRef(File1 fileRef) {
-//		this.fileRef = fileRef;
-//	}
-	
+
 //	@Override
 //    public boolean equals(Object o) {
 //        if (this == o) return true;

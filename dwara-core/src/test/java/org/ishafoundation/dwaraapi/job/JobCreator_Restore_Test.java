@@ -66,7 +66,6 @@ public class JobCreator_Restore_Test extends JobCreator_Test {
 		RequestDetails details = new RequestDetails();
 		details.setFileId(fileId);
 		// details.setPriority(priority);
-		details.setLocationId(location.getId());
 		details.setOutputFolder(outputFolder);
 		details.setDestinationPath(destinationpath);
 		details.setVerify(verify); // overwriting default archiveformat.verify during restore

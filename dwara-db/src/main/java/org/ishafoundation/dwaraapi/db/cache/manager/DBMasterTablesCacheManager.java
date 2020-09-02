@@ -25,8 +25,8 @@ public class DBMasterTablesCacheManager<T> {
 	private Map<String, CacheableRepository> cacheableReposMap;
 	
 	//caches all listed reference and config tables 
-	private Map<String, List<Cacheable>> tables_table_List = new HashMap<String, List<Cacheable>>();
-	private Map<String, Map<String, Cacheable>> tables_id_record_Map = new HashMap<String, Map<String, Cacheable>>();
+	private Map<String, List<Cacheable>> tableName_AllRecordsList = new HashMap<String, List<Cacheable>>();
+	private Map<String, Map<String, Cacheable>> tableName_Id_Record_Map = new HashMap<String, Map<String, Cacheable>>();
 
 
 	@PostConstruct
@@ -47,8 +47,8 @@ public class DBMasterTablesCacheManager<T> {
 					id_record_Map.put(cacheable.getId(), cacheable);
 			}
 			
-			tables_table_List.put(tableName, list);
-			tables_id_record_Map.put(tableName,id_record_Map);
+			tableName_AllRecordsList.put(tableName, list);
+			tableName_Id_Record_Map.put(tableName,id_record_Map);
 		}
 		//validateConfiguration();
 	}
@@ -71,19 +71,19 @@ public class DBMasterTablesCacheManager<T> {
 	}
 	
 	public List<Cacheable> getAllRecords(String tableName){
-		return tables_table_List.get(tableName);
+		return tableName_AllRecordsList.get(tableName);
 	}
 
 	public Cacheable getRecord(String tableName, String id){
-		Cacheable s = tables_id_record_Map.get(tableName).get(id);
+		Cacheable s = tableName_Id_Record_Map.get(tableName).get(id);
 		return s;
 	}
 
 	public void clearAll() {
 		logger.debug("Now clear all");
 		
-		tables_table_List.clear();
-		tables_id_record_Map.clear();
+		tableName_AllRecordsList.clear();
+		tableName_Id_Record_Map.clear();
 	}
 	
 	// loading a specific table. Table name need to be passed as a parameter...
@@ -92,8 +92,8 @@ public class DBMasterTablesCacheManager<T> {
 	}
 	
 	public void clear(String tableName) {
-		tables_table_List.get(tableName).clear();
-		tables_id_record_Map.get(tableName).clear();
+		tableName_AllRecordsList.get(tableName).clear();
+		tableName_Id_Record_Map.get(tableName).clear();
 		load(tableName);
 	}
 }

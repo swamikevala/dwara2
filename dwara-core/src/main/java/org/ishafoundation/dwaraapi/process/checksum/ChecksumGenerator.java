@@ -10,12 +10,16 @@ import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component("checksum-generation")
+@Component("checksum-gen")
 public class ChecksumGenerator implements IProcessingTask {
 
+	private static final Logger logger = LoggerFactory.getLogger(ChecksumGenerator.class);
+	
 	@Autowired
 	private DomainUtil domainUtil;
 	
@@ -26,15 +30,22 @@ public class ChecksumGenerator implements IProcessingTask {
 	public ProcessingtaskResponse execute(String taskName, String libraryName, File file, Domain domain, LogicalFile logicalFile,
 			String category, String destinationDirPath) throws Exception {
 		
-		if(logicalFile.isFile())
-			file.setChecksum(ChecksumUtil.getChecksum(logicalFile, Checksumtype.valueOf(configuration.getChecksumType())));
-
-    	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-    	domainSpecificFileRepository.save(file);
-
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
+		if(logicalFile.isFile()) {
+			if(file.getChecksum() != null) { // If there is a checksum already dont overwrite it...
+				file.setChecksum(ChecksumUtil.getChecksum(logicalFile, Checksumtype.valueOf(configuration.getChecksumType())));
+	
+		    	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+		    	domainSpecificFileRepository.save(file);
+			}
+			else {
+				logger.info(file.getId() + " already has checksum. Not overwriting it");
+			}
+		}
+		else {
+			logger.info(file.getId() + " not a file but a folder. Skipping it");
+		}
 		processingtaskResponse.setIsComplete(true);
-
 		return processingtaskResponse;
 	}
 

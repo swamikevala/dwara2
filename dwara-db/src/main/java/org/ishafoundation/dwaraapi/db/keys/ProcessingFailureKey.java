@@ -7,7 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 @Embeddable
-public class FailureKey implements Serializable {
+public class ProcessingFailureKey implements Serializable {
 
 	private static final long serialVersionUID = 8367155075402352731L;
 
@@ -17,9 +17,9 @@ public class FailureKey implements Serializable {
     @Column(name = "job_id")
     private int jobId;
  
-    public FailureKey() {}
+    public ProcessingFailureKey() {}
     
-    public FailureKey(
+    public ProcessingFailureKey(
         int fileId,
         int jobId) {
         this.fileId = fileId;
@@ -49,7 +49,7 @@ public class FailureKey implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        FailureKey that = (FailureKey) o;
+        ProcessingFailureKey that = (ProcessingFailureKey) o;
         return Objects.equals(fileId, that.fileId) &&
                Objects.equals(jobId, that.jobId);
     }

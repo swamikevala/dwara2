@@ -15,39 +15,59 @@ public class SequenceUtil {
 	@Autowired
 	protected SequenceDao sequenceDao;
 	
-	
+	// Used during scanning
 	public String getExtractedCode(Sequence sequence, String artifactName){
 	    String sequenceCode = null;
-		String artifactCodeRegex = sequence.getArtifactCodeRegex();
-		String artifactNumberRegex = sequence.getArtifactNumberRegex();
-		if(artifactNumberRegex != null)
-			sequenceCode = (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + extractSequenceFromArtifactName(artifactName, artifactNumberRegex);
-		else if(artifactCodeRegex != null)
+		String artifactCodeRegex = sequence.getCodeRegex();
+		if(artifactCodeRegex != null)
 			sequenceCode = extractSequenceFromArtifactName(artifactName, artifactCodeRegex);
 	
 		return sequenceCode;
 	}
 	
+	// Used when ingesting or by the processing framework when framing the outputartifactname for artifactclasses that produce outputArtifactclass  
 	public String getSequenceCode(Sequence sequence, String artifactName) {
-	    boolean useExtractedCode = sequence.isArtifactKeep();
-	    
 	    String sequenceCode = null;
-	    if(useExtractedCode) {
-	    	sequenceCode = getExtractedCode(sequence, artifactName);
+
+		boolean useExtractedCode = sequence.isKeepCode();
+	    if(useExtractedCode) { 
+	    	String artifactCodeRegex = sequence.getCodeRegex();
+	    	
+	    	if(artifactCodeRegex != null) // if use extracted code, and code_regex matches then we dont want a new code
+	    		sequenceCode = extractSequenceFromArtifactName(artifactName, artifactCodeRegex);
 	    }
-	    else { // if using extracted code, then we dont want a new code
-	    	synchronized (artifactName) {
-	    		Integer incrementedCurrentNumber = null;
-	    		if(sequence.getSequenceRef() != null) {
-	    			incrementedCurrentNumber = sequence.getSequenceRef().incrementCurrentNumber();
-	    			sequenceDao.save(sequence.getSequenceRef());
-	    		}
-	    		else {
-	    			incrementedCurrentNumber = sequence.incrementCurrentNumber();
-	    			sequenceDao.save(sequence);
-	    		}
-	    		sequenceCode = (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + incrementedCurrentNumber;
-	    	}
+	    
+	    if(StringUtils.isBlank(sequenceCode)) { // if keep_code is true but code_regex doesnt return a match...
+	    	/*
+	    	The code generation logic for artifacts is tried the following order:
+
+	    		If number_regex returns a match value, use concat(prefix, value)
+	    		Use concat(prefix, current_number + 1)
+	    	*/
+			String artifactNumberRegex = sequence.getNumberRegex();
+			String extractedSeqNum = artifactNumberRegex != null ? extractSequenceFromArtifactName(artifactName, artifactNumberRegex) : null; 
+
+			if(StringUtils.isNotBlank(extractedSeqNum)) // If number_regex returns a match value, use concat(prefix, value)
+				sequenceCode = (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + extractedSeqNum;
+			else {
+				if(sequence.getForceMatch() != null && sequence.getForceMatch()) { // if true means supposed-to/should/must already have sequence in it, and shouldnt generate the sequence
+					sequenceCode = null;
+				}
+				else { // generating the sequence
+			    	synchronized (artifactName) {
+			    		Integer incrementedCurrentNumber = null;
+			    		if(sequence.getSequenceRef() != null) {
+			    			incrementedCurrentNumber = sequence.getSequenceRef().incrementCurrentNumber();
+			    			sequenceDao.save(sequence.getSequenceRef());
+			    		}
+			    		else {
+			    			incrementedCurrentNumber = sequence.incrementCurrentNumber();
+			    			sequenceDao.save(sequence);
+			    		}
+			    		sequenceCode = (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + incrementedCurrentNumber;
+			    	}
+				}
+			}
 	    }
 		return sequenceCode;
 	}	 

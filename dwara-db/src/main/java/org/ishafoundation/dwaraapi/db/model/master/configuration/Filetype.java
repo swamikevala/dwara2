@@ -22,10 +22,7 @@ public class Filetype{
 
 	@Id
 	@Column(name="id")
-	private String id; // "Copy Tasks" in task table has no relevance/meaning for filetype
-	
-	@Column(name="name", unique = true)
-	private String name;
+	private String id;
 	
 	@Column(name="description")
 	private String description;
@@ -39,9 +36,8 @@ public class Filetype{
     	
     }
     
-    public Filetype(String id, String name) {
+    public Filetype(String id) {
     	this.id = id;
-    	this.name = name;
     }
     
 	public String getId() {
@@ -50,14 +46,6 @@ public class Filetype{
 
 	public void setId(String id) {
 		this.id = id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 	
 	public String getDescription() {
@@ -107,11 +95,11 @@ public class Filetype{
             return false;
  
         Filetype filetype = (Filetype) o;
-        return Objects.equals(name, filetype.name);
+        return Objects.equals(id, filetype.id);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(id);
     }    
 }

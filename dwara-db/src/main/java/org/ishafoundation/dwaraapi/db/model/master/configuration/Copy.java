@@ -4,54 +4,44 @@ import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 
 @Entity
-@Table(name="location")
-public class Location implements Cacheable{
+@Table(name="copy")
+public class Copy {
 	@Id
 	@Column(name="id")
-	private String id;
+	private int id;
 	
-	@Column(name="description", unique = true)
-	private String description;
-	
-	@Column(name="\"default\"")
-	private boolean default_;
+	@ManyToOne(fetch = FetchType.LAZY) // Many copies can be in same location
+	private Location location;
 
-	
-	public String getId() {
+	public int getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(int id) {
 		this.id = id;
 	}
 
-	public String getDescription() {
-		return description;
+	public Location getLocation() {
+		return location;
 	}
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public boolean isDefault_() {
-		return default_;
-	}
-
-	public void setDefault_(boolean default_) {
-		this.default_ = default_;
+	public void setLocation(Location location) {
+		this.location = location;
 	}
 
 	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Location location = (Location) o;
+        Copy location = (Copy) o;
         return Objects.equals(id, location.id);
     }
  

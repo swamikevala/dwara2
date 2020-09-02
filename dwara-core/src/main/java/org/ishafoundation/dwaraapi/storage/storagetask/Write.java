@@ -1,9 +1,13 @@
 package org.ishafoundation.dwaraapi.storage.storagetask;
 
 
+import java.util.List;
+
 import org.apache.commons.io.FileUtils;
+import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
@@ -28,6 +32,9 @@ public class Write extends AbstractStoragetaskAction{
 	private DomainUtil domainUtil;
 	
 	@Autowired
+	private ProcessingtaskDao processingtaskDao;
+	
+	@Autowired
 	private VolumeDao volumeDao;
 	
 	@Autowired
@@ -50,8 +57,15 @@ public class Write extends AbstractStoragetaskAction{
 		Domain domain = null;
 		long artifactSize = 0L;
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.ingest) {
-			//Dont use this as for proxy copy the artifact class is more apt to be picked from action element - Integer artifactclassId = job.getRequest().getDetails().getArtifactclass_id(); 
-			String artifactclassId = job.getActionelement().getArtifactclassId();
+			String artifactclassId = request.getDetails().getArtifactclassId();
+			List<Integer> preReqJobIds = job.getDependencies();
+			if(preReqJobIds != null) {
+				String processingtaskId = job.getProcessingtaskId();  
+				Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+				String outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix();
+				artifactclassId =  artifactclassId + outputArtifactclassSuffix;
+			}	
+
 			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 			domain = artifactclass.getDomain();
 			pathPrefix = artifactclass.getPath();
@@ -74,7 +88,7 @@ public class Write extends AbstractStoragetaskAction{
 //			volumegroupId = volume.getId();
 			// TODO domain = ??
 			String volumeUid = request.getDetails().getTo_volume_uid();
-			volume = volumeDao.findById(volumeUid);
+			volume = volumeDao.findById(volumeUid).get();
 		}
 
 		

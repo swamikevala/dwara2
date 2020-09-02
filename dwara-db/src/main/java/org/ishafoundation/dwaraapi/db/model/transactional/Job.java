@@ -14,14 +14,16 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
+import org.hibernate.annotations.Type;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.Actionelement;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -49,7 +51,11 @@ public class Job {
 	private String processingtaskId;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
-    private Actionelement actionelement;
+    private Flowelement flowelement;
+	
+	@Type(type = "json")
+	@Column(name="dependencies", columnDefinition = "json")
+	private List<Integer> dependencies;
 
 	// The FK constraints are removed so that this can point to one of the domain's artifact.
 	@Column(name="input_artifact_id")
@@ -74,8 +80,9 @@ public class Job {
 	@Column(name="status")
 	private Status status;
 	
-	@OneToOne(fetch = FetchType.LAZY)
-	private org.ishafoundation.dwaraapi.db.model.master.reference.Error error; 
+	@Lob
+	@Column(name="error_msg")
+	private String errorMsg; 
 
 	@OneToOne(fetch = FetchType.LAZY)
 	private Volume volume;
@@ -119,12 +126,20 @@ public class Job {
 		this.processingtaskId = processingtaskId;
 	}
 
-	public Actionelement getActionelement() {
-		return actionelement;
+	public Flowelement getFlowelement() {
+		return flowelement;
 	}
 
-	public void setActionelement(Actionelement actionelement) {
-		this.actionelement = actionelement;
+	public void setFlowelement(Flowelement flowelement) {
+		this.flowelement = flowelement;
+	}
+
+	public List<Integer> getDependencies() {
+		return dependencies;
+	}
+
+	public void setDependencies(List<Integer> dependencies) {
+		this.dependencies = dependencies;
 	}
 
 	public Integer getInputArtifactId() {
@@ -143,14 +158,14 @@ public class Job {
 		this.outputArtifactId = outputArtifactId;
 	}
 
-	public org.ishafoundation.dwaraapi.db.model.master.reference.Error getError() {
-		return error;
+	public String getErrorMsg() {
+		return errorMsg;
 	}
 
-	public void setError(org.ishafoundation.dwaraapi.db.model.master.reference.Error error) {
-		this.error = error;
+	public void setErrorMsg(String errorMsg) {
+		this.errorMsg = errorMsg;
 	}
-	
+
 	public LocalDateTime getCompletedAt() {
 		return completedAt;
 	}

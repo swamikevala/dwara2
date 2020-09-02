@@ -3,7 +3,6 @@ package org.ishafoundation.dwaraapi.storage.storagetype.tape.drive;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
@@ -36,9 +35,21 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 
 	private String callMtStatus(String dataTransferElementName) throws Exception {
 		String mtStatusResponse = null;
-		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("mt -f " + dataTransferElementName + " status");
-		if(cler.isComplete())
-			mtStatusResponse = cler.getStdOutResponse();
+		CommandLineExecutionResponse cler = null;
+		try {
+			cler = commandLineExecuter.executeCommand("mt -f " + dataTransferElementName + " status");
+			if(cler.isComplete())
+				mtStatusResponse = cler.getStdOutResponse();
+
+		}
+		catch (Exception e) {
+			String errorMsg = e.getMessage();
+			logger.error("Unable to get mtstatus - " + errorMsg);
+			if(errorMsg.contains("Device or resource busy"))
+				mtStatusResponse = errorMsg;
+			else
+				throw e;
+		}
 		return mtStatusResponse;
 	}
 
