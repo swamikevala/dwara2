@@ -282,7 +282,7 @@ public class ProcessingJobProcessor implements Runnable{
 						    logger.debug(logMsgPrefix + " - Success");	
 						    
 						    // Now setting all the dependentjobs with the tasktype generated output artifactid
-						    setInputArtifactForDependentJobs(job.getFlowelement().getFlow().getId(), outputArtifact);
+						    setInputArtifactForDependentJobs(job, outputArtifact);
     		
 						}	    
 
@@ -348,21 +348,35 @@ public class ProcessingJobProcessor implements Runnable{
 		}
 	}
 
-	private void setInputArtifactForDependentJobs(String flowId, Artifact inputArtifactForDependentJobs) {
-		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndActiveTrueOrderByDisplayOrderAsc(flowId);
-		for (Flowelement nthFlowelement : flowelementList) {
-			if(nthFlowelement.getFlowRef() != null) {
-				setInputArtifactForDependentJobs(nthFlowelement.getFlowRef().getId(), inputArtifactForDependentJobs);
-			}
-			else {
-				Job nthDependentJob = jobDao.findByFlowelementIdAndStatus(nthFlowelement.getId(), Status.queued);
-				String logMsgPrefix2 = "DB Job - " + "(" + nthDependentJob.getId() + ") - Updation - InputArtifactId " + inputArtifactForDependentJobs.getId();
+	private void setInputArtifactForDependentJobs(Job job, Artifact inputArtifactForDependentJobs) {
+		List<Job> jobList = jobDao.findAllByRequestId(job.getRequest().getId());
+		for (Job nthJob : jobList) {
+			List<Integer> dependencyList = nthJob.getDependencies();
+			if(dependencyList != null && dependencyList.contains(job.getId())) {
+				nthJob.setInputArtifactId(inputArtifactForDependentJobs.getId()); // output artifact of the current job is the input artifact of the dependent job
+				String logMsgPrefix2 = "DB Job - " + "(" + nthJob.getId() + ") - Updation - InputArtifactId " + inputArtifactForDependentJobs.getId();
 				logger.debug(logMsgPrefix2);	
-			    jobDao.save(nthDependentJob);
+			    jobDao.save(nthJob);
 			    logger.debug(logMsgPrefix2 + " - Success");
 			}
 		}
 	}
+
+//	private void setInputArtifactForDependentJobs(String flowId, Artifact inputArtifactForDependentJobs) {
+//		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndActiveTrueOrderByDisplayOrderAsc(flowId);
+//		for (Flowelement nthFlowelement : flowelementList) {
+//			if(nthFlowelement.getFlowRef() != null) {
+//				setInputArtifactForDependentJobs(nthFlowelement.getFlowRef().getId(), inputArtifactForDependentJobs);
+//			}
+//			else {
+//				Job nthDependentJob = jobDao.findByFlowelementIdAndStatus(nthFlowelement.getId(), Status.queued);
+//				String logMsgPrefix2 = "DB Job - " + "(" + nthDependentJob.getId() + ") - Updation - InputArtifactId " + inputArtifactForDependentJobs.getId();
+//				logger.debug(logMsgPrefix2);	
+//			    jobDao.save(nthDependentJob);
+//			    logger.debug(logMsgPrefix2 + " - Success");
+//			}
+//		}
+//	}
 	
 	private synchronized Job checkAndUpdateStatusToInProgress(Job job, Request systemGeneratedRequest){
 		if(job.getStatus() == Status.queued) {

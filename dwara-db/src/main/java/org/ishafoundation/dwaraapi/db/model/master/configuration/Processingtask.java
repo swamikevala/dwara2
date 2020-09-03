@@ -28,8 +28,10 @@ public class Processingtask{
 	// Eg.,
 	// Pubvideo - video
 	// Privvideo - video
-	@ManyToOne(fetch = FetchType.LAZY)
-	private Filetype filetype;
+//	@ManyToOne(fetch = FetchType.LAZY)
+//	private Filetype filetype;
+	@Column(name="filetype_id")
+	private String filetypeId;
 	
 	@Column(name="output_artifactclass_suffix")
 	private String outputArtifactclassSuffix;
@@ -58,12 +60,12 @@ public class Processingtask{
 		this.maxErrors = maxErrors;
 	}
 
-	public Filetype getFiletype() {
-		return filetype;
+	public String getFiletypeId() {
+		return filetypeId;
 	}
 
-	public void setFiletype(Filetype filetype) {
-		this.filetype = filetype;
+	public void setFiletypeId(String filetypeId) {
+		this.filetypeId = filetypeId;
 	}
 	
     public String getOutputArtifactclassSuffix() {

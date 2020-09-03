@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
@@ -30,6 +31,9 @@ public class Write extends AbstractStoragetaskAction{
     
 	@Autowired
 	private DomainUtil domainUtil;
+	
+	@Autowired
+	private JobDao jobDao;
 	
 	@Autowired
 	private ProcessingtaskDao processingtaskDao;
@@ -60,12 +64,14 @@ public class Write extends AbstractStoragetaskAction{
 			String artifactclassId = request.getDetails().getArtifactclassId();
 			List<Integer> preReqJobIds = job.getDependencies();
 			if(preReqJobIds != null) {
-				String processingtaskId = job.getProcessingtaskId();  
+				// TODO : Assuming only one dependency
+				String processingtaskId = jobDao.findById(preReqJobIds.get(0)).get().getProcessingtaskId();  
 				Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
 				String outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix();
 				artifactclassId =  artifactclassId + outputArtifactclassSuffix;
 			}	
-
+			logger.trace("artifactclassId for getting domain - " + artifactclassId);
+			
 			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 			domain = artifactclass.getDomain();
 			pathPrefix = artifactclass.getPath();

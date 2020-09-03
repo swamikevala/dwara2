@@ -32,7 +32,7 @@ public class ChecksumGenerator implements IProcessingTask {
 		
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 		if(logicalFile.isFile()) {
-			if(file.getChecksum() != null) { // If there is a checksum already dont overwrite it...
+			if(file.getChecksum() == null) { // If there is a checksum already dont overwrite it...
 				file.setChecksum(ChecksumUtil.getChecksum(logicalFile, Checksumtype.valueOf(configuration.getChecksumType())));
 	
 		    	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);

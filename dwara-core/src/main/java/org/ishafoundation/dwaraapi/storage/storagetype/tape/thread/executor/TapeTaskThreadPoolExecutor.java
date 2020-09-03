@@ -29,8 +29,10 @@ public class TapeTaskThreadPoolExecutor {
 	INSERT INTO `tapedrive` VALUES (13001,'somw qqi',0,'1234','AVAILABLE',null,null,null);
 	*/
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
 		List<Device> tapedriveList = (List<Device>) deviceDao.findAllByTypeAndStatusAndDefectiveIsFalse(Devicetype.tape_drive, DeviceStatus.online);
+		if(tapedriveList.size() ==  0)
+			throw new Exception("Please configure devices table properly");
 		int corePoolSize = tapedriveList.size();
 		int maxPoolSize = corePoolSize;
         executor = new ThreadPoolExecutor(corePoolSize, maxPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());

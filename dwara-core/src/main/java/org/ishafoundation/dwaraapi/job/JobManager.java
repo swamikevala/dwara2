@@ -78,6 +78,7 @@ public class JobManager {
 						ThreadPoolExecutor tpe = (ThreadPoolExecutor) processingtaskSingleThreadExecutor.getExecutor();
 						BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
 						boolean alreadyQueued = false;
+						// TODO Add some logs here....
 						for (Runnable runnable : runnableQueueList) {
 							ProcessingJobManager pjm = (ProcessingJobManager) runnable;
 							if(job.getId() == pjm.getJob().getId()) {

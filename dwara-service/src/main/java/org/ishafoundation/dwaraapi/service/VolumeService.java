@@ -85,7 +85,8 @@ public class VolumeService extends DwaraService {
 				volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity);
 				volResp.setSizeUnit(sizeUnit);
 				*/
-				volResp.setLocation(volume.getLocation().getId());
+				if(volume.getLocation() != null)
+					volResp.setLocation(volume.getLocation().getId());
 				
 				VolumeDetails volumeDetails = volume.getDetails();
 				if(volumeDetails != null) {

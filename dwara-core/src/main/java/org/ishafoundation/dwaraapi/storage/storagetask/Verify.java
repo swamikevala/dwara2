@@ -63,7 +63,8 @@ public class Verify extends AbstractStoragetaskAction{
 		String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
 		List<Integer> preReqJobIdsOfWriteJobToBeVerified = writeJobToBeVerified.getDependencies();
 		if(preReqJobIdsOfWriteJobToBeVerified != null) {
-			String processingtaskId = writeJobToBeVerified.getProcessingtaskId();  
+			// TODO : Assuming only one dependency
+			String processingtaskId = jobDao.findById(preReqJobIdsOfWriteJobToBeVerified.get(0)).get().getProcessingtaskId();  
 			Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
 			String outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix();
 			artifactclassId = artifactclassId + outputArtifactclassSuffix;

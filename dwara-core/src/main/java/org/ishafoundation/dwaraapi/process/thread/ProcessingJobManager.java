@@ -12,6 +12,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
@@ -47,6 +48,12 @@ public class ProcessingJobManager implements Runnable{
 	
 	@Autowired
     private ProcessingtaskDao processingtaskDao;
+	
+	@Autowired
+	private FiletypeDao filetypeDao;
+	
+	@Autowired
+	private JobDao jobDao;
 		
 	@Autowired
 	private DomainUtil domainUtil;
@@ -68,9 +75,6 @@ public class ProcessingJobManager implements Runnable{
 
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
-	
-	@Autowired
-	private JobDao jobDao;
 	
 	private Job job;
 
@@ -95,22 +99,35 @@ public class ProcessingJobManager implements Runnable{
 		
 		try {
 			String processingtaskId = job.getProcessingtaskId();
+			Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
+			if(executor == null)
+				throw new Exception(processingtaskId + " class is still not impl. Please refer IProcessingTask doc...");
 			Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
 			
 			Domain domain = null;
 			Artifactclass outputArtifactclass = null;
 			
 			String outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix();
+			String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
+			logger.trace("outputArtifactclassSuffix " + outputArtifactclassSuffix);
 			if(outputArtifactclassSuffix != null) { // For processing tasks like checksum-gen this will be null...
-				String outputArtifactclassId = job.getRequest().getDetails().getArtifactclassId() + outputArtifactclassSuffix;
+				String outputArtifactclassId =  artifactclassId + outputArtifactclassSuffix;
+				logger.trace("outputArtifactclassId " + outputArtifactclassId);
 				outputArtifactclass = configurationTablesUtil.getArtifactclass(outputArtifactclassId);
 				domain = outputArtifactclass.getDomain();
 			}
 			else{
-				domain = job.getRequest().getDomain();
+				Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
+				domain = artifactclass.getDomain();
+				
+				if(domain == null)
+					domain = job.getRequest().getDomain();
 			}
 			
-			
+			if(domain == null) {
+				logger.error("Unable to get domain from the request");
+				throw new Exception("Unable to get domain from the request");
+			}
 			ArtifactRepository artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 			
 			Integer inputArtifactId = job.getInputArtifactId();
@@ -137,8 +154,13 @@ public class ProcessingJobManager implements Runnable{
 			
 			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, inputArtifact);
 	
-
-			Collection<LogicalFile> selectedFileList = getLogicalFileList(processingtask.getFiletype(), inputArtifactPath);
+			// TODO Cache filetypes...
+			Filetype ft = null;
+			if(!processingtask.getFiletypeId().equals("_all_")) {
+				ft = filetypeDao.findById(processingtask.getFiletypeId()).get();
+			}
+				
+			Collection<LogicalFile> selectedFileList = getLogicalFileList(ft, inputArtifactPath);
 			int filesToBeProcessedCount = selectedFileList.size();
 			if(filesToBeProcessedCount == 0)
 				throw new Exception("No files to process. Check supported extensions...");
@@ -188,7 +210,6 @@ public class ProcessingJobManager implements Runnable{
 				processingJobProcessor.setOutputArtifactPathname(outputArtifactPathname);
 				processingJobProcessor.setDestinationDirPath(outputFilePath);
 				
-				Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
 				executor.execute(processingJobProcessor);
 			}
 			// TODO if no. of errors in the tasktype reach the configured max_errors threshold then we stop further processing.... count(*) on failures for the job_id...
@@ -218,11 +239,25 @@ public class ProcessingJobManager implements Runnable{
 //	}
 
 	private String getOutputArtifactName(Artifactclass outputArtifactclass, String inputArtifactName){
+
 		String outputArtifactClassSequenceId = outputArtifactclass.getSequenceId();
-		Sequence sequence = configurationTablesUtil.getSequence(outputArtifactClassSequenceId);
-		return sequenceUtil.getSequenceCode(sequence, inputArtifactName);
+		Sequence outputArtifactClassSequence = configurationTablesUtil.getSequence(outputArtifactClassSequenceId);
+		String outputArtifactSeqCode = sequenceUtil.getSequenceCode(outputArtifactClassSequence, inputArtifactName);
+		// TODO : Assuming the artifact name will have some sequence followed by "_"
+		return inputArtifactName.replace(StringUtils.substringBefore(inputArtifactName, "_"), outputArtifactSeqCode);
 	}
 
+//	private String getOutputArtifactName(Artifactclass outputArtifactclass, String inputArtifactName,  Artifactclass inputArtifactclass){
+//		String inputArtifactClassSequenceId = inputArtifactclass.getSequenceId();
+//		Sequence inputArtifactClassSequence = configurationTablesUtil.getSequence(inputArtifactClassSequenceId);
+//		String inputArtifactSeqCode = sequenceUtil.getExtractedCode(inputArtifactClassSequence, inputArtifactName);
+//
+//		
+//		String outputArtifactClassSequenceId = outputArtifactclass.getSequenceId();
+//		Sequence outputArtifactClassSequence = configurationTablesUtil.getSequence(outputArtifactClassSequenceId);
+//		String outputArtifactSeqCode = sequenceUtil.getSequenceCode(outputArtifactClassSequence, inputArtifactName);
+//		return inputArtifactName.replace(inputArtifactSeqCode, outputArtifactSeqCode);
+//	}
 	private String getOutputArtifactPathname(Artifactclass outputArtifactclass, String outputArtifactName) {
 		return outputArtifactclass.getPath() + java.io.File.separator + outputArtifactName;
 	}

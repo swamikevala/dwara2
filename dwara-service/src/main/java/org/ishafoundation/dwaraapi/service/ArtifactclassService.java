@@ -96,7 +96,8 @@ public class ArtifactclassService {
 			ArtifactclassResponse artifactclassResponse = new ArtifactclassResponse();
 			String artifactclassId = artifactclass.getId();
 			artifactclassResponse.setId(artifactclassId);
-			artifactclassResponse.setName(artifactclass.getDescription());// artifactclassResponse.setName(artifactclass.getName());
+			// TODO - Breaking change...
+			artifactclassResponse.setName(artifactclassId);// artifactclassResponse.setName(artifactclass.getName());
 			if(artifactclass.getDomain() != null)
 				artifactclassResponse.setDomain(Integer.parseInt(domainAttributeConverter.convertToDatabaseColumn(artifactclass.getDomain()))); // FIXME - Domain - Parsing as Integer
 			artifactclassResponse.setSource(artifactclass.isSource());
