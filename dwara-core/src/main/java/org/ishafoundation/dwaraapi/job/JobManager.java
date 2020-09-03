@@ -70,18 +70,18 @@ public class JobManager {
 				else {
 					jobName = processingtaskId;
 				}
-				logger.info("job - " + job.getId() + ":" + jobName);
+				logger.info("Job - " + job.getId() + ":" + jobName);
 				boolean isJobReadyToBeProcessed = isJobReadyToBeProcessed(job);
-				logger.info("isJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
+				logger.info("IsJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
 				if(isJobReadyToBeProcessed) {
 					if(processingtaskId != null) { // a non-storage process job
 						ThreadPoolExecutor tpe = (ThreadPoolExecutor) processingtaskSingleThreadExecutor.getExecutor();
 						BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
 						boolean alreadyQueued = false;
-						// TODO Add some logs here....
 						for (Runnable runnable : runnableQueueList) {
 							ProcessingJobManager pjm = (ProcessingJobManager) runnable;
 							if(job.getId() == pjm.getJob().getId()) {
+								logger.debug(job.getId() + " already in ProcessingJobManager queue. Skipping it...");
 								alreadyQueued = true;
 								break;
 							}
@@ -89,7 +89,7 @@ public class JobManager {
 						if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
 							ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
 							processingJobManager.setJob(job);
-
+							logger.debug(job.getId() + " added to the ProcessingJobManager queue.");
 							tpe.execute(processingJobManager);
 						}
 					}else {

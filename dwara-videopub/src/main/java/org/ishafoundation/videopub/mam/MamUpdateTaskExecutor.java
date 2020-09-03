@@ -106,8 +106,12 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			long startms = System.currentTimeMillis();
 				
 			String generatedProxyFilePath = logicalFile.getAbsolutePath(); // Proxies will be something like - /data/transcode/13491_HYTT_Yogasanas-Demo_AYA-IYC_02-Nov-2017_EX1_Mod11/1533/VIVA0985_01.mp4
-			String generatedThumbnailPath = logicalFile.getSidecarFile("jpg").getAbsolutePath(); // Thumbnails will be something like - /data/transcode/13491_HYTT_Yogasanas-Demo_AYA-IYC_02-Nov-2017_EX1_Mod11/1533/VIVA0985_01.jpg
-			String generatedProxyMetaDataFilePath = logicalFile.getSidecarFile("mp4_ffprobe_out").getAbsolutePath();				
+			File jpgSidecarFile = logicalFile.getSidecarFile("jpg");
+			File ffprobeSidecarFile = logicalFile.getSidecarFile("mp4_ffprobe_out");
+			if(jpgSidecarFile == null || ffprobeSidecarFile == null)
+				throw new Exception("Mam expects jpg and mp4_ffprobe_out sidecar files for videos... Pls configure it");
+			String generatedThumbnailPath = jpgSidecarFile.getAbsolutePath(); // Thumbnails will be something like - /data/transcode/13491_HYTT_Yogasanas-Demo_AYA-IYC_02-Nov-2017_EX1_Mod11/1533/VIVA0985_01.jpg
+			String generatedProxyMetaDataFilePath = ffprobeSidecarFile.getAbsolutePath();				
 			
 			String proxyFilePathOnMamServer = generatedProxyFilePath.replace(StringUtils.substringBefore(generatedProxyFilePath, File.separator + category + File.separator), catDVConfiguration.getSshProxiesRootLocation());
 			jSchSession = catdvSshSessionHelper.getSession();

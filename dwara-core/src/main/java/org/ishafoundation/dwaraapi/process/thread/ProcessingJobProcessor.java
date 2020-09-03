@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.process.thread;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.NameFileFilter;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
@@ -17,7 +19,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepositor
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -283,35 +284,27 @@ public class ProcessingJobProcessor implements Runnable{
 						    
 						    // Now setting all the dependentjobs with the tasktype generated output artifactid
 						    setInputArtifactForDependentJobs(job, outputArtifact);
-    		
 						}	    
 
-					    org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
-
-					    Method fileRefSetter = nthFileRowToBeInserted.getClass().getMethod("set" + file.getClass().getSimpleName() + "Ref", file.getClass());
-					    fileRefSetter.invoke(nthFileRowToBeInserted, file);
-						
-					    Method fileArtifactSetter = nthFileRowToBeInserted.getClass().getMethod("set" + outputArtifact.getClass().getSimpleName(), outputArtifact.getClass());
-						fileArtifactSetter.invoke(nthFileRowToBeInserted, outputArtifact);
-						
-						String filePathname = processingtaskResponse.getDestinationPathname().replace(outputArtifactPathname, outputArtifactName);
-						nthFileRowToBeInserted.setPathname(filePathname);
-						
-						// TODO need to be done and set after proxy file is generated
-						//nthFileRowToBeInserted.setChecksum(ChecksumUtil.getChecksum(new File(processingtaskResponse.getDestinationPathname()), Checksumtype.sha256)); 
-						nthFileRowToBeInserted.setSize(FileUtils.sizeOf(new File(processingtaskResponse.getDestinationPathname())));
-				    	logger.debug("DB File Creation");
-				    	try {
-				    		domainSpecificFileRepository.save(nthFileRowToBeInserted);
-				    	}
-				    	catch (Exception e) {
-				    		nthFileRowToBeInserted = domainSpecificFileRepository.findByPathname(filePathname); 
-							if(nthFileRowToBeInserted != null)
-								logger.trace("File details possibly updated by another thread already");
-							else
-								throw e;
+						// creating File records for the process generated files
+						String proxyFilePathName = processingtaskResponse.getDestinationPathname(); 
+						String proxyFileBaseName = FilenameUtils.getBaseName(proxyFilePathName);
+						String proxyFilePath = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathName);
+				        FilenameFilter fileNameFilter = new FilenameFilter() {
+				            @Override
+				            public boolean accept(File dir, String name) {
+				            	if(FilenameUtils.getBaseName(name).equals(proxyFileBaseName))
+				            		return true;
+				               
+				               return false;
+				            }
+				         };
+						String[] files = new File(proxyFilePath).list(fileNameFilter);
+						for (String nthFileName : files) {
+							String filepathName = proxyFilePath + File.separator + nthFileName;
+							logger.trace("Now creating file record for - " + filepathName);
+							createFile(filepathName, outputArtifact, domainSpecificFileRepository);	
 						}
-						logger.debug("DB File Creation - Success");
 					}
 
 					staus = Status.completed;
@@ -348,16 +341,59 @@ public class ProcessingJobProcessor implements Runnable{
 		}
 	}
 
+	private void createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository) throws Exception {
+	    org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
+		
+	    Method fileRefSetter = nthFileRowToBeInserted.getClass().getMethod("set" + file.getClass().getSimpleName() + "Ref", file.getClass());
+	    fileRefSetter.invoke(nthFileRowToBeInserted, file);
+		
+	    Method fileArtifactSetter = nthFileRowToBeInserted.getClass().getMethod("set" + outputArtifact.getClass().getSimpleName(), outputArtifact.getClass());
+		fileArtifactSetter.invoke(nthFileRowToBeInserted, outputArtifact);
+		
+		String filePathname = fileAbsolutePathName.replace(outputArtifactPathname, outputArtifactName);
+		nthFileRowToBeInserted.setPathname(filePathname);
+		
+		// TODO need to be done and set after proxy file is generated
+		//nthFileRowToBeInserted.setChecksum(ChecksumUtil.getChecksum(new File(processingtaskResponse.getDestinationPathname()), Checksumtype.sha256)); 
+		//nthFileRowToBeInserted.setSize(FileUtils.sizeOf(new File(fileAbsolutePathName)));
+		logger.debug("DB File Creation");
+		try {
+			domainSpecificFileRepository.save(nthFileRowToBeInserted);
+		}
+		catch (Exception e) {
+			nthFileRowToBeInserted = domainSpecificFileRepository.findByPathname(filePathname); 
+			if(nthFileRowToBeInserted != null)
+				logger.trace("File details possibly updated by another thread already");
+			else
+				throw e;
+		}
+		logger.debug("DB File Creation - Success");
+	
+	}
+
 	private void setInputArtifactForDependentJobs(Job job, Artifact inputArtifactForDependentJobs) {
 		List<Job> jobList = jobDao.findAllByRequestId(job.getRequest().getId());
 		for (Job nthJob : jobList) {
 			List<Integer> dependencyList = nthJob.getDependencies();
-			if(dependencyList != null && dependencyList.contains(job.getId())) {
-				nthJob.setInputArtifactId(inputArtifactForDependentJobs.getId()); // output artifact of the current job is the input artifact of the dependent job
-				String logMsgPrefix2 = "DB Job - " + "(" + nthJob.getId() + ") - Updation - InputArtifactId " + inputArtifactForDependentJobs.getId();
-				logger.debug(logMsgPrefix2);	
-			    jobDao.save(nthJob);
-			    logger.debug(logMsgPrefix2 + " - Success");
+			boolean setInputArtifact = false;
+			if(dependencyList != null) {
+				if(dependencyList.contains(job.getId())) 
+					setInputArtifact = true;
+				else {
+					// TODO Assuming the first job
+					Job dependentParentJob = jobDao.findById(dependencyList.get(0)).get();
+					List<Integer> dependentParentList = dependentParentJob.getDependencies();
+					if(dependentParentList != null && dependentParentList.contains(job.getId())) 
+						setInputArtifact = true;
+				}
+
+				if(setInputArtifact) {	 
+					nthJob.setInputArtifactId(inputArtifactForDependentJobs.getId()); // output artifact of the current job is the input artifact of the dependent job
+					String logMsgPrefix2 = "DB Job - " + "(" + nthJob.getId() + ") - Updation - InputArtifactId " + inputArtifactForDependentJobs.getId();
+					logger.debug(logMsgPrefix2);	
+				    jobDao.save(nthJob);
+				    logger.debug(logMsgPrefix2 + " - Success");
+				}
 			}
 		}
 	}

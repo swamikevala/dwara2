@@ -131,6 +131,7 @@ public class FileService extends DwaraService{
     		
 			Request systemRequest = new Request();
 			systemRequest.setType(RequestType.system);
+			systemRequest.setStatus(Status.queued);
 			systemRequest.setRequestRef(userRequest);
 			systemRequest.setActionId(userRequest.getActionId());
 			systemRequest.setRequestedBy(userRequest.getRequestedBy());

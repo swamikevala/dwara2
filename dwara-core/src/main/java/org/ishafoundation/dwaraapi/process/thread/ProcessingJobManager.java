@@ -168,25 +168,32 @@ public class ProcessingJobManager implements Runnable{
 			for (Iterator<LogicalFile> iterator = selectedFileList.iterator(); iterator.hasNext();) {
 				LogicalFile logicalFile = (LogicalFile) iterator.next(); // would have an absolute file like C:\data\ingested\14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS and its sidecar files
 				String logicalFilePath = logicalFile.getAbsolutePath();
-				logger.trace(logicalFilePath);
+				logger.trace("logicalFilePath - " + logicalFilePath);
 				if(logicalFilePath.contains(configuration.getJunkFilesStagedDirName())) // skipping junk files
 					continue;			
 
-				logger.info("Now kicking off - " + job.getId() + " " + logicalFilePath + " task " + processingtaskId);
 				// TODO - Need to work on this for Audio where its just file..
-				String x = FilenameUtils.getFullPath(logicalFile.getAbsolutePath()) + FilenameUtils.getBaseName(logicalFile.getAbsolutePath());
-				if(logicalFile.getAbsolutePath().equals(x)) { 
+				String x = FilenameUtils.getFullPath(logicalFilePath) + FilenameUtils.getBaseName(logicalFilePath);
+				if(logicalFilePath.equals(x)) { 
 					// means input artifact is a file and not a directory
 					
 				}
-				String filePathnameWithoutArtifactNamePrefixed = logicalFile.getAbsolutePath().replace(inputArtifactPath + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
-				String artifactNamePrefixedFilePathname = logicalFile.getAbsolutePath().replace(inputArtifactPath + File.separator, artifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
+				String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPath + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
+				String artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPath + File.separator, artifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
 				
 				//logger.info("Now processing - " + path);
 				org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
 				if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
 					file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
+
+				/* Commenting out as we decided to save the sidecar files too
+				// We dont save sidecar files in file table and for checksum action when we wanted to generate checksum for all files these files wont be available...
+				// 2 options either save the generated sidecar files too in file table OR skip them here for checksum generation
+				if(file == null && processingtaskId.contains("checksum")) // TODO Nasty hardcoded fix... 
+					continue;
+				*/
 				logger.trace("file - " + file.getId());
+
 				
 				String outputFilePath = null;
 				if(outputArtifactPathname != null) {
@@ -209,7 +216,7 @@ public class ProcessingJobManager implements Runnable{
 				processingJobProcessor.setOutputArtifactName(outputArtifactName);
 				processingJobProcessor.setOutputArtifactPathname(outputArtifactPathname);
 				processingJobProcessor.setDestinationDirPath(outputFilePath);
-				
+				logger.info("Now kicking off - " + job.getId() + " " + logicalFilePath + " task " + processingtaskId);				
 				executor.execute(processingJobProcessor);
 			}
 			// TODO if no. of errors in the tasktype reach the configured max_errors threshold then we stop further processing.... count(*) on failures for the job_id...
@@ -273,6 +280,7 @@ public class ProcessingJobManager implements Runnable{
 		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
 			filePathTofileObj.put(nthFile.getPathname(), nthFile);
 		}
+		//logger.trace("file collection - " + filePathTofileObj.keySet().toString());
 		return filePathTofileObj;
 	}
 	

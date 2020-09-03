@@ -58,7 +58,7 @@ public class StoragetypeJobDelegator {
 			// Ideally the Storagetype specific JobManager just need to delegate the job to the processor thread. So by the time the next schedule gets here the queue should be empty. 
 			// But just in case if it has items clear them and feed it with the fresh job list...
 			runnableQueueList.clear();
-
+			logger.debug("Cleared existing IStoragetypeThreadPoolExecutor queue item and added the fresh storage job list...");
 			/*
 			if(runnableQueueList.size() >= 3) {
 				logger.debug("Already 3 storagejobset lined up in " + storagetype.name() + DwaraConstants.STORAGETYPE_THREADPOOLEXECUTOR_SUFFIX + ". Skipping this schedule");
