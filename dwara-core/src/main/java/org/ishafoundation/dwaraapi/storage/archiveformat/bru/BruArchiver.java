@@ -64,12 +64,6 @@ public class BruArchiver implements IArchiveformatter {
 		return convertBruResponseToArchiveResponse(bruResponse, artifactNameToBeWritten, volumeBlocksize, archiveformatBlocksize);
 	}
 	
-	protected String executeWriteCommand(List<String> writeCommandParamsList, String artifactName, int volumeBlocksize)
-			throws Exception {
-		return executeCommand(writeCommandParamsList);
-	}
-
-	
 	protected ArchiveResponse convertBruResponseToArchiveResponse(BruResponse bruResponse, String artifactName, int volumeBlocksize, double archiveformatBlocksize){
 		ArchiveResponse ar = new ArchiveResponse();
 		ar.setArchiveId(bruResponse.getArchiveId());
@@ -191,16 +185,13 @@ public class BruArchiver implements IArchiveformatter {
 
 				-f /dev/stdin (to read from stdin), 
 				-Pf (to get file listing order from stdin)
+				
 				mbuffer switches: 
-					-e (to make mbuffer exit on error - needed when bru exits after finishing reading a file - mbuffer doesn't know when to stop reading the tape, so we rely on the "broken pipe" error afer bru terminates
-					-m 2G - provides a buffer of 2G. for bigger files a bigger buffer is better, e.g. 100 GB file, 8GB is good
+					-e (to make mbuffer exit on error - needed when bru/tar exits after finishing reading a file - mbuffer doesn't know when to stop reading the tape, so we rely on the "broken pipe" error after bru/tar terminates
+					-m 2G - provides a buffer of 2G. for bigger files a bigger buffer is better, e.g. 100 GB file, 8GB is good - formula to arrive m value =  max(1G, round_to_nearest_gb(filesize/16))
 					-s 1M - basically has to match the tape volume block size
 					-p 10 - means start reading from the tape when the buffer is less than 10% full. This is good because mechanically stopping/starting the tape drive is an overhead, so once the buffer becomes 100% full, this means that bru/tar will read data from the buffer until it is almost empty, and only then the tape drive will start filling up the buffer again
-
-			 */
-			
-			// mbuffer -m value calculation
-			// max(1G, round_to_nearest_gb(filesize/16))
+			*/
 			
 			// TODO : Should there by any max cap for the buffer ???
 			float fileSizeInGiB = (float) (fileSize/1073741824.0);  // 1 GiB = 1073741824 bytes...
@@ -219,8 +210,32 @@ public class BruArchiver implements IArchiveformatter {
 		return commandList;
 	}
 	
+	protected String executeWriteCommand(List<String> writeCommandParamsList, String artifactName, int volumeBlocksize)
+			throws Exception {
+		return executeCommand(writeCommandParamsList);
+	}
+
 	protected String executeRestoreCommand(List<String> restoreCommandParamsList) throws Exception {
-		return executeCommand(restoreCommandParamsList);
+		String mtStatusResponse = null;
+		CommandLineExecutionResponse cler = null;
+		try {
+			cler = commandLineExecuter.executeCommand(restoreCommandParamsList, false);
+			if(cler.isComplete())
+				mtStatusResponse = cler.getStdOutResponse();
+		}
+		catch (Exception e) {
+			String errorMsg = e.getMessage();
+			/* Something like
+					bru: [W042] "V25155_25155_12290_In-The-Lap-Of-The-Master_Day1-Evening_Q-And-A-Session_AYA-IYC_07-Jul-2017_Cam6_Osmo_B-Rolls": warning - error setting owner/group: errno = 1, Operation not permitted
+					^Min @ 78.0 MiB/s, out @ 60.8 MiB/s, 67.0 MiB total, buffer   2% fullbru: [W042] "V25155_25155_12290_In-The-Lap-Of-The-Master_Day1-Evening_Q-And-A-Session_AYA-IYC_07-Jul-2017_Cam6_Osmo_B-Rolls/DJI_0129.MOV": warning - error setting owner/group: errno = 1, Operation not permitted
+					mbuffer: error: outputThread: error writing to <stdout> at offset 0x4310000: Broken pipe
+			 */
+			if(errorMsg.contains("bru: [E"))
+				throw e;
+			else
+				mtStatusResponse = errorMsg;
+		}
+		return mtStatusResponse;
 	}
 	
 	private String executeCommand(List<String> bruCommandParamsList)

@@ -58,13 +58,10 @@ public class JobCreator {
 
 
 	// only if action is async create job should be called...
-	public List<Job> createJobs(Request request, Artifact sourceArtifact) throws Exception{
+	public List<Job> createJobs(Request request, Artifact sourceArtifact){
 		Action requestedBusinessAction = request.getActionId();
 		List<Integer>  flowelementsToBeSkipped = request.getDetails().getSkipActionelements();
 		org.ishafoundation.dwaraapi.db.model.master.reference.Action action = configurationTablesUtil.getAction(requestedBusinessAction);
-
-		if(action == null)
-			throw new Exception("Action for " + requestedBusinessAction.name() + " not configured in DB properly. Please set it first");
 
 		List<Job> jobList = new ArrayList<Job>();
 
@@ -100,14 +97,27 @@ public class JobCreator {
 		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndActiveTrueOrderByDisplayOrderAsc(nthFlowId);
 		for (Flowelement nthFlowelement : flowelementList) {
 			Flow flowRef = nthFlowelement.getFlowRef();
-			if(flowRef != null) {
-				// TODO : for now assuming that the prereq for the flowelement with flowref is going to have only one dependency and that too a process task..
-				Flowelement prereqFlowelement = flowelementDao.findById(nthFlowelement.getDependencies().get(0)).get();
-				String processingtaskId = prereqFlowelement.getProcessingtaskId();  
-				Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
-				String outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix();
-				String outputArtifactclassId = request.getDetails().getArtifactclassId() + outputArtifactclassSuffix;
-				iterateFlow(request, outputArtifactclassId, null, flowRef.getId(), nthFlowelement, jobList, flowelementId_Job_Map, flowelementId_CopyNumber_Job_Map);
+			
+			if(flowRef != null) { // If the flowelement has a flowref, that means one of this flowelement dependency is a processing task generating an output artifact, that is to be consumed as input
+				List<Integer> refFlowelementDepsList = nthFlowelement.getDependencies();
+				if(refFlowelementDepsList == null) {
+					logger.warn("Are you sure you dont want any dependencies defined on - " + nthFlowelement.getId() + ". Whats the point of this flowelement with flowref then?");
+				}else {
+					// Now use one of the processing task that too generating an output
+					String outputArtifactclassSuffix = null;
+					for (Integer nthRefFlowelementDepId : refFlowelementDepsList) {
+						Flowelement prereqFlowelement = flowelementDao.findById(nthRefFlowelementDepId).get();
+						String processingtaskId = prereqFlowelement.getProcessingtaskId();  
+						if(processingtaskId == null) // Is the dependency a processing task?
+							continue;
+						Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+						outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix(); // Does the dependent processing task generate an output?
+						if(outputArtifactclassSuffix != null)
+							break;
+					}
+					String outputArtifactclassId = request.getDetails().getArtifactclassId() + outputArtifactclassSuffix;
+					iterateFlow(request, outputArtifactclassId, null, flowRef.getId(), nthFlowelement, jobList, flowelementId_Job_Map, flowelementId_CopyNumber_Job_Map);
+				}
 			} else {
 				createJob(request, artifactclassId, artifactId, flowRefFlowelement, nthFlowelement, jobList, flowelementId_Job_Map, flowelementId_CopyNumber_Job_Map);
 			}

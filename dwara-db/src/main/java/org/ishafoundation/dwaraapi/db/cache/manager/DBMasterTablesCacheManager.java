@@ -31,7 +31,7 @@ public class DBMasterTablesCacheManager<T> {
 
 	@PostConstruct
 	public void loadAll() {
-		logger.debug("Now loading configured Referece/Configuration Master tables for caching...");
+		logger.debug("Now loading configured Reference/Configuration Master tables for caching...");
 		CacheableTablesList[] configTables = CacheableTablesList.values();
 		for (int i = 0; i < configTables.length; i++) {
 			CacheableTablesList configurationTables = configTables[i];

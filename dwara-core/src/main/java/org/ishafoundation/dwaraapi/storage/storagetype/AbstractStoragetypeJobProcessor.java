@@ -239,33 +239,13 @@ public abstract class AbstractStoragetypeJobProcessor {
     	}
     }
     
-    // TODO Should we force this to be implemented or let it be overwritten
     protected void beforeVerify(SelectedStorageJob selectedStorageJob) throws Exception {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
 		
-		Job job = storageJob.getJob();
 		Volume volume = storageJob.getVolume();
-    	
-		Job writeJobToBeVerified = null;
-		List<Integer> dependencies = job.getDependencies();
-		if(dependencies != null) {
-			for (Integer nthPreReqJobId : dependencies) {
-				Job preReqJobRef  = jobDao.findById(nthPreReqJobId).get();
-				if(preReqJobRef != null && preReqJobRef.getStoragetaskActionId() == Action.write) {
-					writeJobToBeVerified = preReqJobRef;
-				}
-			}
-		}
 		
-		String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
-		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
-		Domain domain = artifactclass.getDomain();
-		storageJob.setDomain(domain);
-		
-		Integer inputArtifactId = writeJobToBeVerified.getInputArtifactId();
-		Artifact artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);		
-		
-		storageJob.setArtifact(artifact);
+		Domain domain = storageJob.getDomain();
+		Artifact artifact = storageJob.getArtifact();
 
 		
 		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);

@@ -63,11 +63,20 @@ public class Write extends AbstractStoragetaskAction{
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.ingest) {
 			String artifactclassId = request.getDetails().getArtifactclassId();
 			List<Integer> preReqJobIds = job.getDependencies();
+			
 			if(preReqJobIds != null) {
-				// TODO : Assuming only one dependency
-				String processingtaskId = jobDao.findById(preReqJobIds.get(0)).get().getProcessingtaskId();  
-				Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
-				String outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix();
+				String outputArtifactclassSuffix = null;
+				// Now use one of the processing jobs that too generating an output
+				for (Integer preReqJobId : preReqJobIds) {
+					String processingtaskId = jobDao.findById(preReqJobId).get().getProcessingtaskId();
+					if(processingtaskId == null) // Is the dependency a processing job?
+						continue;
+					
+					Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+					outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix(); // Does the dependent processing job generate an output?
+					if(outputArtifactclassSuffix != null)
+						break;
+				}
 				artifactclassId =  artifactclassId + outputArtifactclassSuffix;
 			}	
 			logger.trace("artifactclassId for getting domain - " + artifactclassId);

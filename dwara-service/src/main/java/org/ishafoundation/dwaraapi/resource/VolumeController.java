@@ -138,7 +138,7 @@ public class VolumeController {
 			String prefix = volumeGroup.getSequence().getPrefix();
 			int sequenceOnLabel = getSequenceUsedOnVolumeLabel(volumeId, prefix);
 			if(sequenceOnLabel != expectedSequenceOnLabel)
-				throw new DwaraException("Volume " + volumeId + " sequence number is not contiguous. Expected numeric sequence - " + expectedSequenceOnLabel, null);
+				throw new DwaraException("Sequence number for Volume " + volumeId + " with " + sequenceOnLabel + " is not contiguous. Expected numeric sequence - " + expectedSequenceOnLabel, null);
 
 			// #6 - Storagesubtype should be defined (enum)
 			String storagesubtypeStr = nthInitializeRequest.getStoragesubtype();

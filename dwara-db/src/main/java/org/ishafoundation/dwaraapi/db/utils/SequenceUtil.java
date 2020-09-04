@@ -50,10 +50,7 @@ public class SequenceUtil {
 			if(StringUtils.isNotBlank(extractedSeqNum)) // If number_regex returns a match value, use concat(prefix, value)
 				sequenceCode = (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + extractedSeqNum;
 			else {
-				if(sequence.getForceMatch() != null && sequence.getForceMatch()) { // if true means supposed-to/should/must already have sequence in it, and shouldnt generate the sequence
-					sequenceCode = null;
-				}
-				else { // generating the sequence
+					// generating the sequence
 			    	synchronized (artifactName) {
 			    		Integer incrementedCurrentNumber = null;
 			    		if(sequence.getSequenceRef() != null) {
@@ -67,7 +64,6 @@ public class SequenceUtil {
 			    		sequenceCode = (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + incrementedCurrentNumber;
 			    	}
 				}
-			}
 	    }
 		return sequenceCode;
 	}	 

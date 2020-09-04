@@ -58,7 +58,7 @@ public abstract class AbstractStoragetaskAction{
 		return saveJob(job);
 	}
 
-	
+	// Only the information absolutely needed for tape job selection is set here - rest is all lazy loaded after the job is selected, so we dont load up all info upfront, only to be not used later...
 	public StorageJob buildStorageJob(Job job) throws Exception{
 		// If needed to be overwritten by subclass implementations
 		StorageJob storageJob = new StorageJob();

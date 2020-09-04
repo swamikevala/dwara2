@@ -185,13 +185,6 @@ public class ProcessingJobManager implements Runnable{
 				org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
 				if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
 					file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
-
-				/* Commenting out as we decided to save the sidecar files too
-				// We dont save sidecar files in file table and for checksum action when we wanted to generate checksum for all files these files wont be available...
-				// 2 options either save the generated sidecar files too in file table OR skip them here for checksum generation
-				if(file == null && processingtaskId.contains("checksum")) // TODO Nasty hardcoded fix... 
-					continue;
-				*/
 				logger.trace("file - " + file.getId());
 
 				
@@ -230,28 +223,12 @@ public class ProcessingJobManager implements Runnable{
 		}
 	}
 
-//	private Domain getDomain() {
-//		Domain domain = null;
-//		try {
-//			String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
-//			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
-//			domain = artifactclass.getDomain();
-//			
-//			if(domain == null)
-//				domain = job.getRequest().getDomain();
-//		}catch (Exception e) {
-//			logger.error("Unable to get domain from the request", e);
-//		}
-//		return domain;
-//	}
-
 	private String getOutputArtifactName(Artifactclass outputArtifactclass, String inputArtifactName){
-
 		String outputArtifactClassSequenceId = outputArtifactclass.getSequenceId();
 		Sequence outputArtifactClassSequence = configurationTablesUtil.getSequence(outputArtifactClassSequenceId);
+		String inputArtifactSeqCode = sequenceUtil.getExtractedCode(outputArtifactClassSequence, inputArtifactName);
 		String outputArtifactSeqCode = sequenceUtil.getSequenceCode(outputArtifactClassSequence, inputArtifactName);
-		// TODO : Assuming the artifact name will have some sequence followed by "_"
-		return inputArtifactName.replace(StringUtils.substringBefore(inputArtifactName, "_"), outputArtifactSeqCode);
+		return inputArtifactName.replace(inputArtifactSeqCode, outputArtifactSeqCode);
 	}
 
 //	private String getOutputArtifactName(Artifactclass outputArtifactclass, String inputArtifactName,  Artifactclass inputArtifactclass){

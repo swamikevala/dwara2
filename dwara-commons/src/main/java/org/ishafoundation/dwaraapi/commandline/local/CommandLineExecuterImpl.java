@@ -61,10 +61,17 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 	public CommandLineExecutionResponse executeCommand(List<String> commandList) throws Exception {
 		return executeCommand(commandList, createProcess(commandList));
 	}
-
+	
+	public CommandLineExecutionResponse executeCommand(List<String> commandList, boolean extractLastLineAsFailureReason) throws Exception {
+		return executeCommand(commandList, createProcess(commandList), extractLastLineAsFailureReason);
+	}
+	
 	public CommandLineExecutionResponse executeCommand(List<String> commandList, Process proc) throws Exception {
+		return executeCommand(commandList, proc, true);
+	}
+	
+	public CommandLineExecutionResponse executeCommand(List<String> commandList, Process proc, boolean extractLastLineAsFailureReason) throws Exception {
 		boolean isComplete = false;
-		String failureReason = null;
 		
 		CommandLineExecutionResponse commandLineExecutionResponse = new CommandLineExecutionResponse();
 		
@@ -74,22 +81,9 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 		try {
 			in = proc.getInputStream();
 			err = proc.getErrorStream();
-
-//			String stdOutResp = copy(in);
-//			String stdErrResp = copy(in);
-//			
-//			if(proc.exitValue() == 0) {
-//				isComplete = true;
-//				commandLineExecutionResponse.setStdOutResponse(stdOutResp);	
-//			} else {
-//				isComplete = false;
-//				failureReason = getFailureReason(stdErrResp);
-//				commandLineExecutionResponse.setFailureReason(failureReason);
-//				throw new Exception(failureReason);
-//			}
 			
-			StringBuffer stdOutRespBuffer = new StringBuffer();
-			StringBuffer stdErrRespBuffer = new StringBuffer();
+			StringBuffer stdOutRespBuffer = new StringBuffer(); // stdout channel
+			StringBuffer stdErrRespBuffer = new StringBuffer(); // stderr channel
 
 			byte[] tmp = new byte[1024];
 
@@ -123,9 +117,15 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 				commandLineExecutionResponse.setStdOutResponse(stdOutRespBuffer.toString());	
 			} else {
 				isComplete = false;
-				failureReason = getFailureReason(stdErrRespBuffer.toString());
-				commandLineExecutionResponse.setFailureReason(failureReason);
-				throw new Exception(failureReason);
+				String stdErrResp = stdErrRespBuffer.toString();
+				logger.debug("Command's stderr message - " + stdErrResp);
+				String message = null;
+				if(extractLastLineAsFailureReason) {
+					message = getLastLine(stdErrResp);
+				}else {
+					message = stdErrResp;
+				}
+				throw new Exception(message);
 			}
 			commandLineExecutionResponse.setIsComplete(isComplete);			
 
@@ -148,21 +148,9 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 		return commandLineExecutionResponse;
 		
 	}
-	
-	
-	private String copy(InputStream is) throws IOException {
-        int n = 0;
-        byte[] tmp = new byte[1024];
-        StringBuffer respBuffer = new StringBuffer();
-        while (-1 != (n = is.read(tmp))) {
-        	respBuffer.append(new String(tmp, 0, n));
-        }
-        return respBuffer.toString();
-	}
-	
+
 	// Not sure how to get the last line string just by reading the stream without having to write it to a file...
-	private String getFailureReason(String errorMessage){
-		logger.error("Command responded with error - " + errorMessage);
+	private String getLastLine(String errorMessage){
 		String failureReason = null;
 		String filename = commandlineExecutorErrorResponseTemporaryLocation + File.separator + System.currentTimeMillis() + ".err";
 		try {

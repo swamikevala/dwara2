@@ -311,10 +311,17 @@ public class StagedService extends DwaraService{
 //		    		}
 		        	
 					Sequence sequence = artifactclass.getSequence();
+					String extractedCode = sequenceUtil.getExtractedCode(sequence, stagedFileName);
 					String sequenceCode = sequenceUtil.getSequenceCode(sequence, stagedFileName);
+					
+					String toBeArtifactName = null;
+					if(extractedCode != null)
+						toBeArtifactName = stagedFileName.replace(extractedCode, sequenceCode);
+					else
+						toBeArtifactName = sequenceCode + "_" + stagedFileName;
 			        
-			        // Renames the directory prefixing sequencecode...
-			        java.io.File stagedFileInAppReadyToIngest = moveFile(appReadyToIngestFileObj, FileUtils.getFile(readyToIngestPath, sequenceCode + "_" + stagedFileName));
+			        // Renames the artifact with the needed sequencecode...
+			        java.io.File stagedFileInAppReadyToIngest = moveFile(appReadyToIngestFileObj, FileUtils.getFile(readyToIngestPath, toBeArtifactName));
 		    		
 		        	// STEP 2 - Moves Junk files
 			    	String junkFilesStagedDirName = configuration.getJunkFilesStagedDirName(); 

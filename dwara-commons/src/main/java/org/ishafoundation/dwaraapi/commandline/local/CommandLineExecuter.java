@@ -14,6 +14,9 @@ public interface CommandLineExecuter {
 	
 	public CommandLineExecutionResponse executeCommand(List<String> commandList) throws Exception;
 	
+	public CommandLineExecutionResponse executeCommand(List<String> commandList, boolean extractLastLineAsFailureReason) throws Exception;
+	
 	public CommandLineExecutionResponse executeCommand(List<String> commandList, Process proc) throws Exception;
 	
+	public CommandLineExecutionResponse executeCommand(List<String> commandList, Process proc, boolean extractLastLineAsFailureReason) throws Exception;
 }

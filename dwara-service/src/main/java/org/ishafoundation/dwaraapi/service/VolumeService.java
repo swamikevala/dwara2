@@ -9,16 +9,15 @@ import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.initialize.SystemRequestsForInitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.Details;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
-import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
+import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
@@ -46,7 +45,7 @@ public class VolumeService extends DwaraService {
 	private RequestDao requestDao;
 	
 	@Autowired
-	private SequenceDao sequenceDao;
+	private ConfigurationTablesUtil configurationTablesUtil;
 	
 	@Autowired
 	private JobCreator jobCreator;
@@ -110,9 +109,15 @@ public class VolumeService extends DwaraService {
 
 	public InitializeResponse initialize(List<InitializeUserRequest> initializeRequestList) throws Exception{	
 		InitializeResponse initializeResponse = new InitializeResponse();
+		Action requestedBusinessAction = Action.initialize;
+		org.ishafoundation.dwaraapi.db.model.master.reference.Action action = configurationTablesUtil.getAction(requestedBusinessAction);
+		if(action == null)
+			throw new Exception("Action for " + requestedBusinessAction.name() + " not configured in DB properly. Please set it first");
+
+		
 		Request request = new Request();
 		request.setType(RequestType.user);
-		request.setActionId(Action.initialize);
+		request.setActionId(requestedBusinessAction);
 		request.setStatus(Status.queued);
     	User user = getUserObjFromContext();
     	String requestedBy = user.getName();
@@ -133,6 +138,7 @@ public class VolumeService extends DwaraService {
 		
 		for (InitializeUserRequest nthInitializeRequest : initializeRequestList) {
 			Request systemrequest = new Request();
+			request.setType(RequestType.system);
 			systemrequest.setRequestRef(request);
 			systemrequest.setActionId(request.getActionId());
 			systemrequest.setStatus(Status.queued);

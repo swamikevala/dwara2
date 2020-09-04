@@ -36,8 +36,7 @@ public class Verify extends AbstractStoragetaskAction{
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
-	
-	
+	 
 	@Override
 	public StorageJob buildStorageJob(Job job) throws Exception{
 		StorageJob storageJob = new StorageJob();
@@ -63,21 +62,30 @@ public class Verify extends AbstractStoragetaskAction{
 		String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
 		List<Integer> preReqJobIdsOfWriteJobToBeVerified = writeJobToBeVerified.getDependencies();
 		if(preReqJobIdsOfWriteJobToBeVerified != null) {
-			// TODO : Assuming only one dependency
-			String processingtaskId = jobDao.findById(preReqJobIdsOfWriteJobToBeVerified.get(0)).get().getProcessingtaskId();  
-			Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
-			String outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix();
+			String outputArtifactclassSuffix = null;
+			// Now use one of the processing jobs that too generating an output
+			for (Integer preReqJobId : preReqJobIdsOfWriteJobToBeVerified) {
+				String processingtaskId = jobDao.findById(preReqJobId).get().getProcessingtaskId();
+				if(processingtaskId == null) // Is the dependency a processing job?
+					continue;
+				
+				Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+				outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix(); // Does the dependent processing job generate an output?
+				if(outputArtifactclassSuffix != null)
+					break;
+			}
 			artifactclassId = artifactclassId + outputArtifactclassSuffix;
 		}	
 		
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 		Domain domain = artifactclass.getDomain();
-
+		storageJob.setDomain(domain);
+		
 		Integer inputArtifactId = job.getInputArtifactId();
 		Artifact artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);
-		storageJob.setArtifact(artifact);			
+		storageJob.setArtifact(artifact); // Needed for tape job selection			
 
-		/** lazy loading other details once the job is selected for processing - Refer AbstractStoragetypeJobProcessor.verify()**/
+		/** lazy loading other details once the job is selected for processing - Refer AbstractStoragetypeJobProcessor.beforeVerify()**/
 		
 		return storageJob;
 	}

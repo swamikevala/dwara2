@@ -7,10 +7,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.NameFileFilter;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
+import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -19,6 +17,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepositor
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -56,7 +55,7 @@ public class ProcessingJobProcessor implements Runnable{
 	private JobDao jobDao;	
 	
 	@Autowired
-	private FlowelementDao flowelementDao;	
+	private ProcessingtaskDao processingtaskDao;	
 	
 	@Autowired
 	private ProcessingFailureDao failureDao;
@@ -286,6 +285,11 @@ public class ProcessingJobProcessor implements Runnable{
 						    setInputArtifactForDependentJobs(job, outputArtifact);
 						}	    
 
+						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
+						if(artifactFile == null) {
+							createFile(outputArtifactName, outputArtifact, domainSpecificFileRepository);	
+						}
+
 						// creating File records for the process generated files
 						String proxyFilePathName = processingtaskResponse.getDestinationPathname(); 
 						String proxyFileBaseName = FilenameUtils.getBaseName(proxyFilePathName);
@@ -368,23 +372,46 @@ public class ProcessingJobProcessor implements Runnable{
 				throw e;
 		}
 		logger.debug("DB File Creation - Success");
-	
 	}
 
+	/**
+	 * Sets inputArtifact for all dependent Jobs of the current job(running process job that generates the output)
+	 * Iterates through the job list on request and  
+	 * @param job
+	 * @param inputArtifactForDependentJobs
+	 */
 	private void setInputArtifactForDependentJobs(Job job, Artifact inputArtifactForDependentJobs) {
 		List<Job> jobList = jobDao.findAllByRequestId(job.getRequest().getId());
 		for (Job nthJob : jobList) {
-			List<Integer> dependencyList = nthJob.getDependencies();
+			List<Integer> preReqJobIds = nthJob.getDependencies();
 			boolean setInputArtifact = false;
-			if(dependencyList != null) {
-				if(dependencyList.contains(job.getId())) 
+			if(preReqJobIds != null) {
+				/*
+				Need to set inputArtifact for jobs that has
+					1) a direct dependency - for eg., write job has a direct dependency reference to the proxy-gen job
+					2) a chained dependency - for eg., a verify job which dependency references a verify and write job, one/both of them which inturn then has a direct dependency reference to the proxy-gen job 
+				*/
+				if(preReqJobIds.contains(job.getId())) // if the job has a direct dependency to the current job(running process job that generates the output) 
 					setInputArtifact = true;
-				else {
-					// TODO Assuming the first job
-					Job dependentParentJob = jobDao.findById(dependencyList.get(0)).get();
-					List<Integer> dependentParentList = dependentParentJob.getDependencies();
-					if(dependentParentList != null && dependentParentList.contains(job.getId())) 
-						setInputArtifact = true;
+				else { // if the job has a chained dependency to the current job(running process job that generates the output) 
+					String outputArtifactclassSuffix = null;
+					// Now use one of the processing jobs that too generating an output
+					for (Integer preReqJobId : preReqJobIds) {
+						Job dependentParentJob = jobDao.findById(preReqJobId).get();
+//						String processingtaskId = dependentParentJob.getProcessingtaskId();
+//						if(processingtaskId == null) // Is the dependency a processing job?
+//							continue;
+//						
+//						Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+//						outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix(); // Does the dependent processing job generate an output?
+//						if(outputArtifactclassSuffix != null) {
+							List<Integer> dependentParentList = dependentParentJob.getDependencies();
+							if(dependentParentList != null && dependentParentList.contains(job.getId())) {
+								setInputArtifact = true;
+								break;
+							}
+//						}
+					}
 				}
 
 				if(setInputArtifact) {	 
@@ -397,22 +424,6 @@ public class ProcessingJobProcessor implements Runnable{
 			}
 		}
 	}
-
-//	private void setInputArtifactForDependentJobs(String flowId, Artifact inputArtifactForDependentJobs) {
-//		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndActiveTrueOrderByDisplayOrderAsc(flowId);
-//		for (Flowelement nthFlowelement : flowelementList) {
-//			if(nthFlowelement.getFlowRef() != null) {
-//				setInputArtifactForDependentJobs(nthFlowelement.getFlowRef().getId(), inputArtifactForDependentJobs);
-//			}
-//			else {
-//				Job nthDependentJob = jobDao.findByFlowelementIdAndStatus(nthFlowelement.getId(), Status.queued);
-//				String logMsgPrefix2 = "DB Job - " + "(" + nthDependentJob.getId() + ") - Updation - InputArtifactId " + inputArtifactForDependentJobs.getId();
-//				logger.debug(logMsgPrefix2);	
-//			    jobDao.save(nthDependentJob);
-//			    logger.debug(logMsgPrefix2 + " - Success");
-//			}
-//		}
-//	}
 	
 	private synchronized Job checkAndUpdateStatusToInProgress(Job job, Request systemGeneratedRequest){
 		if(job.getStatus() == Status.queued) {

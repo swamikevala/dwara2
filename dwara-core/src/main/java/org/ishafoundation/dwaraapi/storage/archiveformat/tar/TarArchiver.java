@@ -279,27 +279,21 @@ public class TarArchiver implements IArchiveformatter {
 
 		if(useBuffering) {
 			/*
-				/usr/bin/mbuffer -i /dev/tape/by-id/scsi-35000e11167f7d001-nst -s 1M -m 2G -p 10 -e | dd -f /dev/stdin bs=512k count=200
-
-				-f /dev/stdin (to read from stdin), 
-				-Pf (to get file listing order from stdin)
+				/usr/bin/mbuffer -i /dev/tape/by-id/scsi-35000e11167f7d001-nst -s 1M -m 2G -p 10 -e | dd bs=512k count=200
 				mbuffer switches: 
-					-e (to make mbuffer exit on error - needed when bru exits after finishing reading a file - mbuffer doesn't know when to stop reading the tape, so we rely on the "broken pipe" error afer bru terminates
-					-m 2G - provides a buffer of 2G. for bigger files a bigger buffer is better, e.g. 100 GB file, 8GB is good
+					-e (to make mbuffer exit on error - needed when bru/tar exits after finishing reading a file - mbuffer doesn't know when to stop reading the tape, so we rely on the "broken pipe" error after bru/tar terminates
+					-m 2G - provides a buffer of 2G. for bigger files a bigger buffer is better, e.g. 100 GB file, 8GB is good - formula to arrive m value =  max(1G, round_to_nearest_gb(filesize/16))
 					-s 1M - basically has to match the tape volume block size
 					-p 10 - means start reading from the tape when the buffer is less than 10% full. This is good because mechanically stopping/starting the tape drive is an overhead, so once the buffer becomes 100% full, this means that bru/tar will read data from the buffer until it is almost empty, and only then the tape drive will start filling up the buffer again
 
 			 */
-			
-			// mbuffer -m value calculation
-			// max(1G, round_to_nearest_gb(filesize/16))
 			
 			// TODO : Should there by any max cap for the buffer ???
 			float fileSizeInGiB = (float) (fileSize/1073741824.0);  // 1 GiB = 1073741824 bytes...
 			int m = (int) Math.max(1, Math.round(fileSizeInGiB/16.0));
 			String mValue = m + "G";
 			
-			restoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e  | dd -f /dev/stdin " + " bs=" + volumeBlocksize	+ " count=" + noOfTapeBlocksToBeRead;
+			restoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e  | dd bs=" + volumeBlocksize	+ " count=" + noOfTapeBlocksToBeRead;
 		}
 		logger.debug("Tar restoration - " +  restoreCommand);
 		logger.debug("Will be restoring to - " + destinationPath);
