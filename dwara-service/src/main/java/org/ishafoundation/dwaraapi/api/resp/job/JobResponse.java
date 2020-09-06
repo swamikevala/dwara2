@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "storagetaskAction",
     "processingTask",
     "requestId",
-    "actionelementId",
+    "flowelementId",
     "inputArtifactId",
     "outputArtifactId",
     "createdAt",
@@ -31,8 +31,8 @@ public class JobResponse {
     private String processingTask;
     @JsonProperty("requestId")
     private Integer requestId;
-    @JsonProperty("actionelementId")
-    private Integer actionelementId;
+    @JsonProperty("flowelementId")
+    private Integer flowelementId;
     @JsonProperty("inputArtifactId")
     private Integer inputArtifactId;
     @JsonProperty("outputArtifactId")
@@ -92,14 +92,14 @@ public class JobResponse {
         this.requestId = requestId;
     }
 
-    @JsonProperty("actionelementId")
-    public Integer getActionelementId() {
-        return actionelementId;
+    @JsonProperty("flowelementId")
+    public Integer getFlowelementId() {
+        return flowelementId;
     }
 
-    @JsonProperty("actionelementId")
-    public void setActionelementId(Integer actionelementId) {
-        this.actionelementId = actionelementId;
+    @JsonProperty("flowelementId")
+    public void setFlowelementId(Integer flowelementId) {
+        this.flowelementId = flowelementId;
     }
 
     @JsonProperty("inputArtifactId")

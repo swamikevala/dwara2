@@ -212,7 +212,7 @@ public class VolumeController {
 		return ResponseEntity.status(HttpStatus.OK).body(volumeResponseList);
 	}
 	
-	@GetMapping(value = "/volume", produces = "application/json")
+	@GetMapping(value = "/volume/{id}", produces = "application/json")
 	public ResponseEntity<VolumeResponse> getVolume(@PathVariable("id") String id){
 		VolumeResponse volumeResponse = null;
 		try {

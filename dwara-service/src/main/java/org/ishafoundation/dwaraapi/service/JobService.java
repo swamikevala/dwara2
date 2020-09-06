@@ -45,7 +45,7 @@ public class JobService extends DwaraService{
 			jobResponse.setProcessingTask(processingtaskId);
 			Flowelement flowelement = job.getFlowelement();
 			if(flowelement != null)
-				jobResponse.setActionelementId(flowelement.getId());
+				jobResponse.setFlowelementId(flowelement.getId());
 			jobResponse.setInputArtifactId(job.getInputArtifactId());
 			jobResponse.setOutputArtifactId(job.getOutputArtifactId());
 			jobResponse.setCreatedAt(getDateForUI(job.getCreatedAt()));
