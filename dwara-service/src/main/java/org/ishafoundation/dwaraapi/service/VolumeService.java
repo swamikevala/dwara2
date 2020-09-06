@@ -64,49 +64,58 @@ public class VolumeService extends DwaraService {
 			volumeResponseList = new ArrayList<VolumeResponse>();
 			List<Volume> volumeGroupList = volumeDao.findAllByType(neededVolumetype);
 			for (Volume volume : volumeGroupList) {
-				VolumeResponse volResp = new VolumeResponse();
-				volResp.setId(volume.getId());
-				volResp.setVolumetype(volume.getType().name());
-				volResp.setStoragetype(volume.getStoragetype().name());
-				volResp.setStoragelevel(volume.getStoragelevel().name());
-				//volResp.setVolumeRef(volumeRef);
-				//volResp.setChecksumtype(checksumtype);
-				//volResp.setInitializedAt(initializetedAt);
-				volResp.setFinalized(volume.isFinalized());
-				volResp.setImported(volume.isImported());
-				if(volume.getArchiveformat() != null)
-					volResp.setArchiveformat(volume.getArchiveformat().getId());
-
-				/* TODO
-				volResp.setTotalCapacity(totalCapacity);
-				volResp.setUsedCapacity(usedCapacity);
-				volResp.setUnusedCapacity(unusedCapacity);
-				volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity);
-				volResp.setSizeUnit(sizeUnit);
-				*/
-				if(volume.getLocation() != null)
-					volResp.setLocation(volume.getLocation().getId());
-				
-				VolumeDetails volumeDetails = volume.getDetails();
-				if(volumeDetails != null) {
-					Details details = new Details();
-					
-					//details.setBarcoded(volumeDetails.isBarcoded());
-					if(volumeDetails.getBlocksize() != null)
-						details.setBlocksize(volumeDetails.getBlocksize()/1024);
-					details.setBlocksizeUnit("KiB");
-					
-					details.setStoragesubtype(volume.getStoragesubtype());
-					//details.setMountPoint(mountPoint);
-					//details.setProvider(provider);
-					//details.setRemoveAfterJob(removeAfterJob);
-					volResp.setDetails(details);
-				}
-				volumeResponseList.add(volResp);
+				volumeResponseList.add(getVolume_Internal(volume));
 			}
 		return volumeResponseList;
 	}
 
+	public VolumeResponse getVolume(String volumeId) {
+		Volume volume = volumeDao.findById(volumeId).get();
+		return getVolume_Internal(volume);
+	}
+	
+	private VolumeResponse getVolume_Internal(Volume volume) {
+		VolumeResponse volResp = new VolumeResponse();
+		volResp.setId(volume.getId());
+		volResp.setVolumetype(volume.getType().name());
+		volResp.setStoragetype(volume.getStoragetype().name());
+		volResp.setStoragelevel(volume.getStoragelevel().name());
+		//volResp.setVolumeRef(volumeRef);
+		//volResp.setChecksumtype(checksumtype);
+		//volResp.setInitializedAt(initializetedAt);
+		volResp.setFinalized(volume.isFinalized());
+		volResp.setImported(volume.isImported());
+		if(volume.getArchiveformat() != null)
+			volResp.setArchiveformat(volume.getArchiveformat().getId());
+
+		/* TODO
+		volResp.setTotalCapacity(totalCapacity);
+		volResp.setUsedCapacity(usedCapacity);
+		volResp.setUnusedCapacity(unusedCapacity);
+		volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity);
+		volResp.setSizeUnit(sizeUnit);
+		*/
+		if(volume.getLocation() != null)
+			volResp.setLocation(volume.getLocation().getId());
+		
+		VolumeDetails volumeDetails = volume.getDetails();
+		if(volumeDetails != null) {
+			Details details = new Details();
+			
+			//details.setBarcoded(volumeDetails.isBarcoded());
+			if(volumeDetails.getBlocksize() != null)
+				details.setBlocksize(volumeDetails.getBlocksize()/1024);
+			details.setBlocksizeUnit("KiB");
+			
+			details.setStoragesubtype(volume.getStoragesubtype());
+			//details.setMountPoint(mountPoint);
+			//details.setProvider(provider);
+			//details.setRemoveAfterJob(removeAfterJob);
+			volResp.setDetails(details);
+		}
+		return volResp;
+
+	}
 	public InitializeResponse initialize(List<InitializeUserRequest> initializeRequestList) throws Exception{	
 		InitializeResponse initializeResponse = new InitializeResponse();
 		Action requestedBusinessAction = Action.initialize;

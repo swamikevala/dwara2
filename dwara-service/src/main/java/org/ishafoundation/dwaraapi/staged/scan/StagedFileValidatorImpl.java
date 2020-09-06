@@ -113,7 +113,6 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 		Iterable<Extension> extensionList = extensionDao.findAll();
 		Set<String> supportedExtns =  new TreeSet<String>();
 		for (Extension extension : extensionList) {
-			supportedExtns.add(extension.getId().toUpperCase());
 			supportedExtns.add(extension.getId().toLowerCase());
 		}
 
@@ -158,7 +157,7 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 				continue;
 			
 			// validate against the supported list of extensions in the system we have
-			if(!supportedExtns.contains(nthFileExtn))
+			if(!supportedExtns.contains(nthFileExtn.toLowerCase()))
 				unSupportedExtns.add(nthFileExtn);
 		}
 		

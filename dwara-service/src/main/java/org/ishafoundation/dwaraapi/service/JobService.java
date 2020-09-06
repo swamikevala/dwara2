@@ -3,12 +3,14 @@ package org.ishafoundation.dwaraapi.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.slf4j.Logger;
@@ -22,10 +24,10 @@ public class JobService extends DwaraService{
 	private static final Logger logger = LoggerFactory.getLogger(JobService.class);
 
 	@Autowired
-	protected JobDao jobDao;
+	private JobDao jobDao;
 	
 	@Autowired
-	protected DomainUtil domainUtil;
+	private ProcessingFailureDao processingFailureDao;
 
 	public List<JobResponse> getJobs(int systemRequestId){
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
@@ -33,12 +35,14 @@ public class JobService extends DwaraService{
 		List<Job> jobList = jobDao.findAllByRequestId(systemRequestId);
 		for (Job job : jobList) {
 			JobResponse jobResponse = new JobResponse();
-			jobResponse.setId(job.getId());
+			int jobId = job.getId();
+			jobResponse.setId(jobId);
 			jobResponse.setRequestId(job.getRequest().getId());
 			Action storagetaskAction = job.getStoragetaskActionId();
 			if(storagetaskAction != null)
 				jobResponse.setStoragetaskAction(storagetaskAction.name());
-			jobResponse.setProcessingTask(job.getProcessingtaskId());
+			String processingtaskId = job.getProcessingtaskId();
+			jobResponse.setProcessingTask(processingtaskId);
 			Flowelement flowelement = job.getFlowelement();
 			if(flowelement != null)
 				jobResponse.setActionelementId(flowelement.getId());
@@ -62,7 +66,21 @@ public class JobService extends DwaraService{
 				if(volume != null && volume.getType() == Volumetype.provisioned) {
 					jobResponse.setCopy(volume.getCopy().getId());
 				}
-			}				
+			}
+			
+			List<String> errors = new ArrayList<String>();
+			String jobErrorMsg = job.getErrorMsg();
+			if(StringUtils.isNotBlank(jobErrorMsg));
+				errors.add(jobErrorMsg);
+			if(StringUtils.isNotBlank(processingtaskId)) {
+				// Check if any processing failures are there for this job
+				List<ProcessingFailure> processingFailureList = processingFailureDao.findAllByJobId(jobId);
+				for (ProcessingFailure nthProcessingFailure : processingFailureList) {
+					errors.add("File " + nthProcessingFailure.getFileId() + " " + nthProcessingFailure.getReason());
+				}
+			}
+				
+			jobResponse.setErrors(errors);
 			jobResponseList.add(jobResponse);
 		}
 		return jobResponseList;

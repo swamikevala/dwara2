@@ -219,6 +219,7 @@ public class ProcessingJobManager implements Runnable{
 			String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - status to " + Status.failed;
 			logger.debug(logMsgPrefix);	
 			job.setStatus(Status.failed);
+			job.setErrorMsg(e.getMessage());
 			jobDao.save(job);
 		}
 	}

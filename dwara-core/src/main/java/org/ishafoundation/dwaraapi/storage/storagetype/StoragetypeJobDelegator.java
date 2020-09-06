@@ -100,7 +100,10 @@ public class StoragetypeJobDelegator {
 			}
 			Volume volume = storageJob.getVolume();
 			if(volume == null) {
-				logger.info("No volume available just yet for job "  + job.getId() + ". So skipping this job this schedule...");
+				String msg = "No volume available just yet for job "  + job.getId() + ". So skipping this job this schedule...";
+				logger.info(msg);
+				job.setErrorMsg(msg);
+				job = jobDao.save(job);
 				continue;
 			}
 			Storagetype storagetype = volume.getStoragetype();

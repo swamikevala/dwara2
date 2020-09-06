@@ -63,29 +63,49 @@ public class ChecksumUtil {
 	
 	public static boolean compareChecksum(HashMap<String, byte[]> filePathNameToChecksum,
 			String destinationPath, String filePathNameToBeVerified, Checksumtype checksumtype) throws Exception {
-		
+		return compareChecksum(filePathNameToChecksum, destinationPath, filePathNameToBeVerified, checksumtype, false); 
+	}
+	
+	public static boolean compareChecksum(HashMap<String, byte[]> filePathNameToChecksum,
+			String destinationPath, String filePathNameToBeVerified, Checksumtype checksumtype, boolean deleteFileToBeVerified) throws Exception {
 		// calculating the restored file' checksum
 		boolean verify = true;
-		java.io.File artifactToBeVerified = new java.io.File(destinationPath + java.io.File.separator + filePathNameToBeVerified);
-		Collection<java.io.File> artifactFileAndDirsList = FileUtils.listFilesAndDirs(artifactToBeVerified, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
-		
-		for (java.io.File file : artifactFileAndDirsList) {
-			if(file.isDirectory())
-				continue;
-			byte[] checksum = getChecksum(file, checksumtype);
+		java.io.File fileToBeVerified = new java.io.File(destinationPath + java.io.File.separator + filePathNameToBeVerified);
+		if(fileToBeVerified.isDirectory()) {
+			Collection<java.io.File> artifactFileAndDirsList = FileUtils.listFilesAndDirs(fileToBeVerified, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
 			
-			String filePathName = file.getAbsolutePath();
-			filePathName = filePathName.replace(destinationPath + java.io.File.separator, "");
-			byte[] originalChecksum = filePathNameToChecksum.get(filePathName);
-			
-			if(!Arrays.equals(checksum, originalChecksum)) {
-				verify = false;
-				logger.error("Checksum mismatch " + filePathName + " restored checksum : " + checksum + " original checksum : " + originalChecksum);
-			}	
+			for (java.io.File nthFileToBeVerified : artifactFileAndDirsList) {
+				if(nthFileToBeVerified.isDirectory())
+					continue;
+				verify = compare(filePathNameToChecksum, destinationPath, nthFileToBeVerified, checksumtype);
+			}
+		}
+		else {
+			verify = compare(filePathNameToChecksum, destinationPath, fileToBeVerified, checksumtype);
 		}
 		logger.debug("verification status " + verify);
-		artifactToBeVerified.delete();
-		logger.trace(artifactToBeVerified + " deleted");
+		if(deleteFileToBeVerified) {
+			fileToBeVerified.delete();
+			logger.trace(fileToBeVerified + " deleted");
+		}
 		return verify;
 	}
+	
+	private static boolean compare(HashMap<String, byte[]> filePathNameToChecksum,
+			String destinationPath, java.io.File fileToBeVerified, Checksumtype checksumtype) throws Exception {
+		boolean verify = true;
+		byte[] checksum = getChecksum(fileToBeVerified, checksumtype);
+		
+		String filePathName = fileToBeVerified.getAbsolutePath();
+		filePathName = filePathName.replace(destinationPath + java.io.File.separator, "");
+		byte[] originalChecksum = filePathNameToChecksum.get(filePathName);
+		
+		if(!Arrays.equals(checksum, originalChecksum)) {
+			verify = false;
+			logger.error("Checksum mismatch " + filePathName + " restored checksum : " + checksum + " original checksum : " + originalChecksum);
+		}
+		return verify;	
+	}
+
+
 }

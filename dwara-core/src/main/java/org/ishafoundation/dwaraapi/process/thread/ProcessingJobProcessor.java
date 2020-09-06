@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
-import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -17,7 +16,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepositor
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -53,9 +51,6 @@ public class ProcessingJobProcessor implements Runnable{
 	
 	@Autowired
 	private JobDao jobDao;	
-	
-	@Autowired
-	private ProcessingtaskDao processingtaskDao;	
 	
 	@Autowired
 	private ProcessingFailureDao failureDao;
@@ -398,13 +393,6 @@ public class ProcessingJobProcessor implements Runnable{
 					// Now use one of the processing jobs that too generating an output
 					for (Integer preReqJobId : preReqJobIds) {
 						Job dependentParentJob = jobDao.findById(preReqJobId).get();
-//						String processingtaskId = dependentParentJob.getProcessingtaskId();
-//						if(processingtaskId == null) // Is the dependency a processing job?
-//							continue;
-//						
-//						Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
-//						outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix(); // Does the dependent processing job generate an output?
-//						if(outputArtifactclassSuffix != null) {
 							List<Integer> dependentParentList = dependentParentJob.getDependencies();
 							if(dependentParentList != null && dependentParentList.contains(job.getId())) {
 								setInputArtifact = true;

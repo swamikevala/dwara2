@@ -412,6 +412,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		//String destDirPath = storageJob.getTargetLocationPath().replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");
 		//logger.trace("destDirPath " + destDirPath);
 		//FileUtils.moveToDirectory(srcFile, new java.io.File(destDirPath), false); // doesn't create the full path... hence the if condition on directory or file...
+		// TODO try JDK Filemove option
 		if(srcFile.isDirectory())
 			FileUtils.moveDirectory(srcFile, destFile);
 		else

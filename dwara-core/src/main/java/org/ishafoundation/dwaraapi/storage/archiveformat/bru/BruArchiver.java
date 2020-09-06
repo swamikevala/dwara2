@@ -141,7 +141,7 @@ public class BruArchiver implements IArchiveformatter {
 		
 		executeRestoreCommand(commandList);
 		
-		boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
+		boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype(),true);
 		if(!success)
 			throw new Exception("Verification failed");
 		

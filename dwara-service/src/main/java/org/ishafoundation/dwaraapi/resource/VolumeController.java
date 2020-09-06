@@ -29,6 +29,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -211,6 +212,23 @@ public class VolumeController {
 		return ResponseEntity.status(HttpStatus.OK).body(volumeResponseList);
 	}
 	
+	@GetMapping(value = "/volume", produces = "application/json")
+	public ResponseEntity<VolumeResponse> getVolume(@PathVariable("id") String id){
+		VolumeResponse volumeResponse = null;
+		try {
+			volumeResponse = volumeService.getVolume(id);
+		}catch (Exception e) {
+			String errorMsg = "Unable to get Volume details - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(volumeResponse);
+	}
 	
 	@ApiOperation(value = "Finalization comment goes here")
 	@ApiResponses(value = { 

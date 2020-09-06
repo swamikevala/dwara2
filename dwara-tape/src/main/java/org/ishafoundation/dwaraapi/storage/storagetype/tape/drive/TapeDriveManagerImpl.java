@@ -166,6 +166,12 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			if(tellRespRegExMatcher.find()) {
 				blockNumber = Integer.parseInt(tellRespRegExMatcher.group(1));
 			}
+			
+			// validating the blockNumber
+			if(blockNumberToSeek != blockNumber) {
+				throw new Exception("Expected blockNumberToSeek " + blockNumberToSeek + ", actual " + blockNumber);
+			}
+				
 			mtStatus = getMtStatus(dataTransferElementName);
 			// TODO - Is fileNumber needed?? mtStatus.setFileNumber(fileNumber);
 			mtStatus.setBlockNumber(blockNumber);

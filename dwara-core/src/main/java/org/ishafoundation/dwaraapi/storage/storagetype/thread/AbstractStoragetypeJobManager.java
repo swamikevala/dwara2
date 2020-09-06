@@ -70,10 +70,13 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 			
 			updateJobCompleted(job);
 		}catch (Throwable e) {
+			String errorMsg = e.getCause().getMessage();
 //			logger.error(e.getMessage());
-//			if(logger.isTraceEnabled())
-				logger.error(e.getMessage(), e);//printing the stacktrace
-			job.setErrorMsg(e.getMessage());
+			if(logger.isTraceEnabled())
+				logger.error(errorMsg, e);//printing the stacktrace
+			else
+				logger.error(errorMsg);
+			job.setErrorMsg(errorMsg);
 			updateJobFailed(job);
 			// updateError Table;
 		}
@@ -83,6 +86,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 	protected Job updateJobInProgress(Job job) {
 		if(job.getStatus() != Status.in_progress) { // If not updated already
 			job.setStartedAt(LocalDateTime.now());
+			job.setErrorMsg(null);
 			job = updateJobStatus(job, Status.in_progress);
 		}
 		
@@ -91,6 +95,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 	
 	protected Job updateJobCompleted(Job job) {
 		job.setCompletedAt(LocalDateTime.now());
+		job.setErrorMsg(null);
 		return updateJobStatus(job, Status.completed);
 	}
 	

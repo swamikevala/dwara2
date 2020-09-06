@@ -1,7 +1,8 @@
 package org.ishafoundation.dwaraapi.service;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -355,7 +356,7 @@ public class StagedService extends DwaraService{
 					Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
 					artifact.setWriteRequest(systemrequest);
 					artifact.setqLatestRequest(systemrequest);
-					artifact.setName(sequenceCode + "_" + stagedFileName);
+					artifact.setName(toBeArtifactName);
 					artifact.setArtifactclass(artifactclass);
 					artifact.setFileCount(fileCount);
 					artifact.setTotalSize(size);
@@ -403,11 +404,12 @@ public class StagedService extends DwaraService{
     private java.io.File moveFile(java.io.File src, java.io.File dest) throws Exception {
 		// TODO USE MOVE using commandline
     	try {
-    		if(src.isDirectory())
-    			FileUtils.moveDirectory(src, dest);
-    		else if(src.isFile())
-    			FileUtils.moveFile(src, dest);
-		} catch (IOException e) {
+    		Files.move(src.toPath(), dest.toPath(), StandardCopyOption.ATOMIC_MOVE);
+//    		if(src.isDirectory())
+//    			FileUtils.moveDirectory(src, dest);
+//    		else if(src.isFile())
+//    			FileUtils.moveFile(src, dest);
+		} catch (Exception e) {
 			String errorMsg = "Unable to move file " + src + " to " + dest + " - " + e.getMessage();
 			logger.error(errorMsg, e);
 			throw new Exception(errorMsg);

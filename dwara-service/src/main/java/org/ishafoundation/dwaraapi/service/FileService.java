@@ -100,13 +100,7 @@ public class FileService extends DwaraService{
     	String requestedBy = user.getName();
     	userRequest.setRequestedBy(user);
 		userRequest.setRequestedAt(LocalDateTime.now());
-		Domain domain = null;
-		if(restoreUserRequest.getDomain() != null)
-			domain = domainAttributeConverter.convertToEntityAttribute(restoreUserRequest.getDomain()+"");
-		else {
-			org.ishafoundation.dwaraapi.db.model.master.configuration.Domain domainFromDB = domainDao.findByDefaultTrue();
-			domain = domainAttributeConverter.convertToEntityAttribute(domainFromDB.getId()+"");
-		}
+		Domain domain = domainUtil.getDomain(restoreUserRequest.getDomain());
 		userRequest.setDomain(domain);
 		RequestDetails details = new RequestDetails();
 		JsonNode postBodyJson = getRequestDetails(restoreUserRequest); 

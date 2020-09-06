@@ -32,7 +32,7 @@ public class TapeStreamer {
 		Process proc = pb.start();
 		logger.trace("process started...");
 		InputStream is = new BufferedInputStream(proc.getInputStream(), bufferSize);
-
+		// Dont do anything with errorstream - mbuffer returns broken pipe error - InputStream es = new BufferedInputStream(proc.getErrorStream(), bufferSize);
 		byte[] chopchunk = new byte[skipByteCount];
 		logger.trace("skipped " + is.read(chopchunk, 0, chopchunk.length) + " bytes");
 

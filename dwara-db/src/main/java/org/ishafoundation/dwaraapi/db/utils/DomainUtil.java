@@ -136,6 +136,21 @@ public class DomainUtil {
 		return domainName;
 	}
 	
+	public Domain getDefaultDomain() {
+		org.ishafoundation.dwaraapi.db.model.master.configuration.Domain domainFromDB = domainDao.findByDefaultTrue();
+		return domainAttributeConverter.convertToEntityAttribute(domainFromDB.getId()+"");
+	}
+	
+	public Domain getDomain(Integer domainId) {
+		Domain domain = null;
+		if(domainId != null)
+			domain = domainAttributeConverter.convertToEntityAttribute(domainId+"");
+		else {
+			domain = getDefaultDomain();
+		}
+		return domain;
+	}
+	
 //	public List<File> getDomainSpecificLibraryFiles(Domain domain, int libraryId) {
 //		List<File> libraryFileList = null;
 //		if(domain == Domain.one)
