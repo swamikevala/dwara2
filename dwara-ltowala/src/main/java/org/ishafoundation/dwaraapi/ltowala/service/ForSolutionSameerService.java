@@ -53,25 +53,38 @@ public class ForSolutionSameerService {
 		ltoWalaResponse.setStartDate(getDateForUI(startDateTime));
 		ltoWalaResponse.setEndDate(getDateForUI(endDateTime));
 		
+		Domain[] domains = Domain.values();
+		
 		List<Artifact> artifactList = new ArrayList<Artifact>();
 		List<Job> jobList = jobDao.findAllByCompletedAtBetweenAndStoragetaskActionIdAndGroupVolumeCopyId(startDateTime, endDateTime, Action.write, copyNumber);
 		for (Job job : jobList) {
 			Artifact artifact = new Artifact();
 			int artifactId = job.getInputArtifactId();
-			
-			org.ishafoundation.dwaraapi.db.model.master.configuration.Domain domainFromDB = domainDao.findByDefaultTrue();
-			Domain domain = domainAttributeConverter.convertToEntityAttribute(domainFromDB.getId()+"");
-			ArtifactRepository artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactFromDb = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) artifactRepository.findById(artifactId).get();
-			String artifactName = artifactFromDb.getName();
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactFromDB = null;
+			Domain domain = null;
+    		for (Domain nthDomain : domains) {
+    			artifactFromDB = domainUtil.getDomainSpecificArtifact(nthDomain, artifactId);
+    			if(artifactFromDB != null) {
+    				domain = nthDomain;
+    				break;
+    			}
+			}
+    		
+    		if(artifactFromDB == null) {
+    			// TODO What then? Can it be? No way artifact has to be in one of the domain specific tables..
+//    			logger.error();
+    			continue;
+    		}
+    			
+			String artifactName = artifactFromDB.getName();
 			artifact.setName(artifactName);
-			artifact.setArtifactclass(artifactFromDb.getArtifactclass().getId());
-			artifact.setTotalSize(artifactFromDb.getTotalSize());
+			artifact.setArtifactclass(artifactFromDB.getArtifactclass().getId());
+			artifact.setTotalSize(artifactFromDB.getTotalSize());
 			artifact.setCompletedAt(getDateForUI(job.getCompletedAt())); // TODO Change the field name
-			artifact.setFileCount(artifactFromDb.getFileCount());
+			artifact.setFileCount(artifactFromDB.getFileCount());
 			
 			List<File> fileList = new ArrayList<File>();
-			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactFromDb, domain);
+			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactFromDB, domain);
 			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
 				String filePathname = nthFile.getPathname();
 				if(listFiles || (!listFiles && filePathname.equals(artifactName))) {

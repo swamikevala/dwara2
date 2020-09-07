@@ -98,8 +98,8 @@ public class ArtifactclassService {
 			artifactclassResponse.setId(artifactclassId);
 			// TODO - Breaking change...
 			artifactclassResponse.setName(artifactclassId);// artifactclassResponse.setName(artifactclass.getName());
-			if(artifactclass.getDomain() != null)
-				artifactclassResponse.setDomain(Integer.parseInt(domainAttributeConverter.convertToDatabaseColumn(artifactclass.getDomain()))); // FIXME - Domain - Parsing as Integer
+//			if(artifactclass.getDomain() != null)
+//				artifactclassResponse.setDomain(Integer.parseInt(domainAttributeConverter.convertToDatabaseColumn(artifactclass.getDomain()))); // FIXME - Domain - Parsing as Integer
 			artifactclassResponse.setSource(artifactclass.isSource());
 			artifactclassResponse.setDisplayOrder(artifactclass.getDisplayOrder());
 			

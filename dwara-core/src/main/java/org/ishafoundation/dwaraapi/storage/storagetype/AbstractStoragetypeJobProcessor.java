@@ -1,7 +1,6 @@
 package org.ishafoundation.dwaraapi.storage.storagetype;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,9 +19,9 @@ import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
@@ -31,9 +30,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
-import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
@@ -68,10 +65,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 	private DomainUtil domainUtil;
 	
 	@Autowired
-	private ConfigurationTablesUtil configurationTablesUtil;
+	private FileRepositoryUtil fileRepositoryUtil;
 	
 	@Autowired
-	private FileRepositoryUtil fileRepositoryUtil;
+	private FileEntityUtil fileEntityUtil;
 	
 	@Autowired
 	private VolumeUtil volumeUtil;
@@ -79,9 +76,6 @@ public abstract class AbstractStoragetypeJobProcessor {
 	@Autowired
 	private VolumeFinalizer volumeFinalizer;
 	
-	@Autowired
-	private DomainAttributeConverter domainAttributeConverter;
-
 	@Autowired
 	private Configuration configuration;
 
@@ -158,10 +152,6 @@ public abstract class AbstractStoragetypeJobProcessor {
 			}
 		}
 		
-//    	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-//    	Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_ARTIFACT_ID.replace("<<DOMAIN_SPECIFIC_ARTIFACT>>", artifact.getClass().getSimpleName()), int.class);
-////    	Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod("findAllBy" + artifact.getClass().getSimpleName() + "Id", int.class);
-//		List<File> artifactFileList = (List<File>) fileDaoFindAllBy.invoke(domainSpecificFileRepository, artifactId);
 		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
 
 		// NOTE: We need filevolume entries even when response from storage layer is null(Only archiveformats return the file breakup storage details... Other non archive writes dont...)
@@ -235,7 +225,7 @@ public abstract class AbstractStoragetypeJobProcessor {
     		logger.info("Triggering a finalization request for volume - " + volume.getId());
     		
 			// TODO Need to set the system as the user - How?
-    		volumeFinalizer.finalize(volume.getId(), null, domain);
+    		volumeFinalizer.finalize(volume.getId(), null);
     	}
     }
     
@@ -347,26 +337,13 @@ public abstract class AbstractStoragetypeJobProcessor {
 		Destination destination = destinationDao.findByPath(storageJob.getDestinationPath());
 		selectedStorageJob.setUseBuffering(destination.isUseBuffering());
 		
-    	Method getArtifact = file.getClass().getMethod("getArtifact"+domainAttributeConverter.convertToDatabaseColumn(domain));
-    	Artifact artifact = (Artifact) getArtifact.invoke(file);
+    	Artifact artifact = fileEntityUtil.getArtifact(file, domain); 
+    	
 		storageJob.setArtifact(artifact);
 		
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
 		selectedStorageJob.setArtifactFileList(fileList);
 		selectedStorageJob.setFilePathNameToChecksum(getSourceFilesChecksum(fileList));
-		
-//		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
-//		for (File nthFile : fileList) {
-//			if(nthFile.getId() == fileIdToBeRestored) {
-//				file = nthFile;
-//				break;
-//			}
-//		}
-//		
-//		selectedStorageJob.setFile(file);
-//    	Method getArtifact = file.getClass().getMethod("getArtifact"+domainAttributeConverter.convertToDatabaseColumn(domain));
-//    	Artifact artifact = (Artifact) getArtifact.invoke(file);
-//		storageJob.setArtifact(artifact);
     }
     
 	private HashMap<String, byte[]> getSourceFilesChecksum(List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList){

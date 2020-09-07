@@ -20,9 +20,8 @@ public class DomainSpecificArtifactVolumeFactory {
 
     public static ArtifactVolume getInstance(Domain domain, int artifactId, Volume volume) {
     	DomainAttributeConverter domainAttributeConverter = new DomainAttributeConverter();
-		String domainAsString = domainAttributeConverter.convertToDatabaseColumn(domain);
-//		String domainSpecificArtifactVolumeTableName = Artifact.TABLE_NAME_PREFIX + domainAsString + "_volume";
-		String domainSpecificArtifactVolumeTableName = ArtifactVolume.TABLE_NAME.replace("<<DOMAIN>>", domainAsString);
+		Integer domainId = domainAttributeConverter.convertToDatabaseColumn(domain);
+		String domainSpecificArtifactVolumeTableName = ArtifactVolume.TABLE_NAME.replace("<<DOMAIN>>", domainId+"");
 		
         if (instances.containsKey(domainSpecificArtifactVolumeTableName)) {
         	Class<? extends ArtifactVolume> entityAsClass = instances.get(domainSpecificArtifactVolumeTableName);

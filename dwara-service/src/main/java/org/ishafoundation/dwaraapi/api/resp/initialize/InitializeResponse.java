@@ -12,7 +12,7 @@ public class InitializeResponse
 
     private String requestedAt;
 
-    private List<SystemRequestsForInitializeResponse> systemRequests;
+    private List<SystemRequestForInitializeResponse> systemRequests;
 
 
     public int getUserRequestId() {
@@ -39,10 +39,10 @@ public class InitializeResponse
     public String getRequestedAt(){
         return this.requestedAt;
     }
-	public List<SystemRequestsForInitializeResponse> getSystemRequests() {
+	public List<SystemRequestForInitializeResponse> getSystemRequests() {
 		return systemRequests;
 	}
-	public void setSystemRequests(List<SystemRequestsForInitializeResponse> systemRequests) {
+	public void setSystemRequests(List<SystemRequestForInitializeResponse> systemRequests) {
 		this.systemRequests = systemRequests;
 	}
 

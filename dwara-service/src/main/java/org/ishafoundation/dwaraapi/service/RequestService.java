@@ -71,13 +71,7 @@ public class RequestService extends DwaraService{
 			requestResponse.setAction(requestAction.name());
 			if(requestType == RequestType.system) {
 				if(requestAction == Action.ingest) {
-				
-					
-	//				String artifactclassId = systemRequest.getDetails().getArtifactclassId();
-	//				Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
-	//				Domain domain = artifactclass.getDomain();
-					
-					Domain domain = request.getDomain();
+					Domain domain = domainUtil.getDomain(request);
 					ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 	
 					Artifact systemArtifact = artifactRepository.findByWriteRequestId(requestId); 
@@ -94,7 +88,7 @@ public class RequestService extends DwaraService{
 					}
 				} 
 				else if(requestAction == Action.restore) {
-					Domain domain = request.getDomain();
+					Domain domain = domainUtil.getDomain(request);
 					if(domain == null)
 						domain = domainUtil.getDefaultDomain();
 					

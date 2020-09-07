@@ -68,19 +68,20 @@ public class JobService extends DwaraService{
 				}
 			}
 			
-			List<String> errors = new ArrayList<String>();
-			String jobErrorMsg = job.getErrorMsg();
-			if(StringUtils.isNotBlank(jobErrorMsg));
-				errors.add(jobErrorMsg);
+			String jobMsg = job.getMessage();
+			if(StringUtils.isNotBlank(jobMsg));
+				jobResponse.setMessage(jobMsg);
+			
+			List<String> fileFailures = new ArrayList<String>();	
 			if(StringUtils.isNotBlank(processingtaskId)) {
 				// Check if any processing failures are there for this job
 				List<ProcessingFailure> processingFailureList = processingFailureDao.findAllByJobId(jobId);
 				for (ProcessingFailure nthProcessingFailure : processingFailureList) {
-					errors.add("File " + nthProcessingFailure.getFileId() + " " + nthProcessingFailure.getReason());
+					fileFailures.add("File " + nthProcessingFailure.getFileId() + " " + nthProcessingFailure.getReason());
 				}
 			}
-				
-			jobResponse.setErrors(errors);
+			if(fileFailures.size() > 0)
+				jobResponse.setFileFailures(fileFailures);
 			jobResponseList.add(jobResponse);
 		}
 		return jobResponseList;

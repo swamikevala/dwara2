@@ -31,7 +31,7 @@ public class DomainUtilTest {
 	
 	@Test
 	public void test_b_SpecificDomain() {
-		Artifact artifact = domainUtil.getDomainSpecificArtifact(Domain.other, 1);
+		Artifact artifact = domainUtil.getDomainSpecificArtifact(Domain.TWO, 1);
 		logger.debug(artifact.getClass().getName());
 	}
 }

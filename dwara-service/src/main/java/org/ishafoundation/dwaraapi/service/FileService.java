@@ -1,35 +1,32 @@
 package org.ishafoundation.dwaraapi.service;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.codec.binary.Hex;
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
-import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
-import org.ishafoundation.dwaraapi.db.dao.master.DomainDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
-import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -39,43 +36,30 @@ public class FileService extends DwaraService{
 	private static final Logger logger = LoggerFactory.getLogger(FileService.class);
 	
 	@Autowired
-	protected DomainDao domainDao;
+	private RequestDao requestDao;
 	
 	@Autowired
-	protected RequestDao requestDao;
+	private JobCreator jobCreator;
 	
 	@Autowired
-	protected JobCreator jobCreator;
+	private DomainUtil domainUtil;
 	
-	@Autowired
-	protected DomainUtil domainUtil;
-	
-	@Autowired
-	private ConfigurationTablesUtil configurationTablesUtil;
-	
-	@Autowired
-	private DomainAttributeConverter domainAttributeConverter;
-
 	public List<File> list(List<Integer> fileIds){
+
+
+    	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
+    	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
+    	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
+    	
 		List<File> fileList = new ArrayList<File>();
 		int counter = 1;
-		Domain domain = null;
-//		if(restoreUserRequest.getDomain() != null)
-//			domain = domainAttributeConverter.convertToEntityAttribute(restoreUserRequest.getDomain()+"");
-//		else {
-			org.ishafoundation.dwaraapi.db.model.master.configuration.Domain domainFromDB = domainDao.findByDefaultTrue();
-			domain = domainAttributeConverter.convertToEntityAttribute(domainFromDB.getId()+"");
-//		}
-
 		for (Integer nthFileId : fileIds) {
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(domain, nthFileId);
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = fileId_FileObj_Map.get(nthFileId);
 			
 			File file = new File();
 			byte[] checksum = fileFromDB.getChecksum();
 			if(checksum != null)
 				file.setChecksum(Hex.encodeHexString(checksum));
-			
-			//file.setChecksumType(fileFromDB.getChecksum());
 			file.setId(fileFromDB.getId());
 			file.setPathname(fileFromDB.getPathname());
 			file.setPriority(counter);
@@ -91,7 +75,13 @@ public class FileService extends DwaraService{
 
     public RestoreResponse restore(RestoreUserRequest restoreUserRequest) throws Exception{	
     	RestoreResponse restoreResponse = new RestoreResponse();
-		    	
+
+    	List<Integer> fileIds = restoreUserRequest.getFileIds();
+
+    	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
+    	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
+    	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
+    	
 		Request userRequest = new Request();
     	userRequest.setType(RequestType.user);
 		userRequest.setActionId(Action.restore);
@@ -100,8 +90,6 @@ public class FileService extends DwaraService{
     	String requestedBy = user.getName();
     	userRequest.setRequestedBy(user);
 		userRequest.setRequestedAt(LocalDateTime.now());
-		Domain domain = domainUtil.getDomain(restoreUserRequest.getDomain());
-		userRequest.setDomain(domain);
 		RequestDetails details = new RequestDetails();
 		JsonNode postBodyJson = getRequestDetails(restoreUserRequest); 
 		details.setBody(postBodyJson);
@@ -118,11 +106,12 @@ public class FileService extends DwaraService{
     	boolean verify = restoreUserRequest.isVerify();
     	List<File> files = new ArrayList<File>();
     	
-    	List<Integer> fileIds = restoreUserRequest.getFileIds();
+
     	int counter = 1;
     	for (Integer nthFileId : fileIds) {
-    		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(domain, nthFileId);
     		
+    		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = fileId_FileObj_Map.get(nthFileId);
+    			
 			Request systemRequest = new Request();
 			systemRequest.setType(RequestType.system);
 			systemRequest.setStatus(Status.queued);
@@ -130,16 +119,15 @@ public class FileService extends DwaraService{
 			systemRequest.setActionId(userRequest.getActionId());
 			systemRequest.setRequestedBy(userRequest.getRequestedBy());
 			systemRequest.setRequestedAt(LocalDateTime.now());
-			systemRequest.setDomain(userRequest.getDomain());
-
+			
     		RequestDetails systemrequestDetails = new RequestDetails();
     		systemrequestDetails.setFileId(nthFileId);
-    		
     		systemrequestDetails.setCopyId(copyNumber);
 			systemrequestDetails.setOutputFolder(outputFolder);
 			systemrequestDetails.setDestinationPath(destinationPath);
 			systemrequestDetails.setVerify(verify); // overwriting default archiveformat.verify during restore
-
+			systemrequestDetails.setDomainId(domainUtil.getDomainId(fileId_Domain_Map.get(nthFileId)));
+			
 			systemRequest.setDetails(systemrequestDetails);
 			systemRequest = requestDao.save(systemRequest);
 			logger.info("System request - " + systemRequest.getId());
@@ -153,8 +141,6 @@ public class FileService extends DwaraService{
 			byte[] checksum = fileFromDB.getChecksum();
 			if(checksum != null)
 				file.setChecksum(Hex.encodeHexString(checksum));
-			
-			//file.setChecksumType(fileFromDB.getChecksum());
 			file.setId(fileFromDB.getId());
 			file.setPathname(fileFromDB.getPathname());
 			file.setPriority(counter);
@@ -177,18 +163,36 @@ public class FileService extends DwaraService{
     	restoreResponse.setFiles(files);    	
     	return restoreResponse;
     }
-	
-	// TODO - Unnecessary conversion happening...
-	private JsonNode getRequestDetails(RestoreUserRequest userRequest) {
-		JsonNode postBodyJson = null;
-		try {
-			ObjectMapper mapper = new ObjectMapper();
-			String postBody = mapper.writeValueAsString(userRequest);
-			postBodyJson = mapper.readValue(postBody, JsonNode.class);
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		return postBodyJson;
-	}
+
+
+    private void validate(List<Integer> fileIds, Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map, Map<Integer, Domain> fileId_Domain_Map) {
+    	Domain[] domains = Domain.values();
+    	List<String> errorFileList = new ArrayList<String>();
+    	boolean hasErrors = false;
+    	for (Integer nthFileId : fileIds) {
+    		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = null;
+    		
+    		for (Domain nthDomain : domains) {
+    			fileFromDB = domainUtil.getDomainSpecificFile(nthDomain, nthFileId);
+    			if(fileFromDB != null) {
+    				fileId_FileObj_Map.put(nthFileId, fileFromDB);
+    				fileId_Domain_Map.put(nthFileId, nthDomain);
+    				break;
+    			}
+			}
+    		
+    		if(fileFromDB == null) {
+    			errorFileList.add(nthFileId + " is invalid");
+    			hasErrors = true;
+    		}
+    	}
+    	
+    	if(hasErrors) {
+    		ObjectMapper mapper = new ObjectMapper(); 
+    		mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+    		JsonNode jsonNode = mapper.valueToTree(errorFileList);
+    		throw new DwaraException("Files not in system requested...", jsonNode);
+    	}
+    }
 }
 

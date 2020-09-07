@@ -81,8 +81,8 @@ public class Job {
 	private Status status;
 	
 	@Lob
-	@Column(name="error_msg")
-	private String errorMsg; 
+	@Column(name="message")
+	private String message; 
 
 	@OneToOne(fetch = FetchType.LAZY)
 	private Volume volume;
@@ -158,12 +158,12 @@ public class Job {
 		this.outputArtifactId = outputArtifactId;
 	}
 
-	public String getErrorMsg() {
-		return errorMsg;
+	public String getMessage() {
+		return message;
 	}
 
-	public void setErrorMsg(String errorMsg) {
-		this.errorMsg = errorMsg;
+	public void setMessage(String message) {
+		this.message = message;
 	}
 
 	public LocalDateTime getCompletedAt() {

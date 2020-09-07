@@ -49,7 +49,7 @@ public class VolumeindexManager {
 		boolean isSuccess = false;
 		StorageJob storageJob = storagetypeJob.getStorageJob();
 		Volume volume = storageJob.getVolume();
-		Domain domain = storageJob.getJob().getRequest().getDomain();
+		Domain domain = storageJob.getDomain();
 		
 		String xmlFromJava = createVolumeindex(volume, domain);
 		logger.trace(xmlFromJava);
@@ -112,11 +112,6 @@ public class VolumeindexManager {
 			artifact.setSequencecode(artifactDbObj.getSequenceCode());
 			
 			List<File> fileList = new ArrayList<File>();
-			
-//	    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-//	    	Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_ARTIFACT_ID.replace("<<DOMAIN_SPECIFIC_ARTIFACT>>", artifactDbObj.getClass().getSimpleName()), int.class);
-//	//    	Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod("findAllBy" + artifact.getClass().getSimpleName() + "Id", int.class);
-//			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = (List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>) fileDaoFindAllBy.invoke(domainSpecificFileRepository, artifactId);
 			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactDbObj, domain);
 			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
 				File file = new File();

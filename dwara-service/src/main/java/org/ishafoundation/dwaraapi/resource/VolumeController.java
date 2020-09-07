@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -50,6 +51,9 @@ public class VolumeController {
 	
 	@Autowired
 	VolumeService volumeService;
+	
+	@Autowired
+	Configuration configuration;
 	
 	@Autowired
 	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
@@ -113,8 +117,11 @@ public class VolumeController {
 		for (Integer volumeNumericSequence : volumeNumericSequenceList) {
 			InitializeUserRequest nthInitializeRequest = volumeNumericSequence_InitializeRequest.get(volumeNumericSequence);
 			String volumeId = nthInitializeRequest.getVolume();
-			if(nthInitializeRequest.getForce())
-				throw new DwaraException("Force option not supported just yet. Volume " + volumeId, null);
+			if(nthInitializeRequest.getForce()) {
+				if(!configuration.isAllowForceOptionForTesting())
+					throw new DwaraException("Force option not supported just yet. Volume " + volumeId, null);
+			}
+				
 			
 			// #1 - Volume ids should not be in use
 			try {
@@ -236,11 +243,11 @@ public class VolumeController {
 		    @ApiResponse(code = 400, message = "Error")
 	})
 	@PostMapping(value = "/volume/finalize", produces = "application/json")
-	public ResponseEntity<String> finalize(@RequestParam String volume, @RequestParam Domain domain){
+	public ResponseEntity<String> finalize(@RequestParam String volume){
 		
 		String finalizeResponse = null;
 		try {
-			finalizeResponse = volumeService.finalize(volume, domain);
+			finalizeResponse = volumeService.finalize(volume);
 		}catch (Exception e) {
 			String errorMsg = "Unable to finalize - " + e.getMessage();
 			logger.error(errorMsg, e);

@@ -119,9 +119,6 @@ public class ProcessingJobManager implements Runnable{
 			else{
 				Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 				domain = artifactclass.getDomain();
-				
-				if(domain == null)
-					domain = job.getRequest().getDomain();
 			}
 			
 			if(domain == null) {
@@ -219,7 +216,7 @@ public class ProcessingJobManager implements Runnable{
 			String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - status to " + Status.failed;
 			logger.debug(logMsgPrefix);	
 			job.setStatus(Status.failed);
-			job.setErrorMsg(e.getMessage());
+			job.setMessage("[error] " + e.getMessage());
 			jobDao.save(job);
 		}
 	}
@@ -250,10 +247,6 @@ public class ProcessingJobManager implements Runnable{
 	private HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getFilePathToFileObj(Domain domain, Artifact artifactDbObj) throws Exception{
 		HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathTofileObj = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
 		
-//		List<File> fileList = new ArrayList<File>();
-//    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-//    	Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_ARTIFACT_ID.replace("<<DOMAIN_SPECIFIC_ARTIFACT>>", artifactDbObj.getClass().getSimpleName()), int.class);
-//		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = (List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>) fileDaoFindAllBy.invoke(domainSpecificFileRepository, artifactDbObj.getId());
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactDbObj, domain);
 		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
 			filePathTofileObj.put(nthFile.getPathname(), nthFile);

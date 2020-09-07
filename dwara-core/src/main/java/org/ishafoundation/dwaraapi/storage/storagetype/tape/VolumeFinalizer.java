@@ -4,9 +4,12 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
@@ -28,23 +31,24 @@ public class VolumeFinalizer {
 	private RequestDao requestDao;
 	
 	@Autowired
+	private DomainUtil domainUtil;
+	
+	@Autowired
 	private JobCreator jobCreator;
 	
-	// TODO : Why domain needed? ANS: Filevolume and Artifactvolume needed for generating the index are "domain-ed"
-	public String finalize(String volumeId, User user, Domain domain) throws Exception{
+	public String finalize(String volumeId, User user) throws Exception{
 			Request request = new Request();
 			request.setType(RequestType.user);
 			request.setActionId(Action.finalize);
 			request.setRequestedBy(user);
 			request.setRequestedAt(LocalDateTime.now());
-			request.setDomain(domain);
 			RequestDetails details = new RequestDetails();
 			ObjectMapper mapper = new ObjectMapper();
 			
 //			String jsonAsString = "{\"volume_id\":\""+volumeId+"\"}";
 
 			HashMap<String, Object> data = new HashMap<String, Object>();
-	    	data.put("volume_id", volumeId);
+	    	data.put("volumeId", volumeId);
 	    	String jsonAsString = mapper.writeValueAsString(data);
 			
 			JsonNode postBodyJson = mapper.readValue(jsonAsString, JsonNode.class);
@@ -61,11 +65,23 @@ public class VolumeFinalizer {
 			systemrequest.setActionId(request.getActionId());
 			systemrequest.setRequestedBy(request.getRequestedBy());
 			systemrequest.setRequestedAt(LocalDateTime.now());
-			systemrequest.setDomain(request.getDomain());
 
 			RequestDetails systemrequestDetails = new RequestDetails();
 			systemrequestDetails.setVolumeId(volumeId);
+			
+		   	Domain[] domains = Domain.values();
+		   	Domain domain = null;
+    		for (Domain nthDomain : domains) {
+			    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(nthDomain);
+			    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(volumeId);
+    			if(artifactVolumeCount > 0) {
+    				domain = nthDomain;
+    				break;
+    			}
+			}
+    		systemrequestDetails.setDomainId(domainUtil.getDomainId(domain));	
 			systemrequest.setDetails(systemrequestDetails);
+			
 			systemrequest = requestDao.save(systemrequest);
 			logger.info("System request - " + systemrequest.getId());
 

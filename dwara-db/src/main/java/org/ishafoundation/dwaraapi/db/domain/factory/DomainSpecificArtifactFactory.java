@@ -19,8 +19,8 @@ public class DomainSpecificArtifactFactory {
 
     public static Artifact getInstance(Domain domain) {
     	DomainAttributeConverter domainAttributeConverter = new DomainAttributeConverter();
-		String domainAsString = domainAttributeConverter.convertToDatabaseColumn(domain);
-		String domainSpecificArtifactTableName = Artifact.TABLE_NAME_PREFIX + domainAsString;
+		int domainId = domainAttributeConverter.convertToDatabaseColumn(domain);
+		String domainSpecificArtifactTableName = Artifact.TABLE_NAME_PREFIX + domainId;
 
         if (instances.containsKey(domainSpecificArtifactTableName)) {
         	Class<? extends Artifact> entityAsClass = instances.get(domainSpecificArtifactTableName);

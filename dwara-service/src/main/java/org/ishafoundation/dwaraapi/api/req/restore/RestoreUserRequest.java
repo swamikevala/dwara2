@@ -3,21 +3,11 @@ package org.ishafoundation.dwaraapi.api.req.restore;
 import java.util.List;
 
 public class RestoreUserRequest {
-	private Integer domain;
 	private Integer copy;
 	private String outputFolder;
 	private String destinationPath;
 	private boolean verify;
 	private List<Integer> fileIds;
-
-
-	public Integer getDomain() {
-		return domain;
-	}
-
-	public void setDomain(Integer domain) {
-		this.domain = domain;
-	}	
 
 	public Integer getCopy() {
 		return copy;

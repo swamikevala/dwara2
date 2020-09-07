@@ -4,14 +4,19 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestDetails {
 	
+	@JsonUnwrapped
 	private JsonNode body;
 	
-	// format
+	@JsonProperty("autoloader_id")
+	private String autoloaderId;
+	
+	// Initialize
 	@JsonProperty("volume_id")
 	private String volumeId;
 	
@@ -24,16 +29,6 @@ public class RequestDetails {
 	private String storagesubtype;
 	
 	private Boolean force;
-
-	// NOT NEEDED AS WE JUST STORE USERREQUEST AND FOR ALL USERREQUESTS WE ONLY HAVE THE FREEFORM BODY JSONNODE
-//	// Rename
-//	
-//	@JsonProperty("old_name")
-//	private String oldName;
-//	
-//	@JsonProperty("new_name")
-//	private String newName;
-	
 
 	// ingest stuff
 	@JsonProperty("artifactclass_id")
@@ -71,6 +66,8 @@ public class RequestDetails {
 	
 	private Boolean verify; // overwrites whatever is configured in archiveformat.restore_verify = true
 	
+	@JsonProperty("domain_id")
+	private Integer domainId;
 	
 	// rewrite stuff
 	private Integer artifact_id;// artifact_id or name???
@@ -88,7 +85,17 @@ public class RequestDetails {
 		this.body = body;
 	}
 
-	/********************  FORMAT  ********************/
+	/********************  MAP_DRIVES  ********************/
+
+	public String getAutoloaderId() {
+		return autoloaderId;
+	}
+
+	public void setAutoloaderId(String autoloaderId) {
+		this.autoloaderId = autoloaderId;
+	}
+	
+	/********************  INITIALIZE  ********************/
 
 
 	public String getVolumeId() {
@@ -239,6 +246,14 @@ public class RequestDetails {
 
 	public void setVerify(Boolean verify) {
 		this.verify = verify;
+	}
+
+	public Integer getDomainId() {
+		return domainId;
+	}
+
+	public void setDomainId(Integer domainId) {
+		this.domainId = domainId;
 	}
 
 	/********************  REWRITE  ********************/

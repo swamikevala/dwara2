@@ -41,9 +41,6 @@ public class JobCreator_Test {
 		ActionAttributeConverter actionAttributeConverter = new ActionAttributeConverter();
 		Action actionn = actionAttributeConverter.convertToEntityAttribute(action);
 		request.setActionId(actionn);
-		if(actionn == Action.restore)
-			request.setDomain(getDomain(null));
-		// request.setUser(user);
 		request.setRequestedAt(LocalDateTime.now());
 
 		
@@ -66,7 +63,7 @@ public class JobCreator_Test {
 		// to get domaindefault we might need a util... or a query...
 		Domain domain = null;// from user request
 		if (domain == null)
-			domain = Domain.main; // defaulting to the domain configured as default...
+			domain = Domain.ONE; // defaulting to the domain configured as default...
 		return domain;
 	}
 
@@ -79,7 +76,6 @@ public class JobCreator_Test {
 		Request systemrequest = new Request();
 		systemrequest.setRequestRef(request);
 		systemrequest.setActionId(request.getActionId());
-		systemrequest.setDomain(request.getDomain());
 		systemrequest.setRequestedAt(LocalDateTime.now());
 	
 		RequestDetails details = getSystemrequestDetails();

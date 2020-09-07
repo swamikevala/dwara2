@@ -19,8 +19,8 @@ public class DomainSpecificFileFactory {
 
     public static File getInstance(Domain domain) {
     	DomainAttributeConverter domainAttributeConverter = new DomainAttributeConverter();
-		String domainAsString = domainAttributeConverter.convertToDatabaseColumn(domain);
-		String domainSpecificFileTableName = File.TABLE_NAME_PREFIX + domainAsString;
+		Integer domainId = domainAttributeConverter.convertToDatabaseColumn(domain);
+		String domainSpecificFileTableName = File.TABLE_NAME_PREFIX + domainId;
 
         if (instances.containsKey(domainSpecificFileTableName)) {
         	Class<? extends File> entityAsClass = instances.get(domainSpecificFileTableName);

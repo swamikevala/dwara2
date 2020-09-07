@@ -73,7 +73,9 @@ public class TapeDeviceUtil {
 				continue;
 			}
 			
+			logger.trace("Following drives are in phyiscal tape library " + tapelibraryId);
 			for (DataTransferElement dte : dteList) {
+				logger.trace("Drive's AutoloaderAddress - " + dte.getsNo());
 				driveAutoloaderAddress_DataTransferElement_Map.put(dte.getsNo(), dte);
 			}
 			
@@ -81,7 +83,14 @@ public class TapeDeviceUtil {
 				String tapedriveDeviceId = tapedriveDevice.getId();
 				String dataTransferElementName = tapedriveDevice.getWwnId();
 				Integer driveAutoloaderAddress = tapedriveDevice.getDetails().getAutoloaderAddress();
+				DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
+				if(dte == null) {
+					logger.error(tapedriveDeviceId + " seems to be offline. Please mark it so in dwara. Skipping getting details for it");
+					continue;
+				}
+				
 				if(tapedriveDevice.getDetails().getAutoloaderId().equals(tapelibraryId)) { // equivalent of calling the query devicetype=drive and details.autoloader_id=X, query NOT easy with json
+					logger.trace("Getting details for - " + tapedriveDeviceId);
 					DriveDetails driveDetails = null;
 					if(taskName.equals("getAllDrivesDetails")) {
 						try {

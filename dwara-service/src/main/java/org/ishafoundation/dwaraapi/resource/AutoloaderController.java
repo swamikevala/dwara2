@@ -11,6 +11,7 @@ import org.ishafoundation.dwaraapi.api.resp.autoloader.Element;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeUsageStatus;
+import org.ishafoundation.dwaraapi.api.resp.mapdrives.MapDrivesResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
@@ -19,6 +20,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
+import org.ishafoundation.dwaraapi.service.AutoloaderService;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDeviceUtil;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
@@ -31,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @CrossOrigin
@@ -44,12 +47,33 @@ public class AutoloaderController {
 	
 	@Autowired
 	private VolumeDao volumeDao;
+
+	@Autowired
+	private AutoloaderService autoloaderService;
 	
 	@Autowired
 	private TapeDeviceUtil tapeDeviceUtil;
 
 	@Autowired
 	private TapeLibraryManager tapeLibraryManager;
+	
+	@PostMapping(value = "/autoloader/{autoloaderId}/mapDrives", produces = "application/json")
+	public ResponseEntity<MapDrivesResponse> mapDrives(@PathVariable("autoloaderId") String autoloaderId){
+		MapDrivesResponse mapDrivesResponse = null;
+		
+		try {
+			mapDrivesResponse = autoloaderService.mapDrives(autoloaderId);
+		}catch (Exception e) {
+			String errorMsg = "Unable to map drives - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(mapDrivesResponse);
+	}
 	
 	@GetMapping(value = "/autoloader", produces = "application/json")
 	public ResponseEntity<List<AutoloaderResponse>> getAllAutoloaders(){
@@ -94,16 +118,19 @@ public class AutoloaderController {
 			}
 
 //			List<Device> allDrives = configurationTablesUtil.getAllConfiguredDriveDevices();
+			logger.trace("Following drives are mapped in dwara to " + autoloaderId);
 			List<Device> allDrives = deviceDao.findAllByType(Devicetype.tape_drive);
 			HashMap<String, Device> deviceId_DeviceObj_Map = new HashMap<String, Device>();
 			for (Device device : allDrives) {
+				logger.trace(device.getId());	
 				deviceId_DeviceObj_Map.put(device.getId(), device);
 			}
 			
-			
+			logger.trace("Getting all drives details from the physcial Tape library " + autoloaderId);
 			List<DriveDetails> driveDetailsList = tapeDeviceUtil.getAllDrivesDetails();
 			for (DriveDetails driveDetails : driveDetailsList) {
 				String driveId = driveDetails.getDriveId();
+				logger.trace("Adding details for " + driveId);
 				Device configuredDriveDevice = deviceId_DeviceObj_Map.get(driveId);
 				
 				Drive drive = new Drive();
@@ -125,6 +152,8 @@ public class AutoloaderController {
 			for (Volume volume : volumeList) {
 				volumeId_VolumeObj_Map.put(volume.getId(), volume);
 			}
+			
+			logger.trace("Getting all loaded tapes in the physcial Tape library " + autoloaderId);
 			List<TapeOnLibrary> tapeOnLibraryList = tapeLibraryManager.getAllLoadedTapesInTheLibrary(autoloaderDevice.getWwnId());
 			for (TapeOnLibrary tapeOnLibrary : tapeOnLibraryList) {
 				Tape tape = new Tape();
@@ -139,7 +168,7 @@ public class AutoloaderController {
 				tape.setBarcode(barcode);
 				
 				Volume volume = volumeId_VolumeObj_Map.get(barcode);
-				if(volume != null) { // If its not regd in dwara yet, it means its either blank(not formatted) or unknown 
+				if(volume != null) {  
 					tape.setLocation(volume.getLocation().getId());
 					tape.setRemoveAfterJob(volume.getDetails().getRemoveAfterJob());
 					
@@ -149,12 +178,18 @@ public class AutoloaderController {
 					TapeUsageStatus usageStatus = getTapeUsageStatus(volume);
 					tape.setUsageStatus(usageStatus);
 				}
-				else {
-					if(isTapeBlank(volume)){
-						tape.setStatus(TapeStatus.blank);
+				else { // If its not regd in dwara yet, it means its either blank(not formatted) or unknown
+					TapeUsageStatus tapeUsageStatus = getTapeUsageStatus(volume);
+					if(tapeUsageStatus == TapeUsageStatus.no_job_queued) {
+						if(isTapeBlank(volume)){
+							tape.setStatus(TapeStatus.blank);
+						}
+						else
+							tape.setStatus(TapeStatus.unknown);
 					}
-					else
-						tape.setStatus(TapeStatus.unknown);
+					else{
+						tape.setStatus(TapeStatus.initializing);
+					}
 				}
 				tapes.add(tape);
 			}
@@ -188,17 +223,17 @@ public class AutoloaderController {
 	}
 	
 	private boolean isTapeBlank(Volume volume){
-		boolean isTapeBlank = true;
+		boolean isTapeBlank = true; // TODO : Hardcoded.... Should we check if the tape is blank or not by loading the tape and verifying every time its called - No way, there should be a better way...
 		return isTapeBlank;
 	}
 	
 	private boolean hasAnyArtifactOnVolume(Volume volume){
-		boolean hasAnyArtifactOnVolume = false;
+		boolean hasAnyArtifactOnVolume = false; // TODO : Hardcoded....
 		return hasAnyArtifactOnVolume;
 	}
 	
 	private boolean isInitialized(Volume volume){
-		boolean isInitialized = true;
+		boolean isInitialized = true; // TODO : Hardcoded....
 		return isInitialized;
 	}
 	
@@ -220,12 +255,12 @@ public class AutoloaderController {
 	}
 	
 	private boolean getInProgressJobOnVolume(Volume volume){
-		boolean inProgressJob = false;
+		boolean inProgressJob = false; // TODO : Hardcoded....
 		return inProgressJob;
 	}
 	
 	private boolean getQueuedJobOnVolume(Volume volume){
-		boolean queuedJob = false;
-		return queuedJob;
+		boolean queuedJob = false; // TODO : Hardcoded....
+		return queuedJob; 
 	}
 }	

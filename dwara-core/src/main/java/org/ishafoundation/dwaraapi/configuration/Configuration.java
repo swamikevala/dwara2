@@ -33,6 +33,8 @@ public class Configuration {
 	
 	private String restoreInProgressFileIdentifier;
 	
+	private boolean allowForceOptionForTesting;
+	
 	public String getRegexAllowedChrsInFileName() {
 		return regexAllowedChrsInFileName;
 	}
@@ -135,6 +137,14 @@ public class Configuration {
 
 	public void setRestoreInProgressFileIdentifier(String restoreInProgressFileIdentifier) {
 		this.restoreInProgressFileIdentifier = restoreInProgressFileIdentifier;
+	}
+
+	public boolean isAllowForceOptionForTesting() {
+		return allowForceOptionForTesting;
+	}
+
+	public void setAllowForceOptionForTesting(boolean allowForceOptionForTesting) {
+		this.allowForceOptionForTesting = allowForceOptionForTesting;
 	}
 
 }

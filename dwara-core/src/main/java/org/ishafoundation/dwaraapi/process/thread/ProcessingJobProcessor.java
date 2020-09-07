@@ -12,7 +12,9 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileJobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
@@ -64,6 +66,12 @@ public class ProcessingJobProcessor implements Runnable{
 	@Autowired
 	private DomainUtil domainUtil;
 
+	@Autowired
+	private ArtifactEntityUtil artifactEntityUtil;
+	
+	@Autowired
+	private FileEntityUtil fileEntityUtil;
+	
 	private Job job;
 	private Domain domain;
 	private Artifact inputArtifact;
@@ -247,8 +255,8 @@ public class ProcessingJobProcessor implements Runnable{
 						Artifact outputArtifact = artifactRepository.findByName(outputArtifactName); 
 						if(outputArtifact == null) {// not already created.
 						    outputArtifact = domainUtil.getDomainSpecificArtifactInstance(domain);
-							Method artifactRefSetter = outputArtifact.getClass().getMethod("set" + outputArtifact.getClass().getSimpleName() + "Ref", outputArtifact.getClass());
-							artifactRefSetter.invoke(outputArtifact, inputArtifact); //sourceArtifactId
+							
+						    artifactEntityUtil.setDomainSpecificArtifactRef(outputArtifact, inputArtifact);
 							
 							outputArtifact.setTotalSize(totalSize);
 						    outputArtifact.setFileCount(fileCount);
@@ -324,6 +332,7 @@ public class ProcessingJobProcessor implements Runnable{
 			logger.error(failureReason, e);
 			
 			// TODO : Work on the threshold failures...
+			// Only unique -- 
 			logger.debug("DB Failure Creation");
 			ProcessingFailure failure = new ProcessingFailure(file.getId(), job, e.getMessage());
 			failure = failureDao.save(failure);	
@@ -343,11 +352,9 @@ public class ProcessingJobProcessor implements Runnable{
 	private void createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository) throws Exception {
 	    org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
 		
-	    Method fileRefSetter = nthFileRowToBeInserted.getClass().getMethod("set" + file.getClass().getSimpleName() + "Ref", file.getClass());
-	    fileRefSetter.invoke(nthFileRowToBeInserted, file);
-		
-	    Method fileArtifactSetter = nthFileRowToBeInserted.getClass().getMethod("set" + outputArtifact.getClass().getSimpleName(), outputArtifact.getClass());
-		fileArtifactSetter.invoke(nthFileRowToBeInserted, outputArtifact);
+	    fileEntityUtil.setDomainSpecificFileRef(nthFileRowToBeInserted, file);
+	    
+	    fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, outputArtifact);
 		
 		String filePathname = fileAbsolutePathName.replace(outputArtifactPathname, outputArtifactName);
 		nthFileRowToBeInserted.setPathname(filePathname);

@@ -20,9 +20,8 @@ public class DomainSpecificFileVolumeFactory {
 
     public static FileVolume getInstance(Domain domain, int fileId, Volume volume) {
     	DomainAttributeConverter domainAttributeConverter = new DomainAttributeConverter();
-		String domainAsString = domainAttributeConverter.convertToDatabaseColumn(domain);
-//		String domainSpecificFileVolumeTableName = File.TABLE_NAME_PREFIX + domainAsString + "_volume";
-		String domainSpecificFileVolumeTableName = FileVolume.TABLE_NAME.replace("<<DOMAIN>>", domainAsString);
+		Integer domainId = domainAttributeConverter.convertToDatabaseColumn(domain);
+		String domainSpecificFileVolumeTableName = FileVolume.TABLE_NAME.replace("<<DOMAIN>>", domainId+"");
 
         if (instances.containsKey(domainSpecificFileVolumeTableName)) {
         	Class<? extends FileVolume> entityAsClass = instances.get(domainSpecificFileVolumeTableName);

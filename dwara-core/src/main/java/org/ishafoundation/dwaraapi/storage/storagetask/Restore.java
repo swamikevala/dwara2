@@ -1,15 +1,12 @@
 package org.ishafoundation.dwaraapi.storage.storagetask;
 
 
-import org.ishafoundation.dwaraapi.db.dao.master.LocationDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
-import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -27,9 +24,6 @@ public class Restore extends AbstractStoragetaskAction{
 	@Autowired
 	private DomainUtil domainUtil;
 	
-	@Autowired
-	private ConfigurationTablesUtil configurationTablesUtil;
-	
 	@Override
 	public StorageJob buildStorageJob(Job job) throws Exception {
 		Request request = job.getRequest();
@@ -38,7 +32,7 @@ public class Restore extends AbstractStoragetaskAction{
 		storageJob.setJob(job);
 
 		// Domain
-		Domain domain = request.getDomain();
+		Domain domain = domainUtil.getDomain(request);
 		storageJob.setDomain(domain);
 		
 		RequestDetails requestDetails = request.getDetails();

@@ -76,7 +76,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 				logger.error(errorMsg, e);//printing the stacktrace
 			else
 				logger.error(errorMsg);
-			job.setErrorMsg(errorMsg);
+			job.setMessage("[error] " + errorMsg);
 			updateJobFailed(job);
 			// updateError Table;
 		}
@@ -86,7 +86,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 	protected Job updateJobInProgress(Job job) {
 		if(job.getStatus() != Status.in_progress) { // If not updated already
 			job.setStartedAt(LocalDateTime.now());
-			job.setErrorMsg(null);
+			job.setMessage(null);
 			job = updateJobStatus(job, Status.in_progress);
 		}
 		
@@ -95,7 +95,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 	
 	protected Job updateJobCompleted(Job job) {
 		job.setCompletedAt(LocalDateTime.now());
-		job.setErrorMsg(null);
+		job.setMessage(null);
 		return updateJobStatus(job, Status.completed);
 	}
 	

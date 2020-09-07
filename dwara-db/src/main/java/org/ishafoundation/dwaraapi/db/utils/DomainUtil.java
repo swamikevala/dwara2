@@ -12,6 +12,7 @@ import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactFacto
 import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactVolumeFactory;
 import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileFactory;
 import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileVolumeFactory;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
@@ -61,10 +62,10 @@ public class DomainUtil {
 	
 	@SuppressWarnings("rawtypes")
 	public ArtifactRepository getDomainSpecificArtifactRepository(Domain domain) {
-		String domainName = getDomainName(domain);
+		int domainId = getDomainId(domain);
 
 		
-		String domainSpecificArtifactName = Artifact.TABLE_NAME_PREFIX + domainName;
+		String domainSpecificArtifactName = Artifact.TABLE_NAME_PREFIX + domainId;
 		return (ArtifactRepository) artifactDaoMap.get(domainSpecificArtifactName + daoSuffix);
 	}
 	
@@ -80,9 +81,9 @@ public class DomainUtil {
 
 	@SuppressWarnings("rawtypes")
 	public FileRepository getDomainSpecificFileRepository(Domain domain) {
-		String domainName = getDomainName(domain);
+		int domainId = getDomainId(domain);
 		
-		String domainSpecificFileName = File.TABLE_NAME_PREFIX + domainName;
+		String domainSpecificFileName = File.TABLE_NAME_PREFIX + domainId;
 		return (FileRepository) fileDaoMap.get(domainSpecificFileName + daoSuffix);
 	}
 
@@ -98,10 +99,10 @@ public class DomainUtil {
 
 	@SuppressWarnings("rawtypes")
 	public ArtifactVolumeRepository getDomainSpecificArtifactVolumeRepository(Domain domain) {
-		String domainName = getDomainName(domain);
+		int domainId = getDomainId(domain);
 
 		
-		String domainSpecificArtifactVolumeName = Artifact.TABLE_NAME_PREFIX + domainName + volumeSuffix;
+		String domainSpecificArtifactVolumeName = Artifact.TABLE_NAME_PREFIX + domainId + volumeSuffix;
 		return (ArtifactVolumeRepository) artifactVolumeDaoMap.get(domainSpecificArtifactVolumeName + daoSuffix);
 	}
 	
@@ -117,38 +118,43 @@ public class DomainUtil {
 
 	@SuppressWarnings("rawtypes")
 	public FileVolumeRepository getDomainSpecificFileVolumeRepository(Domain domain) {
-		String domainName = getDomainName(domain);
+		int domainId = getDomainId(domain);
 		
-		String domainSpecificFileVolumeName = File.TABLE_NAME_PREFIX + domainName + volumeSuffix;
+		String domainSpecificFileVolumeName = File.TABLE_NAME_PREFIX + domainId + volumeSuffix;
 		return (FileVolumeRepository) fileVolumeDaoMap.get(domainSpecificFileVolumeName + daoSuffix);
 	}
 	
 
-	private String getDomainName(Domain domain) {
-		String domainName = null;
+	public int getDomainId(Domain domain) {
+		int domainId;
 		if(domain == null) { // If domain is not available default it
 			org.ishafoundation.dwaraapi.db.model.master.configuration.Domain domainFromDB = domainDao.findByDefaultTrue();
-			domainName = domainFromDB.getName();
+			domainId = domainFromDB.getId();
 		}
 		else {
-			domainName = domainAttributeConverter.convertToDatabaseColumn(domain);
+			domainId = domainAttributeConverter.convertToDatabaseColumn(domain);
 		}
-		return domainName;
+		return domainId;
 	}
 	
 	public Domain getDefaultDomain() {
 		org.ishafoundation.dwaraapi.db.model.master.configuration.Domain domainFromDB = domainDao.findByDefaultTrue();
-		return domainAttributeConverter.convertToEntityAttribute(domainFromDB.getId()+"");
+		return domainAttributeConverter.convertToEntityAttribute(domainFromDB.getId());
 	}
 	
 	public Domain getDomain(Integer domainId) {
 		Domain domain = null;
 		if(domainId != null)
-			domain = domainAttributeConverter.convertToEntityAttribute(domainId+"");
+			domain = domainAttributeConverter.convertToEntityAttribute(domainId);
 		else {
 			domain = getDefaultDomain();
 		}
 		return domain;
+	}
+	
+	public Domain getDomain(Request request) {
+		Integer domainId = request.getDetails().getDomainId();
+		return getDomain(domainId);
 	}
 	
 //	public List<File> getDomainSpecificLibraryFiles(Domain domain, int libraryId) {

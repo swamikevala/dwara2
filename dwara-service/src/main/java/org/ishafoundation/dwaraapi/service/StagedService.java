@@ -1,6 +1,5 @@
 package org.ishafoundation.dwaraapi.service;
 
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
@@ -27,6 +26,7 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassUserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Extension;
@@ -89,6 +89,9 @@ public class StagedService extends DwaraService{
 	
 	@Autowired
 	private DomainUtil domainUtil;
+	
+	@Autowired
+	private FileEntityUtil fileEntityUtil;
 
 	@Autowired
 	private ExtensionsUtil extensionsUtil;
@@ -191,7 +194,6 @@ public class StagedService extends DwaraService{
 	    	Request userRequest = new Request();
 	    	userRequest.setType(RequestType.user);
 			userRequest.setActionId(Action.ingest);
-			userRequest.setDomain(domain);
 			userRequest.setStatus(Status.queued);
 	    	userRequest.setRequestedBy(getUserObjFromContext());
 			userRequest.setRequestedAt(LocalDateTime.now());
@@ -277,52 +279,124 @@ public class StagedService extends DwaraService{
 					Error error = stagedFileOperations.setPermissions(path, artifactName);
 					if(error != null) {
 						isLevel2Pass = false;
-						List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
-						errorList.add(error);
+						StagedFileDetails sfd = null;
+				    	for (StagedFileDetails stagedFileDetails : stagedFileDetailsList) {
+				    		if(stagedFileDetails.getName().equals(artifactName)) {
+				    			List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = stagedFileDetails.getErrors();
+				    			if(errorList == null)
+				    				errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
+				    			
+								errorList.add(error);
+								sfd = stagedFileDetails;
+								break;
+				    		}
+						}
 						
-						StagedFileDetails sfd = new StagedFileDetails();
-						
-						sfd.setPath(path);
-						sfd.setName(artifactName);
-						sfd.setErrors(errorList);
-						
+				    	if(sfd == null) {
+							sfd = new StagedFileDetails();
+							
+							sfd.setPath(path);
+							sfd.setName(artifactName);
+
+							List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
+							errorList.add(error);
+
+							sfd.setErrors(errorList);
+				    	}
 						stagedFileDetailsList.add(sfd);
 					}
 				}
 	    	}
 	    	
+	    	// TODO : If we decide to scan for "Multiple Artifactclass directories" at one shot we might then need to have rollback of moved files if there is a failure... 
+	    	// Usecase: If the artifactclass directory is not owned by dwara and dont have write permissions for group, then the move fails. Right now since its just one Artifactclass scan its all or none failure scenario
+	    	// If multiple artifactclass scenario comes then there might be artifacts belonging to artifactclasses directory with the right permissions which succeed and some artifacts belonging to artifactclass directory without the right ownership/permissions failing
+	    	// so we have to fail the request completely but rollback to its original state i.e. move files back from location B to location A...
+	    	// BUT NOT NEEDED RIGHT NOW
+	    	boolean isLevel3Pass = true;
 	    	if(!isLevel2Pass)
 	    		ingestResponse.setStagedFiles(stagedFileDetailsList);
-	    	else { // Next steps on Ingest - Only when level 2 validation succeeds...
-		    	List<IngestSystemRequest> ingestSystemRequests = new ArrayList<IngestSystemRequest>();
+	    	else { // Validation Level 3 - Move file - Only when level 2 is success we continue...
 		    	for (StagedFile stagedFile : stagedFileList) {
+
 		    		String stagedFileName = stagedFile.getName();
 		    		String stagedFilePath = stagedFile.getPath();
 	
 		        	// STEP 1 - Moves the file from User's Staging directory to Application's ReadyToIngest directory
 		        	java.io.File stagedFileObj = FileUtils.getFile(stagedFilePath, stagedFileName);
 		        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, stagedFileName);
-//		        	try {
-		        		moveFile(stagedFileObj, appReadyToIngestFileObj);
-//		    		} catch (Exception e) {
-//		    			// If this fails - its possible the setperms not functional and so all the stagedfiles requested to be ingested would have the same problem... So we err out...
-//		    			String errorMsg = "Unable to move file. " + e.getMessage() + " Check if the file permisions are set properly";
-//		    			logger.error(errorMsg);
-//		    			throw new DwaraException(errorMsg, null);
-//		    		}
+		        	try {
+		        		moveFile(stagedFileObj, appReadyToIngestFileObj); // NOTE : Here the failure would be for all artifacts in the request or nothing... So rollback etc., needed
+			    	} catch (Exception e) {
+			    		isLevel3Pass = false;
+						
+			    		Error error = new Error();
+						error.setType(Errortype.Error);
+						error.setMessage(e.getMessage());
+						
+						StagedFileDetails sfd = null;
+				    	for (StagedFileDetails stagedFileDetails : stagedFileDetailsList) {
+				    		if(stagedFileDetails.getName().equals(stagedFileName)) {
+				    			List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = stagedFileDetails.getErrors();
+				    			if(errorList == null)
+				    				errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
+								errorList.add(error);
+								sfd = stagedFileDetails;
+								break;
+				    		}
+						}
+						
+				    	if(sfd == null) {
+							sfd = new StagedFileDetails();
+							
+							sfd.setPath(stagedFilePath);
+							sfd.setName(stagedFileName);
+
+							List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
+							errorList.add(error);
+
+							sfd.setErrors(errorList);
+				    	}
+						stagedFileDetailsList.add(sfd);
+			    	}
+				}
+	    	}	    	
+	    	
+	    	if(!isLevel3Pass)
+	    		ingestResponse.setStagedFiles(stagedFileDetailsList);
+	    	else { // Next steps on Ingest - Only when level 2 validation succeeds...
+		    	List<IngestSystemRequest> ingestSystemRequests = new ArrayList<IngestSystemRequest>();
+		    	for (StagedFile stagedFile : stagedFileList) {
+		    		String stagedFileName = stagedFile.getName();
+	
+		        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, stagedFileName);
 		        	
 					Sequence sequence = artifactclass.getSequence();
 					String extractedCode = sequenceUtil.getExtractedCode(sequence, stagedFileName);
-					String sequenceCode = sequenceUtil.getSequenceCode(sequence, stagedFileName);
 					
+					String sequenceCode = null;
+					String prevSeqCode = null;
 					String toBeArtifactName = null;
-					if(extractedCode != null)
-						toBeArtifactName = stagedFileName.replace(extractedCode, sequenceCode);
-					else
-						toBeArtifactName = sequenceCode + "_" + stagedFileName;
-			        
+					// NOTE : forcematch is taken care of upfront during scan... No need to act on it...
+					if(sequence.isKeepCode() && extractedCode != null) {
+						// retaining the same name
+						toBeArtifactName = stagedFileName;
+					}
+					else if(sequence.isKeepCode() && extractedCode == null){
+						// TODO : what should happen when keepcode is true but code_regex match doesnt happen...Same as else block??? if yes, merge these blocks into one...
+						toBeArtifactName = stagedFileName; // ???
+					}
+					else {
+						prevSeqCode = extractedCode;
+						sequenceCode = sequenceUtil.getSequenceCode(sequence, stagedFileName);	
+						if(extractedCode != null)
+							toBeArtifactName = stagedFileName.replace(extractedCode, sequenceCode);
+						else
+							toBeArtifactName = sequenceCode + "_" + stagedFileName;
+					}
 			        // Renames the artifact with the needed sequencecode...
-			        java.io.File stagedFileInAppReadyToIngest = moveFile(appReadyToIngestFileObj, FileUtils.getFile(readyToIngestPath, toBeArtifactName));
+					// NOTE : there should be not any error here - Dont have to catch exception and act on it...
+			        java.io.File stagedFileInAppReadyToIngest = moveFile(appReadyToIngestFileObj, FileUtils.getFile(readyToIngestPath, toBeArtifactName));  
 		    		
 		        	// STEP 2 - Moves Junk files
 			    	String junkFilesStagedDirName = configuration.getJunkFilesStagedDirName(); 
@@ -336,7 +410,6 @@ public class StagedService extends DwaraService{
 					systemrequest.setActionId(userRequest.getActionId());
 					systemrequest.setRequestedBy(userRequest.getRequestedBy());
 					systemrequest.setRequestedAt(LocalDateTime.now());
-					systemrequest.setDomain(domain);
 		
 		    		RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForIngest(stagedFile);
 		    		
@@ -361,6 +434,7 @@ public class StagedService extends DwaraService{
 					artifact.setFileCount(fileCount);
 					artifact.setTotalSize(size);
 					artifact.setSequenceCode(sequenceCode);
+					artifact.setPrevSequenceCode(prevSeqCode);
 					artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
 					
 					logger.info(artifact.getClass().getSimpleName() + " - " + artifact.getId());
@@ -432,13 +506,7 @@ public class StagedService extends DwaraService{
 			
 			File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
 			nthFileRowToBeInserted.setPathname(filePath);
-			// Checksum is now done in processing framework...
-//			if(file.isFile())
-//				nthFileRowToBeInserted.setChecksum(Md5Util.getChecksum(file, Checksumtype.sha256));
-			
-			//nthFileRowToBeInserted.setArtifact(artifact); this is now domain specific
-			Method fileArtifactSetter = nthFileRowToBeInserted.getClass().getMethod("set" + artifact.getClass().getSimpleName(), artifact.getClass());
-			fileArtifactSetter.invoke(nthFileRowToBeInserted, artifact);
+			fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, artifact);
 
 			nthFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
 			toBeAddedFileTableEntries.add(nthFileRowToBeInserted);			

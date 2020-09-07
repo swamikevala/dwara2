@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
-import org.ishafoundation.dwaraapi.api.resp.initialize.SystemRequestsForInitializeResponse;
+import org.ishafoundation.dwaraapi.api.resp.initialize.SystemRequestForInitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.Details;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
@@ -143,7 +143,7 @@ public class VolumeService extends DwaraService {
 		int requestId = request.getId();
 		logger.info("Request - " + requestId);
 		
-		List<SystemRequestsForInitializeResponse> systemRequests = new ArrayList<SystemRequestsForInitializeResponse>();
+		List<SystemRequestForInitializeResponse> systemRequests = new ArrayList<SystemRequestForInitializeResponse>();
 		
 		for (InitializeUserRequest nthInitializeRequest : initializeRequestList) {
 			Request systemrequest = new Request();
@@ -153,8 +153,6 @@ public class VolumeService extends DwaraService {
 			systemrequest.setStatus(Status.queued);
 			systemrequest.setRequestedBy(request.getRequestedBy());
 			systemrequest.setRequestedAt(LocalDateTime.now());
-			systemrequest.setDomain(request.getDomain());
-
 
 			RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForInitialize(nthInitializeRequest);
 
@@ -173,13 +171,13 @@ public class VolumeService extends DwaraService {
 //			sequenceDao.save(sequence);
 //			logger.info("Sequence for - " + volumeGroup.getId() + " updated to " + sequence.getCurrrentNumber());
 			
-			SystemRequestsForInitializeResponse systemRequestsForInitializeResponse = new SystemRequestsForInitializeResponse();
-			systemRequestsForInitializeResponse.setId(systemrequest.getId());
-			systemRequestsForInitializeResponse.setJobId(jobId);
-			systemRequestsForInitializeResponse.setStatus(status);
-			systemRequestsForInitializeResponse.setVolume(nthInitializeRequest.getVolume());
+			SystemRequestForInitializeResponse systemRequestForInitializeResponse = new SystemRequestForInitializeResponse();
+			systemRequestForInitializeResponse.setId(systemrequest.getId());
+			systemRequestForInitializeResponse.setJobId(jobId);
+			systemRequestForInitializeResponse.setStatus(status);
+			systemRequestForInitializeResponse.setVolume(nthInitializeRequest.getVolume());
 			
-			systemRequests.add(systemRequestsForInitializeResponse);
+			systemRequests.add(systemRequestForInitializeResponse);
 		}
 		
 		// Framing the response object here...
@@ -191,9 +189,8 @@ public class VolumeService extends DwaraService {
 		return initializeResponse;	
 	}
 	
-	// TODO : Why domain needed? ANS: Filevolume and Artifactvolume needed for generating the index are "domain-ed"
-	public String finalize(String volumeId, Domain domain) throws Exception{
-		return volumeFinalizer.finalize(volumeId, getUserObjFromContext(), domain);
+	public String finalize(String volumeId) throws Exception{
+		return volumeFinalizer.finalize(volumeId, getUserObjFromContext());
 	}
 }
 

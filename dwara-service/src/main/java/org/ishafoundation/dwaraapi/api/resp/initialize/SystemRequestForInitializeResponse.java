@@ -2,7 +2,7 @@ package org.ishafoundation.dwaraapi.api.resp.initialize;
 
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 
-public class SystemRequestsForInitializeResponse
+public class SystemRequestForInitializeResponse
 {
     private int id;
 

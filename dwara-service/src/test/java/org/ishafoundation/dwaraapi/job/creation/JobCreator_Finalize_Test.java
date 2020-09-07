@@ -26,7 +26,7 @@ public class JobCreator_Finalize_Test {
 	@Test
 	public void test_Finalize() {
 		try {
-			volumeService.finalize("V5C001", Domain.main); // TODO : Why domain needed? Filevolume and Artifactvolume needed for generating the index are domain-ed
+			volumeService.finalize("V5C001"); // TODO : Why domain needed? Filevolume and Artifactvolume needed for generating the index are domain-ed
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

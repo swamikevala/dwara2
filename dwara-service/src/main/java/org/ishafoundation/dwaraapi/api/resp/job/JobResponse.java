@@ -19,7 +19,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "startedAt",
     "completedAt",
     "status",
-    "volume"
+    "volume",
+    "copy",
+    "message",
+    "fileFailures"
 })
 public class JobResponse {
 
@@ -49,8 +52,10 @@ public class JobResponse {
     private String volume;
     @JsonProperty("copy")
     private Integer copy;
-    @JsonProperty("errors")
-    private List<String> errors; // failure reason
+    @JsonProperty("message")
+    private String message;
+    @JsonProperty("fileFailures")
+    private List<String> fileFailures; // failure reason
     
     @JsonProperty("id")
     public Integer getId() {
@@ -180,11 +185,19 @@ public class JobResponse {
 		this.copy = copy;
 	}
 
-	public List<String> getErrors() {
-		return errors;
+	public String getMessage() {
+		return message;
 	}
 
-	public void setErrors(List<String> errors) {
-		this.errors = errors;
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public List<String> getFileFailures() {
+		return fileFailures;
+	}
+
+	public void setFileFailures(List<String> fileFailures) {
+		this.fileFailures = fileFailures;
 	}
 }
