@@ -1,6 +1,9 @@
 package org.ishafoundation.dwaraapi.storage.model;
 
+import java.util.List;
+
 import org.ishafoundation.dwaraapi.db.model.transactional.TActivedevice;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 
 public class TapeJob extends SelectedStorageJob {
 	
@@ -9,7 +12,7 @@ public class TapeJob extends SelectedStorageJob {
 	private String tapeLibraryName;
 	private int tapedriveNo; // elementAddress
 //	private boolean tapedriveAlreadyLoadedWithNeededTape;
-	
+	private List<DriveDetails> preparedDrives; // expensive to get the list again, so just passing the already prepared set..
 	private int artifactVolumeCount;
 
 	public boolean isOptimizeTapeAccess() {
@@ -36,7 +39,13 @@ public class TapeJob extends SelectedStorageJob {
 	public void setTapedriveNo(int tapedriveNo) {
 		this.tapedriveNo = tapedriveNo;
 	}
-//	public boolean isTapedriveAlreadyLoadedWithNeededTape() {
+	public List<DriveDetails> getPreparedDrives() {
+		return preparedDrives;
+	}
+	public void setPreparedDrives(List<DriveDetails> preparedDrives) {
+		this.preparedDrives = preparedDrives;
+	}
+	//	public boolean isTapedriveAlreadyLoadedWithNeededTape() {
 //		return tapedriveAlreadyLoadedWithNeededTape;
 //	}
 //	public void setTapedriveAlreadyLoadedWithNeededTape(boolean tapedriveAlreadyLoadedWithNeededTape) {

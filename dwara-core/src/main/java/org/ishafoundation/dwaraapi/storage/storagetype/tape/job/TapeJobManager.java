@@ -114,6 +114,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 					logger.trace("Composing Tape job");
 					TapeJob tapeJob = new TapeJob();
 					tapeJob.setStorageJob(firstStorageJob);
+					tapeJob.setPreparedDrives(preparedDrives);
 					manage(tapeJob);
 				}
 			}

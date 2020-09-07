@@ -13,6 +13,7 @@ import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.label.LabelManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDriveMapper;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.TapeDriveManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
 import org.slf4j.Logger;
@@ -34,6 +35,9 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	private TapeDriveManager tapeDriveManager;
 
 	@Autowired
+	private TapeDriveMapper tapeDriveMapper;
+
+	@Autowired
 	private LabelManager labelManager;
 	
 	@Autowired
@@ -42,8 +46,11 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	@Autowired
 	private Configuration configuration;
 	
-	public StorageResponse map_tapedrives(SelectedStorageJob selectedStorageJob) {
-		logger.trace("Mapping invoked from processor");
+	public StorageResponse map_tapedrives(SelectedStorageJob selectedStorageJob) throws Exception {
+		
+		String tapelibraryId = selectedStorageJob.getStorageJob().getJob().getRequest().getDetails().getAutoloaderId();
+		TapeJob tapeJob = (TapeJob) selectedStorageJob;
+		tapeDriveMapper.mapDrives(tapelibraryId, tapeJob.getPreparedDrives());
 		return new StorageResponse();
 	}
 	
