@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -388,13 +389,12 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		java.io.File srcFile = new java.io.File(srcPath);
 		java.io.File destFile = new java.io.File(destPath);
-		
-		if(srcFile.exists())
-			logger.trace("srcFile exists");
-		
-		if(destFile.exists())
-			logger.trace("destFile exists");
-		
+
+		if(srcFile.isFile())
+			Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
+		else
+			Files.createDirectories(Paths.get(destPath));
+
 		Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
 	}
 	

@@ -84,8 +84,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			try {
 				boolean areJobsRunning = true;
 				while(areJobsRunning) {
-					Iterable<TActivedevice> tActivedevices = tActivedeviceDao.findAll();
-					if(tActivedevices != null) {
+					List<TActivedevice> tActivedevices = (List<TActivedevice>) tActivedeviceDao.findAll();
+					if(tActivedevices.size() > 0) {
 						logger.info("Waiting on running jobs to complete");
 						try {
 							Thread.sleep(10000); // 10 secs
@@ -107,7 +107,6 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 					for (DriveDetails driveDetails : driveDetailsList) {
 						if(driveDetails.getMtStatus().isBusy())
 							anyDriveStillBusy = true;
-							
 					}
 
 					if(anyDriveStillBusy) {
@@ -240,7 +239,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 
 	private void removeJobsThatDontHaveNeededTapeOnLibrary(List<StorageJob> storageJobsList,
 			List<DriveDetails> availableDrivesDetails) {
-		// For now assuming just one tape libarary is supported
+		// TODO For now assuming just one tape libarary is supported
 		String tapeLibraryName = availableDrivesDetails.get(0).getTapelibraryName();
 		List<TapeOnLibrary> tapeOnLibraryObjList = null;
 		try {

@@ -116,7 +116,9 @@ public class TapeDeviceUtil {
 							continue;
 						}
 					}
-					driveDetailsList.add(driveDetails);
+					
+					if(driveDetails != null)
+						driveDetailsList.add(driveDetails);
 				}
 			}
 		}
