@@ -1,6 +1,8 @@
 package org.ishafoundation.dwaraapi.storage.storagetype;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -369,7 +371,7 @@ public abstract class AbstractStoragetypeJobProcessor {
     	return storageResponse; 
     }
 	
-	protected void afterRestore(SelectedStorageJob selectedStorageJob) throws IOException {
+	protected void afterRestore(SelectedStorageJob selectedStorageJob) throws Exception {
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		if(storageJob.isRestoreVerify())
 			updateFileVolumeVerifiedDate(selectedStorageJob); // update the verified date here...
@@ -386,14 +388,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		java.io.File srcFile = new java.io.File(srcPath);
 		java.io.File destFile = new java.io.File(destPath);
-		//String destDirPath = storageJob.getTargetLocationPath().replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");
-		//logger.trace("destDirPath " + destDirPath);
-		//FileUtils.moveToDirectory(srcFile, new java.io.File(destDirPath), false); // doesn't create the full path... hence the if condition on directory or file...
-		// TODO try JDK Filemove option
-		if(srcFile.isDirectory())
-			FileUtils.moveDirectory(srcFile, destFile);
-		else
-			FileUtils.moveFile(srcFile, destFile);
+
+		Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
 	}
 	
 	private IStoragelevel getStoragelevelImpl(SelectedStorageJob selectedStorageJob){
