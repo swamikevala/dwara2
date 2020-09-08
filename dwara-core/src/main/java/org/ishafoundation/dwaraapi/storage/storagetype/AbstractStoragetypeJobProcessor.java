@@ -388,7 +388,13 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		java.io.File srcFile = new java.io.File(srcPath);
 		java.io.File destFile = new java.io.File(destPath);
-
+		
+		if(srcFile.exists())
+			logger.trace("srcFile exists");
+		
+		if(destFile.exists())
+			logger.trace("destFile exists");
+		
 		Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
 	}
 	

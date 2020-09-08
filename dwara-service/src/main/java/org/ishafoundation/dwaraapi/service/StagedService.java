@@ -15,6 +15,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.StagedFile;
 import org.ishafoundation.dwaraapi.api.req.staged.rename.StagedRenameFile;
@@ -205,7 +206,7 @@ public class StagedService extends DwaraService{
 			
 	    	userRequest = requestDao.save(userRequest);
 	    	int userRequestId = userRequest.getId();
-	    	logger.info("Request - " + userRequestId);
+	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
 	    	
 	    	// TODO Move it to validation class
 	    	// Validation Level 1 - For empty folders
@@ -420,7 +421,7 @@ public class StagedService extends DwaraService{
 					systemrequest.setDetails(systemrequestDetails);
 					
 					systemrequest = requestDao.save(systemrequest);
-					logger.info("System request - " + systemrequest.getId());
+					logger.info(DwaraConstants.SYSTEM_REQUEST + systemrequest.getId());
 	
 			    	Collection<java.io.File> libraryFileAndDirsList = getFileList(stagedFileInAppReadyToIngest, junkFilesStagedDirName);
 			    	int fileCount = libraryFileAndDirsList.size();

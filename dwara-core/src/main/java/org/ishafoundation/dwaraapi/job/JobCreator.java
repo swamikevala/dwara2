@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
@@ -219,12 +220,12 @@ public class JobCreator {
 			jobList.add(job);
 			flowelementId_Job_Map.put(putKeyPrefix + nthFlowelement.getId(), job);
 		}
-
 	}
+	
 	private Job saveJob(Job job) {
 		//logger.debug("DB Job row Creation");   
 		job = jobDao.save(job);
-		logger.info("Job - " + job.getId());
+		logger.info(DwaraConstants.JOB + job.getId());
 		return job;
 	}
 }

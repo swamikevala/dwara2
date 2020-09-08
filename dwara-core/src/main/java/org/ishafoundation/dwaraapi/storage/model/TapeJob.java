@@ -12,7 +12,7 @@ public class TapeJob extends SelectedStorageJob {
 	private String tapeLibraryName;
 	private int tapedriveNo; // elementAddress
 //	private boolean tapedriveAlreadyLoadedWithNeededTape;
-	private List<DriveDetails> preparedDrives; // expensive to get the list again, so just passing the already prepared set..
+	private List<DriveDetails> allDriveDetails; // expensive to get the list again, so just passing the already prepared set..
 	private int artifactVolumeCount;
 
 	public boolean isOptimizeTapeAccess() {
@@ -39,11 +39,11 @@ public class TapeJob extends SelectedStorageJob {
 	public void setTapedriveNo(int tapedriveNo) {
 		this.tapedriveNo = tapedriveNo;
 	}
-	public List<DriveDetails> getPreparedDrives() {
-		return preparedDrives;
+	public List<DriveDetails> getAllDriveDetails() {
+		return allDriveDetails;
 	}
-	public void setPreparedDrives(List<DriveDetails> preparedDrives) {
-		this.preparedDrives = preparedDrives;
+	public void setAllDriveDetails(List<DriveDetails> allDriveDetails) {
+		this.allDriveDetails = allDriveDetails;
 	}
 	//	public boolean isTapedriveAlreadyLoadedWithNeededTape() {
 //		return tapedriveAlreadyLoadedWithNeededTape;

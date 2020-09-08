@@ -72,7 +72,7 @@ public class AutoloaderController {
 			else
 				throw new DwaraException(errorMsg, null);
 		}
-		return ResponseEntity.status(HttpStatus.OK).body(mapDrivesResponse);
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(mapDrivesResponse);
 	}
 	
 	@GetMapping(value = "/autoloader", produces = "application/json")

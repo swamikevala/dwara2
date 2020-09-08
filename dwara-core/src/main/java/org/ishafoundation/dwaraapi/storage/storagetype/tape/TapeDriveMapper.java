@@ -35,7 +35,7 @@ public class TapeDriveMapper {
 		Step 1 - get a tape from the storageelement that can be used to load and verify...
 		Step 2 - load the tape on drives and verify
 	*/	
-	public void mapDrives(String tapelibraryId, List<DriveDetails> preparedDrivesList) throws Exception {
+	public void mapDrives(String tapelibraryId, List<DriveDetails> allDrivesList) throws Exception {
 		try {
 			
 			String tapelibraryName = deviceDao.findById(tapelibraryId).get().getWwnId();
@@ -43,20 +43,41 @@ public class TapeDriveMapper {
 			
 			MtxStatus mtxStatus = tapeLibraryManager.getMtxStatus(tapelibraryName);
 			
-
+			// Step 1 - unload all drives
+			logger.debug("Now unloading all non-empty drives...");
+			List<DataTransferElement> dataTransferElementList = mtxStatus.getDteList();
+			for (DataTransferElement nthDataTransferElement : dataTransferElementList) {
+				int toBeMappedDataTransferElementSNo = nthDataTransferElement.getsNo();
+				
+				if(!nthDataTransferElement.isEmpty()) {
+					logger.debug(nthDataTransferElement + " has a tape loaded already. So unloading it");
+					int toBeUnloadedStorageElementNo = nthDataTransferElement.getStorageElementNo();
+					
+					try {
+						tapeLibraryManager.unload(tapelibraryName, toBeUnloadedStorageElementNo, toBeMappedDataTransferElementSNo);
+					} catch (Exception e) {
+						logger.error("Unable to unload " + tapelibraryName + ":" + toBeUnloadedStorageElementNo + ":" + toBeMappedDataTransferElementSNo);
+					}
+					logger.debug("Unloaded drive " + toBeMappedDataTransferElementSNo);
+				}
+			}
 			
-			// Step 1 - get a tape from the storageelement that can be used to load and verify...
+			logger.debug("Now selecting a tape for loading");
+			// Step 2 - get a tape from the storageelement that can be used to load and verify...
 			int toBeUsedStorageElementNo = 0;
+			String volumeTag = null;
 			List<StorageElement> storageElementsList = mtxStatus.getSeList();
 			for (StorageElement storageElement : storageElementsList) {
 				if(!storageElement.isEmpty()) {
 					toBeUsedStorageElementNo = storageElement.getsNo();
+					volumeTag = storageElement.getVolumeTag();
 					break;
 				}
 			}
-
+			logger.trace("To Be Used - StorageElementNo " + toBeUsedStorageElementNo + " and volumeTag " + volumeTag);
+			
 			/*
-			Step 2 - load the tape on to drives and verify drive status
+			Step 3 - load the tape on to drives and verify drive status
 				
 				load a tape on to drive i
 				!~! mt status the already mapped devicewwid and check if drive status online meaning tape is loaded
@@ -70,14 +91,13 @@ public class TapeDriveMapper {
 				unload the tape from drive i
 				
 			*/
-
-			List<DataTransferElement> dataTransferElementList = mtxStatus.getDteList();
 			for (DataTransferElement nthDataTransferElement : dataTransferElementList) {
 				int toBeMappedDataTransferElementSNo = nthDataTransferElement.getsNo();
+				
 				logger.trace("Now checking mapping for DataTransferElement - " + toBeMappedDataTransferElementSNo);
 				tapeLibraryManager.load(tapelibraryName, toBeUsedStorageElementNo, toBeMappedDataTransferElementSNo);
 
-				for (DriveDetails nthDriveDetails : preparedDrivesList) {
+				for (DriveDetails nthDriveDetails : allDrivesList) {
 					String driveId = nthDriveDetails.getDriveId();
 					String driveName = nthDriveDetails.getDriveName();
 					DriveDetails driveStatusDetails = tapeDriveManager.getDriveDetails(driveName);

@@ -50,7 +50,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		
 		String tapelibraryId = selectedStorageJob.getStorageJob().getJob().getRequest().getDetails().getAutoloaderId();
 		TapeJob tapeJob = (TapeJob) selectedStorageJob;
-		tapeDriveMapper.mapDrives(tapelibraryId, tapeJob.getPreparedDrives());
+		tapeDriveMapper.mapDrives(tapelibraryId, tapeJob.getAllDriveDetails());
 		return new StorageResponse();
 	}
 	

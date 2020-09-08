@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
@@ -361,7 +362,16 @@ public class ProcessingJobProcessor implements Runnable{
 		
 		// TODO need to be done and set after proxy file is generated
 		//nthFileRowToBeInserted.setChecksum(ChecksumUtil.getChecksum(new File(processingtaskResponse.getDestinationPathname()), Checksumtype.sha256)); 
-		//nthFileRowToBeInserted.setSize(FileUtils.sizeOf(new File(fileAbsolutePathName)));
+		logger.trace("Calc size of " + filePathname);
+		File file = new File(fileAbsolutePathName);
+		if(file.exists()) {
+			try {
+				nthFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
+			}catch (Exception e) {
+				logger.warn("Weird. File exists but fileutils unable to calculate size. Skipping setting size");
+			}
+		}
+		
 		logger.debug("DB File Creation");
 		try {
 			domainSpecificFileRepository.save(nthFileRowToBeInserted);

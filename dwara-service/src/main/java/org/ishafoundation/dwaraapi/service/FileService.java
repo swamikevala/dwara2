@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.codec.binary.Hex;
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
@@ -97,7 +98,7 @@ public class FileService extends DwaraService{
 		
     	userRequest = requestDao.save(userRequest);
     	int userRequestId = userRequest.getId();
-    	logger.info("Request - " + userRequestId);
+    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
 
 	
     	Integer copyNumber = restoreUserRequest.getCopy();
@@ -130,7 +131,7 @@ public class FileService extends DwaraService{
 			
 			systemRequest.setDetails(systemrequestDetails);
 			systemRequest = requestDao.save(systemRequest);
-			logger.info("System request - " + systemRequest.getId());
+			logger.info(DwaraConstants.SYSTEM_REQUEST + systemRequest.getId());
 			
 			
 			jobCreator.createJobs(systemRequest, null);

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -93,7 +94,7 @@ public abstract class AbstractStoragetaskAction{
 
 	private Job saveJob(Job job) {
 		job = jobDao.save(job);
-		logger.info("Job " + job.getId() + " - Created");
+		logger.info(DwaraConstants.JOB + job.getId());
 		return job;
 	}
 
