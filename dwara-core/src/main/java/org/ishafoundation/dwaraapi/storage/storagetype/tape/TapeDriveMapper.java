@@ -9,12 +9,18 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.TapeDriveManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.DataTransferElement;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.StorageElement;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.status.MtxStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TapeDriveMapper {
+	
+	private static Logger logger = LoggerFactory.getLogger(TapeDriveMapper.class);
 	
 	@Autowired
 	private DeviceDao deviceDao;
@@ -33,87 +39,56 @@ public class TapeDriveMapper {
 		try {
 			
 			String tapelibraryName = deviceDao.findById(tapelibraryId).get().getWwnId();
+			logger.trace("Now mapping drives for " + tapelibraryName);
+			
+			MtxStatus mtxStatus = tapeLibraryManager.getMtxStatus(tapelibraryName);
+			
+
 			
 			// Step 1 - get a tape from the storageelement that can be used to load and verify...
 			int toBeUsedStorageElementNo = 0;
-			List<StorageElement> storageElementsList = tapeLibraryManager.getAllStorageElements(tapelibraryName);
+			List<StorageElement> storageElementsList = mtxStatus.getSeList();
 			for (StorageElement storageElement : storageElementsList) {
 				if(!storageElement.isEmpty()) {
 					toBeUsedStorageElementNo = storageElement.getsNo();
 					break;
 				}
 			}
-			
+
 			/*
-			blank
-			
-			Drive full
-			
-			load - drive full 
-			
-			readlabel - dont have to rewind - 
-			
-			No device found 
-			
-			launch map drive
-			
-			Tape job process - UI - blocking job - Initialize - Map Drive
-			stinit
-				retry
-			launch map drive job
-				1 - dwara - user 
-				requestid and jobid
-			
-				
-			Request.
-				request_id
-				job_id
-				Rerun_no
-			
-			*/	
-			
-			/*
-			Step 2 - load the tape on drives and verify
+			Step 2 - load the tape on to drives and verify drive status
 				
 				load a tape on to drive i
 				!~! mt status the already mapped devicewwid and check if drive status online meaning tape is loaded
-				if not loop the drivelist
-					check !~!
-					if true skip loop else continue
+				loop the drivelist
+					check mt status and check if drive status online meaning tape is loaded
+					if true 
+						update
+						skip loop 
+					else continue
 				iterate to next drive
-				
-				Update tapedrive or hold the details in collection and update the table later...
 				unload the tape from drive i
 				
 			*/
-//			0 - 2
-//			1 - 3
-//			2 - 1
-//			3 = 0 so is it ok just to iterate n-1 times as the last drive to be mapped will be the left out no? Safe to do the load and verify if the drive is indeed working or offline etc... so not avoiding the last call...   
-			Map<Integer, Integer> libraryToDriveElementAddressMap = new HashMap<Integer, Integer>();
-			for (DriveDetails nthDriveDetails : preparedDrivesList) {
-				String driveId = nthDriveDetails.getDriveId();
-				int toBeMappedDataTransferElementSNo = nthDriveDetails.getDte().getsNo();
+
+			List<DataTransferElement> dataTransferElementList = mtxStatus.getDteList();
+			for (DataTransferElement nthDataTransferElement : dataTransferElementList) {
+				int toBeMappedDataTransferElementSNo = nthDataTransferElement.getsNo();
+				logger.trace("Now checking mapping for DataTransferElement - " + toBeMappedDataTransferElementSNo);
 				tapeLibraryManager.load(tapelibraryName, toBeUsedStorageElementNo, toBeMappedDataTransferElementSNo);
-				DriveDetails driveStatusDetails = tapeDriveManager.getDriveDetails(driveId);
-				if(driveStatusDetails.getMtStatus().isReady()){ // means drive is not empty and has the tape we loaded
-					// Nothing needs to be done - continue
-				}
-				else { // if not iterate through the other drives and get the drive which has the tape loaded
-					for (DriveDetails xthDriveDetails : preparedDrivesList) {
-						String xthDriveId = xthDriveDetails.getDriveId();
-						if(driveId.equals(xthDriveId)) {
-							continue; // skipping the current drive thats getting verified
-						}
-						DriveDetails xthDriveDetailsAfterLoad = tapeDriveManager.getDriveDetails(xthDriveId);
-						if(xthDriveDetailsAfterLoad.getMtStatus().isReady()){ // means drive is not empty and has the tape we loaded
-							Device deviceToBeUpdated = deviceDao.findById(xthDriveId).get();
-							deviceToBeUpdated.getDetails().setAutoloaderAddress(xthDriveDetailsAfterLoad.getDte().getsNo());
-							deviceDao.save(deviceToBeUpdated);
-							break;
-						}
+
+				for (DriveDetails nthDriveDetails : preparedDrivesList) {
+					String driveId = nthDriveDetails.getDriveId();
+					String driveName = nthDriveDetails.getDriveName();
+					DriveDetails driveStatusDetails = tapeDriveManager.getDriveDetails(driveName);
+					if(driveStatusDetails.getMtStatus().isReady()){ // means drive is not empty and has the tape we loaded
+						logger.trace(driveId + " maps to " + toBeMappedDataTransferElementSNo);
+						Device deviceToBeUpdated = deviceDao.findById(driveId).get();
+						deviceToBeUpdated.getDetails().setAutoloaderAddress(toBeMappedDataTransferElementSNo);
+						deviceDao.save(deviceToBeUpdated);
+						break;
 					}
-				}	
+				}
 				tapeLibraryManager.unload(tapelibraryName, toBeUsedStorageElementNo, toBeMappedDataTransferElementSNo);
 			}
 		}
