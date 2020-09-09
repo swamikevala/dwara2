@@ -38,6 +38,9 @@ public class Volume {
 	@Column(name="id")
 	private String id; // Holds barcode for tapes and disks, bucket name for cloud, barcode prefix for volume groups
 	
+	@Column(name="uuid")
+	private String uuid;
+	
 	@Enumerated(EnumType.STRING)
 	@Column(name="type")
 	private Volumetype type;
@@ -102,6 +105,14 @@ public class Volume {
 
 	public void setId(String id) {
 		this.id = id;
+	}
+	
+	public String getUuid() {
+		return uuid;
+	}
+
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
 	}
 
 	public Volumetype getType() {

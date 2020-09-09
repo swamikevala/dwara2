@@ -144,7 +144,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			
 			// validating the blockNumber
 			if(blockNumberToBePositioned != blockNumber) {
-				throw new Exception("Expected blockNumberToSeek " + blockNumberToBePositioned + ", actual " + blockNumber);
+				throw new Exception("Expected blockNumber " + blockNumberToBePositioned + ", actual " + blockNumber);
 			}
 			
 			MtStatus mtStatus = getMtStatus(dataTransferElementName);

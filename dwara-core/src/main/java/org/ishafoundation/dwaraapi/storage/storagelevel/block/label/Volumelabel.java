@@ -7,10 +7,10 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 public class Volumelabel {
 	@JacksonXmlProperty(isAttribute=true)
 	private Double version;
-	@JacksonXmlProperty(localName="Volume")
-	private String volume;
-	@JacksonXmlProperty(localName="VolumeGroup")
-	private String volumegroup;
+	@JacksonXmlProperty(localName="Uuid")
+	private String uuid;
+	@JacksonXmlProperty(localName="Barcode")
+	private String barcode;
 	@JacksonXmlProperty(localName="BlockSize")
 	private int blocksize;
 	@JacksonXmlProperty(localName="Owner")
@@ -36,17 +36,17 @@ public class Volumelabel {
 	public void setVersion(Double version) {
 		this.version = version;
 	}
-	public String getVolume() {
-		return volume;
+	public String getUuid() {
+		return uuid;
 	}
-	public void setVolume(String volume) {
-		this.volume = volume;
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
 	}
-	public String getVolumegroup() {
-		return volumegroup;
+	public String getBarcode() {
+		return barcode;
 	}
-	public void setVolumegroup(String volumegroup) {
-		this.volumegroup = volumegroup;
+	public void setBarcode(String barcode) {
+		this.barcode = barcode;
 	}
 	public int getBlocksize() {
 		return blocksize;

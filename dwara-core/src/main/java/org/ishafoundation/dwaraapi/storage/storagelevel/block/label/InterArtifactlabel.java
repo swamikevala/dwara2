@@ -15,8 +15,8 @@ public class InterArtifactlabel {
 	@JacksonXmlProperty(localName="SequenceCode")
 	private String sequenceCode;
 	
-	@JacksonXmlProperty(localName="Volume")
-	private String volume;
+	@JacksonXmlProperty(localName="VolumeUuid")
+	private String volumeUuid;
 	
 	@JacksonXmlProperty(localName="WrittenAt")
 	private String writtenAt;
@@ -57,12 +57,12 @@ public class InterArtifactlabel {
 		this.sequenceCode = sequenceCode;
 	}
 
-	public String getVolume() {
-		return volume;
+	public String getVolumeUuid() {
+		return volumeUuid;
 	}
 
-	public void setVolume(String volume) {
-		this.volume = volume;
+	public void setVolumeUuid(String volumeUuid) {
+		this.volumeUuid = volumeUuid;
 	}
 
 	public String getWrittenAt() {

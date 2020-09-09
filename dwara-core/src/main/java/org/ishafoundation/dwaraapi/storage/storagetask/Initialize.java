@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetask;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.UUID;
 
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
@@ -64,6 +65,7 @@ public class Initialize extends AbstractStoragetaskAction{
 		
 		
 		volume.setId(volumeBarcode);
+		volume.setUuid(UUID.randomUUID().toString());
 		volume.setType(Volumetype.physical);
 		
 		volume.setGroupRef(volumeGroup);

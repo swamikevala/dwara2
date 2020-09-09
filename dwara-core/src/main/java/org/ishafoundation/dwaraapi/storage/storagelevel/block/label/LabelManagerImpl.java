@@ -38,7 +38,7 @@ public class LabelManagerImpl implements LabelManager{
 	
 	private static final Pattern RELEASE_REGEX_PATTERN = Pattern.compile("release:\\s+(.*)");
 	private static final Pattern VARIANT_REGEX_PATTERN = Pattern.compile("variant:\\s+(.*)");
-	private static final Pattern OS_REGEX_PATTERN = Pattern.compile("(.*)\\s+(.*)");
+	private static final Pattern OS_REGEX_PATTERN = Pattern.compile("(.[^ ]*)\\s+(.*)");
 
 
 	// TODO : Hardcoded stuff - Configure it...
@@ -64,7 +64,7 @@ public class LabelManagerImpl implements LabelManager{
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		Volume volume = storageJob.getVolume();
 		
-		String volumeId = volume.getId();
+		String volumeId = volume.getUuid();
 
 		VolumeDetails volumeDetails = volume.getDetails();
 		int blocksize = volumeDetails.getBlocksize();
@@ -76,15 +76,15 @@ public class LabelManagerImpl implements LabelManager{
 		String artifactNameFromLabel = null; // Will be null for first write scenario
 		if(fromVolumelabel){
 			Volumelabel volumelabel = readVolumeLabel(deviceName, blocksize);
-			volIdFromLabel = volumelabel.getVolume();
+			volIdFromLabel = volumelabel.getUuid();
 		}
 		else { // fromArtifactlabel
 			InterArtifactlabel artifactlabel = readArtifactLabel(deviceName, blocksize);
-			volIdFromLabel = artifactlabel.getVolume();
+			volIdFromLabel = artifactlabel.getVolumeUuid();
 			artifactNameFromLabel = artifactlabel.getArtifact();
 		}
 		
-		if(volIdFromLabel.equals(volumeId) && (artifactNameFromLabel == null || artifactNameToCompare == null || (artifactNameFromLabel != null && artifactNameToCompare != null && artifactNameFromLabel.equals(artifactNameToCompare)))) {
+		if(volIdFromLabel.equals(volumeId)) {// && (artifactNameFromLabel == null || artifactNameToCompare == null || (artifactNameFromLabel != null && artifactNameToCompare != null && artifactNameFromLabel.equals(artifactNameToCompare)))) {
 			isRightVolume = true;
 			logger.trace("Right volume");
 		}
@@ -137,7 +137,7 @@ public class LabelManagerImpl implements LabelManager{
 //		String encryptionalgorithm = requestDetails.getEncryption_algorithm();
 		String encryptionalgorithm = configuration.getEncryptionAlgorithm();
 		
-		String label = createVolumeLabel(volumeGroup, volumeId, blocksize, archiveformat, checksumalgorithm, encryptionalgorithm);
+		String label = createVolumeLabel(volume.getUuid(), volumeId, blocksize, archiveformat, checksumalgorithm, encryptionalgorithm);
 		logger.trace(label);
 		
 
@@ -158,13 +158,13 @@ public class LabelManagerImpl implements LabelManager{
 		tar (GNU tar) 1.26
 	 * 
 	 */
-	private String createVolumeLabel(String volumeGroup, String volume, int blocksize, String archiveformat, String checksumalgorithm, String encryptionalgorithm) throws Exception {
+	private String createVolumeLabel(String volumeUuid, String barcode, int blocksize, String archiveformat, String checksumalgorithm, String encryptionalgorithm) throws Exception {
 		
 		Volumelabel volumelabel = new Volumelabel();
 		volumelabel.setVersion(volumeLabelVersion);
 		
-		volumelabel.setVolume(volume);
-		volumelabel.setVolumegroup(volumeGroup);
+		volumelabel.setUuid(volumeUuid);
+		volumelabel.setBarcode(barcode);
 		volumelabel.setBlocksize(blocksize);
 		volumelabel.setOwner(ownerId);
 		
@@ -198,7 +198,7 @@ public class LabelManagerImpl implements LabelManager{
 
 		archivecreatorObj.setVersion("release " + bruReleaseVer + "; variant " + bruVariantVer);
 		archivecreatorObj.setText(archiveformat);
-		
+		volumelabel.setArchiveCreator(archivecreatorObj);
 		
 		volumelabel.setChecksumalgorithm(checksumalgorithm);
 		volumelabel.setEncryptionalgorithm(encryptionalgorithm);
@@ -211,8 +211,8 @@ public class LabelManagerImpl implements LabelManager{
 		String version = null;
 		String text = null;
 		if(osRegExMatcher.matches()) {
-			text = variantRegExMatcher.group(1);
-			version = variantRegExMatcher.group(2);
+			text = osRegExMatcher.group(1);
+			version = osRegExMatcher.group(2);
 		}
 		
 		OperatingSystem os = new OperatingSystem();
@@ -249,7 +249,7 @@ public class LabelManagerImpl implements LabelManager{
 		String volumeId = volume.getId();
 		int blocksize = volumeDetails.getBlocksize();
 		
-		artifactlabel.setVolume(volumeId);
+		artifactlabel.setVolumeUuid(volume.getUuid());
 		
 		ZonedDateTime zdt = LocalDateTime.now().atZone(ZoneId.of("UTC"));
 		String labeltime = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").format(zdt);
