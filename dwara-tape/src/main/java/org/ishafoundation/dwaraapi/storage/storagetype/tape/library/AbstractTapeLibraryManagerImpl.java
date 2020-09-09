@@ -99,7 +99,7 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 		}
 		catch (Exception e) {
 			isSuccess = false;
-			logger.error(e.getMessage());e.printStackTrace();
+			logger.error(e.getMessage(), e);
 			throw e;
 		}
 		return isSuccess;

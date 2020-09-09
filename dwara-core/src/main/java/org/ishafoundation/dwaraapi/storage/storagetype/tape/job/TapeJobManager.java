@@ -303,13 +303,13 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			tapeJob.setTapeLibraryName(tapeLibraryName);
 			tapeJob.setTapedriveNo(tapedriveNo);
 			tapeJob.setDeviceWwnId(tapedriveUid);
-			if(storagetaskAction == Action.write) {
-				Domain domain = storageJob.getDomain();
-			    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-			    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(volume.getId());
-			    tapeJob.setArtifactVolumeCount(artifactVolumeCount);
-			}
-//			tapeJob.setTapedriveAlreadyLoadedWithNeededTape(tapedriveAlreadyLoadedWithTape);
+//			if(storagetaskAction == Action.write) {
+//				Domain domain = storageJob.getDomain();
+//			    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+//			    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(volume.getId());
+//			    tapeJob.setArtifactVolumeCount(artifactVolumeCount);
+//			}
+
 
 			job.setDevice(tapedriveDevice);
 			if(storagetaskAction != Action.initialize) // For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving... 

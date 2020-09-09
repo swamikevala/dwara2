@@ -6,6 +6,7 @@ public class TarBlockCalculatorUtil {
 	
 	//https://www.gnu.org/software/tar/manual/html_chapter/tar_9.html#SEC162
 	public static final int TAPEMARK_BLOCK = 1;
+	public static final int ARTIFACTLABEL_BLOCK = 1;
 	public static final int NEXTARCHIVE_FRESH_START_BLOCK = 1;
 	
 	public static final int FIRSTARCHIVE_START_BLOCK = 0 + TAPELABEL_BLOCK + TAPEMARK_BLOCK;

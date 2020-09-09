@@ -3,20 +3,31 @@ package org.ishafoundation.dwaraapi.storage.storagelevel.block.label;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
-@JacksonXmlRootElement(localName = "volumelabel")
+@JacksonXmlRootElement(localName="VolumeLabel")
 public class Volumelabel {
 	@JacksonXmlProperty(isAttribute=true)
 	private Double version;
+	@JacksonXmlProperty(localName="Volume")
 	private String volume;
+	@JacksonXmlProperty(localName="VolumeGroup")
 	private String volumegroup;
+	@JacksonXmlProperty(localName="BlockSize")
 	private int blocksize;
+	@JacksonXmlProperty(localName="Owner")
 	private String owner;
+	@JacksonXmlProperty(localName="InitializedAt")
 	private String initializedAt;
-	private Archiveformat archiveformat;
+	@JacksonXmlProperty(localName="ArchiveFormat")
+	private String archiveformat;
+	@JacksonXmlProperty(localName="ArchiveCreator")
+	private ArchiveCreator archiveCreator;
+	@JacksonXmlProperty(localName="ChecksumAlgorithm")
 	private String checksumalgorithm;
+	@JacksonXmlProperty(localName="EncryptionAlgorithm")
 	private String encryptionalgorithm;
-	private String systeminfo;
-	private String creator;
+	@JacksonXmlProperty(localName="OperatingSystem")
+	private OperatingSystem operatingSystem;
+	
 	
 	
 	public Double getVersion() {
@@ -55,11 +66,17 @@ public class Volumelabel {
 	public void setInitializedAt(String initializedAt) {
 		this.initializedAt = initializedAt;
 	}
-	public Archiveformat getArchiveformat() {
+	public String getArchiveformat() {
 		return archiveformat;
 	}
-	public void setArchiveformat(Archiveformat archiveformat) {
+	public void setArchiveformat(String archiveformat) {
 		this.archiveformat = archiveformat;
+	}
+	public ArchiveCreator getArchiveCreator() {
+		return archiveCreator;
+	}
+	public void setArchiveCreator(ArchiveCreator archiveCreator) {
+		this.archiveCreator = archiveCreator;
 	}
 	public String getChecksumalgorithm() {
 		return checksumalgorithm;
@@ -73,16 +90,10 @@ public class Volumelabel {
 	public void setEncryptionalgorithm(String encryptionalgorithm) {
 		this.encryptionalgorithm = encryptionalgorithm;
 	}
-	public String getSysteminfo() {
-		return systeminfo;
+	public OperatingSystem getOperatingSystem() {
+		return operatingSystem;
 	}
-	public void setSysteminfo(String systeminfo) {
-		this.systeminfo = systeminfo;
-	}
-	public String getCreator() {
-		return creator;
-	}
-	public void setCreator(String creator) {
-		this.creator = creator;
+	public void setOperatingSystem(OperatingSystem operatingSystem) {
+		this.operatingSystem = operatingSystem;
 	}
 }

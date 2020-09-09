@@ -42,7 +42,7 @@ public class MockTapeDriveManagerImpl extends TapeDriveManagerImpl{
 	}
 
 	@Override
-	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName, int fileNumberToBePositioned) throws Exception {
+	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName, int blockNumberToBePositioned) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -61,7 +61,7 @@ public class MockTapeDriveManagerImpl extends TapeDriveManagerImpl{
 	}
 
 	@Override
-	public DriveDetails setTapeHeadPositionForFinalizing(String dataTransferElementName) throws Exception {
+	public DriveDetails setTapeHeadPositionForFinalizing(String dataTransferElementName, int blockNumberToBePositioned) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}

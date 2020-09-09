@@ -2,7 +2,6 @@ package org.ishafoundation.dwaraapi.process.thread;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +26,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
@@ -194,8 +194,8 @@ public class ProcessingJobProcessor implements Runnable{
 		
 		String containerName = identifierSuffix;	
 		
-//		ThreadNameHelper threadNameHelper = new ThreadNameHelper();
-		// TODO - threadNameHelper.setThreadName(request.getMediaArtifactId(), identifierSuffix + "-" + VideoTasktypeingSteps.TRANSCODING.toString());
+		ThreadNameHelper threadNameHelper = new ThreadNameHelper();
+		threadNameHelper.setThreadName(job.getRequest().getId(), job.getId(), file.getId());
 		Status staus = Status.in_progress;
 		String failureReason = null;
 		long startms = 0;
@@ -346,7 +346,7 @@ public class ProcessingJobProcessor implements Runnable{
 				tFileJobDao.save(tFileJob);
 				logger.debug("DB TFileJob Updation - Success");
 			}
-//			threadNameHelper.resetThreadName();
+			threadNameHelper.resetThreadName();
 		}
 	}
 

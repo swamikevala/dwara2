@@ -29,6 +29,7 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.helpers.LogicalFileHelper;
@@ -97,7 +98,10 @@ public class ProcessingJobManager implements Runnable{
 		}
 		
 		
+		ThreadNameHelper threadNameHelper = new ThreadNameHelper();
 		try {
+			threadNameHelper.setThreadName(job.getRequest().getId(), job.getId());
+		
 			String processingtaskId = job.getProcessingtaskId();
 			Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
 			if(executor == null)
@@ -218,6 +222,8 @@ public class ProcessingJobManager implements Runnable{
 			job.setStatus(Status.failed);
 			job.setMessage("[error] " + e.getMessage());
 			jobDao.save(job);
+		}finally {
+			threadNameHelper.resetThreadName();
 		}
 	}
 

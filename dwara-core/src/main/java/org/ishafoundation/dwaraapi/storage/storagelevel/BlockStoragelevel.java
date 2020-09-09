@@ -39,23 +39,23 @@ public class BlockStoragelevel implements IStoragelevel {
 	private String filesystemTemporarylocation;
 
 	@Override
-	public StorageResponse initialize(SelectedStorageJob storagetypeJob) throws Exception{
+	public StorageResponse initialize(SelectedStorageJob selectedStorageJob) throws Exception{
 		
-		boolean status = labelManager.writeVolumeLabel(storagetypeJob);
+		boolean status = labelManager.writeVolumeLabel(selectedStorageJob);
 		logger.debug("Labelling success? - " + status);
 		
 		return new StorageResponse();
 	}
 
 	@Override
-	public StorageResponse write(SelectedStorageJob storagetypeJob) throws Exception{
+	public StorageResponse write(SelectedStorageJob selectedStorageJob) throws Exception{
 		StorageResponse storageResponse = new StorageResponse();
-		StorageJob storageJob = storagetypeJob.getStorageJob();
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		logger.debug("Writing blocks");
 		Archiveformat archiveformat = storageJob.getVolume().getArchiveformat();
     	IArchiveformatter archiveFormatter = iArchiveformatterMap.get(archiveformat.getId() + DwaraConstants.ARCHIVER_SUFFIX);
     	
-    	ArchiveformatJob archiveformatJob = instantiateArchiveJobWithCommonFields(storagetypeJob);
+    	ArchiveformatJob archiveformatJob = instantiateArchiveJobWithCommonFields(selectedStorageJob);
 //		String artifactSourcePath = storageJob.getArtifactPrefixPath();
 //		String artifactNameToBeWritten = storageJob.getArtifactName();
 //		
@@ -74,14 +74,14 @@ public class BlockStoragelevel implements IStoragelevel {
 	}
 
 	@Override
-	public StorageResponse verify(SelectedStorageJob storagetypeJob) throws Exception{
+	public StorageResponse verify(SelectedStorageJob selectedStorageJob) throws Exception{
 		logger.debug("Verifying blocks");
-		StorageJob storageJob = storagetypeJob.getStorageJob();
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		Volume volume = storageJob.getVolume();
 		Archiveformat archiveformat = volume.getArchiveformat();
     	IArchiveformatter archiveFormatter = iArchiveformatterMap.get(archiveformat.getId() + DwaraConstants.ARCHIVER_SUFFIX);
 		StorageResponse storageResponse = new StorageResponse();
-    	ArchiveformatJob archiveformatJob = instantiateArchiveJobWithCommonFields(storagetypeJob);
+    	ArchiveformatJob archiveformatJob = instantiateArchiveJobWithCommonFields(selectedStorageJob);
     	archiveformatJob.setTargetLocationPath(storageJob.getTargetLocationPath());
 	
 		ArchiveResponse archiveResponse = archiveFormatter.verify(archiveformatJob);
@@ -91,39 +91,39 @@ public class BlockStoragelevel implements IStoragelevel {
 	}
 
 	@Override
-	public StorageResponse finalize(SelectedStorageJob storagetypeJob) throws Exception{
-		boolean status = volumeindexManager.writeVolumeindex(storagetypeJob);
+	public StorageResponse finalize(SelectedStorageJob selectedStorageJob) throws Exception{
+		boolean status = volumeindexManager.writeVolumeindex(selectedStorageJob);
 		logger.debug("Indexing success? - " + status);
 				
 		return new StorageResponse();
 	}
 	
 	@Override
-	public StorageResponse restore(SelectedStorageJob storagetypeJob) throws Exception {
+	public StorageResponse restore(SelectedStorageJob selectedStorageJob) throws Exception {
 		logger.debug("Reading blocks");
 		StorageResponse storageResponse = new StorageResponse();
-		StorageJob storageJob = storagetypeJob.getStorageJob();
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		Volume volume = storageJob.getVolume();
 		Archiveformat archiveformat = volume.getArchiveformat();
     	IArchiveformatter archiveFormatter = iArchiveformatterMap.get(archiveformat.getId() + DwaraConstants.ARCHIVER_SUFFIX);
     	
-    	ArchiveformatJob archiveformatJob = instantiateArchiveJobWithCommonFields(storagetypeJob);
+    	ArchiveformatJob archiveformatJob = instantiateArchiveJobWithCommonFields(selectedStorageJob);
     	archiveformatJob.setTargetLocationPath(storageJob.getTargetLocationPath());
 		ArchiveResponse archiveResponse = archiveFormatter.restore(archiveformatJob);
 		storageResponse.setArchiveResponse(archiveResponse);
 		return storageResponse;
 	}
 	
-	private ArchiveformatJob instantiateArchiveJobWithCommonFields(SelectedStorageJob storagetypeJob) {
+	private ArchiveformatJob instantiateArchiveJobWithCommonFields(SelectedStorageJob selectedStorageJob) {
 		ArchiveformatJob archiveformatJob = new ArchiveformatJob();
-		archiveformatJob.setSelectedStorageJob(storagetypeJob);
+		archiveformatJob.setSelectedStorageJob(selectedStorageJob);
 		
-		StorageJob storageJob = storagetypeJob.getStorageJob();
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		Volume volume = storageJob.getVolume();
 		VolumeDetails volumeDetails = volume.getDetails();
 		int volumeBlocksize = volumeDetails.getBlocksize();
 		int archiveformatBlocksize = volume.getArchiveformat().getBlocksize();
-		String deviceName = storagetypeJob.getDeviceWwnId();
+		String deviceName = selectedStorageJob.getDeviceWwnId();
 		
 		archiveformatJob.setVolumeBlocksize(volumeBlocksize);
 		archiveformatJob.setArchiveformatBlocksize(archiveformatBlocksize);

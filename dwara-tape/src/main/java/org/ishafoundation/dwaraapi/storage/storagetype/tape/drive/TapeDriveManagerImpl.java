@@ -76,16 +76,28 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 		return dsd;
 	}
 	
-	public boolean isTapeBlank(String dataTransferElementName) throws Exception {
-		rewind(dataTransferElementName);
+	public DriveDetails setTapeHeadPositionForInitializing(String dataTransferElementName) throws Exception {
+		DriveDetails dsd = null;
+		
 		try {
-			fsf(dataTransferElementName, 1);
-//			// if fsf fails its a blank tape for sure...
-//			String failureReason = fsfCommandLineExecutionResponse.getFailureReason();
-//
-//			if(StringUtils.isNotBlank(failureReason)){ // when fsf command fails that means its a blank tape
-//				return true;
-//			}
+			rewind(dataTransferElementName);
+			logger.trace("after setTapeHeadPosition - dataTransferElementName " + dataTransferElementName);
+	
+			
+			dsd = new DriveDetails();
+			dsd.setDriveName(dataTransferElementName);
+			dsd.setMtStatus(getMtStatus(dataTransferElementName));
+		}catch (Exception e) {
+			logger.error("Unable to setTapeHeadPositionForInitializing " + e.getMessage());
+			throw e;
+		}
+		return dsd;	
+	}
+	
+	public boolean isTapeBlank(String dataTransferElementName) throws Exception {
+		try {
+			rewind(dataTransferElementName);
+			commandLineExecuter.executeCommand("mt -f " + dataTransferElementName + " fsf " + 1);
 		} catch (Exception e) {
 			logger.debug("fsf failed, means blank tape for sure");
 			return true;
@@ -93,53 +105,49 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 		return false;
 	}
 	
+	public DriveDetails setTapeHeadPositionForReadingLabel(String dataTransferElementName) throws Exception {
+		return setTapeHeadPositionForInitializing(dataTransferElementName);
+	}
+	
+	public DriveDetails setTapeHeadPositionForReadingInterArtifactXml(String dataTransferElementName) throws Exception {
+		DriveDetails dsd = new DriveDetails();
+		dsd.setDriveName(dataTransferElementName);
+		try {
+			
+			eod(dataTransferElementName);
+			
+			int blockNumber = getCurrentPositionBlockNumber(dataTransferElementName);
+			
+			// validating the blockNumber
+			seek(dataTransferElementName, blockNumber - 2);
+			
+			MtStatus mtStatus = getMtStatus(dataTransferElementName);
+			dsd.setMtStatus(mtStatus);
+		}catch (Exception e) {
+			logger.error("Unable to setTapeHeadPositionForReadingInterArtifactXml " + e.getMessage(), e);
+			throw e;
+		}
+		return dsd;
+	}
+
 	// To write Nth medialibrary the tape head should be pointing at file Number N
 	// For e.g., if 5 medialibrary already in volume and to write the 6th mediaLibrary on tape, we need to position tapeHead on FileNumber = 5 - Remember Tape fileNumbers starts with 0
 	// Reference - http://etutorials.org/Linux+systems/how+linux+works/Chapter+13+Backups/13.6+Tape+Drive+Devices/
-	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName, int fileNumberToBePositioned) throws Exception {
+	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName, int blockNumberToBePositioned) throws Exception {
 		DriveDetails dsd = new DriveDetails();
 		dsd.setDriveName(dataTransferElementName);
-		
-		
 		try {
-			MtStatus mtStatus = getMtStatus(dataTransferElementName);
-			int currentFileNumberTapeHeadPointingTo = mtStatus.getFileNumber();
-			int currentBlockNoTapeHeadPointingTo = mtStatus.getBlockNumber();
-			logger.trace("b4 setTapeHeadPositionForWriting - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
-		
-			if(currentFileNumberTapeHeadPointingTo == fileNumberToBePositioned && currentBlockNoTapeHeadPointingTo == 0) {
-				logger.trace("Tape head already in position");
-				dsd.setMtStatus(mtStatus);
-				return dsd;
-			}
 			
 			eod(dataTransferElementName);
-
-			mtStatus = getMtStatus(dataTransferElementName);
-			currentFileNumberTapeHeadPointingTo = mtStatus.getFileNumber();
-			currentBlockNoTapeHeadPointingTo = mtStatus.getBlockNumber();
-			logger.trace("after eod - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
-
-			if(currentFileNumberTapeHeadPointingTo != fileNumberToBePositioned) {
-				logger.warn("something wrong with eod, currentFileNumberTapeHeadPointingTo(" + currentFileNumberTapeHeadPointingTo + ") != expectedFileNumberToBePositioned(" + fileNumberToBePositioned  + ")- dataTransferElementName " + dataTransferElementName);
-				logger.info("rewinding and fsfing " + fileNumberToBePositioned);
-				rewind(dataTransferElementName);
-				fsf(dataTransferElementName, fileNumberToBePositioned);
+			
+			int blockNumber = getCurrentPositionBlockNumber(dataTransferElementName);
+			
+			// validating the blockNumber
+			if(blockNumberToBePositioned != blockNumber) {
+				throw new Exception("Expected blockNumberToSeek " + blockNumberToBePositioned + ", actual " + blockNumber);
 			}
-			else {
-				// TODO : Check if we need this...
-				// eod returns a nonzero blocknumber, so safely doing this...
-				bsf(dataTransferElementName, 1);
-				fsf(dataTransferElementName, 1);
-			}
-		
-			mtStatus = getMtStatus(dataTransferElementName);
-			currentFileNumberTapeHeadPointingTo = mtStatus.getFileNumber();
-			currentBlockNoTapeHeadPointingTo = mtStatus.getBlockNumber();
-			logger.info("after setTapeHeadPositionForWriting - dataTransferElementName " + dataTransferElementName + ", currentFileNumberTapeHeadPointingTo " + currentFileNumberTapeHeadPointingTo + ", currentBlockNoTapeHeadPointingTo " + currentBlockNoTapeHeadPointingTo);
-
-			if(currentFileNumberTapeHeadPointingTo != fileNumberToBePositioned && currentBlockNoTapeHeadPointingTo != 0)
-				throw new Exception("Expected fileNumber " + fileNumberToBePositioned + ", actual " + currentFileNumberTapeHeadPointingTo + ", expected block 0, actual " + currentBlockNoTapeHeadPointingTo);
+			
+			MtStatus mtStatus = getMtStatus(dataTransferElementName);
 			dsd.setMtStatus(mtStatus);
 		}catch (Exception e) {
 			logger.error("Unable to setTapeHeadPositionForWriting " + e.getMessage(), e);
@@ -147,7 +155,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 		}
 		return dsd;
 	}
-
+	
 	// if blockNo is not requested to be seeked...
 	public DriveDetails setTapeHeadPositionForReading(String dataTransferElementName, int blockNumberToSeek)
 			throws Exception {
@@ -158,14 +166,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			dsd.setDriveName(dataTransferElementName);
 			seek(dataTransferElementName, blockNumberToSeek);
 			
-			// after seeking mt status responds with fileNo = -1 and blockNo = -1, so we had to do this...
-			CommandLineExecutionResponse  cler = tell(dataTransferElementName);
-			Pattern tellRespRegExPattern = Pattern.compile("At block ([0-9]*).");
-			Matcher tellRespRegExMatcher = tellRespRegExPattern.matcher(cler.getStdOutResponse());
-			int blockNumber = -9;
-			if(tellRespRegExMatcher.find()) {
-				blockNumber = Integer.parseInt(tellRespRegExMatcher.group(1));
-			}
+			int blockNumber = getCurrentPositionBlockNumber(dataTransferElementName);
 			
 			// validating the blockNumber
 			if(blockNumberToSeek != blockNumber) {
@@ -184,56 +185,61 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 		}
 	}
 	
-	public DriveDetails setTapeHeadPositionForInitializing(String dataTransferElementName) throws Exception {
-		DriveDetails dsd = null;
-		
-		try {
-			rewind(dataTransferElementName);
-			logger.trace("after setTapeHeadPosition - dataTransferElementName " + dataTransferElementName);
-	
-			
-			dsd = new DriveDetails();
-			dsd.setDriveName(dataTransferElementName);
-			dsd.setMtStatus(getMtStatus(dataTransferElementName));
-		}catch (Exception e) {
-			logger.error("Unable to setTapeHeadPositionForWriting " + e.getMessage());
-			throw e;
+	private int getCurrentPositionBlockNumber(String dataTransferElementName) throws Exception {
+		// after seeking mt status responds with fileNo = -1 and blockNo = -1, so we had to do this...
+		CommandLineExecutionResponse  cler = tell(dataTransferElementName);
+		Pattern tellRespRegExPattern = Pattern.compile("At block ([0-9]*).");
+		Matcher tellRespRegExMatcher = tellRespRegExPattern.matcher(cler.getStdOutResponse());
+		int blockNumber = -9;
+		if(tellRespRegExMatcher.find()) {
+			blockNumber = Integer.parseInt(tellRespRegExMatcher.group(1));
 		}
-		return dsd;	
-	}
-	
-	public DriveDetails setTapeHeadPositionForReadingLabel(String dataTransferElementName) throws Exception {
-		return setTapeHeadPositionForInitializing(dataTransferElementName);
+		return blockNumber;
 	}
 
-	public DriveDetails setTapeHeadPositionForFinalizing(String dataTransferElementName) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+	@Override
+	public DriveDetails setTapeHeadPositionForFinalizing(String dataTransferElementName, int blockNumberToBePositioned) throws Exception {
+		return setTapeHeadPositionForWriting(dataTransferElementName, blockNumberToBePositioned);
 	}
 	
+	private CommandLineExecutionResponse rewind(String dataTransferElementName) throws Exception {
+		return commandToBeExecuted("mt -f " + dataTransferElementName + " rewind", true, "Input/output error");
+	}
 	
 	private CommandLineExecutionResponse eod(String dataTransferElementName) throws Exception{
-		return commandLineExecuter.executeCommand("mt -f " + dataTransferElementName + " eod");
+		return commandToBeExecuted("mt -f " + dataTransferElementName + " eod", true, null); // TODO - We dont know what the error msgs will be for eod 
 	}
 
-	private CommandLineExecutionResponse fsf(String dataTransferElementName, int noOfBlocks) throws Exception{
-		return commandLineExecuter.executeCommand("mt -f " + dataTransferElementName + " fsf " + noOfBlocks);
-	}
-
-	private CommandLineExecutionResponse bsf(String dataTransferElementName, int noOfBlocks) throws Exception{
-		return commandLineExecuter.executeCommand("mt -f " + dataTransferElementName + " bsf " + noOfBlocks);
-	}
-
-	private CommandLineExecutionResponse rewind(String dataTransferElementName) throws Exception {
-		return commandLineExecuter.executeCommand("mt -f " + dataTransferElementName + " rewind");
-	}
-	
 	private CommandLineExecutionResponse seek(String dataTransferElementName, int blockNo) throws Exception{
-		return commandLineExecuter.executeCommand("mt -f " + dataTransferElementName + " seek " + blockNo);
+		return commandToBeExecuted("mt -f " + dataTransferElementName + " seek " + blockNo, true, "Input/output error"); // when tape loaded but not stinit throws "Input/output error" 
+		// TODO 
+		// 1) Check what happens when tape not loaded..
+		// 2) How do we handle for some tapes for which seek fails the first but succeeds in the subsequent attempts that Sameer anna mentioned... 
 	}
 	
 	private CommandLineExecutionResponse tell(String dataTransferElementName) throws Exception{
-		 return commandLineExecuter.executeCommand("mt -f " + dataTransferElementName + " tell");
+		 return commandToBeExecuted("mt -f " + dataTransferElementName + " tell", true, "Input/output error");
 	}
-
+	
+	
+	private CommandLineExecutionResponse commandToBeExecuted(String command, boolean retry, String retryCause) throws Exception {
+		CommandLineExecutionResponse commandLineExecutionResponse = null;
+		try {
+			commandLineExecutionResponse = commandLineExecuter.executeCommand(command);
+		} catch (Exception e) {
+			if(retryCause == null || e.getMessage().contains(retryCause)) {
+				if(retry) {
+					// TODO call stinit here
+					logger.warn("Stinit seems to be not executed. Running it now");
+					
+					// re-execute the same command again...
+					commandToBeExecuted(command, false, retryCause);
+				}
+			}
+			else
+				throw e;
+		}
+		
+		return commandLineExecutionResponse;
+	}
 }

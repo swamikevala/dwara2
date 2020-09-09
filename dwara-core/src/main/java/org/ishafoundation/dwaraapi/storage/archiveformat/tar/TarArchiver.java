@@ -198,7 +198,7 @@ public class TarArchiver implements IArchiveformatter {
 	
 		int artifactStartVolumeBlock = TarBlockCalculatorUtil.FIRSTARCHIVE_START_BLOCK; 
 		if(lastArtifactOnVolumeEndVolumeBlock > 0)
-			artifactStartVolumeBlock =  lastArtifactOnVolumeEndVolumeBlock + TarBlockCalculatorUtil.TAPEMARK_BLOCK + TarBlockCalculatorUtil.NEXTARCHIVE_FRESH_START_BLOCK; //+ 2, because one block for tapemark and another one for the next archive to start in a fresh volume block...
+			artifactStartVolumeBlock =  lastArtifactOnVolumeEndVolumeBlock + TarBlockCalculatorUtil.TAPEMARK_BLOCK + TarBlockCalculatorUtil.ARTIFACTLABEL_BLOCK + TarBlockCalculatorUtil.TAPEMARK_BLOCK + TarBlockCalculatorUtil.NEXTARCHIVE_FRESH_START_BLOCK ; //+ 2, because one block for tapemark and another one for the next archive to start in a fresh volume block...
 		
 		return artifactStartVolumeBlock;
 	}

@@ -12,6 +12,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
+import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
@@ -52,21 +53,23 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 //	
 //	protected abstract StorageTypeJob selectStorageTypeJob();
 	
-	protected StorageResponse manage(SelectedStorageJob storagetypeJob){
-		storagetypeJob.setJunkFilesStagedDirName(configuration.getJunkFilesStagedDirName()); // to skip junk files from writing
+	protected StorageResponse manage(SelectedStorageJob selectedStorageJob){
+		selectedStorageJob.setJunkFilesStagedDirName(configuration.getJunkFilesStagedDirName()); // to skip junk files from writing
 		
 		Job job = null;
 		StorageResponse storageResponse = null;
+		ThreadNameHelper threadNameHelper = new ThreadNameHelper();
 		try {
-			job = storagetypeJob.getStorageJob().getJob();
+			job = selectedStorageJob.getStorageJob().getJob();
+			threadNameHelper.setThreadName(job.getRequest().getId(), job.getId());
 			updateJobInProgress(job);
 			
-			Action storagetaskAction = storagetypeJob.getStorageJob().getJob().getStoragetaskActionId();
+			Action storagetaskAction = selectedStorageJob.getStorageJob().getJob().getStoragetaskActionId();
 			
-			Storagetype storagetype = storagetypeJob.getStorageJob().getVolume().getStoragetype();
+			Storagetype storagetype = selectedStorageJob.getStorageJob().getVolume().getStoragetype();
 			AbstractStoragetypeJobProcessor storagetypeJobProcessorImpl = storagetypeJobProcessorMap.get(storagetype.name() + DwaraConstants.STORAGETYPE_JOBPROCESSOR_SUFFIX);
 			Method storageTaskMethod = storagetypeJobProcessorImpl.getClass().getMethod(storagetaskAction.name(), SelectedStorageJob.class);
-			storageResponse = (StorageResponse) storageTaskMethod.invoke(storagetypeJobProcessorImpl, storagetypeJob);
+			storageResponse = (StorageResponse) storageTaskMethod.invoke(storagetypeJobProcessorImpl, selectedStorageJob);
 			
 			updateJobCompleted(job);
 		}catch (Throwable e) {
@@ -79,6 +82,8 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 			job.setMessage("[error] " + errorMsg);
 			updateJobFailed(job);
 			// updateError Table;
+		}finally {
+			threadNameHelper.resetThreadName();
 		}
 		return storageResponse;
 	}

@@ -3,18 +3,18 @@ package org.ishafoundation.dwaraapi.storage.storagelevel.block.label;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
-public class Archiveformat {
+public class ArchiveCreator {
 	
 	@JacksonXmlProperty(isAttribute=true)
-	private Double version;
+	private String version;
 	@JacksonXmlText
 	private String text;
 	
 	
-	public Double getVersion() {
+	public String getVersion() {
 		return version;
 	}
-	public void setVersion(Double version) {
+	public void setVersion(String version) {
 		this.version = version;
 	}
 	public String getText() {
