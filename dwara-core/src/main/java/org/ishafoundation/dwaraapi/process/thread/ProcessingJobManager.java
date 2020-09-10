@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
 import org.apache.commons.io.FilenameUtils;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
+import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -46,6 +48,8 @@ public class ProcessingJobManager implements Runnable{
 
 	private static final Logger logger = LoggerFactory.getLogger(ProcessingJobManager.class);
 	
+	@Autowired
+	private Map<String, IProcessingTask> processingtaskActionMap;
 	
 	@Autowired
     private ProcessingtaskDao processingtaskDao;
@@ -103,9 +107,14 @@ public class ProcessingJobManager implements Runnable{
 			threadNameHelper.setThreadName(job.getRequest().getId(), job.getId());
 		
 			String processingtaskId = job.getProcessingtaskId();
-			Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
-			if(executor == null)
+
+			IProcessingTask processingtaskImpl = processingtaskActionMap.get(processingtaskId);
+			if(processingtaskImpl == null)
 				throw new Exception(processingtaskId + " class is still not impl. Please refer IProcessingTask doc...");
+			
+			Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
+			// TODO Any check needed on the configured executor? 
+			
 			Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
 			
 			Domain domain = null;

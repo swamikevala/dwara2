@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.initialize.SystemRequestForInitializeResponse;
@@ -141,7 +142,7 @@ public class VolumeService extends DwaraService {
 
 		request = requestDao.save(request);
 		int requestId = request.getId();
-		logger.info("Request - " + requestId);
+		logger.info(DwaraConstants.USER_REQUEST + requestId);
 		
 		List<SystemRequestForInitializeResponse> systemRequests = new ArrayList<SystemRequestForInitializeResponse>();
 		
@@ -158,7 +159,7 @@ public class VolumeService extends DwaraService {
 
 			systemrequest.setDetails(systemrequestDetails);
 			systemrequest = requestDao.save(systemrequest);
-			logger.info("System request - " + systemrequest.getId());
+			logger.info(DwaraConstants.SYSTEM_REQUEST + systemrequest.getId());
 
 			Job job = jobCreator.createJobs(systemrequest, null).get(0); // Initialize generates just one job
 			int jobId = job.getId();

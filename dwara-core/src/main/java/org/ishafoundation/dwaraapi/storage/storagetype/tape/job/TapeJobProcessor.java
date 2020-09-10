@@ -95,8 +95,13 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		Volume tapeToBeUsed = tapeJob.getStorageJob().getVolume();
 		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(tapeJob.getStorageJob().getDomain(), tapeToBeUsed);
 		
+		int blockNumberToBePositioned = 0;
+		if(lastArtifactOnVolumeEndVolumeBlock == 0) // during BOT its just the volumelabel + tapemark
+			blockNumberToBePositioned = 2;
+		else
+			blockNumberToBePositioned = lastArtifactOnVolumeEndVolumeBlock + 4;
 		logger.trace("Now positioning tape head for writing");
-		tapeDriveManager.setTapeHeadPositionForWriting(tapeJob.getDeviceWwnId(), lastArtifactOnVolumeEndVolumeBlock + 2); 
+		tapeDriveManager.setTapeHeadPositionForWriting(tapeJob.getDeviceWwnId(), blockNumberToBePositioned); 
 		logger.info("Tape Head positioned for writing " + tapeLibraryName + ":" + tapeJob.getDeviceWwnId() + "(" + driveElementAddress + ")");
 		
 	}

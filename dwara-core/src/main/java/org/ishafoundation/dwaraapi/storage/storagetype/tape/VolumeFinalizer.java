@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype.tape;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
@@ -57,7 +58,7 @@ public class VolumeFinalizer {
 
 			request = requestDao.save(request);
 			int requestId = request.getId();
-			logger.info("Request - " + requestId);
+			logger.info(DwaraConstants.USER_REQUEST + requestId);
 
 
 			Request systemrequest = new Request();
@@ -83,7 +84,7 @@ public class VolumeFinalizer {
 			systemrequest.setDetails(systemrequestDetails);
 			
 			systemrequest = requestDao.save(systemrequest);
-			logger.info("System request - " + systemrequest.getId());
+			logger.info(DwaraConstants.SYSTEM_REQUEST + systemrequest.getId());
 
 
 			jobCreator.createJobs(systemrequest, null);

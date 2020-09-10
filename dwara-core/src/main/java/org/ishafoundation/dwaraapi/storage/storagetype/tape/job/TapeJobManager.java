@@ -123,7 +123,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			
 				logger.info("No running jobs. Proceeding mapping drives");
 				
-				updateJobInProgress(firstStorageJob.getJob());
+				checkAndUpdateStatusesToInProgress(firstStorageJob.getJob());
 				logger.trace("Composing Tape job");
 				TapeJob tapeJob = new TapeJob();
 				tapeJob.setStorageJob(firstStorageJob);
@@ -135,7 +135,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			}
 		} 
 		else if(storagetaskAction == Action.initialize) {
-			updateJobInProgress(firstStorageJob.getJob());
+			checkAndUpdateStatusesToInProgress(firstStorageJob.getJob());
 			logger.debug("Unloading all tapes from all drives");
 			List<DriveDetails> preparedDrives = null;
 			try {
@@ -275,7 +275,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		TActivedevice tActivedevice = null;
 		try {
 			job = storageJob.getJob();
-			updateJobInProgress(job);
+			checkAndUpdateStatusesToInProgress(job);
 			
 			Volume volume = storageJob.getVolume();
 			

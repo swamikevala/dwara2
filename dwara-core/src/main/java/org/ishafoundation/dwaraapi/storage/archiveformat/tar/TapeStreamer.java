@@ -100,6 +100,14 @@ public class TapeStreamer {
 					}
 
 				}
+				else {// for directories just create it so even empty directories are restored
+					if(toBeRestored){
+						File curfile = new File(destinationPath, entryPathName);
+						if (!curfile.exists()) {
+							curfile.mkdirs();
+						}
+					}
+				}
 
 				entry = getNextTarEntry(tin);
 			}

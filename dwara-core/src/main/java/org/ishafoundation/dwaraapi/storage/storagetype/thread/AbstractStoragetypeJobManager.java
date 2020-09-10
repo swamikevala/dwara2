@@ -8,7 +8,9 @@ import java.util.Map;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
@@ -30,6 +32,9 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 		
 	@Autowired
 	private JobDao jobDao;	
+	
+	@Autowired
+	private RequestDao requestDao;
 	
 	@Autowired
 	private Configuration configuration;
@@ -62,7 +67,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 		try {
 			job = selectedStorageJob.getStorageJob().getJob();
 			threadNameHelper.setThreadName(job.getRequest().getId(), job.getId());
-			updateJobInProgress(job);
+			checkAndUpdateStatusesToInProgress(job);
 			
 			Action storagetaskAction = selectedStorageJob.getStorageJob().getJob().getStoragetaskActionId();
 			
@@ -88,13 +93,22 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 		return storageResponse;
 	}
 
-	protected Job updateJobInProgress(Job job) {
+	protected Job checkAndUpdateStatusesToInProgress(Job job) {
 		if(job.getStatus() != Status.in_progress) { // If not updated already
 			job.setStartedAt(LocalDateTime.now());
 			job.setMessage(null);
 			job = updateJobStatus(job, Status.in_progress);
 		}
 		
+		Request systemGeneratedRequest = job.getRequest();
+		if(systemGeneratedRequest.getStatus() != Status.in_progress) {
+			String logMsg = "DB Request - " + systemGeneratedRequest.getId() + " - Update - status to " + Status.in_progress;
+			logger.debug(logMsg);
+	        systemGeneratedRequest.setStatus(Status.in_progress);
+	        systemGeneratedRequest = requestDao.save(systemGeneratedRequest);
+	        logger.debug(logMsg + " - Success");
+		}			
+
 		return job;
 	}
 	
