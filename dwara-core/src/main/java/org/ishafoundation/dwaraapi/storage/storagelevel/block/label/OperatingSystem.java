@@ -7,6 +7,7 @@ public class OperatingSystem {
 	
 	@JacksonXmlProperty(isAttribute=true)
 	private String version;
+	
 	@JacksonXmlText
 	private String text;
 	

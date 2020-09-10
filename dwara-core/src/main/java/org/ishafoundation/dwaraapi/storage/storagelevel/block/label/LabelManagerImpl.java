@@ -36,8 +36,8 @@ public class LabelManagerImpl implements LabelManager{
 	
 	private static Logger logger = LoggerFactory.getLogger(LabelManagerImpl.class);
 	
-	private static final Pattern RELEASE_REGEX_PATTERN = Pattern.compile("release:\\s+(.*)");
-	private static final Pattern VARIANT_REGEX_PATTERN = Pattern.compile("variant:\\s+(.*)");
+	private static final Pattern BRU_RELEASE_REGEX_PATTERN = Pattern.compile("release:\\s+(.*)");
+	private static final Pattern BRU_VARIANT_REGEX_PATTERN = Pattern.compile("variant:\\s+(.*)");
 	private static final Pattern OS_REGEX_PATTERN = Pattern.compile("(.[^ ]*)\\s+(.*)");
 
 
@@ -176,27 +176,34 @@ public class LabelManagerImpl implements LabelManager{
 		
 		
 		ArchiveCreator archivecreatorObj = new ArchiveCreator();
-		
-		CommandLineExecutionResponse bruReleaseCler = commandLineExecuter.executeCommand("bru -h | grep release"); 
-		String bruRelease = bruReleaseCler.getStdOutResponse();  //release:         18.1
-		
-		// regex to get the version 18.1 from above response
-		Matcher releaseRegExMatcher = RELEASE_REGEX_PATTERN.matcher(bruRelease);
-		String bruReleaseVer = null;
-		if(releaseRegExMatcher.matches())
-			bruReleaseVer = releaseRegExMatcher.group(1);
-
-
-		CommandLineExecutionResponse bruVariantCler = commandLineExecuter.executeCommand("bru -h | grep variant");
-		String bruVariant = bruVariantCler.getStdOutResponse(); //variant:         0.14
-
-		// regex to get the version 0.14 from above response
-		Matcher variantRegExMatcher = VARIANT_REGEX_PATTERN.matcher(bruVariant);
-		String bruVariantVer = null;
-		if(variantRegExMatcher.matches())
-			bruReleaseVer = variantRegExMatcher.group(1);
-
-		archivecreatorObj.setVersion("release " + bruReleaseVer + "; variant " + bruVariantVer);
+		String archiveCreatorVersion = null;
+		if(archiveformat.equals("tar")) {
+			CommandLineExecutionResponse tarArchiveCreatorVersionCler = commandLineExecuter.executeCommand("tar --version | head -n1"); 
+			archiveCreatorVersion = tarArchiveCreatorVersionCler.getStdOutResponse().trim();  //(GNU tar) 1.26
+		}
+		else if(archiveformat.equals("bru")) {
+			CommandLineExecutionResponse bruReleaseCler = commandLineExecuter.executeCommand("bru -h | grep release"); 
+			String bruRelease = bruReleaseCler.getStdOutResponse().trim();  //release:         18.1
+			
+			// regex to get the version 18.1 from above response
+			Matcher releaseRegExMatcher = BRU_RELEASE_REGEX_PATTERN.matcher(bruRelease);
+			String bruReleaseVer = null;
+			if(releaseRegExMatcher.matches())
+				bruReleaseVer = releaseRegExMatcher.group(1);
+	
+	
+			CommandLineExecutionResponse bruVariantCler = commandLineExecuter.executeCommand("bru -h | grep variant");
+			String bruVariant = bruVariantCler.getStdOutResponse().trim(); //variant:         0.14
+	
+			// regex to get the version 0.14 from above response
+			Matcher variantRegExMatcher = BRU_VARIANT_REGEX_PATTERN.matcher(bruVariant);
+			String bruVariantVer = null;
+			if(variantRegExMatcher.matches())
+				bruVariantVer = variantRegExMatcher.group(1);
+	
+			archiveCreatorVersion = "release " + bruReleaseVer + "; variant " + bruVariantVer;
+		}
+		archivecreatorObj.setVersion(archiveCreatorVersion);
 		archivecreatorObj.setText(archiveformat);
 		volumelabel.setArchiveCreator(archivecreatorObj);
 		
@@ -205,7 +212,7 @@ public class LabelManagerImpl implements LabelManager{
 		
 
 		CommandLineExecutionResponse osCler = commandLineExecuter.executeCommand("uname -sr");
-		String operatingSystemVersion = osCler.getStdOutResponse();  // TODO regex
+		String operatingSystemVersion = osCler.getStdOutResponse().trim();  //Linux 3.10.0-1062.4.3.el7.x86_64
 		
 		Matcher osRegExMatcher = OS_REGEX_PATTERN.matcher(operatingSystemVersion);
 		String version = null;
