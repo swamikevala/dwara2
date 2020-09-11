@@ -80,7 +80,7 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 					}
 					logger.trace(toBeUsedDataTransferElementSNo + " is not empty and has another tape - so we need to unload the other tape");
 					logger.trace("Unloading ");
-					unload(tapeLibraryName, mtxStatus.getDte(toBeUsedDataTransferElementSNo).getStorageElementNo(), toBeUsedDataTransferElementSNo);
+					unload(tapeLibraryName, toBeUsedDataTransferElementSNo);
 					logger.trace("Unload successful ");
 				}else {
 					logger.trace("Something wrong with the app and tapelibrary sync. Drive is not supposed to be busy, but seems busy");

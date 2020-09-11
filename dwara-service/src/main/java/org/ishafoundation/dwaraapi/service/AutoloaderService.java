@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.mapdrives.MapDrivesResponse;
 import org.ishafoundation.dwaraapi.api.resp.mapdrives.SystemRequestForMapDriveResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -57,7 +58,7 @@ public class AutoloaderService extends DwaraService{
 		
     	userRequest = requestDao.save(userRequest);
     	int userRequestId = userRequest.getId();
-    	logger.info("Request - " + userRequestId);
+    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
 
 	
 		Request systemRequest = new Request();
@@ -73,7 +74,7 @@ public class AutoloaderService extends DwaraService{
 		
 		systemRequest.setDetails(systemrequestDetails);
 		systemRequest = requestDao.save(systemRequest);
-		logger.info("System request - " + systemRequest.getId());
+		logger.info(DwaraConstants.SYSTEM_REQUEST + systemRequest.getId());
 		
 		
 		List<Job> jobList = jobCreator.createJobs(systemRequest, null);

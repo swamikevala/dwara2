@@ -113,4 +113,10 @@ public class MockTapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl {
 		mtxStatus.setNoOfSlots(mtxStatus.getSeList().size());
 		return mtxStatus;
 	}
+
+	@Override
+	public boolean unload(String tapeLibraryName, int dataTransferElementSNo) throws Exception {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

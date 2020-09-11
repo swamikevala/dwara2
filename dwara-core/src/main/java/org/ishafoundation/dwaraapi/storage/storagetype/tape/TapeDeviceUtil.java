@@ -14,6 +14,8 @@ import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.TapeDriveManag
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.DataTransferElement;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.StorageElement;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.status.MtxStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,13 +67,27 @@ public class TapeDeviceUtil {
 		for (Device tapelibrary : tapelibraryDeviceList) { // iterating through all libraries configured in dwara app
 			String tapelibraryId = tapelibrary.getId();
 			String tapelibraryName = tapelibrary.getWwnId();
-			List<DataTransferElement> dteList = null;
+			
+			MtxStatus mtxStatus = null;
 			try {
-				dteList = tapeLibraryManager.getAllDataTransferElements(tapelibraryName); // get the drives in the real tape library
-			} catch (Exception e) {
-				logger.error("Unable to get tape drive details for " + tapelibraryName);
+				mtxStatus = tapeLibraryManager.getMtxStatus(tapelibraryName);
+			}catch (Exception e) {
+				logger.error("Unable to get tape library details for " + tapelibraryName);
 				continue;
 			}
+			
+			logger.trace("Now getting empty slot list");
+			List<StorageElement> emptyStorageElementsList = new ArrayList<StorageElement>();
+			
+			List<StorageElement> storageElementsList = mtxStatus.getSeList();
+			for (StorageElement storageElement : storageElementsList) {
+				if(storageElement.isEmpty()) {
+					emptyStorageElementsList.add(storageElement);
+				}
+			}
+
+			
+			List<DataTransferElement> dteList = mtxStatus.getDteList();
 			
 			logger.trace("Following drives are in phyiscal tape library " + tapelibraryId);
 			for (DataTransferElement dte : dteList) {
@@ -110,7 +126,7 @@ public class TapeDeviceUtil {
 					}
 					else {
 						try {
-							driveDetails = prepareDriveForBlockingJobs(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map);
+							driveDetails = prepareDriveForBlockingJobs(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map, emptyStorageElementsList);
 						} catch (Exception e) {
 							logger.error(e.getMessage());
 							continue;
@@ -155,7 +171,7 @@ public class TapeDeviceUtil {
 		return driveDetails;
 	}
 	
-	private DriveDetails prepareDriveForBlockingJobs(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map) throws Exception{	
+	private DriveDetails prepareDriveForBlockingJobs(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map, List<StorageElement> emptyStorageElementsList) throws Exception{	
 		DriveDetails driveDetails = null;
 		boolean isBusy = true;
 		while(isBusy){//
@@ -176,12 +192,12 @@ public class TapeDeviceUtil {
 				if(!dataTransferElement.isEmpty()) {
 					logger.debug("Available drive has a tape loaded already. so unloading it");
 					int toBeUsedDataTransferElementSNo = dataTransferElement.getsNo();
-					int toBeUsedStorageElementNo = dataTransferElement.getStorageElementNo();
+					//int toBeUsedStorageElementNo = emptyStorageElementsList.remove(0).getsNo();
 					
 					try {
-						tapeLibraryManager.unload(tapelibraryName, toBeUsedStorageElementNo, toBeUsedDataTransferElementSNo);
+						tapeLibraryManager.unload(tapelibraryName, toBeUsedDataTransferElementSNo);
 					} catch (Exception e) {
-						logger.error("Unable to unload " + tapelibraryName + ":" + toBeUsedStorageElementNo + ":" + toBeUsedDataTransferElementSNo);
+						logger.error("Unable to unload " + tapelibraryName + ":" + toBeUsedDataTransferElementSNo);
 					}
 					logger.debug("Unloaded drive " + toBeUsedDataTransferElementSNo);
 				}

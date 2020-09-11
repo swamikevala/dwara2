@@ -1,16 +1,20 @@
-use dwara_v4_test;
+use dwara2_test;
 SET FOREIGN_KEY_CHECKS=0;
 DROP TABLE 
 `artifact1`, 
 `artifact1_volume`, 
+`artifact2`, 
+`artifact2_volume`, 
+`artifact_sequence`,
 `badfile`, 
 `dwara_sequences`, 
-`failure`, 
 `file1`, 
 `file1_volume`, 
-`hibernate_sequence`,
+`file2`, 
+`file2_volume`, 
+`file_sequence`,
 `job`, 
-`job_map`, 
+`processingfailure`, 
 `request`, 
 `t_activedevice`,
 `t_file_job`;

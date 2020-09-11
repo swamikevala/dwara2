@@ -1,8 +1,11 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status;
 
+import java.util.List;
+
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.AbstractTapeLibraryManagerImpl;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.StorageElement;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.status.MtxStatus;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.status.MtxStatusResponseParser;
 import org.slf4j.Logger;
@@ -23,20 +26,10 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 	@Autowired
 	private CommandLineExecuter commandLineExecuter;
 
+	// TODO Hardcoded stuff... Move it as configurable
+	private int retryInterval = 60000; // 60 secs = 1 mt
+	private int retryAttempts = 10;
 	
-	//		load the tape to be used
-	public boolean load(String tapeLibraryName, int seSNo, int driveSNo) throws Exception{
-		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("mtx -f " + tapeLibraryName + " load " + seSNo + " " + driveSNo);
-		logger.trace(cler.getStdOutResponse());
-		return true;
-	}
-
-	//		unload if any other tape - we should always check the status of the drive before unloading the tape. if the drive is busy we should not unload the tape.., (At the time of writing another thread/process is allowed to unload the tape)
-	public boolean unload(String tapeLibraryName, int seSNo, int driveSNo) throws Exception{
-		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("mtx -f " + tapeLibraryName + " unload " + seSNo + " " + driveSNo);
-		logger.trace(cler.getStdOutResponse());
-		return true;
-	}
 	
 	public MtxStatus getMtxStatus(String tapeLibraryName) throws Exception {
 		String mtxStatusResponse = callMtxStatus(tapeLibraryName);
@@ -47,9 +40,69 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 	private String callMtxStatus(String tapeLibraryName) throws Exception {
 		String mtxStatusResponse = null;
 
-		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("mtx -f " + tapeLibraryName + " status");
+		CommandLineExecutionResponse cler = commandToBeExecuted("mtx -f " + tapeLibraryName + " status", 0);
 		mtxStatusResponse = cler.getStdOutResponse();
 
 		return mtxStatusResponse;
+	}
+	
+	//		load the tape to be used
+	public boolean load(String tapeLibraryName, int seSNo, int driveSNo) throws Exception{
+		// TODO Handle the exception...
+		CommandLineExecutionResponse cler = commandToBeExecuted("mtx -f " + tapeLibraryName + " load " + seSNo + " " + driveSNo, 0);
+		logger.trace(cler.getStdOutResponse());
+		return true;
+	}
+
+	//		unload if any other tape - we should always check the status of the drive before unloading the tape. if the drive is busy we should not unload the tape.., (At the time of writing another thread/process is allowed to unload the tape)
+	public boolean unload(String tapeLibraryName, int driveSNo) throws Exception{
+		logger.trace("Now getting an empty slot");
+		int seSNo = -9;
+		MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
+		List<StorageElement> storageElementsList = mtxStatus.getSeList();
+		
+		for (StorageElement storageElement : storageElementsList) {
+			if(storageElement.isEmpty()) {
+				seSNo = storageElement.getsNo();
+			}
+		}
+
+		if(seSNo == -9) {
+			String errorMsg = "Can this happen really???. No empty storagelements huh??? unbelievable";
+			logger.error(errorMsg);
+			throw new Exception(errorMsg);
+		}
+		
+		unload(tapeLibraryName, seSNo, driveSNo);
+
+		return true;
+	}
+
+	@Override
+	public boolean unload(String tapeLibraryName, int storageElementSNo, int dataTransferElementSNo) throws Exception {
+		CommandLineExecutionResponse cler = commandToBeExecuted("mtx -f " + tapeLibraryName + " unload " + storageElementSNo + " " + dataTransferElementSNo, 0);
+		logger.trace(cler.getStdOutResponse());
+		return true;
+	}
+
+	private CommandLineExecutionResponse commandToBeExecuted(String command, int retryCount) throws Exception {
+		CommandLineExecutionResponse commandLineExecutionResponse = null;
+		try {
+			commandLineExecutionResponse = commandLineExecuter.executeCommand(command);
+		} catch (Exception e) {
+			if(e.getMessage().contains("READ ELEMENT STATUS Command Failed")) {
+				if(retryCount > retryAttempts) {
+					logger.info("Library not ready. Perhaps the magazine is open or scanning in progress...");
+					Thread.sleep(retryInterval);
+					
+					// re-execute the same command again...
+					commandToBeExecuted(command, retryCount + 1);
+				}
+			}
+			else
+				throw e;
+		}
+		
+		return commandLineExecutionResponse;
 	}
 }
