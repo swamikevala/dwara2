@@ -20,6 +20,7 @@ public class StatusUpdaterTests {
 		boolean anySkipped = false;
 		boolean hasFailures = false;
 		boolean anyMarkedCompleted = false;
+		boolean isAllQueued = true;
 		boolean isAllComplete = true;
 		boolean isAllCancelled = true;
 					
@@ -33,28 +34,29 @@ public class StatusUpdaterTests {
 					break;
 				case in_progress:
 					anyInProgress = true;
+					isAllQueued = false;
 					isAllComplete = false;
 					isAllCancelled = false;
 					break;
 				case completed:
 					anyComplete = true;
+					isAllQueued = false;
 					isAllCancelled = false;
 					break;						
-				case skipped:
-					anySkipped = true;
-					isAllComplete = false;
-					isAllCancelled = false;
-					break;
 				case cancelled:
+					isAllQueued = false;
 					isAllComplete = false;
 					break;
 				case failed:
 					hasFailures = true;
+					isAllQueued = false;
 					isAllComplete = false;
 					isAllCancelled = false;						
 					break;
+				case completed_failures:
 				case marked_completed:
 					anyMarkedCompleted = true;
+					isAllQueued = false;
 					isAllComplete = false;
 					isAllCancelled = false;						
 					break;
@@ -65,10 +67,7 @@ public class StatusUpdaterTests {
 
 		
 		Status status = Status.queued;
-		if(anyInProgress) { // Some jobs are running
-			status = Status.in_progress; 
-		}
-		else if(anyQueued && !anyInProgress) { // Some jobs are queued, and none are in progress
+		if(isAllQueued) {
 			status = Status.queued; 
 		}
 		else if(isAllCancelled) {
@@ -77,20 +76,23 @@ public class StatusUpdaterTests {
 		else if(isAllComplete) { // All jobs have successfully completed.
 			status = Status.completed; 
 		}
+		else if(anyQueued || anyInProgress) {
+			status = Status.in_progress;
+		}
 		else if(hasFailures) {
 			status = Status.failed;
 		}
-		else if(anyComplete && (anySkipped || anyMarkedCompleted)) { // Some jobs have successfully completed, and some were skipped, or failed and then marked completed.
+		else if(anyComplete && anyMarkedCompleted) { // Some jobs have successfully completed, and some were skipped, or failed and then marked completed.
 			status = Status.partially_completed; 
 		}
-		
+
 		System.out.println("status " + status);
 		return status;
 	}
 
 	@Test
-	public void test_queued() {  // Some jobs are queued, and none are in progress
-		System.out.println("test_queued");
+	public void test_inprogress_1() {  // Some jobs are queued, and none are in progress
+		System.out.println("test_inprogress_1");
 		List<Job> jobList = new ArrayList<Job>();
 		
 		Job job1 = new Job();
@@ -107,12 +109,12 @@ public class StatusUpdaterTests {
 		
 		
 		Status status = getSRStatus(jobList);
-		assertEquals(status, Status.queued);
+		assertEquals(status, Status.in_progress);
 	}
 	
 	@Test
-	public void test_inprogress() { // Some jobs are running
-		System.out.println("test_inprogress");
+	public void test_inprogress_2() { // Some jobs are running
+		System.out.println("test_inprogress_2");
 		List<Job> jobList = new ArrayList<Job>();
 		
 		Job job1 = new Job();
@@ -179,7 +181,7 @@ public class StatusUpdaterTests {
 		List<Job> jobList = new ArrayList<Job>();
 		
 		Job job1 = new Job();
-		job1.setStatus(Status.skipped);
+		job1.setStatus(Status.completed_failures);
 		jobList.add(job1);
 		
 		Job job2 = new Job();

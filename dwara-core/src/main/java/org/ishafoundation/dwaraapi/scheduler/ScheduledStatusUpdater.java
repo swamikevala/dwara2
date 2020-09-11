@@ -31,8 +31,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PostMapping;
 
+@Component
 public class ScheduledStatusUpdater {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledStatusUpdater.class);
@@ -153,9 +155,9 @@ public class ScheduledStatusUpdater {
 			boolean anyQueued = false;
 			boolean anyInProgress = false;
 			boolean anyComplete = false;
-			boolean anySkipped = false;
 			boolean hasFailures = false;
 			boolean anyMarkedCompleted = false;
+			boolean isAllQueued = true;
 			boolean isAllComplete = true;
 			boolean isAllCancelled = true;
 						
@@ -169,28 +171,29 @@ public class ScheduledStatusUpdater {
 						break;
 					case in_progress:
 						anyInProgress = true;
+						isAllQueued = false;
 						isAllComplete = false;
 						isAllCancelled = false;
 						break;
 					case completed:
 						anyComplete = true;
+						isAllQueued = false;
 						isAllCancelled = false;
 						break;						
-					case skipped:
-						anySkipped = true;
-						isAllComplete = false;
-						isAllCancelled = false;
-						break;
 					case cancelled:
+						isAllQueued = false;
 						isAllComplete = false;
 						break;
 					case failed:
 						hasFailures = true;
+						isAllQueued = false;
 						isAllComplete = false;
 						isAllCancelled = false;						
 						break;
+					case completed_failures:
 					case marked_completed:
 						anyMarkedCompleted = true;
+						isAllQueued = false;
 						isAllComplete = false;
 						isAllCancelled = false;						
 						break;
@@ -198,13 +201,10 @@ public class ScheduledStatusUpdater {
 						break;
 				}
 			}
-	
+
 			
 			Status status = Status.queued;
-			if(anyInProgress) { // Some jobs are running
-				status = Status.in_progress; 
-			}
-			else if(anyQueued && !anyInProgress) { // Some jobs are queued, and none are in progress
+			if(isAllQueued) {
 				status = Status.queued; 
 			}
 			else if(isAllCancelled) {
@@ -213,12 +213,17 @@ public class ScheduledStatusUpdater {
 			else if(isAllComplete) { // All jobs have successfully completed.
 				status = Status.completed; 
 			}
+			else if(anyQueued || anyInProgress) {
+				status = Status.in_progress;
+			}
 			else if(hasFailures) {
 				status = Status.failed;
 			}
-			else if(anyComplete && (anySkipped || anyMarkedCompleted)) { // Some jobs have successfully completed, and some were skipped, or failed and then marked completed.
+			else if(anyComplete && anyMarkedCompleted) { // Some jobs have successfully completed, and some were skipped, or failed and then marked completed.
 				status = Status.partially_completed; 
 			}
+
+			System.out.println("status " + status);
 			
 			nthRequest.setStatus(status); 
 			requestDao.save(nthRequest);
@@ -233,24 +238,26 @@ public class ScheduledStatusUpdater {
 				String destRootLocation = null;
 				if(status == Status.completed || status == Status.partially_completed) {
 					destRootLocation = artifact.getArtifactclass().getPathPrefix();
-					
 				}
 				else if(status == Status.cancelled) {
 					destRootLocation = nthRequest.getDetails().getStagedFilepath();
 				}
-				
-				java.io.File srcFile = FileUtils.getFile(artifact.getArtifactclass().getPathPrefix(), artifact.getName());
-				java.io.File destFile = FileUtils.getFile(destRootLocation, status.name(), artifact.getName());
-				try {
-					if(srcFile.isFile())
-						Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destFile.getAbsolutePath())));		
-					else
-						Files.createDirectories(destFile.toPath());
-	
-					Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
-				}
-				catch (Exception e) {
-					logger.error("Unable to move file "  + e.getMessage());
+
+				if(destRootLocation != null) {
+					try {
+						java.io.File srcFile = FileUtils.getFile(artifact.getArtifactclass().getPathPrefix(), artifact.getName());
+						java.io.File destFile = FileUtils.getFile(destRootLocation, status.name(), artifact.getName());
+
+						if(srcFile.isFile())
+							Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destFile.getAbsolutePath())));		
+						else
+							Files.createDirectories(destFile.toPath());
+		
+						Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+					}
+					catch (Exception e) {
+						logger.error("Unable to move file "  + e.getMessage());
+					}
 				}
 			}
 		}
