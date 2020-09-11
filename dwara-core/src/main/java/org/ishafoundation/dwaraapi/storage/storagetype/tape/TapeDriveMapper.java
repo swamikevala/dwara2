@@ -68,6 +68,7 @@ public class TapeDriveMapper {
 						tapeLibraryManager.unload(tapelibraryName, toBeMappedDataTransferElementSNo);
 					} catch (Exception e) {
 						logger.error("Unable to unload " + tapelibraryName + ":" + toBeMappedDataTransferElementSNo);
+						throw e;
 					}
 					logger.debug("Unloaded drive " + toBeMappedDataTransferElementSNo);
 				}

@@ -1,10 +1,9 @@
-package org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status;
+package org.ishafoundation.dwaraapi.storage.storagetype.tape.library;
 
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.AbstractTapeLibraryManagerImpl;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.StorageElement;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.status.MtxStatus;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.status.MtxStatusResponseParser;
@@ -62,8 +61,11 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 		List<StorageElement> storageElementsList = mtxStatus.getSeList();
 		
 		for (StorageElement storageElement : storageElementsList) {
+			logger.trace("checking " + storageElement.getsNo());
 			if(storageElement.isEmpty()) {
 				seSNo = storageElement.getsNo();
+				logger.trace("selected " + seSNo);
+				break;
 			}
 		}
 

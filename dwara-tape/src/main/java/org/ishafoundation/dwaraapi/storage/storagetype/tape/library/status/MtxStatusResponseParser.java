@@ -94,13 +94,15 @@ public class MtxStatusResponseParser {
 					StorageElement se = new StorageElement();
 					String seSNo = seRegExMatcher.group(1);
 					String impOrExp = seRegExMatcher.group(2);
-					String status = seRegExMatcher.group(3);
+					String status = seRegExMatcher.group(3).trim();
 					//System.out.println(seSNo + " : " + impOrExp + " : " + status);
 					se.setsNo(Integer.parseInt(seSNo));
 					Matcher seVolTagRegExMatcher = seVolTagRegExPattern.matcher(status);
 					if(seVolTagRegExMatcher.matches()) {
 						se.setVolumeTag(seVolTagRegExMatcher.group(1));
 					}
+					if(status.equals("Empty"))
+						se.setEmpty(true);
 					mtxStatus.getSeList().add(se);
 				}				
 			}
