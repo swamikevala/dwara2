@@ -1,6 +1,5 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
@@ -43,20 +42,15 @@ public class TapeDriveMapper {
 			MtxStatus mtxStatus = tapeLibraryManager.getMtxStatus(tapelibraryName);
 
 			// Step 1 - getting the empty slot list and an "actor" tape from the storageelement - that can be used to load and verify...
-			logger.debug("Now getting empty slot list and selecting an actor tape to be used for load/unloading into drives");
-			List<StorageElement> emptyStorageElementsList = new ArrayList<StorageElement>();
+			logger.debug("Now selecting an actor tape to be used for load/unloading into drives");
 			int actorStorageElementNo = 0;
 			String actorVolumeTag = null;
-			boolean actorPicked = false;
 			
 			List<StorageElement> storageElementsList = mtxStatus.getSeList();
 			for (StorageElement storageElement : storageElementsList) {
-				if(storageElement.isEmpty()) {
-					emptyStorageElementsList.add(storageElement);
-				}else if(!actorPicked){
+				if(!storageElement.isEmpty()) {
 					actorStorageElementNo = storageElement.getsNo();
 					actorVolumeTag = storageElement.getVolumeTag();
-					actorPicked = true;
 				}
 			}
 			logger.trace("Actor details - StorageElementNo " + actorStorageElementNo + " and volumeTag " + actorVolumeTag);
@@ -70,12 +64,10 @@ public class TapeDriveMapper {
 				
 				if(!nthDataTransferElement.isEmpty()) {
 					logger.debug(nthDataTransferElement + " has a tape loaded already. So unloading it");
-					int toBeUnloadedStorageElementNo = emptyStorageElementsList.remove(0).getsNo();
 					try {
 						tapeLibraryManager.unload(tapelibraryName, toBeMappedDataTransferElementSNo);
-						//tapeLibraryManager.unload(tapelibraryName, toBeUnloadedStorageElementNo, toBeMappedDataTransferElementSNo);
 					} catch (Exception e) {
-						logger.error("Unable to unload " + tapelibraryName + ":" + toBeUnloadedStorageElementNo + ":" + toBeMappedDataTransferElementSNo);
+						logger.error("Unable to unload " + tapelibraryName + ":" + toBeMappedDataTransferElementSNo);
 					}
 					logger.debug("Unloaded drive " + toBeMappedDataTransferElementSNo);
 				}

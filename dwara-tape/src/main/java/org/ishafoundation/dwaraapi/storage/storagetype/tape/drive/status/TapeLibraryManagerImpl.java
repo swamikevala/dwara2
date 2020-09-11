@@ -40,7 +40,7 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 	private String callMtxStatus(String tapeLibraryName) throws Exception {
 		String mtxStatusResponse = null;
 
-		CommandLineExecutionResponse cler = commandToBeExecuted("mtx -f " + tapeLibraryName + " status", 0);
+		CommandLineExecutionResponse cler = execute("mtx -f " + tapeLibraryName + " status", 0);
 		mtxStatusResponse = cler.getStdOutResponse();
 
 		return mtxStatusResponse;
@@ -49,7 +49,7 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 	//		load the tape to be used
 	public boolean load(String tapeLibraryName, int seSNo, int driveSNo) throws Exception{
 		// TODO Handle the exception...
-		CommandLineExecutionResponse cler = commandToBeExecuted("mtx -f " + tapeLibraryName + " load " + seSNo + " " + driveSNo, 0);
+		CommandLineExecutionResponse cler = execute("mtx -f " + tapeLibraryName + " load " + seSNo + " " + driveSNo, 0);
 		logger.trace(cler.getStdOutResponse());
 		return true;
 	}
@@ -80,23 +80,24 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 
 	@Override
 	public boolean unload(String tapeLibraryName, int storageElementSNo, int dataTransferElementSNo) throws Exception {
-		CommandLineExecutionResponse cler = commandToBeExecuted("mtx -f " + tapeLibraryName + " unload " + storageElementSNo + " " + dataTransferElementSNo, 0);
+		CommandLineExecutionResponse cler = execute("mtx -f " + tapeLibraryName + " unload " + storageElementSNo + " " + dataTransferElementSNo, 0);
 		logger.trace(cler.getStdOutResponse());
 		return true;
 	}
 
-	private CommandLineExecutionResponse commandToBeExecuted(String command, int retryCount) throws Exception {
+	private CommandLineExecutionResponse execute(String command, int retryCount) throws Exception {
 		CommandLineExecutionResponse commandLineExecutionResponse = null;
 		try {
 			commandLineExecutionResponse = commandLineExecuter.executeCommand(command);
 		} catch (Exception e) {
 			if(e.getMessage().contains("READ ELEMENT STATUS Command Failed")) {
 				if(retryCount > retryAttempts) {
-					logger.info("Library not ready. Perhaps the magazine is open or scanning in progress...");
+					logger.debug("retryCount " + retryCount);
+					logger.info("Library not ready. Perhaps the magazine is open or scanning in progress. Will try again after " + retryInterval);
 					Thread.sleep(retryInterval);
 					
 					// re-execute the same command again...
-					commandToBeExecuted(command, retryCount + 1);
+					execute(command, retryCount + 1);
 				}
 			}
 			else

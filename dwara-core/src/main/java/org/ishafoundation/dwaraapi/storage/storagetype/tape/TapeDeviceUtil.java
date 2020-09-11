@@ -68,26 +68,13 @@ public class TapeDeviceUtil {
 			String tapelibraryId = tapelibrary.getId();
 			String tapelibraryName = tapelibrary.getWwnId();
 			
-			MtxStatus mtxStatus = null;
+			List<DataTransferElement> dteList = null;
 			try {
-				mtxStatus = tapeLibraryManager.getMtxStatus(tapelibraryName);
+				dteList = tapeLibraryManager.getAllDataTransferElements(tapelibraryName);
 			}catch (Exception e) {
 				logger.error("Unable to get tape library details for " + tapelibraryName);
 				continue;
 			}
-			
-			logger.trace("Now getting empty slot list");
-			List<StorageElement> emptyStorageElementsList = new ArrayList<StorageElement>();
-			
-			List<StorageElement> storageElementsList = mtxStatus.getSeList();
-			for (StorageElement storageElement : storageElementsList) {
-				if(storageElement.isEmpty()) {
-					emptyStorageElementsList.add(storageElement);
-				}
-			}
-
-			
-			List<DataTransferElement> dteList = mtxStatus.getDteList();
 			
 			logger.trace("Following drives are in phyiscal tape library " + tapelibraryId);
 			for (DataTransferElement dte : dteList) {
@@ -126,7 +113,7 @@ public class TapeDeviceUtil {
 					}
 					else {
 						try {
-							driveDetails = prepareDriveForBlockingJobs(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map, emptyStorageElementsList);
+							driveDetails = prepareDriveForBlockingJobs(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map);
 						} catch (Exception e) {
 							logger.error(e.getMessage());
 							continue;
@@ -171,7 +158,7 @@ public class TapeDeviceUtil {
 		return driveDetails;
 	}
 	
-	private DriveDetails prepareDriveForBlockingJobs(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map, List<StorageElement> emptyStorageElementsList) throws Exception{	
+	private DriveDetails prepareDriveForBlockingJobs(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map) throws Exception{	
 		DriveDetails driveDetails = null;
 		boolean isBusy = true;
 		while(isBusy){//
@@ -192,8 +179,7 @@ public class TapeDeviceUtil {
 				if(!dataTransferElement.isEmpty()) {
 					logger.debug("Available drive has a tape loaded already. so unloading it");
 					int toBeUsedDataTransferElementSNo = dataTransferElement.getsNo();
-					//int toBeUsedStorageElementNo = emptyStorageElementsList.remove(0).getsNo();
-					
+				
 					try {
 						tapeLibraryManager.unload(tapelibraryName, toBeUsedDataTransferElementSNo);
 					} catch (Exception e) {
