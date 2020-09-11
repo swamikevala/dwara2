@@ -7,8 +7,10 @@ import java.util.List;
 import org.apache.commons.codec.binary.Hex;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
@@ -28,6 +30,9 @@ public class RequestService extends DwaraService{
 
 	@Autowired
 	private RequestDao requestDao;
+
+	@Autowired
+	private JobDao jobDao;
 	
 	@Autowired
 	private DomainUtil domainUtil;
@@ -56,63 +61,85 @@ public class RequestService extends DwaraService{
 		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, fromDate, toDate, pageNumber, pageSize);
 
 		for (Request request : requestList) {
-			RequestResponse requestResponse = new RequestResponse();
-			int requestId = request.getId();
-			
-			requestResponse.setId(requestId);
-			requestResponse.setType(request.getType().name());
-			if(requestType == RequestType.system)
-				requestResponse.setUserRequestId(request.getRequestRef().getId());
-			requestResponse.setRequestedAt(getDateForUI(request.getRequestedAt()));
-			requestResponse.setRequestedBy(request.getRequestedBy().getName());
-			
-			requestResponse.setStatus(request.getStatus().name());
-			Action requestAction = request.getActionId();
-			requestResponse.setAction(requestAction.name());
-			if(requestType == RequestType.system) {
-				if(requestAction == Action.ingest) {
-					Domain domain = domainUtil.getDomain(request);
-					ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-	
-					Artifact systemArtifact = artifactRepository.findByWriteRequestId(requestId); 
-					if(systemArtifact != null) {
-						org.ishafoundation.dwaraapi.api.resp.request.Artifact artifactForResponse = new org.ishafoundation.dwaraapi.api.resp.request.Artifact();
-						artifactForResponse.setArtifactclass(systemArtifact.getArtifactclass().getId());
-						artifactForResponse.setPrevSequenceCode(systemArtifact.getPrevSequenceCode());
-						artifactForResponse.setRerunNo(request.getDetails().getRerunNo());
-						artifactForResponse.setSkipActionElements(request.getDetails().getSkipActionelements());
-						artifactForResponse.setStagedFilename(request.getDetails().getStagedFilename());
-						artifactForResponse.setStagedFilepath(request.getDetails().getStagedFilepath());
-						
-						requestResponse.setArtifact(artifactForResponse);
-					}
-				} 
-				else if(requestAction == Action.restore) {
-					Domain domain = domainUtil.getDomain(request);
-					if(domain == null)
-						domain = domainUtil.getDefaultDomain();
-					
-					org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(domain, request.getDetails().getFileId());
-				
-					File fileForRestoreResponse = new File();
-					byte[] checksum = fileFromDB.getChecksum();
-					if(checksum != null)
-						fileForRestoreResponse.setChecksum(Hex.encodeHexString(checksum));
-					
-					fileForRestoreResponse.setId(fileFromDB.getId());
-					fileForRestoreResponse.setPathname(fileFromDB.getPathname());
-					fileForRestoreResponse.setSize(fileFromDB.getSize());
-					fileForRestoreResponse.setSystemRequestId(request.getId());
-					requestResponse.setFile(fileForRestoreResponse);
-				}
-				else if(requestAction == Action.initialize || requestAction == Action.finalize) {
-					requestResponse.setVolume(volumeService.getVolume(request.getDetails().getVolumeId()));
-				}
-			}
+			RequestResponse requestResponse = frameRequestResponse(request, requestType);
+
 			requestResponseList.add(requestResponse);
 		}
 		return requestResponseList;
 	}
 	
+	
+	public RequestResponse cancelRequest(int requestId){
+//		check isRequestCancellable
+		
+		List<Job> jobList = jobDao.findAllByRequestId(requestId);
+		for (Job job : jobList) {
+			job.setStatus(Status.cancelled);
+		}
+		jobDao.saveAll(jobList);
+		
+		Request request = requestDao.findById(requestId).get();
+		request.setStatus(Status.cancelled);
+		requestDao.save(request);
+		
+		return frameRequestResponse(request, RequestType.system);
+	}
+	
+	private RequestResponse frameRequestResponse(Request request, RequestType requestType){
+		RequestResponse requestResponse = new RequestResponse();
+		int requestId = request.getId();
+		
+		requestResponse.setId(requestId);
+		requestResponse.setType(request.getType().name());
+		if(requestType == RequestType.system)
+			requestResponse.setUserRequestId(request.getRequestRef().getId());
+		requestResponse.setRequestedAt(getDateForUI(request.getRequestedAt()));
+		requestResponse.setRequestedBy(request.getRequestedBy().getName());
+		
+		requestResponse.setStatus(request.getStatus().name());
+		Action requestAction = request.getActionId();
+		requestResponse.setAction(requestAction.name());
+		if(requestType == RequestType.system) {
+			if(requestAction == Action.ingest) {
+				Domain domain = domainUtil.getDomain(request);
+				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+
+				Artifact systemArtifact = artifactRepository.findByWriteRequestId(requestId); 
+				if(systemArtifact != null) {
+					org.ishafoundation.dwaraapi.api.resp.request.Artifact artifactForResponse = new org.ishafoundation.dwaraapi.api.resp.request.Artifact();
+					artifactForResponse.setArtifactclass(systemArtifact.getArtifactclass().getId());
+					artifactForResponse.setPrevSequenceCode(systemArtifact.getPrevSequenceCode());
+					artifactForResponse.setRerunNo(request.getDetails().getRerunNo());
+					artifactForResponse.setSkipActionElements(request.getDetails().getSkipActionelements());
+					artifactForResponse.setStagedFilename(request.getDetails().getStagedFilename());
+					artifactForResponse.setStagedFilepath(request.getDetails().getStagedFilepath());
+					
+					requestResponse.setArtifact(artifactForResponse);
+				}
+			} 
+			else if(requestAction == Action.restore) {
+				Domain domain = domainUtil.getDomain(request);
+				if(domain == null)
+					domain = domainUtil.getDefaultDomain();
+				
+				org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(domain, request.getDetails().getFileId());
+			
+				File fileForRestoreResponse = new File();
+				byte[] checksum = fileFromDB.getChecksum();
+				if(checksum != null)
+					fileForRestoreResponse.setChecksum(Hex.encodeHexString(checksum));
+				
+				fileForRestoreResponse.setId(fileFromDB.getId());
+				fileForRestoreResponse.setPathname(fileFromDB.getPathname());
+				fileForRestoreResponse.setSize(fileFromDB.getSize());
+				fileForRestoreResponse.setSystemRequestId(request.getId());
+				requestResponse.setFile(fileForRestoreResponse);
+			}
+			else if(requestAction == Action.initialize || requestAction == Action.finalize) {
+				requestResponse.setVolume(volumeService.getVolume(request.getDetails().getVolumeId()));
+			}
+		}
+		return requestResponse;
+	}
 }
 

@@ -7,13 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-// TODO - Do we really want this to be exposed as a controller? 
-@RestController
-@RequestMapping("jobsSchedulerMimick")
-public class ScheduledJobsController {
+public class ScheduledJobManagerInvoker {
 	
 	@Autowired
 	private JobManager jobManager;

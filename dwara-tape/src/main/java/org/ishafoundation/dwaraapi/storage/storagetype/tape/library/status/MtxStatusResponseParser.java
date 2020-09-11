@@ -75,7 +75,7 @@ public class MtxStatusResponseParser {
 				DataTransferElement dte = new DataTransferElement();
 				dte.setsNo(Integer.parseInt(dteRegExMatcher.group(1)));
 				String dteState = dteRegExMatcher.group(2);
-				if(dteState.equals(dteEmptyRegEx)) {
+				if(dteState.contains(dteEmptyRegEx)) {
 					dte.setEmpty(true);
 				}
 				else {

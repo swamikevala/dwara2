@@ -11,7 +11,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class ScheduledStatusUpdaterControllerTest {
 	
 	@Autowired 
-	private ScheduledStatusUpdaterController scheduledStatusUpdaterController;
+	private ScheduledStatusUpdater scheduledStatusUpdaterController;
 	
 	@Test
 	public void updateStatus() {

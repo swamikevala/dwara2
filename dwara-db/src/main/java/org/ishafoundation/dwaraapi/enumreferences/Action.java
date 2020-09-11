@@ -27,5 +27,6 @@ public enum Action {
 	finalize,
 	import_,
 	map_tapedrives,
-	diagnostics
+	diagnostics,
+	requeue
 }

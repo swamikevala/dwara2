@@ -14,8 +14,6 @@ import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.TapeDriveManag
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.DataTransferElement;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.StorageElement;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.status.MtxStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,38 +84,23 @@ public class TapeDeviceUtil {
 				String tapedriveDeviceId = tapedriveDevice.getId();
 				String dataTransferElementName = tapedriveDevice.getWwnId();
 				Integer driveAutoloaderAddress = tapedriveDevice.getDetails().getAutoloaderAddress();
-				DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
-				if(dte == null) {
-					logger.error(tapedriveDeviceId + " seems to be offline. Please mark it so in dwara. Skipping getting details for it");
-					continue;
-				}
 				
 				if(tapedriveDevice.getDetails().getAutoloaderId().equals(tapelibraryId)) { // equivalent of calling the query devicetype=drive and details.autoloader_id=X, query NOT easy with json
 					logger.trace("Getting details for - " + tapedriveDeviceId);
 					DriveDetails driveDetails = null;
-					if(taskName.equals("getAllDrivesDetails")) {
-						try {
+					try {
+						if(taskName.equals("getAllDrivesDetails")) {
 							driveDetails = getDriveDetails(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map);
-						} catch (Exception e) {
-							logger.error(e.getMessage());
-							continue;
 						}
-					}
-					else if(taskName.equals("getAllAvailableDrivesDetails")) {
-						try {
+						else if(taskName.equals("getAllAvailableDrivesDetails")) {
 							driveDetails = getDriveDetailsIfAvailable(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map);
-						} catch (Exception e) {
-							logger.error(e.getMessage());
-							continue;
 						}
-					}
-					else {
-						try {
+						else {
 							driveDetails = prepareDriveForBlockingJobs(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map);
-						} catch (Exception e) {
-							logger.error(e.getMessage());
-							continue;
 						}
+					} catch (Exception e) {
+						logger.error(e.getMessage() + " Skipping getting details for - " + tapedriveDeviceId);
+						continue;
 					}
 					
 					if(driveDetails != null)
@@ -126,6 +109,27 @@ public class TapeDeviceUtil {
 			}
 		}
 		return driveDetailsList;
+	}
+
+	private DriveDetails getDriveDetails(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map) throws Exception{
+		DriveDetails driveDetails = null;
+		try {
+			driveDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
+		} catch (Exception e) {
+			logger.error(dataTransferElementName + "(device - " + tapedriveDeviceId + ") seems to be offline, but is marked online in Dwara. Resetting its status to " + DeviceStatus.not_found.name()); 
+			Device device = deviceDao.findById(tapedriveDeviceId).get(); 
+			device.setStatus(DeviceStatus.not_found);
+			deviceDao.save(device);
+			
+			throw new Exception("Unable to get tape drive details " + dataTransferElementName);
+		}
+		
+		// Adding tape library and other details
+		driveDetails.setTapelibraryName(tapelibraryName);
+		driveDetails.setDriveId(tapedriveDeviceId);
+		DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
+		driveDetails.setDte(dte);
+		return driveDetails;
 	}
 	
 	private DriveDetails getDriveDetailsIfAvailable(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map) throws Exception{
@@ -141,22 +145,6 @@ public class TapeDeviceUtil {
 		}
 		return driveDetails;
 	}
-
-	private DriveDetails getDriveDetails(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map) throws Exception{
-		DriveDetails driveDetails = null;
-		try {
-			driveDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
-		} catch (Exception e) {
-			throw new Exception("Unable to get tape drive details " + dataTransferElementName);
-		}
-		
-		// Adding tape library and other details
-		driveDetails.setTapelibraryName(tapelibraryName);
-		driveDetails.setDriveId(tapedriveDeviceId);
-		DataTransferElement dte = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
-		driveDetails.setDte(dte);
-		return driveDetails;
-	}
 	
 	private DriveDetails prepareDriveForBlockingJobs(String tapelibraryName, String tapedriveDeviceId, String dataTransferElementName, Integer driveAutoloaderAddress, HashMap<Integer, DataTransferElement>  driveAutoloaderAddress_DataTransferElement_Map) throws Exception{	
 		DriveDetails driveDetails = null;
@@ -166,15 +154,12 @@ public class TapeDeviceUtil {
 			if(tActivedevice == null) {	
 				isBusy = false; // available...
 				// verify once again
-				try {
-					driveDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
-				} catch (Exception e) {
-					throw new Exception("Unable to get tape drive details " + dataTransferElementName);
-				}
+				getDriveDetails(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map);
 		
 				if(driveDetails != null && driveDetails.getMtStatus().isBusy()) {
 					throw new Exception("Something wrong. Driver " + dataTransferElementName + " mt status and dwara's tactivedevice not in sync");
 				}
+				
 				DataTransferElement dataTransferElement = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
 				if(!dataTransferElement.isEmpty()) {
 					logger.debug("Available drive has a tape loaded already. so unloading it");

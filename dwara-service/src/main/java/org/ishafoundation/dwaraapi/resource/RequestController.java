@@ -16,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -73,4 +75,21 @@ public class RequestController {
 
 		return ResponseEntity.status(HttpStatus.OK).body(requestResponseList);
 	}
+	
+    @PostMapping("/request/{requestId}/cancel")
+    public ResponseEntity<RequestResponse> cancelRequest(@PathVariable("requestId") int requestId) {
+    	RequestResponse requestResponse = null;
+    	try {
+    		requestResponse = requestService.cancelRequest(requestId);
+		}catch (Exception e) {
+			String errorMsg = "Unable to get Request - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+    	return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
+    }
 }

@@ -24,6 +24,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
@@ -63,6 +64,9 @@ public class ProcessingJobProcessor implements Runnable{
 	
 	@Autowired
 	private Map<String, IProcessingTask> processingtaskActionMap;
+
+	@Autowired
+	private JobUtil jobUtil;	
 	
 	@Autowired
 	private DomainUtil domainUtil;
@@ -393,40 +397,13 @@ public class ProcessingJobProcessor implements Runnable{
 	 * @param inputArtifactForDependentJobs
 	 */
 	private void setInputArtifactForDependentJobs(Job job, Artifact inputArtifactForDependentJobs) {
-		List<Job> jobList = jobDao.findAllByRequestId(job.getRequest().getId());
-		for (Job nthJob : jobList) {
-			List<Integer> preReqJobIds = nthJob.getDependencies();
-			boolean setInputArtifact = false;
-			if(preReqJobIds != null) {
-				/*
-				Need to set inputArtifact for jobs that has
-					1) a direct dependency - for eg., write job has a direct dependency reference to the proxy-gen job
-					2) a chained dependency - for eg., a verify job which dependency references a verify and write job, one/both of them which inturn then has a direct dependency reference to the proxy-gen job 
-				*/
-				if(preReqJobIds.contains(job.getId())) // if the job has a direct dependency to the current job(running process job that generates the output) 
-					setInputArtifact = true;
-				else { // if the job has a chained dependency to the current job(running process job that generates the output) 
-					String outputArtifactclassSuffix = null;
-					// Now use one of the processing jobs that too generating an output
-					for (Integer preReqJobId : preReqJobIds) {
-						Job dependentParentJob = jobDao.findById(preReqJobId).get();
-							List<Integer> dependentParentList = dependentParentJob.getDependencies();
-							if(dependentParentList != null && dependentParentList.contains(job.getId())) {
-								setInputArtifact = true;
-								break;
-							}
-//						}
-					}
-				}
-
-				if(setInputArtifact) {	 
-					nthJob.setInputArtifactId(inputArtifactForDependentJobs.getId()); // output artifact of the current job is the input artifact of the dependent job
-					String logMsgPrefix2 = "DB Job - " + "(" + nthJob.getId() + ") - Updation - InputArtifactId " + inputArtifactForDependentJobs.getId();
-					logger.debug(logMsgPrefix2);	
-				    jobDao.save(nthJob);
-				    logger.debug(logMsgPrefix2 + " - Success");
-				}
-			}
+		List<Job> dependentJobList = jobUtil.getDependentJobs(job);
+		for (Job nthDependentJob : dependentJobList) {
+			nthDependentJob.setInputArtifactId(inputArtifactForDependentJobs.getId()); // output artifact of the current job is the input artifact of the dependent job
+			String logMsgPrefix2 = "DB Job - " + "(" + nthDependentJob.getId() + ") - Updation - InputArtifactId " + inputArtifactForDependentJobs.getId();
+			logger.debug(logMsgPrefix2);	
+		    jobDao.save(nthDependentJob);
+		    logger.debug(logMsgPrefix2 + " - Success");
 		}
 	}
 	
