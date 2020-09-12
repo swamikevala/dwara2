@@ -20,8 +20,9 @@ public class MockVideo_LowResolution_Transcoding_TaskExecutor extends MediaTask 
 
 
 	@Override
-	public ProcessingtaskResponse execute(String taskName, String artifactName, org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile, String category,
-			String destinationDirPath) throws Exception {
+	public ProcessingtaskResponse execute(String taskName, String inputArtifactName, String outputArtifactName,
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile,
+			String category, String destinationDirPath) throws Exception {
 		String sourceFilePathname = logicalFile.getAbsolutePath();
 		String clipName = FilenameUtils.getName(sourceFilePathname);
 		
@@ -34,7 +35,7 @@ public class MockVideo_LowResolution_Transcoding_TaskExecutor extends MediaTask 
 		String m01FileLocPath = sourceFilePathname.replace("." + FilenameUtils.getExtension(sourceFilePathname), "M01.XML");
 		String baseName = FilenameUtils.getBaseName(sourceFilePathname);
 		if(new File(sourceFilePathname).isFile())
-			baseName = FilenameUtils.getBaseName(artifactName);
+			baseName = FilenameUtils.getBaseName(outputArtifactName);
 		
 		String thumbnailTargetLocation = destinationDirPath + File.separator + baseName + ".jpg";
 		String thumbnailStdErrFileLoc = thumbnailTargetLocation.replace(".jpg", ".jpg_ffmpeg_log");

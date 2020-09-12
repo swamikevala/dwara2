@@ -27,7 +27,8 @@ public class ChecksumGenerator implements IProcessingTask {
 	private Configuration configuration;
 
 	@Override
-	public ProcessingtaskResponse execute(String taskName, String libraryName, File file, Domain domain, LogicalFile logicalFile,
+	public ProcessingtaskResponse execute(String taskName, String inputArtifactName, String outputArtifactName,
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile,
 			String category, String destinationDirPath) throws Exception {
 		
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();

@@ -30,8 +30,9 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	private M01XmlFileHandler m01xfh;	
 
 	@Override
-	public ProcessingtaskResponse execute(String taskName, String artifactName, org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile, String category,
-			String destinationDirPath) throws Exception {
+	public ProcessingtaskResponse execute(String taskName, String inputArtifactName, String outputArtifactName,
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile,
+			String category, String destinationDirPath) throws Exception {
 		String sourceFilePathname = logicalFile.getAbsolutePath();
 		String clipName = FilenameUtils.getName(sourceFilePathname);
 		
@@ -45,7 +46,7 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	
 		String baseName = FilenameUtils.getBaseName(sourceFilePathname);
 		if(new File(sourceFilePathname).isFile())
-			baseName = FilenameUtils.getBaseName(artifactName);
+			baseName = FilenameUtils.getBaseName(outputArtifactName);
 		
 		String thumbnailTargetLocation = destinationDirPath + File.separator + baseName + ".jpg";
 	
@@ -209,5 +210,4 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	    String reversedTimeCode = timeCode7thN8thDigit + ":" + timeCode5thN6thDigit + ":" + timeCode3rdN4thDigit + ":" + timeCode1stN2ndDigit;
 	    return reversedTimeCode;
 	}
-
 }

@@ -72,7 +72,7 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 		
 
 	@Override
-	public ProcessingtaskResponse execute(String taskName, String libraryName,
+	public ProcessingtaskResponse execute(String taskName, String inputArtifactName, String outputArtifactName,
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile,
 			String category, String destinationDirPath) throws Exception {
 		
@@ -117,15 +117,15 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			jSchSession = catdvSshSessionHelper.getSession();
 			String parentDir = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathOnMamServer);
 			String command1 = "mkdir -p " + parentDir;
-			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, libraryName + ".out_mkdir_mamErr");
+			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, inputArtifactName + ".out_mkdir_mamErr");
 			
 			logger.info("Now Copying the Proxy file " + generatedProxyFilePath + " over to catdv server location " + proxyFilePathOnMamServer);
 			securedCopier.copyTo(jSchSession, generatedProxyFilePath, proxyFilePathOnMamServer);
-			String catalogName = getCatalogName(libraryName);
+			String catalogName = getCatalogName(inputArtifactName);
 			
 			int catalogId = catalogChecker.getCatalogId(catdvSessionId, catalogName);
 			if(catalogId == 0) { // If there isnt the catalog exist - create new one...
-				String catalogComment = libraryName;
+				String catalogComment = inputArtifactName;
 				String createdCatalogJsonResp = cc.createCatalog(catdvSessionId, catalogName, groupId, catalogComment);
 				String createdCatalogRespStatus = JsonPathUtil.getValue(createdCatalogJsonResp, "status");
 				if("OK".equals(createdCatalogRespStatus)) {

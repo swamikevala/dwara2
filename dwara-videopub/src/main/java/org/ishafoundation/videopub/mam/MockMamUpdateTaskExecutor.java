@@ -16,7 +16,7 @@ public class MockMamUpdateTaskExecutor implements IProcessingTask {
     private static final Logger logger = LoggerFactory.getLogger(MockMamUpdateTaskExecutor.class);
 
 	@Override
-	public ProcessingtaskResponse execute(String taskName, String libraryName,
+	public ProcessingtaskResponse execute(String taskName, String inputArtifactName, String outputArtifactName,
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile,
 			String category, String destinationDirPath) throws Exception {
 		

@@ -243,7 +243,7 @@ public class ProcessingJobProcessor implements Runnable{
 				Artifactclass artifactclass = inputArtifact.getArtifactclass();
 				String artifactCategory = artifactclass.getCategory(); // TODO How to distinguish pub/priv
 				
-				ProcessingtaskResponse processingtaskResponse = processingtaskActionMap.get(processingtaskName).execute(processingtaskName, inputArtifactName, file, domain, logicalFile, artifactCategory, destinationDirPath);
+				ProcessingtaskResponse processingtaskResponse = processingtaskActionMap.get(processingtaskName).execute(processingtaskName, inputArtifactName, outputArtifactName, file, domain, logicalFile, artifactCategory, destinationDirPath);
 				if(processingtaskResponse == null) // TODO : Handle this...
 					return;
 				boolean isCancelInitiated = processingtaskResponse.isCancelled();
