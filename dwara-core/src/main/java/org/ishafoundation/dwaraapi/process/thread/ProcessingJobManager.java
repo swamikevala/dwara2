@@ -236,7 +236,7 @@ public class ProcessingJobManager implements Runnable{
 						break;
 					}
 				}
-				if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
+				if(!alreadyQueued && tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId())).get() == null) { // only when the job is not already dispatched to the queue to be executed, send it now...
 					TFileJob tFileJob = new TFileJob();
 					tFileJob.setId(new TFileJobKey(file.getId(), job.getId()));
 					tFileJob.setJob(job);
