@@ -124,7 +124,13 @@ public class BruArchiver implements IArchiveformatter {
 		ar.setArchivedFileList(archivedFileList);
 
 		ar.setArtifactStartVolumeBlock(artifactStartVolumeBlock);
-		ar.setArtifactEndVolumeBlock(artifactStartVolumeBlock + artifactTotalVolumeBlocks);
+		// -1 because artifactTotalVolumeBlocks is inclusive of the startVolumeBlock too...
+		// for eg., - say 
+		// svb = 2
+		// tvb written = 5
+		// so it would be 2,3,4,5,6
+		// and so evb = (2-1) + 5 = 6
+		ar.setArtifactEndVolumeBlock((artifactStartVolumeBlock-1) + artifactTotalVolumeBlocks);  
 		return ar;
 	}
 
