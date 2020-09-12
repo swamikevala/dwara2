@@ -1,13 +1,16 @@
 package org.ishafoundation.dwaraapi.process.thread;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -16,8 +19,10 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
@@ -25,6 +30,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
@@ -39,7 +45,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
-import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -59,6 +64,9 @@ public class ProcessingJobManager implements Runnable{
 	
 	@Autowired
 	private JobDao jobDao;
+	
+	@Autowired
+	private TFileJobDao tFileJobDao;
 		
 	@Autowired
 	private DomainUtil domainUtil;
@@ -95,6 +103,9 @@ public class ProcessingJobManager implements Runnable{
     public void run() {
 		logger.trace("Managing processing job - " + job.getId());
 		
+		// This check is because of the same file getting queued up for processing again...
+		// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
+		// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
 		Status jobStatus = job.getStatus();
 		if(jobStatus != Status.queued) {
 			logger.trace("Processing job - " + job.getId() + " already picked up earlier. So skipping from processing again");
@@ -182,12 +193,11 @@ public class ProcessingJobManager implements Runnable{
 				if(logicalFilePath.contains(configuration.getJunkFilesStagedDirName())) // skipping junk files
 					continue;			
 
-				// TODO - Need to work on this for Audio where its just file..
-				String x = FilenameUtils.getFullPath(logicalFilePath) + FilenameUtils.getName(logicalFilePath);
+				String filePath = FilenameUtils.getFullPath(logicalFilePath) + FilenameUtils.getName(logicalFilePath);
 				
 				String artifactNamePrefixedFilePathname = null; // 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4 || 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
 				String outputFilePath = null; // /data/transcoded/public
-				if(logicalFilePath.equals(x)) { 
+				if(logicalFilePath.equals(filePath)) { 
 					// means input artifact is a file and not a directory
 					artifactNamePrefixedFilePathname = artifactName; // logicalFilePath.replace(inputArtifactPath, artifactName); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4
 					if(outputArtifactPathname != null)
@@ -211,22 +221,47 @@ public class ProcessingJobManager implements Runnable{
 				if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
 					file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
 				logger.trace("file - " + file.getId());
-				
-				ProcessingJobProcessor processingJobProcessor = applicationContext.getBean(ProcessingJobProcessor.class);
-				processingJobProcessor.setJob(job);
-				processingJobProcessor.setDomain(domain);
-				processingJobProcessor.setInputArtifact(inputArtifact);
-				processingJobProcessor.setFileCount(filesToBeProcessedCount);
-				processingJobProcessor.setTotalSize(0); // TODO How to calculate this?
-				processingJobProcessor.setFile(file);
-				processingJobProcessor.setLogicalFile(logicalFile);
-				
-				processingJobProcessor.setOutputArtifactclass(outputArtifactclass);
-				processingJobProcessor.setOutputArtifactName(outputArtifactName); // VL20190701_071239.mp4
-				processingJobProcessor.setOutputArtifactPathname(outputArtifactPathname); // C:\data\transcoded\public\VL20190701_071239.mp4
-				processingJobProcessor.setDestinationDirPath(outputFilePath);
-				logger.info("Now kicking off - " + job.getId() + " " + logicalFilePath + " task " + processingtaskId);				
-				executor.execute(processingJobProcessor);
+
+				// This check is because of the same file getting queued up for processing again...
+				// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
+				// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
+				ThreadPoolExecutor tpe = (ThreadPoolExecutor) executor;
+				BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
+				boolean alreadyQueued = false;
+				for (Runnable runnable : runnableQueueList) {
+					ProcessingJobProcessor pjp = (ProcessingJobProcessor) runnable;
+					if(job.getId() == pjp.getJob().getId() && file.getId() == pjp.getFile().getId()) {
+						logger.debug(job.getId() + " already in ProcessingJobProcessor queue. Skipping it...");
+						alreadyQueued = true;
+						break;
+					}
+				}
+				if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
+					TFileJob tFileJob = new TFileJob();
+					tFileJob.setId(new TFileJobKey(file.getId(), job.getId()));
+					tFileJob.setJob(job);
+					tFileJob.setArtifactId(inputArtifactId);
+					tFileJob.setStatus(Status.queued);
+					logger.debug("DB TFileJob Creation for file " + file.getId());
+					tFileJobDao.save(tFileJob);
+					logger.debug("DB TFileJob Creation - Success");
+					
+					ProcessingJobProcessor processingJobProcessor = applicationContext.getBean(ProcessingJobProcessor.class);
+					processingJobProcessor.setJob(job);
+					processingJobProcessor.setDomain(domain);
+					processingJobProcessor.setInputArtifact(inputArtifact);
+					processingJobProcessor.setFileCount(filesToBeProcessedCount);
+					processingJobProcessor.setTotalSize(0); // TODO How to calculate this?
+					processingJobProcessor.setFile(file);
+					processingJobProcessor.setLogicalFile(logicalFile);
+					
+					processingJobProcessor.setOutputArtifactclass(outputArtifactclass);
+					processingJobProcessor.setOutputArtifactName(outputArtifactName); // VL20190701_071239.mp4
+					processingJobProcessor.setOutputArtifactPathname(outputArtifactPathname); // C:\data\transcoded\public\VL20190701_071239.mp4
+					processingJobProcessor.setDestinationDirPath(outputFilePath);
+					logger.info("Now kicking off - " + job.getId() + " " + logicalFilePath + " task " + processingtaskId);
+					executor.execute(processingJobProcessor);
+				}
 			}
 			// TODO if no. of errors in the tasktype reach the configured max_errors threshold then we stop further processing.... count(*) on failures for the job_id...
 	

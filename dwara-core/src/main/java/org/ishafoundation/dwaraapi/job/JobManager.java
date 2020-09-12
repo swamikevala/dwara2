@@ -75,6 +75,9 @@ public class JobManager {
 				logger.info("IsJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
 				if(isJobReadyToBeProcessed) {
 					if(processingtaskId != null) { // a non-storage process job
+						// This check is because of the same file getting queued up for processing again...
+						// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
+						// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
 						ThreadPoolExecutor tpe = (ThreadPoolExecutor) processingtaskSingleThreadExecutor.getExecutor();
 						BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
 						boolean alreadyQueued = false;

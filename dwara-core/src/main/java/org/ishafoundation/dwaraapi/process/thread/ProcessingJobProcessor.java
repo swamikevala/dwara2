@@ -184,17 +184,20 @@ public class ProcessingJobProcessor implements Runnable{
 		String identifierSuffix = "";//mediaFileId+"";//  +  "-" + VideoTasktypeingSteps.PROXY_GENERATION.toString();
 		logger.trace("Running - " + job.getId() + ":" + logicalFile.getAbsolutePath());
 		
-		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = null;
-		if(outputArtifactName != null) {
-			String proxyTargetLocation = destinationDirPath + File.separator + FilenameUtils.getBaseName(logicalFile.getAbsolutePath()) + ".mp4";
-			String filepathname = proxyTargetLocation.replace(outputArtifactPathname, outputArtifactName);
-			domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileInQuestion = domainSpecificFileRepository.findByPathname(filepathname);
-			if(fileInQuestion != null) {
-				logger.trace(outputArtifactPathname + " already processed. Skipping it");
-				return;
-			}
-		}
+		// This check is because of the same file getting queued up for processing again...
+		// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
+		// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
+//		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = null;
+//		if(outputArtifactName != null) {
+//			String proxyTargetLocation = destinationDirPath + File.separator + FilenameUtils.getBaseName(logicalFile.getAbsolutePath()) + ".mp4";
+//			String filepathname = proxyTargetLocation.replace(outputArtifactPathname, outputArtifactName);
+//			domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+//			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileInQuestion = domainSpecificFileRepository.findByPathname(filepathname);
+//			if(fileInQuestion != null) {
+//				logger.trace(outputArtifactPathname + " already processed. Skipping it");
+//				return;
+//			}
+//		}
 		
 		String containerName = identifierSuffix;	
 		
@@ -228,15 +231,12 @@ public class ProcessingJobProcessor implements Runnable{
 				processingtaskName = job.getProcessingtaskId();
 				logger.trace(job.getId() + " " + processingtaskName);
 				
-				tFileJob = new TFileJob();
-				tFileJob.setId(new TFileJobKey(file.getId(), job.getId()));
-				tFileJob.setJob(job);
-				tFileJob.setArtifactId(inputArtifactId);
+				tFileJob = tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId())).get();
 				tFileJob.setStatus(Status.in_progress);
 				tFileJob.setStartedAt(LocalDateTime.now());
-				logger.debug("DB TFileJob Creation for file " + file.getId());
+				logger.debug("DB TFileJob Updation for file " + file.getId());
 				tFileJobDao.save(tFileJob);
-				logger.debug("DB TFileJob Creation - Success");
+				logger.debug("DB TFileJob Updation - Success");
 
 				
 				String inputArtifactName = inputArtifact.getName();
@@ -292,7 +292,7 @@ public class ProcessingJobProcessor implements Runnable{
 						    // Now setting all the dependentjobs with the tasktype generated output artifactid
 						    setInputArtifactForDependentJobs(job, outputArtifact);
 						}	    
-
+						FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
 						if(artifactFile == null) {
 							createFile(outputArtifactName, outputArtifact, domainSpecificFileRepository);	

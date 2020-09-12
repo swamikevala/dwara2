@@ -89,6 +89,7 @@ public class ScheduledStatusUpdater {
 		for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
 			Job job = (Job) iterator.next();
 			if(job.getProcessingtaskId() != null){ // consolidated status update needed only for process jobs...
+				boolean queued = false;
 				boolean inProgress = false;
 				boolean hasFailures = false;
 				boolean hasAnyCompleted = false;
@@ -97,12 +98,17 @@ public class ScheduledStatusUpdater {
 				for (Iterator<TFileJob> iterator2 = jobFileList.iterator(); iterator2.hasNext();) {
 					TFileJob jobFile = (TFileJob) iterator2.next();
 					Status status = jobFile.getStatus();
-					if(status == Status.in_progress) {
+					if(status == Status.queued) {
+						queued = true;
+						isAllComplete = false;
+						break;
+					}
+					else if(status == Status.in_progress) {
 						inProgress = true;
 						isAllComplete = false;
 						break;
 					}
-					if(status == Status.failed) {
+					else if(status == Status.failed) {
 						isAllComplete = false;
 						hasFailures = true;
 					}
@@ -111,7 +117,7 @@ public class ScheduledStatusUpdater {
 					}
 				}
 				
-				if(!inProgress) {
+				if(!queued && !inProgress) {
 					//Status.cancelled; Status.skipped
 					Status status = null;
 					if(isAllComplete) {
