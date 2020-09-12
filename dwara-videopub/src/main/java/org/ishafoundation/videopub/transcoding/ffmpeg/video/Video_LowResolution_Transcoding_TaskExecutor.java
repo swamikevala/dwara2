@@ -30,7 +30,7 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	private M01XmlFileHandler m01xfh;	
 
 	@Override
-	public ProcessingtaskResponse execute(String taskName, String libraryName, org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile, String category,
+	public ProcessingtaskResponse execute(String taskName, String artifactName, org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile, String category,
 			String destinationDirPath) throws Exception {
 		String sourceFilePathname = logicalFile.getAbsolutePath();
 		String clipName = FilenameUtils.getName(sourceFilePathname);
@@ -43,7 +43,11 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		
 		String m01FileLocPath = sourceFilePathname.replace("." + FilenameUtils.getExtension(sourceFilePathname), "M01.XML");
 	
-		String thumbnailTargetLocation = destinationDirPath + File.separator + FilenameUtils.getBaseName(sourceFilePathname) + ".jpg";
+		String baseName = FilenameUtils.getBaseName(sourceFilePathname);
+		if(new File(sourceFilePathname).isFile())
+			baseName = FilenameUtils.getBaseName(artifactName);
+		
+		String thumbnailTargetLocation = destinationDirPath + File.separator + baseName + ".jpg";
 	
 		/*************** THUMBNAIL GENERATION ***************/
 		long thumbnailStartTime = System.currentTimeMillis();
@@ -66,7 +70,7 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		 * we had to add the containerName(mlID-cardId-processName say e.g., something like 123-345-PROXYGENERATION) as XAVC file names across card folders are same...
 		 * 
 		 */
-		String proxyTargetLocation = destinationDirPath + File.separator + FilenameUtils.getBaseName(sourceFilePathname) + ".mp4";		
+		String proxyTargetLocation = destinationDirPath + File.separator + baseName + ".mp4";		
 		
 		String highResMetaTargetLocation = proxyTargetLocation.replace(".mp4", ".mp4_ffprobe_out");
 		

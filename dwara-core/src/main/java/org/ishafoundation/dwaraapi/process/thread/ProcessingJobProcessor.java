@@ -415,6 +415,7 @@ public class ProcessingJobProcessor implements Runnable{
 			logger.debug(logMsgPrefix);	
 			job.setStatus(status);
 			job.setStartedAt(LocalDateTime.now());
+			job.setMessage(null);
 			jobDao.save(job);
 			logger.debug(logMsgPrefix + " - Success");					
 

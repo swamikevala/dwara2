@@ -1,6 +1,9 @@
 package org.ishafoundation.dwaraapi.utils;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -9,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.slf4j.Logger;
@@ -66,16 +70,12 @@ public class JunkFilesMover {
 					String destPath = nthFilePath.replace(mediaLibraryFolderLocation, mediaLibraryFolderLocation + File.separator + config.getJunkFilesStagedDirName());
 					File destDir = new File(destPath);					
 					try {
-						if(nthFile.isDirectory()) {
-							FileUtils.moveDirectory(nthFile, destDir);
-							logger.debug("Moved dir " + nthFilePath + " to " + destPath);
-							//FileUtils.moveDirectoryToDirectory(nthFile, destDir, true);
-						}
-						else {
-							FileUtils.moveFile(nthFile, destDir);
-							logger.debug("Moved file " + nthFilePath + " to " + destPath);
-							//FileUtils.moveFileToDirectory(nthFile, destDir, true);
-						}
+						if(nthFile.isFile())
+							Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
+						else
+							Files.createDirectories(Paths.get(destPath));
+
+						Files.move(nthFile.toPath(), destDir.toPath(), StandardCopyOption.ATOMIC_MOVE);
 					}catch (Exception e) {
 						logger.error("Unable to move file " + nthFilePath + " to " + destPath + " as " + e.getMessage(), e);
 					}

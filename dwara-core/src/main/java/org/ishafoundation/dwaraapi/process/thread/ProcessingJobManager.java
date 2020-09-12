@@ -183,29 +183,35 @@ public class ProcessingJobManager implements Runnable{
 					continue;			
 
 				// TODO - Need to work on this for Audio where its just file..
-				String x = FilenameUtils.getFullPath(logicalFilePath) + FilenameUtils.getBaseName(logicalFilePath);
+				String x = FilenameUtils.getFullPath(logicalFilePath) + FilenameUtils.getName(logicalFilePath);
+				
+				String artifactNamePrefixedFilePathname = null; // 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4 || 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
+				String outputFilePath = null; // /data/transcoded/public
 				if(logicalFilePath.equals(x)) { 
 					// means input artifact is a file and not a directory
-					
+					artifactNamePrefixedFilePathname = artifactName; // logicalFilePath.replace(inputArtifactPath, artifactName); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4
+					if(outputArtifactPathname != null)
+						outputFilePath = FilenameUtils.getFullPathNoEndSeparator(outputArtifactPathname);
 				}
-				String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPath + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
-				String artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPath + File.separator, artifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
+				else {
+					String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPath + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
+					artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPath + File.separator, artifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
+					
+					if(outputArtifactPathname != null) {
+						String suffixPath = FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
+						if(StringUtils.isBlank(suffixPath))
+							outputFilePath = outputArtifactPathname;
+						else
+							outputFilePath = outputArtifactPathname + File.separator + FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
+					}
+				}
 				
 				//logger.info("Now processing - " + path);
 				org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
 				if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
 					file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
 				logger.trace("file - " + file.getId());
-
 				
-				String outputFilePath = null;
-				if(outputArtifactPathname != null) {
-					String suffixPath = FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
-					if(StringUtils.isBlank(suffixPath))
-						outputFilePath = outputArtifactPathname;
-					else
-						outputFilePath = outputArtifactPathname + File.separator + FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
-				}
 				ProcessingJobProcessor processingJobProcessor = applicationContext.getBean(ProcessingJobProcessor.class);
 				processingJobProcessor.setJob(job);
 				processingJobProcessor.setDomain(domain);
@@ -216,8 +222,8 @@ public class ProcessingJobManager implements Runnable{
 				processingJobProcessor.setLogicalFile(logicalFile);
 				
 				processingJobProcessor.setOutputArtifactclass(outputArtifactclass);
-				processingJobProcessor.setOutputArtifactName(outputArtifactName);
-				processingJobProcessor.setOutputArtifactPathname(outputArtifactPathname);
+				processingJobProcessor.setOutputArtifactName(outputArtifactName); // VL20190701_071239.mp4
+				processingJobProcessor.setOutputArtifactPathname(outputArtifactPathname); // C:\data\transcoded\public\VL20190701_071239.mp4
 				processingJobProcessor.setDestinationDirPath(outputFilePath);
 				logger.info("Now kicking off - " + job.getId() + " " + logicalFilePath + " task " + processingtaskId);				
 				executor.execute(processingJobProcessor);

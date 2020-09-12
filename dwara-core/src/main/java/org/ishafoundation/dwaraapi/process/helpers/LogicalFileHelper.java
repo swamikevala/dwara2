@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.process.helpers;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,15 +25,24 @@ public class LogicalFileHelper {
 		if(extensions != null) {
 			List<String> sourceExtensionsList = new ArrayList<String>();
 			for (int i = 0; i < extensions.length; i++) {
+				sourceExtensionsList.add(extensions[i]);
 				sourceExtensionsList.add(extensions[i].toUpperCase());
 				sourceExtensionsList.add(extensions[i].toLowerCase());
 			}
 			
 			sourceExtensions = ArrayUtils.toStringArray(sourceExtensionsList.toArray());
 		}
-		Collection<File> sourceFilesList = FileUtils.listFiles(new File(artifactPath), sourceExtensions, true);
 		
-		if(needSidecarFiles) {
+		Collection<File> sourceFilesList = new ArrayList<File>();
+		File artifactFile = new File(artifactPath);
+		if(artifactFile.isFile()) {
+			if(sourceExtensions == null || (sourceExtensions != null && Arrays.asList(sourceExtensions).contains(FilenameUtils.getExtension(artifactPath))))
+				sourceFilesList.add(artifactFile);
+		}
+		else
+			sourceFilesList = FileUtils.listFiles(artifactFile, sourceExtensions, true);
+		
+		if(needSidecarFiles && artifactFile.isDirectory()) {
 		
 			HashMap<String, LogicalFile> name_To_File = new HashMap<String, LogicalFile>();
 			

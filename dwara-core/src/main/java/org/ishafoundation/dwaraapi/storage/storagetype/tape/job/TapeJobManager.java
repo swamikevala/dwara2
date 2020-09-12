@@ -96,6 +96,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				boolean areJobsStillRunning = true;
 				while(areJobsStillRunning) {
 					driveDetailsList = tapeDeviceUtil.getAllDrivesDetails();
+					if(driveDetailsList.size() == 0)
+						throw new Exception("No drives configured/online in dwara. Nothing to map. Please check devices table");
 					boolean anyDriveStillBusy = false;
 					for (DriveDetails driveDetails : driveDetailsList) {
 						if(driveDetails.getMtStatus().isBusy())

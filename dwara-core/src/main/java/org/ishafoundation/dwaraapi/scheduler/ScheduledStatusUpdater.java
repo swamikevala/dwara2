@@ -222,8 +222,6 @@ public class ScheduledStatusUpdater {
 			else if(anyComplete && anyMarkedCompleted) { // Some jobs have successfully completed, and some were skipped, or failed and then marked completed.
 				status = Status.partially_completed; 
 			}
-
-			System.out.println("status " + status);
 			
 			nthRequest.setStatus(status); 
 			requestDao.save(nthRequest);
