@@ -259,71 +259,72 @@ public class ProcessingJobProcessor implements Runnable{
 					logger.trace("Processing Task " + processingtaskName + " execution completed for job " + job.getId());
 					endms = System.currentTimeMillis();
 					
-					if(outputArtifactName != null) {
-						ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-
-						Artifact outputArtifact = artifactRepository.findByName(outputArtifactName); 
-						if(outputArtifact == null) {// not already created.
-						    outputArtifact = domainUtil.getDomainSpecificArtifactInstance(domain);
-							
-						    artifactEntityUtil.setDomainSpecificArtifactRef(outputArtifact, inputArtifact);
-							
-							outputArtifact.setTotalSize(totalSize);
-						    outputArtifact.setFileCount(fileCount);
-						    //outputArtifact.setFileStructureMd5("not needed");
-						    outputArtifact.setArtifactclass(outputArtifactclass);
-						    outputArtifact.setName(outputArtifactName);
-						    
-						    try {
-						    	outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
-						    }
-						    catch (Exception e) {
-								// possibly updated by another thread already
-								outputArtifact = artifactRepository.findByName(outputArtifactName); 
-								if(outputArtifact != null)
-									logger.trace("OutputArtifact details possibly updated by another thread already");
-								else
-									throw e;
-						    	
+					//synchronized (processingtaskResponse) { // A Synchronized block to ensure only one thread at a time updates... Handling it differently with extra checks..
+						if(outputArtifactName != null) {
+							ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+	
+							Artifact outputArtifact = artifactRepository.findByName(outputArtifactName); 
+							if(outputArtifact == null) {// not already created.
+							    outputArtifact = domainUtil.getDomainSpecificArtifactInstance(domain);
+								
+							    artifactEntityUtil.setDomainSpecificArtifactRef(outputArtifact, inputArtifact);
+								
+								outputArtifact.setTotalSize(totalSize);
+							    outputArtifact.setFileCount(fileCount);
+							    //outputArtifact.setFileStructureMd5("not needed");
+							    outputArtifact.setArtifactclass(outputArtifactclass);
+							    outputArtifact.setName(outputArtifactName);
+							    
+							    try {
+							    	outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
+							    }
+							    catch (Exception e) {
+									// possibly updated by another thread already
+									outputArtifact = artifactRepository.findByName(outputArtifactName); 
+									if(outputArtifact != null)
+										logger.trace("OutputArtifact details possibly updated by another thread already");
+									else
+										throw e;
+							    	
+								}
+							    
+							    // setting the current jobs output artifactid
+								String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - OutputArtifactId " + outputArtifact.getId();
+								logger.debug(logMsgPrefix);	
+							    job.setOutputArtifactId(outputArtifact.getId());
+							    jobDao.save(job);
+							    logger.debug(logMsgPrefix + " - Success");	
+							    
+							    // Now setting all the dependentjobs with the tasktype generated output artifactid
+							    setInputArtifactForDependentJobs(job, outputArtifact);
+							}	    
+							FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+							org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
+							if(artifactFile == null) {
+								createFile(outputArtifactName, outputArtifact, domainSpecificFileRepository);	
 							}
-						    
-						    // setting the current jobs output artifactid
-							String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - OutputArtifactId " + outputArtifact.getId();
-							logger.debug(logMsgPrefix);	
-						    job.setOutputArtifactId(outputArtifact.getId());
-						    jobDao.save(job);
-						    logger.debug(logMsgPrefix + " - Success");	
-						    
-						    // Now setting all the dependentjobs with the tasktype generated output artifactid
-						    setInputArtifactForDependentJobs(job, outputArtifact);
-						}	    
-						FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
-						if(artifactFile == null) {
-							createFile(outputArtifactName, outputArtifact, domainSpecificFileRepository);	
+	
+							// creating File records for the process generated files
+							String proxyFilePathName = processingtaskResponse.getDestinationPathname(); 
+							String proxyFileBaseName = FilenameUtils.getBaseName(proxyFilePathName);
+							String proxyFilePath = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathName);
+					        FilenameFilter fileNameFilter = new FilenameFilter() {
+					            @Override
+					            public boolean accept(File dir, String name) {
+					            	if(FilenameUtils.getBaseName(name).equals(proxyFileBaseName))
+					            		return true;
+					               
+					               return false;
+					            }
+					         };
+							String[] files = new File(proxyFilePath).list(fileNameFilter);
+							for (String nthFileName : files) {
+								String filepathName = proxyFilePath + File.separator + nthFileName;
+								logger.trace("Now creating file record for - " + filepathName);
+								createFile(filepathName, outputArtifact, domainSpecificFileRepository);	
+							}
 						}
-
-						// creating File records for the process generated files
-						String proxyFilePathName = processingtaskResponse.getDestinationPathname(); 
-						String proxyFileBaseName = FilenameUtils.getBaseName(proxyFilePathName);
-						String proxyFilePath = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathName);
-				        FilenameFilter fileNameFilter = new FilenameFilter() {
-				            @Override
-				            public boolean accept(File dir, String name) {
-				            	if(FilenameUtils.getBaseName(name).equals(proxyFileBaseName))
-				            		return true;
-				               
-				               return false;
-				            }
-				         };
-						String[] files = new File(proxyFilePath).list(fileNameFilter);
-						for (String nthFileName : files) {
-							String filepathName = proxyFilePath + File.separator + nthFileName;
-							logger.trace("Now creating file record for - " + filepathName);
-							createFile(filepathName, outputArtifact, domainSpecificFileRepository);	
-						}
-					}
-
+					//}
 					staus = Status.completed;
 					//logger.info("Proxy for " + containerName + " created successfully in " + ((proxyEndTime - proxyStartTime)/1000) + " seconds - " +  generatedProxyFilePathname);
 					logger.info("Processing Completed in " + ((endms - startms)/1000) + " seconds");

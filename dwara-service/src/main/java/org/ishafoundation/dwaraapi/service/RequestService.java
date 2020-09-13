@@ -54,7 +54,7 @@ public class RequestService extends DwaraService{
 	@Autowired
 	private VolumeService volumeService;
 	
-	public List<RequestResponse> getRequests(RequestType requestType, Action action, List<Status> statusList){
+	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
 		
 //		List<Status> statusList = new ArrayList<Status>();
@@ -75,6 +75,7 @@ public class RequestService extends DwaraService{
 		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, fromDate, toDate, pageNumber, pageSize);
 
 		for (Request request : requestList) {
+			logger.trace("Getting details for " + request.getId());
 			RequestResponse requestResponse = frameRequestResponse(request, requestType);
 
 			requestResponseList.add(requestResponse);

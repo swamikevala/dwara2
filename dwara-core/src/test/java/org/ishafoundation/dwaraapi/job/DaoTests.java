@@ -60,8 +60,12 @@ public class DaoTests{
 		List<Action> actionList = new ArrayList<Action>();
 		actionList.add(Action.map_tapedrives);
 		actionList.add(Action.initialize);
+		
 		RequestType requestType = RequestType.system; 
-		Action action = Action.ingest;
+		
+		List<Action> action = new ArrayList<Action>();
+		action.add(Action.ingest);
+		
 		List<Status> statusList = new ArrayList<Status>();
 		statusList.add(Status.queued);
 		statusList.add(Status.in_progress);

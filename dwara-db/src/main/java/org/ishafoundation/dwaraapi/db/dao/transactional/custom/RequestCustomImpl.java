@@ -33,7 +33,7 @@ public class RequestCustomImpl implements RequestCustom {
      */
     
 	@Override
-	public List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, Action action, List<Status> statusList, String user, LocalDateTime fromDate, LocalDateTime toDate, int pageNumber, int pageSize) {
+	public List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, List<Action> action, List<Status> statusList, String user, LocalDateTime fromDate, LocalDateTime toDate, int pageNumber, int pageSize) {
 		
 		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 		
@@ -65,7 +65,7 @@ public class RequestCustomImpl implements RequestCustom {
 
 
 	
-	private List<Predicate> getFramedPredicates(Root<Request> requestRoot, CriteriaBuilder cb, RequestType requestType, Action action, List<Status> statusList, String user,
+	private List<Predicate> getFramedPredicates(Root<Request> requestRoot, CriteriaBuilder cb, RequestType requestType, List<Action> actionList, List<Status> statusList, String user,
 			LocalDateTime fromDate, LocalDateTime toDate) {
         
         
@@ -73,10 +73,15 @@ public class RequestCustomImpl implements RequestCustom {
 		if(requestType != null) {
 			predicates.add(cb.equal(requestRoot.get("type"), requestType));
 		}
-
-		if(action != null) {
-			predicates.add(cb.equal(requestRoot.get("actionId"), action));
-		}
+		
+	    if(actionList != null) {
+		    Path<String> actionIdPath = requestRoot.get("actionId");
+		    List<Predicate> actionPredicates = new ArrayList<>();
+		    for (Action action : actionList) {
+				actionPredicates.add(cb.equal(actionIdPath, action));
+			}
+			predicates.add(cb.or(actionPredicates.toArray(new Predicate[actionPredicates.size()])));
+	    } 
 
 	    if(statusList != null) {
 		    Path<String> statusIdPath = requestRoot.get("status");

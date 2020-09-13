@@ -46,10 +46,17 @@ public class RequestController {
 			RequestType requestType = null;
 			if(type != null)
 				requestType = RequestType.valueOf(type);
-			
-			Action actionEnum = null;
-			if(action != null)
-				actionEnum = Action.valueOf(action); 
+
+			List<Action> actionEnumList = null;
+			if(action != null) { // TODO - use optional
+				actionEnumList = new ArrayList<Action>();
+				String[] actionArrAsString = action.split(",");
+			   	
+			   	for (int i = 0; i < actionArrAsString.length; i++) {
+			   		Action actionEnum = Action.valueOf(actionArrAsString[i]);
+			   		actionEnumList.add(actionEnum);
+				}
+			}
 			
 			List<Status> statusList = null;
 			if(status != null) { // TODO - use optional
@@ -62,7 +69,7 @@ public class RequestController {
 				}
 			}
 			
-			requestResponseList = requestService.getRequests(requestType, actionEnum, statusList);
+			requestResponseList = requestService.getRequests(requestType, actionEnumList, statusList);
 		}catch (Exception e) {
 			String errorMsg = "Unable to get Request details - " + e.getMessage();
 			logger.error(errorMsg, e);

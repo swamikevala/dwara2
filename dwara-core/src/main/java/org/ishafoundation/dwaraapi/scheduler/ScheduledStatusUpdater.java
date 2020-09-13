@@ -265,16 +265,19 @@ public class ScheduledStatusUpdater {
 		for (Request nthUserRequest : userRequestList) {
 			int userRequestId = nthUserRequest.getId();
 			List<Request> systemRequestList = requestDao.findAllByRequestRefId(userRequestId);
+
 			
 			boolean anyQueued = false;
 			boolean anyInProgress = false;
 			boolean anyComplete = false;
 			boolean hasFailures = false;
+			boolean anyPartiallyCompleted = false;
+			boolean isAllQueued = true;
 			boolean isAllComplete = true;
 			boolean isAllCancelled = true;
-			
+						
 			for (Request nthSystemRequest : systemRequestList) {
-				Status status = nthSystemRequest.getStatus();
+			Status status = nthSystemRequest.getStatus();
 				switch (status) {
 					case queued:
 						anyQueued = true;
@@ -283,18 +286,28 @@ public class ScheduledStatusUpdater {
 						break;
 					case in_progress:
 						anyInProgress = true;
+						isAllQueued = false;
 						isAllComplete = false;
 						isAllCancelled = false;
 						break;
 					case completed:
 						anyComplete = true;
+						isAllQueued = false;
 						isAllCancelled = false;
-						break;
+						break;						
 					case cancelled:
+						isAllQueued = false;
 						isAllComplete = false;
 						break;
 					case failed:
 						hasFailures = true;
+						isAllQueued = false;
+						isAllComplete = false;
+						isAllCancelled = false;						
+						break;
+					case partially_completed:
+						anyPartiallyCompleted = true;
+						isAllQueued = false;
 						isAllComplete = false;
 						isAllCancelled = false;						
 						break;
@@ -302,27 +315,89 @@ public class ScheduledStatusUpdater {
 						break;
 				}
 			}
+//
+//			boolean anyQueued = false;
+//			boolean anyInProgress = false;
+//			boolean anyComplete = false;
+//			boolean hasFailures = false;
+//			boolean isAllComplete = true;
+//			boolean isAllCancelled = true;
+//			
+//			for (Request nthSystemRequest : systemRequestList) {
+//				Status status = nthSystemRequest.getStatus();
+//				switch (status) {
+//					case queued:
+//						anyQueued = true;
+//						isAllComplete = false;
+//						isAllCancelled = false;
+//						break;
+//					case in_progress:
+//						anyInProgress = true;
+//						isAllComplete = false;
+//						isAllCancelled = false;
+//						break;
+//					case completed:
+//						anyComplete = true;
+//						isAllCancelled = false;
+//						break;
+//					case cancelled:
+//						isAllComplete = false;
+//						break;
+//					case failed:
+//						hasFailures = true;
+//						isAllComplete = false;
+//						isAllCancelled = false;						
+//						break;
+//					default:
+//						break;
+//				}
+//			}
+
+			logger.trace(nthUserRequest.getId() + " ::: " + "isAllQueued - " + isAllQueued + " isAllComplete - " + isAllComplete + " isAllCancelled - " + isAllCancelled + " anyQueued - " + 
+			anyQueued + " anyInProgress - " + anyInProgress + " anyComplete - " + anyComplete + " hasFailures - " + hasFailures + " anyPartiallyCompleted - " + anyPartiallyCompleted);
+			
+//			Status status = Status.queued;
+//			if(anyInProgress) { // Some System Requests are running
+//				status = Status.in_progress; 
+//			}
+//			else if(anyQueued && !anyInProgress) { // Some System Requests are queued, and none are in progress
+//				status = Status.queued; 
+//			}
+//			else if(isAllCancelled) {
+//				status = Status.cancelled;
+//			}
+//			else if(isAllComplete) { // All System Requests have successfully completed.
+//				status = Status.completed; 
+//			}
+//			else if(hasFailures) {
+//				status = Status.failed;
+//			}
+//			else if(anyComplete) { // Some System Requests have successfully completed, but some are cancelled
+//				status = Status.partially_completed; 
+//			}
 
 			Status status = Status.queued;
-			if(anyInProgress) { // Some System Requests are running
-				status = Status.in_progress; 
-			}
-			else if(anyQueued && !anyInProgress) { // Some System Requests are queued, and none are in progress
+			if(isAllQueued) {
 				status = Status.queued; 
 			}
 			else if(isAllCancelled) {
 				status = Status.cancelled;
 			}
-			else if(isAllComplete) { // All System Requests have successfully completed.
+			else if(isAllComplete) { // All jobs have successfully completed.
 				status = Status.completed; 
+			}
+			else if(anyQueued || anyInProgress) {
+				status = Status.in_progress;
 			}
 			else if(hasFailures) {
 				status = Status.failed;
 			}
-			else if(anyComplete) { // Some System Requests have successfully completed, but some are cancelled
+			else if(anyComplete && anyPartiallyCompleted) { // Some jobs have successfully completed, and some were skipped, or failed and then marked completed.
 				status = Status.partially_completed; 
 			}
-
+			
+			logger.trace(nthUserRequest.getId() + " ::: " + status);
+			
 			nthUserRequest.setStatus(status); 
 			requestDao.save(nthUserRequest);
 		}

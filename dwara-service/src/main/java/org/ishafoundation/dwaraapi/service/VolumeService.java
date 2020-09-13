@@ -134,7 +134,7 @@ public class VolumeService extends DwaraService {
 
     	LocalDateTime requestedAt = LocalDateTime.now();
 		request.setRequestedAt(requestedAt);
-		
+		request.setRequestedBy(user);
 		RequestDetails details = new RequestDetails();
 		JsonNode postBodyJson = getRequestDetails(initializeRequestList); 
 		details.setBody(postBodyJson);
@@ -148,7 +148,7 @@ public class VolumeService extends DwaraService {
 		
 		for (InitializeUserRequest nthInitializeRequest : initializeRequestList) {
 			Request systemrequest = new Request();
-			request.setType(RequestType.system);
+			systemrequest.setType(RequestType.system);
 			systemrequest.setRequestRef(request);
 			systemrequest.setActionId(request.getActionId());
 			systemrequest.setStatus(Status.queued);

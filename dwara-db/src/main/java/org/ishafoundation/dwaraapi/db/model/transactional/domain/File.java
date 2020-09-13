@@ -6,7 +6,6 @@ import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Lob;
 import javax.persistence.MappedSuperclass;
 
 @MappedSuperclass
@@ -19,8 +18,8 @@ public class File {
 	@Column(name="id")
 	private int id;
 	
-	@Lob
-	@Column(name="pathname", unique = true)
+	// TODO - Anything > 3072 - throws Specified key was too long; max key length is 3072 bytes and doesnt set the unique constraint
+	@Column(length=3072, name="pathname", unique=true)
 	private String pathname;
 
 	@Column(name="checksum")
