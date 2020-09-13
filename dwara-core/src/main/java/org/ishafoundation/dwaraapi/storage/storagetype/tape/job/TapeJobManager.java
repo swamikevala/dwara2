@@ -131,7 +131,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		} 
 		else if(storagetaskAction == Action.initialize) {
 			checkAndUpdateStatusesToInProgress(firstStorageJob.getJob());
-			logger.debug("Unloading all tapes from all drives");
+			logger.debug("Now preparing all Tape Drives for Initialization");
 			List<DriveDetails> preparedDrives = null;
 			try {
 				preparedDrives = tapeDeviceUtil.prepareAllTapeDrivesForBlockingJobs();

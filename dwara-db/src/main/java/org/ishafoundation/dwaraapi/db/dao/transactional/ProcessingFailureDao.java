@@ -9,5 +9,7 @@ import org.springframework.data.repository.CrudRepository;
 public interface ProcessingFailureDao extends CrudRepository<ProcessingFailure,ProcessingFailureKey> {
 	
 	List<ProcessingFailure> findAllByJobId(int jobId);
+	
+	long countByJobId(int jobId);
 
 }

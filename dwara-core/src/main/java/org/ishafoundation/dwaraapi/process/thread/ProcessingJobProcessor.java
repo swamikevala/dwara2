@@ -8,16 +8,18 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -55,6 +57,9 @@ public class ProcessingJobProcessor implements Runnable{
 	
 	@Autowired
 	private JobDao jobDao;	
+	
+	@Autowired
+	private ProcessingtaskDao processingtaskDao;
 	
 	@Autowired
 	private ProcessingFailureDao failureDao;
@@ -336,12 +341,18 @@ public class ProcessingJobProcessor implements Runnable{
 			failureReason = "Unable to complete " + processingtaskName + " for " + identifierSuffix + " :: " + e.getMessage();
 			logger.error(failureReason, e);
 			
-			// TODO : Work on the threshold failures...
-			// Only unique -- 
-			logger.debug("DB Failure Creation");
-			ProcessingFailure failure = new ProcessingFailure(file.getId(), job, e.getMessage());
-			failure = failureDao.save(failure);	
-			logger.debug("DB Failure Creation - " + failure.getId());   
+			Processingtask processingtask = processingtaskDao.findById(processingtaskName).get();
+			int maxErrorsAllowed = processingtask.getMaxErrors();
+			long noOfFailuresLogged = failureDao.countByJobId(job.getId());
+
+			// Only the threshold no. of failures on a job need to be persisted in DB...
+			if(noOfFailuresLogged < maxErrorsAllowed) {
+				// TODO how to ensure the failures logged in are Only unique???
+				logger.debug("DB Failure Creation");
+				ProcessingFailure failure = new ProcessingFailure(file.getId(), job, e.getMessage());
+				failure = failureDao.save(failure);	
+				logger.debug("DB Failure Creation - " + failure.getId());
+			}
 		}
 		finally {
 			if(tFileJob != null) {

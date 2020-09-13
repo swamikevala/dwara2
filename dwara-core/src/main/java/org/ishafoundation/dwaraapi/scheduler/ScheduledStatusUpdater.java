@@ -9,17 +9,15 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
@@ -49,13 +47,7 @@ public class ScheduledStatusUpdater {
 	private TFileJobDao tFileJobDao;
 	
 	@Autowired
-	private JobUtil jobUtil;
-	
-	@Autowired
 	private DomainUtil domainUtil;
-
-	@Autowired
-	private Configuration configuration;
 	
 	@Value("${scheduler.enabled:true}")
 	private boolean isEnabled;
@@ -134,8 +126,10 @@ public class ScheduledStatusUpdater {
 					jobDao.save(job);
 					logger.info("Job " + job.getId() + " - " + status);
 					
-					tFileJobDao.deleteAll(jobFileList);
-					logger.info("tFileJob cleaned up files of Job " + job.getId());
+					if(status == Status.completed) {
+						tFileJobDao.deleteAll(jobFileList);
+						logger.info("tFileJob cleaned up files of Job " + job.getId());
+					}
 				}
 			}
 		}
@@ -232,20 +226,14 @@ public class ScheduledStatusUpdater {
 			nthRequest.setStatus(status); 
 			requestDao.save(nthRequest);
 			
-			if(nthRequest.getActionId() == Action.ingest) {
+			if(nthRequest.getActionId() == Action.ingest && status == Status.completed) {
 				
 				Domain domain = domainUtil.getDomain(nthRequest);
 				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 
 				Artifact artifact = artifactRepository.findByWriteRequestId(nthRequest.getId()); 
 
-				String destRootLocation = null;
-				if(status == Status.completed || status == Status.partially_completed) {
-					destRootLocation = artifact.getArtifactclass().getPathPrefix();
-				}
-				else if(status == Status.cancelled) {
-					destRootLocation = nthRequest.getDetails().getStagedFilepath();
-				}
+				String destRootLocation = artifact.getArtifactclass().getPathPrefix();
 
 				if(destRootLocation != null) {
 					try {

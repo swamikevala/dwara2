@@ -99,7 +99,7 @@ public class TapeDeviceUtil {
 							driveDetails = prepareDriveForBlockingJobs(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map);
 						}
 					} catch (Exception e) {
-						logger.error(e.getMessage() + " Skipping getting details for - " + tapedriveDeviceId);
+						logger.error(e.getMessage() + " Skipping getting details for - " + tapedriveDeviceId, e);
 						continue;
 					}
 					
@@ -108,6 +108,8 @@ public class TapeDeviceUtil {
 				}
 			}
 		}
+		if(driveDetailsList.size() == 0)
+			throw new Exception("No drive available");
 		return driveDetailsList;
 	}
 

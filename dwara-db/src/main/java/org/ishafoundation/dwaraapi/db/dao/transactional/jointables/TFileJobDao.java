@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.db.dao.transactional;
+package org.ishafoundation.dwaraapi.db.dao.transactional.jointables;
 
 import java.util.List;
 

@@ -1,13 +1,13 @@
 package org.ishafoundation.dwaraapi.process.thread;
 
 import java.io.File;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -19,9 +19,9 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
@@ -222,6 +222,13 @@ public class ProcessingJobManager implements Runnable{
 					file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
 				logger.trace("file - " + file.getId());
 
+				// Requeue scenario - Only failed files are to be continued...
+				Optional<TFileJob> tFileJobDB = tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId()));
+				if(tFileJobDB.isPresent() && tFileJobDB.get().getStatus() != Status.failed) {
+					logger.debug(job.getId() + " already Inprogress/completed. Skipping it...");
+					continue;
+				}
+				
 				// This check is because of the same file getting queued up for processing again...
 				// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
 				// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
@@ -236,7 +243,8 @@ public class ProcessingJobManager implements Runnable{
 						break;
 					}
 				}
-				if(!alreadyQueued && tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId())).get() == null) { // only when the job is not already dispatched to the queue to be executed, send it now...
+				
+				if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
 					TFileJob tFileJob = new TFileJob();
 					tFileJob.setId(new TFileJobKey(file.getId(), job.getId()));
 					tFileJob.setJob(job);

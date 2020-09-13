@@ -1,27 +1,41 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class RequestService extends DwaraService{
@@ -69,20 +83,84 @@ public class RequestService extends DwaraService{
 	}
 	
 	
-	public RequestResponse cancelRequest(int requestId){
-//		check isRequestCancellable
+	public RequestResponse cancelRequest(int requestId) throws Exception{
+		Request userRequest = null;
+		try {
+			List<Job> jobList = jobDao.findAllByRequestId(requestId);
+			for (Job job : jobList) {
+				if(job.getStatus() == Status.queued)
+					job.setStatus(Status.cancelled);
+				else
+					throw new DwaraException(requestId + " request cannot be cancelled. All jobs should be in queued status");
+			}
+			
+			userRequest = new Request();
+	    	userRequest.setType(RequestType.user);
+			userRequest.setActionId(Action.cancel);
+			userRequest.setStatus(Status.in_progress);
+			User user = getUserObjFromContext();
+	    	String requestedBy = user.getName();
+	    	userRequest.setRequestedBy(user);
+			userRequest.setRequestedAt(LocalDateTime.now());
+			RequestDetails details = new RequestDetails();
+			ObjectMapper mapper = new ObjectMapper();
+	
+			HashMap<String, Object> data = new HashMap<String, Object>();
+	    	data.put("requestId", requestId);
+	    	
+	    	String jsonAsString = mapper.writeValueAsString(data);
+			JsonNode postBodyJson = mapper.readValue(jsonAsString, JsonNode.class);
+			details.setBody(postBodyJson);
+			userRequest.setDetails(details);
+			
+	    	userRequest = requestDao.save(userRequest);
+	    	int userRequestId = userRequest.getId();
+	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
+	
+			
+			jobDao.saveAll(jobList);
+			
+			Request requestToBeCancelled = requestDao.findById(requestId).get();
+			requestToBeCancelled.setStatus(Status.cancelled);
+			requestDao.save(requestToBeCancelled);
+			
+			if(requestToBeCancelled.getActionId() == Action.ingest) {
+				
+				Domain domain = domainUtil.getDomain(requestToBeCancelled);
+				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+				Artifact artifact = artifactRepository.findByWriteRequestId(requestToBeCancelled.getId()); 
+	
+				String destRootLocation = requestToBeCancelled.getDetails().getStagedFilepath();
+				if(destRootLocation != null) {
+					try {
+						java.io.File srcFile = FileUtils.getFile(artifact.getArtifactclass().getPathPrefix(), artifact.getName());
+						java.io.File destFile = FileUtils.getFile(destRootLocation, Status.cancelled.name(), artifact.getName());
+	
+						if(srcFile.isFile())
+							Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destFile.getAbsolutePath())));		
+						else
+							Files.createDirectories(destFile.toPath());
 		
-		List<Job> jobList = jobDao.findAllByRequestId(requestId);
-		for (Job job : jobList) {
-			job.setStatus(Status.cancelled);
+						Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+					}
+					catch (Exception e) {
+						logger.error("Unable to move file "  + e.getMessage());
+					}
+				}
+			}
+			
+			userRequest.setStatus(Status.completed);
+			userRequest = requestDao.save(userRequest);
+			
+			return frameRequestResponse(requestToBeCancelled, RequestType.system);
 		}
-		jobDao.saveAll(jobList);
-		
-		Request request = requestDao.findById(requestId).get();
-		request.setStatus(Status.cancelled);
-		requestDao.save(request);
-		
-		return frameRequestResponse(request, RequestType.system);
+		catch (Exception e) {
+			if(userRequest != null && userRequest.getId() != 0) {
+				userRequest.setStatus(Status.failed);
+				userRequest = requestDao.save(userRequest);
+			}
+			throw e;
+		}
 	}
 	
 	private RequestResponse frameRequestResponse(Request request, RequestType requestType){
