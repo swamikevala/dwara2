@@ -171,7 +171,9 @@ public class ProcessingJobManager implements Runnable{
 				outputArtifactName = getOutputArtifactName(outputArtifactclass, artifactName);
 				outputArtifactPathname = getOutputArtifactPathname(outputArtifactclass, outputArtifactName);
 			}
-			
+			logger.trace("inputArtifactPath " + inputArtifactPath);
+			logger.trace("outputArtifactName " + outputArtifactName);
+			logger.trace("outputArtifactPathname " + outputArtifactPathname);
 			
 			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, inputArtifact);
 	
@@ -183,6 +185,8 @@ public class ProcessingJobManager implements Runnable{
 				
 			Collection<LogicalFile> selectedFileList = getLogicalFileList(ft, inputArtifactPath);
 			int filesToBeProcessedCount = selectedFileList.size();
+			logger.trace("filesToBeProcessedCount " + filesToBeProcessedCount);
+			
 			if(filesToBeProcessedCount == 0)
 				throw new Exception("No files to process. Check supported extensions...");
 			
@@ -190,15 +194,15 @@ public class ProcessingJobManager implements Runnable{
 				LogicalFile logicalFile = (LogicalFile) iterator.next(); // would have an absolute file like C:\data\ingested\14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS and its sidecar files
 				String logicalFilePath = logicalFile.getAbsolutePath();
 				logger.trace("logicalFilePath - " + logicalFilePath);
-				if(logicalFilePath.contains(configuration.getJunkFilesStagedDirName())) // skipping junk files
+				if(logicalFilePath.contains(configuration.getJunkFilesStagedDirName())) { // skipping junk files
+					logger.trace("Junk file. Skipping it");
 					continue;			
-
+				}
 				String filePath = FilenameUtils.getFullPath(logicalFilePath) + FilenameUtils.getName(logicalFilePath);
 				
 				String artifactNamePrefixedFilePathname = null; // 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4 || 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
 				String outputFilePath = null; // /data/transcoded/public
-				if(logicalFilePath.equals(filePath)) { 
-					// means input artifact is a file and not a directory
+				if(logicalFilePath.equals(inputArtifactPath)) { // means input artifact is a file and not a directory
 					artifactNamePrefixedFilePathname = artifactName; // logicalFilePath.replace(inputArtifactPath, artifactName); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4
 					if(outputArtifactPathname != null)
 						outputFilePath = FilenameUtils.getFullPathNoEndSeparator(outputArtifactPathname);
@@ -215,7 +219,7 @@ public class ProcessingJobManager implements Runnable{
 							outputFilePath = outputArtifactPathname + File.separator + FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
 					}
 				}
-				
+				logger.trace("outputFilePath - " + outputFilePath);
 				//logger.info("Now processing - " + path);
 				org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
 				if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))

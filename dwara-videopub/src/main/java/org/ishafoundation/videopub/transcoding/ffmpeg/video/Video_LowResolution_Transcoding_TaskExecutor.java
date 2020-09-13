@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
@@ -33,6 +34,17 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	public ProcessingtaskResponse execute(String taskName, String inputArtifactName, String outputArtifactName,
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile,
 			String category, String destinationDirPath) throws Exception {
+		
+		if(logger.isTraceEnabled()) {
+			logger.trace("taskName " + taskName);
+			logger.trace("inputArtifactName " + inputArtifactName);
+			logger.trace("outputArtifactName " + outputArtifactName);
+			logger.trace("fileId " + file.getId());
+			logger.trace("domain " + domain.name());
+			logger.trace("logicalFile " + logicalFile.getAbsolutePath());
+			logger.trace("category " + category);
+			logger.trace("destinationDirPath " + destinationDirPath);
+		}
 		String sourceFilePathname = logicalFile.getAbsolutePath();
 		String clipName = FilenameUtils.getName(sourceFilePathname);
 		
@@ -44,11 +56,11 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		
 		String m01FileLocPath = sourceFilePathname.replace("." + FilenameUtils.getExtension(sourceFilePathname), "M01.XML");
 	
-		String baseName = FilenameUtils.getBaseName(sourceFilePathname);
-		if(new File(sourceFilePathname).isFile())
-			baseName = FilenameUtils.getBaseName(outputArtifactName);
+		String fileName = FilenameUtils.getBaseName(sourceFilePathname);
+		if(StringUtils.isNotBlank(FilenameUtils.getExtension(inputArtifactName))) // means the source file is the artifact itself and not a directory
+			fileName = FilenameUtils.getBaseName(outputArtifactName);
 		
-		String thumbnailTargetLocation = destinationDirPath + File.separator + baseName + ".jpg";
+		String thumbnailTargetLocation = destinationDirPath + File.separator + fileName + ".jpg";
 	
 		/*************** THUMBNAIL GENERATION ***************/
 		long thumbnailStartTime = System.currentTimeMillis();
@@ -71,7 +83,7 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		 * we had to add the containerName(mlID-cardId-processName say e.g., something like 123-345-PROXYGENERATION) as XAVC file names across card folders are same...
 		 * 
 		 */
-		String proxyTargetLocation = destinationDirPath + File.separator + baseName + ".mp4";		
+		String proxyTargetLocation = destinationDirPath + File.separator + fileName + ".mp4";		
 		
 		String highResMetaTargetLocation = proxyTargetLocation.replace(".mp4", ".mp4_ffprobe_out");
 		

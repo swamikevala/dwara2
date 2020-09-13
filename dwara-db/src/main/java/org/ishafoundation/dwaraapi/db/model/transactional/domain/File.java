@@ -6,6 +6,7 @@ import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.MappedSuperclass;
 
 @MappedSuperclass
@@ -18,6 +19,7 @@ public class File {
 	@Column(name="id")
 	private int id;
 	
+	@Lob
 	@Column(name="pathname", unique = true)
 	private String pathname;
 

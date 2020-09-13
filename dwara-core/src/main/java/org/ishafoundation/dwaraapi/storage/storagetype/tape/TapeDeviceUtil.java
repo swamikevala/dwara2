@@ -156,7 +156,7 @@ public class TapeDeviceUtil {
 			if(tActivedevice == null) {	
 				isBusy = false; // available...
 				// verify once again
-				getDriveDetails(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map);
+				driveDetails = getDriveDetails(tapelibraryName, tapedriveDeviceId, dataTransferElementName, driveAutoloaderAddress, driveAutoloaderAddress_DataTransferElement_Map);
 		
 				if(driveDetails != null && driveDetails.getMtStatus().isBusy()) {
 					throw new Exception("Something wrong. Driver " + dataTransferElementName + " mt status and dwara's tactivedevice not in sync");

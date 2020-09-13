@@ -68,7 +68,7 @@ public class JobService extends DwaraService{
 		try {		
 			Job jobToBeRequeued = jobDao.findById(jobId).get();
 			if(jobToBeRequeued.getStatus() != Status.completed_failures && jobToBeRequeued.getStatus() != Status.failed)
-				throw new DwaraException("Job cannot be requeued. Only failed or a job completed with some failures can be rerun. Any extra protection needed for avoiding written content getting requeued again?"); //
+				throw new DwaraException("Job cannot be requeued. Only failed or a job completed with some failures can be rerun. @TEAM - Any extra protection needed for avoiding written content getting requeued again?"); //
 
 	    	long jobRunCount = jobRunDao.countByJobId(jobId);
 	    	int requeueId = (int) (jobRunCount + 1);
@@ -99,6 +99,7 @@ public class JobService extends DwaraService{
 	    	// update the reference table    	
 	    	JobRun jobRun = new JobRun();
 	    	jobRun.setId(new JobRunKey(jobId, requeueId));
+	    	jobRun.setJob(jobToBeRequeued);
 	    	jobRun.setStartedAt(jobToBeRequeued.getStartedAt());
 	    	jobRun.setCompletedAt(jobToBeRequeued.getCompletedAt());
 	    	jobRun.setStatus(jobToBeRequeued.getStatus());

@@ -13,12 +13,22 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
+import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class LogicalFileHelper {
 	
+	private static final Logger logger = LoggerFactory.getLogger(LogicalFileHelper.class);
+	
 	public Collection<LogicalFile> getFiles(String artifactPath, String[] extensions, boolean needSidecarFiles, String[] sidecarExtensions){
+		logger.trace("artifactPath " + artifactPath);
+		logger.trace("extensions " + extensions);
+		logger.trace("needSidecarFiles " + needSidecarFiles);
+		logger.trace("sidecarExtensions " + sidecarExtensions);
+		
 		List<LogicalFile> outputList = new ArrayList<LogicalFile>();
 		
 		String[] sourceExtensions = null;

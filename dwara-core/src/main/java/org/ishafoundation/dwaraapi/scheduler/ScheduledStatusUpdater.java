@@ -202,6 +202,8 @@ public class ScheduledStatusUpdater {
 				}
 			}
 
+			logger.trace(nthRequest.getId() + " ::: " + "isAllQueued - " + isAllQueued + " isAllComplete - " + isAllComplete + " isAllCancelled - " + isAllCancelled + " anyQueued - " + 
+			anyQueued + " anyInProgress - " + anyInProgress + " anyComplete - " + anyComplete + " hasFailures - " + hasFailures + " anyMarkedCompleted - " + anyMarkedCompleted);
 			
 			Status status = Status.queued;
 			if(isAllQueued) {
@@ -222,6 +224,8 @@ public class ScheduledStatusUpdater {
 			else if(anyComplete && anyMarkedCompleted) { // Some jobs have successfully completed, and some were skipped, or failed and then marked completed.
 				status = Status.partially_completed; 
 			}
+			
+			logger.trace(nthRequest.getId() + " ::: " + status);
 			
 			nthRequest.setStatus(status); 
 			requestDao.save(nthRequest);
