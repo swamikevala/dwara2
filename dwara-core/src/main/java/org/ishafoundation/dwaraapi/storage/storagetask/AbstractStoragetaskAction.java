@@ -66,33 +66,8 @@ public abstract class AbstractStoragetaskAction{
 		storageJob.setJob(job);
 		return storageJob;
 	}
-	
-	public void postProcessDbUpdates(Job job, ArchiveResponse archiveResponse) {
-		// If needed to be overwritten by subclass implementations
-	}
 
-//	public ArchiveResponse process(StoragetypeJob storagejob) throws Throwable {
-//		Job job = null;
-//		ArchiveResponse archiveResponse = null;
-//		try {
-////			job = storagejob.getJob();
-////			jobUtils.updateJobInProgress(job);
-//			
-//			archiveResponse = execute(storagejob);
-//			
-////			jobUtils.updateJobCompleted(job);
-//		}catch (Exception e) {
-////			jobUtils.updateJobFailed(job);
-//			e.printStackTrace();
-//			throw e;
-//		}
-//		return archiveResponse;
-//
-//	}
-
-	//public abstract ArchiveResponse execute(StoragetypeJob storagejob) throws Throwable;
-
-	private Job saveJob(Job job) {
+	protected Job saveJob(Job job) {
 		job = jobDao.save(job);
 		logger.info(DwaraConstants.JOB + job.getId());
 		return job;

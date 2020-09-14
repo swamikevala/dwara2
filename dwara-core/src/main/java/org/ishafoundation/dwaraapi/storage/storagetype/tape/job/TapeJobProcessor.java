@@ -11,12 +11,14 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
+import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.label.LabelManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDriveMapper;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.TapeDriveManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
+import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +45,9 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 
 	@Autowired
 	private LabelManager labelManager;
+	
+	@Autowired
+	private VolumeUtil volumeUtil;
 	
 	@Autowired
 	private ArtifactVolumeRepositoryUtil artifactVolumeRepositoryUtil;
@@ -87,13 +92,27 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	protected void beforeWrite(SelectedStorageJob selectedStorageJob) throws Exception {
 		super.beforeWrite(selectedStorageJob);
 		TapeJob tapeJob = (TapeJob) selectedStorageJob;
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
 		
+		Volume tapeToBeUsed = storageJob.getVolume();
+
+		/**
+		 * No need to recheck here again as TapeJobSelector does the check on the artifact size and the selected Tape' size and excludes the job from selection, if size doesnt fit
+		Volume actualTapeToBeUsed = volumeUtil.getToBeUsedPhysicalVolume(storageJob.getDomain(), tapeToBeUsed.getGroupRef().getId(), storageJob.getArtifactSize());
+		if(!actualTapeToBeUsed.getId().equals(tapeToBeUsed.getId())) {
+			// means at the time of building the storage job the volume selected had enough size 
+			// but after it got selected 
+			// an already running job updated the new volume size - which is probably making this jobs' artifatsize not fit in the selected tape
+			// TODO : ???
+		}
+		**/
+		
 		loadTapeAndCheck(selectedStorageJob);
 		
-		Volume tapeToBeUsed = tapeJob.getStorageJob().getVolume();
-		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(tapeJob.getStorageJob().getDomain(), tapeToBeUsed);
+		 
+		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(storageJob.getDomain(), tapeToBeUsed);
 		
 		int blockNumberToBePositioned = 0;
 		if(lastArtifactOnVolumeEndVolumeBlock == 0) // during BOT its just the volumelabel + tapemark

@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -66,11 +67,14 @@ public class ScheduledStatusUpdater {
 	public void updateTransactionalTablesStatus() {
 		updateProcessingJobsStatus();
 		
-		List<Request> systemRequestList = requestDao.findAllByTypeAndStatus(RequestType.system, Status.in_progress);
-		updateDependentJobsStatus(systemRequestList);
+		List<Status> statusList = new ArrayList<Status>();
+		statusList.add(Status.in_progress);
+		List<Request> systemRequestList = requestDao.findAllByTypeAndStatusIn(RequestType.system, statusList);
+		//updateDependentJobsStatus(systemRequestList);
 		updateSystemRequestStatus(systemRequestList);
 		
-		List<Request> userRequestList = requestDao.findAllByTypeAndStatus(RequestType.user, Status.in_progress);
+		statusList.add(Status.queued);
+		List<Request> userRequestList = requestDao.findAllByTypeAndStatusIn(RequestType.user, statusList);
 		updateUserRequestStatus(userRequestList);
 	}
 	

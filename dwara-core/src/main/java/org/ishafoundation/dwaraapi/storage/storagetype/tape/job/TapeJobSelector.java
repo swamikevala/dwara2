@@ -608,34 +608,21 @@ public class TapeJobSelector {
 								StorageJob currentlyRunningWriteJobAsStorageJobObject = (StorageJob) currentlyRunningWriteJobsIterator.next();
 								Job crwj = currentlyRunningWriteJobAsStorageJobObject.getJob();
 								
-								/* TODO @Swami
-								 * same request or different request, if the 3 copies are loaded and power goes off then all 3 could go bad
-								 * means at no point in time we should have all the 3 copies loaded at the same time in drives?
-								 * So commenting out the below...
-								if(tapeJob.getJob().getRequestId() != crwj.getRequestId()) // if the jobs are for different requests then no need to check concurrent writes. Yes swami clarified...
-									return tapeJob;
-								*/
-
-								String crwjArtifactClassId = crwj.getRequest().getDetails().getArtifactclassId();
-//								Integer inputArtifactId = crwj.getInputArtifactId();
-//								Domain domain = crwj.getRequest().getDomain();
-//								Artifact artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);
-//
-//								int crwjArtifactClassId = artifact.getArtifactclass().getId();
-								//							int crij_poolId = crij_copy.getPoolId();
-								//							int crij_copyNumber = crij_copy.getCopyNumber();
-
-								// TODO ask swami - can we allow if V5A001 doing copy1 for artifact1 and V5B001 do copy2 on artifact2? Answer should be NO - as the order changes...
-								// What happens if 2 artifactclasses share same set of pools... The check ideally should be on the copy tapes involved... for eg., if we have V5A001 then we shouldnt have V5B001 and V5C001
+								String crwjGroupVolumeId = crwj.getGroupVolume().getId(); // R1
+								int crwjCopyId = crwj.getGroupVolume().getCopy().getId(); // 1
+								String crwjPool = StringUtils.substringBeforeLast(crwjGroupVolumeId, crwjCopyId+""); // R
 								
-								if(crwjArtifactClassId != tapeJobArtifactClassId) { // only if artifactclasses are different. if they are same we should not allow concurrent writes...
-									logger.trace("Running write job " + crwj.getId() + " is not a concurrent copy to " + tapeJob.getJob().getId());
-									
-								}else {
+								String tapeJobGroupVolumeId = tapeJob.getJob().getGroupVolume().getId(); // R2
+								int tapeJobCopyId = tapeJob.getJob().getGroupVolume().getCopy().getId(); // 2
+								String tapeJobPool = StringUtils.substringBeforeLast(tapeJobGroupVolumeId, tapeJobCopyId+""); // R
+								if(tapeJobPool.equals(crwjPool)) { 
+								//if(crwjArtifactClassId.equals(tapeJobArtifactClassId)) { // only if artifactclasses are different. if they are same we should not allow concurrent writes...
 									logger.trace("Running write job " + crwj.getId() + " is a concurrent copy to " + tapeJob.getJob().getId() + ". So skipping " + tapeJob.getJob().getId() + " from processing and removing it from list so its not checked again");
 									isOverlappingConcurrency = true;
 									revisedTapeJobsList.remove(tapeJob);
 									break;
+								}else {
+									logger.trace("Running write job " + crwj.getId() + " is not a concurrent copy to " + tapeJob.getJob().getId());
 								}
 							}
 							if(!isOverlappingConcurrency) {

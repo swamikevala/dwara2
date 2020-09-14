@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
+import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -53,7 +54,8 @@ public class RequestController {
 				String[] actionArrAsString = action.split(",");
 			   	
 			   	for (int i = 0; i < actionArrAsString.length; i++) {
-			   		Action actionEnum = Action.valueOf(actionArrAsString[i]);
+					ActionAttributeConverter actionAttributeConverter = new ActionAttributeConverter();
+					Action actionEnum = actionAttributeConverter.convertToEntityAttribute(actionArrAsString[i]);
 			   		actionEnumList.add(actionEnum);
 				}
 			}

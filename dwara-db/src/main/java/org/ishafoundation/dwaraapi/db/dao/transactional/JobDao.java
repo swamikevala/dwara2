@@ -11,6 +11,11 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface JobDao extends CrudRepository<Job,Integer> {
 	
+	// used for toLoad api - get all jobs with volume id and storagetask is not null and status is queued
+//	List<Job> findAllByVolumeIdIsNotNullAndStoragetaskActionIdIsNotNullAndStatus(Status status);
+//	List<Job> findAllByGroupVolumeIdIsNotNullAndStoragetaskActionIdIsNotNullAndStatus(Status status);
+	List<Job> findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status status);
+	
 	List<Job> findAllByStatusOrderById(Status status);
 	
 	List<Job> findAllByStatusAndProcessingtaskIdIsNotNullOrderById(Status status); 
@@ -20,6 +25,11 @@ public interface JobDao extends CrudRepository<Job,Integer> {
 	// volume_id only for storagetasks, so storagetasks as a filter not needed - applicable for any storagetask like write/verify/restore
 	// completed at gets updated only when status=completed, but is Null and gets picked up by the query...
 	Job findTopByVolumeIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(String volumeId);
+	
+	// Used in determining tapeusageStatus
+	long countByVolumeIdAndStatus(String volumeId, Status status);
+	
+	long countByGroupVolumeIdAndStatus(String groupVolumeId, Status status);
 	
 //	List<Job> findAllBySubrequestIdOrderById(int subrequestId);
 //	

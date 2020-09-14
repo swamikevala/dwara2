@@ -14,6 +14,7 @@ DROP TABLE
 `file2_volume`, 
 `file_sequence`,
 `job`, 
+`jobrun`, 
 `processingfailure`, 
 `request`, 
 `t_activedevice`,
