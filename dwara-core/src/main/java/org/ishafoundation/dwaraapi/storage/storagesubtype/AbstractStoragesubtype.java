@@ -6,6 +6,7 @@ public abstract class AbstractStoragesubtype {
 	
 	protected Long capacity;
 	protected int generation;
+	protected String suffixToEndWith;
 	protected int[] writeSupportedGenerations;
 	protected int[] readSupportedGenerations;
 	
@@ -17,6 +18,10 @@ public abstract class AbstractStoragesubtype {
 		return generation;
 	}
 	
+	public String getSuffixToEndWith() {
+		return suffixToEndWith;
+	}
+
 	public int[] getWriteSupportedGenerations() {
 		return writeSupportedGenerations;
 	}
@@ -25,5 +30,10 @@ public abstract class AbstractStoragesubtype {
 		return readSupportedGenerations;
 	}
 	
-	public abstract void validateVolumeId(String volumeId) throws DwaraException;
+	public void validateVolumeId(String volumeId) throws DwaraException{
+		if(volumeId.endsWith(suffixToEndWith)) {
+			return;
+		}
+		throw new DwaraException("Volume should end with " + suffixToEndWith, null);
+	}
 }

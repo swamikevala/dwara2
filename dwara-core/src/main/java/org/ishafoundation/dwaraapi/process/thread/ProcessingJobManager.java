@@ -171,15 +171,20 @@ public class ProcessingJobManager implements Runnable{
 				outputArtifactName = getOutputArtifactName(outputArtifactclass, artifactName);
 				outputArtifactPathname = getOutputArtifactPathname(outputArtifactclass, outputArtifactName);
 			}
-			logger.trace("inputArtifactPath " + inputArtifactPath);
-			logger.trace("outputArtifactName " + outputArtifactName);
-			logger.trace("outputArtifactPathname " + outputArtifactPathname);
+			
+			logger.trace("inputArtifactPath " + inputArtifactPath); 	// /data/ingested/V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12 
+																		// /data/ingested/V22204_Test2_MBT20481_01.MP4 OR 
+																		// /data/transcoded/public/VL22204_Test2_MBT20481_01
+			logger.trace("outputArtifactName " + outputArtifactName); 	// null for processes that has no outputartifactclass OR 
+																		// VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
+			logger.trace("outputArtifactPathname " + outputArtifactPathname); 	// null OR 
+																				// /data/transcoded/public/VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
 			
 			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, inputArtifact);
 	
 			// TODO Cache filetypes...
 			Filetype ft = null;
-			if(!processingtask.getFiletypeId().equals("_all_")) {
+			if(!processingtask.getFiletypeId().equals("_all_")) { // if filetype is all means get all files...
 				ft = filetypeDao.findById(processingtask.getFiletypeId()).get();
 			}
 				
@@ -198,14 +203,13 @@ public class ProcessingJobManager implements Runnable{
 					logger.trace("Junk file. Skipping it");
 					continue;			
 				}
-				String filePath = FilenameUtils.getFullPath(logicalFilePath) + FilenameUtils.getName(logicalFilePath);
 				
 				String artifactNamePrefixedFilePathname = null; // 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4 || 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
 				String outputFilePath = null; // /data/transcoded/public
-				if(logicalFilePath.equals(inputArtifactPath)) { // means input artifact is a file and not a directory
-					artifactNamePrefixedFilePathname = artifactName; // logicalFilePath.replace(inputArtifactPath, artifactName); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4
+				if(StringUtils.isNotBlank(FilenameUtils.getExtension(inputArtifactPath))) { // means input artifact is a file and not a directory
+					artifactNamePrefixedFilePathname = artifactName; // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4
 					if(outputArtifactPathname != null)
-						outputFilePath = FilenameUtils.getFullPathNoEndSeparator(outputArtifactPathname);
+						outputFilePath = outputArtifactPathname;
 				}
 				else {
 					String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPath + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
@@ -268,8 +272,8 @@ public class ProcessingJobManager implements Runnable{
 					processingJobProcessor.setLogicalFile(logicalFile);
 					
 					processingJobProcessor.setOutputArtifactclass(outputArtifactclass);
-					processingJobProcessor.setOutputArtifactName(outputArtifactName); // VL20190701_071239.mp4
-					processingJobProcessor.setOutputArtifactPathname(outputArtifactPathname); // C:\data\transcoded\public\VL20190701_071239.mp4
+					processingJobProcessor.setOutputArtifactName(outputArtifactName); // VL20190701_071239
+					processingJobProcessor.setOutputArtifactPathname(outputArtifactPathname); // C:\data\transcoded\public\VL20190701_071239
 					processingJobProcessor.setDestinationDirPath(outputFilePath);
 					logger.info("Now kicking off - " + job.getId() + " " + logicalFilePath + " task " + processingtaskId);
 					executor.execute(processingJobProcessor);
@@ -294,20 +298,12 @@ public class ProcessingJobManager implements Runnable{
 		Sequence outputArtifactClassSequence = configurationTablesUtil.getSequence(outputArtifactClassSequenceId);
 		String inputArtifactSeqCode = sequenceUtil.getExtractedCode(outputArtifactClassSequence, inputArtifactName);
 		String outputArtifactSeqCode = sequenceUtil.getSequenceCode(outputArtifactClassSequence, inputArtifactName);
-		return inputArtifactName.replace(inputArtifactSeqCode, outputArtifactSeqCode);
+		String outputArtifactName = inputArtifactName.replace(inputArtifactSeqCode, outputArtifactSeqCode);
+		if(StringUtils.isNotBlank(FilenameUtils.getExtension(outputArtifactName))) // is a file - remove the extn
+			outputArtifactName =  FilenameUtils.getBaseName(outputArtifactName);
+		return outputArtifactName;
 	}
 
-//	private String getOutputArtifactName(Artifactclass outputArtifactclass, String inputArtifactName,  Artifactclass inputArtifactclass){
-//		String inputArtifactClassSequenceId = inputArtifactclass.getSequenceId();
-//		Sequence inputArtifactClassSequence = configurationTablesUtil.getSequence(inputArtifactClassSequenceId);
-//		String inputArtifactSeqCode = sequenceUtil.getExtractedCode(inputArtifactClassSequence, inputArtifactName);
-//
-//		
-//		String outputArtifactClassSequenceId = outputArtifactclass.getSequenceId();
-//		Sequence outputArtifactClassSequence = configurationTablesUtil.getSequence(outputArtifactClassSequenceId);
-//		String outputArtifactSeqCode = sequenceUtil.getSequenceCode(outputArtifactClassSequence, inputArtifactName);
-//		return inputArtifactName.replace(inputArtifactSeqCode, outputArtifactSeqCode);
-//	}
 	private String getOutputArtifactPathname(Artifactclass outputArtifactclass, String outputArtifactName) {
 		return outputArtifactclass.getPath() + java.io.File.separator + outputArtifactName;
 	}
@@ -330,7 +326,7 @@ public class ProcessingJobManager implements Runnable{
 		List<String> sidecarExtensions = null;
 		String[] sidecarExtensionsArray = null;
 		boolean includeSidecarFiles = false;
-		if(filetype != null) {
+		if(filetype != null) { // if filetype is null extensions are set to null which will get all the files listed - eg., process like checksum-gen
 			extensions = new ArrayList<String>();
 			sidecarExtensions = new ArrayList<String>();
 			List<ExtensionFiletype> extn_Filetype_List = filetype.getExtensions(); //extensionFiletypeDao.findAllByFiletypeId(filetype.getId());

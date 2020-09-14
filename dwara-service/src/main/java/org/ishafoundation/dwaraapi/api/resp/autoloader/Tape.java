@@ -13,6 +13,10 @@ public class Tape
     private TapeStatus status;
 
     private String barcode;
+    
+	private String volumeGroup;
+	
+	private String storagesubtype;
 
     private Boolean removeAfterJob;
 
@@ -51,6 +55,22 @@ public class Tape
 
 	public void setBarcode(String barcode) {
 		this.barcode = barcode;
+	}
+
+	public String getVolumeGroup() {
+		return volumeGroup;
+	}
+
+	public void setVolumeGroup(String volumeGroup) {
+		this.volumeGroup = volumeGroup;
+	}
+
+	public String getStoragesubtype() {
+		return storagesubtype;
+	}
+
+	public void setStoragesubtype(String storagesubtype) {
+		this.storagesubtype = storagesubtype;
 	}
 
 	public Boolean isRemoveAfterJob() {

@@ -12,6 +12,7 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.slf4j.Logger;
@@ -24,10 +25,13 @@ public class LogicalFileHelper {
 	private static final Logger logger = LoggerFactory.getLogger(LogicalFileHelper.class);
 	
 	public Collection<LogicalFile> getFiles(String artifactPath, String[] extensions, boolean needSidecarFiles, String[] sidecarExtensions){
-		logger.trace("artifactPath " + artifactPath);
-		logger.trace("extensions " + extensions);
+		logger.trace("artifactPath " + artifactPath); 	// /data/ingested/V22204_Test2_MBT20481_01.MP4
+														// /data/transcoded/public/V22204_Test2_MBT20481_01
+														// /data/ingested/V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12 
+														// /data/transcoded/public/VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
+		logger.trace("extensions " + Arrays.toString(extensions));
 		logger.trace("needSidecarFiles " + needSidecarFiles);
-		logger.trace("sidecarExtensions " + sidecarExtensions);
+		logger.trace("sidecarExtensions " + Arrays.toString(sidecarExtensions));
 		
 		List<LogicalFile> outputList = new ArrayList<LogicalFile>();
 		
@@ -44,18 +48,17 @@ public class LogicalFileHelper {
 		}
 		
 		Collection<File> sourceFilesList = new ArrayList<File>();
-		File artifactFile = new File(artifactPath);
-		if(artifactFile.isFile()) {
-			if(sourceExtensions == null || (sourceExtensions != null && Arrays.asList(sourceExtensions).contains(FilenameUtils.getExtension(artifactPath))))
-				sourceFilesList.add(artifactFile);
+		
+		if(StringUtils.isNotBlank(FilenameUtils.getExtension(artifactPath))) { // If artifact is a file...
+			if(sourceExtensions == null || (sourceExtensions != null && Arrays.asList(sourceExtensions).contains(FilenameUtils.getExtension(artifactPath)))) { // s
+				sourceFilesList.add(new File(artifactPath));
+			}
 		}
 		else
-			sourceFilesList = FileUtils.listFiles(artifactFile, sourceExtensions, true);
+			sourceFilesList = FileUtils.listFiles(new File(artifactPath), sourceExtensions, true);
 		
-		if(needSidecarFiles && artifactFile.isDirectory()) {
-		
+		if(needSidecarFiles) {		
 			HashMap<String, LogicalFile> name_To_File = new HashMap<String, LogicalFile>();
-			
 	
 			for (Iterator<File> iterator = sourceFilesList.iterator(); iterator.hasNext();) {
 				File file = (File) iterator.next();

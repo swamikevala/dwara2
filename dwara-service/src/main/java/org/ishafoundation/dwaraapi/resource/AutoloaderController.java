@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.AutoloaderResponse;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.Drive;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.DriveStatus;
@@ -35,6 +37,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.AutoloaderService;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
+import org.ishafoundation.dwaraapi.storage.storagesubtype.AbstractStoragesubtype;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDeviceUtil;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
@@ -71,6 +74,9 @@ public class AutoloaderController {
 	
 	@Autowired
 	private AutoloaderService autoloaderService;
+	
+	@Autowired
+	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
 	
 	@Autowired
 	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
@@ -263,6 +269,15 @@ public class AutoloaderController {
 				
 				String barcode = tapeOnLibrary.getVolumeTag();
 				tape.setBarcode(barcode);
+				tape.setVolumeGroup(StringUtils.substring(barcode, 0, 2));
+				String storagesubtypeSuffix = StringUtils.substring(barcode, barcode.length()-3, barcode.length());
+				Set<String> storagesubtypeSet = storagesubtypeMap.keySet();
+				for (String nthStoragesubtypeImpl : storagesubtypeSet) {
+					if(storagesubtypeSuffix.equals(storagesubtypeMap.get(nthStoragesubtypeImpl).getSuffixToEndWith())) {
+						tape.setStoragesubtype(nthStoragesubtypeImpl);
+						break;
+					}
+				}
 				
 				Volume volume = volumeId_VolumeObj_Map.get(barcode);
 				TapeStatus tapeStatus = null;

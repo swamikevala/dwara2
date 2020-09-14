@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
@@ -297,13 +298,15 @@ public class ProcessingJobProcessor implements Runnable{
 							    
 							    // Now setting all the dependentjobs with the tasktype generated output artifactid
 							    setInputArtifactForDependentJobs(job, outputArtifact);
-							}	    
+							}
+							
+							// Output Artifact as a file record
 							FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 							org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
-							if(artifactFile == null) {
+							if(artifactFile == null) { // only if not already created... 
 								createFile(outputArtifactName, outputArtifact, domainSpecificFileRepository);	
 							}
-	
+							
 							// creating File records for the process generated files
 							String proxyFilePathName = processingtaskResponse.getDestinationPathname(); 
 							String proxyFileBaseName = FilenameUtils.getBaseName(proxyFilePathName);
@@ -372,8 +375,16 @@ public class ProcessingJobProcessor implements Runnable{
 	    fileEntityUtil.setDomainSpecificFileRef(nthFileRowToBeInserted, file);
 	    
 	    fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, outputArtifact);
-		
-		String filePathname = fileAbsolutePathName.replace(outputArtifactPathname, outputArtifactName);
+
+	    
+	    
+//		String filePathname = null;
+//		if(StringUtils.isBlank(FilenameUtils.getExtension(outputArtifactName))) { // replace the entire output artifact Pathname (/data/transcoded/public/VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12) with artifactName(VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12)
+//			filePathname = fileAbsolutePathName.replace(outputArtifactPathname, outputArtifactName);
+//		}
+//		else
+//			filePathname = fileAbsolutePathName.replace(outputArtifact.getArtifactclass().getPath() + File.separator, ""); // /data/transcoded/public/VL22204_Test2_MBT20481_01.MP4 to VL22204_Test2_MBT20481_01.MP4
+	    String filePathname = fileAbsolutePathName.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "");
 		nthFileRowToBeInserted.setPathname(filePathname);
 		
 		// TODO need to be done and set after proxy file is generated

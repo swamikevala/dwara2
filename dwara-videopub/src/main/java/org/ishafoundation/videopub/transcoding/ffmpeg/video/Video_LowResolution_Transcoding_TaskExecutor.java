@@ -37,13 +37,13 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		
 		if(logger.isTraceEnabled()) {
 			logger.trace("taskName " + taskName);
-			logger.trace("inputArtifactName " + inputArtifactName);
-			logger.trace("outputArtifactName " + outputArtifactName);
+			logger.trace("inputArtifactName " + inputArtifactName); // V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
+			logger.trace("outputArtifactName " + outputArtifactName); // VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
 			logger.trace("fileId " + file.getId());
-			logger.trace("domain " + domain.name());
-			logger.trace("logicalFile " + logicalFile.getAbsolutePath());
-			logger.trace("category " + category);
-			logger.trace("destinationDirPath " + destinationDirPath);
+			logger.trace("domain " + domain.name()); 
+			logger.trace("logicalFile " + logicalFile.getAbsolutePath()); // /data/ingested/V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12/DCIM/100EOS5D/MVI_5594.MOV
+			logger.trace("category " + category); // public
+			logger.trace("destinationDirPath " + destinationDirPath); // /data/transcoded/public/VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12/DCIM/100EOS5D
 		}
 		String sourceFilePathname = logicalFile.getAbsolutePath();
 		String clipName = FilenameUtils.getName(sourceFilePathname);
@@ -57,9 +57,6 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		String m01FileLocPath = sourceFilePathname.replace("." + FilenameUtils.getExtension(sourceFilePathname), "M01.XML");
 	
 		String fileName = FilenameUtils.getBaseName(sourceFilePathname);
-		if(StringUtils.isNotBlank(FilenameUtils.getExtension(inputArtifactName))) // means the source file is the artifact itself and not a directory
-			fileName = FilenameUtils.getBaseName(outputArtifactName);
-		
 		String thumbnailTargetLocation = destinationDirPath + File.separator + fileName + ".jpg";
 	
 		/*************** THUMBNAIL GENERATION ***************/
