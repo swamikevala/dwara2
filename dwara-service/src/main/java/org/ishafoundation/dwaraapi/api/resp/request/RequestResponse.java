@@ -22,127 +22,129 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 })
 public class RequestResponse {
 
-    @JsonProperty("id")
     private Integer id;
-    @JsonProperty("type")
     private String type;
-    @JsonProperty("userRequestId")
     private Integer userRequestId;
-    @JsonProperty("requestedAt")
     private String requestedAt;
-    @JsonProperty("requestedBy")
     private String requestedBy;
-    @JsonProperty("action")
     private String action;
-    @JsonProperty("status")
     private String status;
-    @JsonProperty("artifact")
+    
+    // For ingest
     private Artifact artifact;
-    @JsonProperty("file")
+
+    // For restore
+    private Integer copyId;
+	private String destinationPath;
+	private String outputFolder;
     private File file;
+
+    // For volume relate actions like initialize, map_drives etc.
     @JsonProperty("volume")
     private VolumeResponse volume;
-    
-    @JsonProperty("id")
-    public Integer getId() {
-        return id;
-    }
 
-    @JsonProperty("id")
-    public void setId(Integer id) {
-        this.id = id;
-    }
+	public Integer getId() {
+		return id;
+	}
 
-    @JsonProperty("type")
-    public String getType() {
-        return type;
-    }
+	public void setId(Integer id) {
+		this.id = id;
+	}
 
-    @JsonProperty("type")
-    public void setType(String type) {
-        this.type = type;
-    }
+	public String getType() {
+		return type;
+	}
 
-    @JsonProperty("userRequestId")
-    public Integer getUserRequestId() {
-        return userRequestId;
-    }
+	public void setType(String type) {
+		this.type = type;
+	}
 
-    @JsonProperty("userRequestId")
-    public void setUserRequestId(Integer userRequestId) {
-        this.userRequestId = userRequestId;
-    }
+	public Integer getUserRequestId() {
+		return userRequestId;
+	}
 
-    @JsonProperty("requestedAt")
-    public String getRequestedAt() {
-        return requestedAt;
-    }
+	public void setUserRequestId(Integer userRequestId) {
+		this.userRequestId = userRequestId;
+	}
 
-    @JsonProperty("requestedAt")
-    public void setRequestedAt(String requestedAt) {
-        this.requestedAt = requestedAt;
-    }
+	public String getRequestedAt() {
+		return requestedAt;
+	}
 
-    @JsonProperty("requestedBy")
-    public String getRequestedBy() {
-        return requestedBy;
-    }
+	public void setRequestedAt(String requestedAt) {
+		this.requestedAt = requestedAt;
+	}
 
-    @JsonProperty("requestedBy")
-    public void setRequestedBy(String requestedBy) {
-        this.requestedBy = requestedBy;
-    }
+	public String getRequestedBy() {
+		return requestedBy;
+	}
 
-    @JsonProperty("action")
-    public String getAction() {
-        return action;
-    }
+	public void setRequestedBy(String requestedBy) {
+		this.requestedBy = requestedBy;
+	}
 
-    @JsonProperty("action")
-    public void setAction(String action) {
-        this.action = action;
-    }
+	public String getAction() {
+		return action;
+	}
 
-    @JsonProperty("status")
-    public String getStatus() {
-        return status;
-    }
+	public void setAction(String action) {
+		this.action = action;
+	}
 
-    @JsonProperty("status")
-    public void setStatus(String status) {
-        this.status = status;
-    }
+	public String getStatus() {
+		return status;
+	}
 
-    @JsonProperty("artifact")
-    public Artifact getArtifact() {
-        return artifact;
-    }
+	public void setStatus(String status) {
+		this.status = status;
+	}
 
-    @JsonProperty("artifact")
-    public void setArtifact(Artifact artifact) {
-        this.artifact = artifact;
-    }
+	public Artifact getArtifact() {
+		return artifact;
+	}
 
-    @JsonProperty("file")
+	public void setArtifact(Artifact artifact) {
+		this.artifact = artifact;
+	}
+
+	public Integer getCopyId() {
+		return copyId;
+	}
+
+	public void setCopyId(Integer copyId) {
+		this.copyId = copyId;
+	}
+
+	public String getDestinationPath() {
+		return destinationPath;
+	}
+
+	public void setDestinationPath(String destinationPath) {
+		this.destinationPath = destinationPath;
+	}
+
+	public String getOutputFolder() {
+		return outputFolder;
+	}
+
+	public void setOutputFolder(String outputFolder) {
+		this.outputFolder = outputFolder;
+	}
+
 	public File getFile() {
 		return file;
 	}
 
-    @JsonProperty("file")
 	public void setFile(File file) {
 		this.file = file;
 	}
 
-    @JsonProperty("volume")
 	public VolumeResponse getVolume() {
 		return volume;
 	}
 
-    @JsonProperty("volume")
 	public void setVolume(VolumeResponse volume) {
 		this.volume = volume;
 	}
-
-    
 }
 

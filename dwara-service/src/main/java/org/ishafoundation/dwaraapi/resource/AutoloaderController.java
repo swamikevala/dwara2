@@ -270,7 +270,7 @@ public class AutoloaderController {
 				String barcode = tapeOnLibrary.getVolumeTag();
 				tape.setBarcode(barcode);
 				tape.setVolumeGroup(StringUtils.substring(barcode, 0, 2));
-				String storagesubtypeSuffix = StringUtils.substring(barcode, barcode.length()-3, barcode.length());
+				String storagesubtypeSuffix = StringUtils.substring(barcode, barcode.length()-2, barcode.length());
 				Set<String> storagesubtypeSet = storagesubtypeMap.keySet();
 				for (String nthStoragesubtypeImpl : storagesubtypeSet) {
 					if(storagesubtypeSuffix.equals(storagesubtypeMap.get(nthStoragesubtypeImpl).getSuffixToEndWith())) {

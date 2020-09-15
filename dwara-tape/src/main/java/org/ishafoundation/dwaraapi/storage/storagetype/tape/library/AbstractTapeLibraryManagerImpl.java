@@ -70,21 +70,23 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 			logger.trace("getting details of drive " + toBeUsedDataTransferElementSNo);
 			
 			DriveDetails driveStatusDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
+			
+			if(driveStatusDetails.getMtStatus().isBusy()) { // means drive is just loaded with tape but not using it
+				logger.trace("Something wrong with the app and tapelibrary sync. Drive is not supposed to be busy, but seems busy");
+				throw new Exception("Drive " + toBeUsedDataTransferElementSNo + "(" + dataTransferElementName + ") seems to be busy, when its not supposed to. App Bug. Contact Dev team");
+			}
+			
 			if(driveStatusDetails.getMtStatus().isReady()){ // means drive is not empty and has a tape
-				if(!driveStatusDetails.getMtStatus().isBusy()) { // means drive is just loaded with tape but not using it
-					DataTransferElement dte = mtxStatus.getDte(toBeUsedDataTransferElementSNo);
-					String alreadyLoadedVolumeTag = dte.getVolumeTag();
-					if(alreadyLoadedVolumeTag.equals(toBeUsedTapeBarcode)) { // drive is already loaded with the needed tape
-						logger.trace("Drive " + toBeUsedDataTransferElementSNo + " is already loaded with the needed tape");
-						return true;
-					}
-					logger.trace(toBeUsedDataTransferElementSNo + " is not empty and has another tape - so we need to unload the other tape");
-					logger.trace("Unloading ");
-					unload(tapeLibraryName, toBeUsedDataTransferElementSNo);
-					logger.trace("Unload successful ");
-				}else {
-					logger.trace("Something wrong with the app and tapelibrary sync. Drive is not supposed to be busy, but seems busy");
+				DataTransferElement dte = mtxStatus.getDte(toBeUsedDataTransferElementSNo);
+				String alreadyLoadedVolumeTag = dte.getVolumeTag();
+				if(alreadyLoadedVolumeTag.equals(toBeUsedTapeBarcode)) { // drive is already loaded with the needed tape
+					logger.trace("Drive " + toBeUsedDataTransferElementSNo + " is already loaded with the needed tape");
+					return true;
 				}
+				logger.trace(toBeUsedDataTransferElementSNo + " is not empty and has another tape - so we need to unload the other tape");
+				logger.trace("Unloading ");
+				unload(tapeLibraryName, toBeUsedDataTransferElementSNo);
+				logger.trace("Unload successful ");
 			}
 	
 			// locate in which slot the volume is...

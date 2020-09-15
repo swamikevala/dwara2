@@ -165,7 +165,7 @@ public class VolumeService extends DwaraService {
 			int jobId = job.getId();
 			Status status = job.getStatus();
 			
-//			The updated sequence no for a volume group in initialize is saved along with Job...
+//			The updated sequence no for a volume group in initialize is saved along with User Request...
 //			Volume volumeGroup = volumeDao.findById(nthInitializeRequest.getVolumeGroup());
 //			Sequence sequence = volumeGroup.getSequence();
 //			sequence.incrementCurrentNumber();

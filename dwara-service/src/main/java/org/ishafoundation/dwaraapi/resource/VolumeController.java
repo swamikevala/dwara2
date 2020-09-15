@@ -103,70 +103,83 @@ public class VolumeController {
 		}
 
 		// Ordering the initializeRequests by sequence Number
-		Map<Integer, InitializeUserRequest> volumeNumericSequence_InitializeRequest = new HashMap<Integer, InitializeUserRequest>();
+		Map<String, Map<Integer, InitializeUserRequest>> volumeGroup_volumeNumericSequence_InitializeRequest = new HashMap<String, Map<Integer, InitializeUserRequest>>();
 		for (InitializeUserRequest nthInitializeRequest : initializeRequestList) {
 			String volumeId = nthInitializeRequest.getVolume();
+			String volumeGroupId = nthInitializeRequest.getVolumeGroup();
 			int sequenceOnLabel = getSequenceUsedOnVolumeLabel(volumeId, null);
+			Map<Integer, InitializeUserRequest> volumeNumericSequence_InitializeRequest = volumeGroup_volumeNumericSequence_InitializeRequest.get(volumeGroupId);
+			if(volumeNumericSequence_InitializeRequest == null) {
+				volumeNumericSequence_InitializeRequest = new HashMap<Integer, InitializeUserRequest>();
+				volumeGroup_volumeNumericSequence_InitializeRequest.put(volumeGroupId, volumeNumericSequence_InitializeRequest);
+			}
 			volumeNumericSequence_InitializeRequest.put(sequenceOnLabel, nthInitializeRequest);
 		}
-		Set<Integer> volumeNumericSequenceSet = volumeNumericSequence_InitializeRequest.keySet();
-		List<Integer> volumeNumericSequenceList = new ArrayList<Integer>(volumeNumericSequenceSet) ;        //set -> list
-		//Sort the list
-		Collections.sort(volumeNumericSequenceList);
+		
+		// iterating through the volumegroup related tapes
+		Set<String> volumeGroupSet = volumeGroup_volumeNumericSequence_InitializeRequest.keySet();
+		for (String nthVolumeGroup : volumeGroupSet) {
+			Map<Integer, InitializeUserRequest> volumeNumericSequence_InitializeRequest = volumeGroup_volumeNumericSequence_InitializeRequest.get(nthVolumeGroup);
 
-		for (Integer volumeNumericSequence : volumeNumericSequenceList) {
-			InitializeUserRequest nthInitializeRequest = volumeNumericSequence_InitializeRequest.get(volumeNumericSequence);
-			String volumeId = nthInitializeRequest.getVolume();
-			if(nthInitializeRequest.getForce()) {
-				if(!configuration.isAllowForceOptionForTesting())
-					throw new DwaraException("Force option not supported just yet. Volume " + volumeId, null);
-			}
+			Set<Integer> volumeNumericSequenceSet = volumeNumericSequence_InitializeRequest.keySet();
+			List<Integer> volumeNumericSequenceList = new ArrayList<Integer>(volumeNumericSequenceSet) ;        //set -> list
+			//Sort the list
+			Collections.sort(volumeNumericSequenceList);
+
+			for (Integer volumeNumericSequence : volumeNumericSequenceList) {
+				InitializeUserRequest nthInitializeRequest = volumeNumericSequence_InitializeRequest.get(volumeNumericSequence);
+				String volumeId = nthInitializeRequest.getVolume();
+				if(nthInitializeRequest.getForce()) {
+					if(!configuration.isAllowForceOptionForTesting())
+						throw new DwaraException("Force option not supported just yet. Volume " + volumeId, null);
+				}
+					
 				
-			
-			// #1 - Volume ids should not be in use
-			try {
-				Volume volume = volumeDao.findById(volumeId).get(); // TODO: if force=true, means we are trying to reinitialize an existing tape. How about that???
-				throw new DwaraException("Volume " + volumeId + " already in use" , null);
-			}
-			catch (Exception e) {
+				// #1 - Volume ids should not be in use
+				try {
+					Volume volume = volumeDao.findById(volumeId).get(); // TODO: if force=true, means we are trying to reinitialize an existing tape. How about that??? Means what happens to the existing artifact/file_volume entries???
+					throw new DwaraException("Volume " + volumeId + " already in use" , null);
+				}
+				catch (Exception e) {
+					
+				}
+					
+
+				// #5 - Volume Group should be defined (db)
+				String volumeGroupId = nthInitializeRequest.getVolumeGroup();
+				Volume volumeGroup = volumeGroupId_Volume_Map.get(volumeGroupId);
+				if(volumeGroup == null)
+					throw new DwaraException("Volume Group " + volumeGroupId + " doesnt exist" , null);
+
+
+				// #2 - Volume id sequence numbers should be contiguous
+				int currentNumber = volumeGroup.getSequence().getCurrrentNumber();
+				int expectedSequenceOnLabel = volumeGroup.getSequence().incrementCurrentNumber();
+				String prefix = volumeGroup.getSequence().getPrefix();
+				int sequenceOnLabel = getSequenceUsedOnVolumeLabel(volumeId, prefix);
+				if(sequenceOnLabel != expectedSequenceOnLabel)
+					throw new DwaraException("Sequence number for Volume " + volumeId + " with " + sequenceOnLabel + " is not contiguous. Expected numeric sequence - " + expectedSequenceOnLabel, null);
+
+				// #6 - Storagesubtype should be defined (enum)
+				String storagesubtypeStr = nthInitializeRequest.getStoragesubtype();
+				TapeStoragesubtype storagesubtype = TapeStoragesubtype.getStoragesubtype(storagesubtypeStr);
+				if(storagesubtype == null)
+					throw new DwaraException("Storagesubtype " + storagesubtypeStr + " not supported" , null);
 				
-			}
+				// #3 - Volume id validations required by the storagesubtype (e.g. L7 suffix for LTO-7 tapes)
+				storagesubtypeMap.get(storagesubtypeStr).validateVolumeId(volumeId);
 				
-
-			// #5 - Volume Group should be defined (db)
-			String volumeGroupId = nthInitializeRequest.getVolumeGroup();
-			Volume volumeGroup = volumeGroupId_Volume_Map.get(volumeGroupId);
-			if(volumeGroup == null)
-				throw new DwaraException("Volume Group " + volumeGroupId + " doesnt exist" , null);
-
-
-			// #2 - Volume id sequence numbers should be contiguous
-			int currentNumber = volumeGroup.getSequence().getCurrrentNumber();
-			int expectedSequenceOnLabel = volumeGroup.getSequence().incrementCurrentNumber();
-			String prefix = volumeGroup.getSequence().getPrefix();
-			int sequenceOnLabel = getSequenceUsedOnVolumeLabel(volumeId, prefix);
-			if(sequenceOnLabel != expectedSequenceOnLabel)
-				throw new DwaraException("Sequence number for Volume " + volumeId + " with " + sequenceOnLabel + " is not contiguous. Expected numeric sequence - " + expectedSequenceOnLabel, null);
-
-			// #6 - Storagesubtype should be defined (enum)
-			String storagesubtypeStr = nthInitializeRequest.getStoragesubtype();
-			TapeStoragesubtype storagesubtype = TapeStoragesubtype.getStoragesubtype(storagesubtypeStr);
-			if(storagesubtype == null)
-				throw new DwaraException("Storagesubtype " + storagesubtypeStr + " not supported" , null);
-			
-			// #3 - Volume id validations required by the storagesubtype (e.g. L7 suffix for LTO-7 tapes)
-			storagesubtypeMap.get(storagesubtypeStr).validateVolumeId(volumeId);
-			
-			
-			// #4 - Volume blocksize should be multiple of 64KiB
-			int divisorInBytes = 65536; // 64 * 1024
-			Integer volumeBlocksize = nthInitializeRequest.getVolumeBlocksize();
-			if(volumeBlocksize%divisorInBytes != 0) {
-				throw new DwaraException("Volume " + volumeId + " blocksize is not in multiple of 64KiB" , null);
-			}
-			
-			logger.trace("All validation good for " + volumeId);
-		}	
+				
+				// #4 - Volume blocksize should be multiple of 64KiB
+				int divisorInBytes = 65536; // 64 * 1024
+				Integer volumeBlocksize = nthInitializeRequest.getVolumeBlocksize();
+				if(volumeBlocksize%divisorInBytes != 0) {
+					throw new DwaraException("Volume " + volumeId + " blocksize is not in multiple of 64KiB" , null);
+				}
+				
+				logger.trace("All validation good for " + volumeId);
+			}	
+		}
 	}
 
 	private int getSequenceUsedOnVolumeLabel(String volumeId, String prefix){

@@ -33,7 +33,24 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 		return mtStatus;
 	}
 
-	private String callMtStatus(String dataTransferElementName) throws Exception {
+	/*
+		While its just status requisition - atleast in VTL when 2 threads calling the mt status at the same time the response is a DEVICE BUSY for one of the threads - So synchronizing the method...
+2020-09-14 15:14:04,650 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-2-thread-1] start [mt, -f, /dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst, status]
+2020-09-14 15:14:04,688 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-1-thread-3~!~sr-13-job-8] start [mt, -f, /dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst, status]
+2020-09-14 15:14:05,669 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-2-thread-1] exit-status: 0
+2020-09-14 15:14:05,669 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-2-thread-1] end [mt, -f, /dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst, status]
+2020-09-14 15:14:05,695 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-1-thread-3~!~sr-13-job-8] exit-status: 1
+2020-09-14 15:14:05,696 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-1-thread-3~!~sr-13-job-8] Command's stderr message - /dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst: Device or resource busy
+
+2020-09-14 15:15:05,079 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-2-thread-1] start [mt, -f, /dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst, status]
+2020-09-14 15:15:05,086 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-1-thread-1~!~sr-14-job-18] start [mt, -f, /dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst, status]
+2020-09-14 15:15:06,109 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-1-thread-1~!~sr-14-job-18] exit-status: 1
+2020-09-14 15:15:06,109 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-1-thread-1~!~sr-14-job-18] Command's stderr message - /dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst: Device or resource busy
+2020-09-14 15:15:06,111 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-2-thread-1] exit-status: 0
+2020-09-14 15:15:06,112 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-2-thread-1] end [mt, -f, /dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst, status]
+
+	 */
+	private synchronized String callMtStatus(String dataTransferElementName) throws Exception {
 		String mtStatusResponse = null;
 		CommandLineExecutionResponse cler = null;
 		try {

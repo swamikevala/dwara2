@@ -114,6 +114,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		Job job = storageJob.getJob();
 		job.setVolume(volume);
+		job.setGroupVolume(volume.getGroupRef());
 		jobDao.save(job);
 		logger.trace("Job " + job.getId() + " updated with the formatted Volume " + volume.getId() + " succesfully");
 	}

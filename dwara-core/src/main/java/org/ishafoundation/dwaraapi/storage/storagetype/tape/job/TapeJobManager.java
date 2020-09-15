@@ -256,7 +256,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				onlyTapeOnLibraryStorageJobsList.add(nthStorageJob);
 			}
 			else {
-				logger.info(volumeTag + " not in library " + tapeLibraryName +" . Skipping job - " + nthStorageJob.getJob().getId()); 
+				logger.info(volumeTag + " not inside the library " + tapeLibraryName +" . Skipping job - " + nthStorageJob.getJob().getId()); 
 			}
 		}
 	

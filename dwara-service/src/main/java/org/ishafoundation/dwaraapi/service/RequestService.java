@@ -213,6 +213,10 @@ public class RequestService extends DwaraService{
 				fileForRestoreResponse.setSize(fileFromDB.getSize());
 				fileForRestoreResponse.setSystemRequestId(request.getId());
 				requestResponse.setFile(fileForRestoreResponse);
+				
+				requestResponse.setCopyId(request.getDetails().getCopyId());
+				requestResponse.setDestinationPath(request.getDetails().getDestinationPath());
+				requestResponse.setOutputFolder(request.getDetails().getOutputFolder());
 			}
 			else if(requestAction == Action.initialize || requestAction == Action.finalize) {
 				requestResponse.setVolume(volumeService.getVolume(request.getDetails().getVolumeId()));

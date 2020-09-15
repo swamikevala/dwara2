@@ -3,8 +3,10 @@ package org.ishafoundation.dwaraapi.storage.storagetask;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
@@ -60,7 +62,12 @@ public class Initialize extends AbstractStoragetaskAction{
 		Volume volume = new Volume();
 		
 		String volumeBarcode = requestDetails.getVolumeId();
+
 		String volumeGroupId = requestDetails.getVolumeGroupId();
+		if(volumeGroupId == null) {
+			volumeGroupId = StringUtils.substring(volumeBarcode, 0, 2);
+		}
+			
 		Volume volumeGroup = volumeDao.findById(volumeGroupId).get();
 		
 		
@@ -77,6 +84,16 @@ public class Initialize extends AbstractStoragetaskAction{
 		volume.setImported(false);
 
 		String storagesubtype = requestDetails.getStoragesubtype();
+		if(storagesubtype == null) {
+			String storagesubtypeSuffix = StringUtils.substring(volumeBarcode, volumeBarcode.length()-2, volumeBarcode.length());
+			Set<String> storagesubtypeSet = storagesubtypeMap.keySet();
+			for (String nthStoragesubtypeImpl : storagesubtypeSet) {
+				if(storagesubtypeSuffix.equals(storagesubtypeMap.get(nthStoragesubtypeImpl).getSuffixToEndWith())) {
+					storagesubtype = nthStoragesubtypeImpl;
+					break;
+				}
+			}
+		}
 		volume.setStoragesubtype(storagesubtype);
 		
 		AbstractStoragesubtype storagesubtypeImpl = storagesubtypeMap.get(storagesubtype);//storagesubtypeMap.get(storagesubtype.name());
