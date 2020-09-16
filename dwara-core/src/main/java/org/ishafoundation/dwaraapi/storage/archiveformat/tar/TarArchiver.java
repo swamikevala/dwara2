@@ -30,6 +30,7 @@ import org.ishafoundation.dwaraapi.storage.archiveformat.tar.response.components
 import org.ishafoundation.dwaraapi.storage.model.ArchiveformatJob;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.DeviceLockFactory;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,6 +108,9 @@ public class TarArchiver implements IArchiveformatter {
 	
 	@Autowired
 	private ArtifactVolumeRepositoryUtil artifactVolumeRepositoryUtil;
+	
+	@Autowired
+	private DeviceLockFactory deviceLockFactory;
 
 	@Override
 	public ArchiveResponse write(ArchiveformatJob archiveformatJob) throws Exception {
@@ -222,7 +226,7 @@ public class TarArchiver implements IArchiveformatter {
 		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, false, 0, targetLocationPath, noOfTapeBlocksToBeRead);
 
 		HashMap<String, byte[]> filePathNameToChecksumObj = selectedStorageJob.getFilePathNameToChecksum();
-		boolean isSuccess = stream(commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, false, targetLocationPath, true, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
+		boolean isSuccess = stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, false, targetLocationPath, true, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
 		logger.debug("verification status " + isSuccess);
 		return new ArchiveResponse();
 	}
@@ -263,7 +267,7 @@ public class TarArchiver implements IArchiveformatter {
 			if(configuration.checksumTypeSupportsStreamingVerification()) // if stream verify supported by checksumtype, then set the streamverify = true
 				streamVerify = true;
 		}
-		stream(commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, true, targetLocationPath, streamVerify, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
+		stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, true, targetLocationPath, streamVerify, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
 
 		if(storageJob.isRestoreVerify() && !streamVerify) { // TO be verified using standard approach but not the on the fly streaming and verifying
 			boolean success = ChecksumUtil.compareChecksum(filePathNameToChecksumObj, targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
@@ -308,11 +312,13 @@ public class TarArchiver implements IArchiveformatter {
 
 
 
-	protected boolean stream(List<String> commandList, int volumeBlocksize, int skipByteCount,
+	protected boolean stream(String dataTransferElementName, List<String> commandList, int volumeBlocksize, int skipByteCount,
 			String filePathNameWeNeed, boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
 			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
 		
-		return TapeStreamer.stream(commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj);
+		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
+			return TapeStreamer.stream(commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj);
+		}
 	}
 	
 	private ArchiveformatJob getDecoratedArchiveformatJobForRestore(ArchiveformatJob archiveformatJob) throws Exception {

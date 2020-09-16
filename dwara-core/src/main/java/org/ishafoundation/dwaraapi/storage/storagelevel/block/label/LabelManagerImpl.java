@@ -18,6 +18,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.DeviceLockFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +57,9 @@ public class LabelManagerImpl implements LabelManager{
 	
 	@Autowired
 	private Configuration configuration;
+	
+	@Autowired
+	private DeviceLockFactory deviceLockFactory;
 
 	@Override
 	public boolean isRightVolume(SelectedStorageJob selectedStorageJob, boolean fromVolumelabel) throws Exception {
@@ -109,10 +113,14 @@ public class LabelManagerImpl implements LabelManager{
 	}
 	
 	private String getLabel(String dataTransferElementName, int blocksize) throws Exception {
-		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + dataTransferElementName + " bs=" + blocksize + " count=1");
-		String resp = cler.getStdOutResponse();
-		String label = StringUtils.substring(resp, 0, blocksize);
-		return label;
+		logger.trace("Now reading label from " + dataTransferElementName + ":" + blocksize);
+		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
+			logger.trace("Executing read label command synchronized-ly " + dataTransferElementName + ":" + blocksize);
+			CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + dataTransferElementName + " bs=" + blocksize + " count=1");
+			String resp = cler.getStdOutResponse();
+			String label = StringUtils.substring(resp, 0, blocksize);
+			return label;
+		}
 	}
 
 	@Override
@@ -307,7 +315,7 @@ public class LabelManagerImpl implements LabelManager{
 	 */
 	private boolean writeLabel(String label, String tempFileName, String deviceName, int blocksize) throws Exception {
 		boolean isSuccess = false;
-		
+		logger.trace("Now writing label on " + deviceName);
 		File file = new File(filesystemTemporarylocation + File.separator + tempFileName + ".xml");
 		FileUtils.writeStringToFile(file, label);
 		logger.trace(file.getAbsolutePath() + " created ");
@@ -315,13 +323,15 @@ public class LabelManagerImpl implements LabelManager{
 		// Option 2 doesnt work well for xml - CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("echo \"" + label + "\" | dd of=" + deviceName + " bs="+blocksize);
 		
 		// Option 3
-		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + file.getAbsolutePath()  + " of=" + deviceName + " bs=" + blocksize);
-		FileUtils.forceDelete(file);
-		logger.trace(file.getAbsolutePath() + " deleted ok.");
-		
-		if(cler.isComplete()) 
-			isSuccess = true;
-		
+		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
+			logger.trace("Executing writing label command synchronized-ly " + deviceName + ":" + blocksize);
+			CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + file.getAbsolutePath()  + " of=" + deviceName + " bs=" + blocksize);
+			FileUtils.forceDelete(file);
+			logger.trace(file.getAbsolutePath() + " deleted ok.");
+			
+			if(cler.isComplete()) 
+				isSuccess = true;
+		}
 		return isSuccess;
 	}
 }

@@ -120,7 +120,7 @@ public class Write extends AbstractStoragetaskAction{
 		// to where
 		storageJob.setVolume(volume);
 		if(volume != null) {
-			Integer copyId = volume.getCopy().getId();
+			Integer copyId = volume.getGroupRef().getCopy().getId();
 			priority = copyId * 100;
 		}
 		storageJob.setPriority(priority);

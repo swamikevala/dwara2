@@ -1,6 +1,5 @@
 package org.ishafoundation.dwaraapi.storage.storagelevel.block.index;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +8,6 @@ import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
@@ -20,6 +18,7 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.DeviceLockFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,11 +35,15 @@ public class VolumeindexManager {
 	
 	@Autowired
 	private DomainUtil domainUtil;
+
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
 
 	@Autowired
 	private CommandLineExecuter commandLineExecuter;
+	
+	@Autowired
+	private DeviceLockFactory deviceLockFactory;
 	
 	@Value("${filesystem.temporarylocation}")
 	private String filesystemTemporarylocation;
@@ -66,13 +69,14 @@ public class VolumeindexManager {
 		
 		
 		// Option 3
-		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + file.getAbsolutePath()  + " of=" + deviceName + " bs="+blocksize);
-		FileUtils.forceDelete(file);
-		logger.trace(file.getAbsolutePath() + " deleted ok.");
-		
-		if(cler.isComplete()) 
-			isSuccess = true;
-		
+		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
+			CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + file.getAbsolutePath()  + " of=" + deviceName + " bs="+blocksize);
+			FileUtils.forceDelete(file);
+			logger.trace(file.getAbsolutePath() + " deleted ok.");
+			
+			if(cler.isComplete()) 
+				isSuccess = true;
+		}
 	
 		return isSuccess;
 	}
