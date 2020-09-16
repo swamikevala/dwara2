@@ -27,14 +27,18 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	@Autowired
 	private CommandLineExecuter commandLineExecuter;
 	
+	@Autowired
+	private DeviceLockFactory deviceLockFactory;
+	
 	public MtStatus getMtStatus(String dataTransferElementName) throws Exception{
+		logger.trace("Calling mtStatus - " + dataTransferElementName);
 		String mtStatusResponse = callMtStatus(dataTransferElementName);
 		MtStatus mtStatus = MtStatusResponseParser.parseMtStatusResponse(mtStatusResponse);
 		return mtStatus;
 	}
 
 	/*
-		While its just status requisition - atleast in VTL when 2 threads calling the mt status at the same time the response is a DEVICE BUSY for one of the threads - So synchronizing the method...
+		While its just status requisition - atleast in VTL - when 2 threads call the mt status at the same time the response is a DEVICE BUSY for one of the threads - So synchronizing the method...
 2020-09-14 15:14:04,650 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-2-thread-1] start [mt, -f, /dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst, status]
 2020-09-14 15:14:04,688 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-1-thread-3~!~sr-13-job-8] start [mt, -f, /dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst, status]
 2020-09-14 15:14:05,669 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-2-thread-1] exit-status: 0
@@ -51,6 +55,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 
 	 */
 	private synchronized String callMtStatus(String dataTransferElementName) throws Exception {
+		logger.trace("Executing mtStatus synchronized-ly - " + dataTransferElementName);
 		String mtStatusResponse = null;
 		CommandLineExecutionResponse cler = null;
 		try {
@@ -127,6 +132,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	}
 	
 	public DriveDetails setTapeHeadPositionForReadingInterArtifactXml(String dataTransferElementName) throws Exception {
+		logger.debug("Positioning tape head for reading artifact label " + dataTransferElementName);
 		DriveDetails dsd = new DriveDetails();
 		dsd.setDriveName(dataTransferElementName);
 		try {
@@ -220,26 +226,39 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	}
 	
 	private CommandLineExecutionResponse rewind(String dataTransferElementName) throws Exception {
-		return commandToBeExecuted("mt -f " + dataTransferElementName + " rewind", true, "Input/output error");
+		logger.trace("Now rewinding - " + dataTransferElementName);
+		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
+			return commandToBeExecuted("mt -f " + dataTransferElementName + " rewind", true, "Input/output error");	
+		}
 	}
 	
 	private CommandLineExecutionResponse eod(String dataTransferElementName) throws Exception{
-		return commandToBeExecuted("mt -f " + dataTransferElementName + " eod", true, null); // TODO - We dont know what the error msgs will be for eod 
+		logger.trace("Now eoding - " + dataTransferElementName);
+		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
+			return commandToBeExecuted("mt -f " + dataTransferElementName + " eod", true, "Input/output error"); // TODO - We dont know what the error msgs will be for eod
+		}
 	}
 
 	private CommandLineExecutionResponse seek(String dataTransferElementName, int blockNo) throws Exception{
-		return commandToBeExecuted("mt -f " + dataTransferElementName + " seek " + blockNo, true, "Input/output error"); // when tape loaded but not stinit throws "Input/output error" 
+		logger.trace("Now seeking - " + dataTransferElementName + ":" + blockNo);
+		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
+			return commandToBeExecuted("mt -f " + dataTransferElementName + " seek " + blockNo, true, "Input/output error"); // when tape loaded but not stinit throws "Input/output error"
+		}
 		// TODO 
 		// 1) Check what happens when tape not loaded..
 		// 2) How do we handle for some tapes for which seek fails the first but succeeds in the subsequent attempts that Sameer anna mentioned... 
 	}
 	
 	private CommandLineExecutionResponse tell(String dataTransferElementName) throws Exception{
-		 return commandToBeExecuted("mt -f " + dataTransferElementName + " tell", true, "Input/output error");
+		logger.trace("Now tell-ing - " + dataTransferElementName);
+		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
+			return commandToBeExecuted("mt -f " + dataTransferElementName + " tell", true, "Input/output error");
+		}
 	}
 	
 	
 	private CommandLineExecutionResponse commandToBeExecuted(String command, boolean retry, String retryCause) throws Exception {
+		logger.debug("Executing " + command);
 		CommandLineExecutionResponse commandLineExecutionResponse = null;
 		try {
 			commandLineExecutionResponse = commandLineExecuter.executeCommand(command);
@@ -247,9 +266,10 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			if(retryCause == null || e.getMessage().contains(retryCause)) {
 				if(retry) {
 					// TODO call stinit here
-					logger.warn("Stinit seems to be not executed. Running it now");
-					
+					logger.warn("stinit script seems to be not executed. Running it now");
+					logger.info("TODO : stinit script need to be invoked here");
 					// re-execute the same command again...
+					logger.debug("Now re-executing the same command again " + command);
 					commandToBeExecuted(command, false, retryCause);
 				}
 			}

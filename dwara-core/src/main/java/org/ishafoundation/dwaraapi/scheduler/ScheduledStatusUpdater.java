@@ -69,11 +69,12 @@ public class ScheduledStatusUpdater {
 		
 		List<Status> statusList = new ArrayList<Status>();
 		statusList.add(Status.in_progress);
+		statusList.add(Status.queued);
+		
 		List<Request> systemRequestList = requestDao.findAllByTypeAndStatusIn(RequestType.system, statusList);
 		//updateDependentJobsStatus(systemRequestList);
 		updateSystemRequestStatus(systemRequestList);
 		
-		statusList.add(Status.queued);
 		List<Request> userRequestList = requestDao.findAllByTypeAndStatusIn(RequestType.user, statusList);
 		updateUserRequestStatus(userRequestList);
 	}

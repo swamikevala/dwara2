@@ -94,6 +94,7 @@ public class StoragetypeJobDelegator {
 				storageJob = storagetaskActionImpl.buildStorageJob(job);
 			} catch (Exception e) {
 				logger.error("Unable to gather necessary details for executing the job " + job.getId() + " - " + Status.failed, e);
+				job.setMessage(e.getMessage());
 				job.setStatus(Status.failed); // fail the job so it doesnt keep looping...
 				job = jobDao.save(job);
 				continue;

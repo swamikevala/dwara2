@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
@@ -12,13 +13,16 @@ import org.ishafoundation.dwaraapi.api.resp.volume.Details;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
@@ -27,6 +31,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.resource.mapper.RequestToEntityObjectMapper;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeFinalizer;
+import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +49,12 @@ public class VolumeService extends DwaraService {
 
 	@Autowired
 	private RequestDao requestDao;
+	
+	@Autowired
+	private DomainUtil domainUtil;
+	
+	@Autowired
+	private VolumeUtil volumeUtil;
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
@@ -71,8 +82,12 @@ public class VolumeService extends DwaraService {
 	}
 
 	public VolumeResponse getVolume(String volumeId) {
-		Volume volume = volumeDao.findById(volumeId).get();
-		return getVolume_Internal(volume);
+		Optional<Volume> volumeEntity = volumeDao.findById(volumeId);
+		if(volumeEntity.isPresent()) {
+			Volume volume = volumeEntity.get();
+			return getVolume_Internal(volume);
+		}else
+			return null;
 	}
 	
 	private VolumeResponse getVolume_Internal(Volume volume) {
@@ -89,6 +104,34 @@ public class VolumeService extends DwaraService {
 		if(volume.getArchiveformat() != null)
 			volResp.setArchiveformat(volume.getArchiveformat().getId());
 
+		if(volume.getType() == Volumetype.group) {
+			// get all not finalized physical volume in it
+			
+//			
+//			
+//		   	Domain[] domains = Domain.values();
+//		   	Domain domain = null;
+//			for (Domain nthDomain : domains) {
+//			    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(nthDomain);
+//			    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(volume.getId());
+//				if(artifactVolumeCount > 0) {
+//					domain = nthDomain;
+//					break;
+//				}
+//			}
+//			
+//			domain == null
+//					domainUtil.getDefaultDomain
+//					
+//					
+//			iterate all physical volume from the group and sum up 
+//			
+//			volumeUtil.getVolumeUnusedCapacity(domain, volume)
+//			volumeUtil.getVolumeUsedCapacity(domain, volume)
+
+			
+		}
+		
 		/* TODO
 		volResp.setTotalCapacity(totalCapacity);
 		volResp.setUsedCapacity(usedCapacity);

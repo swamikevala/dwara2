@@ -109,7 +109,7 @@ public class LabelManagerImpl implements LabelManager{
 	}
 	
 	private String getLabel(String dataTransferElementName, int blocksize) throws Exception {
-		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + dataTransferElementName + " bs=" + blocksize);
+		CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + dataTransferElementName + " bs=" + blocksize + " count=1");
 		String resp = cler.getStdOutResponse();
 		String label = StringUtils.substring(resp, 0, blocksize);
 		return label;

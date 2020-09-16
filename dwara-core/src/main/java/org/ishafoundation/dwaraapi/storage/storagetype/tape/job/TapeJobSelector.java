@@ -238,7 +238,7 @@ public class TapeJobSelector {
 
 		// To group and order the jobs
 		// STEP 1 - Grouping Jobs based on  volumeTags
-		GroupedJobsCollection gjc = groupJobsOnVolumeTag(tapeJobsList);
+		GroupedJobsCollection gjc = groupJobsBasedOnVolumeTag(tapeJobsList);
 		Map<String, List<StorageJob>> volumeTag_volumeTagGroupedJobs = gjc.getVolumeTag_volumeTagGroupedJobs();
 		List<StorageJob> groupedOnVolumeTagJobsList = volumeTag_volumeTagGroupedJobs.get(toBeUsedVolumeCode);
 		if(groupedOnVolumeTagJobsList != null) { // if its not already part of other priority
@@ -246,7 +246,7 @@ public class TapeJobSelector {
 			// say 
 			// V5A001 - [Job1, Job3, Job4] becomes [Job4, Job1, Job3]
 			// V5A005 - [Job2, Job6, Job7] becomes [Job2, Job6, Job7]
-			List<StorageJob> orderedJobsList = orderTheJobsForTheTape(groupedOnVolumeTagJobsList);
+			List<StorageJob> orderedJobsList = orderJobsWithinATape(groupedOnVolumeTagJobsList);
 			groupedAndOrderedJobsList.addAll(orderedJobsList);
 		}
 		/* will return 
@@ -263,7 +263,7 @@ public class TapeJobSelector {
 
 		// To group and order the jobs
 		// STEP 1 - Grouping Jobs based on priority and volumeTags
-		GroupedJobsCollection gjc = groupJobsOnVolumeTag(tapeJobsList);
+		GroupedJobsCollection gjc = groupJobsBasedOnVolumeTag(tapeJobsList);
 		Set<Integer> priorityOrder = gjc.getPriorityOrder();
 		Map<String, List<StorageJob>> volumeTag_volumeTagGroupedJobs = gjc.getVolumeTag_volumeTagGroupedJobs();
 
@@ -283,7 +283,7 @@ public class TapeJobSelector {
 						// say 
 						// V5A001 - [Job1, Job3, Job4] becomes [Job4, Job1, Job3]
 						// V5A005 - [Job2, Job6, Job7] becomes [Job2, Job6, Job7]
-						List<StorageJob> orderedJobsList = orderTheJobsForTheTape(groupedOnVolumeTagJobsList);
+						List<StorageJob> orderedJobsList = orderJobsWithinATape(groupedOnVolumeTagJobsList);
 						groupedAndOrderedJobsList.addAll(orderedJobsList);
 						volumeTag_volumeTagGroupedJobs.remove(toBeUsedVolumeCode);
 					}
@@ -303,7 +303,7 @@ public class TapeJobSelector {
 	}
 
 
-	private GroupedJobsCollection groupJobsOnVolumeTag(List<StorageJob> tapeJobsList){
+	private GroupedJobsCollection groupJobsBasedOnVolumeTag(List<StorageJob> tapeJobsList){
 		logger.debug("Grouping the jobs based on volume tag");
 		Set<Integer> priorityOrder = new TreeSet<Integer>();
 		/*
@@ -321,16 +321,13 @@ public class TapeJobSelector {
 
 			// STEP 1a - Grouping Jobs based on volumeTags
 			String toBeUsedVolumeCode = tapeJob.getVolume().getId();
-			if(volumeTag_volumeTagGroupedJobs.containsKey(toBeUsedVolumeCode)) { // if map already contains volume just append the job to the list for the volume
-				List<StorageJob> groupedOnVolumeTagJobsList = volumeTag_volumeTagGroupedJobs.get(toBeUsedVolumeCode);
-				groupedOnVolumeTagJobsList.add(tapeJob);
-				volumeTag_volumeTagGroupedJobs.put(toBeUsedVolumeCode, groupedOnVolumeTagJobsList);
+			
+			List<StorageJob> groupedOnVolumeTagJobsList = volumeTag_volumeTagGroupedJobs.get(toBeUsedVolumeCode);
+			if(groupedOnVolumeTagJobsList == null) {
+				groupedOnVolumeTagJobsList = new ArrayList<StorageJob>();
+				volumeTag_volumeTagGroupedJobs.put(toBeUsedVolumeCode, groupedOnVolumeTagJobsList);	
 			}
-			else { // if map doesnt contain the volume add the volume to the map
-				List<StorageJob> groupedOnVolumeTagJobsList = new ArrayList<StorageJob>();
-				groupedOnVolumeTagJobsList.add(tapeJob);
-				volumeTag_volumeTagGroupedJobs.put(toBeUsedVolumeCode, groupedOnVolumeTagJobsList);
-			}
+			groupedOnVolumeTagJobsList.add(tapeJob);
 		}	
 
 		GroupedJobsCollection gjc = new GroupedJobsCollection();
@@ -346,7 +343,7 @@ public class TapeJobSelector {
 		read jobs had to be ordered based on blocks
 		write jobs need to be ordered based on sequence id of the artifact names
 	*/
-	private List<StorageJob> orderTheJobsForTheTape(List<StorageJob> groupedOnVolumeTagJobsList) {
+	private List<StorageJob> orderJobsWithinATape(List<StorageJob> groupedOnVolumeTagJobsList) {
 		logger.debug("Ordering the jobs");
 		List<StorageJob> orderedJobsList = new ArrayList<StorageJob>();
 
@@ -538,7 +535,7 @@ public class TapeJobSelector {
 			
 			boolean isWriteJobsOn = false;
 
-			GroupedJobsCollection gjc = groupJobsOnVolumeTag(tapeJobsList);
+			GroupedJobsCollection gjc = groupJobsBasedOnVolumeTag(tapeJobsList);
 			Map<String, List<StorageJob>> volumeTag_volumeTagGroupedJobs = gjc.getVolumeTag_volumeTagGroupedJobs();
 
 			logger.trace("Checking if any queued job need the same tape as a currently running job and filtering it.");

@@ -202,6 +202,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	}
 	
 	private void isRightTape(SelectedStorageJob selectedStorageJob) throws Exception {
+		logger.info("Checking if its right tape by reading the artifact xml");
 		TapeJob tapeJob = (TapeJob) selectedStorageJob;
 		Volume tapeToBeUsed = tapeJob.getStorageJob().getVolume();
 		String tapeBarcode = tapeToBeUsed.getId();

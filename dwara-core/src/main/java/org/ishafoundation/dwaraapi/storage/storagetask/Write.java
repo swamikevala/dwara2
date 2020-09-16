@@ -60,6 +60,7 @@ public class Write extends AbstractStoragetaskAction{
 		Volume volume = null;
 		Domain domain = null;
 		long artifactSize = 0L;
+		int priority = 0;
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.ingest) {
 			String artifactclassId = request.getDetails().getArtifactclassId();
 			List<Integer> preReqJobIds = job.getDependencies();
@@ -118,7 +119,11 @@ public class Write extends AbstractStoragetaskAction{
 		storageJob.setArtifactSize(artifactSize);
 		// to where
 		storageJob.setVolume(volume);
-		
+		if(volume != null) {
+			Integer copyId = volume.getCopy().getId();
+			priority = copyId * 100;
+		}
+		storageJob.setPriority(priority);
 		return storageJob;
 	
 	}
