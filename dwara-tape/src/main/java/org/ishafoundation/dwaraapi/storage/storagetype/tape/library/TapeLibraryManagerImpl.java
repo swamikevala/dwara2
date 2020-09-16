@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.DeviceLockFactory;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.StorageElement;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.status.MtxStatus;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.status.MtxStatusResponseParser;
@@ -25,6 +26,9 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 	@Autowired
 	private CommandLineExecuter commandLineExecuter;
 
+	@Autowired
+	private DeviceLockFactory deviceLockFactory;
+	
 	// TODO Hardcoded stuff... Move it as configurable
 	private int retryInterval = 60000; // 60 secs = 1 mt
 	private int retryAttempts = 10;
@@ -37,20 +41,25 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 	}
 	
 	private String callMtxStatus(String tapeLibraryName) throws Exception {
-		String mtxStatusResponse = null;
-
-		CommandLineExecutionResponse cler = execute("mtx -f " + tapeLibraryName + " status", 0);
-		mtxStatusResponse = cler.getStdOutResponse();
-
-		return mtxStatusResponse;
+		logger.trace("Now enquiring status of library " + tapeLibraryName);
+		synchronized (deviceLockFactory.getDeviceLock(tapeLibraryName)) {
+			String mtxStatusResponse = null;
+			CommandLineExecutionResponse cler = execute("mtx -f " + tapeLibraryName + " status", 0);
+			mtxStatusResponse = cler.getStdOutResponse();
+	
+			return mtxStatusResponse;
+		}
 	}
 	
 	//		load the tape to be used
 	public boolean load(String tapeLibraryName, int seSNo, int driveSNo) throws Exception{
-		// TODO Handle the exception...
-		CommandLineExecutionResponse cler = execute("mtx -f " + tapeLibraryName + " load " + seSNo + " " + driveSNo, 0);
-		logger.trace(cler.getStdOutResponse());
-		return true;
+		logger.trace("Now loading - slot " + seSNo + " to drive " + driveSNo + " on " + tapeLibraryName);
+		synchronized (deviceLockFactory.getDeviceLock(tapeLibraryName)) {
+			// TODO Handle the exception...
+			CommandLineExecutionResponse cler = execute("mtx -f " + tapeLibraryName + " load " + seSNo + " " + driveSNo, 0);
+			logger.trace(cler.getStdOutResponse());
+			return true;
+		}
 	}
 
 	//		unload if any other tape - we should always check the status of the drive before unloading the tape. if the drive is busy we should not unload the tape.., (At the time of writing another thread/process is allowed to unload the tape)
@@ -82,12 +91,16 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 
 	@Override
 	public boolean unload(String tapeLibraryName, int storageElementSNo, int dataTransferElementSNo) throws Exception {
-		CommandLineExecutionResponse cler = execute("mtx -f " + tapeLibraryName + " unload " + storageElementSNo + " " + dataTransferElementSNo, 0);
-		logger.trace(cler.getStdOutResponse());
-		return true;
+		logger.trace("Now unloading - " + " from drive " + dataTransferElementSNo + " to slot " + storageElementSNo + " on " + tapeLibraryName);
+		synchronized (deviceLockFactory.getDeviceLock(tapeLibraryName)) {
+			CommandLineExecutionResponse cler = execute("mtx -f " + tapeLibraryName + " unload " + storageElementSNo + " " + dataTransferElementSNo, 0);
+			logger.trace(cler.getStdOutResponse());
+			return true;
+		}
 	}
 
 	private CommandLineExecutionResponse execute(String command, int retryCount) throws Exception {
+		logger.debug("Executing command - " + command);
 		CommandLineExecutionResponse commandLineExecutionResponse = null;
 		try {
 			commandLineExecutionResponse = commandLineExecuter.executeCommand(command);

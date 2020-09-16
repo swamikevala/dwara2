@@ -54,25 +54,27 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 2020-09-14 15:15:06,112 DEBUG org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl [pool-2-thread-1] end [mt, -f, /dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst, status]
 
 	 */
-	private synchronized String callMtStatus(String dataTransferElementName) throws Exception {
-		logger.trace("Executing mtStatus synchronized-ly - " + dataTransferElementName);
-		String mtStatusResponse = null;
-		CommandLineExecutionResponse cler = null;
-		try {
-			cler = commandLineExecuter.executeCommand("mt -f " + dataTransferElementName + " status");
-			if(cler.isComplete())
-				mtStatusResponse = cler.getStdOutResponse();
-
+	private String callMtStatus(String dataTransferElementName) throws Exception {
+		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
+			logger.trace("Executing mtStatus synchronized-ly - " + dataTransferElementName);
+			String mtStatusResponse = null;
+			CommandLineExecutionResponse cler = null;
+			try {
+				cler = commandLineExecuter.executeCommand("mt -f " + dataTransferElementName + " status");
+				if(cler.isComplete())
+					mtStatusResponse = cler.getStdOutResponse();
+	
+			}
+			catch (Exception e) {
+				String errorMsg = e.getMessage();
+				logger.error("Unable to get mtstatus - " + errorMsg);
+				if(errorMsg.contains("Device or resource busy"))
+					mtStatusResponse = errorMsg;
+				else
+					throw e;
+			}
+			return mtStatusResponse;
 		}
-		catch (Exception e) {
-			String errorMsg = e.getMessage();
-			logger.error("Unable to get mtstatus - " + errorMsg);
-			if(errorMsg.contains("Device or resource busy"))
-				mtStatusResponse = errorMsg;
-			else
-				throw e;
-		}
-		return mtStatusResponse;
 	}
 
 	
