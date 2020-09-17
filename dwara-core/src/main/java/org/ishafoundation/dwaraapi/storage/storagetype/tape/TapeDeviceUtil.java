@@ -84,7 +84,7 @@ public class TapeDeviceUtil {
 				String tapedriveDeviceId = tapedriveDevice.getId();
 				String dataTransferElementName = tapedriveDevice.getWwnId();
 				Integer driveAutoloaderAddress = tapedriveDevice.getDetails().getAutoloaderAddress();
-				
+				String tapedriveDeviceStoragesubtype = tapedriveDevice.getDetails().getType();
 				if(tapedriveDevice.getDetails().getAutoloaderId().equals(tapelibraryId)) { // equivalent of calling the query devicetype=drive and details.autoloader_id=X, query NOT easy with json
 					logger.trace("Getting details for - " + tapedriveDeviceId);
 					DriveDetails driveDetails = null;
@@ -103,8 +103,10 @@ public class TapeDeviceUtil {
 						continue;
 					}
 					
-					if(driveDetails != null)
+					if(driveDetails != null) {
+						driveDetails.setDriveStoragesubtype(tapedriveDeviceStoragesubtype);
 						driveDetailsList.add(driveDetails);
+					}
 				}
 			}
 		}

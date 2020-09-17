@@ -10,15 +10,17 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.commandline.local.RetriableCommandLineExecutorImpl;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.DeviceLockFactory;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.DeviceLockFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +50,9 @@ public class LabelManagerImpl implements LabelManager{
 	
 	@Autowired
 	private CommandLineExecuter commandLineExecuter;
+
+	@Autowired
+	private RetriableCommandLineExecutorImpl retriableCommandLineExecutorImpl;
 	
 	@Value("${volume.label.ownerId}")
 	private String ownerId;
@@ -113,14 +118,17 @@ public class LabelManagerImpl implements LabelManager{
 	}
 	
 	private String getLabel(String dataTransferElementName, int blocksize) throws Exception {
-		logger.trace("Now reading label from " + dataTransferElementName + ":" + blocksize);
-		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
-			logger.trace("Executing read label command synchronized-ly " + dataTransferElementName + ":" + blocksize);
-			CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + dataTransferElementName + " bs=" + blocksize + " count=1");
+		logger.info("Now reading label from " + dataTransferElementName + ":" + blocksize);
+//		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
+//			logger.trace("Executing read label command synchronized-ly " + dataTransferElementName + ":" + blocksize);
+			CommandLineExecutionResponse cler = retriableCommandLineExecutorImpl.executeCommandWithRetriesOnSpecificError("dd if=" + dataTransferElementName + " bs=" + blocksize + " count=1", DwaraConstants.DRIVE_BUSY_ERROR);
 			String resp = cler.getStdOutResponse();
-			String label = StringUtils.substring(resp, 0, blocksize);
-			return label;
-		}
+			logger.trace("read label - " + resp);
+//			String label = StringUtils.substring(resp, 0, blocksize);
+//			logger.trace("substringed label - " + label);
+//			return label;
+			return resp;
+//		}
 	}
 
 	@Override
@@ -287,7 +295,7 @@ public class LabelManagerImpl implements LabelManager{
 		xmlMapper.getFactory().getXMLOutputFactory().setProperty(propName, true);
 		xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true);
 		String label = xmlMapper.writeValueAsString(artifactlabel);
-		logger.trace(label);
+		logger.trace("artifactLabel" + label);
 
 		return writeLabel(label, artifactName + "_label", deviceName, blocksize);
 	}
@@ -323,15 +331,15 @@ public class LabelManagerImpl implements LabelManager{
 		// Option 2 doesnt work well for xml - CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("echo \"" + label + "\" | dd of=" + deviceName + " bs="+blocksize);
 		
 		// Option 3
-		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
-			logger.trace("Executing writing label command synchronized-ly " + deviceName + ":" + blocksize);
-			CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + file.getAbsolutePath()  + " of=" + deviceName + " bs=" + blocksize);
+//		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
+//			logger.trace("Executing writing label command synchronized-ly " + deviceName + ":" + blocksize);
+			CommandLineExecutionResponse cler = retriableCommandLineExecutorImpl.executeCommandWithRetriesOnSpecificError("dd if=" + file.getAbsolutePath()  + " of=" + deviceName + " bs=" + blocksize, DwaraConstants.DRIVE_BUSY_ERROR);
 			FileUtils.forceDelete(file);
 			logger.trace(file.getAbsolutePath() + " deleted ok.");
 			
 			if(cler.isComplete()) 
 				isSuccess = true;
-		}
+//		}
 		return isSuccess;
 	}
 }

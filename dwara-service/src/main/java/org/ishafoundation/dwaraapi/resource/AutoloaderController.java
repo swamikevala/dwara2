@@ -181,16 +181,18 @@ public class AutoloaderController {
 					}
 					
 					Volume volume = storageJob.getVolume();
-					String barcode = volume.getId();
-					if(!onlineVolumeList.contains(barcode)) {
-						ToLoadTape toLoadTape = new ToLoadTape();
-						toLoadTape.setAutoloader(onlineVolume_Autoloader_Map.get(barcode));
-						toLoadTape.setBarcode(barcode);
-						toLoadTape.setFinalized(volume.isFinalized());
-						toLoadTape.setLocation(volume.getLocation().getId());
-						toLoadTape.setPriority(priorityCount);
-						toLoadTapeList.add(toLoadTape);
-						priorityCount = priorityCount + 1;
+					if(volume != null) {
+						String barcode = volume.getId();
+						if(!onlineVolumeList.contains(barcode)) {
+							ToLoadTape toLoadTape = new ToLoadTape();
+							toLoadTape.setAutoloader(onlineVolume_Autoloader_Map.get(barcode));
+							toLoadTape.setBarcode(barcode);
+							toLoadTape.setFinalized(volume.isFinalized());
+							toLoadTape.setLocation(volume.getLocation().getId());
+							toLoadTape.setPriority(priorityCount);
+							toLoadTapeList.add(toLoadTape);
+							priorityCount = priorityCount + 1;
+						}
 					}
 				}
 			}

@@ -14,5 +14,8 @@ public interface DwaraConstants {
 	public static final String JOB = "Job - ";
 	public static final String ARTIFACT = "";
 	public static final String FILE = "";
+	
+	
+	public static final String DRIVE_BUSY_ERROR = "Device or resource busy";
 
 }

@@ -5,8 +5,9 @@ import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
-import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.commandline.local.RetriableCommandLineExecutorImpl;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
@@ -18,7 +19,7 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.DeviceLockFactory;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.DeviceLockFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,7 @@ public class VolumeindexManager {
 	private FileRepositoryUtil fileRepositoryUtil;
 
 	@Autowired
-	private CommandLineExecuter commandLineExecuter;
+	private RetriableCommandLineExecutorImpl retriableCommandLineExecutorImpl;
 	
 	@Autowired
 	private DeviceLockFactory deviceLockFactory;
@@ -69,14 +70,14 @@ public class VolumeindexManager {
 		
 		
 		// Option 3
-		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
-			CommandLineExecutionResponse cler = commandLineExecuter.executeCommand("dd if=" + file.getAbsolutePath()  + " of=" + deviceName + " bs="+blocksize);
+//		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
+			CommandLineExecutionResponse cler = retriableCommandLineExecutorImpl.executeCommandWithRetriesOnSpecificError("dd if=" + file.getAbsolutePath()  + " of=" + deviceName + " bs="+blocksize, DwaraConstants.DRIVE_BUSY_ERROR);
 			FileUtils.forceDelete(file);
 			logger.trace(file.getAbsolutePath() + " deleted ok.");
 			
 			if(cler.isComplete()) 
 				isSuccess = true;
-		}
+//		}
 	
 		return isSuccess;
 	}

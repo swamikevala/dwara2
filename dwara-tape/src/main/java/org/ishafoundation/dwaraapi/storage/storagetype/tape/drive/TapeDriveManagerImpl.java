@@ -1,10 +1,14 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape.drive;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.commandline.local.RetriableCommandLineExecutorImpl;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.DeviceLockFactory;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.MtStatus;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.MtStatusResponseParser;
@@ -29,6 +33,15 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	
 	@Autowired
 	private DeviceLockFactory deviceLockFactory;
+	
+	private static final String DRIVE_IO_ERROR = "Input/output error";
+	private static final String DRIVE_BUSY_ERROR = "Device or resource busy";
+	
+	private List<String> errorList = new ArrayList<String>();
+	public TapeDriveManagerImpl() {
+		errorList.add(DRIVE_IO_ERROR);
+		errorList.add(DRIVE_BUSY_ERROR);
+	}
 	
 	public MtStatus getMtStatus(String dataTransferElementName) throws Exception{
 		logger.trace("Calling mtStatus - " + dataTransferElementName);
@@ -55,8 +68,8 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 
 	 */
 	private String callMtStatus(String dataTransferElementName) throws Exception {
-		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
-			logger.trace("Executing mtStatus synchronized-ly - " + dataTransferElementName);
+//		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
+//			logger.trace("Executing mtStatus synchronized-ly - " + dataTransferElementName);
 			String mtStatusResponse = null;
 			CommandLineExecutionResponse cler = null;
 			try {
@@ -74,7 +87,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 					throw e;
 			}
 			return mtStatusResponse;
-		}
+//		}
 	}
 
 	
@@ -121,7 +134,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	public boolean isTapeBlank(String dataTransferElementName) throws Exception {
 		try {
 			rewind(dataTransferElementName);
-			commandLineExecuter.executeCommand("mt -f " + dataTransferElementName + " fsf " + 1);
+			executeCommandWithRetries("mt -f " + dataTransferElementName + " fsf " + 1);
 		} catch (Exception e) {
 			logger.debug("fsf failed, means blank tape for sure");
 			return true;
@@ -141,13 +154,20 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			
 			eod(dataTransferElementName);
 			
-			int blockNumber = getCurrentPositionBlockNumber(dataTransferElementName);
+			int blockNumberAfterEOD = getCurrentPositionBlockNumber(dataTransferElementName);
+			int blockNumberToSeek =  blockNumberAfterEOD - 2;
+			// validating the blockNumber
+			seek(dataTransferElementName, blockNumberToSeek);
+			
+			int blockNumberAfterSeek = getCurrentPositionBlockNumber(dataTransferElementName);
 			
 			// validating the blockNumber
-			seek(dataTransferElementName, blockNumber - 2);
+			if(blockNumberAfterSeek != blockNumberToSeek) {
+				throw new Exception("Expected blockNumberToSeek " + blockNumberToSeek + ", blockNumberAfterSeek " + blockNumberAfterSeek);
+			}
 			
-			MtStatus mtStatus = getMtStatus(dataTransferElementName);
-			dsd.setMtStatus(mtStatus);
+//			MtStatus mtStatus = getMtStatus(dataTransferElementName);
+//			dsd.setMtStatus(mtStatus);
 		}catch (Exception e) {
 			logger.error("Unable to setTapeHeadPositionForReadingInterArtifactXml " + e.getMessage(), e);
 			throw e;
@@ -228,52 +248,64 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	}
 	
 	private CommandLineExecutionResponse rewind(String dataTransferElementName) throws Exception {
-		logger.trace("Now rewinding - " + dataTransferElementName);
-		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
-			return commandToBeExecuted("mt -f " + dataTransferElementName + " rewind", true, "Input/output error");	
-		}
+		logger.debug("Now rewinding - " + dataTransferElementName);
+//		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
+			return executeCommandWithRetries("mt -f " + dataTransferElementName + " rewind");	
+//		}
 	}
 	
 	private CommandLineExecutionResponse eod(String dataTransferElementName) throws Exception{
-		logger.trace("Now eoding - " + dataTransferElementName);
-		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
-			return commandToBeExecuted("mt -f " + dataTransferElementName + " eod", true, "Input/output error"); // TODO - We dont know what the error msgs will be for eod
-		}
+		logger.debug("Now eoding - " + dataTransferElementName);
+//		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
+			return executeCommandWithRetries("mt -f " + dataTransferElementName + " eod"); // TODO - We dont know what the error msgs will be for eod
+//		}
 	}
 
 	private CommandLineExecutionResponse seek(String dataTransferElementName, int blockNo) throws Exception{
-		logger.trace("Now seeking - " + dataTransferElementName + ":" + blockNo);
-		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
-			return commandToBeExecuted("mt -f " + dataTransferElementName + " seek " + blockNo, true, "Input/output error"); // when tape loaded but not stinit throws "Input/output error"
-		}
+		logger.debug("Now seeking - " + dataTransferElementName + ":" + blockNo);
+//		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
+			return executeCommandWithRetries("mt -f " + dataTransferElementName + " seek " + blockNo); // when tape loaded but not stinit throws "Input/output error"
+//		}
 		// TODO 
 		// 1) Check what happens when tape not loaded..
 		// 2) How do we handle for some tapes for which seek fails the first but succeeds in the subsequent attempts that Sameer anna mentioned... 
 	}
 	
 	private CommandLineExecutionResponse tell(String dataTransferElementName) throws Exception{
-		logger.trace("Now tell-ing - " + dataTransferElementName);
-		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
-			return commandToBeExecuted("mt -f " + dataTransferElementName + " tell", true, "Input/output error");
-		}
+		logger.debug("Now tell-ing - " + dataTransferElementName);
+//		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
+			return executeCommandWithRetries("mt -f " + dataTransferElementName + " tell");
+//		}
 	}
 	
 	
-	private CommandLineExecutionResponse commandToBeExecuted(String command, boolean retry, String retryCause) throws Exception {
-		logger.debug("Executing " + command);
+	public CommandLineExecutionResponse executeCommandWithRetries(String command) throws Exception {
+		return executeCommandWithRetries(command, 0, errorList);
+	}
+
+	public CommandLineExecutionResponse executeCommandWithRetries(String command, int nthRetryAttempt, List<String> errorList) throws Exception {
+		logger.debug("Attempt " + nthRetryAttempt + " : " + command);
 		CommandLineExecutionResponse commandLineExecutionResponse = null;
 		try {
 			commandLineExecutionResponse = commandLineExecuter.executeCommand(command);
 		} catch (Exception e) {
-			if(retryCause == null || e.getMessage().contains(retryCause)) {
-				if(retry) {
-					// TODO call stinit here
-					logger.warn("stinit script seems to be not executed. Running it now");
-					logger.info("TODO : stinit script need to be invoked here");
-					// re-execute the same command again...
-					logger.debug("Now re-executing the same command again " + command);
-					commandToBeExecuted(command, false, retryCause);
-				}
+			String errorMsg = e.getMessage();
+			logger.error(command + " failed " + e.getMessage());
+			
+			if(errorList == null)
+				errorList = this.errorList;
+			
+			if(errorMsg.contains(DRIVE_IO_ERROR) && errorList.contains(DRIVE_IO_ERROR) && nthRetryAttempt == 0) {
+				// TODO call stinit here
+				logger.warn("stinit script seems to be not executed. Running it now");
+				logger.info("TODO : stinit script need to be invoked here");
+				// re-execute the same command again...
+				logger.debug("Now re-executing the same command again " + command);
+				executeCommandWithRetries(command, nthRetryAttempt + 1, errorList);
+			}
+			else if(errorMsg.contains(DRIVE_BUSY_ERROR) && errorList.contains(DRIVE_BUSY_ERROR)  && nthRetryAttempt <= 2){
+				logger.debug("Must be a parallel mt status call... Retrying again");
+				executeCommandWithRetries(command, nthRetryAttempt + 1, errorList);
 			}
 			else
 				throw e;

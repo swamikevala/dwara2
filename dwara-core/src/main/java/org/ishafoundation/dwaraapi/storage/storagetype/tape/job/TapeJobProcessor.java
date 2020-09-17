@@ -202,16 +202,19 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	}
 	
 	private void isRightTape(SelectedStorageJob selectedStorageJob) throws Exception {
-		logger.info("Checking if its right tape by reading the artifact xml");
+		logger.info("Checking if its right tape by reading the label");
 		TapeJob tapeJob = (TapeJob) selectedStorageJob;
 		Volume tapeToBeUsed = tapeJob.getStorageJob().getVolume();
 		String tapeBarcode = tapeToBeUsed.getId();
 		
 		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(tapeJob.getStorageJob().getDomain(), tapeToBeUsed);
 		
-		if(lastArtifactOnVolumeEndVolumeBlock == 0)
+		if(lastArtifactOnVolumeEndVolumeBlock == 0) {
+			logger.trace("Will be reading volume label - if need be");
 			isRightTape(selectedStorageJob, tapeBarcode);
+		}
 		else {
+			logger.trace("Will be reading artifact label");
 			tapeDriveManager.setTapeHeadPositionForReadingInterArtifactXml(tapeJob.getDeviceWwnId());
 			
 			boolean isRightTape = labelManager.isRightVolume(selectedStorageJob, false);

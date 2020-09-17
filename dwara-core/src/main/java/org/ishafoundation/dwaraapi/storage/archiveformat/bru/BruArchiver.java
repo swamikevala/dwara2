@@ -6,9 +6,8 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
-import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.commandline.local.RetriableCommandLineExecutorImpl;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
@@ -18,6 +17,7 @@ import org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components
 import org.ishafoundation.dwaraapi.storage.model.ArchiveformatJob;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.DeviceLockFactory;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +32,10 @@ public class BruArchiver implements IArchiveformatter {
 	private static final Logger logger = LoggerFactory.getLogger(BruArchiver.class);
 	
 	@Autowired
-	private CommandLineExecuter commandLineExecuter;
+	private RetriableCommandLineExecutorImpl retriableCommandLineExecutorImpl;
 
 	@Autowired
-	private Configuration configuration;
+	private DeviceLockFactory deviceLockFactory;
 	
 	@Override
 	public ArchiveResponse write(ArchiveformatJob archiveformatJob) throws Exception {
@@ -54,9 +54,11 @@ public class BruArchiver implements IArchiveformatter {
 		commandList.add("-c");
 		commandList.add("cd " + artifactSourcePath + " ; " + bruCopyCommand);
 		
-		logger.debug(" Bru write " +  bruCopyCommand);
-		String commandOutput = executeWriteCommand(commandList, artifactNameToBeWritten, volumeBlocksize);
-
+		String commandOutput = null;
+//		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
+			logger.debug(" Bru write " +  bruCopyCommand);
+			commandOutput = executeWriteCommand(commandList, artifactNameToBeWritten, volumeBlocksize);
+//		}
 		logger.trace("Before parsing bru response - " + commandOutput);
 		BruResponseParser bruResponseParser = new BruResponseParser();
 		BruResponse bruResponse = bruResponseParser.parseBruResponse(commandOutput);
@@ -144,9 +146,9 @@ public class BruArchiver implements IArchiveformatter {
 		String filePathNameToBeRestored = storageJob.getArtifact().getName();
 		
 		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, false, 0, targetLocationPath, filePathNameToBeRestored);
-		
-		executeRestoreCommand(commandList);
-		
+//		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
+			executeRestoreCommand(commandList);
+//		}
 		boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype(),true);
 		if(!success)
 			throw new Exception("Verification failed");
@@ -169,9 +171,9 @@ public class BruArchiver implements IArchiveformatter {
 		FileUtils.forceMkdir(new java.io.File(targetLocationPath));
 		
 		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, selectedStorageJob.isUseBuffering(), filesize, targetLocationPath, filePathNameToBeRestored);
-
-		executeRestoreCommand(commandList);
-
+//		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
+			executeRestoreCommand(commandList);
+//		}
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		
 		if(storageJob.isRestoreVerify()) {
@@ -220,12 +222,25 @@ public class BruArchiver implements IArchiveformatter {
 			throws Exception {
 		return executeCommand(writeCommandParamsList);
 	}
-
+	
+	private String executeCommand(List<String> bruCommandParamsList)
+			throws Exception {
+		String commandOutput = null;
+		CommandLineExecutionResponse bruCopyCommandLineExecutionResponse = retriableCommandLineExecutorImpl.executeCommandWithRetriesOnSpecificError(bruCommandParamsList, DwaraConstants.DRIVE_BUSY_ERROR);
+		if(bruCopyCommandLineExecutionResponse.isComplete()) {
+			commandOutput = bruCopyCommandLineExecutionResponse.getStdOutResponse();
+		}else {
+			logger.error("Bru command execution failed " + bruCopyCommandLineExecutionResponse.getFailureReason());
+			throw new Exception("Unable to execute bru command successfully");
+		}
+		return commandOutput;
+	}
+	
 	protected String executeRestoreCommand(List<String> restoreCommandParamsList) throws Exception {
 		String mtStatusResponse = null;
 		CommandLineExecutionResponse cler = null;
 		try {
-			cler = commandLineExecuter.executeCommand(restoreCommandParamsList, false);
+			cler = retriableCommandLineExecutorImpl.executeCommandWithRetriesOnSpecificError(restoreCommandParamsList, DwaraConstants.DRIVE_BUSY_ERROR, false);
 			if(cler.isComplete())
 				mtStatusResponse = cler.getStdOutResponse();
 		}
@@ -243,17 +258,5 @@ public class BruArchiver implements IArchiveformatter {
 		}
 		return mtStatusResponse;
 	}
-	
-	private String executeCommand(List<String> bruCommandParamsList)
-			throws Exception {
-		String commandOutput = null;
-		CommandLineExecutionResponse bruCopyCommandLineExecutionResponse = commandLineExecuter.executeCommand(bruCommandParamsList);
-		if(bruCopyCommandLineExecutionResponse.isComplete()) {
-			commandOutput = bruCopyCommandLineExecutionResponse.getStdOutResponse();
-		}else {
-			logger.error("Bru command execution failed " + bruCopyCommandLineExecutionResponse.getFailureReason());
-			throw new Exception("Unable to execute bru command successfully");
-		}
-		return commandOutput;
-	}
+
 }

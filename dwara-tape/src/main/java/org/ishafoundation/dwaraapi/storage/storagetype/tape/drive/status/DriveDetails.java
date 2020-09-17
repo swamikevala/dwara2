@@ -4,6 +4,7 @@ import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.D
 
 public class DriveDetails {
 	private String driveId;
+	private String driveStoragesubtype;
 	private String driveName;
 	private MtStatus mtStatus;
 	
@@ -21,6 +22,12 @@ public class DriveDetails {
 	}
 	public void setDriveId(String driveId) {
 		this.driveId = driveId;
+	}
+	public String getDriveStoragesubtype() {
+		return driveStoragesubtype;
+	}
+	public void setDriveStoragesubtype(String driveStoragesubtype) {
+		this.driveStoragesubtype = driveStoragesubtype;
 	}
 	public String getDriveName() {
 		return driveName;

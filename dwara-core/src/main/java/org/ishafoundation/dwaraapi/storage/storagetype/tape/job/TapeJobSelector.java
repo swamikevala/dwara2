@@ -18,6 +18,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.storage.model.GroupedJobsCollection;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
+import org.ishafoundation.dwaraapi.storage.storagesubtype.AbstractStoragesubtype;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDeviceUtil;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
@@ -32,13 +33,16 @@ public class TapeJobSelector {
 	private static final Logger logger = LoggerFactory.getLogger(TapeJobSelector.class);
 	
 	@Autowired
-	private TapeDeviceUtil tapeDeviceUtil;	
+	private TActivedeviceDao tActivedeviceDao;
 	
 	@Autowired
-	private TActivedeviceDao tActivedeviceDao;
+	private TapeDeviceUtil tapeDeviceUtil;	
 
 	@Autowired
 	private VolumeUtil volumeUtil;
+	
+	@Autowired
+	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
 	
 	/**
 	 * Method responsible for getting a job for the drive
@@ -117,6 +121,39 @@ public class TapeJobSelector {
 	private StorageJob chooseAJobForTheDrive(List<StorageJob> tapeJobsList, DriveDetails driveDetails) throws Exception{
 		logger.debug("Choosing a job for the drive " + driveDetails.getDriveId());//driveDetails.getDriveName() + "(" + driveDetails.getDte().getsNo() + ")");
 		// TODO :  Filtering job which involves a tape' generation not supported by the Drive
+		String driveStoragesubtype = driveDetails.getDriveStoragesubtype();
+		int[] driveSupportedGenerationsOnWrite = storagesubtypeMap.get(driveStoragesubtype).getWriteSupportedGenerations();
+		int[] driveSupportedGenerationsOnRead = storagesubtypeMap.get(driveStoragesubtype).getReadSupportedGenerations();
+		List<StorageJob> tapeJobsListNotSupportedForThisDrive = new ArrayList<StorageJob>(); 
+		for (Iterator<StorageJob> tapeJobsIterator = tapeJobsList.iterator(); tapeJobsIterator.hasNext();) {
+			StorageJob tapeJob = (StorageJob) tapeJobsIterator.next();
+			Volume toBeUsedVolume = tapeJob.getVolume();
+			String volumeStoragesubtype = toBeUsedVolume.getStoragesubtype();
+			Action jobStorageAction = tapeJob.getJob().getStoragetaskActionId();
+			// check if the action on volume is supported by the drive
+			int volumeGeneration = storagesubtypeMap.get(volumeStoragesubtype).getGeneration();
+			boolean volumeSupportedByDrive = false;
+			int[] supportedGenerations;
+			if(jobStorageAction == Action.write) {
+				supportedGenerations = driveSupportedGenerationsOnWrite;
+			}
+			else {
+				supportedGenerations = driveSupportedGenerationsOnRead;
+			}
+			
+			for (int i : supportedGenerations) {
+				if(i == volumeGeneration) {
+					volumeSupportedByDrive = true;
+					break;
+				}
+			}
+			if(!volumeSupportedByDrive) {
+				logger.debug(tapeJob.getJob().getId() + ":" + toBeUsedVolume + ":" + volumeGeneration + " not supported in this drive. Will be removing it from the job list");
+				tapeJobsListNotSupportedForThisDrive.add(tapeJob);
+			}
+		}
+		tapeJobsList.removeAll(tapeJobsListNotSupportedForThisDrive);
+
 		// tapedrive and tape linked via device.details.type(LTO7) and volume.details.storagesubtype(LTO7)...
 //			driveDetails.getDriveId();
 		

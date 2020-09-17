@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.storage.storagetype.tape.drive;
+package org.ishafoundation.dwaraapi.storage.storagetype.tape;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

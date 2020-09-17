@@ -9,11 +9,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.commandline.local.RetriableCommandLineExecutorImpl;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
@@ -30,7 +30,7 @@ import org.ishafoundation.dwaraapi.storage.archiveformat.tar.response.components
 import org.ishafoundation.dwaraapi.storage.model.ArchiveformatJob;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.DeviceLockFactory;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.DeviceLockFactory;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +101,7 @@ public class TarArchiver implements IArchiveformatter {
 	private DomainUtil domainUtil;
 	
 	@Autowired
-	private CommandLineExecuter commandLineExecuter;
+	private RetriableCommandLineExecutorImpl retriableCommandLineExecutorImpl;
 	
 	@Autowired
 	private Configuration configuration;
@@ -129,9 +129,12 @@ public class TarArchiver implements IArchiveformatter {
 		commandList.add("-c");
 		commandList.add("cd " + artifactSourcePath + " ; " + tarCopyCommand);
 		
-		logger.debug(" Tar write " +  tarCopyCommand);
-		String commandOutput = executeCommand(commandList, artifactNameToBeWritten, volumeBlocksize);
-
+		String commandOutput = null;
+//		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
+			logger.debug(" Tar write " +  tarCopyCommand);
+			commandOutput = executeCommand(commandList, artifactNameToBeWritten, volumeBlocksize);
+//		}
+		
 		logger.trace("Before parsing tar response - " + commandOutput);
 		TarResponseParser tarResponseParser = new TarResponseParser();
 		TarResponse tarResponse = tarResponseParser.parseTarResponse(commandOutput);
@@ -143,7 +146,7 @@ public class TarArchiver implements IArchiveformatter {
 	protected String executeCommand(List<String> tarCommandParamsList, String artifactName, int volumeBlocksize)
 			throws Exception {
 		String commandOutput = null;
-		CommandLineExecutionResponse tarCopyCommandLineExecutionResponse = commandLineExecuter.executeCommand(tarCommandParamsList);
+		CommandLineExecutionResponse tarCopyCommandLineExecutionResponse = retriableCommandLineExecutorImpl.executeCommandWithRetriesOnSpecificError(tarCommandParamsList, DwaraConstants.DRIVE_BUSY_ERROR, false);
 		if(tarCopyCommandLineExecutionResponse.isComplete()) {
 			commandOutput = tarCopyCommandLineExecutionResponse.getStdOutResponse();
 		}else {
@@ -310,15 +313,32 @@ public class TarArchiver implements IArchiveformatter {
 		return commandList;
 	}
 
-
-
 	protected boolean stream(String dataTransferElementName, List<String> commandList, int volumeBlocksize, int skipByteCount,
 			String filePathNameWeNeed, boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
 			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
-		
-		synchronized (deviceLockFactory.getDeviceLock(dataTransferElementName)) {
-			return TapeStreamer.stream(commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj);
+		return streamWithRetriesOnDeviceBusyError(dataTransferElementName, commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj, DwaraConstants.DRIVE_BUSY_ERROR, 0);
+	}
+	
+	private boolean streamWithRetriesOnDeviceBusyError(String dataTransferElementName, List<String> commandList, int volumeBlocksize, int skipByteCount,
+				String filePathNameWeNeed, boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
+				HashMap<String, byte[]> filePathNameToChecksumObj, String errorMsg, int nthRetryAttempt) throws Exception {
+	
+		boolean success = false;
+		try {
+			success = TapeStreamer.stream(commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj);
+		} catch (Exception e) {
+			String errorMessage = e.getMessage();
+			logger.error("Tar streaming failed " + e.getMessage());
+			
+			if(errorMessage.contains(errorMsg) && nthRetryAttempt <= 2){
+				logger.debug("Must be a parallel mt status call... Retrying again");
+				streamWithRetriesOnDeviceBusyError(dataTransferElementName, commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj, errorMsg, nthRetryAttempt);
+			}
+			else
+				throw e;
 		}
+		
+		return success;
 	}
 	
 	private ArchiveformatJob getDecoratedArchiveformatJobForRestore(ArchiveformatJob archiveformatJob) throws Exception {
