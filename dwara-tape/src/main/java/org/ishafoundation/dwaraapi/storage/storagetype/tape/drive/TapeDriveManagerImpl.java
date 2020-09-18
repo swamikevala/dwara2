@@ -301,11 +301,11 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 				logger.info("TODO : stinit script need to be invoked here");
 				// re-execute the same command again...
 				logger.debug("Now re-executing the same command again " + command);
-				executeCommandWithRetries(command, nthRetryAttempt + 1, errorList);
+				commandLineExecutionResponse = executeCommandWithRetries(command, nthRetryAttempt + 1, errorList);
 			}
 			else if(errorMsg.contains(DRIVE_BUSY_ERROR) && errorList.contains(DRIVE_BUSY_ERROR)  && nthRetryAttempt <= 2){
 				logger.debug("Must be a parallel mt status call... Retrying again");
-				executeCommandWithRetries(command, nthRetryAttempt + 1, errorList);
+				commandLineExecutionResponse = executeCommandWithRetries(command, nthRetryAttempt + 1, errorList);
 			}
 			else
 				throw e;

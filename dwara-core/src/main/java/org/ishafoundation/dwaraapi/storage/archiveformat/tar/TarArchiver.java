@@ -332,7 +332,7 @@ public class TarArchiver implements IArchiveformatter {
 			
 			if(errorMessage.contains(errorMsg) && nthRetryAttempt <= 2){
 				logger.debug("Must be a parallel mt status call... Retrying again");
-				streamWithRetriesOnDeviceBusyError(dataTransferElementName, commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj, errorMsg, nthRetryAttempt);
+				success = streamWithRetriesOnDeviceBusyError(dataTransferElementName, commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj, errorMsg, nthRetryAttempt);
 			}
 			else
 				throw e;

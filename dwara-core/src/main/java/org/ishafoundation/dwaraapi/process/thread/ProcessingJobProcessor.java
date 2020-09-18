@@ -434,6 +434,7 @@ public class ProcessingJobProcessor implements Runnable{
 	}
 	
 	private synchronized Job checkAndUpdateStatusToInProgress(Job job, Request systemGeneratedRequest){
+		job = jobDao.findById(job.getId()).get();
 		if(job.getStatus() == Status.queued) {
 			Status status = Status.in_progress;
 			

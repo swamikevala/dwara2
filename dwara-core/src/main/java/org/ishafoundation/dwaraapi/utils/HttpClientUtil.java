@@ -91,7 +91,8 @@ public class HttpClientUtil {
 	        ResponseHandler<String> responseHandler = createResponseHandler();
 	
 	        logger.trace("Executing request: " + httpPost.getRequestLine());
-	        logger.trace("Payload: " + postBodyPayload);
+	        if(!postBodyPayload.contains("password"))
+	        	logger.trace("Payload: " + postBodyPayload);
 	        
 	        responseBody = httpClient.execute(httpPost, responseHandler);
 	

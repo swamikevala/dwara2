@@ -69,12 +69,7 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 			MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
 			logger.trace("getting details of drive " + toBeUsedDataTransferElementSNo);
 			
-			DriveDetails driveStatusDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
-			
-			if(driveStatusDetails.getMtStatus().isBusy()) { // means drive is just loaded with tape but not using it
-				logger.trace("Something wrong with the app and tapelibrary sync. Drive is not supposed to be busy, but seems busy");
-				throw new Exception("Drive " + toBeUsedDataTransferElementSNo + "(" + dataTransferElementName + ") seems to be busy, when its not supposed to. App Bug. Contact Dev team");
-			}
+			DriveDetails driveStatusDetails = getDriveDetails(toBeUsedDataTransferElementSNo, dataTransferElementName, 0);
 			
 			if(driveStatusDetails.getMtStatus().isReady()){ // means drive is not empty and has a tape
 				DataTransferElement dte = mtxStatus.getDte(toBeUsedDataTransferElementSNo);
@@ -106,6 +101,21 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 		}
 		return isSuccess;
 	}
+	
+	private DriveDetails getDriveDetails(int toBeUsedDataTransferElementSNo, String dataTransferElementName, int nthRetryAttempt) throws Exception{
+		DriveDetails driveStatusDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);
+		if(driveStatusDetails.getMtStatus().isBusy()) {
+			if(nthRetryAttempt < 3) {
+				driveStatusDetails = getDriveDetails(toBeUsedDataTransferElementSNo, dataTransferElementName, nthRetryAttempt + 1);
+			}
+			else {
+				logger.trace("Something wrong with the app and tapelibrary sync. Drive is not supposed to be busy, but seems busy");
+				throw new Exception("Drive " + toBeUsedDataTransferElementSNo + "(" + dataTransferElementName + ") seems to be busy, when its not supposed to. App Bug. Contact Dev team");
+			}
+		}
+		return driveStatusDetails;
+	}
+	
 	
 	private int locateTheTapesStorageElement(List<StorageElement> seList, String toBeUsedTapeBarCode) throws Exception{
 		int storageElementNo = -9;

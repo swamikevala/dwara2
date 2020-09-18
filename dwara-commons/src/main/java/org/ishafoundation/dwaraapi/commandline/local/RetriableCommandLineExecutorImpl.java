@@ -39,7 +39,7 @@ public class RetriableCommandLineExecutorImpl extends CommandLineExecuterImpl{
 			
 			if(errorMessage.contains(errorMsg) && nthRetryAttempt <= 2){
 				logger.debug("Must be a parallel mt status call... Retrying again");
-				executeCommandWithRetries(commandParamsList, nthRetryAttempt + 1, errorMsg, extractLastLineAsFailureReason);
+				commandLineExecutionResponse = executeCommandWithRetries(commandParamsList, nthRetryAttempt + 1, errorMsg, extractLastLineAsFailureReason);
 			}
 			else
 				throw e;

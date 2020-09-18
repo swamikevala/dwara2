@@ -194,8 +194,9 @@ public class LabelManagerImpl implements LabelManager{
 		ArchiveCreator archivecreatorObj = new ArchiveCreator();
 		String archiveCreatorVersion = null;
 		if(archiveformat.equals("tar")) {
-			CommandLineExecutionResponse tarArchiveCreatorVersionCler = commandLineExecuter.executeCommand("tar --version | head -n1"); 
+			CommandLineExecutionResponse tarArchiveCreatorVersionCler = commandLineExecuter.executeCommand("tar --version"); // NOTE - tar --version | head -n1 doesnt work 
 			archiveCreatorVersion = tarArchiveCreatorVersionCler.getStdOutResponse().trim();  //(GNU tar) 1.26
+			archiveCreatorVersion = StringUtils.substringBefore(archiveCreatorVersion, System.getProperty("line.separator"));
 		}
 		else if(archiveformat.equals("bru")) {
 			CommandLineExecutionResponse bruReleaseCler = commandLineExecuter.executeCommand("bru -h | grep release"); 
