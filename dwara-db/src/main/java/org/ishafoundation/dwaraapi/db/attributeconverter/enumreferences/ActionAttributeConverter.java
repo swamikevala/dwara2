@@ -14,7 +14,7 @@ public class ActionAttributeConverter implements AttributeConverter<Action, Stri
 	@Override
 	public String convertToDatabaseColumn(Action attribute) {
 		if (attribute == null)
-			return "";// We dont set NULL in db to ensure uniqueness constraint works...
+			return null;
 
 		switch (attribute) {
 		case import_:
@@ -70,7 +70,7 @@ public class ActionAttributeConverter implements AttributeConverter<Action, Stri
 
 	@Override
 	public Action convertToEntityAttribute(String dbData) {
-		if (StringUtils.isBlank(dbData)) // We dont set NULL in db to ensure uniqueness constraint works...
+		if (dbData == null)
 			return null;
 
 		switch (dbData) {
