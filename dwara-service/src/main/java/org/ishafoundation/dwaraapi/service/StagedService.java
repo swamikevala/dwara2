@@ -5,6 +5,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -523,7 +524,7 @@ public class StagedService extends DwaraService{
 	    Set<String> alreadySupportedExtensions = extensionsUtil.getAllSupportedExtensions();
 	    // getting the not supported extensions by removing already existing extensions
 	    extnsOnArtifactFolder.removeAll(alreadySupportedExtensions);
-	    Set<Extension> toBeAddedExtensionTableEntries = new TreeSet<Extension>();
+	    Set<Extension> toBeAddedExtensionTableEntries = new HashSet<Extension>();
 	    for (String extn : extnsOnArtifactFolder) {
 			Extension extension = new Extension();
 			extension.setId(extn);
