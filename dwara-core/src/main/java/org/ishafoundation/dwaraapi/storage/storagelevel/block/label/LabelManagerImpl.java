@@ -98,7 +98,11 @@ public class LabelManagerImpl implements LabelManager{
 			logger.trace("Right volume");
 		}
 		else {
-			String errorMsg = "Loaded volume " + volumeId + " mismatches with volumeId on label " + volIdFromLabel + ". Needs admin eyes";
+			String errorMsg = null;
+			if(volIdFromLabel.equals(volumeId))
+				errorMsg = "Loaded volume " + volumeId + " mismatches with volumeId on label " + volIdFromLabel + ". Needs admin eyes";
+			else if(artifactNameFromLabel.equals(artifactNameToCompare))
+				errorMsg = "Loaded volume " + volumeId + " is correct. But positioned block is wrong. Has a mismatch on artifact Name. Expected " + artifactNameToCompare + " Actual " + artifactNameFromLabel + ". Needs admin eyes";
 			logger.error(errorMsg);
 			throw new Exception(errorMsg);
 		}

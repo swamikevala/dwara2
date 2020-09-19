@@ -35,17 +35,22 @@
     <!-- LOG everything at INFO level -->
     <root level="info">
         <appender-ref ref="RollingFile" />
-        <appender-ref ref="Console" />
+        <!--<appender-ref ref="Console" />-->
     </root>
  
-    <logger name="org.ishafoundation.dwaraapi" level="trace" additivity="false">
+ 	<logger name="org.ishafoundation.dwaraapi" level="trace" additivity="false">
         <appender-ref ref="RollingFile" />
-        <appender-ref ref="Console" />
+        <!--<appender-ref ref="Console" />-->
+    </logger>
+    
+    <logger name="org.ishafoundation.dwaraapi.commandline" level="info" additivity="false">
+        <appender-ref ref="RollingFile" />
+        <!--<appender-ref ref="Console" />-->
     </logger>
     
     <logger name="org.ishafoundation.videopub" level="trace" additivity="false">
         <appender-ref ref="RollingFile" />
-        <appender-ref ref="Console" />
+        <!--<appender-ref ref="Console" />-->
     </logger>
  
 </configuration>
