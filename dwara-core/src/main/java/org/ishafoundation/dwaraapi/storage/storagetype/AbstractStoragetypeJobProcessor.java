@@ -253,6 +253,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStartVolumeBlock());
 		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEndVolumeBlock());
+		selectedStorageJob.setLastWrittenArtifactName(artifactVolume.getName());
 		
 		// to where
 		String targetLocationPath = configuration.getRestoreTmpLocationForVerification();

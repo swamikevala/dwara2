@@ -81,7 +81,7 @@ public class LabelManagerImpl implements LabelManager{
 
 		String deviceName = selectedStorageJob.getDeviceWwnId();
 		String volIdFromLabel = null;
-		String artifactNameToCompare = selectedStorageJob.getStorageJob().getArtifactName(); // Will be null for finalizing scenario
+		String artifactNameToCompare = selectedStorageJob.getLastWrittenArtifactName(); // Will be null for finalizing scenario
 		String artifactNameFromLabel = null; // Will be null for first write scenario
 		if(fromVolumelabel){
 			Volumelabel volumelabel = readVolumeLabel(deviceName, blocksize);
@@ -93,7 +93,7 @@ public class LabelManagerImpl implements LabelManager{
 			artifactNameFromLabel = artifactlabel.getArtifact();
 		}
 		
-		if(volIdFromLabel.equals(volumeId)) {// && (artifactNameFromLabel == null || artifactNameToCompare == null || (artifactNameFromLabel != null && artifactNameToCompare != null && artifactNameFromLabel.equals(artifactNameToCompare)))) {
+		if((fromVolumelabel && volIdFromLabel.equals(volumeId)) || (!fromVolumelabel && volIdFromLabel.equals(volumeId) && artifactNameFromLabel.equals(artifactNameToCompare))) {
 			isRightVolume = true;
 			logger.trace("Right volume");
 		}

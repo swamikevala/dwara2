@@ -147,6 +147,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 
 			List<DriveDetails> availableDrivesDetails = null;
 			try {
+				logger.info("Getting all available drives");
 				availableDrivesDetails = tapeDeviceUtil.getAllAvailableDrivesDetails();
 			} catch (Exception e1) {
 				logger.error("Unable to get Drives info. Skipping storage jobs...",e1.getMessage());

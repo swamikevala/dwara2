@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.resource;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -138,14 +139,14 @@ public class AutoloaderController {
 	}
 	
 	@GetMapping(value = "/autoloader/toLoad", produces = "application/json")
-	public ResponseEntity<List<ToLoadTape>> getOfflineTapesToBeLoaded(){ 
+	public ResponseEntity<Set<ToLoadTape>> getOfflineTapesToBeLoaded(){ 
 		// get all queued storagetask jobs and their needed tapes
 		
 		// get all jobs with volume id not null and storagetask is not null and status is queued
 //		List<Job> queuedJobListWithVolume = jobDao.findAllByVolumeIdIsNotNullAndStoragetaskActionIdIsNotNullAndStatus(Status.queued); // job has volume for restore and finalize
 //		List<Job> queuedJobListWithVolumeGroup = jobDao.findAllByGroupVolumeIdIsNotNullAndStoragetaskActionIdIsNotNullAndStatus(Status.queued); // job has volume group for ingest 
 		
-		List<ToLoadTape> toLoadTapeList = new ArrayList<ToLoadTape>();
+		Set<ToLoadTape> toLoadTapeList = new HashSet<ToLoadTape>();
 		try {
 			List<Job> queuedJobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued); // job has volume group for ingest
 			if(queuedJobList.size() == 0)
@@ -171,7 +172,7 @@ public class AutoloaderController {
 				int priorityCount = 1;
 				for (Job nthQueuedJob : queuedJobList) {
 					AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(nthQueuedJob.getStoragetaskActionId().name());
-					logger.trace("building storage job - " + nthQueuedJob.getId() + ":" + storagetaskActionImpl.getClass().getSimpleName());
+					logger.trace("Building storage job - " + nthQueuedJob.getId() + ":" + storagetaskActionImpl.getClass().getSimpleName());
 					StorageJob storageJob = null;
 					try {
 						storageJob = storagetaskActionImpl.buildStorageJob(nthQueuedJob);

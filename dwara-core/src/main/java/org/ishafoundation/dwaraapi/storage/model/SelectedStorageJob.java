@@ -12,6 +12,7 @@ public class SelectedStorageJob {
 	private String junkFilesStagedDirName;
 	
 	// Verify
+	private String lastWrittenArtifactName;
 	private Integer artifactStartVolumeBlock;
 	private Integer artifactEndVolumeBlock;
 
@@ -48,6 +49,14 @@ public class SelectedStorageJob {
 		this.junkFilesStagedDirName = junkFilesStagedDirName;
 	}
 	
+	public String getLastWrittenArtifactName() {
+		return lastWrittenArtifactName;
+	}
+
+	public void setLastWrittenArtifactName(String lastWrittenArtifactName) {
+		this.lastWrittenArtifactName = lastWrittenArtifactName;
+	}
+
 	public Integer getArtifactStartVolumeBlock() {
 		return artifactStartVolumeBlock;
 	}

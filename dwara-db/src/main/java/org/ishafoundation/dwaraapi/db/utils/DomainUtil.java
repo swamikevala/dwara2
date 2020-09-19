@@ -12,6 +12,7 @@ import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactFacto
 import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactVolumeFactory;
 import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileFactory;
 import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileVolumeFactory;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -46,6 +47,9 @@ public class DomainUtil {
 	@SuppressWarnings("rawtypes")
 	@Autowired
 	private Map<String, FileVolumeRepository> fileVolumeDaoMap;
+	
+	@Autowired
+	private ConfigurationTablesUtil configurationTablesUtil;
 	
 	private String volumeSuffix = "Volume";
 	private String daoSuffix = "Dao";
@@ -155,6 +159,12 @@ public class DomainUtil {
 	public Domain getDomain(Request request) {
 		Integer domainId = request.getDetails().getDomainId();
 		return getDomain(domainId);
+	}
+	
+	public Domain getDomain(String artifactclassId) {
+		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
+
+		return artifactclass.getDomain();
 	}
 	
 //	public List<File> getDomainSpecificLibraryFiles(Domain domain, int libraryId) {

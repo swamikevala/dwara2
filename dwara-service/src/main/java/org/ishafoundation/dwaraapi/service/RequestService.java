@@ -17,11 +17,13 @@ import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -53,6 +55,7 @@ public class RequestService extends DwaraService{
 
 	@Autowired
 	private VolumeService volumeService;
+
 	
 	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
@@ -180,7 +183,8 @@ public class RequestService extends DwaraService{
 		requestResponse.setAction(requestAction.name());
 		if(requestType == RequestType.system) {
 			if(requestAction == Action.ingest) {
-				Domain domain = domainUtil.getDomain(request);
+				String artifactclassId = request.getDetails().getArtifactclassId();
+				Domain domain = domainUtil.getDomain(artifactclassId);
 				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 
 				Artifact systemArtifact = artifactRepository.findByWriteRequestId(requestId); 

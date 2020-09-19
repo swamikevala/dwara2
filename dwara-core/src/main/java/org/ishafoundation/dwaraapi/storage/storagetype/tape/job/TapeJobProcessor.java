@@ -9,6 +9,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -98,6 +99,8 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		
 		Volume tapeToBeUsed = storageJob.getVolume();
 
+		ArtifactVolume lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(storageJob.getDomain(), tapeToBeUsed);
+		selectedStorageJob.setLastWrittenArtifactName(lastArtifactOnVolume.getName());
 		/**
 		 * No need to recheck here again as TapeJobSelector does the check on the artifact size and the selected Tape' size and excludes the job from selection, if size doesnt fit
 		Volume actualTapeToBeUsed = volumeUtil.getToBeUsedPhysicalVolume(storageJob.getDomain(), tapeToBeUsed.getGroupRef().getId(), storageJob.getArtifactSize());
@@ -112,7 +115,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		loadTapeAndCheck(selectedStorageJob);
 		
 		 
-		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(storageJob.getDomain(), tapeToBeUsed);
+		int lastArtifactOnVolumeEndVolumeBlock = lastArtifactOnVolume.getDetails().getEndVolumeBlock();
 		
 		int blockNumberToBePositioned = 0;
 		if(lastArtifactOnVolumeEndVolumeBlock == 0) // during BOT its just the volumelabel + tapemark
@@ -161,11 +164,14 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		TapeJob tapeJob = (TapeJob) selectedStorageJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
+		Volume tapeToBeUsed = tapeJob.getStorageJob().getVolume();
+
+		ArtifactVolume lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(tapeJob.getStorageJob().getDomain(), tapeToBeUsed);
+		selectedStorageJob.setLastWrittenArtifactName(lastArtifactOnVolume.getName());
 
 		loadTapeAndCheck(selectedStorageJob);
-
-		Volume tapeToBeUsed = tapeJob.getStorageJob().getVolume();
-		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(tapeJob.getStorageJob().getDomain(), tapeToBeUsed);
+		
+		int lastArtifactOnVolumeEndVolumeBlock = lastArtifactOnVolume.getDetails().getEndVolumeBlock();
 
 		logger.trace("Now positioning tape head for finalizing " + tapeLibraryName + ":" + driveElementAddress);
 		tapeDriveManager.setTapeHeadPositionForFinalizing(tapeJob.getDeviceWwnId(), lastArtifactOnVolumeEndVolumeBlock + 3);

@@ -38,7 +38,7 @@ public class StorageJob {
 	private Integer archiveBlock;
 	private boolean restoreVerify;
 	
-	private int priority = 0; // TODO Hardcoded for phase1
+	private int priority = 0;
 
 	public Job getJob() {
 		return job;
