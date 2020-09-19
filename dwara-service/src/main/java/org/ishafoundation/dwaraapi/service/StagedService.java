@@ -523,7 +523,7 @@ public class StagedService extends DwaraService{
 	    Set<String> alreadySupportedExtensions = extensionsUtil.getAllSupportedExtensions();
 	    // getting the not supported extensions by removing already existing extensions
 	    extnsOnArtifactFolder.removeAll(alreadySupportedExtensions);
-	    List<Extension> toBeAddedExtensionTableEntries = new ArrayList<Extension>();
+	    Set<Extension> toBeAddedExtensionTableEntries = new TreeSet<Extension>();
 	    for (String extn : extnsOnArtifactFolder) {
 			Extension extension = new Extension();
 			extension.setId(extn);
