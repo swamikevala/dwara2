@@ -11,7 +11,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.Artifa
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
-import org.ishafoundation.dwaraapi.exception.BlockMismatchException;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
