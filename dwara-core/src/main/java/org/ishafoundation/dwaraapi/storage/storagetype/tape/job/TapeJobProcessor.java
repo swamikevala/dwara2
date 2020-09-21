@@ -177,7 +177,12 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		Volume tapeToBeUsed = storageJob.getVolume();
 
 		ArtifactVolume lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(storageJob.getDomain(), tapeToBeUsed);
-		selectedStorageJob.setLastWrittenArtifactName(lastArtifactOnVolume.getName());
+		int lastArtifactOnVolumeEndVolumeBlock = 0;
+		
+		if(lastArtifactOnVolume != null) {
+			selectedStorageJob.setLastWrittenArtifactName(lastArtifactOnVolume.getName());
+			lastArtifactOnVolumeEndVolumeBlock = lastArtifactOnVolume.getDetails().getEndVolumeBlock();
+		}
 		/**
 		 * No need to recheck here again as TapeJobSelector does the check on the artifact size and the selected Tape' size and excludes the job from selection, if size doesnt fit
 		Volume actualTapeToBeUsed = volumeUtil.getToBeUsedPhysicalVolume(storageJob.getDomain(), tapeToBeUsed.getGroupRef().getId(), storageJob.getArtifactSize());
@@ -190,9 +195,6 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		**/
 		
 		loadTapeAndCheckLabel(selectedStorageJob);
-		
-		 
-		int lastArtifactOnVolumeEndVolumeBlock = lastArtifactOnVolume.getDetails().getEndVolumeBlock();
 		
 		int blockNumberToBePositioned = 0;
 		if(lastArtifactOnVolumeEndVolumeBlock == 0) // during BOT its just the volumelabel + tapemark
@@ -267,7 +269,8 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		isRightVolume(labelDetails, volumeUuid);
 
 		String lastArtifactNameOnVolume = selectedStorageJob.getLastWrittenArtifactName(); // Will be null for finalizing scenario
-		isRightPosition(labelDetails, lastArtifactNameOnVolume);
+		if(lastArtifactNameOnVolume != null)
+			isRightPosition(labelDetails, lastArtifactNameOnVolume);
 	}
 	
 	private void loadTape(SelectedStorageJob selectedStorageJob) throws Exception {
