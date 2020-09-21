@@ -228,6 +228,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 		if(tellRespRegExMatcher.find()) {
 			blockNumber = Integer.parseInt(tellRespRegExMatcher.group(1));
 		}
+		logger.debug("Current blocknumber after tell " + blockNumber);
 		return blockNumber;
 	}
 

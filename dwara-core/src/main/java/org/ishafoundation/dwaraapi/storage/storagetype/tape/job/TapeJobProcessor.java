@@ -313,7 +313,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //			boolean isRightTape = 
 //			if(!isRightTape)
 //				throw new Exception("Not the right tape loaded " + tapeBarcode + " Something fundamentally wrong. Please contact admin.");
-			label = getLabelDetailsFromArtifactLabel(selectedStorageJob, lastArtifactOnVolumeEndVolumeBlock);
+			label = getLabelDetailsFromArtifactLabel(selectedStorageJob, lastArtifactOnVolumeEndVolumeBlock + 4);
 		}
 		return label;
 	}
@@ -357,9 +357,9 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //		}
 	}
 
-	private Label getLabelDetailsFromArtifactLabel(SelectedStorageJob selectedStorageJob, int lastArtifactOnVolumeEndVolumeBlock) throws Exception {
+	private Label getLabelDetailsFromArtifactLabel(SelectedStorageJob selectedStorageJob, int expectedBlockNumberToBePositioned) throws Exception {
 		TapeJob tapeJob = (TapeJob) selectedStorageJob;
-		tapeDriveManager.setTapeHeadPositionForReadingInterArtifactXml(tapeJob.getDeviceWwnId(), lastArtifactOnVolumeEndVolumeBlock);
+		tapeDriveManager.setTapeHeadPositionForReadingInterArtifactXml(tapeJob.getDeviceWwnId(), expectedBlockNumberToBePositioned);
 		
 //		try {
 //			

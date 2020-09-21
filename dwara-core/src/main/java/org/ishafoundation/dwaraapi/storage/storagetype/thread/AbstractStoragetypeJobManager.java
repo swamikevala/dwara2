@@ -7,17 +7,19 @@ import java.util.Map;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
-import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
+import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +37,9 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 	
 	@Autowired
 	private RequestDao requestDao;
+	
+	@Autowired
+	private VolumeDao volumeDao;	
 	
 	@Autowired
 	private Configuration configuration;
@@ -86,6 +91,13 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 				logger.error(errorMsg);
 			job.setMessage("[error] " + errorMsg);
 			updateJobFailed(job);
+			
+			if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.verify) { // Any write or verify failure should have the tape marked as suspect...
+				Volume volume = selectedStorageJob.getStorageJob().getVolume();
+				volume.setSuspect(true);
+				volumeDao.save(volume);
+				logger.info("Marked the volume " + volume.getId() + " as suspect");
+			}
 			// updateError Table;
 		}finally {
 			threadNameHelper.resetThreadName();
