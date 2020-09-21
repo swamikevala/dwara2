@@ -57,7 +57,7 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 	
 	//		load the tape to be used
 	public boolean load(String tapeLibraryName, int seSNo, int driveSNo) throws Exception{
-		logger.trace("Now loading - slot " + seSNo + " to drive " + driveSNo + " on " + tapeLibraryName);
+		logger.trace("Now loading media from Storage Element " + seSNo + " to drive " + driveSNo + " on " + tapeLibraryName);
 //		synchronized (deviceLockFactory.getDeviceLock(tapeLibraryName)) {
 			// TODO Handle the exception...
 			CommandLineExecutionResponse cler = execute("mtx -f " + tapeLibraryName + " load " + seSNo + " " + driveSNo, 0);

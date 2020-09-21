@@ -42,6 +42,11 @@
         <appender-ref ref="RollingFile" />
         <!--<appender-ref ref="Console" />-->
     </logger>
+
+    <logger name="org.ishafoundation.dwaraapi.job.JobCreator" level="info" additivity="false">
+        <appender-ref ref="RollingFile" />
+        <!--<appender-ref ref="Console" />-->
+    </logger>
     
     <logger name="org.ishafoundation.dwaraapi.commandline" level="info" additivity="false">
         <appender-ref ref="RollingFile" />

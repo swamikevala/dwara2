@@ -133,10 +133,10 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 		logger.trace("toBeUsedVolume.getCode() " + toBeUsedTapeBarCode);
 		for (Iterator<StorageElement> iterator = seList.iterator(); iterator.hasNext();) {
 			StorageElement nthStorageElement = (StorageElement) iterator.next();
-			logger.trace("nthStorageElement.getVolumeTag() " + nthStorageElement.getVolumeTag());
+			//logger.trace("nthStorageElement.getVolumeTag() " + nthStorageElement.getVolumeTag());
 			if(nthStorageElement.getVolumeTag() != null && nthStorageElement.getVolumeTag().equals(toBeUsedTapeBarCode)) {
 				storageElementNo = nthStorageElement.getsNo();
-				logger.trace("storageElementNo " + storageElementNo);
+				//logger.trace("storageElementNo " + storageElementNo);
 			}
 		}
 

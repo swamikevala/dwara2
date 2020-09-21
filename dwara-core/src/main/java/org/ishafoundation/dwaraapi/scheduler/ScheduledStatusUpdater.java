@@ -215,7 +215,7 @@ public class ScheduledStatusUpdater {
 				}
 			}
 
-			logger.trace(DwaraConstants.SYSTEM_REQUEST + " " + nthRequest.getId() + " current state - isAllQueued - " + isAllQueued + " isAllComplete - " + isAllComplete + " isAllCancelled - " + isAllCancelled + " anyQueued - " + 
+			logger.trace("System request status - " + nthRequest.getId() + " current state - isAllQueued - " + isAllQueued + " isAllComplete - " + isAllComplete + " isAllCancelled - " + isAllCancelled + " anyQueued - " + 
 			anyQueued + " anyInProgress - " + anyInProgress + " anyComplete - " + anyComplete + " hasFailures - " + hasFailures + " anyMarkedCompleted - " + anyMarkedCompleted);
 			
 			Status status = Status.queued;
@@ -238,7 +238,7 @@ public class ScheduledStatusUpdater {
 				status = Status.partially_completed; 
 			}
 			
-			logger.trace(DwaraConstants.SYSTEM_REQUEST + " " + nthRequest.getId() + " ::: " + status);
+			logger.trace("System request status - " + nthRequest.getId() + " ::: " + status);
 			
 			nthRequest.setStatus(status); 
 			requestDao.save(nthRequest);
@@ -328,7 +328,7 @@ public class ScheduledStatusUpdater {
 				}
 			}
 
-			logger.trace(DwaraConstants.USER_REQUEST + " " + nthUserRequest.getId() + " current state - isAllQueued - " + isAllQueued + " isAllComplete - " + isAllComplete + " isAllCancelled - " + isAllCancelled + " anyQueued - " + 
+			logger.trace("User request status - " + nthUserRequest.getId() + " current state - isAllQueued - " + isAllQueued + " isAllComplete - " + isAllComplete + " isAllCancelled - " + isAllCancelled + " anyQueued - " + 
 			anyQueued + " anyInProgress - " + anyInProgress + " anyComplete - " + anyComplete + " hasFailures - " + hasFailures + " anyPartiallyCompleted - " + anyPartiallyCompleted);
 
 			Status status = Status.queued;
@@ -351,7 +351,7 @@ public class ScheduledStatusUpdater {
 				status = Status.partially_completed; 
 			}
 			
-			logger.trace(DwaraConstants.USER_REQUEST + " " + nthUserRequest.getId() + " ::: " + status);
+			logger.trace("User request status - " + nthUserRequest.getId() + " ::: " + status);
 			
 			// For completed restore jobs the .restoring folder is cleaned up...
 			if(nthUserRequest.getActionId() == Action.restore && status == Status.completed) {

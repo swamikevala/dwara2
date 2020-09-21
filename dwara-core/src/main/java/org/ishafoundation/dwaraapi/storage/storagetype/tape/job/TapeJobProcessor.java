@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
@@ -8,9 +10,11 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -69,6 +73,12 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	@Autowired
 	private Map<String, AbstractStoragesubtype> storagesubtypeMap;	
 	
+//	@Autowired
+//	private AutoloaderService autoloaderService;
+//	
+//	@Autowired
+//	private JobService jobService;
+	
 	public StorageResponse map_tapedrives(SelectedStorageJob selectedStorageJob) throws Exception {
 		String tapelibraryId = selectedStorageJob.getStorageJob().getJob().getRequest().getDetails().getAutoloaderId();
 		TapeJob tapeJob = (TapeJob) selectedStorageJob;
@@ -122,6 +132,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 					DriveDetails driveStatusDetails = tapeDriveManager.getDriveDetails(driveName);
 					if(driveStatusDetails.getMtStatus().isReady()){ // means drive is not empty and has the tape we loaded
 						usedDriveDetails = nthDriveDetails;
+						logger.trace("Tape loaded");
 						break;
 					}
 				}
@@ -130,6 +141,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 				String dataTransferElementName = usedDriveDetails.getDriveName();
 
 				if(!tapeJob.getStorageJob().isForce() && count == 0) { // if its not a forced format check if tape is blank and proceed
+					logger.trace("Checking if tape is blank");
 					if(!tapeDriveManager.isTapeBlank(dataTransferElementName)) // if tape is not blank throw error and dont continue...
 						throw new Exception("Tape not blank to be initialized. If you still want to initialize use the \"force\" option...");
 				}
@@ -439,13 +451,23 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	
 	
 	private void createCorrectionJobs(SelectedStorageJob selectedStorageJob) {
-//		String errorMsg = null;
-//		if(errorMsg.contains("No medium found")) { // 
-//
+//		// last run mapdrive job completed should not be > 60 mts
+//		
+//		Job lastMapDriveJob = jobDao.findTopByStoragetaskActionIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(Action.map_tapedrives);
+//		if(lastMapDriveJob != null) {
+//			LocalDateTime lastMapdriveJobCompletionTime = lastMapDriveJob.getCompletedAt();
+//				
+//			long intervalBetweenJobsInHours = ChronoUnit.HOURS.between(lastMapdriveJobCompletionTime, LocalDateTime.now());
+//			if(intervalBetweenJobsInHours > 1) { // TODO configure the hour...
+//				logger.info("Past map drive check threshold. Initiating map drives job and requeing the current failed job...");
+//				TapeJob tapeJob = (TapeJob) selectedStorageJob;
+//				String tapeLibraryName = tapeJob.getTapeLibraryName();
+//				
+//				autoloaderService.mapDrives(tapeLibraryName);
+//				
+//				jobService.requeueJob(tapeJob.getStorageJob().getJob().getId());
+//			}
 //			
-//			// initiate map drives job but check if its past the threshold
-//			
-//			// create a similar job as the current, so it gets picked up after the map drives job 
 //		}
 	}
 }

@@ -26,6 +26,8 @@ public interface JobDao extends CrudRepository<Job,Integer> {
 	// completed at gets updated only when status=completed, but is Null and gets picked up by the query...
 	Job findTopByVolumeIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(String volumeId);
 	
+	Job findTopByStoragetaskActionIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(Action action);
+	
 	// Used in determining tapeusageStatus
 	long countByVolumeIdAndStatus(String volumeId, Status status);
 	

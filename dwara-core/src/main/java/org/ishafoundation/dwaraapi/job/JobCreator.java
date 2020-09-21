@@ -158,9 +158,8 @@ public class JobCreator {
 		}
 		// TODO Skip individual flow elements - How? Need to be defined
 		Action storagetaskAction = nthFlowelement.getStoragetaskActionId();
-
-		logger.trace("Creating Job for " + storagetaskAction + ":" + nthFlowelement.getId());
 		if(storagetaskAction == Action.write || storagetaskAction == Action.verify) {
+			logger.trace("Creating Job for " + storagetaskAction + ":" + nthFlowelement.getId());
 			List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassId(artifactclassId);
 			logger.trace("No. of copies " + artifactclassVolumeList.size());
 			for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {
@@ -207,7 +206,8 @@ public class JobCreator {
 		}
 		else {
 			String processingtaskId = nthFlowelement.getProcessingtaskId();
-
+			logger.trace("Creating Job for " + processingtaskId + ":" + nthFlowelement.getId());
+			
 			Job job = new Job();
 			if(processingtaskId != null)
 				job.setProcessingtaskId(processingtaskId);

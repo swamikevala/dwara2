@@ -133,7 +133,9 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	public boolean isTapeBlank(String dataTransferElementName) throws Exception {
 		try {
 			rewind(dataTransferElementName);
-			executeCommandWithRetries("mt -f " + dataTransferElementName + " fsf " + 1);
+			List<String> errorList = new ArrayList<String>();
+			errorList.add(DRIVE_BUSY_ERROR);
+			executeCommandWithRetries("mt -f " + dataTransferElementName + " fsf " + 1, 0, errorList);
 		} catch (Exception e) {
 			logger.debug("fsf failed, means blank tape for sure");
 			return true;
@@ -284,8 +286,11 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			
 			if(errorMsg.contains(DRIVE_IO_ERROR) && errorList.contains(DRIVE_IO_ERROR) && nthRetryAttempt == 0) {
 				// TODO call stinit here
-				logger.warn("stinit script seems to be not executed. Running it now");
-				logger.info("TODO : stinit script need to be invoked here");
+				String deviceName = command.split(" ")[2];
+				logger.warn("stinit script seems to be not executed on device " + deviceName + ". Running it now");
+				commandLineExecuter.executeCommand("stinit -f /etc/stinit.def " + deviceName);
+				logger.warn("stinit script on device " + deviceName + " success.");
+				
 				// re-execute the same command again...
 				logger.debug("Now re-executing the same command again " + command);
 				commandLineExecutionResponse = executeCommandWithRetries(command, nthRetryAttempt + 1, errorList);
