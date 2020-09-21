@@ -66,56 +66,14 @@ public class LabelManagerImpl implements LabelManager{
 	@Autowired
 	private DeviceLockFactory deviceLockFactory;
 
-	@Override
-	public boolean isRightVolume(SelectedStorageJob selectedStorageJob, boolean fromVolumelabel) throws Exception {
-		boolean isRightVolume = false;
-		
-		StorageJob storageJob = selectedStorageJob.getStorageJob();
-		Volume volume = storageJob.getVolume();
-		
-		String volumeId = volume.getUuid();
 
-		VolumeDetails volumeDetails = volume.getDetails();
-		int blocksize = volumeDetails.getBlocksize();
-		
-
-		String deviceName = selectedStorageJob.getDeviceWwnId();
-		String volIdFromLabel = null;
-		String artifactNameToCompare = selectedStorageJob.getLastWrittenArtifactName(); // Will be null for finalizing scenario
-		String artifactNameFromLabel = null; // Will be null for first write scenario
-		if(fromVolumelabel){
-			Volumelabel volumelabel = readVolumeLabel(deviceName, blocksize);
-			volIdFromLabel = volumelabel.getUuid();
-		}
-		else { // fromArtifactlabel
-			InterArtifactlabel artifactlabel = readArtifactLabel(deviceName, blocksize);
-			volIdFromLabel = artifactlabel.getVolumeUuid();
-			artifactNameFromLabel = artifactlabel.getArtifact();
-		}
-		
-		if((fromVolumelabel && volIdFromLabel.equals(volumeId)) || (!fromVolumelabel && volIdFromLabel.equals(volumeId) && artifactNameFromLabel.equals(artifactNameToCompare))) {
-			isRightVolume = true;
-			logger.trace("Right volume");
-		}
-		else {
-			String errorMsg = null;
-			if(volIdFromLabel.equals(volumeId))
-				errorMsg = "Loaded volume " + volumeId + " mismatches with volumeId on label " + volIdFromLabel + ". Needs admin eyes";
-			else if(artifactNameFromLabel.equals(artifactNameToCompare))
-				errorMsg = "Loaded volume " + volumeId + " is correct. But positioned block is wrong. Has a mismatch on artifact Name. Expected " + artifactNameToCompare + " Actual " + artifactNameFromLabel + ". Needs admin eyes";
-			logger.error(errorMsg);
-			throw new Exception(errorMsg);
-		}
-		return isRightVolume;
-	}
-
-	private Volumelabel readVolumeLabel(String deviceName, int blocksize) throws Exception{
+	public Volumelabel readVolumeLabel(String deviceName, int blocksize) throws Exception{
 		String label = getLabel(deviceName, blocksize);
 		XmlMapper xmlMapper = new XmlMapper();
 		return xmlMapper.readValue(label, Volumelabel.class);
 	}
 
-	private InterArtifactlabel readArtifactLabel(String deviceName, int blocksize) throws Exception{
+	public InterArtifactlabel readArtifactLabel(String deviceName, int blocksize) throws Exception{
 		String label = getLabel(deviceName, blocksize);
 		XmlMapper xmlMapper = new XmlMapper();
 		return xmlMapper.readValue(label, InterArtifactlabel.class);

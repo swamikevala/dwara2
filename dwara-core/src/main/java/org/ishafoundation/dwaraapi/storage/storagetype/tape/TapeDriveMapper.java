@@ -95,7 +95,9 @@ public class TapeDriveMapper {
 				}
 			}
 		
-			
+			if(volumeGeneration_Actor_Map.keySet().size() == 0) {
+				throw new Exception("No registered tapes");
+			}
 			// Step 2 - unload all drives
 			logger.debug("Now unloading all non-empty drives...");
 			List<DataTransferElement> dataTransferElementList = mtxStatus.getDteList();
@@ -209,7 +211,7 @@ public class TapeDriveMapper {
 					logger.info("Unmapped Device " +  nthUnmappedDevice.getId() + " defaulted with " + dteSno);
 				}else
 					logger.info("Unable to default Device " +  nthUnmappedDevice.getId());
-					count =+ 1;
+				count += 1;
 			}
 			
 		}

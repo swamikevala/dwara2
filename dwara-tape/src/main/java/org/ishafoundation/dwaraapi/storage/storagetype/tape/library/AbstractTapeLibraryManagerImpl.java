@@ -84,10 +84,7 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 				logger.trace("Unload successful ");
 			}
 	
-			// locate in which slot the volume is...
-			List<StorageElement> seList = mtxStatus.getSeList();
-			logger.trace("Now locating in which slot the volume to be used is ..." + seList);
-			int storageElementNo = locateTheTapesStorageElement(seList, toBeUsedTapeBarcode);
+			int storageElementNo = locateTape(toBeUsedTapeBarcode, mtxStatus);
 	
 			// load the volume in the passed slot to the passed dte
 			logger.trace("Now loading " + toBeUsedTapeBarcode + " from " + storageElementNo + " and loading into drive " + toBeUsedDataTransferElementSNo);
@@ -101,6 +98,19 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 		}
 		return isSuccess;
 	}
+	
+	public synchronized int locateTape(String toBeUsedTapeBarcode, String tapeLibraryName) throws Exception{
+		MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
+		return locateTape(toBeUsedTapeBarcode, mtxStatus);
+	}
+	
+	public synchronized int locateTape(String toBeUsedTapeBarcode, MtxStatus mtxStatus) throws Exception{
+		// locate in which slot the volume is...
+		List<StorageElement> seList = mtxStatus.getSeList();
+		logger.trace("Now locating in which slot the volume to be used is ..." + seList);
+		return locateTheTapesStorageElement(seList, toBeUsedTapeBarcode);
+	}	
+	
 	
 	private DriveDetails getDriveDetails(int toBeUsedDataTransferElementSNo, String dataTransferElementName, int nthRetryAttempt) throws Exception{
 		DriveDetails driveStatusDetails = tapeDriveManager.getDriveDetails(dataTransferElementName);

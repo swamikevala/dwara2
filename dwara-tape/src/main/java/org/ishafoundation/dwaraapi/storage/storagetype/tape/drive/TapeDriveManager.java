@@ -13,9 +13,9 @@ public interface TapeDriveManager{
 	
 	public DriveDetails setTapeHeadPositionForInitializing(String dataTransferElementName) throws Exception;
 	
-	public DriveDetails setTapeHeadPositionForReadingLabel(String dataTransferElementName) throws Exception;
+	public DriveDetails setTapeHeadPositionForReadingVolumeLabel(String dataTransferElementName) throws Exception;
 	
-	public DriveDetails setTapeHeadPositionForReadingInterArtifactXml(String dataTransferElementName) throws Exception;
+	public DriveDetails setTapeHeadPositionForReadingInterArtifactXml(String dataTransferElementName, int blockNumberToBePositioned) throws Exception;
 	
 	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName, int blockNumberToBePositioned) throws Exception;
 	

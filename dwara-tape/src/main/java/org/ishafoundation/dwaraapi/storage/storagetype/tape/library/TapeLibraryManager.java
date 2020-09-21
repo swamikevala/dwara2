@@ -33,5 +33,7 @@ public interface TapeLibraryManager {
 	// Is this needed here? - Sort of a link method connecting drivemanager needing the drivename as well
 	public boolean locateAndLoadTapeOnToDrive(String toBeUsedTapeBarcode, String tapeLibraryName, int dataTransferElementSNo, String dataTransferElementName) throws Exception;
 
-
+	public int locateTape(String toBeUsedTapeBarcode, String tapeLibraryName) throws Exception;
+	
+	public int locateTape(String toBeUsedTapeBarcode, MtxStatus mtxStatus) throws Exception;
 }

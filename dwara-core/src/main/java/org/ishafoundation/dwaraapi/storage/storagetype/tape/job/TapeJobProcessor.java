@@ -1,24 +1,32 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
-import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
+import org.ishafoundation.dwaraapi.exception.BlockMismatchException;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.label.InterArtifactlabel;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.label.LabelManager;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.label.Volumelabel;
+import org.ishafoundation.dwaraapi.storage.storagesubtype.AbstractStoragesubtype;
 import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDriveMapper;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.TapeDriveManager;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.DataTransferElement;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.status.MtxStatus;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +42,9 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
     
 	@Autowired
 	private JobDao jobDao; 
+	
+	@Autowired
+	private VolumeDao volumeDao; 
 	
 	@Autowired
 	private TapeLibraryManager tapeLibraryManager;
@@ -56,37 +67,92 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	@Autowired
 	private Configuration configuration;
 	
+	@Autowired
+	private Map<String, AbstractStoragesubtype> storagesubtypeMap;	
+	
 	public StorageResponse map_tapedrives(SelectedStorageJob selectedStorageJob) throws Exception {
 		String tapelibraryId = selectedStorageJob.getStorageJob().getJob().getRequest().getDetails().getAutoloaderId();
 		TapeJob tapeJob = (TapeJob) selectedStorageJob;
-		tapeDriveMapper.mapDrives(tapelibraryId, tapeJob.getAllDriveDetails());
+		tapeDriveMapper.mapDrives(tapelibraryId, tapeJob.getDriveDetails());
 		return new StorageResponse();
 	}
 	
 	@Override
-	protected void beforeInitialize(SelectedStorageJob selectedStorageJob) throws Exception {
-		super.beforeInitialize(selectedStorageJob);
+	public StorageResponse initialize(SelectedStorageJob selectedStorageJob) throws Exception {
 		TapeJob tapeJob = (TapeJob) selectedStorageJob;
-		String tapeLibraryName = tapeJob.getTapeLibraryName();
-		int driveElementAddress = tapeJob.getTapedriveNo();
+		
+		List<DriveDetails> preparedDriveDetailsList = tapeJob.getDriveDetails(); // gets prepared drive details...
+		
+		Volume volume = tapeJob.getStorageJob().getVolume();
+//		
+//		int volumeGeneration = storagesubtypeMap.get(volume.getStoragesubtype()).getGeneration();
+//
+//		DriveDetails selectedDriveDetails = null;
+//		// select a drive that supports the volume
+//		for (DriveDetails driveDetails : preparedDriveDetailsList) {
+//			int[] driveSupportedWriteGenerations = storagesubtypeMap.get(driveDetails.getDriveStoragesubtype()).getWriteSupportedGenerations();
+//			for (int i = 0; i < driveSupportedWriteGenerations.length; i++) {
+//				if(driveSupportedWriteGenerations[i] == volumeGeneration) {
+//					selectedDriveDetails = driveDetails;
+//					break;
+//				}
+//			}
+//			
+//			if(selectedDriveDetails != null)
+//				break;
+//		}
 
-		loadTape(selectedStorageJob);
+		String tapeLibraryName = preparedDriveDetailsList.get(0).getTapelibraryName();// TODO - Supports only one library for now..
+		MtxStatus mtxStatus = tapeLibraryManager.getMtxStatus(tapeLibraryName);
+		int storageElementSNo = tapeLibraryManager.locateTape(volume.getId(), mtxStatus);
+		List<DataTransferElement> dataTransferElementList = mtxStatus.getDteList();
+		
+		int count = 0;
+		DataTransferElement usedDataTransferElement = null; 
+		for (DataTransferElement nthDataTransferElement : dataTransferElementList) {
+			int dteSNo = nthDataTransferElement.getsNo();
+			try {
+				tapeLibraryManager.load(tapeLibraryName, storageElementSNo, dteSNo);
+				usedDataTransferElement = nthDataTransferElement;
+				
+				DriveDetails usedDriveDetails = null;
+				for (DriveDetails nthDriveDetails : preparedDriveDetailsList) {
+					String driveId = nthDriveDetails.getDriveId();
+					String driveName = nthDriveDetails.getDriveName();
+					logger.trace("Checking if " + driveName + " has got the tape loaded");
+					DriveDetails driveStatusDetails = tapeDriveManager.getDriveDetails(driveName);
+					if(driveStatusDetails.getMtStatus().isReady()){ // means drive is not empty and has the tape we loaded
+						usedDriveDetails = nthDriveDetails;
+						break;
+					}
+				}
+				usedDriveDetails.setDte(usedDataTransferElement);
+				
+				String dataTransferElementName = usedDriveDetails.getDriveName();
 
-		String dataTransferElementName = tapeJob.getDeviceWwnId();
+				if(!tapeJob.getStorageJob().isForce() && count == 0) { // if its not a forced format check if tape is blank and proceed
+					if(!tapeDriveManager.isTapeBlank(dataTransferElementName)) // if tape is not blank throw error and dont continue...
+						throw new Exception("Tape not blank to be initialized. If you still want to initialize use the \"force\" option...");
+				}
+				
+				logger.trace("Now positioning tape head for initialize");
+				tapeDriveManager.setTapeHeadPositionForInitializing(dataTransferElementName);
+				logger.info("Tape Head positioned for initialize " + tapeLibraryName + ":" + dataTransferElementName + "(" + usedDataTransferElement.getsNo() + ")");
 
-		if(!tapeJob.getStorageJob().isForce()) { // if its not a forced format check if tape is blank and proceed
-			if(!tapeDriveManager.isTapeBlank(dataTransferElementName)) // if tape is not blank throw error and dont continue...
-				throw new Exception("Tape not blank to be formatted. If you still want to format use the \"force\" option...");
+				boolean status = labelManager.writeVolumeLabel(selectedStorageJob);
+				logger.debug("Labelling success? - " + status);
+				break;
+			}catch (Exception e) {
+				logger.debug("Potentially a different generation drive. Try with another one");
+				count += 1;
+			}
 		}
+
+		afterInitialize(selectedStorageJob);
+		return new StorageResponse();
 		
 		// validate on sequence no of tape - upfront validation
 		// validate on group archive format vs member archiveformat. they have to be same...
-		
-		
-		logger.trace("Now positioning tape head for formatting");
-		tapeDriveManager.setTapeHeadPositionForInitializing(dataTransferElementName);
-		logger.info("Tape Head positioned for formatting" + tapeLibraryName + ":" + dataTransferElementName + "(" + driveElementAddress + ")");
-		
 	}	
 	
 	@Override
@@ -112,7 +178,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		}
 		**/
 		
-		loadTapeAndCheck(selectedStorageJob);
+		loadTapeAndCheckLabel(selectedStorageJob);
 		
 		 
 		int lastArtifactOnVolumeEndVolumeBlock = lastArtifactOnVolume.getDetails().getEndVolumeBlock();
@@ -122,6 +188,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 			blockNumberToBePositioned = 2;
 		else
 			blockNumberToBePositioned = lastArtifactOnVolumeEndVolumeBlock + 4;
+		
 		logger.trace("Now positioning tape head for writing");
 		tapeDriveManager.setTapeHeadPositionForWriting(tapeJob.getDeviceWwnId(), blockNumberToBePositioned); 
 		logger.info("Tape Head positioned for writing " + tapeLibraryName + ":" + tapeJob.getDeviceWwnId() + "(" + driveElementAddress + ")");
@@ -137,7 +204,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		int driveElementAddress = tapeJob.getTapedriveNo();
 		int blockNumberToSeek = tapeJob.getArtifactStartVolumeBlock();
 		
-		loadTapeAndCheck(selectedStorageJob);
+		loadTape(selectedStorageJob);
 
 		tapeDriveManager.setTapeHeadPositionForReading(tapeJob.getDeviceWwnId(), blockNumberToSeek);
 		logger.info("Tape Head positioned for verifying "+ tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
@@ -169,7 +236,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		ArtifactVolume lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(tapeJob.getStorageJob().getDomain(), tapeToBeUsed);
 		selectedStorageJob.setLastWrittenArtifactName(lastArtifactOnVolume.getName());
 
-		loadTapeAndCheck(selectedStorageJob);
+		loadTapeAndCheckLabel(selectedStorageJob);
 		
 		int lastArtifactOnVolumeEndVolumeBlock = lastArtifactOnVolume.getDetails().getEndVolumeBlock();
 
@@ -178,12 +245,21 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 
 	}
 	
-	private void loadTapeAndCheck(SelectedStorageJob selectedStorageJob) throws Exception {
+	private void loadTapeAndCheckLabel(SelectedStorageJob selectedStorageJob) throws Exception {
 		loadTape(selectedStorageJob);
-		isRightTape(selectedStorageJob);
+		
+		Label labelDetails = getLabelDetails(selectedStorageJob);
+		
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
+		Volume volume = storageJob.getVolume();
+		String volumeUuid = volume.getUuid();
+		isRightVolume(labelDetails, volumeUuid);
+
+		String lastArtifactNameOnVolume = selectedStorageJob.getLastWrittenArtifactName(); // Will be null for finalizing scenario
+		isRightPosition(labelDetails, lastArtifactNameOnVolume);
 	}
 	
-	private boolean loadTape(SelectedStorageJob selectedStorageJob) throws Exception {
+	private void loadTape(SelectedStorageJob selectedStorageJob) throws Exception {
 		TapeJob tapeJob = (TapeJob) selectedStorageJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
@@ -204,67 +280,164 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 			}
 			throw e;
 		}
-		return true;
 	}
 	
-	private void isRightTape(SelectedStorageJob selectedStorageJob) throws Exception {
+	private Label getLabelDetails(SelectedStorageJob selectedStorageJob) throws Exception {
+		Label label = null;
+	
 		logger.info("Checking if its right tape by reading the label");
 		TapeJob tapeJob = (TapeJob) selectedStorageJob;
 		Volume tapeToBeUsed = tapeJob.getStorageJob().getVolume();
 		String tapeBarcode = tapeToBeUsed.getId();
 		
+		// TODO - Try avoiding this call as 
 		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(tapeJob.getStorageJob().getDomain(), tapeToBeUsed);
 		
 		if(lastArtifactOnVolumeEndVolumeBlock == 0) {
 			logger.trace("Will be reading volume label - if need be");
-			isRightTape(selectedStorageJob, tapeBarcode);
+			label = getLabelDetailsFromVolumeLabel(selectedStorageJob, tapeBarcode);
 		}
 		else {
 			logger.trace("Will be reading artifact label");
-			tapeDriveManager.setTapeHeadPositionForReadingInterArtifactXml(tapeJob.getDeviceWwnId());
-			
-			boolean isRightTape = labelManager.isRightVolume(selectedStorageJob, false);
-			if(!isRightTape)
-				throw new Exception("Not the right tape loaded " + tapeBarcode + " Something fundamentally wrong. Please contact admin.");
-
+//			boolean isRightTape = 
+//			if(!isRightTape)
+//				throw new Exception("Not the right tape loaded " + tapeBarcode + " Something fundamentally wrong. Please contact admin.");
+			label = getLabelDetailsFromArtifactLabel(selectedStorageJob, lastArtifactOnVolumeEndVolumeBlock);
 		}
+		return label;
 	}
 	
-	private void isRightTape(SelectedStorageJob selectedStorageJob, String tapeBarcode) throws Exception {
+
+	
+	private Label getLabelDetailsFromVolumeLabel(SelectedStorageJob selectedStorageJob, String tapeBarcode) throws Exception {
 		// Verifying (if need be) if the tape is the right tape indeed.
 		// last job on tape
-		Job lastJobOnTape = jobDao.findTopByVolumeIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(tapeBarcode);
-		
-		LocalDateTime lastJobCompletionTime = LocalDateTime.now();
-		boolean checkRightVolume = false;
-		if(lastJobOnTape != null) {
-			lastJobCompletionTime = lastJobOnTape.getCompletedAt();
-			
-			long intervalBetweenJobsInSeconds = ChronoUnit.SECONDS.between(lastJobCompletionTime, LocalDateTime.now());
-			if(intervalBetweenJobsInSeconds > configuration.getRightVolumeCheckInterval()) {
-				logger.trace("Past volume check threshold. Checking label...");
-				checkRightVolume = true;
-			}
-		}else
-			checkRightVolume = false;
-			
-		
-		if(checkRightVolume) {
+//		Job lastJobOnTape = jobDao.findTopByVolumeIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(tapeBarcode);
+//		
+//		LocalDateTime lastJobCompletionTime = LocalDateTime.now();
+//		boolean checkRightVolume = false;
+//		if(lastJobOnTape != null) {
+//			lastJobCompletionTime = lastJobOnTape.getCompletedAt();
+//			
+//			long intervalBetweenJobsInSeconds = ChronoUnit.SECONDS.between(lastJobCompletionTime, LocalDateTime.now());
+//			if(intervalBetweenJobsInSeconds > configuration.getRightVolumeCheckInterval()) {
+//				logger.trace("Past volume check threshold. Checking label...");
+//				checkRightVolume = true;
+//			}
+//		}else
+//			checkRightVolume = false;
+//			
+//		
+//		if(checkRightVolume) {
 			TapeJob tapeJob = (TapeJob) selectedStorageJob;
 
 			String tapeLibraryName = tapeJob.getTapeLibraryName();
 			int driveElementAddress = tapeJob.getTapedriveNo();
 
-			tapeDriveManager.setTapeHeadPositionForReadingLabel(tapeJob.getDeviceWwnId());
+			tapeDriveManager.setTapeHeadPositionForReadingVolumeLabel(tapeJob.getDeviceWwnId());
 			logger.trace("Tape Head positioned for reading label "+ tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")");
 			
-			boolean isRightTape = labelManager.isRightVolume(selectedStorageJob, true);
-			if(!isRightTape)
-				throw new Exception("Not the right tape loaded " + tapeBarcode + " Something fundamentally wrong. Please contact admin.");
-		}else {
-			logger.trace("Well inside volume check threshold. Not checking label");
+			return getLabelDetails(selectedStorageJob, true);
+//			boolean isRightTape = getLabelDetails(selectedStorageJob, true);
+//			if(!isRightTape)
+//				throw new Exception("Not the right tape loaded " + tapeBarcode + " Something fundamentally wrong. Please contact admin.");
+//		}else {
+//			logger.trace("Well inside volume check threshold. Not checking label");
+//		}
+	}
+
+	private Label getLabelDetailsFromArtifactLabel(SelectedStorageJob selectedStorageJob, int lastArtifactOnVolumeEndVolumeBlock) throws Exception {
+		TapeJob tapeJob = (TapeJob) selectedStorageJob;
+		tapeDriveManager.setTapeHeadPositionForReadingInterArtifactXml(tapeJob.getDeviceWwnId(), lastArtifactOnVolumeEndVolumeBlock);
+		
+//		try {
+//			
+//		}catch (Exception e) {
+//			StorageJob storageJob = selectedStorageJob.getStorageJob();
+//			Volume volume = storageJob.getVolume();
+//			volume.setSuspect(true);
+//			volumeDao.save(volume);
+//			// TODO - How do we differentiate when to fail the job and when to conitnue
+		
+//			tapeDriveManager.setTapeHeadPositionForReading(tapeJob.getDeviceWwnId(), lastArtifactOnVolumeEndVolumeBlock - 2);
+//		}
+		return getLabelDetails(selectedStorageJob, false);
+	}
+
+	private Label getLabelDetails(SelectedStorageJob selectedStorageJob, boolean fromVolumelabel) throws Exception {
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
+		Volume volume = storageJob.getVolume();
+		VolumeDetails volumeDetails = volume.getDetails();
+		int blocksize = volumeDetails.getBlocksize();
+
+		String deviceName = selectedStorageJob.getDeviceWwnId();
+		String volIdFromLabel = null;
+		String artifactNameFromLabel = null; // Will be null for first write scenario
+		if(fromVolumelabel){
+			Volumelabel volumelabel = labelManager.readVolumeLabel(deviceName, blocksize);
+			volIdFromLabel = volumelabel.getUuid();
+		}
+		else { // fromArtifactlabel
+			InterArtifactlabel artifactlabel = labelManager.readArtifactLabel(deviceName, blocksize);
+			volIdFromLabel = artifactlabel.getVolumeUuid();
+			artifactNameFromLabel = artifactlabel.getArtifact();
+		}
+
+		Label labelDetails = new Label();
+		labelDetails.setVolIdFromLabel(volIdFromLabel);
+		labelDetails.setArtifactNameFromLabel(artifactNameFromLabel);
+		
+		return labelDetails;
+	}
+	
+	private class Label { // TODO Rename this to LabelDetails...
+		private String volIdFromLabel = null;
+		private String artifactNameFromLabel = null;
+
+		public String getVolIdFromLabel() {
+			return volIdFromLabel;
+		}
+		public void setVolIdFromLabel(String volIdFromLabel) {
+			this.volIdFromLabel = volIdFromLabel;
+		}
+		public String getArtifactNameFromLabel() {
+			return artifactNameFromLabel;
+		}
+		public void setArtifactNameFromLabel(String artifactNameFromLabel) {
+			this.artifactNameFromLabel = artifactNameFromLabel;
 		}
 	}
+	
+	private boolean isRightVolume(Label labelDetails, String volumeUuid) throws Exception {
+		boolean isRightVolume = false;
+		
+		if(labelDetails.getVolIdFromLabel().equals(volumeUuid)) {
+			isRightVolume = true;
+			logger.trace("Right volume");
+		}
+		else {
+			String errorMsg = "Loaded volume " + volumeUuid + " mismatches with volumeId on label " + labelDetails.getVolIdFromLabel() + ". Needs admin eyes";
+			logger.error(errorMsg);
+			throw new Exception(errorMsg);
+		}
+		return isRightVolume;
+	}
+	
+	private boolean isRightPosition(Label labelDetails, String lastArtifactNameOnVolume) throws Exception {
+		boolean isRightPosition = false;
+		
+		if(labelDetails.getArtifactNameFromLabel().equals(lastArtifactNameOnVolume)) {
+			isRightPosition = true;
+			logger.trace("Right position");
+		}
+		else {
+			String errorMsg = "Positioned block is wrong. Has a mismatch on artifact Name. Expected " + lastArtifactNameOnVolume + " Actual " + labelDetails.getArtifactNameFromLabel() + ". Needs admin eyes";
+			logger.error(errorMsg);
+			throw new Exception(errorMsg);
+		}
+		return isRightPosition;
+	}
+	
 	
 	private void createCorrectionJobs(SelectedStorageJob selectedStorageJob) {
 //		String errorMsg = null;

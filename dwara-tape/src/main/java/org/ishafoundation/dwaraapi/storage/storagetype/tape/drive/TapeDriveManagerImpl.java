@@ -7,7 +7,6 @@ import java.util.regex.Pattern;
 
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
-import org.ishafoundation.dwaraapi.commandline.local.RetriableCommandLineExecutorImpl;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.DeviceLockFactory;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.MtStatus;
@@ -142,11 +141,11 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 		return false;
 	}
 	
-	public DriveDetails setTapeHeadPositionForReadingLabel(String dataTransferElementName) throws Exception {
+	public DriveDetails setTapeHeadPositionForReadingVolumeLabel(String dataTransferElementName) throws Exception {
 		return setTapeHeadPositionForInitializing(dataTransferElementName);
 	}
 	
-	public DriveDetails setTapeHeadPositionForReadingInterArtifactXml(String dataTransferElementName) throws Exception {
+	public DriveDetails setTapeHeadPositionForReadingInterArtifactXml(String dataTransferElementName, int expectedBlockNumberToBePositioned) throws Exception {
 		logger.debug("Positioning tape head for reading artifact label " + dataTransferElementName);
 		DriveDetails dsd = new DriveDetails();
 		dsd.setDriveName(dataTransferElementName);
@@ -155,19 +154,29 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			eod(dataTransferElementName);
 			
 			int blockNumberAfterEOD = getCurrentPositionBlockNumber(dataTransferElementName);
-			int blockNumberToSeek =  blockNumberAfterEOD - 2;
-			// validating the blockNumber
+			
+			int blockNumberToSeek = 0;
+			
+			if(blockNumberAfterEOD == expectedBlockNumberToBePositioned) {
+				blockNumberToSeek = blockNumberAfterEOD - 2;
+			}
+			else {
+				//throw new BlockMismatchException("Expected blockNumber after EOD " + expectedBlockNumberToBePositioned + ", actual " + blockNumberAfterEOD);
+				logger.warn("Expected blockNumber after EOD " + expectedBlockNumberToBePositioned + ", actual " + blockNumberAfterEOD + ". Falling back to seek option");
+				blockNumberToSeek =  expectedBlockNumberToBePositioned - 2;
+			}
+
 			seek(dataTransferElementName, blockNumberToSeek);
 			
 			int blockNumberAfterSeek = getCurrentPositionBlockNumber(dataTransferElementName);
 			
-			// validating the blockNumber
+			// validating the blockNumber - There were few times in test env where we seeked and tried verifying but the block was wrong for some reason. So we are trying to validate this just to doubly ensure...
 			if(blockNumberAfterSeek != blockNumberToSeek) {
 				throw new Exception("Expected blockNumberToSeek " + blockNumberToSeek + ", blockNumberAfterSeek " + blockNumberAfterSeek);
 			}
 			
-//			MtStatus mtStatus = getMtStatus(dataTransferElementName);
-//			dsd.setMtStatus(mtStatus);
+			MtStatus mtStatus = getMtStatus(dataTransferElementName);
+			dsd.setMtStatus(mtStatus);
 		}catch (Exception e) {
 			logger.error("Unable to setTapeHeadPositionForReadingInterArtifactXml " + e.getMessage(), e);
 			throw e;
@@ -175,30 +184,8 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 		return dsd;
 	}
 
-	// To write Nth medialibrary the tape head should be pointing at file Number N
-	// For e.g., if 5 medialibrary already in volume and to write the 6th mediaLibrary on tape, we need to position tapeHead on FileNumber = 5 - Remember Tape fileNumbers starts with 0
-	// Reference - http://etutorials.org/Linux+systems/how+linux+works/Chapter+13+Backups/13.6+Tape+Drive+Devices/
 	public DriveDetails setTapeHeadPositionForWriting(String dataTransferElementName, int blockNumberToBePositioned) throws Exception {
-		DriveDetails dsd = new DriveDetails();
-		dsd.setDriveName(dataTransferElementName);
-		try {
-			
-			eod(dataTransferElementName);
-			
-			int blockNumber = getCurrentPositionBlockNumber(dataTransferElementName);
-			
-			// validating the blockNumber
-			if(blockNumberToBePositioned != blockNumber) {
-				throw new Exception("Expected blockNumber " + blockNumberToBePositioned + ", actual " + blockNumber);
-			}
-			
-			MtStatus mtStatus = getMtStatus(dataTransferElementName);
-			dsd.setMtStatus(mtStatus);
-		}catch (Exception e) {
-			logger.error("Unable to setTapeHeadPositionForWriting " + e.getMessage(), e);
-			throw e;
-		}
-		return dsd;
+		return setTapeHeadPositionForReading(dataTransferElementName, blockNumberToBePositioned);
 	}
 	
 	// if blockNo is not requested to be seeked...

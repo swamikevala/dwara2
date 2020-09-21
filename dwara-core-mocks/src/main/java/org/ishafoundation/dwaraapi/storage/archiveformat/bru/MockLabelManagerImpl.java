@@ -9,9 +9,5 @@ import org.springframework.stereotype.Component;
 @Profile({ "dev | stage" })
 public class MockLabelManagerImpl extends LabelManagerImpl{
 	
-	@Override
-	public boolean isRightVolume(SelectedStorageJob selectedStorageJob, boolean fromVolumelabel) throws Exception {
-		return true;
-	}
 
 }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
+import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TActivedeviceDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
@@ -42,6 +43,12 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	private TActivedeviceDao tActivedeviceDao;
 	
 	@Autowired
+	private JobDao jobDao;
+
+	@Autowired
+	private VolumeDao volumeDao;
+	
+	@Autowired
 	private TapeTaskThreadPoolExecutor tapeTaskThreadPoolExecutor;	
 	
 	@Autowired
@@ -52,9 +59,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 
 	@Autowired
 	private TapeLibraryManager tapeLibraryManager;
-	
-	@Autowired
-	private JobDao jobDao;
+
+
 	/**
 	 * 
   		1) Get Available(Non busy) Drive list - We need to Dequeue as many jobs and Spawn as many threads For eg., If 2 free drives are available then we need to allocate 2 jobs to these drives on their own threads
@@ -122,7 +128,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				logger.trace("Composing Tape job");
 				TapeJob tapeJob = new TapeJob();
 				tapeJob.setStorageJob(firstStorageJob);
-				tapeJob.setAllDriveDetails(driveDetailsList);
+				tapeJob.setDriveDetails(driveDetailsList);
 				manage(tapeJob);
 			} catch (Exception e1) {
 				logger.error(e1.getMessage());
@@ -134,14 +140,21 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			logger.debug("Now preparing all Tape Drives for Initialization");
 			List<DriveDetails> preparedDrives = null;
 			try {
+
 				preparedDrives = tapeDeviceUtil.prepareAllTapeDrivesForBlockingJobs();
+				
+				// When we initialize the first time - mapping wouldnt have happened as a regd tape is a criteria for mapping drive - so we dont the device getting used and so can update Tactivedevice table
+				logger.trace("Composing Tape job");
+				TapeJob tapeJob = new TapeJob();
+				tapeJob.setStorageJob(firstStorageJob);
+//				tapeJob.setTapeLibraryName(selectedDriveDetails.getTapelibraryName());
+//				tapeJob.setTapedriveNo(selectedDriveDetails.getDriveId());
+				tapeJob.setDriveDetails(preparedDrives);
+				manage(tapeJob);
 			} catch (Exception e1) {
 				logger.error(e1.getMessage());
 				updateJobFailed(firstStorageJob.getJob());
 			}
-
-			DriveDetails driveDetails = preparedDrives.get(0);
-			prepareTapeJobAndContinueNextSteps(firstStorageJob, driveDetails, false);
 		}
 		else {
 
@@ -328,7 +341,14 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		catch (Exception e) {
 			logger.error(e.getMessage());
 			updateJobFailed(job);
-
+			
+			if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.verify) { // Any write or verify failure should have the tape marked as suspect...
+				Volume volume = storageJob.getVolume();
+				volume.setSuspect(true);
+				volumeDao.save(volume);
+				logger.info("Marked the volume " + volume.getId() + " as suspect");
+			}
+			
 			logger.debug("Deleting the t_activedevice record for " + tapeJob.getDeviceWwnId());
 			tActivedeviceDao.delete(tActivedevice);
 		}

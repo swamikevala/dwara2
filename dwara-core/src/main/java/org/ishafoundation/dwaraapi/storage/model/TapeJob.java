@@ -11,7 +11,7 @@ public class TapeJob extends SelectedStorageJob {
 	private TActivedevice tActivedevice;
 	private String tapeLibraryName;
 	private int tapedriveNo; // elementAddress
-	private List<DriveDetails> allDriveDetails; // expensive to get the list again, so just passing the already prepared set..
+	private List<DriveDetails> driveDetails; // expensive to get the list again, so just passing the already prepared set..
 
 	public boolean isOptimizeTapeAccess() {
 		return optimizeTapeAccess;
@@ -37,10 +37,10 @@ public class TapeJob extends SelectedStorageJob {
 	public void setTapedriveNo(int tapedriveNo) {
 		this.tapedriveNo = tapedriveNo;
 	}
-	public List<DriveDetails> getAllDriveDetails() {
-		return allDriveDetails;
+	public List<DriveDetails> getDriveDetails() {
+		return driveDetails;
 	}
-	public void setAllDriveDetails(List<DriveDetails> allDriveDetails) {
-		this.allDriveDetails = allDriveDetails;
+	public void setDriveDetails(List<DriveDetails> driveDetails) {
+		this.driveDetails = driveDetails;
 	}
 }
