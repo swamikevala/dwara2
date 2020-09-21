@@ -80,10 +80,10 @@ public class Volume {
 	private boolean imported;
 
 	@Column(name="suspect")
-	private Boolean suspect; // Not on VolumeGroups
+	private Boolean suspect = false; // Not on VolumeGroups
 
 	@Column(name="defective")
-	private Boolean defective; // Not on VolumeGroups
+	private Boolean defective = false; // Not on VolumeGroups
 
 	@OneToOne
 	private Archiveformat archiveformat;
