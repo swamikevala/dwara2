@@ -241,6 +241,7 @@ public class AutoloaderController {
 				
 				Drive drive = new Drive();
 				drive.setId(driveId);
+				// During mapping drives this value is set to null...
 				drive.setAddress(configuredDriveDevice.getDetails().getAutoloaderAddress());
 				drive.setBarcode(driveDetails.getDte().getVolumeTag());
 				drive.setEmpty(driveDetails.getDte().isEmpty());

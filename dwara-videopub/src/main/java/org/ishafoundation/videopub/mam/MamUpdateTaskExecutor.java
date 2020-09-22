@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import com.jcraft.jsch.Session;
@@ -42,6 +43,9 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 
 	@Autowired
 	private CatDVConfiguration catDVConfiguration;
+	
+	@Autowired
+	private Environment env;
 	
 	@Autowired
 	private Authenticator authenticator;
@@ -72,9 +76,8 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 		
 
 	@Override
-	public ProcessingtaskResponse execute(String taskName, String inputArtifactName, String outputArtifactName,
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile,
-			String category, String destinationDirPath) throws Exception {
+	public ProcessingtaskResponse execute(String taskName, String inputArtifactClass, String inputArtifactName, String outputArtifactName,
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile, String category, String destinationDirPath) throws Exception {
 		
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 		String catdvSessionId = null;
@@ -86,11 +89,11 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 		// Use case 4 - missed out extn
 		// Check is simple if catdv reference is available in mediafile table then it means the mediafile is already inserted into catdv
 		try {		
+			
+			String groupIdAsString = env.getProperty("catdv.groupId."+ inputArtifactClass);
+			
 			// TODO : get groupId using libraryCategory
-			int groupId = catDVConfiguration.getPublicGroupId();	
-			if(category.equals("private")) { // TODO: private1/2/3?
-				groupId = catDVConfiguration.getPrivateGroupId();
-			}
+			int groupId = groupIdAsString != null ? Integer.parseInt(groupIdAsString) : 0;// default it to some groupId	
 			
 			catdvSessionId = getSessionId();
 	    	

@@ -31,7 +31,7 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	private M01XmlFileHandler m01xfh;	
 
 	@Override
-	public ProcessingtaskResponse execute(String taskName, String inputArtifactName, String outputArtifactName,
+	public ProcessingtaskResponse execute(String taskName, String artifactclass, String inputArtifactName, String outputArtifactName,
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile,
 			String category, String destinationDirPath) throws Exception {
 		

@@ -8,7 +8,7 @@ public class Drive
 {
     private String id;
 
-    private int address;
+    private Integer address;
 
     private DriveStatus status;
 
@@ -22,10 +22,10 @@ public class Drive
     public String getId(){
         return this.id;
     }
-    public void setAddress(int address){
+    public void setAddress(Integer address){
         this.address = address;
     }
-    public int getAddress(){
+    public Integer getAddress(){
         return this.address;
     }
     public DriveStatus getStatus() {

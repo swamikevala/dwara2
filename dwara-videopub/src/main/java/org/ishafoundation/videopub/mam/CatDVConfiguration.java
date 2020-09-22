@@ -20,10 +20,6 @@ public class CatDVConfiguration {
 	private String webUserID;
 	private String webUserPwd;
 	
-	private int publicGroupId;
-	private int privateGroupId;
-	
-	
 	public boolean isSecured() {
 		return isSecured;
 	}
@@ -65,17 +61,5 @@ public class CatDVConfiguration {
 	}
 	public void setWebUserPwd(String webUserPwd) {
 		this.webUserPwd = webUserPwd;
-	}
-	public int getPublicGroupId() {
-		return publicGroupId;
-	}
-	public void setPublicGroupId(int publicGroupId) {
-		this.publicGroupId = publicGroupId;
-	}
-	public int getPrivateGroupId() {
-		return privateGroupId;
-	}
-	public void setPrivateGroupId(int privateGroupId) {
-		this.privateGroupId = privateGroupId;
 	}
 }

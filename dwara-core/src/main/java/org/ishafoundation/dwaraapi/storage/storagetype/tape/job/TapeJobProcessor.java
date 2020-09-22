@@ -152,23 +152,30 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 			tapeDriveManager.setTapeHeadPositionForInitializing(dataTransferElementName);
 			logger.info("Tape Head positioned for initialize " + tapeLibraryName + ":" + dataTransferElementName + "(" + usedDataTransferElement.getsNo() + ")");
 			
-			try {
+			
+			// TODO - Commenting the catch block as we dont know the specific error to check on write not supported gen drives and dont want to retry by keeping it open for other scenarios...
+			// This usecase is probably not needed for now anyway as we use  LTO-7 drive and there isnt a need for us to write LTO-5 tapes... 
+//			try {
 				selectedStorageJob.setDeviceWwnId(dataTransferElementName); // Ideally we should be setting this detail upfront but just above we got this info so had to set it here...
 				status = labelManager.writeVolumeLabel(selectedStorageJob);
 				logger.debug("Labelling success? - " + status);
 				break;
-			}catch (Exception e) {
-				// TODO - Check for a specific error msg than keeping it open...
-				logger.debug("Potentially write not supported generation drive. Try with another one"); // LTO-7 cant write in LTO-5 tape 
-				count += 1;
-				continue;
-			}
+//			}catch (Exception e) {
+//				
+//				tapeLibraryManager.unload(tapeLibraryName, storageElementSNo, dteSNo); // unload and continue...
+//				
+//				// TODO - Check for a specific error msg than keeping it open...
+//				logger.debug("Potentially write not supported generation drive. Try with another one"); // LTO-7 cant write in LTO-5 tape 
+//				count += 1;
+//				continue;
+//			}
 		}
 
 		if(status)
 			afterInitialize(selectedStorageJob);
 		else
-			throw new Exception("Unable to initialise. Supported drive not available");
+			throw new Exception("Unable to initialise.");
+		
 		return new StorageResponse();
 		
 		// validate on sequence no of tape - upfront validation

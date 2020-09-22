@@ -46,10 +46,14 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 	}
 	
 	public CommandLineExecutionResponse executeCommand(String command) throws Exception{
+		return executeCommand(command, false);
+	}
+	
+	public CommandLineExecutionResponse executeCommand(String command, boolean extractLastLineAsFailureReason) throws Exception{
 		String[] commandArgs = command.split(" ");
 		List<String> commandList = Arrays.asList(commandArgs);
 
-		CommandLineExecutionResponse commandLineExecutionResponse = executeCommand(commandList);
+		CommandLineExecutionResponse commandLineExecutionResponse = executeCommand(commandList, extractLastLineAsFailureReason);
 		if(commandLineExecutionResponse.isComplete()) {
 			logger.trace(command + " executed successfully " + commandLineExecutionResponse.getStdOutResponse());
 		}
