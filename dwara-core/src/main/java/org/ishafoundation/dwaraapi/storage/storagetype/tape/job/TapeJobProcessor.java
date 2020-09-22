@@ -149,7 +149,8 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 				logger.trace("Now positioning tape head for initialize");
 				tapeDriveManager.setTapeHeadPositionForInitializing(dataTransferElementName);
 				logger.info("Tape Head positioned for initialize " + tapeLibraryName + ":" + dataTransferElementName + "(" + usedDataTransferElement.getsNo() + ")");
-
+				
+				selectedStorageJob.setDeviceWwnId(dataTransferElementName); // Ideally we should be setting this detail upfront but just above we got this info so had to set it here...
 				boolean status = labelManager.writeVolumeLabel(selectedStorageJob);
 				logger.debug("Labelling success? - " + status);
 				break;
