@@ -169,7 +169,7 @@ public class ClipInserter extends CatDVInteractor {
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "media.videoFormat", catDVStyleVideoFormat);
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "media.audioFormat", catDVStyleAudioFormat);
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "media.aspectRatio", aspectRatio);// TODO need customisation
-		jsonDataSourceString = JsonPathUtil.putEntry(jsonDataSourceString, "media.fields", "dwaraId", fileId);
+		jsonDataSourceString = JsonPathUtil.putEntry(jsonDataSourceString, "media.fields", "dwara2Id", fileId);
 
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "importSource.file", mediaPath);
 		

@@ -1,7 +1,5 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
@@ -10,11 +8,9 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
-import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
-import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -118,49 +114,61 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		
 		int count = 0;
 		DataTransferElement usedDataTransferElement = null; 
+		boolean status = false;
 		for (DataTransferElement nthDataTransferElement : dataTransferElementList) {
 			int dteSNo = nthDataTransferElement.getsNo();
 			try {
 				tapeLibraryManager.load(tapeLibraryName, storageElementSNo, dteSNo);
 				usedDataTransferElement = nthDataTransferElement;
-				
-				DriveDetails usedDriveDetails = null;
-				for (DriveDetails nthDriveDetails : preparedDriveDetailsList) {
-					String driveId = nthDriveDetails.getDriveId();
-					String driveName = nthDriveDetails.getDriveName();
-					logger.trace("Checking if " + driveName + " has got the tape loaded");
-					DriveDetails driveStatusDetails = tapeDriveManager.getDriveDetails(driveName);
-					if(driveStatusDetails.getMtStatus().isReady()){ // means drive is not empty and has the tape we loaded
-						usedDriveDetails = nthDriveDetails;
-						logger.trace("Tape loaded");
-						break;
-					}
+			}catch (Exception e) {
+				logger.debug("Potentially a unsupported generation drive. Try with another one"); // if we try to load a LTO7 into LTO6 drive....
+				count += 1;
+				continue;
+			}
+			
+			DriveDetails usedDriveDetails = null;
+			for (DriveDetails nthDriveDetails : preparedDriveDetailsList) {
+				String driveId = nthDriveDetails.getDriveId();
+				String driveName = nthDriveDetails.getDriveName();
+				logger.trace("Checking if " + driveName + " has got the tape loaded");
+				DriveDetails driveStatusDetails = tapeDriveManager.getDriveDetails(driveName);
+				if(driveStatusDetails.getMtStatus().isReady()){ // means drive is not empty and has the tape we loaded
+					usedDriveDetails = nthDriveDetails;
+					logger.trace("Tape loaded");
+					break;
 				}
-				usedDriveDetails.setDte(usedDataTransferElement);
-				
-				String dataTransferElementName = usedDriveDetails.getDriveName();
+			}
+			usedDriveDetails.setDte(usedDataTransferElement);
+			
+			String dataTransferElementName = usedDriveDetails.getDriveName();
 
-				if(!tapeJob.getStorageJob().isForce() && count == 0) { // if its not a forced format check if tape is blank and proceed
-					logger.trace("Checking if tape is blank");
-					if(!tapeDriveManager.isTapeBlank(dataTransferElementName)) // if tape is not blank throw error and dont continue...
-						throw new Exception("Tape not blank to be initialized. If you still want to initialize use the \"force\" option...");
-				}
-				
-				logger.trace("Now positioning tape head for initialize");
-				tapeDriveManager.setTapeHeadPositionForInitializing(dataTransferElementName);
-				logger.info("Tape Head positioned for initialize " + tapeLibraryName + ":" + dataTransferElementName + "(" + usedDataTransferElement.getsNo() + ")");
-				
+			if(!tapeJob.getStorageJob().isForce() && count == 0) { // if its not a forced format check if tape is blank and proceed // count == 0 check because 
+				logger.trace("Checking if tape is blank");
+				if(!tapeDriveManager.isTapeBlank(dataTransferElementName)) // if tape is not blank throw error and dont continue...
+					throw new Exception("Tape not blank to be initialized. If you still want to initialize use the \"force\" option...");
+			}
+			
+			logger.trace("Now positioning tape head for initialize");
+			tapeDriveManager.setTapeHeadPositionForInitializing(dataTransferElementName);
+			logger.info("Tape Head positioned for initialize " + tapeLibraryName + ":" + dataTransferElementName + "(" + usedDataTransferElement.getsNo() + ")");
+			
+			try {
 				selectedStorageJob.setDeviceWwnId(dataTransferElementName); // Ideally we should be setting this detail upfront but just above we got this info so had to set it here...
-				boolean status = labelManager.writeVolumeLabel(selectedStorageJob);
+				status = labelManager.writeVolumeLabel(selectedStorageJob);
 				logger.debug("Labelling success? - " + status);
 				break;
 			}catch (Exception e) {
-				logger.debug("Potentially a different generation drive. Try with another one");
+				// TODO - Check for a specific error msg than keeping it open...
+				logger.debug("Potentially write not supported generation drive. Try with another one"); // LTO-7 cant write in LTO-5 tape 
 				count += 1;
+				continue;
 			}
 		}
 
-		afterInitialize(selectedStorageJob);
+		if(status)
+			afterInitialize(selectedStorageJob);
+		else
+			throw new Exception("Unable to initialise. Supported drive not available");
 		return new StorageResponse();
 		
 		// validate on sequence no of tape - upfront validation
