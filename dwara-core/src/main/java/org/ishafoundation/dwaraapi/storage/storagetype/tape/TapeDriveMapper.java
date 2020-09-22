@@ -50,16 +50,16 @@ public class TapeDriveMapper {
 	*/	
 	public void mapDrives(String tapelibraryId, List<DriveDetails> allDrivesList) throws Exception {
 		try {
-			// Step 0 - defaulting autoloader addresses
-//			Map<Integer, String> autoloaderAddress_DriveId_Map = new HashMap<Integer, String>();
-			List<Device> allConfiguredDrivesInDwara = deviceDao.findAllByType(Devicetype.tape_drive);
-//			int autoloaderAddress = 0;
-			for (Device nthDrive : allConfiguredDrivesInDwara) {
-				nthDrive.getDetails().setAutoloaderAddress(null);	
-//				autoloaderAddress_DriveId_Map.put(autoloaderAddress, nthDrive.getId());
-//				autoloaderAddress =+ 1;
-			}
-			allConfiguredDrivesInDwara = (List<Device>) deviceDao.saveAll(allConfiguredDrivesInDwara);
+//			// Step 0 - defaulting autoloader addresses
+////			Map<Integer, String> autoloaderAddress_DriveId_Map = new HashMap<Integer, String>();
+//			List<Device> allConfiguredDrivesInDwara = deviceDao.findAllByType(Devicetype.tape_drive);
+////			int autoloaderAddress = 0;
+//			for (Device nthDrive : allConfiguredDrivesInDwara) {
+//				nthDrive.getDetails().setAutoloaderAddress(null);	
+////				autoloaderAddress_DriveId_Map.put(autoloaderAddress, nthDrive.getId());
+////				autoloaderAddress =+ 1;
+//			}
+//			allConfiguredDrivesInDwara = (List<Device>) deviceDao.saveAll(allConfiguredDrivesInDwara);
 
 			
 			String tapelibraryName = deviceDao.findById(tapelibraryId).get().getWwnId();
@@ -98,6 +98,8 @@ public class TapeDriveMapper {
 			if(volumeGeneration_Actor_Map.keySet().size() == 0) {
 				throw new Exception("No registered tapes");
 			}
+			
+			
 			// Step 2 - unload all drives
 			logger.debug("Now unloading all non-empty drives...");
 			List<DataTransferElement> dataTransferElementList = mtxStatus.getDteList();
@@ -200,7 +202,7 @@ public class TapeDriveMapper {
 			}
 			
 			// Setting the unmapped drives with some unmapped DTEs...
-			allConfiguredDrivesInDwara = deviceDao.findAllByType(Devicetype.tape_drive);
+			List<Device> allConfiguredDrivesInDwara = deviceDao.findAllByType(Devicetype.tape_drive);
 			allConfiguredDrivesInDwara.removeAll(mappedDrives);
 			int count = 0;
 			for (Device nthUnmappedDevice : allConfiguredDrivesInDwara) {

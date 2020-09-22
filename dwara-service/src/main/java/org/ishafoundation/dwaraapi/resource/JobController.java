@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.resource;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
@@ -60,5 +62,29 @@ public class JobController {
 				throw new DwaraException(errorMsg, null);
 		}
     	return ResponseEntity.status(HttpStatus.OK).body(jobResponse);
+    }
+    
+    @PostMapping("/job/multi-requeue")
+    public ResponseEntity<List<JobResponse>> requeueSpecifiedFailedJobs(@RequestParam("jobIds") String jobIds) {
+    	List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
+		List<String> jobIdsList = Arrays.asList(jobIds.split(","));
+		for (String jobIdAsString : jobIdsList) {
+			int jobId = Integer.parseInt(jobIdAsString);
+	    	JobResponse jobResponse = null;
+	    	try {
+	    		jobResponse = jobService.requeueJob(jobId);
+	    		jobResponseList.add(jobResponse);
+			}catch (Exception e) {
+				String errorMsg = "Unable to get Jobs - " + e.getMessage();
+				logger.error(errorMsg, e);
+				
+				if(e instanceof DwaraException)
+					throw (DwaraException) e;
+				else
+					throw new DwaraException(errorMsg, null);
+			}
+		}
+			
+    	return ResponseEntity.status(HttpStatus.OK).body(jobResponseList);
     }
 }
