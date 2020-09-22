@@ -161,24 +161,20 @@ public class LabelManagerImpl implements LabelManager{
 			archiveCreatorVersion = StringUtils.substringBefore(archiveCreatorVersion, System.getProperty("line.separator"));
 		}
 		else if(archiveformat.equals("bru")) {
-			CommandLineExecutionResponse bruReleaseCler = commandLineExecuter.executeCommand("bru -h | grep release"); 
-			String bruRelease = bruReleaseCler.getStdOutResponse().trim();  //release:         18.1
+			CommandLineExecutionResponse bruCler = commandLineExecuter.executeCommand("bru -h"); 
+			String bruResponse = bruCler.getStdOutResponse();  
 			
 			// regex to get the version 18.1 from above response
-			Matcher releaseRegExMatcher = BRU_RELEASE_REGEX_PATTERN.matcher(bruRelease);
+			Matcher releaseRegExMatcher = BRU_RELEASE_REGEX_PATTERN.matcher(bruResponse); //release:         18.1
 			String bruReleaseVer = null;
-			if(releaseRegExMatcher.matches())
-				bruReleaseVer = releaseRegExMatcher.group(1);
-	
-	
-			CommandLineExecutionResponse bruVariantCler = commandLineExecuter.executeCommand("bru -h | grep variant");
-			String bruVariant = bruVariantCler.getStdOutResponse().trim(); //variant:         0.14
+			if(releaseRegExMatcher.find())
+				bruReleaseVer = releaseRegExMatcher.group(1).trim();
 	
 			// regex to get the version 0.14 from above response
-			Matcher variantRegExMatcher = BRU_VARIANT_REGEX_PATTERN.matcher(bruVariant);
+			Matcher variantRegExMatcher = BRU_VARIANT_REGEX_PATTERN.matcher(bruResponse); //variant:         0.14
 			String bruVariantVer = null;
-			if(variantRegExMatcher.matches())
-				bruVariantVer = variantRegExMatcher.group(1);
+			if(variantRegExMatcher.find())
+				bruVariantVer = variantRegExMatcher.group(1).trim();
 	
 			archiveCreatorVersion = "release " + bruReleaseVer + "; variant " + bruVariantVer;
 		}

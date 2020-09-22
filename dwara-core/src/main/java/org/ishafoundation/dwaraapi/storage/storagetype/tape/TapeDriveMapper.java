@@ -50,18 +50,6 @@ public class TapeDriveMapper {
 	*/	
 	public void mapDrives(String tapelibraryId, List<DriveDetails> allDrivesList) throws Exception {
 		try {
-//			// Step 0 - defaulting autoloader addresses
-////			Map<Integer, String> autoloaderAddress_DriveId_Map = new HashMap<Integer, String>();
-//			List<Device> allConfiguredDrivesInDwara = deviceDao.findAllByType(Devicetype.tape_drive);
-////			int autoloaderAddress = 0;
-//			for (Device nthDrive : allConfiguredDrivesInDwara) {
-//				nthDrive.getDetails().setAutoloaderAddress(null);	
-////				autoloaderAddress_DriveId_Map.put(autoloaderAddress, nthDrive.getId());
-////				autoloaderAddress =+ 1;
-//			}
-//			allConfiguredDrivesInDwara = (List<Device>) deviceDao.saveAll(allConfiguredDrivesInDwara);
-
-			
 			String tapelibraryName = deviceDao.findById(tapelibraryId).get().getWwnId();
 			logger.info("Now mapping drives for library - " + tapelibraryName);
 			
@@ -122,6 +110,17 @@ public class TapeDriveMapper {
 				}
 			}
 		
+			// Step 0 - defaulting autoloader addresses
+//			Map<Integer, String> autoloaderAddress_DriveId_Map = new HashMap<Integer, String>();
+			List<Device> allConfiguredDrivesInDwara = deviceDao.findAllByType(Devicetype.tape_drive);
+//			int autoloaderAddress = 0;
+			for (Device nthDrive : allConfiguredDrivesInDwara) {
+				nthDrive.getDetails().setAutoloaderAddress(null);	
+//				autoloaderAddress_DriveId_Map.put(autoloaderAddress, nthDrive.getId());
+//				autoloaderAddress =+ 1;
+			}
+			allConfiguredDrivesInDwara = (List<Device>) deviceDao.saveAll(allConfiguredDrivesInDwara);
+
 			
 			/*
 			Step 3 - load the tape on to drives and verify drive status
@@ -202,7 +201,7 @@ public class TapeDriveMapper {
 			}
 			
 			// Setting the unmapped drives with some unmapped DTEs...
-			List<Device> allConfiguredDrivesInDwara = deviceDao.findAllByType(Devicetype.tape_drive);
+			allConfiguredDrivesInDwara = deviceDao.findAllByType(Devicetype.tape_drive);
 			allConfiguredDrivesInDwara.removeAll(mappedDrives);
 			int count = 0;
 			for (Device nthUnmappedDevice : allConfiguredDrivesInDwara) {
