@@ -200,35 +200,51 @@ public class TapeDriveMapper {
 				}
 			}
 			
-			// Setting the unmapped drives with some unmapped DTEs...
+
 			allConfiguredDrivesInDwara = deviceDao.findAllByType(Devicetype.tape_drive);
 			allConfiguredDrivesInDwara.removeAll(mappedDrives);
-			
-			// if there are unmappedDTEs for not configured/offline devices 
-			// (for e.g. dataTransferElements = 5, allConfiguredDrivesInDwara = 6 [online = 2, offline = 4] -- mapped online drives = 2, unmapped DTEs = 3, unmapped drives = 4)
-			// here mapping for the 3/4 unmapped drive happens
-			List<Device> unmappedDrivesList1 = new ArrayList<Device>();
+
+			// Now setting the address for unmapped drives with unmapped DTEs if any or with a default...
 			int count = 0;
-			for (Integer nthUnmappedDteSNo : unmappedDTEs) {
-				if(allConfiguredDrivesInDwara.size() > count) {
-					Device nthUnmappedDrive = allConfiguredDrivesInDwara.get(count);
-					nthUnmappedDrive.getDetails().setAutoloaderAddress(nthUnmappedDteSNo);
-					deviceDao.save(nthUnmappedDrive);				
-					logger.info("Unmapped Device " +  nthUnmappedDrive.getId() + " defaulted with " + nthUnmappedDteSNo);
-					unmappedDrivesList1.add(nthUnmappedDrive);
-					count += 1;
-				}
-			}
-			allConfiguredDrivesInDwara.removeAll(unmappedDrivesList1);
-			
-			count = dataTransferElementList.size();
-			// if there are extra configured devices but not in DTE....
 			for (Device nthUnmappedDevice : allConfiguredDrivesInDwara) {
-				nthUnmappedDevice.getDetails().setAutoloaderAddress(count);
+				Integer autoloaderAddress = null; 
+				if(count < unmappedDTEs.size()) {
+					autoloaderAddress = unmappedDTEs.get(count);
+				}else {
+					autoloaderAddress = mappedDrives.size() + count;
+					logger.info("Unable to default Device " +  nthUnmappedDevice.getId() + "with a DTE value. Hence manipulating");
+				}
+				logger.info("Unmapped Device " +  nthUnmappedDevice.getId() + " defaulted with " + autoloaderAddress);
+				nthUnmappedDevice.getDetails().setAutoloaderAddress(autoloaderAddress);
 				deviceDao.save(nthUnmappedDevice);
-				logger.info("Unmapped Device " +  nthUnmappedDevice.getId() + " defaulted with " + count);
 				count += 1;
 			}
+			
+//			// if there are unmappedDTEs for not configured/offline devices 
+//			// (for e.g. dataTransferElements = 5, allConfiguredDrivesInDwara = 6 [online = 2, offline = 4] -- mapped online drives = 2, unmapped DTEs = 3, unmapped drives = 4)
+//			// here mapping for the 3/4 unmapped drive happens
+//			List<Device> unmappedDrivesList1 = new ArrayList<Device>();
+//			int count = 0;
+//			for (Integer nthUnmappedDteSNo : unmappedDTEs) {
+//				if(allConfiguredDrivesInDwara.size() > count) {
+//					Device nthUnmappedDrive = allConfiguredDrivesInDwara.get(count);
+//					nthUnmappedDrive.getDetails().setAutoloaderAddress(nthUnmappedDteSNo);
+//					deviceDao.save(nthUnmappedDrive);				
+//					logger.info("Unmapped Device " +  nthUnmappedDrive.getId() + " defaulted with " + nthUnmappedDteSNo);
+//					unmappedDrivesList1.add(nthUnmappedDrive);
+//					count += 1;
+//				}
+//			}
+//			allConfiguredDrivesInDwara.removeAll(unmappedDrivesList1);
+//			
+//			count = dataTransferElementList.size();
+//			// if there are extra configured devices but not in DTE....
+//			for (Device nthUnmappedDevice : allConfiguredDrivesInDwara) {
+//				nthUnmappedDevice.getDetails().setAutoloaderAddress(count);
+//				deviceDao.save(nthUnmappedDevice);
+//				logger.info("Unmapped Device " +  nthUnmappedDevice.getId() + " defaulted with " + count);
+//				count += 1;
+//			}
 			
 		}
 		catch (Exception e) {
