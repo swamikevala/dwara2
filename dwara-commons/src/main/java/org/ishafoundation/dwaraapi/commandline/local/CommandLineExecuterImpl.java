@@ -46,7 +46,7 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 	}
 	
 	public CommandLineExecutionResponse executeCommand(String command) throws Exception{
-		return executeCommand(command, false);
+		return executeCommand(command, true);
 	}
 	
 	public CommandLineExecutionResponse executeCommand(String command, boolean extractLastLineAsFailureReason) throws Exception{
@@ -108,6 +108,8 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 					if (in.available() > 0 || err.available() > 0)
 						continue;
 					logger.debug("exit-status: " + proc.exitValue());
+					logger.trace("Command's stdout message - " + stdOutRespBuffer.toString());
+					logger.trace("Command's stderr message - " + stdErrRespBuffer.toString());
 					break;
 				}
 				try {
@@ -122,7 +124,6 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 			} else {
 				isComplete = false;
 				String stdErrResp = stdErrRespBuffer.toString();
-				logger.debug("Command's stderr message - " + stdErrResp);
 				String message = null;
 				if(extractLastLineAsFailureReason) {
 					message = getLastLine(stdErrResp);

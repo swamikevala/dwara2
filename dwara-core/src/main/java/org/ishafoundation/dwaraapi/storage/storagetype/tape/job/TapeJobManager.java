@@ -283,10 +283,13 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		TapeJob tapeJob = null;
 		TActivedevice tActivedevice = null;
 		try {
+			Volume volume = storageJob.getVolume();
 			job = storageJob.getJob();
+			Action storagetaskAction = job.getStoragetaskActionId();
+			if(storagetaskAction != Action.initialize) // For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving... 
+				job.setVolume(volume);
 			checkAndUpdateStatusesToInProgress(job);
 			
-			Volume volume = storageJob.getVolume();
 			
 			tActivedevice = new TActivedevice();// Challenge here...
 			Device tapedriveDevice = deviceDao.findByWwnId(driveDetails.getDriveName());
@@ -295,7 +298,6 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 
 			logger.debug("Flagging drive " + tapedriveUid + " as busy, by adding tActivedevice entry" );
 			tActivedevice.setJob(job);
-			Action storagetaskAction = job.getStoragetaskActionId();
 			if(storagetaskAction != Action.initialize) // For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving device...  
 				tActivedevice.setVolume(volume);
 
@@ -321,8 +323,6 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 
 
 			job.setDevice(tapedriveDevice);
-			if(storagetaskAction != Action.initialize) // For format the volume is still not in the DB just yet. Not having this condition will cause FK failure while saving... 
-				job.setVolume(volume);
 			
 			if(nextStepsInSeparateThread) {
 				logger.debug("Launching separate tape task thread -----------");
