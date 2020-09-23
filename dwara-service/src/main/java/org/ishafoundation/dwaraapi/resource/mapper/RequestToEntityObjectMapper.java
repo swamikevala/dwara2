@@ -22,8 +22,7 @@ public interface RequestToEntityObjectMapper {
 	
 	@Mappings({
         @Mapping(source = "volume", target = "volumeId"),
-        @Mapping(source = "volumeGroup", target = "volumeGroupId"),
-        @Mapping(source = "volumeBlocksize", target = "volumeBlocksize")
+        @Mapping(source = "volumeGroup", target = "volumeGroupId")
     })
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
 	RequestDetails getRequestDetailsForInitialize(InitializeUserRequest initializeUserRequest);

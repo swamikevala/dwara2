@@ -111,7 +111,7 @@ public class Initialize extends AbstractStoragetaskAction{
 		volume.setArchiveformat(volumeGroup.getArchiveformat());
 		volume.setInitializedAt(LocalDateTime.now());
 		
-		Integer blocksize = requestDetails.getVolumeBlocksize();
+		Integer blocksize = volumeGroup.getDetails().getBlocksize();//CR on release-Day 23rd Sept - requestDetails.getVolumeBlocksize();
 		
 		VolumeDetails volumeDetails = new VolumeDetails();
 		volumeDetails.setBarcoded(true);
