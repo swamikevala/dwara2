@@ -105,40 +105,54 @@ public class VolumeService extends DwaraService {
 			volResp.setArchiveformat(volume.getArchiveformat().getId());
 
 		if(volume.getType() == Volumetype.group) {
-			// get all not finalized physical volume in it
-			
-//			
-//			
-//		   	Domain[] domains = Domain.values();
-//		   	Domain domain = null;
-//			for (Domain nthDomain : domains) {
-//			    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(nthDomain);
-//			    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(volume.getId());
-//				if(artifactVolumeCount > 0) {
-//					domain = nthDomain;
-//					break;
-//				}
-//			}
-//			
-//			domain == null
-//					domainUtil.getDefaultDomain
-//					
-//					
-//			iterate all physical volume from the group and sum up 
-//			
-//			volumeUtil.getVolumeUnusedCapacity(domain, volume)
-//			volumeUtil.getVolumeUsedCapacity(domain, volume)
 
+			Domain domain = null;
+			long groupVolumeCapacity = 0L;
+			long groupVolumeUnusedCapacity = 0L;
+			long groupVolumeUsedCapacity = 0L;
+			long maxPhysicalUnusedCapacity = 0L;
+			List<Volume> physicalVolumeList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndSuspectIsFalseOrderByIdAsc(volume.getId()); // get all not finalized physical volume in the group
 			
+			for (Volume nthPhyscialVolume : physicalVolumeList) { // iterate all physical volume from the group and sum up for total/used/unused cap
+				logger.trace("Dashboard - " + nthPhyscialVolume.getId());
+				if(domain == null) {
+			   		Domain[] domains = Domain.values();
+			   	
+					for (Domain nthDomain : domains) {
+					    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(nthDomain);
+					    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(nthPhyscialVolume.getId());
+						if(artifactVolumeCount > 0) {
+							domain = nthDomain;
+							break;
+						}
+					}
+				}
+				
+//				long nthPhysicalVolumeCapacity = nthPhyscialVolume.getCapacity();
+//				long nthPhysicalVolumeUsedCapacity = volumeUtil.getVolumeUsedCapacity(domain, nthPhyscialVolume);
+				groupVolumeCapacity += volumeUtil.getVolumeUsableCapacity(domain, nthPhyscialVolume);//nthPhyscialVolume.getCapacity();
+				logger.trace("Dashboard -groupVolumeCapacity - " + groupVolumeCapacity);
+				logger.trace("Dashboard -groupVolumeCapacity in GiB - " + groupVolumeCapacity/1073741824);
+				long nthPhysicalVolumeUnusedCapacity = volumeUtil.getVolumeUnusedCapacity(domain, nthPhyscialVolume);
+				groupVolumeUnusedCapacity += nthPhysicalVolumeUnusedCapacity;
+				logger.trace("Dashboard -groupVolumeUnusedCapacity - " + groupVolumeUnusedCapacity);
+				logger.trace("Dashboard -groupVolumeUnusedCapacity in GiB - " + groupVolumeUnusedCapacity/1073741824);
+				if(maxPhysicalUnusedCapacity < nthPhysicalVolumeUnusedCapacity)
+					maxPhysicalUnusedCapacity = nthPhysicalVolumeUnusedCapacity;
+				logger.trace("Dashboard -maxPhysicalUnusedCapacity - " + maxPhysicalUnusedCapacity);
+				logger.trace("Dashboard -maxPhysicalUnusedCapacity in GiB - " + maxPhysicalUnusedCapacity/1073741824);
+				groupVolumeUsedCapacity += volumeUtil.getVolumeUsedCapacity(domain, nthPhyscialVolume);
+				logger.trace("Dashboard -groupVolumeUsedCapacity - " + groupVolumeUsedCapacity);
+				logger.trace("Dashboard -groupVolumeUsedCapacity in GiB - " + groupVolumeUsedCapacity/1073741824);
+			}
+
+			volResp.setTotalCapacity(groupVolumeCapacity/1073741824);
+			volResp.setUsedCapacity(groupVolumeUsedCapacity/1073741824);
+			volResp.setUnusedCapacity(groupVolumeUnusedCapacity/1073741824);
+			volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity/1073741824);
+			volResp.setSizeUnit("GiB"); // 1 GiB = 1073741824 bytes...
 		}
 		
-		/* TODO
-		volResp.setTotalCapacity(totalCapacity);
-		volResp.setUsedCapacity(usedCapacity);
-		volResp.setUnusedCapacity(unusedCapacity);
-		volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity);
-		volResp.setSizeUnit(sizeUnit);
-		*/
 		if(volume.getLocation() != null)
 			volResp.setLocation(volume.getLocation().getId());
 		

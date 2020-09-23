@@ -46,13 +46,18 @@ public class VolumeUtil {
 		logger.trace("volumeUsedCapacity " + volumeUsedCapacity);
 		return volumeUsedCapacity;
 	}
-	
+
 	// returns - in bytes...
-	public long getVolumeUnusedCapacity(Domain domain, Volume volume){
+	public long getVolumeUsableCapacity(Domain domain, Volume volume){
 		long capacity = volume.getCapacity(); // something like 6TB
 		logger.trace("capacity " + capacity);
 		// but we dont use the full capacity but only till high water mark...
-		long useableCapacity = (long) (capacity * watermarkHigh);
+		return (long) (capacity * watermarkHigh);
+	}
+	
+	// returns - in bytes...
+	public long getVolumeUnusedCapacity(Domain domain, Volume volume){
+		long useableCapacity = getVolumeUsableCapacity(domain, volume);
 		logger.trace("useableCapacity " + useableCapacity);
 		long usedCapacity = getVolumeUsedCapacity(domain, volume);
 		long volumeUnUsedCapacity = useableCapacity - usedCapacity;
