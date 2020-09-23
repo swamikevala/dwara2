@@ -18,9 +18,31 @@ public class JobCustomImpl implements JobCustom {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+	@Override
+	public List<Job> findAllDynamicallyBasedOnParamsOrderByLatest(Integer systemRequestId, List<Status> statusList) {
+		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+		
+        CriteriaQuery<Job> query = cb.createQuery(Job.class);
+        Root<Job> jobRoot = query.from(Job.class);
+        
+        List<Predicate> predicates = getFramedPredicates(jobRoot, cb, systemRequestId, statusList);
+       	query.select(jobRoot).where(cb.and(predicates.toArray(new Predicate[0])));
+       	query.orderBy(cb.desc(jobRoot.get("id"))); // default orderby most recent first
+        //List<Request> requestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
+       	List<Job> jobList = entityManager.createQuery(query).getResultList();
+
+        return jobList;
+	}
 	
-	private List<Predicate> getFramedPredicates(Root<Job> jobRoot, CriteriaBuilder cb, List<Status> statusList) {
+	
+	private List<Predicate> getFramedPredicates(Root<Job> jobRoot, CriteriaBuilder cb, Integer requestId, List<Status> statusList) {
 	    List<Predicate> predicates = new ArrayList<>();
+	    
+		if(requestId != null) {
+			predicates.add(cb.equal(jobRoot.get("request"), requestId));
+		}
+		
 	    if(statusList != null) {
 		    Path<String> statusIdPath = jobRoot.get("status");
 		    List<Predicate> statusPredicates = new ArrayList<>();
@@ -31,23 +53,5 @@ public class JobCustomImpl implements JobCustom {
 	    } 
 
 	    return predicates;
-	}
-
-
-
-	@Override
-	public List<Job> findAllByStatusOrderByLatest(List<Status> statusList) {
-		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-		
-        CriteriaQuery<Job> query = cb.createQuery(Job.class);
-        Root<Job> jobRoot = query.from(Job.class);
-        
-        List<Predicate> predicates = getFramedPredicates(jobRoot, cb, statusList);
-       	query.select(jobRoot).where(cb.and(predicates.toArray(new Predicate[0])));
-       	query.orderBy(cb.desc(jobRoot.get("id"))); // default orderby most recent first
-        //List<Request> requestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
-       	List<Job> jobList = entityManager.createQuery(query).getResultList();
-
-        return jobList;
 	}
 }

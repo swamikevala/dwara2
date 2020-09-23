@@ -7,6 +7,6 @@ import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 public interface JobCustom {
 	
-	List<Job> findAllByStatusOrderByLatest(List<Status> statusList);
+	List<Job> findAllDynamicallyBasedOnParamsOrderByLatest(Integer systemRequestId, List<Status> statusList);
 
 }

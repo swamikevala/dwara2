@@ -63,10 +63,10 @@ public class JobService extends DwaraService{
 		return jobResponseList;
 	}
 	
-	public List<JobResponse> getJobs(List<Status> statusList) {
+	public List<JobResponse> getJobs(Integer systemRequestId, List<Status> statusList) {
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
 		
-		List<Job> jobList = jobDao.findAllByStatusOrderByLatest(statusList);
+		List<Job> jobList = jobDao.findAllDynamicallyBasedOnParamsOrderByLatest(systemRequestId, statusList);
 		for (Job job : jobList) {
 			JobResponse jobResponse = frameJobResponse(job);
 
