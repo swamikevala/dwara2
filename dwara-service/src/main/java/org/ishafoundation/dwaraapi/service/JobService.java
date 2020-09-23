@@ -51,6 +51,30 @@ public class JobService extends DwaraService{
 	@Autowired
 	private ProcessingFailureDao processingFailureDao;
 
+	public List<JobResponse> getAllJobs(){
+		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
+		
+		List<Job> jobList = (List<Job>) jobDao.findAll();
+		for (Job job : jobList) {
+			JobResponse jobResponse = frameJobResponse(job);
+
+			jobResponseList.add(jobResponse);
+		}
+		return jobResponseList;
+	}
+	
+	public List<JobResponse> getJobs(List<Status> statusList) {
+		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
+		
+		List<Job> jobList = jobDao.findAllByStatusOrderByLatest(statusList);
+		for (Job job : jobList) {
+			JobResponse jobResponse = frameJobResponse(job);
+
+			jobResponseList.add(jobResponse);
+		}
+		return jobResponseList;
+	}
+	
 	public List<JobResponse> getJobs(int systemRequestId){
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
 		
@@ -186,6 +210,5 @@ public class JobService extends DwaraService{
 		
 		return jobResponse;
 	}
-	
 }
 

@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
+import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.JobService;
 import org.slf4j.Logger;
@@ -27,9 +29,60 @@ public class JobController {
 	
 	@Autowired
 	JobService jobService;
-		
+
 	@GetMapping(value = "/job", produces = "application/json")
-	public ResponseEntity<List<JobResponse>> getJobs(@RequestParam(value="requestId", required=true) int systemRequestId){
+	public ResponseEntity<List<JobResponse>> getAllJobs(){
+		List<JobResponse> jobResponseList = null;
+		try {
+			
+			jobResponseList = jobService.getAllJobs();
+		}catch (Exception e) {
+			String errorMsg = "Unable to get Jobs - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(jobResponseList);
+	}
+	
+	@GetMapping(value = "/job", produces = "application/json")
+	public ResponseEntity<List<JobResponse>> getJobs(@RequestParam(required=false) String status){
+		List<JobResponse> jobResponseList = null;
+		try {
+			
+			List<Status> statusList = null;
+			if(status != null) { // TODO - use optional
+				statusList = new ArrayList<Status>();
+				String[] statusArrAsString = status.split(",");
+			   	
+			   	for (int i = 0; i < statusArrAsString.length; i++) {
+			   		Status statusEnum = Status.valueOf(statusArrAsString[i]);
+			   		statusList.add(statusEnum);
+				}
+			}
+			
+			jobResponseList = jobService.getJobs(statusList);
+		}catch (Exception e) {
+			String errorMsg = "Unable to get Jobs - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(jobResponseList);
+	}
+
+		
+
+	@GetMapping(value = "/job", produces = "application/json")
+	public ResponseEntity<List<JobResponse>> getRequestSpecificJobs(@RequestParam(value="requestId", required=true) int systemRequestId){
 		List<JobResponse> jobResponseList = null;
 		try {
 			

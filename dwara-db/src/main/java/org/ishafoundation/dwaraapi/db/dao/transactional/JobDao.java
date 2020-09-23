@@ -4,12 +4,13 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.db.dao.transactional.custom.JobCustom;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.springframework.data.repository.CrudRepository;
 
-public interface JobDao extends CrudRepository<Job,Integer> {
+public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	
 	// used for toLoad api - get all jobs with volume id and storagetask is not null and status is queued
 //	List<Job> findAllByVolumeIdIsNotNullAndStoragetaskActionIdIsNotNullAndStatus(Status status);
