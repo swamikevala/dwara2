@@ -5,8 +5,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.DeviceLockFactory;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.MtStatus;
@@ -32,6 +34,9 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 	
 	@Autowired
 	private DeviceLockFactory deviceLockFactory;
+	
+	@Autowired
+	private Configuration configuration;
 	
 	private static final String DRIVE_IO_ERROR = "Input/output error";
 	private static final String DRIVE_BUSY_ERROR = "Device or resource busy";
@@ -288,7 +293,15 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			if(errorMsg.contains(DRIVE_IO_ERROR) && errorList.contains(DRIVE_IO_ERROR) && nthRetryAttempt == 0) {
 				String deviceName = command.split(" ")[2];
 				logger.warn("stinit script seems to be not executed on device " + deviceName + ". Running it now");
-				commandLineExecuter.executeCommand("sudo /usr/sbin/stinit -f /etc/stinit.def " + deviceName);
+				String script = configuration.getStagingOpsScriptPath();
+				List<String> stinitCommandParamsList = new ArrayList<String>();
+				stinitCommandParamsList.add("sudo");
+				stinitCommandParamsList.add(script);
+				stinitCommandParamsList.add("-t");
+				stinitCommandParamsList.add("stinit");
+				stinitCommandParamsList.add("-w");
+				stinitCommandParamsList.add(deviceName);
+				commandLineExecuter.executeCommand(stinitCommandParamsList);
 				logger.warn("stinit script on device " + deviceName + " success.");
 				
 				// re-execute the same command again...
