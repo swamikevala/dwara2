@@ -53,6 +53,7 @@ import org.ishafoundation.dwaraapi.staged.StagedFileOperations;
 import org.ishafoundation.dwaraapi.staged.scan.Error;
 import org.ishafoundation.dwaraapi.staged.scan.Errortype;
 import org.ishafoundation.dwaraapi.staged.scan.SourceDirScanner;
+import org.ishafoundation.dwaraapi.utils.ArtifactFileDetails;
 import org.ishafoundation.dwaraapi.utils.ExtensionsUtil;
 import org.ishafoundation.dwaraapi.utils.JunkFilesDealer;
 import org.slf4j.Logger;
@@ -224,21 +225,24 @@ public class StagedService extends DwaraService{
 		        long size = 0;
 		        int fileCount = 0;
 		        
-		        try {
-		        	size = FileUtils.sizeOf(nthIngestableFile);
-		        }catch (Exception e) {
-					// swallowing it...
-		        	logger.trace("Unable to calculate size for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
-				}
-		        
 		        if(nthIngestableFile.isDirectory()) {
+			        ArtifactFileDetails fd = junkFilesDealer.getJunkFilesExcludedFileDetails(nthIngestableFile.getAbsolutePath());
+			        // added to try catch for the test api not to throw an error when looking for a non-existing folder
+			        try {
+			        	size = fd.getTotalSize();
+			        }catch (Exception e) {
+						// swallowing it...
+			        	logger.trace("Unable to calculate size for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
+					}
+		        
 		            try {
-		            	fileCount = FileUtils.listFiles(nthIngestableFile, null, true).size();
+		            	fileCount = fd.getCount();
 		            }catch (Exception e) {
 						// swallowing it...
 		            	logger.trace("Unable to list files for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
 					}
 		        }else {
+		        	size = FileUtils.sizeOf(nthIngestableFile);
 		        	fileCount = 1;
 		        }
 		        
@@ -405,10 +409,19 @@ public class StagedService extends DwaraService{
 			        java.io.File stagedFileInAppReadyToIngest = moveFile(appReadyToIngestFileObj, FileUtils.getFile(readyToIngestPath, toBeArtifactName));  
 		    		
 		        	// STEP 2 - Moves Junk files
-			    	String junkFilesStagedDirName = configuration.getJunkFilesStagedDirName(); 
-			    	if(stagedFileInAppReadyToIngest.isDirectory())
-			    		junkFilesDealer.moveJunkFiles(stagedFileInAppReadyToIngest.getAbsolutePath());
-	
+			    	String junkFilesStagedDirName = configuration.getJunkFilesStagedDirName();
+			    	ArtifactFileDetails artifactDetails = null;
+			    	int fileCount = 0;
+			        long size = 0L;
+
+			    	if(stagedFileInAppReadyToIngest.isDirectory()) {
+			    		artifactDetails = junkFilesDealer.moveJunkFiles(stagedFileInAppReadyToIngest.getAbsolutePath());
+			    		fileCount = artifactDetails.getCount();
+			        	size = artifactDetails.getTotalSize();
+			    	} else {
+			    		fileCount = 1;
+			        	size = FileUtils.sizeOf(stagedFileInAppReadyToIngest);
+			    	}	
 					Request systemrequest = new Request();
 					systemrequest.setType(RequestType.system);
 					systemrequest.setRequestRef(userRequest);
@@ -429,8 +442,6 @@ public class StagedService extends DwaraService{
 					logger.info(DwaraConstants.SYSTEM_REQUEST + systemrequest.getId());
 	
 			    	Collection<java.io.File> libraryFileAndDirsList = getFileList(stagedFileInAppReadyToIngest, junkFilesStagedDirName);
-			    	int fileCount = libraryFileAndDirsList.size();
-			        long size = FileUtils.sizeOf(stagedFileInAppReadyToIngest);
 	
 					Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
 					artifact.setWriteRequest(systemrequest);
@@ -445,7 +456,7 @@ public class StagedService extends DwaraService{
 					
 					logger.info(artifact.getClass().getSimpleName() + " - " + artifact.getId());
 					
-			        createFilesAndExtensions(readyToIngestPath, domain, artifact, libraryFileAndDirsList);
+			        createFilesAndExtensions(readyToIngestPath, domain, artifact, size, libraryFileAndDirsList);
 					
 					jobCreator.createJobs(systemrequest, artifact);
 					
@@ -498,14 +509,15 @@ public class StagedService extends DwaraService{
 		return dest;
 	}
     
-	private void createFilesAndExtensions(String pathPrefix, Domain domain, Artifact artifact, Collection<java.io.File> libraryFileAndDirsList) throws Exception {
+	private void createFilesAndExtensions(String pathPrefix, Domain domain, Artifact artifact, long artifactSize, Collection<java.io.File> libraryFileAndDirsList) throws Exception {
 		Set<String> extnsOnArtifactFolder =  new TreeSet<String>();
 	    List<File> toBeAddedFileTableEntries = new ArrayList<File>(); 
 	    for (Iterator<java.io.File> iterator = libraryFileAndDirsList.iterator(); iterator.hasNext();) {
 			
 			java.io.File file = (java.io.File) iterator.next();
+			String fileName = file.getName();
 			// assumes there arent any file without extension - Checking and excluding it is the role of junkFilesMover...   
-			extnsOnArtifactFolder.add(FilenameUtils.getExtension(file.getName()));
+			extnsOnArtifactFolder.add(FilenameUtils.getExtension(fileName));
 			
 			String filePath = file.getAbsolutePath();
 			filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); // just holding the file path from the artifact folder and not the absolute path.
@@ -514,7 +526,10 @@ public class StagedService extends DwaraService{
 			nthFileRowToBeInserted.setPathname(filePath);
 			fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, artifact);
 
-			nthFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
+			if(fileName.equals(artifact.getName())) // if file is the artifact file itself, set the artifact size calculated upfront...
+				nthFileRowToBeInserted.setSize(artifactSize);
+			else
+				nthFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
 			toBeAddedFileTableEntries.add(nthFileRowToBeInserted);			
 		}
 		

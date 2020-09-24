@@ -42,15 +42,17 @@ public class JunkFilesDealer {
 		}
 	}
 	
-	public void moveJunkFiles(String artifactSrcPathLocation) {
-		iterateOnFiles(artifactSrcPathLocation, "move");
+	public ArtifactFileDetails moveJunkFiles(String artifactSrcPathLocation) {
+		return iterateOnFiles(artifactSrcPathLocation, "move");
 	}
 
-	public Collection<File> getJunkFilesExcludedFileList(String artifactSrcPathLocation) {
-		return iterateOnFiles(artifactSrcPathLocation, "excludeJunk");
+	public ArtifactFileDetails getJunkFilesExcludedFileDetails(String artifactSrcPathLocation) {
+		return iterateOnFiles(artifactSrcPathLocation, "detailsOnly");
 	}
-
-	private Collection<File> iterateOnFiles(String artifactSrcPathLocation, String action) {
+	
+	private ArtifactFileDetails iterateOnFiles(String artifactSrcPathLocation, String action) {
+		ArtifactFileDetails fileDetails = new ArtifactFileDetails();
+		long totalSize = 0L;
 		Collection<File> junkFilesExcludedFileList = new java.util.LinkedList<File>();
 		Collection<File> fileList = FileUtils.listFilesAndDirs(new File(artifactSrcPathLocation), TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
 		for (Iterator<File> iterator = fileList.iterator(); iterator.hasNext();) {
@@ -81,16 +83,16 @@ public class JunkFilesDealer {
 					}
 
 				} else {
-					if(nthFile.isFile())
+					if(nthFile.isFile()) {
 						junkFilesExcludedFileList.add(nthFile);
+						totalSize += FileUtils.sizeOf(nthFile);
+					}
 				}
 			}
 		}
-		return junkFilesExcludedFileList;
-	}
-
-	public static void main(String[] args) {
-		JunkFilesDealer junkFilesMover = new JunkFilesDealer();
-		junkFilesMover.moveJunkFiles("C:\\data\\user\\pgurumurthy\\ingest\\pub-audio\\14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.mp3");
+		fileDetails.setTotalSize(totalSize);
+		fileDetails.setFileList(junkFilesExcludedFileList);
+		fileDetails.setCount(junkFilesExcludedFileList.size());
+		return fileDetails;
 	}
 }

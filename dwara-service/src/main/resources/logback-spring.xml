@@ -29,33 +29,39 @@
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>10MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>30</maxHistory>
         </rollingPolicy>
     </appender>
+    
+    <appender name="RollingTraceFile"
+        class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOGS}/spring-boot-logger-trace.log</file>
+        <encoder
+            class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>%d %p %C{1.} [%t] %m%n</Pattern>
+        </encoder>
+ 
+        <rollingPolicy
+            class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- rollover daily and when the file reaches 10 MegaBytes -->
+            <fileNamePattern>${LOGS}/archived/spring-boot-logger-trace-%d{yyyy-MM-dd}.%i.log
+            </fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy
+                class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    </appender>
+     
+
      
     <!-- LOG everything at INFO level -->
     <root level="info">
         <appender-ref ref="RollingFile" />
-        <!--<appender-ref ref="Console" />-->
     </root>
  
- 	<logger name="org.ishafoundation.dwaraapi" level="trace" additivity="false">
-        <appender-ref ref="RollingFile" />
-        <!--<appender-ref ref="Console" />-->
+	<logger name="org.ishafoundation.dwaraapi" level="trace" additivity="false">
+        <appender-ref ref="RollingTraceFile" />
     </logger>
-
-    <logger name="org.ishafoundation.dwaraapi.job.JobCreator" level="info" additivity="false">
-        <appender-ref ref="RollingFile" />
-        <!--<appender-ref ref="Console" />-->
-    </logger>
-    
-    <logger name="org.ishafoundation.dwaraapi.commandline" level="info" additivity="false">
-        <appender-ref ref="RollingFile" />
-        <!--<appender-ref ref="Console" />-->
-    </logger>
-    
-    <logger name="org.ishafoundation.videopub" level="trace" additivity="false">
-        <appender-ref ref="RollingFile" />
-        <!--<appender-ref ref="Console" />-->
-    </logger>
- 
 </configuration>

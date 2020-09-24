@@ -285,12 +285,13 @@ public class ProcessingJobManager implements Runnable{
 				if(!processingtask.getFiletypeId().equals("_all_")) {
 					msg = msg + " Check supported extensions...";
 				}
-				logger.info(msg);
-				String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - status to " + Status.completed;
-				logger.debug(logMsgPrefix);	
-				job.setStatus(Status.completed);
-				job.setMessage("[info] " + msg);
-				jobDao.save(job);
+				throw new Exception(msg);
+//				logger.info(msg);
+//				String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - status to " + Status.completed;
+//				logger.debug(logMsgPrefix);	
+//				job.setStatus(Status.completed);
+//				job.setMessage("[info] " + msg);
+//				jobDao.save(job);
 			}
 		}catch (Exception e) {
 			logger.error("Unable to proceed on job - " + job.getId(), e);

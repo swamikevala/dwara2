@@ -16,6 +16,7 @@ import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.utils.ArtifactFileDetails;
 import org.ishafoundation.dwaraapi.utils.JunkFilesDealer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,23 +108,24 @@ public class SourceDirScanner {
         int fileCount = 0;
         
         String fileName = nthIngestableFile.getName();
-        
-        // added to try catch for the test api not to throw an error when looking for a non-existing folder
-        try {
-        	size = FileUtils.sizeOf(nthIngestableFile);
-        }catch (Exception e) {
-			// swallowing it...
-        	logger.trace("Unable to calculate size for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
-		}
-        
         if(nthIngestableFile.isDirectory()) {
+	        ArtifactFileDetails fd = junkFilesDealer.getJunkFilesExcludedFileDetails(nthIngestableFile.getAbsolutePath());
+	        // added to try catch for the test api not to throw an error when looking for a non-existing folder
+	        try {
+	        	size = fd.getTotalSize();
+	        }catch (Exception e) {
+				// swallowing it...
+	        	logger.trace("Unable to calculate size for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
+			}
+        
             try {
-            	fileCount = junkFilesDealer.getJunkFilesExcludedFileList(nthIngestableFile.getAbsolutePath()).size();
+            	fileCount = fd.getCount();
             }catch (Exception e) {
 				// swallowing it...
             	logger.trace("Unable to list files for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
 			}
         }else {
+        	size = FileUtils.sizeOf(nthIngestableFile);
         	fileCount = 1;
         }
 		

@@ -42,7 +42,7 @@ public class JobManager {
 	private ImportStoragetaskSingleThreadExecutor importStoragetaskSingleThreadExecutor;
 	
 	public void manageJobs() {
-		logger.trace("***** Managing jobs now *****");
+		logger.info("***** Managing jobs now *****");
 		List<Job> storageJobList = new ArrayList<Job>();
 		
 		// Need to block all storage jobs from picked up for processing, when there is a queued/inprogress mapdrive/format request... 
@@ -70,9 +70,9 @@ public class JobManager {
 				else {
 					jobName = processingtaskId;
 				}
-				logger.info("Job - " + job.getId() + ":" + jobName);
+				logger.trace("Job - " + job.getId() + ":" + jobName);
 				boolean isJobReadyToBeProcessed = isJobReadyToBeProcessed(job);
-				logger.info("IsJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
+				logger.trace("IsJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
 				if(isJobReadyToBeProcessed) {
 					if(processingtaskId != null) { // a non-storage process job
 						// This check is because of the same file getting queued up for processing again...
