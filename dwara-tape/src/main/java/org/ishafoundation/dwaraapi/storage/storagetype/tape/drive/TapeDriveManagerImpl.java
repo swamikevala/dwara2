@@ -288,7 +288,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			if(errorMsg.contains(DRIVE_IO_ERROR) && errorList.contains(DRIVE_IO_ERROR) && nthRetryAttempt == 0) {
 				String deviceName = command.split(" ")[2];
 				logger.warn("stinit script seems to be not executed on device " + deviceName + ". Running it now");
-				commandLineExecuter.executeCommand("/usr/sbin/stinit -vv -f /etc/stinit.def " + deviceName);
+				commandLineExecuter.executeCommand("sudo /usr/sbin/stinit -f /etc/stinit.def " + deviceName);
 				logger.warn("stinit script on device " + deviceName + " success.");
 				
 				// re-execute the same command again...
