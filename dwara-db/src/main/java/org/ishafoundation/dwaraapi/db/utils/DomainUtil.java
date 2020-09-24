@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.db.utils;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
 import org.ishafoundation.dwaraapi.db.dao.master.DomainDao;
@@ -60,7 +61,10 @@ public class DomainUtil {
 	}
 
 	public Artifact getDomainSpecificArtifact(Domain domain, int artifactId) {
-		Artifact artifact = (Artifact) getDomainSpecificArtifactRepository(domain).findById(artifactId).get();
+		Optional artifactEntity = getDomainSpecificArtifactRepository(domain).findById(artifactId);
+		Artifact artifact = null;
+		if(artifactEntity.isPresent())
+			artifact = (Artifact) artifactEntity.get();
 		return artifact;
 	}
 	
@@ -79,7 +83,10 @@ public class DomainUtil {
 	}
 
 	public File getDomainSpecificFile(Domain domain, int fileId) {
-		File file = (File) getDomainSpecificFileRepository(domain).findById(fileId).get();
+		Optional fileEntity = getDomainSpecificFileRepository(domain).findById(fileId);
+		File file = null;
+		if(fileEntity.isPresent())
+			file = (File) fileEntity.get();
 		return file;
 	}
 
