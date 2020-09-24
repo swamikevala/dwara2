@@ -271,8 +271,10 @@ public class StagedService extends DwaraService{
 	    	}
 	    	
 	    	boolean isLevel2Pass = true;
-	    	if(!isLevel1Pass)
+	    	if(!isLevel1Pass) {
 	    		ingestResponse.setStagedFiles(stagedFileDetailsList);
+	    		isLevel2Pass = false;
+	    	}
 	    	else { // Validation Level 2 - Set permissions - Only when level 1 is success we continue...
 		    	for (StagedFile stagedFile : stagedFileList) {
 		    		
@@ -316,8 +318,10 @@ public class StagedService extends DwaraService{
 	    	// so we have to fail the request completely but rollback to its original state i.e. move files back from location B to location A...
 	    	// BUT NOT NEEDED RIGHT NOW
 	    	boolean isLevel3Pass = true;
-	    	if(!isLevel2Pass)
+	    	if(!isLevel2Pass) {
 	    		ingestResponse.setStagedFiles(stagedFileDetailsList);
+	    		isLevel3Pass = false;
+	    	}
 	    	else { // Validation Level 3 - Move file - Only when level 2 is success we continue...
 		    	for (StagedFile stagedFile : stagedFileList) {
 
