@@ -33,7 +33,8 @@ public class JunkFilesDealer {
 
 	private List<Pattern> excludedFileNamesRegexList = new ArrayList<Pattern>();
 	
-	public JunkFilesDealer() {
+	@PostConstruct
+	public void getExcludedFileNamesRegexList() {
 		String[] junkFilesFinderRegexPatternList = config.getJunkFilesFinderRegexPatternList();
 		for (int i = 0; i < junkFilesFinderRegexPatternList.length; i++) {
 			Pattern nthJunkFilesFinderRegexPattern = Pattern.compile(junkFilesFinderRegexPatternList[i]);

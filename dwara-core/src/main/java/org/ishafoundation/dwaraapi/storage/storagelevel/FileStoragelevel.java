@@ -1,14 +1,10 @@
 package org.ishafoundation.dwaraapi.storage.storagelevel;
 
-import java.util.Map;
-
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
-import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component("file"+DwaraConstants.STORAGELEVEL_SUFFIX)
@@ -16,11 +12,6 @@ import org.springframework.stereotype.Component;
 public class FileStoragelevel implements IStoragelevel {
 
 	private static final Logger logger = LoggerFactory.getLogger(FileStoragelevel.class);
-	
-	@Autowired
-	private Map<String, IArchiveformatter> aafMap;
-
-	// we just need the parameters need to set based on 
 
 	@Override
 	public StorageResponse initialize(SelectedStorageJob job) throws Exception{

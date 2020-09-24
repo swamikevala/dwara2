@@ -192,95 +192,106 @@ public class ProcessingJobManager implements Runnable{
 			int filesToBeProcessedCount = selectedFileList.size();
 			logger.trace("filesToBeProcessedCount " + filesToBeProcessedCount);
 			
-			if(filesToBeProcessedCount == 0)
-				throw new Exception("No files to process. Check supported extensions...");
-			
-			for (Iterator<LogicalFile> iterator = selectedFileList.iterator(); iterator.hasNext();) {
-				LogicalFile logicalFile = (LogicalFile) iterator.next(); // would have an absolute file like C:\data\ingested\14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS and its sidecar files
-				String logicalFilePath = logicalFile.getAbsolutePath();
-				logger.trace("logicalFilePath - " + logicalFilePath);
-				if(logicalFilePath.contains(configuration.getJunkFilesStagedDirName())) { // skipping junk files
-					logger.trace("Junk file. Skipping it");
-					continue;			
-				}
-				
-				String artifactNamePrefixedFilePathname = null; // 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4 || 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
-				String outputFilePath = null; // /data/transcoded/public
-				if(StringUtils.isNotBlank(FilenameUtils.getExtension(inputArtifactPath))) { // means input artifact is a file and not a directory
-					artifactNamePrefixedFilePathname = artifactName; // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4
-					if(outputArtifactPathname != null)
-						outputFilePath = outputArtifactPathname;
-				}
-				else {
-					String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPath + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
-					artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPath + File.separator, artifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
-					
-					if(outputArtifactPathname != null) {
-						String suffixPath = FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
-						if(StringUtils.isBlank(suffixPath))
+			boolean anyFileSentForProcessing = false;
+			if(filesToBeProcessedCount > 0) {
+				for (Iterator<LogicalFile> iterator = selectedFileList.iterator(); iterator.hasNext();) {
+					LogicalFile logicalFile = (LogicalFile) iterator.next(); // would have an absolute file like C:\data\ingested\14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS and its sidecar files
+					String logicalFilePath = logicalFile.getAbsolutePath();
+					logger.trace("logicalFilePath - " + logicalFilePath);
+					if(logicalFilePath.contains(configuration.getJunkFilesStagedDirName())) { // skipping junk files
+						logger.trace("Junk file. Skipping it");
+						continue;			
+					}
+					anyFileSentForProcessing = true;
+					String artifactNamePrefixedFilePathname = null; // 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4 || 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
+					String outputFilePath = null; // /data/transcoded/public
+					if(StringUtils.isNotBlank(FilenameUtils.getExtension(inputArtifactPath))) { // means input artifact is a file and not a directory
+						artifactNamePrefixedFilePathname = artifactName; // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4
+						if(outputArtifactPathname != null)
 							outputFilePath = outputArtifactPathname;
-						else
-							outputFilePath = outputArtifactPathname + File.separator + FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
 					}
-				}
-				logger.trace("outputFilePath - " + outputFilePath);
-				//logger.info("Now processing - " + path);
-				org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
-				if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
-					file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
-				logger.trace("file - " + file.getId());
-
-				// Requeue scenario - Only failed files are to be continued...
-				Optional<TFileJob> tFileJobDB = tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId()));
-				if(tFileJobDB.isPresent() && tFileJobDB.get().getStatus() != Status.failed) {
-					logger.debug(job.getId() + " already Inprogress/completed. Skipping it...");
-					continue;
-				}
-				
-				// This check is because of the same file getting queued up for processing again...
-				// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
-				// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
-				ThreadPoolExecutor tpe = (ThreadPoolExecutor) executor;
-				BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
-				boolean alreadyQueued = false;
-				for (Runnable runnable : runnableQueueList) {
-					ProcessingJobProcessor pjp = (ProcessingJobProcessor) runnable;
-					if(job.getId() == pjp.getJob().getId() && file.getId() == pjp.getFile().getId()) {
-						logger.debug(job.getId() + " already in ProcessingJobProcessor queue. Skipping it...");
-						alreadyQueued = true;
-						break;
+					else {
+						String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPath + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
+						artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPath + File.separator, artifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
+						
+						if(outputArtifactPathname != null) {
+							String suffixPath = FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
+							if(StringUtils.isBlank(suffixPath))
+								outputFilePath = outputArtifactPathname;
+							else
+								outputFilePath = outputArtifactPathname + File.separator + FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
+						}
 					}
-				}
-				
-				if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
-					TFileJob tFileJob = new TFileJob();
-					tFileJob.setId(new TFileJobKey(file.getId(), job.getId()));
-					tFileJob.setJob(job);
-					tFileJob.setArtifactId(inputArtifactId);
-					tFileJob.setStatus(Status.queued);
-					logger.debug("DB TFileJob Creation for file " + file.getId());
-					tFileJobDao.save(tFileJob);
-					logger.debug("DB TFileJob Creation - Success");
+					logger.trace("outputFilePath - " + outputFilePath);
+					//logger.info("Now processing - " + path);
+					org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
+					if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
+						file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
+					logger.trace("file - " + file.getId());
+	
+					// Requeue scenario - Only failed files are to be continued...
+					Optional<TFileJob> tFileJobDB = tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId()));
+					if(tFileJobDB.isPresent() && tFileJobDB.get().getStatus() != Status.failed) {
+						logger.debug(job.getId() + " already Inprogress/completed. Skipping it...");
+						continue;
+					}
 					
-					ProcessingJobProcessor processingJobProcessor = applicationContext.getBean(ProcessingJobProcessor.class);
-					processingJobProcessor.setJob(job);
-					processingJobProcessor.setDomain(domain);
-					processingJobProcessor.setInputArtifact(inputArtifact);
-					processingJobProcessor.setFileCount(filesToBeProcessedCount);
-					processingJobProcessor.setTotalSize(0); // TODO How to calculate this?
-					processingJobProcessor.setFile(file);
-					processingJobProcessor.setLogicalFile(logicalFile);
+					// This check is because of the same file getting queued up for processing again...
+					// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
+					// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
+					ThreadPoolExecutor tpe = (ThreadPoolExecutor) executor;
+					BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
+					boolean alreadyQueued = false;
+					for (Runnable runnable : runnableQueueList) {
+						ProcessingJobProcessor pjp = (ProcessingJobProcessor) runnable;
+						if(job.getId() == pjp.getJob().getId() && file.getId() == pjp.getFile().getId()) {
+							logger.debug(job.getId() + " already in ProcessingJobProcessor queue. Skipping it...");
+							alreadyQueued = true;
+							break;
+						}
+					}
 					
-					processingJobProcessor.setOutputArtifactclass(outputArtifactclass);
-					processingJobProcessor.setOutputArtifactName(outputArtifactName); // VL20190701_071239
-					processingJobProcessor.setOutputArtifactPathname(outputArtifactPathname); // C:\data\transcoded\public\VL20190701_071239
-					processingJobProcessor.setDestinationDirPath(outputFilePath);
-					logger.info("Now kicking off - " + job.getId() + " " + logicalFilePath + " task " + processingtaskId);
-					executor.execute(processingJobProcessor);
+					if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
+						TFileJob tFileJob = new TFileJob();
+						tFileJob.setId(new TFileJobKey(file.getId(), job.getId()));
+						tFileJob.setJob(job);
+						tFileJob.setArtifactId(inputArtifactId);
+						tFileJob.setStatus(Status.queued);
+						logger.debug("DB TFileJob Creation for file " + file.getId());
+						tFileJobDao.save(tFileJob);
+						logger.debug("DB TFileJob Creation - Success");
+						
+						ProcessingJobProcessor processingJobProcessor = applicationContext.getBean(ProcessingJobProcessor.class);
+						processingJobProcessor.setJob(job);
+						processingJobProcessor.setDomain(domain);
+						processingJobProcessor.setInputArtifact(inputArtifact);
+						processingJobProcessor.setFileCount(filesToBeProcessedCount);
+						processingJobProcessor.setTotalSize(0); // TODO How to calculate this?
+						processingJobProcessor.setFile(file);
+						processingJobProcessor.setLogicalFile(logicalFile);
+						
+						processingJobProcessor.setOutputArtifactclass(outputArtifactclass);
+						processingJobProcessor.setOutputArtifactName(outputArtifactName); // VL20190701_071239
+						processingJobProcessor.setOutputArtifactPathname(outputArtifactPathname); // C:\data\transcoded\public\VL20190701_071239
+						processingJobProcessor.setDestinationDirPath(outputFilePath);
+						logger.info("Now kicking off - " + job.getId() + " " + logicalFilePath + " task " + processingtaskId);
+						executor.execute(processingJobProcessor);
+					}
 				}
 			}
-			// TODO if no. of errors in the tasktype reach the configured max_errors threshold then we stop further processing.... count(*) on failures for the job_id...
-	
+			
+			if(filesToBeProcessedCount == 0 || !anyFileSentForProcessing) {
+				String msg = "No files to process.";
+				if(!processingtask.getFiletypeId().equals("_all_")) {
+					msg = msg + " Check supported extensions...";
+				}
+				logger.info(msg);
+				String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - status to " + Status.completed;
+				logger.debug(logMsgPrefix);	
+				job.setStatus(Status.completed);
+				job.setMessage("[info] " + msg);
+				jobDao.save(job);
+			}
 		}catch (Exception e) {
 			logger.error("Unable to proceed on job - " + job.getId(), e);
 			String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - status to " + Status.failed;
