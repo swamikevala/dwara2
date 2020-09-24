@@ -305,9 +305,9 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 			String driveEmpty = "Data Transfer Element " + driveElementAddress + " is Empty"; // Happens during unload // Data Transfer Element 0 is Empty
 			String driveFull = "Drive " + driveElementAddress + " Full"; // Happens during load // Drive 0 Full 
 			
-			if(e.getMessage().contains(driveEmpty) || e.getMessage().contains(driveFull)) { 
-				createCorrectionJobs(selectedStorageJob);
-			}
+//			if(e.getMessage().contains(driveEmpty) || e.getMessage().contains(driveFull)) { 
+//				createCorrectionJobs(selectedStorageJob);
+//			}
 			throw e;
 		}
 	}

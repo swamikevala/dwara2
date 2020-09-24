@@ -336,7 +336,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 
     protected void beforeRestore(SelectedStorageJob selectedStorageJob) throws Exception {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
-    	storageJob.setTargetLocationPath(storageJob.getTargetLocationPath() + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier() + java.io.File.separator + "job-" + storageJob.getJob().getId());
+    	storageJob.setTargetLocationPath(storageJob.getTargetLocationPath() + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier() + java.io.File.separator + "sr-" + storageJob.getJob().getRequest().getId());
     	Domain domain = storageJob.getDomain();
     	int fileIdToBeRestored = storageJob.getFileId();
 		
