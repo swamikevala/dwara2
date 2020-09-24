@@ -58,7 +58,7 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 		if(stagedFileDetails.getFileCount() == 0) {
 			Error error = new Error();
 			error.setType(Errortype.Error);
-			error.setMessage("Artifact Folder has no files inside");
+			error.setMessage("Artifact Folder has no non-junk files inside");
 			errorList.add(error);
 		}
 		

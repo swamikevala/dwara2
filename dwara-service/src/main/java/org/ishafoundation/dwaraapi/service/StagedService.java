@@ -54,7 +54,7 @@ import org.ishafoundation.dwaraapi.staged.scan.Error;
 import org.ishafoundation.dwaraapi.staged.scan.Errortype;
 import org.ishafoundation.dwaraapi.staged.scan.SourceDirScanner;
 import org.ishafoundation.dwaraapi.utils.ExtensionsUtil;
-import org.ishafoundation.dwaraapi.utils.JunkFilesMover;
+import org.ishafoundation.dwaraapi.utils.JunkFilesDealer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,7 +99,7 @@ public class StagedService extends DwaraService{
 	private ExtensionsUtil extensionsUtil;
 	
 	@Autowired
-	private JunkFilesMover junkFilesMover;
+	private JunkFilesDealer junkFilesDealer;
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
@@ -403,7 +403,7 @@ public class StagedService extends DwaraService{
 		        	// STEP 2 - Moves Junk files
 			    	String junkFilesStagedDirName = configuration.getJunkFilesStagedDirName(); 
 			    	if(stagedFileInAppReadyToIngest.isDirectory())
-			    		junkFilesMover.moveJunkFilesFromMediaLibrary(stagedFileInAppReadyToIngest.getAbsolutePath());
+			    		junkFilesDealer.moveJunkFiles(stagedFileInAppReadyToIngest.getAbsolutePath());
 	
 					Request systemrequest = new Request();
 					systemrequest.setType(RequestType.system);

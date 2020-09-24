@@ -16,6 +16,7 @@ import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.utils.JunkFilesDealer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,9 @@ public class SourceDirScanner {
 	
 	@Autowired
     private IStagedFileValidator stagedFileValidator;
-
+	
+	@Autowired
+    private JunkFilesDealer junkFilesDealer;
 
 	private Pattern folderNameWithoutPrevSeqCodePattern = Pattern.compile("([_-]?)(.*)");
     private String DELETED = "deleted";
@@ -115,7 +118,7 @@ public class SourceDirScanner {
         
         if(nthIngestableFile.isDirectory()) {
             try {
-            	fileCount = FileUtils.listFiles(nthIngestableFile, null, true).size();
+            	fileCount = junkFilesDealer.getJunkFilesExcludedFileList(nthIngestableFile.getAbsolutePath()).size();
             }catch (Exception e) {
 				// swallowing it...
             	logger.trace("Unable to list files for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
