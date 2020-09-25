@@ -48,7 +48,7 @@ public class BruArchiver implements IArchiveformatter {
 		
 		int bruBufferSize = volumeBlocksize; // in bytes...
 		
-		String bruCopyCommand = "bru -B -clOjvvvvvvvvv -QX -b " + bruBufferSize + " -f " + deviceName + " " + artifactNameToBeWritten;
+		String bruCopyCommand = "bru -B -cvvvvvvvvv -QX -s 0 -b " + bruBufferSize + " -f " + deviceName + " " + artifactNameToBeWritten;
 		List<String> commandList = new ArrayList<String>();
 		commandList.add("sh");
 		commandList.add("-c");
