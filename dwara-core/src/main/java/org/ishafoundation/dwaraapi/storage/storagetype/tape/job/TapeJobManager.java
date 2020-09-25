@@ -198,7 +198,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 					try {
 						// Just double ensuring that pickedup job still is queued and not taken up for processing in the earlier schedule...
 						// If status of the selected job is queued we break the loop and move on to next steps
-						// If the selected job' status is not queued, then remove it from the list and do the tapejobselection again for the drive...
+						// If the selected job' status is not queued, then remove it from the list 
+						
 						for (int i = 0; i < storageJobsList.size(); i++) {
 							selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, nthAvailableDriveDetails);
 							if(selectedStorageJob != null) { // If any job is selected for the drive...
@@ -211,6 +212,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 									logger.trace("Selected job was potentially picked up by one of the previous scheduled executor' joblist, after the current list is picked up from DB");
 									storageJobsList.remove(selectedStorageJob); // remove the already selected job from the list and do the tapejobselection again for the drive...
 								}
+							} else {
+								break; // Just to ensure that the tapejobselection is not looped again for the drive...
 							}
 						}
 						

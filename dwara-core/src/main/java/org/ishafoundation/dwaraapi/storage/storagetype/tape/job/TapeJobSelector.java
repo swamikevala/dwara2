@@ -75,9 +75,36 @@ public class TapeJobSelector {
 		
 		// checking the selected Job's volume capacity against the artifact size
 		if(tapeJob != null && tapeJob.getJob().getStoragetaskActionId() == Action.write) {
+			// Scheduler selects a volume for a job 
+			// 2020-09-25 20:24:03,437 TRACE org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator [scheduling-1] building storage job - 413:Write
+			// 2020-09-25 20:24:03,439 TRACE org.ishafoundation.dwaraapi.utils.VolumeUtil [scheduling-1] R20002L7 has enough space. Selecting it
+			// .
+			// .
+			// 2020-09-25 20:24:03,509 DEBUG org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator [scheduling-1] Cleared existing IStoragetypeThreadPoolExecutor queue item and added the fresh storage job list...
+			// 2020-09-25 20:24:03,509 DEBUG org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator [scheduling-1] Delegating to tapeJobManager's separate thread ================
+			
+			// But a running marks the tape as suspect
+			// 2020-09-25 20:24:32,292 INFO org.ishafoundation.dwaraapi.storage.storagetype.thread.AbstractStoragetypeJobManager [pool-2-thread-4~!~sr-60-job-401] Marked the volume R20002L7 as suspect
+			
+			// In the next schedule
+			// 2020-09-25 20:25:03,554 TRACE org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator [scheduling-1] building storage job - 413:Write
+			// 2020-09-25 20:25:03,556 WARN org.ishafoundation.dwaraapi.utils.VolumeUtil [scheduling-1] R2 hasnt got enough capacity. Bump it
+			
+			// And if no storagejob to be processed at all, "Cleared existing IStoragetypeThreadPoolExecutor queue" wont happen..
+			// This happens when there is no extra tape in the pool and so no storagejob added by scheduler for the next steps...
+			if(!volumeUtil.isPhysicalVolumeGood(tapeJob.getVolume().getId())) {
+				logger.debug("Selected job " + tapeJob.getJob().getId() + " volume " + tapeJob.getVolume().getId() + " is flagged as suspect. Removing it and other same volume jobs from the list so they all can be picked up in next schedule. Now re-selecting a job again");
+				
+				GroupedJobsCollection gjc = groupJobsBasedOnVolumeTag(tapeJobsList);
+				Map<String, List<StorageJob>> volumeTag_volumeTagGroupedJobs = gjc.getVolumeTag_volumeTagGroupedJobs();
+				List<StorageJob> toBeIgnoredVolumeTagList = volumeTag_volumeTagGroupedJobs.get(tapeJob.getVolume().getId());
+				tapeJobsList.removeAll(toBeIgnoredVolumeTagList);
+				tapeJob = selectJob(tapeJobsList, driveDetails);
+			}
+			
 			long projectedArtifactSize = volumeUtil.getProjectedArtifactSize(tapeJob.getArtifactSize(), tapeJob.getVolume());
 			if(volumeUtil.getVolumeUnusedCapacity(tapeJob.getDomain(), tapeJob.getVolume()) <= projectedArtifactSize) {
-				logger.debug("Seletected job " + tapeJob.getJob().getId() + " volume doesnt have enough capacity to hold the artifact. Removing it from the list so it can be picked up in next schedule and selecting job again");
+				logger.debug("Selected job " + tapeJob.getJob().getId() + " volume " + tapeJob.getVolume().getId() + " doesnt have enough capacity to hold the artifact. Removing it from the list so it can be picked up in next schedule. Now re-selecting a job again");
 				tapeJobsList.remove(tapeJob);
 				tapeJob = selectJob(tapeJobsList, driveDetails);
 			}

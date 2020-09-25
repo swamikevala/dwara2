@@ -103,6 +103,13 @@ public class VolumeUtil {
 		return toBeUsedVolume;		
 	}
 
+	public boolean isPhysicalVolumeGood(String physicalVolumeId) {
+		Volume toBeUsedVolume = volumeDao.findById(physicalVolumeId).get();
+		if(toBeUsedVolume.getSuspect())
+			return false;
+		return true;		
+	}
+	
 	public long getProjectedArtifactSize(long artifactSize, Volume volume) {
 		float filesizeIncreaseRate = 0;
 		int filesizeIncreaseConst = 0;
