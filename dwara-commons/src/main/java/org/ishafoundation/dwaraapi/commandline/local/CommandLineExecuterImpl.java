@@ -82,12 +82,11 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 		InputStream in = null;
 		InputStream err = null;
 		
+		StringBuffer stdOutRespBuffer = new StringBuffer(); // stdout channel
+		StringBuffer stdErrRespBuffer = new StringBuffer(); // stderr channel		
 		try {
 			in = proc.getInputStream();
 			err = proc.getErrorStream();
-			
-			StringBuffer stdOutRespBuffer = new StringBuffer(); // stdout channel
-			StringBuffer stdErrRespBuffer = new StringBuffer(); // stderr channel
 
 			byte[] tmp = new byte[1024];
 
@@ -138,6 +137,8 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 		}
 		catch (Exception ee) {
 			logger.error(commandList + " execution failed : " + ee.getMessage(), ee);
+			logger.trace("Command's stdout message on exception - " + stdOutRespBuffer.toString());
+			logger.trace("Command's stderr message on exception - " + stdErrRespBuffer.toString());
 			commandLineExecutionResponse.setFailureReason(ee.getMessage());
 			throw ee;
 		}finally {

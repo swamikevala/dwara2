@@ -62,10 +62,12 @@ public class JunkFilesDealer {
 			if(nthFilePath.contains(config.getJunkFilesStagedDirName()))
 				continue;
 			
+			boolean isJunk=false;
 			for (Iterator<Pattern> iterator2 = excludedFileNamesRegexList.iterator(); iterator2.hasNext();) {
 				Pattern nthJunkFilesFinderRegexPattern = iterator2.next();
 				Matcher m = nthJunkFilesFinderRegexPattern.matcher(nthFileName);
 				if(m.matches()) {
+					isJunk=true;
 					if(action.equals("move")) { // move the files from the artifact directory to the junkfolder location.
 						String destPath = nthFilePath.replace(artifactSrcPathLocation, artifactSrcPathLocation + File.separator + config.getJunkFilesStagedDirName());
 						File destDir = new File(destPath);					
@@ -81,12 +83,17 @@ public class JunkFilesDealer {
 						}
 						break;
 					}
-
 				} else {
-					if(nthFile.isFile()) {
-						junkFilesExcludedFileList.add(nthFile);
-						totalSize += FileUtils.sizeOf(nthFile);
-					}
+					Matcher filePathMatcher = nthJunkFilesFinderRegexPattern.matcher(nthFilePath);
+					if(filePathMatcher.find())
+						isJunk=true;
+				}
+			}
+
+			if(!isJunk) {
+				junkFilesExcludedFileList.add(nthFile);
+				if(nthFile.isFile()) {
+					totalSize += FileUtils.sizeOf(nthFile);
 				}
 			}
 		}

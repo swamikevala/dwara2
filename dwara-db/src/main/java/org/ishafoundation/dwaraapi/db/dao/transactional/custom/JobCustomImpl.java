@@ -28,7 +28,7 @@ public class JobCustomImpl implements JobCustom {
         
         List<Predicate> predicates = getFramedPredicates(jobRoot, cb, systemRequestId, statusList);
        	query.select(jobRoot).where(cb.and(predicates.toArray(new Predicate[0])));
-       	query.orderBy(cb.desc(jobRoot.get("id"))); // default orderby most recent first
+       	query.orderBy(cb.asc(jobRoot.get("id"))); // default orderby most recent first
         //List<Request> requestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
        	List<Job> jobList = entityManager.createQuery(query).getResultList();
 

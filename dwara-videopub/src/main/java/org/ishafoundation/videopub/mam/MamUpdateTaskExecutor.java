@@ -89,12 +89,12 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 		// Use case 4 - missed out extn
 		// Check is simple if catdv reference is available in mediafile table then it means the mediafile is already inserted into catdv
 		try {		
-			
+			logger.trace(inputArtifactClass);
 			String groupIdAsString = env.getProperty("catdv.groupId."+ inputArtifactClass);
-			
+			logger.trace(groupIdAsString);
 			// TODO : get groupId using libraryCategory
 			int groupId = groupIdAsString != null ? Integer.parseInt(groupIdAsString) : 0;// default it to some groupId	
-			
+			logger.trace(groupId+"");
 			catdvSessionId = getSessionId();
 	    	
 			// TODO Should happen in calling class
