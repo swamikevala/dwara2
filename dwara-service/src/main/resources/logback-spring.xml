@@ -60,8 +60,20 @@
     <root level="info">
         <appender-ref ref="RollingFile" />
     </root>
- 
-	<logger name="org.ishafoundation.dwaraapi" level="trace" additivity="false">
+
+	<logger name="org.ishafoundation.dwaraapi.storage" level="trace" additivity="false">
+        <appender-ref ref="RollingTraceFile" />
+    </logger>
+    
+	<logger name="org.ishafoundation.dwaraapi.process" level="trace" additivity="false">
+        <appender-ref ref="RollingTraceFile" />
+    </logger>
+
+	<logger name="org.ishafoundation.dwaraapi.commandline" level="trace" additivity="false">
+        <appender-ref ref="RollingTraceFile" />
+    </logger>
+    
+	<logger name="org.ishafoundation.videopub" level="trace" additivity="false">
         <appender-ref ref="RollingTraceFile" />
     </logger>
 </configuration>
