@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.process.thread;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -297,6 +298,7 @@ public class ProcessingJobManager implements Runnable{
 			logger.error("Unable to proceed on job - " + job.getId(), e);
 			String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - status to " + Status.failed;
 			logger.debug(logMsgPrefix);	
+			job.setCompletedAt(LocalDateTime.now());
 			job.setStatus(Status.failed);
 			job.setMessage("[error] " + e.getMessage());
 			jobDao.save(job);

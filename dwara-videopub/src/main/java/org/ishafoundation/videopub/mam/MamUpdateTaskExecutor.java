@@ -89,12 +89,12 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 		// Use case 4 - missed out extn
 		// Check is simple if catdv reference is available in mediafile table then it means the mediafile is already inserted into catdv
 		try {		
-			logger.trace(inputArtifactClass);
+			logger.trace("inputArtifactClass " + inputArtifactClass);
 			String groupIdAsString = env.getProperty("catdv.groupId."+ inputArtifactClass);
-			logger.trace(groupIdAsString);
+			logger.trace("groupIdAsString " + groupIdAsString);
 			// TODO : get groupId using libraryCategory
 			int groupId = groupIdAsString != null ? Integer.parseInt(groupIdAsString) : 0;// default it to some groupId	
-			logger.trace(groupId+"");
+			logger.trace("groupId " + groupId);
 			catdvSessionId = getSessionId();
 	    	
 			// TODO Should happen in calling class
@@ -119,7 +119,7 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			String proxyFilePathOnMamServer = generatedProxyFilePath.replace(StringUtils.substringBefore(generatedProxyFilePath, File.separator + category + File.separator), catDVConfiguration.getSshProxiesRootLocation());
 			jSchSession = catdvSshSessionHelper.getSession();
 			String parentDir = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathOnMamServer);
-			String command1 = "mkdir -p " + parentDir;
+			String command1 = "mkdir -p \"" + parentDir + "\"";
 			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, inputArtifactName + ".out_mkdir_mamErr");
 			
 			logger.info("Now Copying the Proxy file " + generatedProxyFilePath + " over to catdv server location " + proxyFilePathOnMamServer);
@@ -148,6 +148,7 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			processingtaskResponse.setFailureReason(failureReason);
 			processingtaskResponse.setIsComplete(false);
 			logger.error(failureReason, e);
+			throw new Exception(failureReason);
 		}finally {
 			if (jSchSession != null) 
 				catdvSshSessionHelper.disconnectSession(jSchSession);

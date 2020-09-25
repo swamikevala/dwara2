@@ -126,7 +126,7 @@ public class ScheduledStatusUpdater {
 					//Status.cancelled; Status.skipped
 					Status status = null;
 					if(isAllComplete) {
-						job.setCompletedAt(LocalDateTime.now()); // Just can only give some rough completed times... 
+//						job.setCompletedAt(LocalDateTime.now()); // Just can only give some rough completed times... 
 						status = Status.completed;
 					}
 					if(hasFailures) {
@@ -135,6 +135,7 @@ public class ScheduledStatusUpdater {
 						else
 							status = Status.failed;
 					}
+					job.setCompletedAt(LocalDateTime.now()); // Just can only give some rough completed times... 
 					job.setStatus(status);
 					jobDao.save(job);
 					logger.info("Job " + job.getId() + " - " + status);

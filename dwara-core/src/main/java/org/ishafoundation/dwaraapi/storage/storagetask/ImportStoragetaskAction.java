@@ -65,6 +65,7 @@ public class ImportStoragetaskAction implements Runnable {
 	}
 	
 	protected Job updateJobFailed(Job job) {
+		job.setCompletedAt(LocalDateTime.now());
 		return updateJobStatus(job, Status.failed);
 	}
 	

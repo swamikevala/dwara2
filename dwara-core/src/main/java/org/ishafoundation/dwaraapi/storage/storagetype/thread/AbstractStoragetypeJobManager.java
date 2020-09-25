@@ -131,6 +131,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 	}
 	
 	protected Job updateJobFailed(Job job) {
+		job.setCompletedAt(LocalDateTime.now());
 		return updateJobStatus(job, Status.failed);
 	}
 	
