@@ -1,9 +1,17 @@
 package org.ishafoundation.dwaraapi.storage.storagelevel.block.index;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
@@ -28,6 +36,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 
 @Component
 public class VolumeindexManager {
@@ -57,11 +66,11 @@ public class VolumeindexManager {
 		
 		String xmlFromJava = createVolumeindex(volume, domain);
 		logger.trace(xmlFromJava);
-		
-		java.io.File file = new java.io.File(filesystemTemporarylocation + java.io.File.separator + volume.getId() + "_index.xml");
-		FileUtils.writeStringToFile(file, xmlFromJava);
-		// TODO zip the index file...
-
+		java.io.File file = new java.io.File(filesystemTemporarylocation + java.io.File.separator + volume.getId() + "_index.gz");
+		try (GzipCompressorOutputStream out = new GzipCompressorOutputStream(new FileOutputStream(file))){
+            IOUtils.copy(new ByteArrayInputStream(xmlFromJava.getBytes()), out);
+        }
+	
 		logger.trace(file.getAbsolutePath() + " created ");
 		String deviceName = storagetypeJob.getDeviceWwnId();
 		int blocksize = volume.getDetails().getBlocksize();
@@ -137,10 +146,17 @@ public class VolumeindexManager {
 		}
 	
 		Volumeindex volumeindex = new Volumeindex();
+		volumeindex.setXmlns("https://dwara.io");
 		volumeindex.setVolumeinfo(volumeinfo);
 		volumeindex.setArtifact(artifactList);
+		ZonedDateTime zdt = LocalDateTime.now().atZone(ZoneId.of("UTC"));
+		String labeltime = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").format(zdt);
+		volumeindex.setFinalizedAt(labeltime);
 		
 	    XmlMapper xmlMapper = new XmlMapper();
+	    String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;
+	    xmlMapper.getFactory().getXMLOutputFactory().setProperty(propName, true);
+	    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true);
 	    xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
 		String xmlFromJava = xmlMapper.writeValueAsString(volumeindex);
 		return xmlFromJava;

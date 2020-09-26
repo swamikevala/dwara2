@@ -4,18 +4,20 @@ import java.util.List;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
+@JacksonXmlRootElement(localName="Artifact")
 public class Artifact {
 	
-	@JacksonXmlProperty(isAttribute=true)
+	@JacksonXmlProperty(isAttribute=true, localName="startBlock")
 	private int startblock; // archive start block
-	@JacksonXmlProperty(isAttribute=true)
+	@JacksonXmlProperty(isAttribute=true, localName="endBlock")
 	private int endblock; // archive end block
-	@JacksonXmlProperty(isAttribute = true)
+	@JacksonXmlProperty(isAttribute = true, localName="artifactclassUid")
 	private String artifactclassuid;
-	@JacksonXmlProperty(isAttribute = true)
+	@JacksonXmlProperty(isAttribute = true, localName="sequenceCode")
 	private String sequencecode;
-	@JacksonXmlProperty(isAttribute = true)
+	@JacksonXmlProperty(isAttribute = true, localName="rename")
 	private String rename;
 	@JacksonXmlElementWrapper(useWrapping = false)
 	private List<File> file;

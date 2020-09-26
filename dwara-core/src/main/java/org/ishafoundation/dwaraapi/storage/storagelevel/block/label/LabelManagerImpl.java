@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 
@@ -204,8 +205,9 @@ public class LabelManagerImpl implements LabelManager{
 		
 		XmlMapper xmlMapper = new XmlMapper();
 		String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;
-		xmlMapper.getFactory().getXMLOutputFactory() .setProperty(propName, true);
+		xmlMapper.getFactory().getXMLOutputFactory().setProperty(propName, true);
 		xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true);
+		xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
 		return xmlMapper.writeValueAsString(volumelabel);
 	}
 

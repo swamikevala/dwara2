@@ -1,13 +1,26 @@
 package org.ishafoundation.dwaraapi.storage.storagelevel.block.index;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
+@JacksonXmlRootElement(localName="VolumeInfo")
 public class Volumeinfo {
-	 private String volumeuid;
-	 private int volumeblocksize;
-	 private String archiveformat;
-	 private int archiveblocksize;
-	 private String checksumalgorithm;
-	 private String encryptionalgorithm;
-	 private String artifactclassuid;
+	@JacksonXmlProperty(localName="VolumeUid")
+	private String volumeuid;
+	@JacksonXmlProperty(localName="VolumeBlocksize")
+	private int volumeblocksize;
+	@JacksonXmlProperty(localName="ArchiveFormat")
+	private String archiveformat;
+	@JacksonXmlProperty(localName="ArchiveBlocksize")
+	private int archiveblocksize;
+	@JacksonXmlProperty(localName="ChecksumAlgorithm")
+	private String checksumalgorithm;
+	@JacksonXmlProperty(localName="EncryptionAlgorithm")
+	private String encryptionalgorithm;
+	@JsonInclude(JsonInclude.Include.NON_EMPTY) 
+	@JacksonXmlProperty(localName="ArtifactclassUid")
+	private String artifactclassuid;
 	 
 	 
 	public String getVolumeuid() {

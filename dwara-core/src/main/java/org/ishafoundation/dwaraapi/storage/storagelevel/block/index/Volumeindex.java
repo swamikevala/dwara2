@@ -6,23 +6,25 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
-@JacksonXmlRootElement(localName = "volumeindex")
+@JacksonXmlRootElement(localName = "VolumeIndex")
 public class Volumeindex {
 	@JacksonXmlProperty(isAttribute = true)
-	private String version;
+	private String xmlns;
 //	private Importinfo importinfo;
+	@JacksonXmlProperty(localName="VolumeInfo")
 	private Volumeinfo volumeinfo;
 	@JacksonXmlElementWrapper(useWrapping = false)
 	private List<Artifact> artifact;
-
+	@JacksonXmlProperty(localName="FinalizedAt")
+	private String finalizedAt;
 	
-	public String getVersion() {
-		return version;
+	public String getXmlns() {
+		return xmlns;
 	}
-	public void setVersion(String version) {
-		this.version = version;
+	public void setXmlns(String xmlns) {
+		this.xmlns = xmlns;
 	}
-//	public Importinfo getImportinfo() {
+	//	public Importinfo getImportinfo() {
 //		return importinfo;
 //	}
 //	public void setImportinfo(Importinfo importinfo) {
@@ -39,5 +41,11 @@ public class Volumeindex {
 	}
 	public void setArtifact(List<Artifact> artifact) {
 		this.artifact = artifact;
+	}
+	public String getFinalizedAt() {
+		return finalizedAt;
+	}
+	public void setFinalizedAt(String finalizedAt) {
+		this.finalizedAt = finalizedAt;
 	}
 }

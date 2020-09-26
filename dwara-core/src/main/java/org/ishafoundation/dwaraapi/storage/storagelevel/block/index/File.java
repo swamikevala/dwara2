@@ -1,18 +1,21 @@
 package org.ishafoundation.dwaraapi.storage.storagelevel.block.index;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
+@JacksonXmlRootElement(localName="File")
 public class File {
-	@JacksonXmlProperty(isAttribute=true)
+	
+	@JacksonXmlProperty(isAttribute=true, localName="volumeBlock")
 	private int volumeblock; // volume start block
-	@JacksonXmlProperty(isAttribute=true)
+	@JacksonXmlProperty(isAttribute=true, localName="archiveBlock")
 	private int archiveblock; // archive start block
-	@JacksonXmlProperty(isAttribute=true) 
+	@JacksonXmlProperty(isAttribute=true, localName="size") 
 	private Long size;
-	@JacksonXmlProperty(isAttribute=true)
+	@JacksonXmlProperty(isAttribute=true, localName="checksum")
 	private String checksum;
-	@JacksonXmlProperty(isAttribute=true)
+	@JacksonXmlProperty(isAttribute=true, localName="encrypted")
 	private boolean encrypted;
 	@JacksonXmlText
 	private String name;
