@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.api.resp.autoloader;
+package org.ishafoundation.dwaraapi.utils;
 
 public enum TapeUsageStatus {
 	job_in_progress,

@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.api.resp.autoloader;
 
+import org.ishafoundation.dwaraapi.utils.TapeUsageStatus;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 

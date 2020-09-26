@@ -3,9 +3,11 @@ package org.ishafoundation.dwaraapi.utils;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +21,10 @@ public class VolumeUtil {
 	
 	@Autowired
 	private VolumeDao volumeDao;
-
+	
+	@Autowired
+	private JobDao jobDao;
+	
 	@Autowired
 	private ArtifactVolumeRepositoryUtil artifactVolumeRepositoryUtil;
 
@@ -128,5 +133,31 @@ public class VolumeUtil {
 		logger.trace("artifactSize " + artifactSize + ", filesizeIncreaseRate " + filesizeIncreaseRate + ", filesizeIncreaseConst " + filesizeIncreaseConst);
 		logger.trace("projectedArtifactSize " + projectedArtifactSize);
 		return projectedArtifactSize;
+	}
+	
+	public TapeUsageStatus getTapeUsageStatus(String volumeId) {
+		TapeUsageStatus tapeUsageStatus = null;
+		long jobInProgressCount = jobDao.countByVolumeIdAndStatus(volumeId, Status.in_progress);
+		
+		if(jobInProgressCount > 0) {
+			tapeUsageStatus = TapeUsageStatus.job_in_progress;
+		}
+		else if(getQueuedJobOnVolume(volumeId)){
+			// any group job queued up
+			tapeUsageStatus = TapeUsageStatus.job_queued;
+		}
+		else {
+			// if no job lined up, means no job needs it  
+			tapeUsageStatus = TapeUsageStatus.no_job_queued;
+		}
+		return tapeUsageStatus;
+	}
+	
+	private boolean getQueuedJobOnVolume(String volumeId){
+		boolean queuedJob = false;
+		long jobInQueueCount = jobDao.countByGroupVolumeIdAndStatus(volumeId, Status.queued);
+		if(jobInQueueCount > 0)
+			queuedJob = true;
+		return queuedJob; 
 	}
 }

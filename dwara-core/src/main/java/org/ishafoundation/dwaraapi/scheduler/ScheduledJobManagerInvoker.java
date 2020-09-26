@@ -18,7 +18,7 @@ public class ScheduledJobManagerInvoker {
 	@Value("${scheduler.enabled:true}")
 	private boolean isEnabled;
 	
-	@Scheduled(fixedDelay = 60000)
+	@Scheduled(fixedDelayString = "${scheduler.jobManager.fixedDelay}")
     @PostMapping("/triggerJobs")
     public ResponseEntity<String> triggerJobs(){
     	if(isEnabled) {

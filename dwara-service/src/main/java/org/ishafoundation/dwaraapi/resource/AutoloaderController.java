@@ -14,7 +14,6 @@ import org.ishafoundation.dwaraapi.api.resp.autoloader.DriveStatus;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.Element;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeUsageStatus;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.ToLoadTape;
 import org.ishafoundation.dwaraapi.api.resp.mapdrives.MapDrivesResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
@@ -44,6 +43,8 @@ import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDeviceUtil;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeOnLibrary;
+import org.ishafoundation.dwaraapi.utils.TapeUsageStatus;
+import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,7 +88,10 @@ public class AutoloaderController {
 	
 	@Autowired
 	private TapeDeviceUtil tapeDeviceUtil;
-
+	
+	@Autowired
+	private VolumeUtil volumeUtil;
+	
 	@Autowired
 	private TapeLibraryManager tapeLibraryManager;
 	
@@ -290,7 +294,7 @@ public class AutoloaderController {
 					tape.setLocation(volume.getLocation().getId());
 					tape.setRemoveAfterJob(volume.getDetails().getRemoveAfterJob()); // TODO : When do we set this??
 					tapeStatus = getTapeStatus(volume);
-					usageStatus = getTapeUsageStatus(volume);
+					usageStatus = volumeUtil.getTapeUsageStatus(volume.getId());
 				}
 				else { // If its not regd(no entry in volume table for the barcode) in dwara yet, it means its either blank(not formatted) or unknown
 					/*
@@ -391,32 +395,5 @@ public class AutoloaderController {
 	private boolean isInitialized(Volume volume){
 		// If it has come thus far, it means Volume is regd and no artifacts on volume
 		return true;
-	}
-	
-	private TapeUsageStatus getTapeUsageStatus(Volume volume) {
-		TapeUsageStatus tapeUsageStatus = null;
-		String volumeId = volume.getId();
-		long jobInProgressCount = jobDao.countByVolumeIdAndStatus(volumeId, Status.in_progress);
-		
-		if(jobInProgressCount > 0) {
-			tapeUsageStatus = TapeUsageStatus.job_in_progress;
-		}
-		else if(getQueuedJobOnVolume(volume)){
-			// any group job queued up
-			tapeUsageStatus = TapeUsageStatus.job_queued;
-		}
-		else {
-			// if no job lined up, means no job needs it  
-			tapeUsageStatus = TapeUsageStatus.no_job_queued;
-		}
-		return tapeUsageStatus;
-	}
-	
-	private boolean getQueuedJobOnVolume(Volume volume){
-		boolean queuedJob = false;
-		long jobInQueueCount = jobDao.countByGroupVolumeIdAndStatus(volume.getId(), Status.queued);
-		if(jobInQueueCount > 0)
-			queuedJob = true;
-		return queuedJob; 
 	}
 }	
