@@ -13,6 +13,7 @@ public class Volumeindex {
 //	private Importinfo importinfo;
 	@JacksonXmlProperty(localName="VolumeInfo")
 	private Volumeinfo volumeinfo;
+	@JacksonXmlProperty(localName="Artifact")
 	@JacksonXmlElementWrapper(useWrapping = false)
 	private List<Artifact> artifact;
 	@JacksonXmlProperty(localName="FinalizedAt")

@@ -19,6 +19,7 @@ public class Artifact {
 	private String sequencecode;
 	@JacksonXmlProperty(isAttribute = true, localName="rename")
 	private String rename;
+	@JacksonXmlProperty(localName="File")
 	@JacksonXmlElementWrapper(useWrapping = false)
 	private List<File> file;
 	
