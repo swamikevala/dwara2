@@ -62,6 +62,8 @@ public class TapeDriveMapper {
 			for (StorageElement storageElement : storageElementsList) {
 				if(!storageElement.isEmpty()) {
 					String volumeTag = storageElement.getVolumeTag();
+					if(volumeTag == null) // not a barcoded tape... dwara doesnt know how to deal with it
+						continue;
 					
 					if(volumeTag.endsWith("CU")) // clean up tape shouldnt be used as an actor tape // TODO :: configure the chars...
 						continue;
