@@ -123,7 +123,7 @@ public class TarArchiver implements IArchiveformatter {
 		String junkFilesStagedDirName = archiveformatJob.getSelectedStorageJob().getJunkFilesStagedDirName();
 		
 		int tarBlockingFactor = volumeBlocksize/archiveformatBlocksize;
-		String tarCopyCommand = "tar cvvv -R -b " + tarBlockingFactor + " -f " + deviceName + " " + artifactNameToBeWritten + " --exclude=" + junkFilesStagedDirName;
+		String tarCopyCommand = "tar cvvv -R -b " + tarBlockingFactor + " -f " + deviceName + " " + artifactNameToBeWritten + " --exclude=" + junkFilesStagedDirName + " --format=posix";
 		List<String> commandList = new ArrayList<String>();
 		commandList.add("sh");
 		commandList.add("-c");
