@@ -224,6 +224,11 @@ public class ProcessingJobProcessor implements Runnable{
 			// if the current status of the job is queued - update it to inprogress and do so with the artifact status and request status...
 			Request systemGeneratedRequest = job.getRequest();
 			//Request request = systemGeneratedRequest.getRequest();
+			job = jobDao.findById(job.getId()).get();
+			if(job.getStatus() == Status.on_hold) {
+				logger.warn("Job on hold - so dont process it now");
+				return;
+			}
 			job = checkAndUpdateStatusToInProgress(job, systemGeneratedRequest); // synchronous method so only one thread can access this at a time
 			
 			// If the job is QUEUED or IN_PROGRESS and cancellation is initiated ...
@@ -434,7 +439,6 @@ public class ProcessingJobProcessor implements Runnable{
 	}
 	
 	private synchronized Job checkAndUpdateStatusToInProgress(Job job, Request systemGeneratedRequest){
-		job = jobDao.findById(job.getId()).get();
 		if(job.getStatus() == Status.queued) {
 			Status status = Status.in_progress;
 			

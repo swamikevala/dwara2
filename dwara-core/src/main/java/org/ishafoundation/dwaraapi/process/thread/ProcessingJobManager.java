@@ -107,7 +107,13 @@ public class ProcessingJobManager implements Runnable{
 		// This check is because of the same file getting queued up for processing again...
 		// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
 		// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
-		Status jobStatus = job.getStatus();
+		Status jobStatus = jobDao.findById(job.getId()).get().getStatus(); // getting the job again to reflect the current status...
+		
+		if(jobStatus == Status.on_hold) {
+			logger.warn("Processing job - " + job.getId() + " on hold - so dont process it now");
+			return;
+		}
+		
 		if(jobStatus != Status.queued) {
 			logger.trace("Processing job - " + job.getId() + " already picked up earlier. So skipping from processing again");
 			return;
