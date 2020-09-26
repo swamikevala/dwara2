@@ -234,8 +234,7 @@ public abstract class AbstractStoragetypeJobProcessor {
     	if(isVolumeNeedToBeFinalized) {
     		logger.info("Triggering a finalization request for volume - " + volume.getId());
     		
-			// TODO Need to set the system as the user - How?
-    		volumeFinalizer.finalize(volume.getId(), null);
+    		volumeFinalizer.finalize(volume.getId(), DwaraConstants.SYSTEM_USER_NAME);
     	}
     }
     

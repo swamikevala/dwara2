@@ -91,7 +91,7 @@ public class JobService extends DwaraService{
 	}
 	
 	public JobResponse requeueJob(int jobId) throws Exception{
-		return frameJobResponse(jobServiceRequeueHelper.requeueJob(jobId));
+		return frameJobResponse(jobServiceRequeueHelper.requeueJob(jobId, getUserFromContext()));
 	}
 	
 

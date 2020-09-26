@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
@@ -30,6 +31,9 @@ public class VolumeFinalizer {
 
 	@Autowired
 	private RequestDao requestDao;
+
+	@Autowired
+	private UserDao userDao;
 	
 	@Autowired
 	private DomainUtil domainUtil;
@@ -37,10 +41,11 @@ public class VolumeFinalizer {
 	@Autowired
 	private JobCreator jobCreator;
 	
-	public String finalize(String volumeId, User user) throws Exception{
+	public String finalize(String volumeId, String userName) throws Exception{
 			Request request = new Request();
 			request.setType(RequestType.user);
 			request.setActionId(Action.finalize);
+			User user = userDao.findByName(userName);
 			request.setRequestedBy(user);
 			request.setRequestedAt(LocalDateTime.now());
 			RequestDetails details = new RequestDetails();

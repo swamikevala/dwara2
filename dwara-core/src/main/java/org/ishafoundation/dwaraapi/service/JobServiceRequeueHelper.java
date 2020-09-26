@@ -50,7 +50,7 @@ public class JobServiceRequeueHelper{
 	@Autowired
 	private ProcessingFailureDao processingFailureDao;
 	
-	public Job requeueJob(int jobId) throws Exception{
+	public Job requeueJob(int jobId, String userName) throws Exception{
 		Request userRequest = null;
 		try {		
 			Job jobToBeRequeued = jobDao.findById(jobId).get();
@@ -63,9 +63,8 @@ public class JobServiceRequeueHelper{
 			userRequest = new Request();
 	    	userRequest.setType(RequestType.user);
 			userRequest.setActionId(Action.requeue);
-			
-			String userFromContext = SecurityContextHolder.getContext().getAuthentication().getName();
-			User requestedByUser = userDao.findByName(userFromContext);
+
+			User requestedByUser = userDao.findByName(userName);
 	    	String requestedBy = requestedByUser.getName();
 	    	userRequest.setRequestedBy(requestedByUser);
 			userRequest.setRequestedAt(LocalDateTime.now());

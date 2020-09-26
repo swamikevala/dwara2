@@ -27,7 +27,7 @@ public class Configuration {
 
 	private String encryptionAlgorithm;
 
-	private int rightVolumeCheckInterval; // in seconds
+//	private int rightVolumeCheckInterval; // in seconds
 
 	private String restoreTmpLocationForVerification;
 	
@@ -117,13 +117,13 @@ public class Configuration {
 		this.encryptionAlgorithm = encryptionAlgorithm;
 	}
 
-	public int getRightVolumeCheckInterval() {
-		return rightVolumeCheckInterval;
-	}
-
-	public void setRightVolumeCheckInterval(int rightVolumeCheckInterval) {
-		this.rightVolumeCheckInterval = rightVolumeCheckInterval;
-	}
+//	public int getRightVolumeCheckInterval() {
+//		return rightVolumeCheckInterval;
+//	}
+//
+//	public void setRightVolumeCheckInterval(int rightVolumeCheckInterval) {
+//		this.rightVolumeCheckInterval = rightVolumeCheckInterval;
+//	}
 
 	public String getRestoreTmpLocationForVerification() {
 		return restoreTmpLocationForVerification;

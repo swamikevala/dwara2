@@ -248,7 +248,7 @@ public class VolumeService extends DwaraService {
 	}
 	
 	public String finalize(String volumeId) throws Exception{
-		return volumeFinalizer.finalize(volumeId, getUserObjFromContext());
+		return volumeFinalizer.finalize(volumeId, getUserFromContext());
 	}
 }
 

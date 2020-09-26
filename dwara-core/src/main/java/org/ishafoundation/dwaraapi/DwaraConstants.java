@@ -2,6 +2,8 @@ package org.ishafoundation.dwaraapi;
 
 public interface DwaraConstants {
 	
+	public static final String SYSTEM_USER_NAME = "dwara";
+	
 	public static final String ARCHIVER_SUFFIX = "Archiver";
 	public static final String STORAGETYPE_JOBPROCESSOR_SUFFIX = "JobProcessor";
 	public static final String STORAGELEVEL_SUFFIX = "Storagelevel";
