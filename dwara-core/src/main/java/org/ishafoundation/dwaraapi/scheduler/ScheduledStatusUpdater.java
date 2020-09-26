@@ -165,6 +165,7 @@ public class ScheduledStatusUpdater {
 		for (Request nthRequest : requestList) {
 			List<Job> nthRequestJobs = jobDao.findAllByRequestId(nthRequest.getId());
 			
+			boolean anyOnHold = false;
 			boolean anyQueued = false;
 			boolean anyInProgress = false;
 			boolean anyComplete = false;
@@ -177,6 +178,12 @@ public class ScheduledStatusUpdater {
 			for (Job nthJob : nthRequestJobs) {
 				Status status = nthJob.getStatus();
 				switch (status) {
+					case on_hold:
+						anyOnHold = true;
+						isAllQueued = false;
+						isAllComplete = false;
+						isAllCancelled = false;
+						break;
 					case queued:
 						anyQueued = true;
 						isAllComplete = false;
@@ -228,7 +235,7 @@ public class ScheduledStatusUpdater {
 			else if(isAllComplete) { // All jobs have successfully completed.
 				status = Status.completed; 
 			}
-			else if(anyQueued || anyInProgress) {
+			else if(anyOnHold || anyQueued || anyInProgress) {
 				status = Status.in_progress;
 			}
 			else if(hasFailures) {
@@ -278,7 +285,7 @@ public class ScheduledStatusUpdater {
 			int userRequestId = nthUserRequest.getId();
 			List<Request> systemRequestList = requestDao.findAllByRequestRefId(userRequestId);
 
-			
+			boolean anyOnHold = false;
 			boolean anyQueued = false;
 			boolean anyInProgress = false;
 			boolean anyComplete = false;
@@ -291,6 +298,12 @@ public class ScheduledStatusUpdater {
 			for (Request nthSystemRequest : systemRequestList) {
 			Status status = nthSystemRequest.getStatus();
 				switch (status) {
+					case on_hold:
+						anyOnHold = true;
+						isAllQueued = false;
+						isAllComplete = false;
+						isAllCancelled = false;
+						break;				
 					case queued:
 						anyQueued = true;
 						isAllComplete = false;
@@ -341,7 +354,7 @@ public class ScheduledStatusUpdater {
 			else if(isAllComplete) { // All jobs have successfully completed.
 				status = Status.completed; 
 			}
-			else if(anyQueued || anyInProgress) {
+			else if(anyOnHold || anyQueued || anyInProgress) {
 				status = Status.in_progress;
 			}
 			else if(hasFailures) {
