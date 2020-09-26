@@ -10,6 +10,7 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.JobRunDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
@@ -17,6 +18,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
+import org.ishafoundation.dwaraapi.service.JobServiceRequeueHelper;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -40,6 +42,12 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 	
 	@Autowired
 	private VolumeDao volumeDao;	
+	
+	@Autowired
+	private JobRunDao jobRunDao;
+	
+	@Autowired
+	private JobServiceRequeueHelper jobServiceRequeueHelper;
 	
 	@Autowired
 	private Configuration configuration;
@@ -93,10 +101,19 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 			updateJobFailed(job);
 			
 			if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.verify) { // Any write or verify failure should have the tape marked as suspect...
-				Volume volume = selectedStorageJob.getStorageJob().getVolume();
-				volume.setSuspect(true);
-				volumeDao.save(volume);
-				logger.info("Marked the volume " + volume.getId() + " as suspect");
+				long jobAlreadyRequeuedCount = jobRunDao.countByJobId(job.getId());
+				if(jobAlreadyRequeuedCount < configuration.getAllowedAutoRequeueAttemptsOnFailedStorageJobs()) {
+					try {
+						jobServiceRequeueHelper.requeueJob(job.getId());
+					} catch (Exception e1) {
+						logger.error("Unable to auto requeue failed job..." + job.getId());
+					}
+				}
+
+//				Volume volume = selectedStorageJob.getStorageJob().getVolume();
+//				volume.setSuspect(true);
+//				volumeDao.save(volume);
+//				logger.info("Marked the volume " + volume.getId() + " as suspect");
 			}
 			// updateError Table;
 		}finally {

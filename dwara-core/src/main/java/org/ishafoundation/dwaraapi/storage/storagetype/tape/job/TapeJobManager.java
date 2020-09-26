@@ -4,16 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TActivedeviceDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.JobRunDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TActivedevice;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.service.JobServiceRequeueHelper;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
@@ -41,10 +44,16 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	
 	@Autowired
 	private TActivedeviceDao tActivedeviceDao;
-	
+
 	@Autowired
 	private JobDao jobDao;
-
+	
+	@Autowired
+	private JobRunDao jobRunDao;
+	
+	@Autowired
+	private JobServiceRequeueHelper jobServiceRequeueHelper;
+	
 	@Autowired
 	private VolumeDao volumeDao;
 	
@@ -59,6 +68,10 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 
 	@Autowired
 	private TapeLibraryManager tapeLibraryManager;
+	
+	@Autowired
+	private Configuration configuration;
+	
 
 
 	/**
@@ -346,10 +359,18 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			updateJobFailed(job);
 			
 			if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.verify) { // Any write or verify failure should have the tape marked as suspect...
-				Volume volume = storageJob.getVolume();
-				volume.setSuspect(true);
-				volumeDao.save(volume);
-				logger.info("Marked the volume " + volume.getId() + " as suspect");
+				long jobAlreadyRequeuedCount = jobRunDao.countByJobId(job.getId());
+				if(jobAlreadyRequeuedCount < configuration.getAllowedAutoRequeueAttemptsOnFailedStorageJobs()) {
+					try {
+						jobServiceRequeueHelper.requeueJob(job.getId());
+					} catch (Exception e1) {
+						logger.error("Unable to auto requeue failed job..." + job.getId());
+					}
+				}
+//				Volume volume = storageJob.getVolume();
+//				volume.setSuspect(true);
+//				volumeDao.save(volume);
+//				logger.info("Marked the volume " + volume.getId() + " as suspect");
 			}
 			
 			logger.debug("Deleting the t_activedevice record for " + tapeJob.getDeviceWwnId());

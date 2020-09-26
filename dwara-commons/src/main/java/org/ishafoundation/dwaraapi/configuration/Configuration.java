@@ -35,6 +35,8 @@ public class Configuration {
 	
 	private boolean allowForceOptionForTesting;
 	
+	private int allowedAutoRequeueAttemptsOnFailedStorageJobs;
+	
 	public String getRegexAllowedChrsInFileName() {
 		return regexAllowedChrsInFileName;
 	}
@@ -145,6 +147,14 @@ public class Configuration {
 
 	public void setAllowForceOptionForTesting(boolean allowForceOptionForTesting) {
 		this.allowForceOptionForTesting = allowForceOptionForTesting;
+	}
+
+	public int getAllowedAutoRequeueAttemptsOnFailedStorageJobs() {
+		return allowedAutoRequeueAttemptsOnFailedStorageJobs;
+	}
+
+	public void setAllowedAutoRequeueAttemptsOnFailedStorageJobs(int allowedAutoRequeueAttemptsOnFailedStorageJobs) {
+		this.allowedAutoRequeueAttemptsOnFailedStorageJobs = allowedAutoRequeueAttemptsOnFailedStorageJobs;
 	}
 
 }

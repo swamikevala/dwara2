@@ -51,6 +51,9 @@ public class JobService extends DwaraService{
 	@Autowired
 	private ProcessingFailureDao processingFailureDao;
 
+	@Autowired
+	private JobServiceRequeueHelper jobServiceRequeueHelper;
+	
 	public List<JobResponse> getAllJobs(){
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
 		
@@ -88,73 +91,7 @@ public class JobService extends DwaraService{
 	}
 	
 	public JobResponse requeueJob(int jobId) throws Exception{
-		Request userRequest = null;
-		try {		
-			Job jobToBeRequeued = jobDao.findById(jobId).get();
-			if(jobToBeRequeued.getStatus() != Status.completed_failures && jobToBeRequeued.getStatus() != Status.failed)
-				throw new DwaraException("Job cannot be requeued. Only failed or a job completed with some failures can be rerun. @TEAM - Any extra protection needed for avoiding written content getting requeued again?"); //
-
-	    	long jobRunCount = jobRunDao.countByJobId(jobId);
-	    	int requeueId = (int) (jobRunCount + 1);
-	    	
-			userRequest = new Request();
-	    	userRequest.setType(RequestType.user);
-			userRequest.setActionId(Action.requeue);
-	    	User user = getUserObjFromContext();
-	    	String requestedBy = user.getName();
-	    	userRequest.setRequestedBy(user);
-			userRequest.setRequestedAt(LocalDateTime.now());
-			RequestDetails details = new RequestDetails();
-			ObjectMapper mapper = new ObjectMapper();
-	
-			HashMap<String, Object> data = new HashMap<String, Object>();
-	    	data.put("jobId", jobId);
-	    	data.put("requeueId", requeueId);
-	    	
-	    	String jsonAsString = mapper.writeValueAsString(data);
-			JsonNode postBodyJson = mapper.readValue(jsonAsString, JsonNode.class);
-			details.setBody(postBodyJson);
-			userRequest.setDetails(details);
-			
-	    	userRequest = requestDao.save(userRequest);
-	    	int userRequestId = userRequest.getId();
-	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
-	    	
-	    	// update the reference table    	
-	    	JobRun jobRun = new JobRun();
-	    	jobRun.setId(new JobRunKey(jobId, requeueId));
-	    	jobRun.setJob(jobToBeRequeued);
-	    	jobRun.setStartedAt(jobToBeRequeued.getStartedAt());
-	    	jobRun.setCompletedAt(jobToBeRequeued.getCompletedAt());
-	    	jobRun.setStatus(jobToBeRequeued.getStatus());
-	    	jobRun.setMessage(jobToBeRequeued.getMessage());
-	    	jobRun.setDevice(jobToBeRequeued.getDevice());
-	    	jobRun.setVolume(jobToBeRequeued.getVolume());
-	    	jobRunDao.save(jobRun);
-	    	logger.debug("JobRun record created successfully " + jobId + ":" + requeueId);
-	    	
-	    	if(jobToBeRequeued.getProcessingtaskId() != null) {
-				List<ProcessingFailure> processingFailureList = processingFailureDao.findAllByJobId(jobId);
-				processingFailureDao.deleteAll(processingFailureList);
-		    	logger.debug("Processing failure records cleaned up " + jobId);
-	    	}
-			
-			jobToBeRequeued.setStatus(Status.queued);
-			jobToBeRequeued.setMessage(null);
-			jobToBeRequeued = jobDao.save(jobToBeRequeued);
-			logger.info("Job queued successfully " + jobId);
-			
-			userRequest.setStatus(Status.completed);
-			userRequest = requestDao.save(userRequest);
-			
-			return frameJobResponse(jobToBeRequeued);
-		}catch (Exception e) {
-			if(userRequest != null && userRequest.getId() != 0) {
-				userRequest.setStatus(Status.failed);
-				userRequest = requestDao.save(userRequest);
-			}
-			throw e;
-		}
+		return frameJobResponse(jobServiceRequeueHelper.requeueJob(jobId));
 	}
 	
 
