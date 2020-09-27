@@ -111,7 +111,7 @@ public class VolumeService extends DwaraService {
 			long groupVolumeUnusedCapacity = 0L;
 			long groupVolumeUsedCapacity = 0L;
 			long maxPhysicalUnusedCapacity = 0L;
-			List<Volume> physicalVolumeList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndSuspectIsFalseOrderByIdAsc(volume.getId()); // get all not finalized physical volume in the group
+			List<Volume> physicalVolumeList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndDefectiveIsFalseAndSuspectIsFalseOrderByIdAsc(volume.getId()); // get all not finalized physical volume in the group
 			
 			for (Volume nthPhyscialVolume : physicalVolumeList) { // iterate all physical volume from the group and sum up for total/used/unused cap
 				logger.trace("Dashboard - " + nthPhyscialVolume.getId());

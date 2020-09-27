@@ -110,11 +110,12 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 						logger.error("Unable to auto requeue failed job..." + job.getId(), e1);
 					}
 				}
-
-//				Volume volume = selectedStorageJob.getStorageJob().getVolume();
-//				volume.setSuspect(true);
-//				volumeDao.save(volume);
-//				logger.info("Marked the volume " + volume.getId() + " as suspect");
+				else {
+					Volume volume = selectedStorageJob.getStorageJob().getVolume();
+					volume.setSuspect(true);
+					volumeDao.save(volume);
+					logger.info("Marked the volume " + volume.getId() + " as suspect");
+				}	
 			}
 			// updateError Table;
 		}finally {

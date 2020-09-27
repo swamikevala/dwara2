@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -107,8 +108,6 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 					if (in.available() > 0 || err.available() > 0)
 						continue;
 					logger.debug("exit-status: " + proc.exitValue());
-					logger.trace("Command's stdout message - " + stdOutRespBuffer.toString());
-					logger.trace("Command's stderr message - " + stdErrRespBuffer.toString());
 					break;
 				}
 				try {
@@ -137,12 +136,15 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 		}
 		catch (Exception ee) {
 			logger.error(commandList + " execution failed : " + ee.getMessage(), ee);
-			logger.trace("Command's stdout message on exception - " + stdOutRespBuffer.toString());
-			logger.trace("Command's stderr message on exception - " + stdErrRespBuffer.toString());
 			commandLineExecutionResponse.setFailureReason(ee.getMessage());
 			throw ee;
 		}finally {
 			try {
+				if(StringUtils.isNotBlank(stdOutRespBuffer.toString()))
+					logger.trace("Command's stdout message - " + stdOutRespBuffer.toString());
+				if(StringUtils.isNotBlank(stdErrRespBuffer.toString()))
+					logger.trace("Command's stderr message - " + stdErrRespBuffer.toString());
+
 				proc.destroy();
 				in.close();
 				err.close();

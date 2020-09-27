@@ -367,11 +367,12 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 					} catch (Exception e1) {
 						logger.error("Unable to auto requeue failed job..." + job.getId(), e);
 					}
+				} else {
+					Volume volume = storageJob.getVolume();
+					volume.setSuspect(true);
+					volumeDao.save(volume);
+					logger.info("Marked the volume " + volume.getId() + " as suspect");
 				}
-//				Volume volume = storageJob.getVolume();
-//				volume.setSuspect(true);
-//				volumeDao.save(volume);
-//				logger.info("Marked the volume " + volume.getId() + " as suspect");
 			}
 			
 			logger.debug("Deleting the t_activedevice record for " + tapeJob.getDeviceWwnId());
