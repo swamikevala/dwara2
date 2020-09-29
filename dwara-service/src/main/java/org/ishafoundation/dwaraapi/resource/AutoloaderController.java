@@ -27,6 +27,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -82,7 +83,10 @@ public class AutoloaderController {
 	
 	@Autowired
 	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
-
+	
+	@Autowired
+	private JobUtil jobUtil;
+	
 	@Autowired
 	private DomainUtil domainUtil;
 	
@@ -177,6 +181,9 @@ public class AutoloaderController {
 				
 				int priorityCount = 1;
 				for (Job nthQueuedJob : queuedJobList) {
+					if(!jobUtil.isJobReadyToBeExecuted(nthQueuedJob))
+					continue;
+					
 					AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(nthQueuedJob.getStoragetaskActionId().name());
 					logger.trace("Building storage job - " + nthQueuedJob.getId() + ":" + storagetaskActionImpl.getClass().getSimpleName());
 					StorageJob storageJob = null;

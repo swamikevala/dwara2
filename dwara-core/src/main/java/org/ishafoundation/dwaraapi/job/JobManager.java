@@ -8,6 +8,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
@@ -28,6 +29,9 @@ public class JobManager {
 
 	@Autowired
 	private JobDao jobDao;	
+	
+	@Autowired
+	private JobUtil jobUtil;	
 	
 	@Autowired
 	private ApplicationContext applicationContext;
@@ -71,7 +75,7 @@ public class JobManager {
 					jobName = processingtaskId;
 				}
 				logger.trace("Job - " + job.getId() + ":" + jobName);
-				boolean isJobReadyToBeProcessed = isJobReadyToBeProcessed(job);
+				boolean isJobReadyToBeProcessed = jobUtil.isJobReadyToBeExecuted(job);
 				logger.trace("IsJobReadyToBeProcessed - " + isJobReadyToBeProcessed);
 				if(isJobReadyToBeProcessed) {
 					if(processingtaskId != null) { // a non-storage process job
@@ -135,23 +139,5 @@ public class JobManager {
 			logger.trace("No jobs queued up");
 		}
 	}
-
-	// If a job is a dependent job the job's prerequisite job's status should be completed for it to be ready to be taken up for processing...
-	private boolean isJobReadyToBeProcessed(Job job) {
-		boolean isJobReadyToBeProcessed = true;
-
-		List<Integer> dependencies = job.getDependencies();
-		if(dependencies != null) {
-			for (Integer nthPreReqJobId : dependencies) {
-				Status preReqJobStatus = jobDao.findById(nthPreReqJobId).get().getStatus();
-				if(preReqJobStatus != Status.completed && preReqJobStatus != Status.partially_completed && preReqJobStatus != Status.completed_failures && preReqJobStatus != Status.marked_completed)
-					return false;			
-			}
-		}
-
-		return isJobReadyToBeProcessed;
-	}
-	
-
 }
 	

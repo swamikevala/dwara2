@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -43,5 +44,21 @@ public class JobUtil {
 		}
 		
 		return depenedentJobsList;
+	}
+	
+	// If a job is a dependent job the job's prerequisite job's status should be completed for it to be ready to be taken up for processing...
+	public boolean isJobReadyToBeExecuted(Job job) {
+		boolean isJobReadyToBeProcessed = true;
+
+		List<Integer> dependencies = job.getDependencies();
+		if(dependencies != null) {
+			for (Integer nthPreReqJobId : dependencies) {
+				Status preReqJobStatus = jobDao.findById(nthPreReqJobId).get().getStatus();
+				if(preReqJobStatus != Status.completed && preReqJobStatus != Status.partially_completed && preReqJobStatus != Status.completed_failures && preReqJobStatus != Status.marked_completed)
+					return false;			
+			}
+		}
+
+		return isJobReadyToBeProcessed;
 	}
 }
