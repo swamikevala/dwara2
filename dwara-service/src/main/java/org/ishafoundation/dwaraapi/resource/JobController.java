@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
-import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.JobService;
@@ -33,6 +32,7 @@ public class JobController {
 
 	@GetMapping(value = "/job", produces = "application/json")
 	public ResponseEntity<List<JobResponse>> getJobs(@RequestParam(value="requestId", required=false) Integer systemRequestId, @RequestParam(required=false) String status){
+		logger.info("/job?" + (status != null ? "status=" + status : "") + (systemRequestId != null ? "requestId=" + systemRequestId : ""));
 		List<JobResponse> jobResponseList = null;
 		try {
 			
@@ -63,6 +63,7 @@ public class JobController {
 	
     @PostMapping("/job/{jobId}/requeue")
     public ResponseEntity<JobResponse> requeueJob(@PathVariable("jobId") int jobId) {
+    	logger.info("/job/" + jobId + "/requeue");
     	JobResponse jobResponse = null;
     	try {
     		jobResponse = jobService.requeueJob(jobId);

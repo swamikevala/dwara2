@@ -16,7 +16,6 @@ import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.enumreferences.TapeStoragesubtype;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
@@ -216,6 +215,7 @@ public class VolumeController {
 	
 	@GetMapping(value = "/volume", produces = "application/json")
 	public ResponseEntity<List<VolumeResponse>> getVolumeByVolumetype(@RequestParam("type") String volumetype){
+		logger.info("/volume?type="+volumetype);
 		List<VolumeResponse> volumeResponseList = null;
 		try {
 			volumeResponseList = volumeService.getVolumeByVolumetype(volumetype);

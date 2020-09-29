@@ -41,6 +41,7 @@ public class RequestController {
 	 */
 	@GetMapping(value = "/request", produces = "application/json")
 	public ResponseEntity<List<RequestResponse>> getRequests(@RequestParam(value="type", required=false) String type, @RequestParam(required=false) String action, @RequestParam(required=false) String status){
+		logger.info("/request?type=" + type + "&action=" + action + "&status=" + status);
 		List<RequestResponse> requestResponseList = null;
 		try {
 			
@@ -87,6 +88,7 @@ public class RequestController {
 	
     @PostMapping("/request/{requestId}/cancel")
     public ResponseEntity<RequestResponse> cancelRequest(@PathVariable("requestId") int requestId) {
+    	logger.info("/request/" + requestId + "/cancel");
     	RequestResponse requestResponse = null;
     	try {
     		requestResponse = requestService.cancelRequest(requestId);

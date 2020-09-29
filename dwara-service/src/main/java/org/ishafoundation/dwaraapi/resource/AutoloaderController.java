@@ -115,6 +115,7 @@ public class AutoloaderController {
 	
 	@GetMapping(value = "/autoloader", produces = "application/json")
 	public ResponseEntity<List<AutoloaderResponse>> getAllAutoloaders(){
+		logger.info("/autoloader");
 		List<AutoloaderResponse> autoloaderResponseList = new ArrayList<AutoloaderResponse>();
 		try {
 			//List<Device> autoloaderDevices = configurationTablesUtil.getAllConfiguredAutoloaderDevices();
@@ -144,6 +145,7 @@ public class AutoloaderController {
 	
 	@GetMapping(value = "/autoloader/toLoad", produces = "application/json")
 	public ResponseEntity<Set<ToLoadTape>> getOfflineTapesToBeLoaded(){ 
+		logger.info("/autoloader/toLoad");
 		// get all queued storagetask jobs and their needed tapes
 		
 		// get all jobs with volume id not null and storagetask is not null and status is queued

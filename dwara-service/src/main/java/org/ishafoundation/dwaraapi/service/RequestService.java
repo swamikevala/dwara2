@@ -17,13 +17,11 @@ import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
-import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -35,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -59,15 +56,7 @@ public class RequestService extends DwaraService{
 	
 	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
-		
-//		List<Status> statusList = new ArrayList<Status>();
-//		statusList.add(Status.queued);
-//		statusList.add(Status.in_progress);
-//		statusList.add(Status.failed);
-//		
-//		List<Request> systemRequestList = requestDao.findAllByTypeAndActionIdAndStatusInOrderByIdDesc(RequestType.system, Action.ingest, statusList);
-		
-		//List<Request> systemRequestList = requestDao.findAllByTypeAndActionIdAndStatusInOrderByIdDesc(requestType, action, statusList);
+		logger.info("Retrieving requests " + requestType.name() + ":" + action + ":" + statusList);
 		
 		String user = null;
 		LocalDateTime fromDate = null;
@@ -76,11 +65,8 @@ public class RequestService extends DwaraService{
 		int pageSize = 0;
 
 		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, fromDate, toDate, pageNumber, pageSize);
-
 		for (Request request : requestList) {
-			logger.trace("Getting details for " + request.getId());
 			RequestResponse requestResponse = frameRequestResponse(request, requestType);
-
 			requestResponseList.add(requestResponse);
 		}
 		return requestResponseList;
@@ -88,6 +74,7 @@ public class RequestService extends DwaraService{
 	
 	
 	public RequestResponse cancelRequest(int requestId) throws Exception{
+		logger.info("Cancelling request " + requestId);
 		Request userRequest = null;
 		try {
 			List<Job> jobList = jobDao.findAllByRequestId(requestId);
