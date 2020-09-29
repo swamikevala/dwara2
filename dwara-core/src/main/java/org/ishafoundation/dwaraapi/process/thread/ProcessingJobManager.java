@@ -102,15 +102,15 @@ public class ProcessingJobManager implements Runnable{
 
 	@Override
     public void run() {
-		logger.trace("Managing processing job - " + job.getId());
+		logger.info("Managing processing job - " + job.getId());
 		
 		// This check is because of the same file getting queued up for processing again...
 		// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
 		// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
 		Status jobStatus = jobDao.findById(job.getId()).get().getStatus(); // getting the job again to reflect the current status...
 		
-		if(jobStatus == Status.on_hold) {
-			logger.warn("Processing job - " + job.getId() + " on hold - so dont process it now");
+		if(jobStatus == Status.on_hold || jobStatus == Status.cancelled) {
+			logger.warn("Processing job - " + job.getId() + " " + jobStatus + " - so dont process it now");
 			return;
 		}
 		
@@ -234,12 +234,12 @@ public class ProcessingJobManager implements Runnable{
 					org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
 					if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
 						file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
-					logger.trace("file - " + file.getId());
+					logger.debug("Delegating for processing -job-" + job.getId() + "-file-" + file.getId());
 	
 					// Requeue scenario - Only failed files are to be continued...
 					Optional<TFileJob> tFileJobDB = tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId()));
 					if(tFileJobDB.isPresent() && tFileJobDB.get().getStatus() != Status.failed) {
-						logger.debug(job.getId() + " already Inprogress/completed. Skipping it...");
+						logger.info(job.getId() + " already Inprogress/completed. Skipping it...");
 						continue;
 					}
 					

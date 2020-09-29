@@ -188,7 +188,6 @@ public class ProcessingJobProcessor implements Runnable{
 	@Override
 	public void run(){
 		String identifierSuffix = "";//mediaFileId+"";//  +  "-" + VideoTasktypeingSteps.PROXY_GENERATION.toString();
-		logger.trace("Running - " + job.getId() + ":" + logicalFile.getAbsolutePath());
 		
 		// This check is because of the same file getting queued up for processing again...
 		// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
@@ -209,6 +208,7 @@ public class ProcessingJobProcessor implements Runnable{
 		
 		ThreadNameHelper threadNameHelper = new ThreadNameHelper();
 		threadNameHelper.setThreadName(job.getRequest().getId(), job.getId(), file.getId());
+		logger.debug("Will be processing - " + logicalFile.getAbsolutePath());
 		Status staus = Status.in_progress;
 		String failureReason = null;
 		long startms = 0;
@@ -225,125 +225,113 @@ public class ProcessingJobProcessor implements Runnable{
 			Request systemGeneratedRequest = job.getRequest();
 			//Request request = systemGeneratedRequest.getRequest();
 			job = jobDao.findById(job.getId()).get();
-			if(job.getStatus() == Status.on_hold) {
-				logger.warn("Job on hold - so dont process it now");
+			if(job.getStatus() == Status.on_hold || job.getStatus() == Status.cancelled) {
+				logger.warn("Job " + job.getStatus() + " - not processing it now");
 				return;
 			}
 			job = checkAndUpdateStatusToInProgress(job, systemGeneratedRequest); // synchronous method so only one thread can access this at a time
 			
 			// If the job is QUEUED or IN_PROGRESS and cancellation is initiated ...
-			if(job.getStatus() == Status.cancelled || job.getStatus() == Status.aborted) { 	
-				staus = Status.cancelled; // Tasktype status is Cancelled because its yet to begin... // TODO revisit this...
-			}
-			else {
-				startms = System.currentTimeMillis();
-				Integer inputArtifactId = job.getInputArtifactId();
+			startms = System.currentTimeMillis();
+			Integer inputArtifactId = job.getInputArtifactId();
 
-				processingtaskName = job.getProcessingtaskId();
-				logger.trace(job.getId() + " " + processingtaskName);
-				
-				tFileJob = tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId())).get();
-				tFileJob.setStatus(Status.in_progress);
-				tFileJob.setStartedAt(LocalDateTime.now());
-				logger.debug("DB TFileJob Updation for file " + file.getId());
-				tFileJobDao.save(tFileJob);
-				logger.debug("DB TFileJob Updation - Success");
+			processingtaskName = job.getProcessingtaskId();
+			logger.trace(job.getId() + " " + processingtaskName);
+			
+			tFileJob = tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId())).get();
+			tFileJob.setStatus(Status.in_progress);
+			tFileJob.setStartedAt(LocalDateTime.now());
+			logger.debug("DB TFileJob Updation for file " + file.getId());
+			tFileJobDao.save(tFileJob);
+			logger.debug("DB TFileJob Updation - Success");
 
+			
+			String inputArtifactName = inputArtifact.getName();
+			Artifactclass artifactclass = inputArtifact.getArtifactclass();
+			String artifactCategory = artifactclass.getCategory(); // TODO How to distinguish pub/priv
+			
+			ProcessingtaskResponse processingtaskResponse = processingtaskActionMap.get(processingtaskName).execute(processingtaskName, artifactclass.getId(), inputArtifactName, outputArtifactName, file, domain, logicalFile, artifactCategory, destinationDirPath);
+			if(processingtaskResponse == null) // TODO : Handle this...
+				return;
+			boolean isCancelInitiated = processingtaskResponse.isCancelled();
+			
+			long proxyEndTime = System.currentTimeMillis();
+			boolean isComplete = processingtaskResponse.isComplete();
+			if(isComplete) {
+				logger.info("Processing complete - " + logicalFile.getAbsolutePath());
+				endms = System.currentTimeMillis();
 				
-				String inputArtifactName = inputArtifact.getName();
-				Artifactclass artifactclass = inputArtifact.getArtifactclass();
-				String artifactCategory = artifactclass.getCategory(); // TODO How to distinguish pub/priv
-				
-				ProcessingtaskResponse processingtaskResponse = processingtaskActionMap.get(processingtaskName).execute(processingtaskName, artifactclass.getId(), inputArtifactName, outputArtifactName, file, domain, logicalFile, artifactCategory, destinationDirPath);
-				if(processingtaskResponse == null) // TODO : Handle this...
-					return;
-				boolean isCancelInitiated = processingtaskResponse.isCancelled();
-				
-				long proxyEndTime = System.currentTimeMillis();
-				boolean isComplete = processingtaskResponse.isComplete();
-				if(isComplete) {
-					logger.trace("Processing Task " + processingtaskName + " execution completed for job " + job.getId());
-					endms = System.currentTimeMillis();
-					
-					//synchronized (processingtaskResponse) { // A Synchronized block to ensure only one thread at a time updates... Handling it differently with extra checks..
-						if(outputArtifactName != null) {
-							ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-	
-							Artifact outputArtifact = artifactRepository.findByName(outputArtifactName); 
-							if(outputArtifact == null) {// not already created.
-							    outputArtifact = domainUtil.getDomainSpecificArtifactInstance(domain);
-								
-							    artifactEntityUtil.setDomainSpecificArtifactRef(outputArtifact, inputArtifact);
-								
-								outputArtifact.setTotalSize(totalSize);
-							    outputArtifact.setFileCount(fileCount);
-							    //outputArtifact.setFileStructureMd5("not needed");
-							    outputArtifact.setArtifactclass(outputArtifactclass);
-							    outputArtifact.setName(outputArtifactName);
-							    
-							    try {
-							    	outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
-							    }
-							    catch (Exception e) {
-									// possibly updated by another thread already
-									outputArtifact = artifactRepository.findByName(outputArtifactName); 
-									if(outputArtifact != null)
-										logger.trace("OutputArtifact details possibly updated by another thread already");
-									else
-										throw e;
-							    	
-								}
-							    
-							    // setting the current jobs output artifactid
-								String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - OutputArtifactId " + outputArtifact.getId();
-								logger.debug(logMsgPrefix);	
-							    job.setOutputArtifactId(outputArtifact.getId());
-							    jobDao.save(job);
-							    logger.debug(logMsgPrefix + " - Success");	
-							    
-							    // Now setting all the dependentjobs with the tasktype generated output artifactid
-							    setInputArtifactForDependentJobs(job, outputArtifact);
-							}
+				//synchronized (processingtaskResponse) { // A Synchronized block to ensure only one thread at a time updates... Handling it differently with extra checks..
+					if(outputArtifactName != null) {
+						ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+
+						Artifact outputArtifact = artifactRepository.findByName(outputArtifactName); 
+						if(outputArtifact == null) {// not already created.
+						    outputArtifact = domainUtil.getDomainSpecificArtifactInstance(domain);
 							
-							// Output Artifact as a file record
-							FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-							org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
-							if(artifactFile == null) { // only if not already created... 
-								createFile(outputArtifactName, outputArtifact, domainSpecificFileRepository);	
-							}
+						    artifactEntityUtil.setDomainSpecificArtifactRef(outputArtifact, inputArtifact);
 							
-							// creating File records for the process generated files
-							String proxyFilePathName = processingtaskResponse.getDestinationPathname(); 
-							String proxyFileBaseName = FilenameUtils.getBaseName(proxyFilePathName);
-							String proxyFilePath = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathName);
-					        FilenameFilter fileNameFilter = new FilenameFilter() {
-					            @Override
-					            public boolean accept(File dir, String name) {
-					            	if(FilenameUtils.getBaseName(name).equals(proxyFileBaseName))
-					            		return true;
-					               
-					               return false;
-					            }
-					         };
-							String[] files = new File(proxyFilePath).list(fileNameFilter);
-							for (String nthFileName : files) {
-								String filepathName = proxyFilePath + File.separator + nthFileName;
-								logger.trace("Now creating file record for - " + filepathName);
-								createFile(filepathName, outputArtifact, domainSpecificFileRepository);	
+							outputArtifact.setTotalSize(totalSize);
+						    outputArtifact.setFileCount(fileCount);
+						    //outputArtifact.setFileStructureMd5("not needed");
+						    outputArtifact.setArtifactclass(outputArtifactclass);
+						    outputArtifact.setName(outputArtifactName);
+						    
+						    try {
+						    	outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
+						    }
+						    catch (Exception e) {
+								// possibly updated by another thread already
+								outputArtifact = artifactRepository.findByName(outputArtifactName); 
+								if(outputArtifact != null)
+									logger.trace("OutputArtifact details possibly updated by another thread already");
+								else
+									throw e;
+						    	
 							}
+						    
+						    // setting the current jobs output artifactid
+							String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - OutputArtifactId " + outputArtifact.getId();
+							logger.debug(logMsgPrefix);	
+						    job.setOutputArtifactId(outputArtifact.getId());
+						    jobDao.save(job);
+						    logger.debug(logMsgPrefix + " - Success");	
+						    
+						    // Now setting all the dependentjobs with the tasktype generated output artifactid
+						    setInputArtifactForDependentJobs(job, outputArtifact);
 						}
-					//}
-					staus = Status.completed;
-					//logger.info("Proxy for " + containerName + " created successfully in " + ((proxyEndTime - proxyStartTime)/1000) + " seconds - " +  generatedProxyFilePathname);
-					logger.info("Processing Completed in " + ((endms - startms)/1000) + " seconds");
-				}else {
-					if(isCancelInitiated){
-						staus = Status.aborted;
-						logger.info("Processingtask " + containerName + " aborted");
-					} 
-					else
-						throw new Exception("Unable to process " + FilenameUtils.getBaseName(logicalFile.getAbsolutePath()) + " : because : " + processingtaskResponse.getFailureReason());
-				}
+						
+						// Output Artifact as a file record
+						FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
+						if(artifactFile == null) { // only if not already created... 
+							createFile(outputArtifactName, outputArtifact, domainSpecificFileRepository);	
+						}
+						
+						// creating File records for the process generated files
+						String proxyFilePathName = processingtaskResponse.getDestinationPathname(); 
+						String proxyFileBaseName = FilenameUtils.getBaseName(proxyFilePathName);
+						String proxyFilePath = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathName);
+				        FilenameFilter fileNameFilter = new FilenameFilter() {
+				            @Override
+				            public boolean accept(File dir, String name) {
+				            	if(FilenameUtils.getBaseName(name).equals(proxyFileBaseName))
+				            		return true;
+				               
+				               return false;
+				            }
+				         };
+						String[] files = new File(proxyFilePath).list(fileNameFilter);
+						for (String nthFileName : files) {
+							String filepathName = proxyFilePath + File.separator + nthFileName;
+							logger.trace("Now creating file record for - " + filepathName);
+							createFile(filepathName, outputArtifact, domainSpecificFileRepository);	
+						}
+					}
+				//}
+				staus = Status.completed;
+				//logger.info("Proxy for " + containerName + " created successfully in " + ((proxyEndTime - proxyStartTime)/1000) + " seconds - " +  generatedProxyFilePathname);
+				logger.debug("Processing Completed in " + ((endms - startms)/1000) + " seconds");
 			}
 		} catch (Exception e) {
 			staus = Status.failed;

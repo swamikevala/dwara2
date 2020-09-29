@@ -18,7 +18,11 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Extension;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +35,9 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 	
 	@Autowired
     private ExtensionDao extensionDao;
+
+	@Autowired
+    private DomainUtil domainUtil;
 	
 	@Autowired
     private Configuration configuration;
@@ -51,7 +58,7 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 	}
 
 	@Override
-	public List<Error> validate(StagedFileDetails stagedFileDetails) {
+	public List<Error> validate(StagedFileDetails stagedFileDetails, Domain domain) {
 		List<Error> errorList = new ArrayList<Error>();
 		
 		// validateCount
@@ -77,6 +84,22 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 			error.setMessage("Artifact is less than 1 MiB");
 			errorList.add(error);
 		};
+
+		// dupe check on size against existing artifact
+	    ArtifactRepository<Artifact> domainSpecificArtifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+	    List<Artifact> alreadyExistingArtifacts = domainSpecificArtifactRepository.findAllByTotalSize(stagedFileSize);
+
+		if(alreadyExistingArtifacts.size() > 0) {
+			Error error = new Error();
+			error.setType(Errortype.Warning);
+			StringBuffer sb = new StringBuffer();
+		    for (Artifact artifact : alreadyExistingArtifacts) {
+				sb.append(" Id:" + artifact.getId() + " ArtifactName:" + artifact.getName());
+			}
+			error.setMessage("Artifact probably already exists in dwara. Please double check. Matches" + sb.toString());
+			errorList.add(error);
+		}
+		
 		
 		errorList.addAll(validateName(stagedFileDetails.getName()));
 		
@@ -84,7 +107,8 @@ public class StagedFileValidatorImpl implements IStagedFileValidator{
 		if(extnError != null)
 			errorList.add(extnError);
 		
-		// TODO dupe check on size 
+
+		
 		
 		return errorList;
 	}

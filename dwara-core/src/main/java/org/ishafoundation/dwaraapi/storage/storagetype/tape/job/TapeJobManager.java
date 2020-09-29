@@ -85,7 +85,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	 */
 	@Override
     public void run() {
-		logger.trace("Tape job manager kicked off");
+		logger.info("Tape job manager kicked off");
 		List<StorageJob> storageJobsList = getStorageJobList();
 
 		// execute the job
@@ -93,6 +93,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		Action storagetaskAction = firstStorageJob.getJob().getStoragetaskActionId();
 		
 		if(storagetaskAction == Action.map_tapedrives) {
+			logger.info("Will be mapping drives");
 			try {
 				boolean areJobsRunning = true;
 				while(areJobsRunning) {
@@ -149,8 +150,10 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			}
 		} 
 		else if(storagetaskAction == Action.initialize) {
-			checkAndUpdateStatusesToInProgress(firstStorageJob.getJob());
-			logger.debug("Now preparing all Tape Drives for Initialization");
+			Job job = firstStorageJob.getJob();
+			logger.info("Will be initializing " + job.getRequest().getDetails().getVolumeId());
+			checkAndUpdateStatusesToInProgress(job);
+			logger.info("Now preparing all tape drives for initialization");
 			List<DriveDetails> preparedDrives = null;
 			try {
 
@@ -204,7 +207,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	//			}
 				// STEP 1
 				for (DriveDetails nthAvailableDriveDetails : availableDrivesDetails) {
-					logger.debug("Now selecting job for drive - " + nthAvailableDriveDetails.getDriveId());//+ nthAvailableDriveDetails.getDriveName() + "(" + nthAvailableDriveDetails.getDte().getsNo() + ")");
+					logger.info("Now selecting job for drive - " + nthAvailableDriveDetails.getDriveId());//+ nthAvailableDriveDetails.getDriveName() + "(" + nthAvailableDriveDetails.getDte().getsNo() + ")");
 					
 					// STEP 2a
 					StorageJob selectedStorageJob = null;
@@ -219,10 +222,10 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 								Job selectedJob = jobDao.findById(selectedStorageJob.getJob().getId()).get();
 								
 								if(selectedJob.getStatus() == Status.queued) {
-									logger.trace("Selected job is good for next steps");
+									logger.debug("Job " + selectedJob.getId() + " is good for next steps");
 									break; 
 								} else {
-									logger.trace("Selected job was potentially picked up by one of the previous scheduled executor' joblist, after the current list is picked up from DB");
+									logger.debug("Job " + selectedJob.getId() + " was potentially picked up by one of the previous scheduled executor' joblist, after the current list is picked up from DB");
 									storageJobsList.remove(selectedStorageJob); // remove the already selected job from the list and do the tapejobselection again for the drive...
 								}
 							} else {
@@ -237,11 +240,11 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 					
 					// STEP 2b
 					if(selectedStorageJob == null) {
-						logger.debug("No tape jobs in queue are eligible to be processed for the drive");
+						logger.info("No tape jobs in queue are eligible to be processed for the drive");
 						//break;
 					}
 					else if(selectedStorageJob != null) {
-						logger.debug("Job " + selectedStorageJob.getJob().getId() + " selected");
+						logger.info("Job " + selectedStorageJob.getJob().getId() + " selected");
 						
 						prepareTapeJobAndContinueNextSteps(selectedStorageJob, nthAvailableDriveDetails, true);
 						

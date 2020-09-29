@@ -158,7 +158,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 //			try {
 				selectedStorageJob.setDeviceWwnId(dataTransferElementName); // Ideally we should be setting this detail upfront but just above we got this info so had to set it here...
 				status = labelManager.writeVolumeLabel(selectedStorageJob);
-				logger.debug("Labelling success? - " + status);
+				logger.info("Labelling success? - " + status);
 				break;
 //			}catch (Exception e) {
 //				
@@ -211,17 +211,16 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		**/
 		
 		loadTapeAndCheckLabel(selectedStorageJob);
-		
+
 		int blockNumberToBePositioned = 0;
 		if(lastArtifactOnVolumeEndVolumeBlock == 0) // during BOT its just the volumelabel + tapemark
 			blockNumberToBePositioned = 2;
 		else
 			blockNumberToBePositioned = lastArtifactOnVolumeEndVolumeBlock + 4;
-		
+
 		logger.trace("Now positioning tape head for writing");
 		tapeDriveManager.setTapeHeadPositionForWriting(tapeJob.getDeviceWwnId(), blockNumberToBePositioned); 
 		logger.info("Tape Head positioned for writing " + tapeLibraryName + ":" + tapeJob.getDeviceWwnId() + "(" + driveElementAddress + ")");
-		
 	}
 
 	
@@ -271,7 +270,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 
 		logger.trace("Now positioning tape head for finalizing " + tapeLibraryName + ":" + driveElementAddress);
 		tapeDriveManager.setTapeHeadPositionForFinalizing(tapeJob.getDeviceWwnId(), lastArtifactOnVolumeEndVolumeBlock + 3);
-
+		logger.info("Tape Head positioned for finalizing " + tapeLibraryName + ":" + driveElementAddress);
 	}
 	
 	private void loadTapeAndCheckLabel(SelectedStorageJob selectedStorageJob) throws Exception {

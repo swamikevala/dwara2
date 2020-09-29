@@ -15,6 +15,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.utils.ArtifactFileDetails;
 import org.ishafoundation.dwaraapi.utils.JunkFilesDealer;
@@ -46,6 +47,7 @@ public class SourceDirScanner {
 	public List<StagedFileDetails> scanSourceDir(Artifactclass artifactclass, List<String> scanFolderBasePathList) {
 		//int artifactclassId = artifactclass.getId();
     	String artifactclassName = artifactclass.getId();
+    	Domain domain = artifactclass.getDomain();
         String sequenceId = artifactclass.getSequenceId(); // getting the primary key of the Sequence table which holds the lastsequencenumber for this group...
         Sequence sequence = configurationTablesUtil.getSequence(sequenceId);
         if(sequence == null) {
@@ -67,7 +69,7 @@ public class SourceDirScanner {
 //				allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(notCancelledFolderFilter, notDeletedFolderFilter);
 	    	File[] ingestableFiles = new File(sourcePath).listFiles(allFilesExcludingCancelledAndDeletedDirectoryFilter);
 	    	if(ingestableFiles != null) {
-	    		List<StagedFileDetails> nthScanFolderBaseIngestDirectoryList = scanForIngestableFiles(sequence, sourcePath, ingestableFiles);
+	    		List<StagedFileDetails> nthScanFolderBaseIngestDirectoryList = scanForIngestableFiles(domain, sequence, sourcePath, ingestableFiles);
 	    		ingestReadyFileList.addAll(nthScanFolderBaseIngestDirectoryList);
 	    	}
 	    	
@@ -75,7 +77,7 @@ public class SourceDirScanner {
 	    	String cancelledOriginSourceDir = sourcePath + File.separator + Status.cancelled.toString();
 	    	File[] cancelledIngestableFiles = new File(cancelledOriginSourceDir).listFiles();
 	    	if(cancelledIngestableFiles != null) {
-	    		List<StagedFileDetails> nthScanFolderBaseCancelledDirectoryIngestFileList = scanForIngestableFiles(sequence, cancelledOriginSourceDir, cancelledIngestableFiles);
+	    		List<StagedFileDetails> nthScanFolderBaseCancelledDirectoryIngestFileList = scanForIngestableFiles(domain, sequence, cancelledOriginSourceDir, cancelledIngestableFiles);
 	    		ingestReadyFileList.addAll(nthScanFolderBaseCancelledDirectoryIngestFileList);
 	    	}	
 	    	
@@ -83,7 +85,7 @@ public class SourceDirScanner {
 	    	String deletedOriginSourceDir = sourcePath + File.separator + DELETED;
 	    	File[] deletedIngestableFiles = new File(deletedOriginSourceDir).listFiles();
 	    	if(deletedIngestableFiles != null) {
-	    		List<StagedFileDetails> nthScanFolderBaseDeletedDirectoryIngestFileList = scanForIngestableFiles(sequence, deletedOriginSourceDir, deletedIngestableFiles);
+	    		List<StagedFileDetails> nthScanFolderBaseDeletedDirectoryIngestFileList = scanForIngestableFiles(domain, sequence, deletedOriginSourceDir, deletedIngestableFiles);
 	    		ingestReadyFileList.addAll(nthScanFolderBaseDeletedDirectoryIngestFileList);
 	    	}		    	
 		}
@@ -91,19 +93,19 @@ public class SourceDirScanner {
 		return ingestReadyFileList;
 	}
 	
-	private List<StagedFileDetails> scanForIngestableFiles(Sequence sequence,String sourcePath, File[] ingestableFiles) {
+	private List<StagedFileDetails> scanForIngestableFiles(Domain domain, Sequence sequence, String sourcePath, File[] ingestableFiles) {
 		
 		List<StagedFileDetails> ingestFileList = new ArrayList<StagedFileDetails>();
     	for (int i = 0; i < ingestableFiles.length; i++) {
 			File nthIngestableFile = ingestableFiles[i];
-			StagedFileDetails nthIngestFile = getFileAttributes(nthIngestableFile, sequence, sourcePath);
+			StagedFileDetails nthIngestFile = getFileAttributes(nthIngestableFile, domain, sequence, sourcePath);
 			ingestFileList.add(nthIngestFile);
 		}
     	return ingestFileList;
 	}
 
 	
-	private StagedFileDetails getFileAttributes(File nthIngestableFile, Sequence sequence, String sourcePath) {
+	private StagedFileDetails getFileAttributes(File nthIngestableFile, Domain domain, Sequence sequence, String sourcePath) {
         long size = 0;
         int fileCount = 0;
         
@@ -136,7 +138,7 @@ public class SourceDirScanner {
 		nthIngestFile.setTotalSize(size);
 		//nthIngestDirectory.setFileSizeInMBytes(totalSizeInMB);
 
-		nthIngestFile.setErrors(stagedFileValidator.validate(nthIngestFile));
+		nthIngestFile.setErrors(stagedFileValidator.validate(nthIngestFile, domain));
 		
 		Boolean isKeepExtractedCode = sequence.isKeepCode();
 		Boolean isForceMatch = sequence.getForceMatch();
