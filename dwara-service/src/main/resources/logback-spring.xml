@@ -69,6 +69,11 @@
 		<appender-ref ref="RollingFile" />
 	</logger>
 
+	<logger name="org.ishafoundation.dwaraapi.utils"
+		level="info">
+		<appender-ref ref="RollingFile" />
+	</logger>
+	
 	<logger name="org.ishafoundation.videopub" level="info"
 		additivity="false">
 		<appender-ref ref="RollingFile" />
