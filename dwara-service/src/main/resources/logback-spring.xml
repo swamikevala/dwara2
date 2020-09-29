@@ -47,16 +47,20 @@
     <root level="info">
         <appender-ref ref="RollingFile" />
     </root>
+	<!-- 
+	<logger name="org.ishafoundation" level="trace">
+        <appender-ref ref="RollingFileTrace" />
+    </logger>
 
-	<logger name="org.ishafoundation.dwaraapi" level="trace">
-        <appender-ref ref="RollingFileTrace" />
+	<logger name="org.ishafoundation.dwaraapi" level="info">
+        <appender-ref ref="RollingFile" />
     </logger>
-    
+    -->
     <logger name="org.ishafoundation.dwaraapi.commandline" level="OFF">
-        <appender-ref ref="RollingFileTrace" />
+        <appender-ref ref="RollingFile" />
     </logger>
-    
-	<logger name="org.ishafoundation.videopub" level="trace">
-        <appender-ref ref="RollingFileTrace" />
-    </logger>
+    <!-- 
+	<logger name="org.ishafoundation.videopub" level="info">
+        <appender-ref ref="RollingFile" />
+    </logger>-->
 </configuration>
