@@ -56,13 +56,15 @@ public class BruArchiver implements IArchiveformatter {
 		
 		String commandOutput = null;
 //		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
-			logger.debug(" Bru write " +  bruCopyCommand);
+			logger.info("Bru write " +  bruCopyCommand);
 			commandOutput = executeWriteCommand(commandList, artifactNameToBeWritten, volumeBlocksize);
+			
 //		}
 		logger.trace("Before parsing bru response - " + commandOutput);
 		BruResponseParser bruResponseParser = new BruResponseParser();
 		BruResponse bruResponse = bruResponseParser.parseBruResponse(commandOutput);
-		logger.trace("Parsed bru response object - " + bruResponse);		
+		logger.trace("Parsed bru response object - " + bruResponse);
+		logger.info("Bru write complete - " +  bruResponse.getArchiveId());
 		return convertBruResponseToArchiveResponse(bruResponse, artifactNameToBeWritten, volumeBlocksize, archiveformatBlocksize);
 	}
 	
@@ -153,7 +155,7 @@ public class BruArchiver implements IArchiveformatter {
 		if(!success)
 			throw new Exception("Verification failed");
 		
-		
+		logger.info("Verification success");
 		return new ArchiveResponse();
 	}
 	
@@ -181,6 +183,7 @@ public class BruArchiver implements IArchiveformatter {
 			if(!success)
 				throw new Exception("Restored file's verification failed");
 		}
+		logger.info("Restoration complete");
 		return new ArchiveResponse();
 	}
 
@@ -208,7 +211,7 @@ public class BruArchiver implements IArchiveformatter {
 			
 			bruRestoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e  | bru -B -xvvvvvvvvv -QV -C -Pf -b " + volumeBlocksize + " -f /dev/stdin " + filePathNameToBeRestored;
 		}
-		logger.debug("Bru restoring to " + destinationPath + " - " +  bruRestoreCommand);
+		logger.info("Bru restoring to " + destinationPath + " - " +  bruRestoreCommand);
 	
 		List<String> commandList = new ArrayList<String>();
 		commandList.add("sh");

@@ -131,8 +131,9 @@ public class TarArchiver implements IArchiveformatter {
 		
 		String commandOutput = null;
 //		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
-			logger.debug(" Tar write " +  tarCopyCommand);
+			logger.info("Tar write " +  tarCopyCommand);
 			commandOutput = executeCommand(commandList, artifactNameToBeWritten, volumeBlocksize);
+			logger.info("Tar write complete");
 //		}
 		
 		logger.trace("Before parsing tar response - " + commandOutput);
@@ -230,7 +231,7 @@ public class TarArchiver implements IArchiveformatter {
 
 		HashMap<String, byte[]> filePathNameToChecksumObj = selectedStorageJob.getFilePathNameToChecksum();
 		boolean isSuccess = stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, false, targetLocationPath, true, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
-		logger.debug("verification status " + isSuccess);
+		logger.info("Verification success");
 		return new ArchiveResponse();
 	}
 	
@@ -277,6 +278,7 @@ public class TarArchiver implements IArchiveformatter {
 			if(!success)
 				throw new Exception("Restored file's verification failed");
 		}
+		logger.info("Restoration complete");
 		return new ArchiveResponse();
 	}
 	
@@ -302,8 +304,7 @@ public class TarArchiver implements IArchiveformatter {
 			
 			restoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e  | dd bs=" + volumeBlocksize	+ " count=" + noOfTapeBlocksToBeRead;
 		}
-		logger.debug("Tar restoration - " +  restoreCommand);
-		logger.debug("Will be restoring to - " + destinationPath);
+		logger.info("Tar restoring to " + destinationPath + " - " +  restoreCommand);
 		
 		List<String> commandList = new ArrayList<String>();
 		commandList.add("sh");
