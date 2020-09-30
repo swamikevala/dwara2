@@ -81,9 +81,11 @@ public class StagedFileOperations {
 	
 	// Returns something like /opt/dwara/bin/setperms -b /data/user -u pgurumurthy -c pub-video -a Shots-Of-Sadhanapada-Particpants-Volunteering-In-BSP_SPH-IYC_24-Oct-2019_Z280V_9 -g dwara -d 0775 -f 0664 -r
     private CommandLineExecutionResponse callStagingOpsScript(String script, StagingOpsAction action, String sourcePath, String artifactName, String newArtifactName) throws Exception {
-		String parts[] = sourcePath.split("/");
-		String user = parts[3];
-		String artifactclassName = parts[5];
+    	
+    	String suffixPath = sourcePath.replace(configuration.getReadyToIngestSrcDirRoot(), "");
+		String parts[] = suffixPath.split("/");
+		String user = parts[1];
+		String artifactclassName = parts[3];
 
 		List<String> setFilePermissionsCommandParamsList = new ArrayList<String>();
 		setFilePermissionsCommandParamsList.add("sudo");
