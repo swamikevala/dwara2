@@ -238,7 +238,7 @@ public class ProcessingJobManager implements Runnable{
 	
 					// Requeue scenario - Only failed files are to be continued...
 					Optional<TFileJob> tFileJobDB = tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId()));
-					if(tFileJobDB.isPresent() && tFileJobDB.get().getStatus() != Status.failed) {
+					if(tFileJobDB.isPresent() && (tFileJobDB.get().getStatus() == Status.in_progress || tFileJobDB.get().getStatus() == Status.completed)) {
 						logger.info(job.getId() + " already Inprogress/completed. Skipping it...");
 						continue;
 					}

@@ -70,7 +70,7 @@
 	</logger>
 
 	<logger name="org.ishafoundation.dwaraapi.utils"
-		level="info">
+		level="info" additivity="false">
 		<appender-ref ref="RollingFile" />
 	</logger>
 	
