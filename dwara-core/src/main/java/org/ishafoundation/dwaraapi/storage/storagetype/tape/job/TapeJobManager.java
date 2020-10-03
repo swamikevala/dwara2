@@ -375,6 +375,13 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 					volume.setSuspect(true);
 					volumeDao.save(volume);
 					logger.info("Marked the volume " + volume.getId() + " as suspect");
+					// requeuing the job in question after marking the tape bad, so that it gets picked up with the new tape...
+					try {
+						logger.info("Requeuing job " + job.getId() + " after marking the current tape as suspect. Attempt " + jobAlreadyRequeuedCount + 1);
+						jobServiceRequeueHelper.requeueJob(job.getId(),DwaraConstants.SYSTEM_USER_NAME);
+					} catch (Exception e1) {
+						logger.error("Unable to auto requeue failed job..." + job.getId(), e);
+					}
 				}
 			}
 			

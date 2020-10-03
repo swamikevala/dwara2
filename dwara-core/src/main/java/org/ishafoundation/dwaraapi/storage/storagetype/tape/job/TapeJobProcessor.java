@@ -269,7 +269,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		int lastArtifactOnVolumeEndVolumeBlock = lastArtifactOnVolume.getDetails().getEndVolumeBlock();
 
 		logger.trace("Now positioning tape head for finalizing " + tapeLibraryName + ":" + driveElementAddress);
-		tapeDriveManager.setTapeHeadPositionForFinalizing(tapeJob.getDeviceWwnId(), lastArtifactOnVolumeEndVolumeBlock + 3);
+		tapeDriveManager.setTapeHeadPositionForFinalizing(tapeJob.getDeviceWwnId(), lastArtifactOnVolumeEndVolumeBlock + 4);
 		logger.info("Tape Head positioned for finalizing " + tapeLibraryName + ":" + driveElementAddress);
 	}
 	

@@ -10,12 +10,12 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -256,20 +256,21 @@ public class ScheduledStatusUpdater {
 				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 
 				Artifact artifact = artifactRepository.findByWriteRequestId(nthRequest.getId()); 
+				Artifactclass artifactclass = artifact.getArtifactclass();
+				String srcRootLocation = artifactclass.getPathPrefix();
 
-				String destRootLocation = artifact.getArtifactclass().getPathPrefix();
-
-				if(destRootLocation != null) {
+				if(srcRootLocation != null) {
 					try {
-						java.io.File srcFile = FileUtils.getFile(artifact.getArtifactclass().getPathPrefix(), artifact.getName());
-						java.io.File destFile = FileUtils.getFile(destRootLocation, status.name(), artifact.getName());
+						java.io.File srcFile = FileUtils.getFile(srcRootLocation, artifact.getName());
+						java.io.File destFile = FileUtils.getFile(configuration.getIngestCompleteDirRoot(), artifact.getName());
 
 						if(srcFile.isFile())
-							Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destFile.getAbsolutePath())));		
+							//Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destFile.getAbsolutePath())));		
+							Files.createDirectories(Paths.get(configuration.getIngestCompleteDirRoot()));
 						else
 							Files.createDirectories(destFile.toPath());
 		
-						Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+						Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE); // what will be the timestamp of this moved file?
 					}
 					catch (Exception e) {
 						logger.error("Unable to move file "  + e.getMessage());

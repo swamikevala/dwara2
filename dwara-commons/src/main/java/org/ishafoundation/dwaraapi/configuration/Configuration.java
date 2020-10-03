@@ -19,6 +19,8 @@ public class Configuration {
 	
 	private String readyToIngestSrcDirRoot;
 	
+	private String ingestCompleteDirRoot;
+	
 	private String sshPrvKeyFileLocation;
 	
 	private String checksumType;
@@ -83,6 +85,14 @@ public class Configuration {
 
 	public void setReadyToIngestSrcDirRoot(String readyToIngestSrcDirRoot) {
 		this.readyToIngestSrcDirRoot = readyToIngestSrcDirRoot;
+	}
+
+	public String getIngestCompleteDirRoot() {
+		return ingestCompleteDirRoot;
+	}
+
+	public void setIngestCompleteDirRoot(String ingestCompleteDirRoot) {
+		this.ingestCompleteDirRoot = ingestCompleteDirRoot;
 	}
 
 	public String getSshPrvKeyFileLocation() {

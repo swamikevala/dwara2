@@ -239,7 +239,7 @@ public class ProcessingJobManager implements Runnable{
 					// Requeue scenario - Only failed files are to be continued...
 					Optional<TFileJob> tFileJobDB = tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId()));
 					if(tFileJobDB.isPresent() && (tFileJobDB.get().getStatus() == Status.in_progress || tFileJobDB.get().getStatus() == Status.completed)) {
-						logger.info(job.getId() + " already Inprogress/completed. Skipping it...");
+						logger.info("job-" + job.getId() + "-file-" + file.getId() + " already Inprogress/completed. Skipping it...");
 						continue;
 					}
 					
@@ -252,21 +252,23 @@ public class ProcessingJobManager implements Runnable{
 					for (Runnable runnable : runnableQueueList) {
 						ProcessingJobProcessor pjp = (ProcessingJobProcessor) runnable;
 						if(job.getId() == pjp.getJob().getId() && file.getId() == pjp.getFile().getId()) {
-							logger.debug(job.getId() + " already in ProcessingJobProcessor queue. Skipping it...");
+							logger.info("job-" + job.getId() + "-file-" + file.getId() + " already in ProcessingJobProcessor queue. Skipping it...");
 							alreadyQueued = true;
 							break;
 						}
 					}
 					
 					if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
-						TFileJob tFileJob = new TFileJob();
-						tFileJob.setId(new TFileJobKey(file.getId(), job.getId()));
-						tFileJob.setJob(job);
-						tFileJob.setArtifactId(inputArtifactId);
-						tFileJob.setStatus(Status.queued);
-						logger.debug("DB TFileJob Creation for file " + file.getId());
-						tFileJobDao.save(tFileJob);
-						logger.debug("DB TFileJob Creation - Success");
+						if(!tFileJobDB.isPresent()) {
+							TFileJob tFileJob = new TFileJob();
+							tFileJob.setId(new TFileJobKey(file.getId(), job.getId()));
+							tFileJob.setJob(job);
+							tFileJob.setArtifactId(inputArtifactId);
+							tFileJob.setStatus(Status.queued);
+							logger.debug("DB TFileJob Creation for file " + file.getId());
+							tFileJobDao.save(tFileJob);
+							logger.debug("DB TFileJob Creation - Success");
+						}
 						
 						ProcessingJobProcessor processingJobProcessor = applicationContext.getBean(ProcessingJobProcessor.class);
 						processingJobProcessor.setJob(job);
