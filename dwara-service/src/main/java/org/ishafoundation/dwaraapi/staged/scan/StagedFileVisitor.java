@@ -22,9 +22,14 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class StagedFileVisitor extends SimpleFileVisitor<Path> {
+	
+	private static final Logger logger = LoggerFactory.getLogger(StagedFileVisitor.class);
+	
 	private String stagedFileName = null;
 	private String junkFilesStagedDirName = null;
 	private List<Pattern> excludedFileNamesRegexList = null;
@@ -71,12 +76,14 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	@Override
 	public FileVisitResult preVisitDirectory(Path dir,
 			BasicFileAttributes attrs) {
-		if(dir.getFileName().toString().equals(this.junkFilesStagedDirName))
+		if(dir.getFileName().toString().equals(this.junkFilesStagedDirName)) {
+			logger.trace("Skipped " + junkFilesStagedDirName);
 			return SKIP_SUBTREE;
-
-		if(isJunk(dir))
+		}
+		if(isJunk(dir)) {
+			logger.trace("Skipped junk dir " + dir.toString());
 			return SKIP_SUBTREE;
-
+		}
 		return CONTINUE;
 	}
 
@@ -84,9 +91,10 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	public FileVisitResult visitFile(Path file,
 			BasicFileAttributes attrs) {
 
-		if(isJunk(file))
+		if(isJunk(file)) {
+			logger.trace("Skipped junk file " + file.toString());
 			return CONTINUE;
-
+		}
 		Path fileRealPath = null;
 		try {
 			fileRealPath = file.toRealPath();
@@ -96,18 +104,26 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 
 		// unresolved links
 		//if(Files.isSymbolicLink(file) && file.getCanonicalPath() == null)
-		if(Files.isSymbolicLink(file) && fileRealPath == null) {
-			hasUnresolvedSymLink = true;
+		if(Files.isSymbolicLink(file)) {
+			logger.trace("SymLink " + file.toString());
+			logger.trace("FileRealPath " + fileRealPath);
+			if(fileRealPath == null) {
+				logger.warn("Unresolved Sym Link " + file.toString());
+				hasUnresolvedSymLink = true;
+				return CONTINUE;
+			}
 		}
-
+		
 //		if(fileName.length() > 100)
 //			hasAnyFileNameGt100Chrs = true;
 
-
-		//if(fileRealPath != null && fileRealPath.toString().length() > 3072) // TODO - Need to remove the prefix path before artifact from path name length calculation
-		if((stagedFileName + StringUtils.substringAfter(file.toString(),stagedFileName)).length() > 3072)
+		String filePathName = stagedFileName + StringUtils.substringAfter(file.toString(),stagedFileName);
+		if(filePathName.length() > 3072) {
+			logger.warn("FilePathname > 3072 " + filePathName);
 			hasAnyFilePathNameGt3072Chrs = true;
-
+			return CONTINUE;
+		}
+		
 		fileCount++;
 		totalSize = totalSize + FileUtils.sizeOf(file.toFile());
 
@@ -125,8 +141,9 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	public FileVisitResult visitFileFailed(Path file,
 			IOException exc) {
 		if (exc instanceof FileSystemLoopException) {
-			System.err.println("cycle detected: " + file);
-			return TERMINATE;
+			logger.warn("Cycle detected: " + file);
+			hasSymLinkLoop = true;
+			return CONTINUE;// TODO: TERMINATE or CONTINUE???...
 		}
 		return CONTINUE;
 	}
@@ -139,10 +156,10 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 			Matcher m = nthJunkFilesFinderRegexPattern.matcher(path.getFileName().toString());
 			if(m.matches()) {
 				isJunk=true;
-				//				} else {
-				//					Matcher filePathMatcher = nthJunkFilesFinderRegexPattern.matcher(nthFilePath);
-				//					if(filePathMatcher.find())
-				//						isJunk=true;
+//			} else {
+//				Matcher filePathMatcher = nthJunkFilesFinderRegexPattern.matcher(nthFilePath);
+//				if(filePathMatcher.find())
+//					isJunk=true;
 			}
 		}
 		return isJunk;
