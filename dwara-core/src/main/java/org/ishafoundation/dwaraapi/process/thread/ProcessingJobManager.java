@@ -274,8 +274,6 @@ public class ProcessingJobManager implements Runnable{
 						processingJobProcessor.setJob(job);
 						processingJobProcessor.setDomain(domain);
 						processingJobProcessor.setInputArtifact(inputArtifact);
-						processingJobProcessor.setFileCount(filesToBeProcessedCount);
-						processingJobProcessor.setTotalSize(0); // TODO How to calculate this?
 						processingJobProcessor.setFile(file);
 						processingJobProcessor.setLogicalFile(logicalFile);
 						

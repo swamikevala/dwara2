@@ -86,8 +86,7 @@ public class ProcessingJobProcessor implements Runnable{
 	private Job job;
 	private Domain domain;
 	private Artifact inputArtifact;
-	private int fileCount;
-	private long totalSize;
+
 	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File file;
 	private LogicalFile logicalFile;
 	
@@ -119,22 +118,6 @@ public class ProcessingJobProcessor implements Runnable{
 
 	public void setInputArtifact(Artifact inputArtifact) {
 		this.inputArtifact = inputArtifact;
-	}
-
-	public int getFileCount() {
-		return fileCount;
-	}
-
-	public void setFileCount(int fileCount) {
-		this.fileCount = fileCount;
-	}
-
-	public long getTotalSize() {
-		return totalSize;
-	}
-
-	public void setTotalSize(long totalSize) {
-		this.totalSize = totalSize;
 	}
 
 	public org.ishafoundation.dwaraapi.db.model.transactional.domain.File getFile() {
@@ -264,18 +247,20 @@ public class ProcessingJobProcessor implements Runnable{
 				//synchronized (processingtaskResponse) { // A Synchronized block to ensure only one thread at a time updates... Handling it differently with extra checks..
 					if(outputArtifactName != null) {
 						ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-
 						Artifact outputArtifact = artifactRepository.findByName(outputArtifactName); 
 						if(outputArtifact == null) {// not already created.
 						    outputArtifact = domainUtil.getDomainSpecificArtifactInstance(domain);
 							
 						    artifactEntityUtil.setDomainSpecificArtifactRef(outputArtifact, inputArtifact);
-							
-							outputArtifact.setTotalSize(totalSize);
-						    outputArtifact.setFileCount(fileCount);
+
 						    //outputArtifact.setFileStructureMd5("not needed");
 						    outputArtifact.setArtifactclass(outputArtifactclass);
 						    outputArtifact.setName(outputArtifactName);
+						    //outputArtifact.setPrevSequenceCode(inputArtifact.getPrevSequenceCode());
+						    //outputArtifact.setSequenceCode(inputArtifact.getSequenceCode());
+						    outputArtifact.setSequenceCode(StringUtils.substringBefore(outputArtifactName, "_"));
+						    outputArtifact.setqLatestRequest(inputArtifact.getqLatestRequest());
+						    outputArtifact.setWriteRequest(inputArtifact.getWriteRequest());
 						    
 						    try {
 						    	outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
@@ -305,7 +290,7 @@ public class ProcessingJobProcessor implements Runnable{
 						FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
 						if(artifactFile == null) { // only if not already created... 
-							createFile(outputArtifactName, outputArtifact, domainSpecificFileRepository);	
+							artifactFile = createFile(outputArtifactName, outputArtifact, domainSpecificFileRepository);	
 						}
 						
 						// creating File records for the process generated files
@@ -327,6 +312,10 @@ public class ProcessingJobProcessor implements Runnable{
 							logger.trace("Now creating file record for - " + filepathName);
 							createFile(filepathName, outputArtifact, domainSpecificFileRepository);	
 						}
+						
+						outputArtifact.setTotalSize(artifactFile.getSize());
+					    outputArtifact.setFileCount(files.length);
+					    outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
 					}
 				//}
 				staus = Status.completed;
@@ -362,7 +351,7 @@ public class ProcessingJobProcessor implements Runnable{
 		}
 	}
 
-	private void createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository) throws Exception {
+	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository) throws Exception {
 	    org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
 		
 	    fileEntityUtil.setDomainSpecificFileRef(nthFileRowToBeInserted, file);
@@ -391,10 +380,10 @@ public class ProcessingJobProcessor implements Runnable{
 				logger.warn("Weird. File exists but fileutils unable to calculate size. Skipping setting size");
 			}
 		}
-		
+		org.ishafoundation.dwaraapi.db.model.transactional.domain.File savedFile = null;
 		logger.debug("DB File Creation");
 		try {
-			domainSpecificFileRepository.save(nthFileRowToBeInserted);
+			savedFile = domainSpecificFileRepository.save(nthFileRowToBeInserted);
 		}
 		catch (Exception e) {
 			nthFileRowToBeInserted = domainSpecificFileRepository.findByPathname(filePathname);
@@ -407,6 +396,7 @@ public class ProcessingJobProcessor implements Runnable{
 				throw e;
 		}
 		logger.debug("DB File Creation - Success");
+		return savedFile;
 	}
 
 	/**

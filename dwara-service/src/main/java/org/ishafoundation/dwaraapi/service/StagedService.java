@@ -5,6 +5,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -521,7 +522,7 @@ public class StagedService extends DwaraService{
 			
 			String filePath = file.getAbsolutePath();
 			filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); // just holding the file path from the artifact folder and not the absolute path.
-			
+			logger.trace("filePath - " + filePath);
 			File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
 			nthFileRowToBeInserted.setPathname(filePath);
 			fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, artifact);
@@ -530,6 +531,7 @@ public class StagedService extends DwaraService{
 				nthFileRowToBeInserted.setSize(artifactSize);
 			else
 				nthFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
+			
 			toBeAddedFileTableEntries.add(nthFileRowToBeInserted);			
 		}
 		
@@ -569,6 +571,7 @@ public class StagedService extends DwaraService{
 	    	libraryFileAndDirsList = new ArrayList<java.io.File>();
 	    	libraryFileAndDirsList.add(libraryFileInStagingDir);
 	    }
+	    Collections.sort((List<java.io.File>) libraryFileAndDirsList);
 	    return libraryFileAndDirsList;
 	}
 
