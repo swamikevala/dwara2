@@ -4,9 +4,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
@@ -17,8 +15,6 @@ import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
-import org.ishafoundation.dwaraapi.utils.ArtifactFileDetails;
-import org.ishafoundation.dwaraapi.utils.JunkFilesDealer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,12 +32,9 @@ public class SourceDirScanner {
     private ConfigurationTablesUtil configurationTablesUtil;
 	
 	@Autowired
-    private IStagedFileValidator stagedFileValidator;
+    private StagedFileEvaluator stagedFileEvaluator;
 	
-	@Autowired
-    private JunkFilesDealer junkFilesDealer;
-
-	private Pattern folderNameWithoutPrevSeqCodePattern = Pattern.compile("([_-]?)(.*)");
+//	private Pattern folderNameWithoutPrevSeqCodePattern = Pattern.compile("([_-]?)(.*)");
     private String DELETED = "deleted";
 	
 	public List<StagedFileDetails> scanSourceDir(Artifactclass artifactclass, List<String> scanFolderBasePathList) {
@@ -59,21 +52,17 @@ public class SourceDirScanner {
     	for (String nthScanFolderBasePath : scanFolderBasePathList) {
 			String sourcePath = nthScanFolderBasePath + File.separator + Action.ingest.name() + File.separator + artifactclassName;
 			
-			//IOFileFilter dirFilter = FileFilterUtils.directoryFileFilter(); We need not show only directories but can also show files - Like Audio and 
 			IOFileFilter notCancelledFolderFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(Status.cancelled.toString()));
 			IOFileFilter notDeletedFolderFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(DELETED));
 			
-			//FileFilter allDirectoriesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(dirFilter, notCancelledFolderFilter, notDeletedFolderFilter);
 			FileFilter allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(notCancelledFolderFilter, notDeletedFolderFilter);//FileFilterUtils.and(dirFilter, notCancelledFolderFilter, notDeletedFolderFilter);
-//			if(artifactclassName.contains("audio"))
-//				allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(notCancelledFolderFilter, notDeletedFolderFilter);
 	    	File[] ingestableFiles = new File(sourcePath).listFiles(allFilesExcludingCancelledAndDeletedDirectoryFilter);
 	    	if(ingestableFiles != null) {
 	    		List<StagedFileDetails> nthScanFolderBaseIngestDirectoryList = scanForIngestableFiles(domain, sequence, sourcePath, ingestableFiles);
 	    		ingestReadyFileList.addAll(nthScanFolderBaseIngestDirectoryList);
 	    	}
 	    	
-	    	// All cancelled mediaartifact...
+	    	// All cancelled artifact...
 	    	String cancelledOriginSourceDir = sourcePath + File.separator + Status.cancelled.toString();
 	    	File[] cancelledIngestableFiles = new File(cancelledOriginSourceDir).listFiles();
 	    	if(cancelledIngestableFiles != null) {
@@ -81,7 +70,7 @@ public class SourceDirScanner {
 	    		ingestReadyFileList.addAll(nthScanFolderBaseCancelledDirectoryIngestFileList);
 	    	}	
 	    	
-	    	// All deleted mediaartifact...
+	    	// All deleted artifact...
 	    	String deletedOriginSourceDir = sourcePath + File.separator + DELETED;
 	    	File[] deletedIngestableFiles = new File(deletedOriginSourceDir).listFiles();
 	    	if(deletedIngestableFiles != null) {
@@ -98,64 +87,10 @@ public class SourceDirScanner {
 		List<StagedFileDetails> ingestFileList = new ArrayList<StagedFileDetails>();
     	for (int i = 0; i < ingestableFiles.length; i++) {
 			File nthIngestableFile = ingestableFiles[i];
-			StagedFileDetails nthIngestFile = getFileAttributes(nthIngestableFile, domain, sequence, sourcePath);
+			StagedFileDetails nthIngestFile = stagedFileEvaluator.evaluateAndGetDetails(domain, sequence, sourcePath, nthIngestableFile);
 			ingestFileList.add(nthIngestFile);
 		}
     	return ingestFileList;
-	}
-
-	
-	private StagedFileDetails getFileAttributes(File nthIngestableFile, Domain domain, Sequence sequence, String sourcePath) {
-        long size = 0;
-        int fileCount = 0;
-        
-        String fileName = nthIngestableFile.getName();
-        if(nthIngestableFile.isDirectory()) {
-	        ArtifactFileDetails fd = junkFilesDealer.getJunkFilesExcludedFileDetails(nthIngestableFile.getAbsolutePath());
-	        // added to try catch for the test api not to throw an error when looking for a non-existing folder
-	        try {
-	        	size = fd.getTotalSize();
-	        }catch (Exception e) {
-				// swallowing it...
-	        	logger.trace("Unable to calculate size for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
-			}
-        
-            try {
-            	fileCount = fd.getCount();
-            }catch (Exception e) {
-				// swallowing it...
-            	logger.trace("Unable to list files for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
-			}
-        }else {
-        	size = FileUtils.sizeOf(nthIngestableFile);
-        	fileCount = 1;
-        }
-		
-		StagedFileDetails nthIngestFile = new StagedFileDetails();
-		nthIngestFile.setName(fileName);		
-		nthIngestFile.setPath(sourcePath);
-		nthIngestFile.setFileCount(fileCount);
-		nthIngestFile.setTotalSize(size);
-		//nthIngestDirectory.setFileSizeInMBytes(totalSizeInMB);
-
-		nthIngestFile.setErrors(stagedFileValidator.validate(nthIngestFile, domain));
-		
-		Boolean isKeepExtractedCode = sequence.isKeepCode();
-		Boolean isForceMatch = sequence.getForceMatch();
-		
-		if(!isKeepExtractedCode) {
-			String prevSeqCode = sequenceUtil.getExtractedCode(sequence, fileName);
-			nthIngestFile.setPrevSequenceCode(prevSeqCode);
-		}	
-		if(isForceMatch != null && isForceMatch)
-			nthIngestFile.setPrevSequenceCodeExpected(true);
-		
-		// TODO : Talk to swami - do we still need suggested filename now that we are not migrating
-//		String customFileName = getCustomArtifactName(fileName, prevSeqCode, sequence, isKeepExtractedCode);
-//		if(!fileName.equals(customFileName))
-//			nthIngestFile.setSuggestedName(customFileName);
-		
-		return nthIngestFile;
 	}
 
 	// All isha specific logic should go out...

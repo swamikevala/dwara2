@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Profile({ "dev | stage" })
-public class MockCommandLineExecuterImpl extends CommandLineExecuterImpl{
+public class MockCommandLineExecuterImpl extends RetriableCommandLineExecutorImpl{
 
 	private static Logger logger = LoggerFactory.getLogger(MockCommandLineExecuterImpl.class);
 	
