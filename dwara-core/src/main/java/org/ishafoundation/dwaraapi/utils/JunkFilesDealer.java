@@ -80,6 +80,7 @@ public class JunkFilesDealer {
 							Files.move(nthFile.toPath(), destDir.toPath(), StandardCopyOption.ATOMIC_MOVE);
 						}catch (Exception e) {
 							logger.error("Unable to move file " + nthFilePath + " to " + destPath + " as " + e.getMessage(), e);
+							// Should we throw ???
 						}
 						break;
 					}

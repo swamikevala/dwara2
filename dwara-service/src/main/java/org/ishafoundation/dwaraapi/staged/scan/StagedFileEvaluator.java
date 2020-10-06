@@ -52,7 +52,7 @@ public class StagedFileEvaluator {
 	@PostConstruct
 	public void getExcludedFileNamesRegexList() {
 		regexAllowedChrsInFileName = config.getRegexAllowedChrsInFileName();
-		allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
+		allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName, Pattern.UNICODE_CHARACTER_CLASS);
 
 		String[] junkFilesFinderRegexPatternList = config.getJunkFilesFinderRegexPatternList();
 		for (int i = 0; i < junkFilesFinderRegexPatternList.length; i++) {
