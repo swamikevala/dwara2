@@ -285,20 +285,18 @@ public class ProcessingJobProcessor implements Runnable{
 						    // Now setting all the dependentjobs with the tasktype generated output artifactid
 						    setInputArtifactForDependentJobs(job, outputArtifact);
 						}
-
-						String proxyFilePathName = processingtaskResponse.getDestinationPathname(); 
-						String proxyFileBaseName = FilenameUtils.getBaseName(proxyFilePathName);
-						String proxyFilePath = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathName);
 						
 						// Output Artifact as a file record
 						FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
 						if(artifactFile == null) { // only if not already created... 
-							artifactFile = createFile(proxyFilePath + File.separator + outputArtifactName, outputArtifact, domainSpecificFileRepository);	
+							artifactFile = createFile(outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName, outputArtifact, domainSpecificFileRepository);	
 						}
 						
 						// creating File records for the process generated files
-
+						String proxyFilePathName = processingtaskResponse.getDestinationPathname(); 
+						String proxyFileBaseName = FilenameUtils.getBaseName(proxyFilePathName);
+						String proxyFilePath = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathName);
 				        FilenameFilter fileNameFilter = new FilenameFilter() {
 				            @Override
 				            public boolean accept(File dir, String name) {
