@@ -31,9 +31,6 @@ public class Filetype{
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
     private List<ExtensionFiletype> extensions = new ArrayList<>();
-	
-    @Column(name="pathname_regex")
-    private String pathnameRegex;
     
     public Filetype() {
     	
@@ -89,14 +86,6 @@ public class Filetype{
             }
         }
     }*/
-    
-    public String getPathnameRegex() {
-		return pathnameRegex;
-	}
-
-	public void setPathnameRegex(String pathnameRegex) {
-		this.pathnameRegex = pathnameRegex;
-	}
 
 	@Override
     public boolean equals(Object o) {

@@ -24,15 +24,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
+import org.ishafoundation.dwaraapi.db.keys.ArtifactclassProcessingtaskKey;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassProcessingtask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -71,6 +74,9 @@ public class ProcessingJobManager implements Runnable{
 	
 	@Autowired
 	private JobDao jobDao;
+	
+	@Autowired
+	private ArtifactclassProcessingtaskDao artifactclassProcessingtaskDao;
 	
 	@Autowired
 	private TFileJobDao tFileJobDao;
@@ -167,9 +173,9 @@ public class ProcessingJobManager implements Runnable{
 			Integer inputArtifactId = job.getInputArtifactId();
 			Artifact inputArtifact = (Artifact) artifactRepository.findById(inputArtifactId).get();
 			
-			String artifactName = inputArtifact.getName();
-			Artifactclass artifactclass = inputArtifact.getArtifactclass();
-			String inputArtifactPath = artifactclass.getPath() + File.separator + artifactName;
+			String inputArtifactName = inputArtifact.getName();
+			Artifactclass inputArtifactclass = inputArtifact.getArtifactclass();
+			String inputArtifactPath = inputArtifactclass.getPath() + File.separator + inputArtifactName;
 	
 			// For the task getting processed check
 			// 1) if there are any dependent tasks 
@@ -181,7 +187,7 @@ public class ProcessingJobManager implements Runnable{
 			String outputArtifactName = null;
 			String outputArtifactPathname = null; // holds where to generate the files in the physical system...
 			if(outputArtifactclass != null) {
-				outputArtifactName = getOutputArtifactName(outputArtifactclass, artifactName);
+				outputArtifactName = getOutputArtifactName(outputArtifactclass, inputArtifactName);
 				outputArtifactPathname = getOutputArtifactPathname(outputArtifactclass, outputArtifactName);
 			}
 			
@@ -201,7 +207,7 @@ public class ProcessingJobManager implements Runnable{
 				ft = filetypeDao.findById(processingtask.getFiletypeId()).get();
 			}
 				
-			Collection<LogicalFile> selectedFileList = getLogicalFileList(ft, inputArtifactPath);
+			Collection<LogicalFile> selectedFileList = getLogicalFileList(ft, inputArtifactPath, inputArtifactclass.getId(), processingtaskId);
 			int filesToBeProcessedCount = selectedFileList.size();
 			logger.trace("filesToBeProcessedCount " + filesToBeProcessedCount);
 			
@@ -219,13 +225,13 @@ public class ProcessingJobManager implements Runnable{
 					String artifactNamePrefixedFilePathname = null; // 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4 || 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
 					String outputFilePath = null; // /data/transcoded/public
 					if(StringUtils.isNotBlank(FilenameUtils.getExtension(inputArtifactPath))) { // means input artifact is a file and not a directory
-						artifactNamePrefixedFilePathname = artifactName; // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4
+						artifactNamePrefixedFilePathname = inputArtifactName; // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4
 						if(outputArtifactPathname != null)
 							outputFilePath = outputArtifactPathname;
 					}
 					else {
 						String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPath + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
-						artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPath + File.separator, artifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
+						artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPath + File.separator, inputArtifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
 						
 						if(outputArtifactPathname != null) {
 							String suffixPath = FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
@@ -345,7 +351,7 @@ public class ProcessingJobManager implements Runnable{
 		return filePathTofileObj;
 	}
 	
-	private Collection<LogicalFile> getLogicalFileList(Filetype filetype, String inputArtifactPath){
+	private Collection<LogicalFile> getLogicalFileList(Filetype filetype, String inputArtifactPath, String inputArtifactclassId, String processingtaskId){
 		
 		Collection<LogicalFile> logicalFileCollection =  new ArrayList<LogicalFile>(); 
 		
@@ -356,7 +362,8 @@ public class ProcessingJobManager implements Runnable{
 		boolean includeSidecarFiles = false;
 		if(filetype != null) { // if filetype is null extensions are set to null which will get all the files listed - eg., process like checksum-gen
 			Set<String> pathsToBeUsed = new TreeSet<String>(); 
-			String pathnameRegex = filetype.getPathnameRegex();
+			Optional<ArtifactclassProcessingtask> artifactclassProcessingtask = artifactclassProcessingtaskDao.findById(new ArtifactclassProcessingtaskKey(inputArtifactclassId, processingtaskId));
+			String pathnameRegex = artifactclassProcessingtask.isPresent() ? artifactclassProcessingtask.get().getPathnameRegex() : null;
 			if(pathnameRegex != null) {
 				FiletypePathnameReqexVisitor filetypePathnameReqexVisitor = new FiletypePathnameReqexVisitor(pathnameRegex);
 				try {
