@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
@@ -13,7 +14,7 @@ import org.ishafoundation.dwaraapi.db.keys.ArtifactclassProcessingtaskKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 
-//@Entity(name = "ArtifactclassProcessingtask")
+@Entity(name = "ArtifactclassProcessingtask")
 @Table(name="artifactclass_processingtask")
 public class ArtifactclassProcessingtask {
 
