@@ -1,6 +1,9 @@
 package org.ishafoundation.dwaraapi.process.thread;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,6 +12,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -40,6 +45,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
+import org.ishafoundation.dwaraapi.process.helpers.FiletypePathnameReqexVisitor;
 import org.ishafoundation.dwaraapi.process.helpers.LogicalFileHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -341,12 +347,30 @@ public class ProcessingJobManager implements Runnable{
 	
 	private Collection<LogicalFile> getLogicalFileList(Filetype filetype, String inputArtifactPath){
 		
+		Collection<LogicalFile> logicalFileCollection =  new ArrayList<LogicalFile>(); 
+		
 		List<String> extensions = null;
 		String[] extensionsArray = null;
 		List<String> sidecarExtensions = null;
 		String[] sidecarExtensionsArray = null;
 		boolean includeSidecarFiles = false;
 		if(filetype != null) { // if filetype is null extensions are set to null which will get all the files listed - eg., process like checksum-gen
+			Set<String> pathsToBeUsed = new TreeSet<String>(); 
+			String pathnameRegex = filetype.getPathnameRegex();
+			if(pathnameRegex != null) {
+				FiletypePathnameReqexVisitor filetypePathnameReqexVisitor = new FiletypePathnameReqexVisitor(pathnameRegex);
+				try {
+					Files.walkFileTree(Paths.get(inputArtifactPath), filetypePathnameReqexVisitor);
+				} catch (IOException e) {
+					// swallow for now
+				}
+				if(filetypePathnameReqexVisitor != null) {
+					pathsToBeUsed.addAll(filetypePathnameReqexVisitor.getPaths());
+				}
+			} else {
+				pathsToBeUsed.add(inputArtifactPath);	
+			}
+				
 			extensions = new ArrayList<String>();
 			sidecarExtensions = new ArrayList<String>();
 			List<ExtensionFiletype> extn_Filetype_List = filetype.getExtensions(); //extensionFiletypeDao.findAllByFiletypeId(filetype.getId());
@@ -362,8 +386,14 @@ public class ProcessingJobManager implements Runnable{
 			}
 			extensionsArray = ArrayUtils.toStringArray(extensions.toArray());
 			sidecarExtensionsArray = ArrayUtils.toStringArray(sidecarExtensions.toArray());
+			
+			for (String nthPathToBeUsed : pathsToBeUsed) {
+				logicalFileCollection.addAll(fileHelper.getFiles(nthPathToBeUsed, extensionsArray, includeSidecarFiles, sidecarExtensionsArray));				
+			}
 		}
+		else
+			logicalFileCollection.addAll(fileHelper.getFiles(inputArtifactPath, extensionsArray, includeSidecarFiles, sidecarExtensionsArray));
 		
-		return fileHelper.getFiles(inputArtifactPath, extensionsArray, includeSidecarFiles, sidecarExtensionsArray);
+		return logicalFileCollection;
 	}
 }

@@ -286,6 +286,13 @@ public abstract class AbstractStoragetypeJobProcessor {
 	protected void afterVerify(SelectedStorageJob selectedStorageJob) {
 		// update the verified date here...
 		updateFileVolumeVerifiedDate(selectedStorageJob);
+		
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
+		String fileNameToBeVerified = storageJob.getArtifact().getName();
+		String filePathNameToBeVerified = storageJob.getTargetLocationPath() + java.io.File.separator + fileNameToBeVerified;
+		java.io.File fileToBeVerified = new java.io.File(filePathNameToBeVerified);
+		if(fileToBeVerified.exists())
+			fileToBeVerified.delete();
 	}
 
 	private void updateFileVolumeVerifiedDate(SelectedStorageJob selectedStorageJob) {

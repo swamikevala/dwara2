@@ -52,7 +52,8 @@ public class StagedFileEvaluator {
 	@PostConstruct
 	public void getExcludedFileNamesRegexList() {
 		regexAllowedChrsInFileName = config.getRegexAllowedChrsInFileName();
-		allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName, Pattern.UNICODE_CHARACTER_CLASS);
+		//allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName, Pattern.UNICODE_CHARACTER_CLASS); // Reverted this change per latest comment on DU-194
+		allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
 
 		String[] junkFilesFinderRegexPatternList = config.getJunkFilesFinderRegexPatternList();
 		for (int i = 0; i < junkFilesFinderRegexPatternList.length; i++) {
@@ -198,17 +199,17 @@ public class StagedFileEvaluator {
 
 	private List<Error> validateName(String fileName) {
 		List<Error> errorList = new ArrayList<Error>();
-		if(fileName.length() > 150) {
+		if(fileName.length() > 255) {
 			Error error = new Error();
-			error.setType(Errortype.Warning);
-			error.setMessage("Artifact Name gt 150 characters");
+			error.setType(Errortype.Error);
+			error.setMessage("Artifact Name gt 255 characters");
 			errorList.add(error);
 		}
 
 		Matcher m = allowedChrsInFileNamePattern.matcher(fileName);
 		if(!m.matches()) {
 			Error error = new Error();
-			error.setType(Errortype.Warning);
+			error.setType(Errortype.Error);
 			error.setMessage("Artifact Name contains special characters");
 			errorList.add(error);
 		}

@@ -375,7 +375,7 @@ public class StagedService extends DwaraService{
 	    	
 	    	if(!isLevel3Pass)
 	    		ingestResponse.setStagedFiles(stagedFileDetailsList);
-	    	else { // Next steps on Ingest - Only when level 2 validation succeeds...
+	    	else { // Next steps on Ingest - Only when level 3 validation succeeds...
 		    	List<IngestSystemRequest> ingestSystemRequests = new ArrayList<IngestSystemRequest>();
 		    	for (StagedFile stagedFile : stagedFileList) {
 		    		String stagedFileName = stagedFile.getName();
