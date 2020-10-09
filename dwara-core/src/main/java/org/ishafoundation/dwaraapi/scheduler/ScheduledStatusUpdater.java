@@ -255,7 +255,7 @@ public class ScheduledStatusUpdater {
 				Domain domain = domainUtil.getDomain(nthRequest);
 				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 
-				Artifact artifact = artifactRepository.findByWriteRequestId(nthRequest.getId()); 
+				Artifact artifact = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(nthRequest.getId()); 
 				Artifactclass artifactclass = artifact.getArtifactclass();
 				String srcRootLocation = artifactclass.getPathPrefix();
 

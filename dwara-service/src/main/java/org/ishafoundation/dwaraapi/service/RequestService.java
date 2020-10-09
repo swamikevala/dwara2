@@ -119,7 +119,7 @@ public class RequestService extends DwaraService{
 				
 				Domain domain = domainUtil.getDomain(requestToBeCancelled);
 				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-				Artifact artifact = artifactRepository.findByWriteRequestId(requestToBeCancelled.getId()); 
+				Artifact artifact = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(requestToBeCancelled.getId()); 
 	
 				String destRootLocation = requestToBeCancelled.getDetails().getStagedFilepath();
 				if(destRootLocation != null) {
@@ -174,7 +174,7 @@ public class RequestService extends DwaraService{
 				Domain domain = domainUtil.getDomain(artifactclassId);
 				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 
-				Artifact systemArtifact = artifactRepository.findByWriteRequestId(requestId); 
+				Artifact systemArtifact = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(requestId); 
 				if(systemArtifact != null) {
 					org.ishafoundation.dwaraapi.api.resp.request.Artifact artifactForResponse = new org.ishafoundation.dwaraapi.api.resp.request.Artifact();
 					artifactForResponse.setArtifactclass(systemArtifact.getArtifactclass().getId());
