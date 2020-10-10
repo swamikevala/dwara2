@@ -22,7 +22,7 @@ public class TarBlockCalculatorUtil {
 	// TODO : better this logic... 1 or 3 blocks based on 100 character limit or something better identification?
 	public static int getFileHeaderBlocks(String fileName){
 		int fileHeaderBlocks = 1;
-		if(fileName.length() >= FILENAME_CHARACTER_THRESHOLD_PER_TAR_BLOCK) {
+		if(fileName.length() >= FILENAME_CHARACTER_THRESHOLD_PER_TAR_BLOCK) { // Reference TarArchiveOutputStream.handleLongName().if (len >= TarConstants.NAMELEN)
 			fileHeaderBlocks = 3;
 		}
 		return fileHeaderBlocks;	
