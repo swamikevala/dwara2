@@ -5,12 +5,15 @@ import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 import static java.nio.file.FileVisitResult.TERMINATE;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystemLoopException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Iterator;
 import java.util.List;
@@ -30,11 +33,13 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(StagedFileVisitor.class);
 	
+	private String artifactSrcPathLocation = null;
 	private String stagedFileName = null;
 	private String junkFilesStagedDirName = null;
 	private List<Pattern> excludedFileNamesRegexList = null;
 	private Set<String> supportedExtns =  null;
-
+	private boolean isMove = false;
+	
 	private int fileCount = 0;
 	private long totalSize = 0;
 	
@@ -42,12 +47,23 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	private Set<String> symLinkLoops = new TreeSet<String>();
 	private Set<String> unSupportedExtns = new TreeSet<String>();
 	private Set<String> filePathNamesGt3072Chrs = new TreeSet<String>();
+	
 
 	StagedFileVisitor(String stagedFileName, String junkFilesStagedDirName, List<Pattern> excludedFileNamesRegexList, Set<String> supportedExtns) {
 		this.stagedFileName = stagedFileName;
 		this.junkFilesStagedDirName = junkFilesStagedDirName;
 		this.excludedFileNamesRegexList = excludedFileNamesRegexList;
 		this.supportedExtns = supportedExtns;
+	}
+
+	
+	StagedFileVisitor(String artifactSrcPathLocation, String stagedFileName, String junkFilesStagedDirName, List<Pattern> excludedFileNamesRegexList, Set<String> supportedExtns, boolean isMove) {
+		this.artifactSrcPathLocation = artifactSrcPathLocation;
+		this.stagedFileName = stagedFileName;
+		this.junkFilesStagedDirName = junkFilesStagedDirName;
+		this.excludedFileNamesRegexList = excludedFileNamesRegexList;
+		this.supportedExtns = supportedExtns;
+		this.isMove = isMove;
 	}
 
 	public int getFileCount() {
@@ -57,7 +73,6 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	public long getTotalSize() {
 		return totalSize;
 	}
-	
 
 	public Set<String> getUnresolvedSymLinks() {
 		return unresolvedSymLinks;
@@ -78,12 +93,28 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	@Override
 	public FileVisitResult preVisitDirectory(Path dir,
 			BasicFileAttributes attrs) {
+		
 		if(dir.getFileName().toString().equals(this.junkFilesStagedDirName)) {
 			logger.trace("Skipped " + junkFilesStagedDirName);
 			return SKIP_SUBTREE;
 		}
+		
 		if(isJunk(dir)) {
-			logger.trace("Skipped junk dir " + dir.toString());
+			if(isMove) {
+				String destPath = dir.toString().replace(artifactSrcPathLocation, artifactSrcPathLocation + File.separator + junkFilesStagedDirName);
+				File destDir = new File(destPath);					
+				try {
+					Files.createDirectories(Paths.get(destPath));
+
+					Files.move(dir, destDir.toPath(), StandardCopyOption.ATOMIC_MOVE);
+					logger.trace("Moved junk dir " + dir.toString());
+				}catch (Exception e) {
+					logger.error("Unable to move file " + dir + " to " + destPath + " as " + e.getMessage(), e);
+					// Should we throw ???
+				}
+			}
+			else
+				logger.trace("Skipped junk dir " + dir.toString());
 			return SKIP_SUBTREE;
 		}
 		return CONTINUE;
@@ -96,9 +127,24 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 		String filePathName = file.toString();
 		
 		if(isJunk(file)) {
-			logger.trace("Skipped junk file " + filePathName);
+			if(isMove) {
+				String destPath = file.toString().replace(artifactSrcPathLocation, artifactSrcPathLocation + File.separator + junkFilesStagedDirName);
+				File destDir = new File(destPath);					
+				try {
+					Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
+
+					Files.move(file, destDir.toPath(), StandardCopyOption.ATOMIC_MOVE);
+					logger.trace("Moved junk file " + filePathName);
+				}catch (Exception e) {
+					logger.error("Unable to move file " + file + " to " + destPath + " as " + e.getMessage(), e);
+					// Should we throw ???
+				}
+			}
+			else
+				logger.trace("Skipped junk file " + filePathName);
 			return CONTINUE;
 		}
+		
 		Path fileRealPath = null;
 		try {
 			fileRealPath = file.toRealPath();
@@ -148,7 +194,10 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 		
 		String filePathName = file.toString();
 		if(isJunk(file)) {
-			logger.trace("Skipped junk visit failed file " + filePathName);
+			if(isMove)
+				logger.trace("Skipped moving junk visit failed file " + filePathName);
+			else
+				logger.trace("Skipped junk visit failed file " + filePathName);
 			return CONTINUE;
 		}
 		

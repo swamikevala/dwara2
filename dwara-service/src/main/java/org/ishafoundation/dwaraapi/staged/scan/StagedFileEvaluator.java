@@ -66,7 +66,66 @@ public class StagedFileEvaluator {
 			supportedExtns.add(extension.getId().toLowerCase());
 		}
 	}
-
+	
+	public ArtifactFileDetails getDetails(File nthIngestableFile){
+		long size = 0;
+		int fileCount = 0;
+		StagedFileVisitor sfv = null;
+		if(nthIngestableFile.isDirectory()) {
+			EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+		
+			sfv = new StagedFileVisitor(nthIngestableFile.getName(), config.getJunkFilesStagedDirName(), excludedFileNamesRegexList, supportedExtns);
+			try {
+				Files.walkFileTree(nthIngestableFile.toPath(), opts, Integer.MAX_VALUE, sfv);
+			} catch (IOException e) {
+				// swallow for now
+			}
+			if(sfv != null) {
+				size = sfv.getTotalSize();
+				fileCount = sfv.getFileCount();
+			}
+		}else {
+			size = FileUtils.sizeOf(nthIngestableFile);
+			fileCount = 1;
+		}
+		
+		ArtifactFileDetails afd = new ArtifactFileDetails();
+		afd.setTotalSize(size);
+		afd.setCount(fileCount);
+		
+		return afd;
+	}
+	
+	
+	public ArtifactFileDetails moveJunkAndGetDetails(File nthIngestableFile){
+		long size = 0;
+		int fileCount = 0;
+		StagedFileVisitor sfv = null;
+		if(nthIngestableFile.isDirectory()) {
+			EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+		
+			sfv = new StagedFileVisitor(nthIngestableFile.getAbsolutePath(), nthIngestableFile.getName(), config.getJunkFilesStagedDirName(), excludedFileNamesRegexList, supportedExtns, true);
+			try {
+				Files.walkFileTree(nthIngestableFile.toPath(), opts, Integer.MAX_VALUE, sfv);
+			} catch (IOException e) {
+				// swallow for now
+			}
+			if(sfv != null) {
+				size = sfv.getTotalSize();
+				fileCount = sfv.getFileCount();
+			}
+		}else {
+			size = FileUtils.sizeOf(nthIngestableFile);
+			fileCount = 1;
+		}
+		
+		ArtifactFileDetails afd = new ArtifactFileDetails();
+		afd.setTotalSize(size);
+		afd.setCount(fileCount);
+		
+		return afd;
+	}
+	
 	public StagedFileDetails evaluateAndGetDetails(Domain domain, Sequence sequence, String sourcePath, File nthIngestableFile){
 		long size = 0;
 		int fileCount = 0;

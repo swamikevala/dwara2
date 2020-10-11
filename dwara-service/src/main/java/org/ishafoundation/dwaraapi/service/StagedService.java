@@ -54,9 +54,9 @@ import org.ishafoundation.dwaraapi.staged.StagedFileOperations;
 import org.ishafoundation.dwaraapi.staged.scan.Error;
 import org.ishafoundation.dwaraapi.staged.scan.Errortype;
 import org.ishafoundation.dwaraapi.staged.scan.SourceDirScanner;
+import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
 import org.ishafoundation.dwaraapi.utils.ArtifactFileDetails;
 import org.ishafoundation.dwaraapi.utils.ExtensionsUtil;
-import org.ishafoundation.dwaraapi.utils.JunkFilesDealer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,7 +101,7 @@ public class StagedService extends DwaraService{
 	private ExtensionsUtil extensionsUtil;
 	
 	@Autowired
-	private JunkFilesDealer junkFilesDealer;
+    private StagedFileEvaluator stagedFileEvaluator;
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
@@ -225,27 +225,31 @@ public class StagedService extends DwaraService{
 				
 		        long size = 0;
 		        int fileCount = 0;
+
+		        org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails fd = stagedFileEvaluator.getDetails(nthIngestableFile);
+		        size = fd.getTotalSize();
+		        fileCount = fd.getCount();
 		        
-		        if(nthIngestableFile.isDirectory()) {
-			        ArtifactFileDetails fd = junkFilesDealer.getJunkFilesExcludedFileDetails(nthIngestableFile.getAbsolutePath());
-			        // added to try catch for the test api not to throw an error when looking for a non-existing folder
-			        try {
-			        	size = fd.getTotalSize();
-			        }catch (Exception e) {
-						// swallowing it...
-			        	logger.trace("Unable to calculate size for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
-					}
-		        
-		            try {
-		            	fileCount = fd.getCount();
-		            }catch (Exception e) {
-						// swallowing it...
-		            	logger.trace("Unable to list files for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
-					}
-		        }else {
-		        	size = FileUtils.sizeOf(nthIngestableFile);
-		        	fileCount = 1;
-		        }
+//		        if(nthIngestableFile.isDirectory()) {
+//			        ArtifactFileDetails fd = junkFilesDealer.getJunkFilesExcludedFileDetails(nthIngestableFile.getAbsolutePath());
+//			        // added to try catch for the test api not to throw an error when looking for a non-existing folder
+//			        try {
+//			        	size = fd.getTotalSize();
+//			        }catch (Exception e) {
+//						// swallowing it...
+//			        	logger.trace("Unable to calculate size for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
+//					}
+//		        
+//		            try {
+//		            	fileCount = fd.getCount();
+//		            }catch (Exception e) {
+//						// swallowing it...
+//		            	logger.trace("Unable to list files for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
+//					}
+//		        }else {
+//		        	size = FileUtils.sizeOf(nthIngestableFile);
+//		        	fileCount = 1;
+//		        }
 		        
 		        if(fileCount == 0 || size == 0) {
 		        	isLevel1Pass = false;
@@ -268,8 +272,9 @@ public class StagedService extends DwaraService{
 						error.setType(Errortype.Error);
 						error.setMessage(artifactName + " has no files inside");
 						errorList.add(error);
-			        	}
-					sfd.setErrors(errorList);
+			        }
+					
+		        	sfd.setErrors(errorList);
 					
 					stagedFileDetailsList.add(sfd);
 		        }
@@ -414,15 +419,17 @@ public class StagedService extends DwaraService{
 			    	ArtifactFileDetails artifactDetails = null;
 			    	int fileCount = 0;
 			        long size = 0L;
-
-			    	if(stagedFileInAppReadyToIngest.isDirectory()) {
-			    		artifactDetails = junkFilesDealer.moveJunkFiles(stagedFileInAppReadyToIngest.getAbsolutePath());
-			    		fileCount = artifactDetails.getCount();
-			        	size = artifactDetails.getTotalSize();
-			    	} else {
-			    		fileCount = 1;
-			        	size = FileUtils.sizeOf(stagedFileInAppReadyToIngest);
-			    	}	
+			        org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails afd = stagedFileEvaluator.moveJunkAndGetDetails(stagedFileInAppReadyToIngest);
+			        fileCount = afd.getCount();
+			        size = afd.getTotalSize();
+//			    	if(stagedFileInAppReadyToIngest.isDirectory()) {
+//			    		artifactDetails = junkFilesDealer.moveJunkFiles(stagedFileInAppReadyToIngest.getAbsolutePath());
+//			    		fileCount = artifactDetails.getCount();
+//			        	size = artifactDetails.getTotalSize();
+//			    	} else {
+//			    		fileCount = 1;
+//			        	size = FileUtils.sizeOf(stagedFileInAppReadyToIngest);
+//			    	}	
 					Request systemrequest = new Request();
 					systemrequest.setType(RequestType.system);
 					systemrequest.setRequestRef(userRequest);

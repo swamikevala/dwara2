@@ -60,10 +60,11 @@ public class FiletypePathnameReqexVisitor extends SimpleFileVisitor<Path> {
 	@Override
 	public FileVisitResult visitFile(Path file,
 			BasicFileAttributes attrs) {
-		
+		logger.trace("visited file - " + file.toString());
 		Matcher pathnameRegexMatcher = pathnameRegexPattern.matcher(file.toString());
 		
 		if(pathnameRegexMatcher.matches()) {
+			logger.trace("matches regex - " + pathnameRegexPattern);
 			paths.add(file.getParent().toString());
 			extns.add(FilenameUtils.getExtension(file.getFileName().toString()));
 		}
@@ -91,7 +92,8 @@ public class FiletypePathnameReqexVisitor extends SimpleFileVisitor<Path> {
 		String inputArtifactPath = args[0];
 		//String pathnameRegex = ".*\\\\Output";
 		//String pathnameRegex = ".*\\\\Video\\\\Output";
-		String pathnameRegex = ".*\\\\Out.*";
+		//String pathnameRegex = ".*\\\\Out.*";
+		String pathnameRegex = ".*\\\\Output\\\\[^\\\\]*.mov$";
 		
 		FiletypePathnameReqexVisitor filetypePathnameReqexVisitor = new FiletypePathnameReqexVisitor(pathnameRegex);
 		try {
@@ -99,8 +101,10 @@ public class FiletypePathnameReqexVisitor extends SimpleFileVisitor<Path> {
 		} catch (IOException e) {
 			// swallow for now
 		}
+
 		if(filetypePathnameReqexVisitor != null) {
 			System.out.println(filetypePathnameReqexVisitor.getPaths());
+			System.out.println(filetypePathnameReqexVisitor.getExtns());
 		}
 	}
 }

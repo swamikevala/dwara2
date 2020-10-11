@@ -374,19 +374,21 @@ public class ProcessingJobManager implements Runnable{
 				}
 				if(filetypePathnameReqexVisitor != null) {
 					pathsToBeUsed.addAll(filetypePathnameReqexVisitor.getPaths());
-					if(filetypePathnameReqexVisitor.getExtns().size() > 0) // if regex contains specific file extns we need to only use processable files with that extn only
+					if(filetypePathnameReqexVisitor.getExtns().size() > 0) { // if regex contains specific file extns we need to only use processable files with that extn only{
 						extnsToBeUsed = filetypePathnameReqexVisitor.getExtns();
+					}
 				}
 			} else { // all processable files from the entire artifact directory
 				pathsToBeUsed.add(inputArtifactPath);	
 			}
-				
+			logger.trace("pathsToBeUsed - " + pathsToBeUsed);
+			logger.trace("extnsToBeUsed - " + extnsToBeUsed);
+			
 			extensions = new ArrayList<String>();
 			sidecarExtensions = new ArrayList<String>();
 			List<ExtensionFiletype> extn_Filetype_List = filetype.getExtensions(); //extensionFiletypeDao.findAllByFiletypeId(filetype.getId());
 			for (ExtensionFiletype extensionFiletype : extn_Filetype_List) {
 				String extensionName = extensionFiletype.getExtension().getId();
-				
 				if(extnsToBeUsed == null || (extnsToBeUsed != null && extnsToBeUsed.contains(extensionName))) { // if regex contains specific file extns, we need to only use them and not all the extensions_filetype for that particular processingtasks' filetype
 					if(extensionFiletype.isSidecar()) {
 						sidecarExtensions.add(extensionName);
@@ -399,6 +401,8 @@ public class ProcessingJobManager implements Runnable{
 			extensionsArray = ArrayUtils.toStringArray(extensions.toArray());
 			sidecarExtensionsArray = ArrayUtils.toStringArray(sidecarExtensions.toArray());
 			
+			logger.trace("extensionsArray - " + extensionsArray);
+			logger.trace("sidecarExtensionsArray - " + sidecarExtensionsArray);
 			for (String nthPathToBeUsed : pathsToBeUsed) {
 				logicalFileCollection.addAll(fileHelper.getFiles(nthPathToBeUsed, extensionsArray, includeSidecarFiles, sidecarExtensionsArray));				
 			}
