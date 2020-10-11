@@ -82,7 +82,7 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		 */
 		String proxyTargetLocation = destinationDirPath + File.separator + fileName + ".mp4";		
 		
-		String highResMetaTargetLocation = proxyTargetLocation.replace(FilenameUtils.getExtension(proxyTargetLocation), "mp4_ffprobe_out");
+		String highResMetaTargetLocation =  destinationDirPath + File.separator + fileName + ".mp4_ffprobe_out"; //proxyTargetLocation.replace(FilenameUtils.getExtension(proxyTargetLocation), "mp4_ffprobe_out");
 		
 		/*************** METADATA EXTRACTION ***************/
 		long metaStartTime = System.currentTimeMillis();
