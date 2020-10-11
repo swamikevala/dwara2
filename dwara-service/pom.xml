@@ -30,7 +30,7 @@
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-core-mocks</artifactId>
 			<version>2.0</version>
-			<!-- <scope>test</scope>  -->
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
@@ -41,12 +41,12 @@
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-tape-mocks</artifactId>
 			<version>2.0</version>
-			<!-- <scope>test</scope> -->
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-videopub</artifactId>
-			<version>2.0.05</version>
+			<version>${dwara-videopub.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
@@ -240,6 +240,7 @@
 			<properties>
 				<packaging.type>war</packaging.type>
 				<dwara-core.version>2.0.05</dwara-core.version>
+				<dwara-videopub.version>2.0.05</dwara-videopub.version>
 			</properties>
 			<build>
 				<plugins>
