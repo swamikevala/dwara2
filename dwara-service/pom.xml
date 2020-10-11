@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>org.ishafoundation</groupId>
 	<artifactId>dwara-service</artifactId>
-	<version>2.0</version>
+	<version>2.0.05</version>
 	<packaging>${packaging.type}</packaging>
 	<name>dwara-service</name>
 	<description>Isha Foundation Dwara</description>
@@ -24,13 +24,13 @@
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-core</artifactId>
-			<version>2.0</version>
+			<version>${dwara-core.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-core-mocks</artifactId>
 			<version>2.0</version>
-			<scope>test</scope>
+			<!-- <scope>test</scope>  -->
 		</dependency>
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
@@ -41,12 +41,12 @@
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-tape-mocks</artifactId>
 			<version>2.0</version>
-			<scope>test</scope>
+			<!-- <scope>test</scope> -->
 		</dependency>
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-videopub</artifactId>
-			<version>2.0</version>
+			<version>2.0.05</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
@@ -239,6 +239,7 @@
 			</activation>
 			<properties>
 				<packaging.type>war</packaging.type>
+				<dwara-core.version>2.0.05</dwara-core.version>
 			</properties>
 			<build>
 				<plugins>

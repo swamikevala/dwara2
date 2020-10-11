@@ -7,7 +7,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
+import org.ishafoundation.dwaraapi.db.dao.master.VersionDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
+import org.ishafoundation.dwaraapi.db.model.master.reference.Version;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -31,11 +33,20 @@ public class DwaraApiApplication {
 	
 	@Autowired
 	private ProcessingtaskDao processingtaskDao;		
-			
+
+	@Autowired
+	private VersionDao versionDao;	
+	
 	public static void main(String[] args) {
 		SpringApplication.run(DwaraApiApplication.class, args);
 	}
 
+	@EventListener(ApplicationReadyEvent.class)
+	public void validateDbVersion() throws Exception {
+		Version version = versionDao.findTopByVersion();
+		if(!version.getVersion().equals("2.0.05"))
+			throw new Exception("DB version mismatch. Upgrade DB to " + "2.0.05");
+	}
 	/*
 	 * On bootstraping the app we need to create as many thread pools for as many tasks configured...
 	 */

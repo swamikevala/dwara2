@@ -12,7 +12,7 @@
 	</parent>
 	<groupId>org.ishafoundation</groupId>
 	<artifactId>dwara-core</artifactId>
-	<version>2.0</version>
+	<version>2.0.05</version>
 	<packaging>jar</packaging>
 	<name>dwara-core</name>
 	<description>Isha Foundation Dwara</description>
@@ -25,12 +25,12 @@
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-commons</artifactId>
-			<version>2.0</version>
+			<version>2.0.05</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-db</artifactId>
-			<version>2.0</version>
+			<version>2.0.05</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
