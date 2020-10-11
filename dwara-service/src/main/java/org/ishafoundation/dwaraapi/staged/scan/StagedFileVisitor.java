@@ -37,10 +37,11 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 
 	private int fileCount = 0;
 	private long totalSize = 0;
-	private boolean hasUnresolvedSymLink = false;
-	private boolean hasSymLinkLoop = false;
+	
+	private Set<String> unresolvedSymLinks = new TreeSet<String>();
+	private Set<String> symLinkLoops = new TreeSet<String>();
 	private Set<String> unSupportedExtns = new TreeSet<String>();
-	private boolean hasAnyFilePathNameGt3072Chrs = false;
+	private Set<String> filePathNamesGt3072Chrs = new TreeSet<String>();
 
 	StagedFileVisitor(String stagedFileName, String junkFilesStagedDirName, List<Pattern> excludedFileNamesRegexList, Set<String> supportedExtns) {
 		this.stagedFileName = stagedFileName;
@@ -57,20 +58,21 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 		return totalSize;
 	}
 	
-	public boolean hasUnresolvedSymLink() {
-		return hasUnresolvedSymLink;
+
+	public Set<String> getUnresolvedSymLinks() {
+		return unresolvedSymLinks;
 	}
 
-	public boolean hasSymLinkLoop() {
-		return hasSymLinkLoop;
+	public Set<String> getSymLinkLoops() {
+		return symLinkLoops;
 	}
-	
+
 	public Set<String> getUnSupportedExtns() {
 		return unSupportedExtns;
 	}
 
-	public boolean hasAnyFilePathNameGt3072Chrs() {
-		return hasAnyFilePathNameGt3072Chrs;
+	public Set<String> getFilePathNamesGt3072Chrs() {
+		return filePathNamesGt3072Chrs;
 	}
 
 	@Override
@@ -91,8 +93,10 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	public FileVisitResult visitFile(Path file,
 			BasicFileAttributes attrs) {
 
+		String filePathName = file.toString();
+		
 		if(isJunk(file)) {
-			logger.trace("Skipped junk file " + file.toString());
+			logger.trace("Skipped junk file " + filePathName);
 			return CONTINUE;
 		}
 		Path fileRealPath = null;
@@ -105,11 +109,12 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 		// unresolved links
 		//if(Files.isSymbolicLink(file) && file.getCanonicalPath() == null)
 		if(Files.isSymbolicLink(file)) {
-			logger.trace("SymLink " + file.toString());
+			
+			logger.trace("SymLink " + filePathName);
 			logger.trace("FileRealPath " + fileRealPath);
 			if(fileRealPath == null) {
-				logger.warn("Unresolved Sym Link " + file.toString());
-				hasUnresolvedSymLink = true;
+				logger.warn("Unresolved Sym Link " + filePathName);
+				unresolvedSymLinks.add(filePathName);
 				return CONTINUE;
 			}
 		}
@@ -117,10 +122,10 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 //		if(fileName.length() > 100)
 //			hasAnyFileNameGt100Chrs = true;
 
-		String filePathName = stagedFileName + StringUtils.substringAfter(file.toString(),stagedFileName);
-		if(filePathName.length() > 3072) {
-			logger.warn("FilePathname > 3072 " + filePathName);
-			hasAnyFilePathNameGt3072Chrs = true;
+		String stagedFilePathName = stagedFileName + StringUtils.substringAfter(filePathName,stagedFileName);
+		if(stagedFilePathName.length() > 3072) {
+			logger.warn("FilePathname > 3072 " + stagedFilePathName);
+			filePathNamesGt3072Chrs.add(filePathName);
 			return CONTINUE;
 		}
 		
@@ -140,9 +145,16 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	@Override
 	public FileVisitResult visitFileFailed(Path file,
 			IOException exc) {
+		
+		String filePathName = file.toString();
+		if(isJunk(file)) {
+			logger.trace("Skipped junk visit failed file " + filePathName);
+			return CONTINUE;
+		}
+		
 		if (exc instanceof FileSystemLoopException) {
 			logger.warn("Cycle detected: " + file);
-			hasSymLinkLoop = true;
+			symLinkLoops.add(filePathName);
 			return CONTINUE;// TODO: TERMINATE or CONTINUE???...
 		}
 		return CONTINUE;
