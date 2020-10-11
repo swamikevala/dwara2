@@ -5,5 +5,5 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface VersionDao extends CrudRepository<Version,String> {
 
-	Version findTopByVersion();
+	Version findTopByOrderByVersion();
 }

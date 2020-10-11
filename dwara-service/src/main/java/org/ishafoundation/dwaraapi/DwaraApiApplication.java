@@ -43,8 +43,8 @@ public class DwaraApiApplication {
 
 	@EventListener(ApplicationReadyEvent.class)
 	public void validateDbVersion() throws Exception {
-		Version version = versionDao.findTopByVersion();
-		if(!version.getVersion().equals("2.0.05"))
+		Version version = versionDao.findTopByOrderByVersion();
+		if(version == null || !version.getVersion().equals("2.0.05"))
 			throw new Exception("DB version mismatch. Upgrade DB to " + "2.0.05");
 	}
 	/*
