@@ -194,8 +194,19 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 		
 		String filePathName = file.toString();
 		if(isJunk(file)) {
-			if(isMove)
-				logger.trace("Skipped moving junk visit failed file " + filePathName);
+			if(isMove) {
+				String destPath = file.toString().replace(artifactSrcPathLocation, artifactSrcPathLocation + File.separator + junkFilesStagedDirName);
+				File destDir = new File(destPath);					
+				try {
+					Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
+
+					Files.move(file, destDir.toPath(), StandardCopyOption.ATOMIC_MOVE);
+					logger.trace("Moved visit failed junk file " + filePathName);
+				}catch (Exception e) {
+					logger.error("Unable to move visit failed junk file " + file + " to " + destPath + " as " + e.getMessage(), e);
+					// Should we throw ???
+				}
+			}
 			else
 				logger.trace("Skipped junk visit failed file " + filePathName);
 			return CONTINUE;
