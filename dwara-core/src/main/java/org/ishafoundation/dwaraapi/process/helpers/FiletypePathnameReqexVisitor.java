@@ -33,12 +33,16 @@ public class FiletypePathnameReqexVisitor extends SimpleFileVisitor<Path> {
 
 	Pattern pathnameRegexPattern = null;
 	private Set<String> paths = new TreeSet<String>();
+	private Set<String> extns = new TreeSet<String>();
 	
 	//FiletypePathnameReqexVisitor(Pattern pathnameRegexPatter) {
 	public FiletypePathnameReqexVisitor(String pathnameRegex) {
 		pathnameRegexPattern = Pattern.compile(pathnameRegex);
 	}
 
+	/*
+	 * Last minute requirement change - The pathname regex need to filter just specific files and not folders mentioned in the reqex pattern...
+	 * 
 	@Override
 	public FileVisitResult preVisitDirectory(Path dir,
 			BasicFileAttributes attrs) {
@@ -51,7 +55,21 @@ public class FiletypePathnameReqexVisitor extends SimpleFileVisitor<Path> {
 		}
 		return CONTINUE;
 	}
+	*/
 
+	@Override
+	public FileVisitResult visitFile(Path file,
+			BasicFileAttributes attrs) {
+		
+		Matcher pathnameRegexMatcher = pathnameRegexPattern.matcher(file.toString());
+		
+		if(pathnameRegexMatcher.matches()) {
+			paths.add(file.getParent().toString());
+			extns.add(FilenameUtils.getExtension(file.getFileName().toString()));
+		}
+		return CONTINUE;
+	}
+	
 	public Set<String> getPaths() {
 		return paths;
 	}
@@ -61,6 +79,14 @@ public class FiletypePathnameReqexVisitor extends SimpleFileVisitor<Path> {
 	}
 
 	
+	public Set<String> getExtns() {
+		return extns;
+	}
+
+	public void setExtns(Set<String> extns) {
+		this.extns = extns;
+	}
+
 	public static void main(String[] args) {
 		String inputArtifactPath = args[0];
 		//String pathnameRegex = ".*\\\\Output";

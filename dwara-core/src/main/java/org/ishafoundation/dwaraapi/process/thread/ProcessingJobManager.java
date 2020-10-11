@@ -360,11 +360,12 @@ public class ProcessingJobManager implements Runnable{
 		List<String> sidecarExtensions = null;
 		String[] sidecarExtensionsArray = null;
 		boolean includeSidecarFiles = false;
-		if(filetype != null) { // if filetype is null extensions are set to null which will get all the files listed - eg., process like checksum-gen
+		if(filetype != null) { // if filetype is null, extensions are set to null - which will get all the files listed - eg., process like checksum-gen
 			Set<String> pathsToBeUsed = new TreeSet<String>(); 
 			Optional<ArtifactclassProcessingtask> artifactclassProcessingtask = artifactclassProcessingtaskDao.findById(new ArtifactclassProcessingtaskKey(inputArtifactclassId, processingtaskId));
 			String pathnameRegex = artifactclassProcessingtask.isPresent() ? artifactclassProcessingtask.get().getPathnameRegex() : null;
-			if(pathnameRegex != null) {
+			Set<String> extnsToBeUsed = null; 
+			if(pathnameRegex != null) { // if artifactclass_processingtask has a pathregex we need to only get the processable files from that folder path and not from the entire archives directory... e.g., video-pub-edit will have .mov files under output folder
 				FiletypePathnameReqexVisitor filetypePathnameReqexVisitor = new FiletypePathnameReqexVisitor(pathnameRegex);
 				try {
 					Files.walkFileTree(Paths.get(inputArtifactPath), filetypePathnameReqexVisitor);
@@ -373,8 +374,10 @@ public class ProcessingJobManager implements Runnable{
 				}
 				if(filetypePathnameReqexVisitor != null) {
 					pathsToBeUsed.addAll(filetypePathnameReqexVisitor.getPaths());
+					if(filetypePathnameReqexVisitor.getExtns().size() > 0) // if regex contains specific file extns we need to only use processable files with that extn only
+						extnsToBeUsed = filetypePathnameReqexVisitor.getExtns();
 				}
-			} else {
+			} else { // all processable files from the entire artifact directory
 				pathsToBeUsed.add(inputArtifactPath);	
 			}
 				
@@ -384,12 +387,14 @@ public class ProcessingJobManager implements Runnable{
 			for (ExtensionFiletype extensionFiletype : extn_Filetype_List) {
 				String extensionName = extensionFiletype.getExtension().getId();
 				
-				if(extensionFiletype.isSidecar()) {
-					sidecarExtensions.add(extensionName);
-					includeSidecarFiles = true;
+				if(extnsToBeUsed == null || (extnsToBeUsed != null && extnsToBeUsed.contains(extensionName))) { // if regex contains specific file extns, we need to only use them and not all the extensions_filetype for that particular processingtasks' filetype
+					if(extensionFiletype.isSidecar()) {
+						sidecarExtensions.add(extensionName);
+						includeSidecarFiles = true;
+					}
+					else
+						extensions.add(extensionName);
 				}
-				else
-					extensions.add(extensionName);
 			}
 			extensionsArray = ArrayUtils.toStringArray(extensions.toArray());
 			sidecarExtensionsArray = ArrayUtils.toStringArray(sidecarExtensions.toArray());
