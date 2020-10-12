@@ -138,7 +138,7 @@ public class VolumeindexManager {
 				FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());// lets just let users use the util consistently
 				file.setVolumeblock(fileVolume.getVolumeBlock());
 				file.setArchiveblock(fileVolume.getArchiveBlock());
-				file.setEncrypted(fileVolume.isEncrypted());
+				file.setEncrypted(fileVolume.isEncrypted() ? true : null);
 				fileList.add(file);
 			}
 			artifact.setFile(fileList);
@@ -146,7 +146,7 @@ public class VolumeindexManager {
 		}
 	
 		Volumeindex volumeindex = new Volumeindex();
-		volumeindex.setXmlns("https://dwara.io");
+		//volumeindex.setXmlns("https://dwara.io");
 		volumeindex.setVolumeinfo(volumeinfo);
 		volumeindex.setArtifact(artifactList);
 		ZonedDateTime zdt = LocalDateTime.now().atZone(ZoneId.of("UTC"));

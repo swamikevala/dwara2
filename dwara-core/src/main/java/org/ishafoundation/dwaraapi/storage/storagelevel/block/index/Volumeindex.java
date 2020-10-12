@@ -8,8 +8,8 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
 @JacksonXmlRootElement(localName = "VolumeIndex")
 public class Volumeindex {
-	@JacksonXmlProperty(isAttribute = true)
-	private String xmlns;
+//	@JacksonXmlProperty(isAttribute = true)
+//	private String xmlns;
 //	private Importinfo importinfo;
 	@JacksonXmlProperty(localName="VolumeInfo")
 	private Volumeinfo volumeinfo;
@@ -19,12 +19,12 @@ public class Volumeindex {
 	@JacksonXmlProperty(localName="FinalizedAt")
 	private String finalizedAt;
 	
-	public String getXmlns() {
-		return xmlns;
-	}
-	public void setXmlns(String xmlns) {
-		this.xmlns = xmlns;
-	}
+//	public String getXmlns() {
+//		return xmlns;
+//	}
+//	public void setXmlns(String xmlns) {
+//		this.xmlns = xmlns;
+//	}
 	//	public Importinfo getImportinfo() {
 //		return importinfo;
 //	}
