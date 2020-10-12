@@ -232,11 +232,22 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 			else
 				Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));	
 			
-			Files.move(path, destDir.toPath(), StandardCopyOption.ATOMIC_MOVE);
+			if(Files.isSymbolicLink(path)) {
+				Files.move(path, destDir.toPath(), StandardCopyOption.REPLACE_EXISTING);
+//				Path target = Files.readSymbolicLink(path);
+//				logger.trace(path + " symlink target - " + target);
+//				Path newSymLink = Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath), path.getFileName().toString());
+//				Files.createSymbolicLink(newSymLink, target);
+//				logger.trace(newSymLink + " new symlink created " + target);
+//				Files.delete(path);
+//				logger.trace("old symlink deleted - " + path);
+			}	
+			else
+				Files.move(path, destDir.toPath(), StandardCopyOption.ATOMIC_MOVE);
 			logger.trace("Moved junk " + path.toString());
 		}catch (Exception e) {
 			logger.error("Unable to move " + path + " to " + destPath + " as " + e.getMessage(), e);
-			return TERMINATE;
+			//return TERMINATE; // TODO TERMINATE??? throw exception?
 		}
 		return CONTINUE;
 	}

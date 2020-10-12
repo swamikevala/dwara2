@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -292,10 +293,12 @@ public abstract class AbstractStoragetypeJobProcessor {
 		String filePathNameToBeVerified = storageJob.getTargetLocationPath() + java.io.File.separator + fileNameToBeVerified;
 		logger.trace("filePathNameToBeVerified " + filePathNameToBeVerified);
 		java.io.File fileToBeVerified = new java.io.File(filePathNameToBeVerified);
-		if(fileToBeVerified.exists()) {
-			boolean success = Files.deleteIfExists(fileToBeVerified.toPath());
-			logger.trace(filePathNameToBeVerified + " deleted? " + success);	
-		}
+		if(fileToBeVerified.isDirectory())
+			FileUtils.deleteDirectory(fileToBeVerified);
+		else 
+			fileToBeVerified.delete();
+		
+		logger.trace(filePathNameToBeVerified + " deleted");
 			
 	}
 

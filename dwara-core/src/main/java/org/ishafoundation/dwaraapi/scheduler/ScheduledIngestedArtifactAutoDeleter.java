@@ -1,9 +1,11 @@
 package org.ishafoundation.dwaraapi.scheduler;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
+import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -33,10 +35,11 @@ public class ScheduledIngestedArtifactAutoDeleter {
 	// once in a day schedule
 	@Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
     public void autoDeleteIngestedArtifacts() {
+		logger.trace("invoking autoDeleteIngestedArtifacts");
 		File[] ingestableFiles = new File(configuration.getIngestCompleteDirRoot()).listFiles(); // get the list of ingested artifacts
 		for (File file : ingestableFiles) {// loop through the ingested artifacts
 			String artifactName = file.getName();
-			
+			logger.trace("artifactName " + artifactName);
 			Artifact artifact = null; // get the artifact details from DB
 		   	Domain[] domains = Domain.values();
     		for (Domain nthDomain : domains) {
@@ -51,10 +54,23 @@ public class ScheduledIngestedArtifactAutoDeleter {
     		else {
 	    		String artifactclassName = artifact.getArtifactclass().getId();
 	    		long durationSinceArtifactIngested = ChronoUnit.DAYS.between(artifact.getWriteRequest().getRequestedAt(), LocalDateTime.now());
+	    		logger.trace("durationSinceArtifactIngested " + durationSinceArtifactIngested);
 	    		int retentionPeriod = getRetentionPeriod(artifactclassName);
-	    		if(durationSinceArtifactIngested > retentionPeriod) { // if artifact has been there for more than retention period
-					if(file.delete()) //delete it
-						logger.info(artifactName + " deleted");
+	    		logger.trace("retentionPeriod " + retentionPeriod);
+	    		if(retentionPeriod != -1 && durationSinceArtifactIngested >= retentionPeriod) { // if artifact has been there for more than retention period
+	    			if(file.isDirectory()) {
+	    				try {
+							FileUtils.deleteDirectory(file);
+							logger.info(artifactName + " deleted");
+						} catch (IOException e) {
+							logger.error("Unable to delete " + artifactName);
+						}
+	    			}
+	    			else {
+	    				if(file.delete()) { //delete it
+							logger.info(artifactName + " deleted");
+						}
+	    			}
 	    		}
     		}
 		}
