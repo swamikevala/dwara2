@@ -97,7 +97,9 @@ public class VolumeindexManager {
 		volumeinfo.setVolumeblocksize(volume.getDetails().getBlocksize());
 		volumeinfo.setArchiveformat(volume.getArchiveformat().getId());
 		volumeinfo.setArchiveblocksize(volume.getArchiveformat().getBlocksize());
-		
+		ZonedDateTime zdt = LocalDateTime.now().atZone(ZoneId.of("UTC"));
+		String labeltime = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").format(zdt);
+		volumeinfo.setFinalizedAt(labeltime);		
 	
 		volumeinfo.setChecksumalgorithm(volume.getChecksumtype().name());
 		//TODO : ??? volumeinfo.setEncryptionalgorithm(encryptionalgorithm);
@@ -149,9 +151,7 @@ public class VolumeindexManager {
 		//volumeindex.setXmlns("https://dwara.io");
 		volumeindex.setVolumeinfo(volumeinfo);
 		volumeindex.setArtifact(artifactList);
-		ZonedDateTime zdt = LocalDateTime.now().atZone(ZoneId.of("UTC"));
-		String labeltime = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").format(zdt);
-		volumeindex.setFinalizedAt(labeltime);
+
 		
 	    XmlMapper xmlMapper = new XmlMapper();
 	    String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;

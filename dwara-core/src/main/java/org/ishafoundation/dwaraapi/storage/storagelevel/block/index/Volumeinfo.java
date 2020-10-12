@@ -21,7 +21,8 @@ public class Volumeinfo {
 	@JsonInclude(JsonInclude.Include.NON_EMPTY) 
 	@JacksonXmlProperty(localName="ArtifactclassUid")
 	private String artifactclassuid;
-	 
+	@JacksonXmlProperty(localName="FinalizedAt")
+	private String finalizedAt;	 
 	 
 	public String getVolumeuid() {
 		return volumeuid;
@@ -65,5 +66,11 @@ public class Volumeinfo {
 	public void setArtifactclassuid(String artifactclassuid) {
 		this.artifactclassuid = artifactclassuid;
 	}
+	public String getFinalizedAt() {
+		return finalizedAt;
+	}
+	public void setFinalizedAt(String finalizedAt) {
+		this.finalizedAt = finalizedAt;
+	}	
 }
 

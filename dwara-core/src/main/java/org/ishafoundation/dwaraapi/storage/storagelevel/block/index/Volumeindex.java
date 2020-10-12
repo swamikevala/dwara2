@@ -16,8 +16,7 @@ public class Volumeindex {
 	@JacksonXmlProperty(localName="Artifact")
 	@JacksonXmlElementWrapper(useWrapping = false)
 	private List<Artifact> artifact;
-	@JacksonXmlProperty(localName="FinalizedAt")
-	private String finalizedAt;
+
 	
 //	public String getXmlns() {
 //		return xmlns;
@@ -43,10 +42,5 @@ public class Volumeindex {
 	public void setArtifact(List<Artifact> artifact) {
 		this.artifact = artifact;
 	}
-	public String getFinalizedAt() {
-		return finalizedAt;
-	}
-	public void setFinalizedAt(String finalizedAt) {
-		this.finalizedAt = finalizedAt;
-	}
+
 }
