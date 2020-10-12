@@ -283,16 +283,20 @@ public abstract class AbstractStoragetypeJobProcessor {
    	
     }
 	
-	protected void afterVerify(SelectedStorageJob selectedStorageJob) {
+	protected void afterVerify(SelectedStorageJob selectedStorageJob) throws Exception{
 		// update the verified date here...
 		updateFileVolumeVerifiedDate(selectedStorageJob);
 		
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		String fileNameToBeVerified = storageJob.getArtifact().getName();
 		String filePathNameToBeVerified = storageJob.getTargetLocationPath() + java.io.File.separator + fileNameToBeVerified;
+		logger.trace("filePathNameToBeVerified " + filePathNameToBeVerified);
 		java.io.File fileToBeVerified = new java.io.File(filePathNameToBeVerified);
-		if(fileToBeVerified.exists())
-			fileToBeVerified.delete();
+		if(fileToBeVerified.exists()) {
+			boolean success = Files.deleteIfExists(fileToBeVerified.toPath());
+			logger.trace(filePathNameToBeVerified + " deleted? " + success);	
+		}
+			
 	}
 
 	private void updateFileVolumeVerifiedDate(SelectedStorageJob selectedStorageJob) {

@@ -17,6 +17,12 @@
 > -# artifactclass-specific override - 0 will delete immediately (or the next time the auto-delete process runs)
 
 > retentionPeriod.dvcapture-2020=0
+
+3 DB Version support
+
+> Schema change - New table version addition only - Source will automatically create the table...
+
+> version.version need to be set with 2.0.05
 	
 ### Bug fixes
 1 Volume index catalog should be written after last artifact label + filemark and not right after the last artifact label

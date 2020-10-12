@@ -55,7 +55,6 @@ import org.ishafoundation.dwaraapi.staged.scan.Error;
 import org.ishafoundation.dwaraapi.staged.scan.Errortype;
 import org.ishafoundation.dwaraapi.staged.scan.SourceDirScanner;
 import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
-import org.ishafoundation.dwaraapi.utils.ArtifactFileDetails;
 import org.ishafoundation.dwaraapi.utils.ExtensionsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -416,7 +415,6 @@ public class StagedService extends DwaraService{
 		    		
 		        	// STEP 2 - Moves Junk files
 			    	String junkFilesStagedDirName = configuration.getJunkFilesStagedDirName();
-			    	ArtifactFileDetails artifactDetails = null;
 			    	int fileCount = 0;
 			        long size = 0L;
 			        org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails afd = stagedFileEvaluator.moveJunkAndGetDetails(stagedFileInAppReadyToIngest);

@@ -101,22 +101,13 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 		
 		if(isJunk(dir)) {
 			if(isMove) {
-				String destPath = dir.toString().replace(artifactSrcPathLocation, artifactSrcPathLocation + File.separator + junkFilesStagedDirName);
-				File destDir = new File(destPath);					
-				try {
-					Files.createDirectories(Paths.get(destPath));
-
-					Files.move(dir, destDir.toPath(), StandardCopyOption.ATOMIC_MOVE);
-					logger.trace("Moved junk dir " + dir.toString());
-				}catch (Exception e) {
-					logger.error("Unable to move file " + dir + " to " + destPath + " as " + e.getMessage(), e);
-					// Should we throw ???
-				}
+				move(dir);
 			}
 			else
 				logger.trace("Skipped junk dir " + dir.toString());
 			return SKIP_SUBTREE;
 		}
+		
 		return CONTINUE;
 	}
 
@@ -128,17 +119,7 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 		
 		if(isJunk(file)) {
 			if(isMove) {
-				String destPath = file.toString().replace(artifactSrcPathLocation, artifactSrcPathLocation + File.separator + junkFilesStagedDirName);
-				File destDir = new File(destPath);					
-				try {
-					Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
-
-					Files.move(file, destDir.toPath(), StandardCopyOption.ATOMIC_MOVE);
-					logger.trace("Moved junk file " + filePathName);
-				}catch (Exception e) {
-					logger.error("Unable to move file " + file + " to " + destPath + " as " + e.getMessage(), e);
-					// Should we throw ???
-				}
+				move(file);
 			}
 			else
 				logger.trace("Skipped junk file " + filePathName);
@@ -193,29 +174,38 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 			IOException exc) {
 		
 		String filePathName = file.toString();
-		if(isJunk(file)) {
-			if(isMove) {
-				String destPath = file.toString().replace(artifactSrcPathLocation, artifactSrcPathLocation + File.separator + junkFilesStagedDirName);
-				File destDir = new File(destPath);					
-				try {
-					Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
-
-					Files.move(file, destDir.toPath(), StandardCopyOption.ATOMIC_MOVE);
-					logger.trace("Moved visit failed junk file " + filePathName);
-				}catch (Exception e) {
-					logger.error("Unable to move visit failed junk file " + file + " to " + destPath + " as " + e.getMessage(), e);
-					// Should we throw ???
-				}
-			}
-			else
-				logger.trace("Skipped junk visit failed file " + filePathName);
-			return CONTINUE;
-		}
+		boolean isJunk = isJunk(file);
+//		if (exc instanceof FileSystemLoopException) {
+//			logger.warn("Cycle detected: " + file);
+//			if(isJunk) {
+//				if(isMove) {
+//					move(file);
+//				}
+//				else
+//					logger.trace("Skipped junk visit failed file " + filePathName);
+//			}else {
+//				symLinkLoops.add(filePathName);
+//				logger.trace("Skipped visit failed file " + filePathName);
+//			}
+//		}
+//		else {
+//			if(isJunk) {
+//				if(isMove) {
+//					move(file);
+//				}
+//				else
+//					logger.trace("Skipped junk visit failed file " + filePathName);
+//			}
+//			else
+//				logger.trace("Skipped visit failed file " + filePathName);
+//		}
 		
 		if (exc instanceof FileSystemLoopException) {
 			logger.warn("Cycle detected: " + file);
-			symLinkLoops.add(filePathName);
-			return CONTINUE;// TODO: TERMINATE or CONTINUE???...
+			if(isJunk)
+				logger.trace("Skipped junk visit failed file " + filePathName);
+			else
+				symLinkLoops.add(filePathName);
 		}
 		return CONTINUE;
 	}
@@ -228,12 +218,26 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 			Matcher m = nthJunkFilesFinderRegexPattern.matcher(path.getFileName().toString());
 			if(m.matches()) {
 				isJunk=true;
-//			} else {
-//				Matcher filePathMatcher = nthJunkFilesFinderRegexPattern.matcher(nthFilePath);
-//				if(filePathMatcher.find())
-//					isJunk=true;
 			}
 		}
 		return isJunk;
+	}
+	
+	private FileVisitResult move(Path path){
+		String destPath = path.toString().replace(artifactSrcPathLocation, artifactSrcPathLocation + File.separator + junkFilesStagedDirName);
+		File destDir = new File(destPath);					
+		try {
+			if(path.toFile().isDirectory())
+				Files.createDirectories(Paths.get(destPath));
+			else
+				Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));	
+			
+			Files.move(path, destDir.toPath(), StandardCopyOption.ATOMIC_MOVE);
+			logger.trace("Moved junk " + path.toString());
+		}catch (Exception e) {
+			logger.error("Unable to move " + path + " to " + destPath + " as " + e.getMessage(), e);
+			return TERMINATE;
+		}
+		return CONTINUE;
 	}
 }

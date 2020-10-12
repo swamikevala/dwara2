@@ -67,65 +67,6 @@ public class StagedFileEvaluator {
 		}
 	}
 	
-	public ArtifactFileDetails getDetails(File nthIngestableFile){
-		long size = 0;
-		int fileCount = 0;
-		StagedFileVisitor sfv = null;
-		if(nthIngestableFile.isDirectory()) {
-			EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
-		
-			sfv = new StagedFileVisitor(nthIngestableFile.getName(), config.getJunkFilesStagedDirName(), excludedFileNamesRegexList, supportedExtns);
-			try {
-				Files.walkFileTree(nthIngestableFile.toPath(), opts, Integer.MAX_VALUE, sfv);
-			} catch (IOException e) {
-				// swallow for now
-			}
-			if(sfv != null) {
-				size = sfv.getTotalSize();
-				fileCount = sfv.getFileCount();
-			}
-		}else {
-			size = FileUtils.sizeOf(nthIngestableFile);
-			fileCount = 1;
-		}
-		
-		ArtifactFileDetails afd = new ArtifactFileDetails();
-		afd.setTotalSize(size);
-		afd.setCount(fileCount);
-		
-		return afd;
-	}
-	
-	
-	public ArtifactFileDetails moveJunkAndGetDetails(File nthIngestableFile){
-		long size = 0;
-		int fileCount = 0;
-		StagedFileVisitor sfv = null;
-		if(nthIngestableFile.isDirectory()) {
-			EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
-		
-			sfv = new StagedFileVisitor(nthIngestableFile.getAbsolutePath(), nthIngestableFile.getName(), config.getJunkFilesStagedDirName(), excludedFileNamesRegexList, supportedExtns, true);
-			try {
-				Files.walkFileTree(nthIngestableFile.toPath(), opts, Integer.MAX_VALUE, sfv);
-			} catch (IOException e) {
-				// swallow for now
-			}
-			if(sfv != null) {
-				size = sfv.getTotalSize();
-				fileCount = sfv.getFileCount();
-			}
-		}else {
-			size = FileUtils.sizeOf(nthIngestableFile);
-			fileCount = 1;
-		}
-		
-		ArtifactFileDetails afd = new ArtifactFileDetails();
-		afd.setTotalSize(size);
-		afd.setCount(fileCount);
-		
-		return afd;
-	}
-	
 	public StagedFileDetails evaluateAndGetDetails(Domain domain, Sequence sequence, String sourcePath, File nthIngestableFile){
 		long size = 0;
 		int fileCount = 0;
@@ -275,44 +216,46 @@ public class StagedFileEvaluator {
 		return errorList;
 	}
 
-	private boolean isStagedFileDupe(){
-		return false;
-		// TODO
-		// same size different name is warning
-		// same size with same name exists should be error
+	// Used in ingest to validate level 1 on file size and count
+	public ArtifactFileDetails getDetails(File nthIngestableFile){
+		return invokeVisitor(nthIngestableFile, false);
 	}
-
-	private void validateStagedFileName(){
-
+	
+	// Used in ingest move junk files
+	public ArtifactFileDetails moveJunkAndGetDetails(File nthIngestableFile){
+		return invokeVisitor(nthIngestableFile, true);
 	}
-
-	private void validateStagedFileCount(){
-
+	
+	public ArtifactFileDetails invokeVisitor(File nthIngestableFile, boolean move){		
+		long size = 0;
+		int fileCount = 0;
+		StagedFileVisitor sfv = null;
+		if(nthIngestableFile.isDirectory()) {
+			//EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+		
+			sfv = new StagedFileVisitor(nthIngestableFile.getAbsolutePath(), nthIngestableFile.getName(), config.getJunkFilesStagedDirName(), excludedFileNamesRegexList, supportedExtns, move);
+			try {
+				//Files.walkFileTree(nthIngestableFile.toPath(), opts, Integer.MAX_VALUE, sfv);
+				Files.walkFileTree(nthIngestableFile.toPath(), sfv); // Dont follow the links when moving...
+			} catch (IOException e) {
+				// swallow for now
+			}
+			if(sfv != null) {
+				size = sfv.getTotalSize();
+				fileCount = sfv.getFileCount();
+			}
+		}else {
+			size = FileUtils.sizeOf(nthIngestableFile);
+			fileCount = 1;
+		}
+		
+		ArtifactFileDetails afd = new ArtifactFileDetails();
+		afd.setTotalSize(size);
+		afd.setCount(fileCount);
+		
+		return afd;
 	}
-
-	private void validateStagedFileSize(){ // size is specific to artifactclass
-		// use the same env concept as app.props
-	}
-
-//	static void usage() {
-//		System.err.println("java Find <path>" +
-//				" -name \"<glob_pattern>\"");
-//		System.exit(-1);
-//	}
-
-//    public static void main(String[] args)
-//        throws IOException {
-//
-//        if (args.length < 3 || !args[1].equals("-name"))
-//            usage();
-//
-//        Path startingDir = Paths.get(args[0]);
-//        String pattern = args[2];
-//
-//        Finder finder = new Finder(pattern);
-//        Files.walkFileTree(startingDir, finder);
-//        finder.done();
-//    }
+	
 
 }
 
