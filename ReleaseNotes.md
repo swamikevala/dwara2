@@ -22,7 +22,7 @@
 
 > Schema change - New table version addition only - Source will automatically create the table...
 
-> version.version need to be set with 2.0.05
+> version.version need to be set with 2.0.1
 	
 ### Bug fixes
 1 Volume index catalog should be written after last artifact label + filemark and not right after the last artifact label
@@ -37,5 +37,7 @@
   * Take DB backup.......
   * Deploy the app
   * Apply the application.properties configuration mentioned above in "New features".2
-  * Restart the app
+  * Restart the app (app will create the tables but fail to start)
+  * Configure the version DB table
   * Configure the artifactclass_processingtask DB table
+  * Restart the app  
