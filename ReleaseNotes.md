@@ -1,4 +1,5 @@
-# Dwara Version - 2.0.05
+# Dwara App Version - 2.0.05
+# Dwara DB Version - 2.0.1
 ### New features 
 1 Support for Edited videos
   * Validate cyclic loop and unresolved Symlinks 
@@ -36,8 +37,9 @@
 ### Upgrade steps
   * Take DB backup.......
   * Deploy the app
-  * Apply the application.properties configuration mentioned above in "New features".2
+  * Apply the application.properties configuration mentioned above in "New features" #2
   * Restart the app (app will create the tables but fail to start)
   * Configure the version DB table
   * Configure the artifactclass_processingtask DB table
   * Restart the app  
+  * Use the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_0_1.sql) to update already created rows missing values because of above Bug #2
