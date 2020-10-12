@@ -16,7 +16,7 @@ public class File {
 	@JacksonXmlProperty(isAttribute=true, localName="checksum")
 	private String checksum;
 	@JacksonXmlProperty(isAttribute=true, localName="encrypted")
-	private boolean encrypted;
+	private Boolean encrypted;
 	@JacksonXmlText
 	private String name;
 	
@@ -45,10 +45,10 @@ public class File {
 	public void setChecksum(String checksum) {
 		this.checksum = checksum;
 	}
-	public boolean getEncrypted() {
+	public Boolean getEncrypted() {
 		return encrypted;
 	}
-	public void setEncrypted(boolean encrypted) {
+	public void setEncrypted(Boolean encrypted) {
 		this.encrypted = encrypted;
 	}
 	public String getName() {
