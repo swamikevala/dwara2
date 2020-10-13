@@ -44,14 +44,12 @@ public class StagedFileEvaluator {
 	@Autowired
 	protected SequenceUtil sequenceUtil;
 
-	private Set<String> supportedExtns =  new TreeSet<String>();
 	private List<Pattern> excludedFileNamesRegexList = new ArrayList<Pattern>();
-	private String regexAllowedChrsInFileName = null;
 	private Pattern allowedChrsInFileNamePattern = null;
 
 	@PostConstruct
 	public void getExcludedFileNamesRegexList() {
-		regexAllowedChrsInFileName = config.getRegexAllowedChrsInFileName();
+		String regexAllowedChrsInFileName = config.getRegexAllowedChrsInFileName();
 		//allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName, Pattern.UNICODE_CHARACTER_CLASS); // Reverted this change per latest comment on DU-194
 		allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
 
@@ -60,16 +58,18 @@ public class StagedFileEvaluator {
 			Pattern nthJunkFilesFinderRegexPattern = Pattern.compile(junkFilesFinderRegexPatternList[i]);
 			excludedFileNamesRegexList.add(nthJunkFilesFinderRegexPattern);
 		}
-
-		Iterable<Extension> extensionList = extensionDao.findAllByIgnoreIsTrueOrFiletypesIsNotNull();
-		for (Extension extension : extensionList) {
-			supportedExtns.add(extension.getId().toLowerCase());
-		}
 	}
 	
 	public StagedFileDetails evaluateAndGetDetails(Domain domain, Sequence sequence, String sourcePath, File nthIngestableFile){
 		long size = 0;
 		int fileCount = 0;
+		
+		Iterable<Extension> extensionList = extensionDao.findAllByIgnoreIsTrueOrFiletypesIsNotNull();
+		Set<String> supportedExtns =  new TreeSet<String>();
+		for (Extension extension : extensionList) {
+			supportedExtns.add(extension.getId().toLowerCase());
+		}
+		
 		Set<String> unSupportedExtns = new TreeSet<String>();
 		List<Error> errorList = new ArrayList<Error>();
 		
@@ -230,6 +230,13 @@ public class StagedFileEvaluator {
 		long size = 0;
 		int fileCount = 0;
 		StagedFileVisitor sfv = null;
+		
+		Iterable<Extension> extensionList = extensionDao.findAllByIgnoreIsTrueOrFiletypesIsNotNull();
+		Set<String> supportedExtns =  new TreeSet<String>();
+		for (Extension extension : extensionList) {
+			supportedExtns.add(extension.getId().toLowerCase());
+		}
+		
 		if(nthIngestableFile.isDirectory()) {
 			//EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
 		
