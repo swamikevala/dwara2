@@ -51,7 +51,8 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		String identifierSuffix = "";//mediaFileId+"";//  +  "-" + VideoProcessingSteps.PROXY_GENERATION.toString();
 		String containerName = identifierSuffix;	
 		
-	
+		FileUtils.forceMkdir(new File(destinationDirPath));
+		
 		long startms = System.currentTimeMillis();
 		
 		String m01FileLocPath = sourceFilePathname.replace("." + FilenameUtils.getExtension(sourceFilePathname), "M01.XML");
@@ -62,8 +63,6 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		/*************** THUMBNAIL GENERATION ***************/
 		long thumbnailStartTime = System.currentTimeMillis();
 		logger.info("Thumbnail Generation start for " + containerName + " - targetLocation is - " + thumbnailTargetLocation);
-		
-		FileUtils.forceMkdir(new File(destinationDirPath));
 		
 		List<String> thumbnailGenerationCommandParamsList = getThumbnailGenerationCommand(sourceFilePathname, thumbnailTargetLocation);
 		CommandLineExecutionResponse thumbnailCommandLineExecutionResponse = commandLineExecuter.executeCommand(thumbnailGenerationCommandParamsList);

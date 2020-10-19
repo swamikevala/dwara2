@@ -31,6 +31,8 @@ public class StorageJob {
 	
 	// Restore stuff
 	private int fileId;
+	private String timecodeStart;
+	private String timecodeEnd;
 	private String destinationPath;
 	private String outputFolder;
 	private String targetLocationPath;
@@ -126,6 +128,22 @@ public class StorageJob {
 
 	public void setFileId(int fileId) {
 		this.fileId = fileId;
+	}
+	
+	public String getTimecodeStart() {
+		return timecodeStart;
+	}
+
+	public void setTimecodeStart(String timecodeStart) {
+		this.timecodeStart = timecodeStart;
+	}
+
+	public String getTimecodeEnd() {
+		return timecodeEnd;
+	}
+
+	public void setTimecodeEnd(String timecodeEnd) {
+		this.timecodeEnd = timecodeEnd;
 	}
 
 	public String getDestinationPath() {

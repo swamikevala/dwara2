@@ -13,6 +13,20 @@ public class CuesFileParser {
 	
 	private Pattern clusterPositionRegexPattern = Pattern.compile("timestamp=(([0-9]{2}):([0-9]{2}):([0-9]{2}).000000000) duration=- cluster_position=([0-9]*) relative_position=([0-9]*)");
 
+	
+	public String getClusterPosition(String cuesFileEntries, String timestamp){
+		String clusterPosition = null;
+		Pattern timestampLineRegexPattern = Pattern.compile("timestamp=" + timestamp + ".000000000 duration=- cluster_position=([0-9]*) relative_position=([0-9]*)");
+		
+		
+		Matcher timestampLineRegexMatcher = timestampLineRegexPattern.matcher(cuesFileEntries);
+		if(timestampLineRegexMatcher.find()) {
+			clusterPosition = timestampLineRegexMatcher.group(1);
+		}
+
+		return clusterPosition;
+	}
+	
 	public String parseCuesResponse(String response){
 		StringBuffer filteredCueEntries = new StringBuffer();
 		Matcher clusterPositionRegexMatcher = clusterPositionRegexPattern.matcher(response);

@@ -48,6 +48,9 @@ public class Video_Prasad_Transcoding_TaskExecutor extends MediaTask implements 
 		long startms = System.currentTimeMillis();
 	
 		String fileName = FilenameUtils.getBaseName(sourceFilePathname);
+		
+		FileUtils.forceMkdir(new File(destinationDirPath));
+		
 		String compressedFileTargetLocation = destinationDirPath + File.separator + fileName + ".mkv";// TODO How do we know if it should be mkv or mxf or what not???	
 		String headerFileTargetLocation = destinationDirPath + File.separator + fileName + ".hdr";// TODO How do we know if it should be mkv or mxf or what not???	
 		String cuesFileTargetLocation = destinationDirPath + File.separator + fileName + ".cues";// TODO How do we know if it should be mkv or mxf or what not???	

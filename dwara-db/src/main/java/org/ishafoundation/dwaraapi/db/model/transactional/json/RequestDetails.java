@@ -55,6 +55,12 @@ public class RequestDetails {
 	@JsonProperty("file_id")
 	private Integer fileId;
 
+	@JsonProperty("timecode_start")
+	private String timecodeStart;
+
+	@JsonProperty("timecode_end")
+	private String timecodeEnd;
+
 	@JsonProperty("copy_id")
 	private Integer copyId;
 	
@@ -216,6 +222,22 @@ public class RequestDetails {
 		this.fileId = fileId;
 	}
 	
+	public String getTimecodeStart() {
+		return timecodeStart;
+	}
+
+	public void setTimecodeStart(String timecodeStart) {
+		this.timecodeStart = timecodeStart;
+	}
+
+	public String getTimecodeEnd() {
+		return timecodeEnd;
+	}
+
+	public void setTimecodeEnd(String timecodeEnd) {
+		this.timecodeEnd = timecodeEnd;
+	}
+
 	public Integer getCopyId() {
 		return copyId;
 	}

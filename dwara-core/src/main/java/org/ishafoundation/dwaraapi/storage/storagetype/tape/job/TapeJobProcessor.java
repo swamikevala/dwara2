@@ -1,16 +1,22 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -56,6 +62,9 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 
 	@Autowired
 	private LabelManager labelManager;
+	
+	@Autowired
+    private FileEntityUtil fileEntityUtil;
 	
 	@Autowired
 	private VolumeUtil volumeUtil;
@@ -244,7 +253,33 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		TapeJob tapeJob = (TapeJob) selectedStorageJob;
 		String tapeLibraryName = tapeJob.getTapeLibraryName();
 		int driveElementAddress = tapeJob.getTapedriveNo();
-		int blockNumberToSeek = tapeJob.getStorageJob().getVolumeBlock();
+		
+		StorageJob storageJob = tapeJob.getStorageJob();
+		int blockNumberToSeek = storageJob.getVolumeBlock();
+		String timeCodeStart = storageJob.getTimecodeStart();
+		if(timeCodeStart != null) { // pfr = true;
+			// skip = ((archive_block + header_block) * archiveformatblocksize) + starttimecode's clusterpos - 1 byte[excluding the start byte]
+			//skip = ((12 + 3) * 512) + 5840030 - 1 = 5847709
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
+			Domain domain = storageJob.getDomain();
+			String path = fileEntityUtil.getArtifact(file, domain).getArtifactclass().getPath();
+			logger.trace("path " + path);
+			String filePathname = path + File.separator + file.getPathname();
+			logger.trace("filePathname " + filePathname);
+			String cuesFileEntries = FileUtils.readFileToString(new File(filePathname.replace(".mkv", ".cues")));
+			//CuesFileParser cfp = new CuesFileParser();
+			 // TODO move this method to CuesFileParser
+			int headerBlocks = 3; // TODO Hardcoded
+			logger.trace("archive_block " + storageJob.getArchiveBlock());
+			logger.trace("archiveformatblocksize " + storageJob.getVolume().getArchiveformat().getBlocksize());
+			logger.trace("starttimecode's clusterpos " + getClusterPosition(cuesFileEntries, timeCodeStart));
+			long noOfBytesToBeSkipped = ((storageJob.getArchiveBlock() + headerBlocks) * storageJob.getVolume().getArchiveformat().getBlocksize()) + Integer.parseInt(getClusterPosition(cuesFileEntries, timeCodeStart)) - 1;
+			logger.trace("noOfBytesToBeSkipped " + noOfBytesToBeSkipped);
+			logger.trace("noOfVolBlocksToBeSkipped " + noOfBytesToBeSkipped/storageJob.getVolume().getDetails().getBlocksize());
+			blockNumberToSeek =  blockNumberToSeek + (int) (noOfBytesToBeSkipped/storageJob.getVolume().getDetails().getBlocksize());
+			logger.trace("blockNumberToSeek " + blockNumberToSeek);
+		}
+			
 		
 		loadTape(selectedStorageJob);
 		
@@ -252,6 +287,19 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		logger.info("Tape Head positioned for reading "+ tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
 	}
 
+	// TODO move this method to CuesFileParser - Aslo move it from TarArchiver tooo...
+	private String getClusterPosition(String cuesFileEntries, String timestamp){
+		String clusterPosition = null;
+		Pattern timestampLineRegexPattern = Pattern.compile("timestamp=" + timestamp + ".000000000 duration=- cluster_position=([0-9]*) relative_position=([0-9]*)");
+		
+		
+		Matcher timestampLineRegexMatcher = timestampLineRegexPattern.matcher(cuesFileEntries);
+		if(timestampLineRegexMatcher.find()) {
+			clusterPosition = timestampLineRegexMatcher.group(1);
+		}
+
+		return clusterPosition;
+	}
 	
 	@Override
 	protected void beforeFinalize(SelectedStorageJob selectedStorageJob) throws Exception {

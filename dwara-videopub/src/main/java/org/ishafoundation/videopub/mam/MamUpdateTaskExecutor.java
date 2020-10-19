@@ -11,6 +11,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.commandline.remote.sch.RemoteCommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.remote.scp.SecuredCopier;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
@@ -74,7 +75,9 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 	@Autowired
     private SecuredCopier securedCopier;
 		
-
+	@Autowired
+    private  FileEntityUtil  fileEntityUtil;
+	
 	@Override
 	public ProcessingtaskResponse execute(String taskName, String inputArtifactClass, String inputArtifactName, String outputArtifactName,
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile, String category, String destinationDirPath) throws Exception {
@@ -139,7 +142,7 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			}
 			logger.info("Now inserting the clip into catdv server");
 
-			int catdvClipId = insertClip(catdvSessionId, file.getId(), catalogId, generatedProxyMetaDataFilePath, proxyFilePathOnMamServer, generatedThumbnailPath); //(proxyGenerationCompletedEvent.getMediaLibraryId(), StorageType.PRIMARY_COPY);
+			int catdvClipId = insertClip(catdvSessionId, fileEntityUtil.getFileRef(file, domain).getId(), catalogId, generatedProxyMetaDataFilePath, proxyFilePathOnMamServer, generatedThumbnailPath); //(proxyGenerationCompletedEvent.getMediaLibraryId(), StorageType.PRIMARY_COPY);
 			processingtaskResponse.setIsComplete(true); 
 			processingtaskResponse.setStdOutResponse("catdvClipId - " + catdvClipId);// TODO : where/how do we update externalrefid in db ...
 			processingtaskResponse.setAppId(catdvClipId + ""); 

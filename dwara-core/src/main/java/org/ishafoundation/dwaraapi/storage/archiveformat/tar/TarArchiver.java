@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -12,6 +14,7 @@ import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.commandline.local.RetriableCommandLineExecutorImpl;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
@@ -99,6 +102,9 @@ public class TarArchiver implements IArchiveformatter {
 	
 	@Autowired
 	private DomainUtil domainUtil;
+	
+	@Autowired
+	private FileEntityUtil fileEntityUtil;
 	
 	@Autowired
 	private RetriableCommandLineExecutorImpl retriableCommandLineExecutorImpl;
@@ -241,7 +247,16 @@ public class TarArchiver implements IArchiveformatter {
 
 	@Override
 	public ArchiveResponse restore(ArchiveformatJob archiveformatJob) throws Exception {
-		archiveformatJob = getDecoratedArchiveformatJobForRestore(archiveformatJob);
+		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
+		String timeCodeStart = storageJob.getTimecodeStart();
+		boolean pfr = false;
+		if(timeCodeStart != null)
+			pfr = true;
+		
+		if(!pfr)
+			archiveformatJob = getDecoratedArchiveformatJobForRestore(archiveformatJob);
+
 		int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
 		String deviceName = archiveformatJob.getDeviceName();
 		String targetLocationPath = archiveformatJob.getTargetLocationPath();
@@ -253,33 +268,148 @@ public class TarArchiver implements IArchiveformatter {
 		logger.trace("Creating the directory " + targetLocationPath + ", if not already present");
 		FileUtils.forceMkdir(new java.io.File(targetLocationPath));
 		
-		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
 		long fileSize = file.getSize();
-		
-		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, selectedStorageJob.isUseBuffering(), fileSize, targetLocationPath, noOfTapeBlocksToBeRead);
-		
-		String filePathNameToBeRestored = archiveformatJob.getFilePathNameToBeRestored();
-		
-		StorageJob storageJob = selectedStorageJob.getStorageJob();
-		
-		HashMap<String, byte[]> filePathNameToChecksumObj = selectedStorageJob.getFilePathNameToChecksum();
-		
-		// if checksumtype supports streaming verification then set it to whatever needed... if not
-		boolean streamVerify = false;
-		if(storageJob.isRestoreVerify()) { // if verification needed
-			if(configuration.checksumTypeSupportsStreamingVerification()) // if stream verify supported by checksumtype, then set the streamverify = true
-				streamVerify = true;
-		}
-		stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, true, targetLocationPath, streamVerify, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
+		if(!pfr) {
+			List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, selectedStorageJob.isUseBuffering(), fileSize, targetLocationPath, noOfTapeBlocksToBeRead);
+			
+			String filePathNameToBeRestored = archiveformatJob.getFilePathNameToBeRestored();
+			
+			HashMap<String, byte[]> filePathNameToChecksumObj = selectedStorageJob.getFilePathNameToChecksum();
 
-		if(storageJob.isRestoreVerify() && !streamVerify) { // TO be verified using standard approach but not the on the fly streaming and verifying
-			boolean success = ChecksumUtil.compareChecksum(filePathNameToChecksumObj, targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
-			if(!success)
-				throw new Exception("Restored file's verification failed");
+		
+			// if checksumtype supports streaming verification then set it to whatever needed... if not
+			boolean streamVerify = false;
+			if(storageJob.isRestoreVerify()) { // if verification needed
+				if(configuration.checksumTypeSupportsStreamingVerification()) // if stream verify supported by checksumtype, then set the streamverify = true
+					streamVerify = true;
+			}
+			stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, true, targetLocationPath, streamVerify, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
+	
+			if(storageJob.isRestoreVerify() && !streamVerify) { // TO be verified using standard approach but not the on the fly streaming and verifying
+				boolean success = ChecksumUtil.compareChecksum(filePathNameToChecksumObj, targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
+				if(!success)
+					throw new Exception("Restored file's verification failed");
+			}
+		}else {
+			String timeCodeEnd = storageJob.getTimecodeEnd();
+			String filePathNameToBeRestored = archiveformatJob.getFilePathNameToBeRestored();
+			logger.trace("filePathNameToBeRestored " + filePathNameToBeRestored);
+			String partialFileFromTapeOutputFilePathName = filePathNameToBeRestored.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + "_restored.bin");
+			
+			Domain domain = storageJob.getDomain();
+			String path = fileEntityUtil.getArtifact(file, domain).getArtifactclass().getPath();
+			logger.trace("path " + path);
+			String filePathname = path + java.io.File.separator + file.getPathname();
+			logger.trace("filePathname " + filePathname);
+			String cuesFileEntries = FileUtils.readFileToString(new java.io.File(filePathname.replace(".mkv", ".cues")));
+			
+			long startClusterPosition = Long.parseLong(getClusterPosition(cuesFileEntries, timeCodeStart));
+			String inclusiveTimeCode = getInclusiveTimeCode(timeCodeEnd);
+			String endClusterPositionAsString = getClusterPosition(cuesFileEntries, inclusiveTimeCode);
+			if(endClusterPositionAsString == null)
+				endClusterPositionAsString = getClusterPosition(cuesFileEntries, timeCodeEnd);
+			long endClusterPosition = Long.parseLong(endClusterPositionAsString);
+			
+			long bytesToRetrieve = endClusterPosition - startClusterPosition;
+			logger.trace("bytesToRetrieve " + bytesToRetrieve);
+			float volumeBlocksizeAsFloat = volumeBlocksize;
+			noOfTapeBlocksToBeRead = (int) Math.ceil(bytesToRetrieve/volumeBlocksizeAsFloat);
+			logger.trace("noOfTapeBlocksToBeRead " + noOfTapeBlocksToBeRead);
+			String ddRestoreCommand = "dd if=" + deviceName + " bs=" + volumeBlocksize + " count=" + noOfTapeBlocksToBeRead + " of=" + partialFileFromTapeOutputFilePathName;
+			List<String> commandList = new ArrayList<String>();
+			commandList.add("sh");
+			commandList.add("-c");
+			commandList.add("cd " + targetLocationPath + " ; " + ddRestoreCommand);
+
+			logger.trace(executeCommand(commandList, null, volumeBlocksize));
+			
+			
+			int headerBlocks = 3; // TODO Hardcoded
+			long noOfBytesToBeSkipped = ((storageJob.getArchiveBlock() + headerBlocks) * storageJob.getVolume().getArchiveformat().getBlocksize()) + startClusterPosition - 1;
+			int bytesConvertedAsBlocks =  (int) (noOfBytesToBeSkipped/storageJob.getVolume().getDetails().getBlocksize());
+			
+			logger.trace("bytesConvertedAsBlocks " + bytesConvertedAsBlocks);
+			long bytesAlreadySeeked = bytesConvertedAsBlocks * storageJob.getVolume().getDetails().getBlocksize();
+			logger.trace("bytesAlreadySeeked " + bytesAlreadySeeked);
+			
+			long bytesToBeSkipped = noOfBytesToBeSkipped - bytesAlreadySeeked;
+			logger.trace("bytesToBeSkipped " + bytesToBeSkipped);
+			
+			String trimmedOutputFilePathName = filePathNameToBeRestored.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
+			
+			String trimCommand = "dd if=" + partialFileFromTapeOutputFilePathName + " skip=" + bytesToBeSkipped + " count=" + bytesToRetrieve + " iflag=skip_bytes,count_bytes of=" + trimmedOutputFilePathName;
+			List<String> trimCommandList = new ArrayList<String>();
+			commandList.add("sh");
+			commandList.add("-c");
+			commandList.add("cd " + targetLocationPath + " ; " + trimCommand);
+
+			logger.trace("trimCommand response - "+ executeCommand(trimCommandList, null, volumeBlocksize));
+
+			// cat P22250_sample.hdr sample_00-00-01_00-00-02.pfr > sample_stitched_00-00-01_00-00-02.mkv
+			String headerFilePathName = filePathNameToBeRestored.replace(".mkv", ".hdr");
+			String stitchedFilePathName = trimmedOutputFilePathName.replace(".pfr", "_stitched.mkv");
+			String catCommand = "cat " + headerFilePathName + " " + trimmedOutputFilePathName + " > " + stitchedFilePathName;
+			List<String> catCommandList = new ArrayList<String>();
+			commandList.add("sh");
+			commandList.add("-c");
+			commandList.add("cd " + targetLocationPath + " ; " + catCommand);
+
+			logger.trace("catCommand response - "+ executeCommand(catCommandList, null, volumeBlocksize));
+
+			
+
+			// mkvmerge -o sample_00-00-01_00-00-02.mkv sample_stitched_00-00-01_00-00-02.mkv
+			String wrappedFileName = stitchedFilePathName.replace("_stitched.mkv", ".mkv");
+			String mkvmergeCommand = "mkvmerge -o " + wrappedFileName + " " + stitchedFilePathName;
+			List<String> mkvmergeCommandList = new ArrayList<String>();
+			commandList.add("sh");
+			commandList.add("-c");
+			commandList.add("cd " + targetLocationPath + " ; " + mkvmergeCommand);
+
+			logger.trace("mkvmergeCommand response - "+ executeCommand(mkvmergeCommandList, null, volumeBlocksize));
+
+			
+			 
+			 
+			 // ffmpeg -i sample_00-00-01_00-00-02.mkv -target pal-dv50 sample_editingTeam_00-00-01_00-00-02.mxf
+			String editingTeamFileName = wrappedFileName.replace(".mkv", "_forEditingTeam.mxf");
+			String mxfConversionCommand = "ffmpeg -i " + wrappedFileName + " -target pal-dv50 " + editingTeamFileName;
+			List<String> mxfConversionCommandList = new ArrayList<String>();
+			commandList.add("sh");
+			commandList.add("-c");
+			commandList.add("cd " + targetLocationPath + " ; " + mxfConversionCommand);
+
+			logger.trace("mxfConversionCommand response - "+ executeCommand(mxfConversionCommandList, null, volumeBlocksize));
 		}
 		logger.info("Restoration complete");
 		return new ArchiveResponse();
+	}
+	private String getInclusiveTimeCode(String timeCode) {
+		String inclusiveTimeCode = timeCode;
+		Pattern timecodeRegexPattern = Pattern.compile("([0-9]{2}):([0-9]{2}):([0-9]{2})");
+		Matcher timecodeRegexMatcher = timecodeRegexPattern.matcher(timeCode);
+		if(timecodeRegexMatcher.matches()) {
+			String seconds = timecodeRegexMatcher.group(3);
+			// Zero padded seconds value...
+			int inclusiveSecond = Integer.parseInt(seconds) + 1; // TODO : if second is 59, + 1 is next minute. need to handle that scenario.
+			inclusiveTimeCode = timecodeRegexMatcher.group(1) + ":" + timecodeRegexMatcher.group(2) + ":" + String.format("%02d", inclusiveSecond);
+		}
+		
+		return inclusiveTimeCode;
+	}
+	// TODO move this method to CuesFileParser
+	private String getClusterPosition(String cuesFileEntries, String timestamp){
+		String clusterPosition = null;
+		Pattern timestampLineRegexPattern = Pattern.compile("timestamp=" + timestamp + ".000000000 duration=- cluster_position=([0-9]*) relative_position=([0-9]*)");
+		
+		
+		Matcher timestampLineRegexMatcher = timestampLineRegexPattern.matcher(cuesFileEntries);
+		if(timestampLineRegexMatcher.find()) {
+			clusterPosition = timestampLineRegexMatcher.group(1);
+		}
+
+		return clusterPosition;
 	}
 	
 	private List<String> frameRestoreCommand(int volumeBlocksize, String deviceName, boolean useBuffering, long fileSize, String destinationPath, int noOfTapeBlocksToBeRead) {

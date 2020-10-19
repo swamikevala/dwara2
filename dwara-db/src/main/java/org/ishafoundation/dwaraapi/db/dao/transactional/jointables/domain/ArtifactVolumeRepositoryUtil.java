@@ -20,16 +20,9 @@ public class ArtifactVolumeRepositoryUtil {
 	private DomainUtil domainUtil;
 	
 	public int getLastArtifactOnVolumeEndVolumeBlock(Domain domain, Volume volume) {
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		int lastArtifactOnVolumeEndVolumeBlock = 0;
-		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeId(volume.getId());
-		for (ArtifactVolume artifactVolume : artifactVolumeList) {
-			int avEVB = artifactVolume.getDetails().getEndVolumeBlock();
-			if(lastArtifactOnVolumeEndVolumeBlock < avEVB) {
-				lastArtifactOnVolumeEndVolumeBlock = avEVB;
-			}
-		}
-		return lastArtifactOnVolumeEndVolumeBlock;
+		ArtifactVolume artifactVolume = getLastArtifactOnVolume(domain, volume);
+		
+		return artifactVolume.getDetails().getEndVolumeBlock();
 	}
 	
 	public ArtifactVolume getLastArtifactOnVolume(Domain domain, Volume volume) {

@@ -1,6 +1,8 @@
 package org.ishafoundation.dwaraapi.storage.storagetask;
 
 
+import java.util.List;
+
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -8,6 +10,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
@@ -23,7 +26,10 @@ public class Restore extends AbstractStoragetaskAction{
 	
 	@Autowired
 	private DomainUtil domainUtil;
-	
+
+	@Autowired
+	private JobUtil jobUtil;
+
 	@Override
 	public StorageJob buildStorageJob(Job job) throws Exception {
 		Request request = job.getRequest();
@@ -39,7 +45,9 @@ public class Restore extends AbstractStoragetaskAction{
 		// what need to be restored
 		int fileIdToBeRestored = requestDetails.getFileId();
 		storageJob.setFileId(fileIdToBeRestored);
-		
+		storageJob.setTimecodeStart(requestDetails.getTimecodeStart());
+		storageJob.setTimecodeEnd(requestDetails.getTimecodeEnd());
+
 		// From where - get the volume
 		Integer copyNumber = requestDetails.getCopyId();
 		if(copyNumber == null) {
@@ -75,8 +83,9 @@ public class Restore extends AbstractStoragetaskAction{
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.restore) {
 			destinationPath = requestDetails.getDestinationPath();//requested destination path 
 		}
-		else {//if(action == org.ishafoundation.dwaraapi.enumreferences.Action.restore_process || action == org.ishafoundation.dwaraapi.enumreferences.Action.process) {
-//			destinationPath = inputlc.path_prefix
+		else if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.restore_process) {
+			List<Job> dependentJobList = jobUtil.getDependentJobs(job);
+			//destinationPath = dependentJobList.get(0).inputlc.path_prefix;
 		}
 		storageJob.setDestinationPath(destinationPath);
 		String outputFolder = request.getDetails().getOutputFolder();

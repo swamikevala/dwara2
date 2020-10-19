@@ -18,10 +18,15 @@ public class FileEntityUtil {
 	
 	@Autowired
 	private DomainUtil domainUtil;
-	
+
     public Artifact getArtifact(File file, Domain domain) throws Exception {
 		Method getArtifact = file.getClass().getMethod("getArtifact"+domainUtil.getDomainId(domain));
 		return (Artifact) getArtifact.invoke(file);
+    }
+	
+    public File getFileRef(File file, Domain domain) throws Exception {
+		Method getFileRef = file.getClass().getMethod("getFile"+domainUtil.getDomainId(domain)+"Ref");
+		return (File) getFileRef.invoke(file);
     }
     
     public void setDomainSpecificFileRef(File file, File fileRef) throws Exception {
