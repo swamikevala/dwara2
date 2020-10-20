@@ -403,8 +403,18 @@ public abstract class AbstractStoragetypeJobProcessor {
 		String restoredFilePathName = file.getPathname();
 		
 		String srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName;
-		String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");
 		
+		
+		String timeCodeStart = storageJob.getTimecodeStart();
+		String timeCodeEnd = storageJob.getTimecodeEnd();
+		boolean pfr = false;
+		if(timeCodeStart != null)
+			pfr = true;
+		
+		if(pfr)
+			srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
+		
+		String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");	
 		logger.trace("src " + srcPath);
 		logger.trace("dest " + destPath);
 		

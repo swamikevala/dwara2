@@ -293,8 +293,10 @@ public class TarArchiver implements IArchiveformatter {
 			}
 		}else {
 			String timeCodeEnd = storageJob.getTimecodeEnd();
-			String filePathNameToBeRestored = archiveformatJob.getFilePathNameToBeRestored();
+			String filePathNameToBeRestored = file.getPathname();
 			logger.trace("filePathNameToBeRestored " + filePathNameToBeRestored);
+			String parentDir = FilenameUtils.getFullPathNoEndSeparator(filePathNameToBeRestored);
+			FileUtils.forceMkdir(new java.io.File(targetLocationPath + java.io.File.separator + parentDir));
 			String partialFileFromTapeOutputFilePathName = filePathNameToBeRestored.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + "_restored.bin");
 			
 			Domain domain = storageJob.getDomain();
@@ -316,7 +318,11 @@ public class TarArchiver implements IArchiveformatter {
 			float volumeBlocksizeAsFloat = volumeBlocksize;
 			noOfTapeBlocksToBeRead = (int) Math.ceil(bytesToRetrieve/volumeBlocksizeAsFloat);
 			logger.trace("noOfTapeBlocksToBeRead " + noOfTapeBlocksToBeRead);
+			
+
+			
 			String ddRestoreCommand = "dd if=" + deviceName + " bs=" + volumeBlocksize + " count=" + noOfTapeBlocksToBeRead + " of=" + partialFileFromTapeOutputFilePathName;
+			logger.trace("ddRestoreFromTapeCommand " + ddRestoreCommand);
 			List<String> commandList = new ArrayList<String>();
 			commandList.add("sh");
 			commandList.add("-c");
@@ -326,7 +332,7 @@ public class TarArchiver implements IArchiveformatter {
 			
 			
 			int headerBlocks = 3; // TODO Hardcoded
-			long noOfBytesToBeSkipped = ((storageJob.getArchiveBlock() + headerBlocks) * storageJob.getVolume().getArchiveformat().getBlocksize()) + startClusterPosition - 1;
+			long noOfBytesToBeSkipped = ((storageJob.getArchiveBlock() + headerBlocks) * storageJob.getVolume().getArchiveformat().getBlocksize()) + startClusterPosition; // TODO Swami check not subtracting as it throws error - 1;
 			int bytesConvertedAsBlocks =  (int) (noOfBytesToBeSkipped/storageJob.getVolume().getDetails().getBlocksize());
 			
 			logger.trace("bytesConvertedAsBlocks " + bytesConvertedAsBlocks);
@@ -336,13 +342,15 @@ public class TarArchiver implements IArchiveformatter {
 			long bytesToBeSkipped = noOfBytesToBeSkipped - bytesAlreadySeeked;
 			logger.trace("bytesToBeSkipped " + bytesToBeSkipped);
 			
-			String trimmedOutputFilePathName = filePathNameToBeRestored.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
+			//String trimmedOutputFilePathName = filePathNameToBeRestored.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
+			String trimmedOutputFilePathName = partialFileFromTapeOutputFilePathName.replace("_restored.bin", ".pfr");
 			
 			String trimCommand = "dd if=" + partialFileFromTapeOutputFilePathName + " skip=" + bytesToBeSkipped + " count=" + bytesToRetrieve + " iflag=skip_bytes,count_bytes of=" + trimmedOutputFilePathName;
+			logger.trace("trimCommand " + trimCommand);
 			List<String> trimCommandList = new ArrayList<String>();
-			commandList.add("sh");
-			commandList.add("-c");
-			commandList.add("cd " + targetLocationPath + " ; " + trimCommand);
+			trimCommandList.add("sh");
+			trimCommandList.add("-c");
+			trimCommandList.add("cd " + targetLocationPath + " ; " + trimCommand);
 
 			logger.trace("trimCommand response - "+ executeCommand(trimCommandList, null, volumeBlocksize));
 
@@ -351,9 +359,9 @@ public class TarArchiver implements IArchiveformatter {
 			String stitchedFilePathName = trimmedOutputFilePathName.replace(".pfr", "_stitched.mkv");
 			String catCommand = "cat " + headerFilePathName + " " + trimmedOutputFilePathName + " > " + stitchedFilePathName;
 			List<String> catCommandList = new ArrayList<String>();
-			commandList.add("sh");
-			commandList.add("-c");
-			commandList.add("cd " + targetLocationPath + " ; " + catCommand);
+			catCommandList.add("sh");
+			catCommandList.add("-c");
+			catCommandList.add("cd " + targetLocationPath + " ; " + catCommand);
 
 			logger.trace("catCommand response - "+ executeCommand(catCommandList, null, volumeBlocksize));
 
@@ -363,9 +371,9 @@ public class TarArchiver implements IArchiveformatter {
 			String wrappedFileName = stitchedFilePathName.replace("_stitched.mkv", ".mkv");
 			String mkvmergeCommand = "mkvmerge -o " + wrappedFileName + " " + stitchedFilePathName;
 			List<String> mkvmergeCommandList = new ArrayList<String>();
-			commandList.add("sh");
-			commandList.add("-c");
-			commandList.add("cd " + targetLocationPath + " ; " + mkvmergeCommand);
+			mkvmergeCommandList.add("sh");
+			mkvmergeCommandList.add("-c");
+			mkvmergeCommandList.add("cd " + targetLocationPath + " ; " + mkvmergeCommand);
 
 			logger.trace("mkvmergeCommand response - "+ executeCommand(mkvmergeCommandList, null, volumeBlocksize));
 
@@ -376,9 +384,9 @@ public class TarArchiver implements IArchiveformatter {
 			String editingTeamFileName = wrappedFileName.replace(".mkv", "_forEditingTeam.mxf");
 			String mxfConversionCommand = "ffmpeg -i " + wrappedFileName + " -target pal-dv50 " + editingTeamFileName;
 			List<String> mxfConversionCommandList = new ArrayList<String>();
-			commandList.add("sh");
-			commandList.add("-c");
-			commandList.add("cd " + targetLocationPath + " ; " + mxfConversionCommand);
+			mxfConversionCommandList.add("sh");
+			mxfConversionCommandList.add("-c");
+			mxfConversionCommandList.add("cd " + targetLocationPath + " ; " + mxfConversionCommand);
 
 			logger.trace("mxfConversionCommand response - "+ executeCommand(mxfConversionCommandList, null, volumeBlocksize));
 		}
