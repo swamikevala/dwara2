@@ -347,7 +347,7 @@ public class TarArchiver implements IArchiveformatter {
 			logger.trace("trimCommand response - "+ executeCommand(trimCommandList, null, volumeBlocksize));
 
 			// cat P22250_sample.hdr sample_00-00-01_00-00-02.pfr > sample_stitched_00-00-01_00-00-02.mkv
-			String headerFilePathName = filePathNameToBeRestored.replace(".mkv", ".hdr");
+			String headerFilePathName = filePathname.replace(".mkv", ".hdr");
 			String stitchedFilePathName = trimmedOutputFilePathName.replace(".pfr", "_stitched.mkv");
 			String catCommand = "cat " + headerFilePathName + " " + trimmedOutputFilePathName + " > " + stitchedFilePathName;
 			List<String> catCommandList = new ArrayList<String>();

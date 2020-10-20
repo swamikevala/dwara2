@@ -8,6 +8,8 @@ import java.util.Map;
 
 import org.apache.commons.codec.binary.Hex;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.api.req.restore.FileDetails;
+import org.ishafoundation.dwaraapi.api.req.restore.PFRestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
@@ -73,7 +75,6 @@ public class FileService extends DwaraService{
 		
 	}
 	
-
     public RestoreResponse restore(RestoreUserRequest restoreUserRequest) throws Exception{	
     	RestoreResponse restoreResponse = new RestoreResponse();
 
@@ -128,6 +129,102 @@ public class FileService extends DwaraService{
 			systemrequestDetails.setDestinationPath(destinationPath);
 			systemrequestDetails.setVerify(verify); // overwriting default archiveformat.verify during restore
 			systemrequestDetails.setDomainId(domainUtil.getDomainId(fileId_Domain_Map.get(nthFileId)));
+			
+			systemRequest.setDetails(systemrequestDetails);
+			systemRequest = requestDao.save(systemRequest);
+			logger.info(DwaraConstants.SYSTEM_REQUEST + systemRequest.getId());
+			
+			
+			jobCreator.createJobs(systemRequest, null);
+			
+			File file = new File();
+			//file.setArtifactclass(artifactclass);
+			
+			byte[] checksum = fileFromDB.getChecksum();
+			if(checksum != null)
+				file.setChecksum(Hex.encodeHexString(checksum));
+			file.setId(fileFromDB.getId());
+			file.setPathname(fileFromDB.getPathname());
+			file.setPriority(counter);
+			file.setSize(fileFromDB.getSize());
+			file.setSystemRequestId(systemRequest.getId());
+			files.add(file);
+			counter = counter + 1;
+		}
+
+    	
+    	restoreResponse.setUserRequestId(userRequestId);
+    	restoreResponse.setAction(userRequest.getActionId().name());
+    	restoreResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
+    	restoreResponse.setRequestedBy(userRequest.getRequestedBy().getName());
+
+    	restoreResponse.setDestinationPath(destinationPath);
+    	restoreResponse.setVerify(verify);
+    	restoreResponse.setOutputFolder(outputFolder);
+    	
+    	restoreResponse.setFiles(files);    	
+    	return restoreResponse;
+    }
+    
+    public RestoreResponse partialFileRestore(PFRestoreUserRequest pfRestoreUserRequest) throws Exception{	
+    	RestoreResponse restoreResponse = new RestoreResponse();
+
+    	List<Integer> fileIds = new ArrayList<Integer>();
+    	List<FileDetails> fileDetailsList = pfRestoreUserRequest.getFiles();
+		for (FileDetails nthFileDetails : fileDetailsList) {
+			fileIds.add(nthFileDetails.getFileId());
+		}
+    	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
+    	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
+    	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
+    	
+		Request userRequest = new Request();
+    	userRequest.setType(RequestType.user);
+		userRequest.setActionId(Action.restore);
+		userRequest.setStatus(Status.queued);
+    	User user = getUserObjFromContext();
+    	String requestedBy = user.getName();
+    	userRequest.setRequestedBy(user);
+		userRequest.setRequestedAt(LocalDateTime.now());
+		RequestDetails details = new RequestDetails();
+		JsonNode postBodyJson = getRequestDetails(pfRestoreUserRequest); 
+		details.setBody(postBodyJson);
+		userRequest.setDetails(details);
+		
+    	userRequest = requestDao.save(userRequest);
+    	int userRequestId = userRequest.getId();
+    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
+
+	
+    	Integer copyNumber = pfRestoreUserRequest.getCopy();
+    	String outputFolder = pfRestoreUserRequest.getOutputFolder();
+    	String destinationPath = pfRestoreUserRequest.getDestinationPath();
+    	boolean verify = pfRestoreUserRequest.isVerify();
+    	List<File> files = new ArrayList<File>();
+    	
+
+    	int counter = 1;
+    	for (FileDetails nthFileDetails : fileDetailsList) {
+    		Integer nthFileId = nthFileDetails.getFileId();
+    		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = fileId_FileObj_Map.get(nthFileId);
+    			
+			Request systemRequest = new Request();
+			systemRequest.setType(RequestType.system);
+			systemRequest.setStatus(Status.queued);
+			systemRequest.setRequestRef(userRequest);
+			systemRequest.setActionId(userRequest.getActionId());
+			systemRequest.setRequestedBy(userRequest.getRequestedBy());
+			systemRequest.setRequestedAt(LocalDateTime.now());
+			
+    		RequestDetails systemrequestDetails = new RequestDetails();
+    		systemrequestDetails.setFileId(nthFileId);
+    		systemrequestDetails.setCopyId(copyNumber);
+			systemrequestDetails.setOutputFolder(outputFolder);
+			systemrequestDetails.setDestinationPath(destinationPath);
+			systemrequestDetails.setVerify(verify); // overwriting default archiveformat.verify during restore
+			systemrequestDetails.setDomainId(domainUtil.getDomainId(fileId_Domain_Map.get(nthFileId)));
+			systemrequestDetails.setTimecodeStart(nthFileDetails.getTimecodeStart());
+			systemrequestDetails.setTimecodeEnd(nthFileDetails.getTimecodeEnd());
 			
 			systemRequest.setDetails(systemrequestDetails);
 			systemRequest = requestDao.save(systemRequest);

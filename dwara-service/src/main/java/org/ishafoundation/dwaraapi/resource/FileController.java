@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.api.req.restore.PFRestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
@@ -66,5 +67,25 @@ public class FileController {
 
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body(restoreResponse);
 	}
+	
+	@ApiOperation(value = "Restores the list of files requested from location into the target volume grouped under the output dir")
+	@PostMapping("/file/partialFileRestore")
+	public ResponseEntity<RestoreResponse> partialFileRestore(@RequestBody PFRestoreUserRequest pfRestoreUserRequest){
+		RestoreResponse restoreResponse = null;
+		try {
+			restoreResponse = fileService.partialFileRestore(pfRestoreUserRequest);
+		}catch (Exception e) {
+			String errorMsg = "Unable to get data for ltowala - " + e.getMessage();
+			logger.error(errorMsg, e);
+
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(restoreResponse);
+	}
+	
 
 }
