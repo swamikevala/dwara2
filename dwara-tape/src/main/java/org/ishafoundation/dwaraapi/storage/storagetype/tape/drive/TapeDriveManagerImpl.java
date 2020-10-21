@@ -224,7 +224,8 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 		}
 	}
 	
-	private int getCurrentPositionBlockNumber(String dataTransferElementName) throws Exception {
+	@Override
+	public int getCurrentPositionBlockNumber(String dataTransferElementName) throws Exception {
 		// after seeking mt status responds with fileNo = -1 and blockNo = -1, so we had to do this...
 		CommandLineExecutionResponse  cler = tell(dataTransferElementName);
 		Pattern tellRespRegExPattern = Pattern.compile("At block ([0-9]*).");

@@ -412,7 +412,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 			pfr = true;
 		
 		if(pfr)
-			srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
+			//srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
+			srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".mxf");
 		
 		String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");	
 		logger.trace("src " + srcPath);
