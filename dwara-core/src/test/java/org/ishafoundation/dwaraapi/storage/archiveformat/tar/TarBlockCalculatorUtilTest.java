@@ -90,60 +90,60 @@ public class TarBlockCalculatorUtilTest {
 		block 72162: -rwxrwxrwx root/root   7353665 2019-07-25 13:51 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/1 CD/20190701_071239.mp4
 	*/
 
-	@Test	
-	public void test2() throws Exception{
-		
-		//block 0: drwxrwxrwx root/root         0 2020-07-01 12:08 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/
-		String fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/";
-		Long fileSize = 0L;
-		int fileArchiveStartBlock = 0;
-						
-		int evb = TarBlockCalculatorUtil.getFileVolumeEndBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
-		System.out.println("vb : " + evb);
-		//assertEquals(0, evb);
-		
-		// block 4: -rwxrwxrwx root/root  12878883 2019-07-25 13:51 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074746.mp4	
-		fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074746.mp4";
-		fileSize = 12878883L;
-		fileArchiveStartBlock = 4;
-		
-		evb = TarBlockCalculatorUtil.getFileVolumeEndBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
-		System.out.println("vb : " + evb);
-		//assertEquals(24, evb); // 25 but starts with 0;
-		
-		//block 25160: -rwxrwxrwx root/root  24063587 2019-07-25 13:51 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074810.mp4
-		fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074810.mp4";
-		fileSize = 24063587L;
-		fileArchiveStartBlock = 25160;
-		
-		evb = TarBlockCalculatorUtil.getFileVolumeEndBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
-		System.out.println("vb : " + evb);
-		//assertEquals(70, evb); // 46 + 25
-		
-
-		//block 72161: drwxrwxrwx root/root         0 2020-07-01 12:08 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/1 CD/
-		fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/1 CD/";
-		fileSize = 0L;
-		fileArchiveStartBlock = 72161;
-		
-		evb = TarBlockCalculatorUtil.getFileVolumeEndBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
-		System.out.println("vb : " + evb);
-		
-		fileName = "Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoProApr6/DCIM/104GOPRO/GOPR6924.MP4";
-		fileSize = 69953193L;
-		fileArchiveStartBlock = 7;
-		
-		evb = TarBlockCalculatorUtil.getFileVolumeEndBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
-		System.out.println("vb : " + evb); 
-		
-		fileName = "Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoProApr6/DCIM/104GOPRO/GOPR6925.MP4";
-		fileSize = 1638625295L;
-		fileArchiveStartBlock = 136638;
-		
-		evb = TarBlockCalculatorUtil.getFileVolumeEndBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
-		System.out.println("vb : " + evb);
-		//assertEquals(71, evb);
-	}
+//	@Test	
+//	public void test2() throws Exception{
+//		
+//		//block 0: drwxrwxrwx root/root         0 2020-07-01 12:08 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/
+//		String fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/";
+//		Long fileSize = 0L;
+//		int fileArchiveStartBlock = 0;
+//						
+//		int evb = TarBlockCalculatorUtil.getFileVolumeEndBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
+//		System.out.println("vb : " + evb);
+//		//assertEquals(0, evb);
+//		
+//		// block 4: -rwxrwxrwx root/root  12878883 2019-07-25 13:51 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074746.mp4	
+//		fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074746.mp4";
+//		fileSize = 12878883L;
+//		fileArchiveStartBlock = 4;
+//		
+//		evb = TarBlockCalculatorUtil.getFileVolumeEndBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
+//		System.out.println("vb : " + evb);
+//		//assertEquals(24, evb); // 25 but starts with 0;
+//		
+//		//block 25160: -rwxrwxrwx root/root  24063587 2019-07-25 13:51 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074810.mp4
+//		fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074810.mp4";
+//		fileSize = 24063587L;
+//		fileArchiveStartBlock = 25160;
+//		
+//		evb = TarBlockCalculatorUtil.getFileVolumeEndBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
+//		System.out.println("vb : " + evb);
+//		//assertEquals(70, evb); // 46 + 25
+//		
+//
+//		//block 72161: drwxrwxrwx root/root         0 2020-07-01 12:08 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/1 CD/
+//		fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/1 CD/";
+//		fileSize = 0L;
+//		fileArchiveStartBlock = 72161;
+//		
+//		evb = TarBlockCalculatorUtil.getFileVolumeEndBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
+//		System.out.println("vb : " + evb);
+//		
+//		fileName = "Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoProApr6/DCIM/104GOPRO/GOPR6924.MP4";
+//		fileSize = 69953193L;
+//		fileArchiveStartBlock = 7;
+//		
+//		evb = TarBlockCalculatorUtil.getFileVolumeEndBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
+//		System.out.println("vb : " + evb); 
+//		
+//		fileName = "Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoProApr6/DCIM/104GOPRO/GOPR6925.MP4";
+//		fileSize = 1638625295L;
+//		fileArchiveStartBlock = 136638;
+//		
+//		evb = TarBlockCalculatorUtil.getFileVolumeEndBlock(fileName, fileArchiveStartBlock, fileSize, tarBlocksize, blockingFactor);
+//		System.out.println("vb : " + evb);
+//		//assertEquals(71, evb);
+//	}
 
 	private Long getUsedFileSize(Long fileSize) {
 		return fileSize;

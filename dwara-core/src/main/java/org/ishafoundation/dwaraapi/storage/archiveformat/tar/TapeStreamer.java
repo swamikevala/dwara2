@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
@@ -22,11 +23,16 @@ public class TapeStreamer {
 
 	private static final Logger logger = LoggerFactory.getLogger(TapeStreamer.class);
 
-	public static boolean stream(List<String> commandList, int bufferSize, int skipByteCount, String filePathNameWeNeed,
+	public static TapeStreamerResponse stream(List<String> commandList, int bufferSize, int skipByteCount, String filePathNameWeNeed,
 			boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
 			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
 
-		boolean success = true;
+		HashMap<String, Integer> filePathNameToHeaderBlockCnt = new LinkedHashMap<String, Integer>();
+		
+		TapeStreamerResponse tsr = new TapeStreamerResponse();
+		tsr.setSuccess(true);
+		tsr.setFilePathNameToHeaderBlockCnt(filePathNameToHeaderBlockCnt);
+
 
 		ProcessBuilder pb = new ProcessBuilder(commandList);
 		Process proc = pb.start();
@@ -39,9 +45,14 @@ public class TapeStreamer {
 		TarArchiveInputStream tin = null;
 		try {
 			tin = new TarArchiveInputStream(is);
+			long totalNoOfBytesRead = 0L;
 			TarArchiveEntry entry = getNextTarEntry(tin);
 			while (entry != null) {
 				String entryPathName = entry.getName();
+				long headerBlockBytes = tin.getBytesRead() - totalNoOfBytesRead;
+				
+				filePathNameToHeaderBlockCnt.put(entryPathName, (int) (headerBlockBytes/512));
+				
 				logger.trace("tar entry - " + entryPathName);
 				// we position to the first files right header already, so if the entry name
 				// doesnt match the folder path that means these are the tail part of the
@@ -72,7 +83,7 @@ public class TapeStreamer {
 								logger.trace("originalChecksum = checksumToBeVerified. All good");
 								logger.info(entryPathName + " restored to " + destinationPath);
 							} else {
-								success = false;
+								tsr.setSuccess(false);
 								logger.error("checksum mismatch " + entryPathName);
 							}
 						}
@@ -93,7 +104,7 @@ public class TapeStreamer {
 						if (Arrays.equals(originalChecksum, checksumToBeVerified)) {
 							logger.trace("originalChecksum = checksumToBeVerified. All good");
 						} else {
-							success = false;
+							tsr.setSuccess(false);
 							logger.error("checksum mismatch " + entryPathName);
 						}
 
@@ -108,7 +119,8 @@ public class TapeStreamer {
 						}
 					}
 				}
-
+				
+				totalNoOfBytesRead = tin.getBytesRead();
 				entry = getNextTarEntry(tin);
 			}
 			logger.trace("no more entries...");
@@ -124,7 +136,7 @@ public class TapeStreamer {
 
 			proc.destroy();
 		}
-		return success;
+		return tsr;
 	}
 
 	private static TarArchiveEntry getNextTarEntry(TarArchiveInputStream tin) {

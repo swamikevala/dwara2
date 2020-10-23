@@ -208,7 +208,7 @@ public class TarArchiver implements IArchiveformatter {
 		}
 		
 		archiveResponse.setArtifactStartVolumeBlock(artifactStartVolumeBlock);
-		artifactTotalVolumeBlocks = TarBlockCalculatorUtil.getFileVolumeEndBlock(lastTaredFile.getFilePathName(), lastTaredFile.getArchiveBlock(), lastTaredFile.getFileSize(), archiveformatBlocksize, blockingFactor);
+		artifactTotalVolumeBlocks = TarBlockCalculatorUtil.getFileVolumeEndBlock(lastTaredFile.getFilePathName(), lastTaredFile.getArchiveBlock(), 3, lastTaredFile.getFileSize(), archiveformatBlocksize, blockingFactor);
 		int evbOldWays = artifactStartVolumeBlock + artifactTotalVolumeBlocks - TarBlockCalculatorUtil.INCLUSIVE_BLOCK_ADJUSTER;  // - 1 because svb inclusive
 		logger.trace("evbOldWays " + evbOldWays);
 //		archiveResponse.setArtifactEndVolumeBlock(evbOldWays);
@@ -257,12 +257,16 @@ public class TarArchiver implements IArchiveformatter {
 		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, false, 0, targetLocationPath, noOfTapeBlocksToBeRead);
 
 		HashMap<String, byte[]> filePathNameToChecksumObj = selectedStorageJob.getFilePathNameToChecksum();
-		boolean isSuccess = stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, false, targetLocationPath, true, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
-		if(isSuccess)
+		TapeStreamerResponse tsr = stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, false, targetLocationPath, true, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
+		if(tsr.isSuccess())
 			logger.info("Verification success");
 		else
 			throw new Exception("Verification failed");
-		return new ArchiveResponse();
+		
+		ArchiveResponse archiveResponse = new ArchiveResponse();
+		archiveResponse.setArchivedFilePathNameToHeaderBlockCnt(tsr.getFilePathNameToHeaderBlockCnt());
+		
+		return archiveResponse;
 	}
 	
 	private int getNoOfTapeBlocksToBeReadForArtifact(int artifactStartVolumeBlock, int artifactEndVolumeBlock) {
@@ -308,10 +312,15 @@ public class TarArchiver implements IArchiveformatter {
 				if(configuration.checksumTypeSupportsStreamingVerification()) // if stream verify supported by checksumtype, then set the streamverify = true
 					streamVerify = true;
 			}
-			stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, true, targetLocationPath, streamVerify, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
-	
-			if(storageJob.isRestoreVerify() && !streamVerify) { // TO be verified using standard approach but not the on the fly streaming and verifying
-				boolean success = ChecksumUtil.compareChecksum(filePathNameToChecksumObj, targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
+			TapeStreamerResponse tsr = stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, true, targetLocationPath, streamVerify, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
+			if(storageJob.isRestoreVerify()) {
+				boolean success = true;
+				if(streamVerify) { // TO be verified using standard approach but not the on the fly streaming and verifying
+					success = tsr.isSuccess();
+				}
+				else {
+					success = ChecksumUtil.compareChecksum(filePathNameToChecksumObj, targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
+				}
 				if(!success)
 					throw new Exception("Restored file's verification failed");
 			}
@@ -354,9 +363,14 @@ public class TarArchiver implements IArchiveformatter {
 			commandList.add("cd " + targetLocationPath + " ; " + ddRestoreCommand);
 
 			logger.trace(executeCommand(commandList, null, volumeBlocksize));
-			
-			
-			int headerBlocks = 3; // TODO Hardcoded
+
+			int fileId = storageJob.getFileId();
+			Volume volume = storageJob.getVolume();
+			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, fileId, volume.getId());// lets just let users use the util consistently
+			Integer headerBlocks = fileVolume.getHeaderBlocks();
+
+			if(headerBlocks == null)
+				headerBlocks = 3;
 			long noOfBytesToBeSkipped = ((storageJob.getArchiveBlock() + headerBlocks) * storageJob.getVolume().getArchiveformat().getBlocksize()) + startClusterPosition; // TODO Swami check not subtracting as it throws error - 1;
 			int bytesConvertedAsBlocks =  (int) (noOfBytesToBeSkipped/storageJob.getVolume().getDetails().getBlocksize());
 			
@@ -432,6 +446,7 @@ public class TarArchiver implements IArchiveformatter {
 		
 		return inclusiveTimeCode;
 	}
+	
 	// TODO move this method to CuesFileParser
 	private String getClusterPosition(String cuesFileEntries, String timestamp){
 		String clusterPosition = null;
@@ -478,32 +493,32 @@ public class TarArchiver implements IArchiveformatter {
 		return commandList;
 	}
 
-	protected boolean stream(String dataTransferElementName, List<String> commandList, int volumeBlocksize, int skipByteCount,
+	protected TapeStreamerResponse stream(String dataTransferElementName, List<String> commandList, int volumeBlocksize, int skipByteCount,
 			String filePathNameWeNeed, boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
 			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
 		return streamWithRetriesOnDeviceBusyError(dataTransferElementName, commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj, DwaraConstants.DRIVE_BUSY_ERROR, 0);
 	}
 	
-	private boolean streamWithRetriesOnDeviceBusyError(String dataTransferElementName, List<String> commandList, int volumeBlocksize, int skipByteCount,
+	private TapeStreamerResponse streamWithRetriesOnDeviceBusyError(String dataTransferElementName, List<String> commandList, int volumeBlocksize, int skipByteCount,
 				String filePathNameWeNeed, boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
 				HashMap<String, byte[]> filePathNameToChecksumObj, String errorMsg, int nthRetryAttempt) throws Exception {
 	
-		boolean success = false;
+		TapeStreamerResponse tsr = null;
 		try {
-			success = TapeStreamer.stream(commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj);
+			tsr = TapeStreamer.stream(commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj);
 		} catch (Exception e) {
 			String errorMessage = e.getMessage();
 			logger.error("Tar streaming failed " + e.getMessage());
 			
 			if(errorMessage.contains(errorMsg) && nthRetryAttempt <= 2){
 				logger.debug("Must be a parallel mt status call... Retrying again");
-				success = streamWithRetriesOnDeviceBusyError(dataTransferElementName, commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj, errorMsg, nthRetryAttempt);
+				tsr = streamWithRetriesOnDeviceBusyError(dataTransferElementName, commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj, errorMsg, nthRetryAttempt);
 			}
 			else
 				throw e;
 		}
 		
-		return success;
+		return tsr;
 	}
 	
 	private ArchiveformatJob getDecoratedArchiveformatJobForRestore(ArchiveformatJob archiveformatJob) throws Exception {
@@ -545,13 +560,14 @@ public class TarArchiver implements IArchiveformatter {
 						FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());// lets just let users use the util consistently
 						Integer filevolumeBlock = fileVolume.getVolumeBlock();
 						Integer filearchiveBlock = fileVolume.getArchiveBlock();
+						Integer headerBlocks = fileVolume.getHeaderBlocks();
 						if(nthArtifactFilePathname.equals(filePathname)) { // first file
 							firstFileVolumeBlock = filevolumeBlock;
 							skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filePathname, filearchiveBlock, archiveformatBlocksize, blockingFactor);
 						}
 						else if(filearchiveBlock > lastFileArchiveBlock) {
 							lastFileArchiveBlock = filearchiveBlock;
-							lastFileEndVolumeBlock = TarBlockCalculatorUtil.getFileVolumeEndBlock(nthArtifactFilePathname, filearchiveBlock, nthFile.getSize(), archiveformatBlocksize, blockingFactor); 
+							lastFileEndVolumeBlock = TarBlockCalculatorUtil.getFileVolumeEndBlock(nthArtifactFilePathname, filearchiveBlock, headerBlocks, nthFile.getSize(), archiveformatBlocksize, blockingFactor); 
 						}
 					}
 				}
@@ -565,7 +581,8 @@ public class TarArchiver implements IArchiveformatter {
 
 			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, fileIdToBeRestored, volume.getId());// lets just let users use the util consistently
 			Integer filearchiveBlock = fileVolume.getArchiveBlock();
-			noOfBlocksToBeRead = artifactVolume.getDetails().getStartVolumeBlock() + TarBlockCalculatorUtil.getFileVolumeEndBlock(filePathname, filearchiveBlock, fileSize, archiveformatBlocksize, blockingFactor) - seekedVolumeBlock;
+			Integer headerBlocks = fileVolume.getHeaderBlocks();
+			noOfBlocksToBeRead = artifactVolume.getDetails().getStartVolumeBlock() + TarBlockCalculatorUtil.getFileVolumeEndBlock(filePathname, filearchiveBlock, headerBlocks, fileSize, archiveformatBlocksize, blockingFactor) - seekedVolumeBlock;
 			skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filePathname, filearchiveBlock, archiveformatBlocksize, blockingFactor); 		
 		}
 		

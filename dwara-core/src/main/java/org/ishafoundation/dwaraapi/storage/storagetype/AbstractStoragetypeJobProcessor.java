@@ -32,6 +32,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.Arti
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
@@ -279,14 +280,14 @@ public abstract class AbstractStoragetypeJobProcessor {
     	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
     	storageResponse = iStoragelevel.verify(selectedStorageJob);
 
-    	afterVerify(selectedStorageJob);
+    	afterVerify(selectedStorageJob, storageResponse);
     	return storageResponse; 
    	
     }
 	
-	protected void afterVerify(SelectedStorageJob selectedStorageJob) throws Exception{
+	protected void afterVerify(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception{
 		// update the verified date here...
-		updateFileVolumeVerifiedDate(selectedStorageJob);
+		updateFileVolumeTable(selectedStorageJob, storageResponse);
 		
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		String fileNameToBeVerified = storageJob.getArtifact().getName();
@@ -302,7 +303,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 			
 	}
 
-	private void updateFileVolumeVerifiedDate(SelectedStorageJob selectedStorageJob) {
+	private void updateFileVolumeTable(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
 		
 		Volume volume = storageJob.getVolume();
@@ -312,10 +313,19 @@ public abstract class AbstractStoragetypeJobProcessor {
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileToBeRestored = selectedStorageJob.getFile();
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = selectedStorageJob.getArtifactFileList();
 		for (File nthFile : fileList) {
-			if(nthFile.getPathname().startsWith(fileToBeRestored.getPathname())) {
+			String filePathname = nthFile.getPathname();
+			if(filePathname.startsWith(fileToBeRestored.getPathname())) {
 				FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());
 				
 				fileVolume.setVerifiedAt(LocalDateTime.now());
+				if(volume.getStoragelevel() == Storagelevel.block && storageJob.getJob().getStoragetaskActionId() == Action.verify) { // Only for block - TODO Should we move this to block specific impl??? 
+					Map<String, Integer> archivedFilePathNameToHeaderBlockCnt = storageResponse.getArchiveResponse().getArchivedFilePathNameToHeaderBlockCnt();
+					if(archivedFilePathNameToHeaderBlockCnt != null) {
+						Integer headerBlockCnt = archivedFilePathNameToHeaderBlockCnt.get(filePathname);
+						if(headerBlockCnt != null)
+							fileVolume.setHeaderBlocks(headerBlockCnt);
+					}
+				}
 				toBeAddedFileVolumeTableEntries.add(fileVolume);
 			}
 		}
@@ -389,14 +399,14 @@ public abstract class AbstractStoragetypeJobProcessor {
     	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
     	storageResponse = iStoragelevel.restore(selectedStorageJob);
 
-    	afterRestore(selectedStorageJob);
+    	afterRestore(selectedStorageJob, storageResponse);
     	return storageResponse; 
     }
 	
-	protected void afterRestore(SelectedStorageJob selectedStorageJob) throws Exception {
+	protected void afterRestore(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception {
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		if(storageJob.isRestoreVerify())
-			updateFileVolumeVerifiedDate(selectedStorageJob); // update the verified date here...
+			updateFileVolumeTable(selectedStorageJob, storageResponse); // update the verified date here...
 		
 		// upon completion moving the file to the original requested dest path		
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();

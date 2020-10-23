@@ -19,22 +19,24 @@ public class TarBlockCalculatorUtil {
 		return volumeBlock/archiveBlock;
 	}
 
-	// TODO : better this logic... 1 or 3 blocks based on 100 character limit or something better identification?
-	public static int getFileHeaderBlocks(String fileName){
-		int fileHeaderBlocks = 1;
-		if(fileName.length() >= FILENAME_CHARACTER_THRESHOLD_PER_TAR_BLOCK) { // Reference TarArchiveOutputStream.handleLongName().if (len >= TarConstants.NAMELEN)
-			fileHeaderBlocks = 3;
-		}
-		return fileHeaderBlocks;	
-	}
+//	// TODO : better this logic... 1 or 3 blocks based on 100 character limit or something better identification?
+//	public static int getFileHeaderBlocks(String fileName){
+//		// TODO : we should get this from the file tbale...
+////		int fileHeaderBlocks = 1;
+////		if(fileName.length() >= FILENAME_CHARACTER_THRESHOLD_PER_TAR_BLOCK) { // Reference TarArchiveOutputStream.handleLongName().if (len >= TarConstants.NAMELEN)
+////			fileHeaderBlocks = 3;
+////		}
+//		int fileHeaderBlocks = 3; // For Posix format its always 3 because of the pax header... 
+//		return fileHeaderBlocks;	
+//	}
 	
 	public static int getFileVolumeBlock(int artifactStartVolumeBlock, int archiveBlock, int blockingFactor) {
 		return artifactStartVolumeBlock + archiveBlock/blockingFactor; // Not ceiling the value as we need to -1 anyway because of 0 start
 	}
 	
 	// calculates a file's Volume END  block - using the running archiveblock of each file... where archiveBlock is the starting block of the file archive...
-	public static int getFileVolumeEndBlock(String fileName, int fileArchiveBlock, Long fileSize, double archiveformatBlocksize, double blockingFactor){
-		int fileHeaderBlocks = getFileHeaderBlocks(fileName);
+	public static int getFileVolumeEndBlock(String fileName, int fileArchiveBlock, int fileHeaderBlocks, Long fileSize, double archiveformatBlocksize, double blockingFactor){
+		//int fileHeaderBlocks = getFileHeaderBlocks(fileName);
 		
 		// Total no. of archive blocks used by the file...
 		int fileArchiveBlocksCount = (int) Math.ceil(fileSize/archiveformatBlocksize);

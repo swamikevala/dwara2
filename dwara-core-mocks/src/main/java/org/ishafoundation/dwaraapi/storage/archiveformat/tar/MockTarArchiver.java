@@ -30,26 +30,26 @@ public class MockTarArchiver extends TarArchiver {
 		return testResponseFileAsString;
 	}
 
-	@Override
-	protected boolean stream(String deviceName, List<String> commandList, int volumeBlocksize, int skipByteCount,
-			String filePathNameWeNeed, boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
-			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
-
-		if (toBeRestored) {
-			if (toBeVerified) { // Restore with checksum validation
-				logger.trace("Simulating restore and verify");
-			} else {
-				logger.trace("Simulating restore without checksum validation");
-			}
-				
-		} else if (!toBeRestored && toBeVerified) {// Just on the fly checksum validation...
-			logger.trace("Simulating checksum validation without restoring");
-		}
-		
-		logger.debug("buffersize - " +  volumeBlocksize);
-		logger.debug("Will be skipping - " +  skipByteCount);
-		
-		return true;
-	}
+//	@Override
+//	protected boolean stream(String deviceName, List<String> commandList, int volumeBlocksize, int skipByteCount,
+//			String filePathNameWeNeed, boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
+//			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
+//
+//		if (toBeRestored) {
+//			if (toBeVerified) { // Restore with checksum validation
+//				logger.trace("Simulating restore and verify");
+//			} else {
+//				logger.trace("Simulating restore without checksum validation");
+//			}
+//				
+//		} else if (!toBeRestored && toBeVerified) {// Just on the fly checksum validation...
+//			logger.trace("Simulating checksum validation without restoring");
+//		}
+//		
+//		logger.debug("buffersize - " +  volumeBlocksize);
+//		logger.debug("Will be skipping - " +  skipByteCount);
+//		
+//		return true;
+//	}
 
 }

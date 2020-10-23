@@ -35,11 +35,14 @@ public class FileVolume {
 	private Volume volume;
 		
 	@Column(name="volume_block")
-	private Integer volumeBlock;
+	private Integer volumeBlock; // volumeBlockStart
 
 	@Column(name="archive_block")
-	private Integer archiveBlock;
+	private Integer archiveBlock; // archiveBlockStart
 
+	@Column(name="header_blocks")
+	private Integer headerBlocks; // no. of HeaderBlocks consumed by the file...
+	
 	@Column(name="encrypted")
 	private boolean encrypted;
 	
@@ -77,6 +80,14 @@ public class FileVolume {
 
 	public void setArchiveBlock(Integer archiveBlock) {
 		this.archiveBlock = archiveBlock;
+	}
+
+	public Integer getHeaderBlocks() {
+		return headerBlocks;
+	}
+
+	public void setHeaderBlocks(Integer headerBlocks) {
+		this.headerBlocks = headerBlocks;
 	}
 
 	public boolean isEncrypted() {

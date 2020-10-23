@@ -1,7 +1,9 @@
 package org.ishafoundation.dwaraapi.storage.archiveformat;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ArchiveResponse {
 	
@@ -15,7 +17,7 @@ public class ArchiveResponse {
 	
 	private List<ArchivedFile> archivedFileList = new ArrayList<ArchivedFile>();
 
-	
+	private Map<String, Integer> archivedFilePathNameToHeaderBlockCnt = new LinkedHashMap<String, Integer>();
 
 	public String getArtifactName() {
 		return artifactName;
@@ -55,6 +57,14 @@ public class ArchiveResponse {
 
 	public void setArchivedFileList(List<ArchivedFile> archivedFileList) {
 		this.archivedFileList = archivedFileList;
+	}
+
+	public Map<String, Integer> getArchivedFilePathNameToHeaderBlockCnt() {
+		return archivedFilePathNameToHeaderBlockCnt;
+	}
+
+	public void setArchivedFilePathNameToHeaderBlockCnt(Map<String, Integer> archivedFilePathNameToHeaderBlockCnt) {
+		this.archivedFilePathNameToHeaderBlockCnt = archivedFilePathNameToHeaderBlockCnt;
 	}
 	
 }
