@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
@@ -15,7 +16,9 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
@@ -71,6 +74,9 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private ArtifactVolumeRepositoryUtil artifactVolumeRepositoryUtil;
+	
+	@Autowired
+	private DomainUtil domainUtil;
 	
 	@Autowired
 	private Configuration configuration;
@@ -262,14 +268,16 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 			//skip = ((12 + 3) * 512) + 5840030 - 1 = 5847709
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
 			Domain domain = storageJob.getDomain();
-			String path = fileEntityUtil.getArtifact(file, domain).getArtifactclass().getPath();
+			String path = storageJob.getArtifact().getArtifactclass().getPath();
 			logger.trace("path " + path);
 			String filePathname = path + File.separator + file.getPathname();
 			logger.trace("filePathname " + filePathname);
-			String cuesFileEntries = FileUtils.readFileToString(new File(filePathname.replace(".mkv", ".cues")));
+			String cuesFileEntries = FileUtils.readFileToString(new File(filePathname.replace(PfrConstants.MKV_EXTN, PfrConstants.INDEX_EXTN)));
 			//CuesFileParser cfp = new CuesFileParser();
 			 // TODO move this method to CuesFileParser
-			int headerBlocks = 3; // TODO Hardcoded
+			
+			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, file.getId(), storageJob.getVolume().getId());
+			int headerBlocks = fileVolume.getHeaderBlocks();
 			logger.trace("archive_block " + storageJob.getArchiveBlock());
 			logger.trace("archiveformatblocksize " + storageJob.getVolume().getArchiveformat().getBlocksize());
 			logger.trace("starttimecode's clusterpos " + getClusterPosition(cuesFileEntries, timeCodeStart));

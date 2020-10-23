@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
@@ -51,9 +52,9 @@ public class Video_Prasad_Transcoding_TaskExecutor extends MediaTask implements 
 		
 		FileUtils.forceMkdir(new File(destinationDirPath));
 		
-		String compressedFileTargetLocation = destinationDirPath + File.separator + fileName + ".mkv";// TODO How do we know if it should be mkv or mxf or what not???	
-		String headerFileTargetLocation = destinationDirPath + File.separator + fileName + ".hdr";// TODO How do we know if it should be mkv or mxf or what not???	
-		String cuesFileTargetLocation = destinationDirPath + File.separator + fileName + ".cues";// TODO How do we know if it should be mkv or mxf or what not???	
+		String compressedFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.MKV_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
+		String headerFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.HDR_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
+		String cuesFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.INDEX_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
 		
 		/*************** COMPRESSION ***************/
 		long proxyStartTime = System.currentTimeMillis();

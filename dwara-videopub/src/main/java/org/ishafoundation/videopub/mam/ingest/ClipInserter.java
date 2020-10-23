@@ -103,7 +103,10 @@ public class ClipInserter extends CatDVInteractor {
 			
 			in = Float.parseFloat((String) vsb.get("start_time"));
 			
-			Float duration = Float.parseFloat((String) vsb.get("duration"));
+			String durationString = (String) vsb.get("duration");
+			if(durationString == null) // For DVs MXF/MKV the video stream doesnt have duration... 
+				durationString = JsonPathUtil.getValue(metaDataJson, "format.duration");
+			Float duration = Float.parseFloat(durationString);
 			
 			out = in + duration;
 		//if(vsb != null) {

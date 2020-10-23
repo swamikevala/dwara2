@@ -11,6 +11,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.commandline.local.RetriableCommandLineExecutorImpl;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -122,14 +123,6 @@ public class TarArchiver implements IArchiveformatter {
 	@Autowired
 	private DeviceLockFactory deviceLockFactory;
 	
-	private static final String MXF_EXTN = ".mxf";
-	private static final String MKV_EXTN = ".mkv";
-	private static final String INDEX_EXTN = ".idx";
-	private static final String HDR_EXTN = ".hdr";
-	
-	private static final String RESTORED_FROM_TAPE_BIN = "_restored.bin";
-	private static final String TRIMMED_BIN = "_trimmed.bin";
-	private static final String STITCHED_MKV = "_stitched.mkv";
 	@Override
 	public ArchiveResponse write(ArchiveformatJob archiveformatJob) throws Exception {
 		String artifactSourcePath = archiveformatJob.getArtifactSourcePath();
@@ -330,14 +323,14 @@ public class TarArchiver implements IArchiveformatter {
 			logger.trace("filePathNameToBeRestored " + filePathNameToBeRestored);
 			String parentDir = FilenameUtils.getFullPathNoEndSeparator(filePathNameToBeRestored);
 			FileUtils.forceMkdir(new java.io.File(targetLocationPath + java.io.File.separator + parentDir));
-			String partialFileFromTapeOutputFilePathName = filePathNameToBeRestored.replace(MKV_EXTN, "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + RESTORED_FROM_TAPE_BIN);
+			String partialFileFromTapeOutputFilePathName = filePathNameToBeRestored.replace(PfrConstants.MKV_EXTN, "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + PfrConstants.RESTORED_FROM_TAPE_BIN);
 			
 			Domain domain = storageJob.getDomain();
 			String path = fileEntityUtil.getArtifact(file, domain).getArtifactclass().getPath();
 			logger.trace("path " + path);
 			String filePathname = path + java.io.File.separator + file.getPathname();
 			logger.trace("filePathname " + filePathname);
-			String cuesFileEntries = FileUtils.readFileToString(new java.io.File(filePathname.replace(MKV_EXTN, INDEX_EXTN)));
+			String cuesFileEntries = FileUtils.readFileToString(new java.io.File(filePathname.replace(PfrConstants.MKV_EXTN, PfrConstants.INDEX_EXTN)));
 			
 			long startClusterPosition = Long.parseLong(getClusterPosition(cuesFileEntries, timeCodeStart));
 //			String inclusiveTimeCode = getInclusiveTimeCode(timeCodeEnd);
@@ -382,7 +375,7 @@ public class TarArchiver implements IArchiveformatter {
 			logger.trace("bytesToBeSkipped " + bytesToBeSkipped);
 			
 			//String trimmedOutputFilePathName = filePathNameToBeRestored.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
-			String trimmedOutputFilePathName = partialFileFromTapeOutputFilePathName.replace(RESTORED_FROM_TAPE_BIN, TRIMMED_BIN);
+			String trimmedOutputFilePathName = partialFileFromTapeOutputFilePathName.replace(PfrConstants.RESTORED_FROM_TAPE_BIN, PfrConstants.TRIMMED_BIN);
 			
 			String trimCommand = "dd if=" + partialFileFromTapeOutputFilePathName + " skip=" + bytesToBeSkipped + " count=" + bytesToRetrieve + " iflag=skip_bytes,count_bytes of=" + trimmedOutputFilePathName;
 			logger.trace("trimCommand " + trimCommand);
@@ -394,8 +387,8 @@ public class TarArchiver implements IArchiveformatter {
 			logger.trace("trimCommand response - "+ executeCommand(trimCommandList, null, volumeBlocksize));
 
 			// cat P22250_sample.hdr sample_00-00-01_00-00-02.pfr > sample_stitched_00-00-01_00-00-02.mkv
-			String headerFilePathName = filePathname.replace(MKV_EXTN, HDR_EXTN);
-			String stitchedFilePathName = trimmedOutputFilePathName.replace(TRIMMED_BIN, STITCHED_MKV);
+			String headerFilePathName = filePathname.replace(PfrConstants.MKV_EXTN, PfrConstants.HDR_EXTN);
+			String stitchedFilePathName = trimmedOutputFilePathName.replace(PfrConstants.TRIMMED_BIN, PfrConstants.STITCHED_MKV);
 			String catCommand = "cat " + headerFilePathName + " " + trimmedOutputFilePathName + " > " + stitchedFilePathName;
 			List<String> catCommandList = new ArrayList<String>();
 			catCommandList.add("sh");
@@ -407,7 +400,7 @@ public class TarArchiver implements IArchiveformatter {
 			
 
 			// mkvmerge -o sample_00-00-01_00-00-02.mkv sample_stitched_00-00-01_00-00-02.mkv
-			String wrappedFileName = stitchedFilePathName.replace(STITCHED_MKV, MKV_EXTN);
+			String wrappedFileName = stitchedFilePathName.replace(PfrConstants.STITCHED_MKV, PfrConstants.MKV_EXTN);
 			String mkvmergeCommand = "mkvmerge -o " + wrappedFileName + " " + stitchedFilePathName;
 			List<String> mkvmergeCommandList = new ArrayList<String>();
 			mkvmergeCommandList.add("sh");
@@ -420,7 +413,7 @@ public class TarArchiver implements IArchiveformatter {
 			 
 			 
 			 // ffmpeg -i sample_00-00-01_00-00-02.mkv -target pal-dv50 sample_editingTeam_00-00-01_00-00-02.mxf
-			String editingTeamFileName = wrappedFileName.replace(MKV_EXTN, MXF_EXTN);
+			String editingTeamFileName = wrappedFileName.replace(PfrConstants.MKV_EXTN, PfrConstants.MXF_EXTN);
 			String mxfConversionCommand = "ffmpeg -i " + wrappedFileName + " -target pal-dv50 " + editingTeamFileName;
 			List<String> mxfConversionCommandList = new ArrayList<String>();
 			mxfConversionCommandList.add("sh");
