@@ -212,12 +212,12 @@ public class TarArchiver implements IArchiveformatter {
 		int evbOldWays = artifactStartVolumeBlock + artifactTotalVolumeBlocks - TarBlockCalculatorUtil.INCLUSIVE_BLOCK_ADJUSTER;  // - 1 because svb inclusive
 		logger.trace("evbOldWays " + evbOldWays);
 //		archiveResponse.setArtifactEndVolumeBlock(evbOldWays);
-		int evbNewWays = tapeDriveManager.getCurrentPositionBlockNumber(deviceName) - TarBlockCalculatorUtil.TAPEMARK_BLOCK; // - TMB because tell always includes the tapemarkblock...
+		int evbNewWays = tapeDriveManager.getCurrentPositionBlockNumber(deviceName) - TarBlockCalculatorUtil.TAPEMARK_BLOCK - TarBlockCalculatorUtil.INCLUSIVE_BLOCK_ADJUSTER; // - TMB because tell always includes the tapemarkblock...
 		logger.trace("evbNewWays " + evbNewWays);
 		if(evbOldWays != evbNewWays) {
 			String msg = "evb mismatch - evbOldWays" + evbOldWays + " evbNewWays " + evbNewWays;
 			logger.error(msg);
-			throw new Exception(msg);
+			//throw new Exception(msg);
 		}
 		archiveResponse.setArtifactEndVolumeBlock(evbNewWays);
 		archiveResponse.setArchivedFileList(archivedFileList);
@@ -258,7 +258,10 @@ public class TarArchiver implements IArchiveformatter {
 
 		HashMap<String, byte[]> filePathNameToChecksumObj = selectedStorageJob.getFilePathNameToChecksum();
 		boolean isSuccess = stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, false, targetLocationPath, true, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
-		logger.info("Verification success");
+		if(isSuccess)
+			logger.info("Verification success");
+		else
+			throw new Exception("Verification failed");
 		return new ArchiveResponse();
 	}
 	
