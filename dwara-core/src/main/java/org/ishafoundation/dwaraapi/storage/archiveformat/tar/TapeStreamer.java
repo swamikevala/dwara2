@@ -14,6 +14,8 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
@@ -49,11 +51,14 @@ public class TapeStreamer {
 			TarArchiveEntry entry = getNextTarEntry(tin);
 			while (entry != null) {
 				String entryPathName = entry.getName();
+				logger.trace("tar entry - " + entryPathName);
 				long headerBlockBytes = tin.getBytesRead() - totalNoOfBytesRead;
-				
+				logger.trace("headerBlockBytes - " + headerBlockBytes);
+				if(entry.isDirectory())
+					entryPathName = FilenameUtils.getPathNoEndSeparator(entryPathName);
 				filePathNameToHeaderBlockCnt.put(entryPathName, (int) (headerBlockBytes/512));
 				
-				logger.trace("tar entry - " + entryPathName);
+				
 				// we position to the first files right header already, so if the entry name
 				// doesnt match the folder path that means these are the tail part of the
 				// restored bytechunk which are not needed...
