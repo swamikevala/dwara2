@@ -1,15 +1,12 @@
 package org.ishafoundation.videopub.mam.ingest;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.cookie.BasicClientCookie;

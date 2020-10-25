@@ -44,8 +44,8 @@ public class DwaraApiApplication {
 	@EventListener(ApplicationReadyEvent.class)
 	public void validateDbVersion() throws Exception {
 		Version version = versionDao.findTopByOrderByVersion();
-		if(version == null || !version.getVersion().equals("2.0.1"))
-			throw new Exception("DB version mismatch. Upgrade DB to " + "2.0.1");
+		if(version == null || !version.getVersion().equals("2.0.2"))
+			throw new Exception("DB version mismatch. Upgrade DB to " + "2.0.2");
 	}
 	/*
 	 * On bootstraping the app we need to create as many thread pools for as many tasks configured...

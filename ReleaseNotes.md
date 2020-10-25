@@ -1,3 +1,22 @@
+# Dwara App Version - 2.0.06
+# Dwara DB Version - 2.0.2
+### New features 
+1 Support for persisting number of header blocks consumed by every file on the archive
+   
+> Schema change - New column file_volume.header_blocks addition only - Source will automatically create the new column...
+
+### Bug fixes
+1 Volume end block calculation for tar now is using tell rather than the existing way of summing up the consumed header block, blocks used based on file size and end of archive blocks involved.
+2 Fixed mam insertclip media.dwara2id pointing to proxy's file id in place of the source fileId.
+
+### Upgrade steps
+  * Take DB backup.......
+  * Deploy the app
+  * Change the DB version to 2.0.2
+  * Restart the app
+  * Use the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_0_2.sql) to update already created rows missing values because of above Bug #2
+  * Update script to correct the dwara2id references pointing to proxy file id than the source file id 
+    
 # Dwara App Version - 2.0.05
 # Dwara DB Version - 2.0.1
 ### New features 
