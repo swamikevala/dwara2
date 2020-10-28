@@ -105,6 +105,9 @@ public class JobCreator {
 			logger.trace("Flowelement " + nthFlowelement.getId());
 			Flow flowRef = nthFlowelement.getFlowRef();
 			
+			if(flowRefFlowelement != null)
+				nthFlowelement.setFlowelementRef(flowRefFlowelement);
+			
 			if(flowRef != null) { // If the flowelement has a flowref, that means one of this flowelement dependency is a processing task generating an output artifact, that is to be consumed as input
 				logger.trace("References a flow again " + flowRef.getId());
 				List<Integer> refFlowelementDepsList = nthFlowelement.getDependencies();
@@ -134,7 +137,19 @@ public class JobCreator {
 			}
 		}
 	}
-
+	
+	private String getKeyPrefix(Flowelement flowRefFlowelement, String keyPrefix) {
+		String keyPrefixTmp = null;
+		Flowelement flowRefFlowelementParent = flowRefFlowelement.getFlowelementRef();
+		if(flowRefFlowelementParent != null) {
+			keyPrefixTmp = getKeyPrefix(flowRefFlowelementParent, keyPrefix + flowRefFlowelementParent.getId() + "_");
+		}
+		else
+			keyPrefixTmp = keyPrefix;
+		
+		logger.trace("keyPrefixTmp - " + keyPrefixTmp);
+		return keyPrefixTmp;
+	}
 	private void createJob(Request request,  String artifactclassId, Integer artifactId, Flowelement flowRefFlowelement, Flowelement nthFlowelement, List<Job> jobList,
 			Map<String, Job> flowelementId_Job_Map, Map<String, Job> flowelementId_CopyNumber_Job_Map) {
 
@@ -145,12 +160,17 @@ public class JobCreator {
 			preRequesiteFlowelements = nthFlowelement.getDependencies();
 		}
 		else {
-			putKeyPrefix = flowRefFlowelement.getId() + "_";
+			String keyPrefix = getKeyPrefix(flowRefFlowelement, "");
+			logger.trace("keyPrefix " + keyPrefix);
+			
+			putKeyPrefix = keyPrefix + flowRefFlowelement.getId() + "_";
+			getKeyPrefix = keyPrefix;
+			
 			if(nthFlowelement.getDependencies() == null)
 				preRequesiteFlowelements = flowRefFlowelement.getDependencies();
 			if(nthFlowelement.getDependencies() != null) {
 				preRequesiteFlowelements = nthFlowelement.getDependencies();
-				getKeyPrefix = flowRefFlowelement.getId() + "_";
+				getKeyPrefix = getKeyPrefix + flowRefFlowelement.getId() + "_";
 			}
 			logger.trace("putKeyPrefix " + putKeyPrefix);
 			logger.trace("preRequesiteFlowelements " + preRequesiteFlowelements);

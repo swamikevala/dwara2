@@ -9,6 +9,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Type;
@@ -45,7 +46,9 @@ public class Flowelement {
 	@Column(name = "active")
 	private boolean active;
 
-
+	@Transient
+	private Flowelement flowelementRef;
+	
 	public int getId() {
 		return id;
 	}
@@ -120,5 +123,13 @@ public class Flowelement {
 
 	public void setActive(boolean active) {
 		this.active = active;
+	}
+
+	public Flowelement getFlowelementRef() {
+		return flowelementRef;
+	}
+
+	public void setFlowelementRef(Flowelement flowelementRef) {
+		this.flowelementRef = flowelementRef;
 	}
 }
