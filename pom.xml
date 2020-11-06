@@ -16,5 +16,6 @@
 		<module>dwara-dev-tools</module>
 		<module>dwara-videopub</module>
     <module>dwara-ltowala</module>
+      <module>dwara-misc</module>
   </modules>
 </project>

@@ -39,17 +39,17 @@ public class ChecksumUtil {
 		return getChecksum(bis, checksumtype, bufferSize);
 	}
 	
-	public static byte[] getChecksum(InputStream tin, Checksumtype checksumtype, int bufferSize) throws Exception {
-		return restoreFileAndGetChecksum(tin, checksumtype, bufferSize, null);
+	public static byte[] getChecksum(InputStream is, Checksumtype checksumtype, int bufferSize) throws Exception {
+		return restoreFileAndGetChecksum(is, checksumtype, bufferSize, null);
 	}
 	
-	public static byte[] restoreFileAndGetChecksum(InputStream tin, Checksumtype checksumtype, int bufferSize, BufferedOutputStream bos) throws Exception {
+	public static byte[] restoreFileAndGetChecksum(InputStream is, Checksumtype checksumtype, int bufferSize, BufferedOutputStream bos) throws Exception {
 		MessageDigest md = MessageDigest.getInstance(checksumtype.getJavaStyleChecksumtype());
 		
         final byte[] buffer = new byte[bufferSize];
         int n = 0;
         long count = 0;
-        while (-1 != (n = tin.read(buffer))) {
+        while (-1 != (n = is.read(buffer))) {
     		if (bos != null) {
 				bos.write(buffer, 0, n);
 			}
