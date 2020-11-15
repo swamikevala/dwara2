@@ -29,6 +29,8 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	
 	Job findTopByStoragetaskActionIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(Action action);
 	
+	Job findByVolumeIdAndStatus(String volumeId, Status status); // we need to pass only inprogress status here...
+	
 	// Used in determining tapeusageStatus
 	long countByVolumeIdAndStatus(String volumeId, Status status);
 	
@@ -45,6 +47,8 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	Job findByRequestIdAndProcessingtaskId(int requestId, String processingtaskId); // TODO : Note this could be a list too if there are failed jobs...
 	
 	List<Job> findAllByRequestId(int requestId);
+	
+	Job findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(int requestId, int inputArtifactId,  int flowelementId, String groupVolumeId);
 	
 	// Used for LtoWala
 	List<Job> findAllByCompletedAtBetweenAndStoragetaskActionIdAndGroupVolumeCopyId(LocalDateTime startDateTime, LocalDateTime endDataTime, Action action, Integer copyNumber);

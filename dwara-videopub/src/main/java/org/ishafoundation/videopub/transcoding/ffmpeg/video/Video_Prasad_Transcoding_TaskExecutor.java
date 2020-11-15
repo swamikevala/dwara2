@@ -52,18 +52,34 @@ public class Video_Prasad_Transcoding_TaskExecutor extends MediaTask implements 
 		
 		FileUtils.forceMkdir(new File(destinationDirPath));
 		
+		String compressedFileTmpTargetLocation = destinationDirPath + File.separator + fileName + "_tmp" + PfrConstants.MKV_EXTN ;// TODO How do we know if it should be mkv or mxf or what not???
 		String compressedFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.MKV_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
 		String headerFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.HDR_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
 		String cuesFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.INDEX_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
 		
 		/*************** COMPRESSION ***************/
 		long proxyStartTime = System.currentTimeMillis();
-		logger.info("Compression starts for " + sourceFilePathname + " - targetLocation is - " + compressedFileTargetLocation);
+		logger.info("Compression starts for " + sourceFilePathname + " - targetLocation is - " + compressedFileTmpTargetLocation);
 	
 		// Doing this command creation and execution in 2 steps so that the process can be referenced in memory and so if cancel command for a specific medialibrary is issued the specific process(es) can be destroyed/killed referencing this...
 		// mapping only for proxy generation commands which are slightly heavy and time consuming than the thumbnail and metadata extraction...
-		List<String> compressionCommandParamsList = getCompressionCommand(sourceFilePathname, compressedFileTargetLocation);
+		List<String> compressionCommandParamsList = getCompressionCommand(sourceFilePathname, compressedFileTmpTargetLocation);
 		CommandLineExecutionResponse compressionCommandLineExecutionResponse = createProcessAndExecuteCommand(file.getId()+"~"+taskName , compressionCommandParamsList);
+		if(compressionCommandLineExecutionResponse.isComplete())
+			logger.info("Compression successful - " + compressedFileTmpTargetLocation);
+		
+		// DU-241 - The ffmpeg output has the audio tracks NOT in proper aligment in a cluster. So we have to run this
+		// TODO - the mkvmerge command has a lowerlimit of 100ms which is putting more than 1 frame in a cluster. We ideally want just 1 frame/cluster. Swami liasing with the mkvtool developer...
+		// TODO - Not able to put 5 frames in one cluster...
+		// TODO - handle ntsc vs pal on cluster-length 
+		logger.info("Now aligning the tracks in cluster");
+		String mkvmergeCommand = "mkvmerge -o " + compressedFileTargetLocation + " " + compressedFileTmpTargetLocation + " --cluster-length 200ms";
+		CommandLineExecutionResponse mkvmergeCommandLineExecutionResponse = commandLineExecuter.executeCommand(mkvmergeCommand);
+		if(mkvmergeCommandLineExecutionResponse.isComplete()) {
+			logger.info("Alignment successful - " + compressedFileTargetLocation);
+			new File(compressedFileTmpTargetLocation).delete();
+		}
+		
 		long proxyEndTime = System.currentTimeMillis();
 	
 		/*************** HEADER EXTRACTION ***************/

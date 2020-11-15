@@ -283,7 +283,7 @@ public class ProcessingJobProcessor implements Runnable{
 						    logger.debug(logMsgPrefix + " - Success");	
 						    
 						    // Now setting all the dependentjobs with the tasktype generated output artifactid
-						    setInputArtifactForDependentJobs(job, outputArtifact);
+						    //setInputArtifactForDependentJobs(job, outputArtifact);
 						}
 						
 						// Output Artifact as a file record

@@ -57,7 +57,7 @@ public class MxfMetaDataCollector implements IProcessingTask {
 		
 		
 		// copies the QCReport file;
-		File qcReportFile = logicalFile.getSidecarFile(".qcr");
+		File qcReportFile = logicalFile.getSidecarFile("qcr");
 		FileUtils.copyFile(qcReportFile, new File(qcrTargetLocation));
 		
 		// TODO : better this...
@@ -97,18 +97,24 @@ public class MxfMetaDataCollector implements IProcessingTask {
             	IOUtils.write(headerData, new FileOutputStream(hdrTargetLocation));
         		break;
         	}
+        	if(count == 5) {
+        		System.out.println("Couldnt find header even after " + count + " loops. Is it even possible?");
+        		break;
+        	}
         	count += 1;
         }
 	}
     
     private void extractAndSaveFooter(String sourceFilePathname, String ftrTargetLocation) throws Exception {
+    	long srcFileSize = new File(sourceFilePathname).length();
     	int bufferSize = 524288;
     	byte[] footerIdentifierPattern = Hex.decodeHex(footerHexPattern);
 
         for (int count = 1; count <= 5; count++) {
         	System.out.println(count);
         	long chunkByteSize = bufferSize * count;
-        	byte[] data = extractFooterChunk(sourceFilePathname, chunkByteSize);
+        	
+        	byte[] data = extractFooterChunk(sourceFilePathname, srcFileSize - chunkByteSize);
         	int footerIndexPos = HexPatternFinderUtil.indexOf(data, footerIdentifierPattern);
         	System.out.println("footerIndexPos " + footerIndexPos);
         	if(footerIndexPos != -1) {
@@ -131,7 +137,6 @@ public class MxfMetaDataCollector implements IProcessingTask {
         	else {
         		System.out.println("couldnt found the footer. retrying again...");
         	}
-
         }
 	}
     

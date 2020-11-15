@@ -161,7 +161,7 @@ CREATE TABLE `artifactclass` (
 
 LOCK TABLES `artifactclass` WRITE;
 /*!40000 ALTER TABLE `artifactclass` DISABLE KEYS */;
-INSERT INTO `artifactclass` VALUES ('video-pub','\0','',1,'1','\0','/data/staged','',NULL,'video-pub'),('video-pub-proxy-low','\0','',13,'1','\0','/data/transcoded','\0','video-pub','video-pub-proxy-low');
+INSERT INTO `artifactclass` VALUES ('video-pub','\0','',1,'1','\0','C:\\data\\staged','',NULL,'video-pub'),('video-pub-proxy-low','\0','',13,'1','\0','C:\\data\\transcoded','\0','video-pub','video-pub-proxy-low');
 /*!40000 ALTER TABLE `artifactclass` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -369,7 +369,7 @@ CREATE TABLE `extension` (
 
 LOCK TABLES `extension` WRITE;
 /*!40000 ALTER TABLE `extension` DISABLE KEYS */;
-INSERT INTO `extension` VALUES ('',NULL,NULL),('8bf',NULL,NULL),('abc',NULL,NULL),('AppleDouble',NULL,NULL),('BIM',NULL,NULL),('CR2',NULL,NULL),('cues','Prasad - Extracted index from mkv','\0'),('ftr','Prasad - Extract header from the source mxf','\0'),('hdr','Prasad - Extract header from both mxf and mkv','\0'),('jpg',NULL,NULL),('LRV',NULL,NULL),('md5','Prasad - md5 file','\0'),('mkv','Prasad - Metroska','\0'),('mov','','\0'),('mp3','','\0'),('mp4','','\0'),('mp4_ffprobe_out',NULL,NULL),('mxf','Prasad - raw uncompressed source file','\0'),('PPN',NULL,''),('prak',NULL,''),('qcr','Prasad - QC report file','\0'),('sav',NULL,NULL),('SMI',NULL,''),('THM',NULL,NULL),('txt',NULL,NULL),('wav','','\0'),('XML',NULL,NULL);
+INSERT INTO `extension` VALUES ('',NULL,NULL),('8bf',NULL,NULL),('abc',NULL,NULL),('AppleDouble',NULL,NULL),('BIM',NULL,NULL),('CR2',NULL,NULL),('cues','Prasad - Extracted index from mkv','\0'),('DS_Store',NULL,NULL),('ftr','Prasad - Extract header from the source mxf','\0'),('hdr','Prasad - Extract header from both mxf and mkv','\0'),('jpg',NULL,NULL),('LRV',NULL,NULL),('md5','Prasad - md5 file','\0'),('mkv','Prasad - Metroska','\0'),('mov','','\0'),('mp3','','\0'),('mp4','','\0'),('mp4_ffprobe_out',NULL,NULL),('mxf','Prasad - raw uncompressed source file','\0'),('PPN',NULL,''),('prak',NULL,''),('qcr','Prasad - QC report file','\0'),('sav',NULL,NULL),('SMI',NULL,''),('THM',NULL,NULL),('txt',NULL,NULL),('wav','','\0'),('XML',NULL,NULL);
 /*!40000 ALTER TABLE `extension` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -479,7 +479,7 @@ CREATE TABLE `flowelement` (
 
 LOCK TABLES `flowelement` WRITE;
 /*!40000 ALTER TABLE `flowelement` DISABLE KEYS */;
-INSERT INTO `flowelement` VALUES (1,'',NULL,1,'checksum-gen',NULL,'archive-flow',NULL),(2,'',NULL,2,NULL,'write','archive-flow',NULL),(3,'','[1, 3]',3,NULL,'verify','archive-flow',NULL),(4,'',NULL,4,'video-proxy-low-gen',NULL,'video-proxy-flow',NULL),(5,'','[4]',5,'video-mam-update',NULL,'video-proxy-flow',NULL),(6,'','[4]',6,NULL,NULL,'video-proxy-flow','archive-flow');
+INSERT INTO `flowelement` VALUES (1,'',NULL,1,'checksum-gen',NULL,'archive-flow',NULL),(2,'',NULL,2,NULL,'write','archive-flow',NULL),(3,'','[1, 2]',3,NULL,'verify','archive-flow',NULL),(4,'',NULL,4,'video-proxy-low-gen',NULL,'video-proxy-flow',NULL),(5,'','[4]',5,'video-mam-update',NULL,'video-proxy-flow',NULL),(6,'','[4]',6,NULL,NULL,'video-proxy-flow','archive-flow');
 /*!40000 ALTER TABLE `flowelement` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -596,7 +596,7 @@ CREATE TABLE `sequence` (
 
 LOCK TABLES `sequence` WRITE;
 /*!40000 ALTER TABLE `sequence` DISABLE KEYS */;
-INSERT INTO `sequence` VALUES ('generated-1',NULL,10500,19999,'\0','\0','\0',NULL,'G',10001,'volume',NULL),('generated-2',NULL,20500,29999,'\0','\0','\0',NULL,'G',20001,'volume',NULL),('generated-3',NULL,30500,39999,'\0','\0','\0',NULL,'G',30001,'volume',NULL),('original-1',NULL,10500,19999,'\0','\0','\0',NULL,'R',10001,'volume',NULL),('original-2',NULL,20500,29999,'\0','\0','\0',NULL,'R',20001,'volume',NULL),('original-3',NULL,30500,39999,'\0','\0','\0',NULL,'R',30001,'volume',NULL),('video-pub','^\\d+(?=_)',NULL,NULL,'\0','\0','\0','^\\d+(?=_)','V',NULL,'artifact','video-grp'),('video-pub-proxy-low','^V\\d+(?=_)',NULL,NULL,'','\0','\0','(?<=V)\\d+(?=_)','VL',NULL,'artifact',NULL);
+INSERT INTO `sequence` VALUES ('generated-1',NULL,10500,19999,'\0','\0','\0',NULL,'G',10001,'volume',NULL),('generated-2',NULL,20500,29999,'\0','\0','\0',NULL,'G',20001,'volume',NULL),('generated-3',NULL,30500,39999,'\0','\0','\0',NULL,'G',30001,'volume',NULL),('original-1',NULL,10500,19999,'\0','\0','\0',NULL,'R',10001,'volume',NULL),('original-2',NULL,20500,29999,'\0','\0','\0',NULL,'R',20001,'volume',NULL),('original-3',NULL,30500,39999,'\0','\0','\0',NULL,'R',30001,'volume',NULL),('video-grp',NULL,22276,-1,'\0','','\0',NULL,NULL,1,'artifact',NULL),('video-pub','^\\d+(?=_)',NULL,NULL,'\0','\0','\0','^\\d+(?=_)','V',NULL,'artifact','video-grp'),('video-pub-proxy-low','^V\\d+(?=_)',NULL,NULL,'','\0','\0','(?<=V)\\d+(?=_)','VL',NULL,'artifact',NULL);
 /*!40000 ALTER TABLE `sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -713,4 +713,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-11-13 16:28:56
+-- Dump completed on 2020-11-14 20:37:00

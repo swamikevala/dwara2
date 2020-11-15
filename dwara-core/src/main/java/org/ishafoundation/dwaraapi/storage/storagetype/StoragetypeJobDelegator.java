@@ -10,18 +10,24 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
+import org.ishafoundation.dwaraapi.storage.storagetask.ImportStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetype.thread.AbstractStoragetypeJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.thread.IStoragetypeThreadPoolExecutor;
+import org.ishafoundation.dwaraapi.thread.executor.ImportStoragetaskSingleThreadExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 
@@ -29,7 +35,23 @@ import org.springframework.stereotype.Component;
 public class StoragetypeJobDelegator {
 	
 	private static final Logger logger = LoggerFactory.getLogger(StoragetypeJobDelegator.class);
+
+	
+	@Autowired
+	private JobDao jobDao;	
+	
+	@Autowired
+	private ApplicationContext applicationContext;
 		
+	@Autowired
+	private ImportStoragetaskSingleThreadExecutor importStoragetaskSingleThreadExecutor;
+	
+	@Autowired
+	private ArtifactVolumeRepositoryUtil artifactVolumeRepositoryUtil;
+
+	@Autowired
+	private JobUtil jobUtil;
+
 	@Autowired
 	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
 	
@@ -37,16 +59,137 @@ public class StoragetypeJobDelegator {
 	private Map<String, AbstractStoragetypeJobManager> storageTypeJobManagerMap;
 	
 	@Autowired
-	private JobDao jobDao;	
-	
-	@Autowired
 	private  Map<String, IStoragetypeThreadPoolExecutor> storagetypeThreadPoolExecutorMap;
+	
+	/**
+	 *  Wraps the jobs with extra storage info and with that extra context filters "already in-progress same volume jobs" and delegates to appropriate storagetype impl
+	 * @param jobsList
+	 */
+	// TODO Need to move the map_drives logic to Tape specific impl...
+	public void delegate(List<Job> jobsList) {
+		List<StorageJob> storageJobList = new ArrayList<StorageJob>();
+		// Need to block all storage jobs from picked up for processing, when there is a queued/inprogress mapdrive/format request... 
+		List<Action> actionList = new ArrayList<Action>();
+		actionList.add(Action.map_tapedrives);
+		actionList.add(Action.initialize);
+
+		// If a subrequest action type is mapdrive and status is queued or inprogress skip storage jobs...
+		long blockingJobsLinedUp = jobDao.countByStoragetaskActionIdInAndStatus(actionList, Status.queued);
+		long blockingJobsInFlight = jobDao.countByStoragetaskActionIdInAndStatus(actionList, Status.in_progress);
+		
+		List<StorageJob> readyToBeExecutedStorageJobsList = new ArrayList<StorageJob>();
+		Map<Volume, Job> volume_InProgressJob_Map = new HashMap<Volume, Job>();
+		Map<Volume, ArtifactVolume> volume_LastArtifactOnVolume_Map = new HashMap<Volume, ArtifactVolume>();
+		for (Job job : jobsList) {
+			Action storagetaskAction = job.getStoragetaskActionId();
+			
+			if(storagetaskAction == Action.import_) {
+				ImportStoragetaskAction importStoragetaskAction = applicationContext.getBean(ImportStoragetaskAction.class);
+				importStoragetaskAction.setJob(job);
+				importStoragetaskSingleThreadExecutor.getExecutor().execute(importStoragetaskAction);
+			}
+			
+			StorageJob storageJob = wrapJobWithStorageInfo(job);
+			if(storageJob == null)
+				continue;
+			
+			if(blockingJobsInFlight > 0) { // format/tape map drive request in progress, so blocking all storage jobs until the job is complete...
+				logger.trace("Skipping adding to storagejob collection as already a blocking request is " + Status.in_progress.name());
+				continue;
+			}
+			else if(blockingJobsLinedUp > 0) { // if any format/tape map drive request queued up
+				// only adding one blocking job to the list
+				if(job.getRequest().getActionId() == Action.initialize || job.getRequest().getActionId() == Action.map_tapedrives) {
+					if(storageJobList.size() == 0) { // add only one job at a time. If already added skip adding to the list and continue loop(we still need to continue so non-storage jobs are managed)...
+						storageJobList.add(storageJob);
+						logger.trace("Added to storagejob collection");
+					}
+					else {
+						logger.trace("Already another blocking job added to storagejob collection. So skipping this");
+						continue;
+					}
+				}
+			}
+			else { // only add when no tapedrivemapping or format activity
+				// all storage jobs need to be grouped for some optimisation...
+				Volume volume = storageJob.getVolume();
+				if(volume == null) {
+					String msg = "No volume available just yet for job "  + job.getId() + ". So skipping this job this schedule...";
+					logger.info(msg);
+					job.setMessage("[info] No volume available");
+					job = jobDao.save(job);
+					continue;
+				}else {
+					Job inProgressJobOnVolume = volume_InProgressJob_Map.get(volume); // Filtering already inprogress same volume jobs
+					if(inProgressJobOnVolume == null) {
+						inProgressJobOnVolume = jobDao.findByVolumeIdAndStatus(volume.getId(), Status.in_progress);
+						
+						if(inProgressJobOnVolume != null) {
+							volume_InProgressJob_Map.put(volume, inProgressJobOnVolume);
+						}
+					}							
+
+					if(inProgressJobOnVolume != null) {
+						logger.info("Skipping as same volume is already in use " + inProgressJobOnVolume.getId());
+						continue;
+					}
+					else {
+						if(storagetaskAction == Action.write) {
+							ArtifactVolume lastArtifactOnVolume = volume_LastArtifactOnVolume_Map.get(volume);
+							if(lastArtifactOnVolume == null) {
+								lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(storageJob.getDomain(), volume);
+								
+								if(lastArtifactOnVolume != null) {
+									volume_LastArtifactOnVolume_Map.put(volume, lastArtifactOnVolume);
+								}
+							}
+							
+							if(lastArtifactOnVolume != null) { // check if the job has dependencies and ensure all nested dependencies are completed...
+								//last write job on the volume needed by this job
+								Job lastWriteJob = lastArtifactOnVolume.getJob();
+								if(!jobUtil.isWriteJobReadyToBeExecuted(lastWriteJob)) {
+									logger.info("Skipping as previous write job' " + lastWriteJob.getId() + " dependent jobs are yet to complete");
+									continue;
+								}
+							}
+						}
+					}
+					
+					storageJobList.add(storageJob);
+					logger.trace("Added to storagejob collection");
+				}
+			}
+
+		}
+		
+		if(readyToBeExecutedStorageJobsList.size() > 0) {
+			logger.debug(readyToBeExecutedStorageJobsList.size() + " storage jobs are process ready");
+			delegate_internal(readyToBeExecutedStorageJobsList);
+		}else {
+			logger.trace("No storage job to be processed");
+		}
+	}
+
+	private StorageJob wrapJobWithStorageInfo(Job job) {
+		AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(job.getStoragetaskActionId().name());
+		logger.trace("building storage job - " + job.getId() + ":" + storagetaskActionImpl.getClass().getSimpleName());
+		StorageJob storageJob = null;
+		try {
+			storageJob = storagetaskActionImpl.buildStorageJob(job);
+		} catch (Exception e) {
+			logger.error("Unable to gather necessary details for executing the job " + job.getId() + " - " + Status.failed, e);
+			job.setMessage(e.getMessage());
+			job.setStatus(Status.failed); // fail the job so it doesnt keep looping...
+			job = jobDao.save(job);
+		}
+		return storageJob;
+	}
 
 	/**
-	 * Wraps the jobs with extra storage info and groups based on storagetype and then delegates it to appropriate storagetype specific jobs processor
+	 * Groups based on storagetype and then delegates it to appropriate storagetype specific jobs processor
 	 */
-	public void delegate(List<Job> storageJobList) {
-		Map<Storagetype, List<StorageJob>> storagetype_storageTypeGroupedJobsList_Map = wrapJobsWithMoreInfoAndGroupOnStorageType(storageJobList);
+	private void delegate_internal(List<StorageJob> storageJobList) {
+		Map<Storagetype, List<StorageJob>> storagetype_storageTypeGroupedJobsList_Map = groupOnStorageType(storageJobList);
 		Set<Storagetype> storagetypeSet = storagetype_storageTypeGroupedJobsList_Map.keySet();
 		
 		// delegate the task to appropriate storagetype specific jobs processor
@@ -82,31 +225,11 @@ public class StoragetypeJobDelegator {
 		}
 	}
 	
-	private Map<Storagetype, List<StorageJob>> wrapJobsWithMoreInfoAndGroupOnStorageType(List<Job> storageJobList){
+	private Map<Storagetype, List<StorageJob>> groupOnStorageType(List<StorageJob> storageJobList){
 		Map<Storagetype, List<StorageJob>> storagetype_storageTypeGroupedJobsList_Map = new HashMap<>();
 		logger.debug("Wrapping jobs with more storage info and grouping them on Storagetype");
-		for (Job job : storageJobList) {
-			Action storagetaskAction = job.getStoragetaskActionId();
-			AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(storagetaskAction.name());
-			logger.trace("building storage job - " + job.getId() + ":" + storagetaskActionImpl.getClass().getSimpleName());
-			StorageJob storageJob = null;
-			try {
-				storageJob = storagetaskActionImpl.buildStorageJob(job);
-			} catch (Exception e) {
-				logger.error("Unable to gather necessary details for executing the job " + job.getId() + " - " + Status.failed, e);
-				job.setMessage(e.getMessage());
-				job.setStatus(Status.failed); // fail the job so it doesnt keep looping...
-				job = jobDao.save(job);
-				continue;
-			}
+		for (StorageJob storageJob : storageJobList) {
 			Volume volume = storageJob.getVolume();
-			if(volume == null) {
-				String msg = "No volume available just yet for job "  + job.getId() + ". So skipping this job this schedule...";
-				logger.info(msg);
-				job.setMessage("[info] No volume available");
-				job = jobDao.save(job);
-				continue;
-			}
 			Storagetype storagetype = volume.getStoragetype();
 			if(storagetype_storageTypeGroupedJobsList_Map.get(storagetype) != null) {
 				List<StorageJob> jobList = storagetype_storageTypeGroupedJobsList_Map.get(storagetype);

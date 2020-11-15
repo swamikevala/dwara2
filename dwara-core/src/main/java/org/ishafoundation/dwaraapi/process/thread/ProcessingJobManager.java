@@ -112,6 +112,36 @@ public class ProcessingJobManager implements Runnable{
 		this.job = job;
 	}
 
+	public boolean isJobToBeCreated(String processingtaskId, String inputArtifactPath, Artifactclass inputArtifactclass) {
+		Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+		Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPath, inputArtifactclass);
+		int filesToBeProcessedCount = selectedFileList.size();
+		logger.trace("filesToBeProcessedCount " + filesToBeProcessedCount);
+		
+		if(filesToBeProcessedCount == 0) {
+			String msg = "No files to process.";
+			if(!processingtask.getFiletypeId().equals("_all_")) {
+				msg = msg + " Check supported extensions...";
+			}
+			logger.warn(msg);
+			return false;
+		}
+		return true;
+	}
+	
+	private Collection<LogicalFile> getFilesToBeProcessed(String processingtaskId, String inputArtifactPath, Artifactclass inputArtifactclass){
+		
+		Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+		
+		// TODO Cache filetypes...
+		Filetype ft = null;
+		if(!processingtask.getFiletypeId().equals("_all_")) { // if filetype is all means get all files...
+			ft = filetypeDao.findById(processingtask.getFiletypeId()).get();
+		}
+			
+		return  getLogicalFileList(ft, inputArtifactPath, inputArtifactclass.getId(), processingtaskId);
+	}
+	
 	@Override
     public void run() {
 		logger.info("Managing processing job - " + job.getId());
@@ -201,13 +231,7 @@ public class ProcessingJobManager implements Runnable{
 			
 			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, inputArtifact);
 	
-			// TODO Cache filetypes...
-			Filetype ft = null;
-			if(!processingtask.getFiletypeId().equals("_all_")) { // if filetype is all means get all files...
-				ft = filetypeDao.findById(processingtask.getFiletypeId()).get();
-			}
-				
-			Collection<LogicalFile> selectedFileList = getLogicalFileList(ft, inputArtifactPath, inputArtifactclass.getId(), processingtaskId);
+			Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPath, inputArtifactclass);
 			int filesToBeProcessedCount = selectedFileList.size();
 			logger.trace("filesToBeProcessedCount " + filesToBeProcessedCount);
 			

@@ -25,6 +25,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,9 @@ public class ScheduledStatusUpdater {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledStatusUpdater.class);
 
 	@Autowired
+	private JobCreator jobCreator;
+	
+	@Autowired
 	private JobDao jobDao;
 	
 	@Autowired
@@ -57,7 +61,7 @@ public class ScheduledStatusUpdater {
 	@Autowired
 	private Configuration configuration;
 	
-	@Value("${scheduler.enabled:true}")
+	@Value("${scheduler.statusUpdater.enabled:true}")
 	private boolean isEnabled;
 	
 	@Scheduled(fixedDelay = 60000)
@@ -142,6 +146,9 @@ public class ScheduledStatusUpdater {
 					if(status == Status.completed) {
 						tFileJobDao.deleteAll(jobFileList);
 						logger.info("tFileJob cleaned up files of Job " + job.getId());
+						
+						// TODO check if something like checksum job and check if write job for that copy is complete before creating verify Job for that copy...
+						jobCreator.createDependentJobs(job);
 					}
 				}
 			}
