@@ -515,7 +515,8 @@ public class StagedService extends DwaraService{
 		return dest;
 	}
     
-	private void createFilesAndExtensions(String pathPrefix, Domain domain, Artifact artifact, long artifactSize, Collection<java.io.File> libraryFileAndDirsList) throws Exception {
+    // made public so tests can access it...
+	public void createFilesAndExtensions(String pathPrefix, Domain domain, Artifact artifact, long artifactSize, Collection<java.io.File> libraryFileAndDirsList) throws Exception {
 		Set<String> extnsOnArtifactFolder =  new TreeSet<String>();
 	    List<File> toBeAddedFileTableEntries = new ArrayList<File>(); 
 	    for (Iterator<java.io.File> iterator = libraryFileAndDirsList.iterator(); iterator.hasNext();) {
