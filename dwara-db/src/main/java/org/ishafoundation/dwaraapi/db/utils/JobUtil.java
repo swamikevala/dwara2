@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
@@ -23,57 +24,93 @@ public class JobUtil {
 	private JobDao jobDao;
 	
 	// used during JobManagement
-	public boolean isWriteJobReadyToBeExecuted(Job writeJob){
+	public boolean isWriteJobAndItsDependentJobsComplete(Job writeJob){
 		boolean isWriteJobReadyToBeExecuted = true;
 		Flowelement fe = writeJob.getFlowelement();
 		
 		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndActiveTrueOrderByDisplayOrderAsc(fe.getFlow().getId());
-		Map<Flowelement, List<Flowelement>> flowelement_DepenedentFlowelements_Map = new HashMap<Flowelement, List<Flowelement>>();
-		getWriteJobNestedDependentFlowelements(fe, flowelementList, flowelement_DepenedentFlowelements_Map);
+		Map<Integer, List<Flowelement>> flowelementId_DependentFlowelements_Map = new HashMap<Integer, List<Flowelement>>();
+		getWriteJobNestedDependentFlowelements(fe, flowelementList, flowelementId_DependentFlowelements_Map);
+		
+		System.out.println("Dependants of Flowelement " + fe.getId());
+		Set<Integer> flowelementIdSet = flowelementId_DependentFlowelements_Map.keySet();
+		for (Integer nthFlowelementId : flowelementIdSet) {
+		
+			List<Flowelement> dependentFlowelementList = flowelementId_DependentFlowelements_Map.get(nthFlowelementId);
+			for (Flowelement flowelement : dependentFlowelementList) {
+				System.out.println(nthFlowelementId + " --> " + flowelement.getId());
+			}
+		}
 		
 		List<Job> jobsOnRequest = jobDao.findAllByRequestId(writeJob.getRequest().getId());
-		Map<Flowelement, Job> flowelement_Job_Map = new HashMap<Flowelement, Job>();
-		getWriteJobNestedDependentJobs(writeJob, jobsOnRequest, flowelement_Job_Map);
+		Map<Integer, Job> flowelementId_dependentJob_Map = new HashMap<Integer, Job>();
+		getWriteJobNestedDependentJobs(writeJob, jobsOnRequest, flowelementId_dependentJob_Map);
+
+		System.out.println("Dependent Jobs");
+		Set<Integer> flowelementIdSet2 = flowelementId_dependentJob_Map.keySet();
+		for (Integer nthFlowelementId : flowelementIdSet2) {
+			Job job = flowelementId_dependentJob_Map.get(nthFlowelementId);
+			System.out.println(nthFlowelementId + " --> " + (job != null ? job.getId() : null));
+		}
 		
+		System.out.println("Now iterating all flowelements of flow " + fe.getFlow().getId());
 		for (Flowelement flowelement : flowelementList) {
-			List<Flowelement> dependentFlowElementsList = flowelement_DepenedentFlowelements_Map.get(flowelement);
-			
-			for (Flowelement dependentFlowElement : dependentFlowElementsList) {
-				Job dependentJob = flowelement_Job_Map.get(dependentFlowElement);
-				if(dependentJob != null) { // Job already created - check status
-					if(dependentJob.getStatus() != Status.completed) // if status is not completed
+			System.out.println("flowelement " + flowelement.getId());
+			List<Flowelement> dependentFlowElementsList = flowelementId_DependentFlowelements_Map.get(flowelement.getId());
+			if(dependentFlowElementsList != null) {
+				for (Flowelement dependentFlowElement : dependentFlowElementsList) {
+					System.out.println("dependentFlowElement " + dependentFlowElement.getId());
+					
+					Job dependentJob = flowelementId_dependentJob_Map.get(dependentFlowElement.getId());
+					if(dependentJob != null) { // Job already created - check status
+						System.out.println(dependentJob.getId() + " Job already created");
+						if(dependentJob.getStatus() != Status.completed) { // if status is not completed
+							isWriteJobReadyToBeExecuted = false;
+							System.out.println(dependentJob.getId() + " Job still not completed");
+						}else {
+							System.out.println(dependentJob.getId() + " Job already completed");
+						}
+					}
+					else { // Job not created at all
 						isWriteJobReadyToBeExecuted = false;
+						System.out.println("Job still not created");
+					}
 				}
-				else // Job not created at all
-					isWriteJobReadyToBeExecuted = false;
+			}else {
+				System.out.println("No dependants");
 			}
-			
 		}		
 		return isWriteJobReadyToBeExecuted;
 	}
 	
+	// made as public for testing
 	// Write Job's nested(depth >= 1) Dependent Jobs - For eg., Write --> Restore. Restore --> verify 
-	private void getWriteJobNestedDependentJobs(Job job, List<Job> jobsOnRequest, Map<Flowelement, Job> flowelement_Job_Map) {
+	public void getWriteJobNestedDependentJobs(Job job, List<Job> jobsOnRequest, Map<Integer, Job> flowelementId_dependantJob_Map) {
+		System.out.println("job " + job.getId());
 		for (Job nthJob : jobsOnRequest) {
 			List<Integer> preReqJobIds = nthJob.getDependencies();
-			if(preReqJobIds != null && preReqJobIds.contains(job.getId())) { // if the job has a direct dependency to the current job(running process job that generates the output) 
-				flowelement_Job_Map.put(job.getFlowelement(), job);
-				getWriteJobNestedDependentJobs(job, jobsOnRequest, flowelement_Job_Map);
+			System.out.println("nthJob " + nthJob.getId() + " preReqJobIds " + preReqJobIds);
+			if(preReqJobIds != null && preReqJobIds.contains(job.getId())) { // if the job has a direct dependency to the current job(running process job that generates the output)
+				System.out.println(nthJob.getFlowelement().getId() + ":" + nthJob.getId());
+				flowelementId_dependantJob_Map.put(nthJob.getFlowelement().getId(), nthJob);
+				getWriteJobNestedDependentJobs(nthJob, jobsOnRequest, flowelementId_dependantJob_Map);
 			}
 		}
 	}
 	
-	private void getWriteJobNestedDependentFlowelements(Flowelement fe, List<Flowelement> flowelementList, Map<Flowelement, List<Flowelement>> flowelement_DependentFlowelements_Map) {
+	// made as public for testing
+	private void getWriteJobNestedDependentFlowelements(Flowelement fe, List<Flowelement> flowelementList, Map<Integer, List<Flowelement>> flowelementId_DepenedentFlowelements_Map) {
 		for (Flowelement nthFlowelement : flowelementList) {
 			if(nthFlowelement.getId() == fe.getId())
 				continue;
 			
 			List<Integer> preReqs = nthFlowelement.getDependencies();
 			if(preReqs != null && preReqs.contains(fe.getId())) {
-				List<Flowelement> dependentFlowelementList = flowelement_DependentFlowelements_Map.get(fe);
+				List<Flowelement> dependentFlowelementList = flowelementId_DepenedentFlowelements_Map.get(fe.getId());
 				if(dependentFlowelementList == null) {
 					dependentFlowelementList = new ArrayList<Flowelement>();
-					flowelement_DependentFlowelements_Map.put(fe, dependentFlowelementList);
+					flowelementId_DepenedentFlowelements_Map.put(fe.getId(), dependentFlowelementList);
+					getWriteJobNestedDependentFlowelements(nthFlowelement, flowelementList, flowelementId_DepenedentFlowelements_Map);
 				}
 				dependentFlowelementList.add(nthFlowelement);
 			}

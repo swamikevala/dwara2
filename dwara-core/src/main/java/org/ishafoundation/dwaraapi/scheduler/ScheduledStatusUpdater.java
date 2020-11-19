@@ -146,26 +146,12 @@ public class ScheduledStatusUpdater {
 					if(status == Status.completed) {
 						tFileJobDao.deleteAll(jobFileList);
 						logger.info("tFileJob cleaned up files of Job " + job.getId());
-						
-						// TODO check if something like checksum job and check if write job for that copy is complete before creating verify Job for that copy...
+
 						jobCreator.createDependentJobs(job);
 					}
 				}
 			}
 		}
-	}
-	
-	private void updateDependentJobsStatus(List<Request> requestList) {
-//		for (Request nthRequest : requestList) {
-//			List<Job> nthRequestJobs = jobDao.findAllByRequestId(nthRequest.getId());
-//			
-//			for (Job nthJob : nthRequestJobs) {
-//				jobUtil.getDependentJobs(nthJob);
-//				
-//				Status status = nthJob.getStatus();
-//				if(nthJob)
-//			}
-//		}
 	}
 	
 	private void updateSystemRequestStatus(List<Request> requestList) {

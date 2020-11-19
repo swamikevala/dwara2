@@ -77,7 +77,7 @@ public class JobCreator_Ingest_VideoPub_Test extends DwaraService {
 	String readyToIngestPath =  "C:\\data\\staged";
 	int artifactId = 0;
 	
-	@Test
+	//@Test
 	public void test_a_ingest() throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
 		URL fileUrl = this.getClass().getResource("/testcases/ingest/ingest_request.json");
@@ -167,6 +167,9 @@ public class JobCreator_Ingest_VideoPub_Test extends DwaraService {
 			test_z_proxy_complete_proxy_calls(jobList);
 
     	}
+	}
+	
+//	public void test_a_() {
 //		
 //		Request systemrequest = requestDao.findById(4).get();
 //				
@@ -182,6 +185,18 @@ public class JobCreator_Ingest_VideoPub_Test extends DwaraService {
 //		for (Job job : jobList) {
 //			System.out.println(job.getId() + job.getProcessingtaskId() + job.getStoragetaskActionId());
 //		}
+//	}
+	
+	@Test
+	public void test_a_() {
+		List<Job> jobList = jobDao.findAllByRequestId(2);
+//		test_b_checksum_complete_writes_still_in_progress_checksum_calls(jobList);
+//		test_c_checksum_complete_write1_complete_write2_still_in_progress_checksum_calls(jobList);
+//		test_d_checksum_complete_writes_complete_checksum_calls(jobList);
+//		test_e_checksum_in_progress_write1_complete_write1_calls(jobList);
+//		test_f_checksum_complete_write1_complete_write1_calls(jobList);
+
+		test_z_proxy_complete_proxy_calls(jobList);
 	}
 
 	//@Test
@@ -350,7 +365,7 @@ public class JobCreator_Ingest_VideoPub_Test extends DwaraService {
 	public void test_z_proxy_complete_proxy_calls(List<Job> jobList) {
 		Job proxyJob = jobDao.findById(jobList.get(3).getId()).get();
 		proxyJob.setStatus(Status.completed);
-		proxyJob.setOutputArtifactId(artifactId);
+		proxyJob.setOutputArtifactId(2);
 		jobDao.save(proxyJob);
 
 		List<Job> dependentJobList = jobCreator.createDependentJobs(proxyJob);
