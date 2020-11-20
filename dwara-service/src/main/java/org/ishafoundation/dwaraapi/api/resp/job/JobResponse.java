@@ -9,12 +9,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "id",
+    "uid",
     "storagetaskAction",
     "processingTask",
     "requestId",
     "flowelementId",
     "inputArtifactId",
     "outputArtifactId",
+    "dependencies",
+    "uIdDependencies",
     "createdAt",
     "startedAt",
     "completedAt",
@@ -28,6 +31,8 @@ public class JobResponse {
 
     @JsonProperty("id")
     private Integer id;
+    @JsonProperty("uid")
+    private String uId;
     @JsonProperty("storagetaskAction")
     private String storagetaskAction;
     @JsonProperty("processingTask")
@@ -40,6 +45,10 @@ public class JobResponse {
     private Integer inputArtifactId;
     @JsonProperty("outputArtifactId")
     private Integer outputArtifactId;
+    @JsonProperty("dependencies")
+    private List<Integer> dependencies;
+    @JsonProperty("uidDependencies")
+	private List<String> uIdDependencies;
     @JsonProperty("createdAt")
     private String createdAt;
     @JsonProperty("startedAt")
@@ -67,7 +76,17 @@ public class JobResponse {
         this.id = id;
     }
 
-    @JsonProperty("storagetaskAction")
+    @JsonProperty("uid")
+    public String getuId() {
+		return uId;
+	}
+
+    @JsonProperty("uid")
+	public void setuId(String uId) {
+		this.uId = uId;
+	}
+
+	@JsonProperty("storagetaskAction")
     public String getStoragetaskAction() {
         return storagetaskAction;
     }
@@ -126,6 +145,26 @@ public class JobResponse {
     public void setOutputArtifactId(Integer outputArtifactId) {
         this.outputArtifactId = outputArtifactId;
     }
+
+    @JsonProperty("dependencies")
+	public List<Integer> getDependencies() {
+		return dependencies;
+	}
+
+    @JsonProperty("dependencies")
+	public void setDependencies(List<Integer> dependencies) {
+		this.dependencies = dependencies;
+	}
+
+    @JsonProperty("uidDependencies")
+	public List<String> getuIdDependencies() {
+		return uIdDependencies;
+	}
+
+    @JsonProperty("uidDependencies")
+	public void setuIdDependencies(List<String> uIdDependencies) {
+		this.uIdDependencies = uIdDependencies;
+	}
 
     @JsonProperty("createdAt")
     public String getCreatedAt() {

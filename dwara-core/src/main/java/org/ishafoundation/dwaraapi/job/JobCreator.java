@@ -129,12 +129,12 @@ public class JobCreator {
 		// We might have race conditions with write completion thread creating one and just at the same time this one does too... Need to ensure that doesnt happen...
 		// TODO Synchronize this...
 		if(storagetaskAction != null) {
-			if(sourceJob == null || (sourceJob != null && sourceJob.getProcessingtaskId() != null)) { // only srcjob = processing task is from scheduler
+			if(sourceJob == null || (sourceJob != null && sourceJob.getProcessingtaskId() != null)) { // only srcjob = processing task is from scheduler which needs multiple job updates 
 				logger.trace("Creating Job for " + storagetaskAction + ":" + nthFlowelement.getId());
-				List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassId(artifactclassId);
+				List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassIdAndActiveTrue(artifactclassId);
 				logger.trace("No. of copies " + artifactclassVolumeList.size());
 				for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {
-					if(artifactclassVolume.isActive()) {
+//					if(artifactclassVolume.isActive()) {
 						Volume grpVolume = artifactclassVolume.getVolume();
 
 						List<Integer> dependentJobIds = new ArrayList<Integer>();
@@ -170,7 +170,7 @@ public class JobCreator {
 							job = saveJob(job);
 							jobsCreated.add(job);
 						}
-					}
+//					}
 				}
 			}
 			else { // sourceJob != null - called from a storage dependency job 

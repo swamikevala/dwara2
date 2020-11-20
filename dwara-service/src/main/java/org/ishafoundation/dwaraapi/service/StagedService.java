@@ -194,21 +194,24 @@ public class StagedService extends DwaraService{
 			
 			List<Integer> actionelementsToBeSkipped = ingestUserRequest.getSkipActionelements();
 			
-	    	Request userRequest = new Request();
-	    	userRequest.setType(RequestType.user);
-			userRequest.setActionId(Action.ingest);
-			userRequest.setStatus(Status.queued);
-	    	userRequest.setRequestedBy(getUserObjFromContext());
-			userRequest.setRequestedAt(LocalDateTime.now());
+//	    	Request userRequest = new Request();
+//	    	userRequest.setType(RequestType.user);
+//			userRequest.setActionId(Action.ingest);
+//			userRequest.setStatus(Status.queued);
+//	    	userRequest.setRequestedBy(getUserObjFromContext());
+//			userRequest.setRequestedAt(LocalDateTime.now());
+//			
+//			RequestDetails details = new RequestDetails();
+//			JsonNode postBodyJson = getRequestDetails(ingestUserRequest); 
+//			details.setBody(postBodyJson);
+//			userRequest.setDetails(details);
+//			
+//	    	userRequest = requestDao.save(userRequest);
+//	    	int userRequestId = userRequest.getId();
+//	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
 			
-			RequestDetails details = new RequestDetails();
-			JsonNode postBodyJson = getRequestDetails(ingestUserRequest); 
-			details.setBody(postBodyJson);
-			userRequest.setDetails(details);
-			
-	    	userRequest = requestDao.save(userRequest);
+			Request userRequest = createUserRequest(Action.ingest, ingestUserRequest);
 	    	int userRequestId = userRequest.getId();
-	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
 	    	
 	    	// TODO Move it to validation class
 	    	// Validation Level 1 - For empty folders

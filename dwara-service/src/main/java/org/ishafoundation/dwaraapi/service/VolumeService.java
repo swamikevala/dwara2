@@ -182,34 +182,37 @@ public class VolumeService extends DwaraService {
 			throw new Exception("Action for " + requestedBusinessAction.name() + " not configured in DB properly. Please set it first");
 
 		
-		Request request = new Request();
-		request.setType(RequestType.user);
-		request.setActionId(requestedBusinessAction);
-		request.setStatus(Status.queued);
-    	User user = getUserObjFromContext();
-    	String requestedBy = user.getName();
+//		Request request = new Request();
+//		request.setType(RequestType.user);
+//		request.setActionId(requestedBusinessAction);
+//		request.setStatus(Status.queued);
+//    	User user = getUserObjFromContext();
+//    	String requestedBy = user.getName();
+//
+//    	LocalDateTime requestedAt = LocalDateTime.now();
+//		request.setRequestedAt(requestedAt);
+//		request.setRequestedBy(user);
+//		RequestDetails details = new RequestDetails();
+//		JsonNode postBodyJson = getRequestDetails(initializeRequestList); 
+//		details.setBody(postBodyJson);
+//		request.setDetails(details);
+//
+//		request = requestDao.save(request);
+//		int requestId = request.getId();
+//		logger.info(DwaraConstants.USER_REQUEST + requestId);
 
-    	LocalDateTime requestedAt = LocalDateTime.now();
-		request.setRequestedAt(requestedAt);
-		request.setRequestedBy(user);
-		RequestDetails details = new RequestDetails();
-		JsonNode postBodyJson = getRequestDetails(initializeRequestList); 
-		details.setBody(postBodyJson);
-		request.setDetails(details);
+		Request userRequest = createUserRequest(requestedBusinessAction, initializeRequestList);
+    	int userRequestId = userRequest.getId();
 
-		request = requestDao.save(request);
-		int requestId = request.getId();
-		logger.info(DwaraConstants.USER_REQUEST + requestId);
-		
 		List<SystemRequestForInitializeResponse> systemRequests = new ArrayList<SystemRequestForInitializeResponse>();
 		
 		for (InitializeUserRequest nthInitializeRequest : initializeRequestList) {
 			Request systemrequest = new Request();
 			systemrequest.setType(RequestType.system);
-			systemrequest.setRequestRef(request);
-			systemrequest.setActionId(request.getActionId());
+			systemrequest.setRequestRef(userRequest);
+			systemrequest.setActionId(userRequest.getActionId());
 			systemrequest.setStatus(Status.queued);
-			systemrequest.setRequestedBy(request.getRequestedBy());
+			systemrequest.setRequestedBy(userRequest.getRequestedBy());
 			systemrequest.setRequestedAt(LocalDateTime.now());
 
 			RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForInitialize(nthInitializeRequest);
@@ -239,10 +242,10 @@ public class VolumeService extends DwaraService {
 		}
 		
 		// Framing the response object here...
-		initializeResponse.setUserRequestId(requestId);
-		initializeResponse.setAction(request.getActionId().name());
-		initializeResponse.setRequestedAt(getDateForUI(requestedAt));
-		initializeResponse.setRequestedBy(requestedBy);
+		initializeResponse.setUserRequestId(userRequestId);
+		initializeResponse.setAction(userRequest.getActionId().name());
+		initializeResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
+		initializeResponse.setRequestedBy(userRequest.getRequestedBy().getName());
 		initializeResponse.setSystemRequests(systemRequests);
 		return initializeResponse;	
 	}

@@ -38,28 +38,32 @@ public class AutoloaderService extends DwaraService{
     public MapDrivesResponse mapDrives(String autoloaderId) throws Exception{	
     	MapDrivesResponse mapDrivesResponse = new MapDrivesResponse();
 
-		Request userRequest = new Request();
-    	userRequest.setType(RequestType.user);
-		userRequest.setActionId(Action.map_tapedrives);
-		userRequest.setStatus(Status.queued);
-    	User user = getUserObjFromContext();
-    	String requestedBy = user.getName();
-    	userRequest.setRequestedBy(user);
-		userRequest.setRequestedAt(LocalDateTime.now());
-		
-		RequestDetails details = new RequestDetails();
-		ObjectMapper mapper = new ObjectMapper();
+//		Request userRequest = new Request();
+//    	userRequest.setType(RequestType.user);
+//		userRequest.setActionId(Action.map_tapedrives);
+//		userRequest.setStatus(Status.queued);
+//    	User user = getUserObjFromContext();
+//    	String requestedBy = user.getName();
+//    	userRequest.setRequestedBy(user);
+//		userRequest.setRequestedAt(LocalDateTime.now());
+//		
+//		RequestDetails details = new RequestDetails();
+//		ObjectMapper mapper = new ObjectMapper();
+//		HashMap<String, Object> data = new HashMap<String, Object>();
+//    	data.put("autoloaderId", autoloaderId);
+//    	String jsonAsString = mapper.writeValueAsString(data);
+//		JsonNode postBodyJson = mapper.readValue(jsonAsString, JsonNode.class);
+//		details.setBody(postBodyJson);
+//		userRequest.setDetails(details);
+//		
+//    	userRequest = requestDao.save(userRequest);
+//    	int userRequestId = userRequest.getId();
+//    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
+
 		HashMap<String, Object> data = new HashMap<String, Object>();
     	data.put("autoloaderId", autoloaderId);
-    	String jsonAsString = mapper.writeValueAsString(data);
-		JsonNode postBodyJson = mapper.readValue(jsonAsString, JsonNode.class);
-		details.setBody(postBodyJson);
-		userRequest.setDetails(details);
-		
-    	userRequest = requestDao.save(userRequest);
+    	Request userRequest = createUserRequest(Action.map_tapedrives, data);
     	int userRequestId = userRequest.getId();
-    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
-
 	
 		Request systemRequest = new Request();
 		systemRequest.setType(RequestType.system);
