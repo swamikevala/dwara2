@@ -121,6 +121,12 @@ public class StagedFileOperations {
 				setFilePermissionsCommandParamsList.add("-r");
 		}	
 		
+		String command = "";
+		for (String v : setFilePermissionsCommandParamsList) {
+			command += v + " ";
+		};
+		logger.debug(command);
+		
 		CommandLineExecutionResponse setPermsCommandLineExecutionResponse = commandLineExecuter.executeCommand(setFilePermissionsCommandParamsList);
 		return setPermsCommandLineExecutionResponse;
     }
