@@ -1,4 +1,4 @@
-package org.ishafoundation.prasad.mxf;
+package org.ishafoundation.digitization.mxf;
 
 public class HexPatternFinderUtil {
 	

@@ -1,4 +1,4 @@
-package org.ishafoundation.videopub.transcoding.ffmpeg.video;
+package org.ishafoundation.digitization.preservation;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,8 +24,8 @@ import org.springframework.stereotype.Component;
 @Component("video-preservation-gen")
 @Primary
 @Profile({ "!dev & !stage" })
-public class Video_Prasad_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
-    private static final Logger logger = LoggerFactory.getLogger(Video_Prasad_Transcoding_TaskExecutor.class);
+public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
+    private static final Logger logger = LoggerFactory.getLogger(Video_Digitization_Transcoding_TaskExecutor.class);
     
     private Pattern clusterPositionRegexPattern = Pattern.compile("Cluster at ([0-9]*)");
     private Pattern videoTrackIdentifierRegexPattern = Pattern.compile("Track ID ([0-9]*): video");

@@ -1,4 +1,4 @@
-package org.ishafoundation.videopub.transcoding.ffmpeg.video;
+package org.ishafoundation.digitization.preservation;
 
 import java.io.File;
 
@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
 
 @Component("video-preservation-gen")
 @Profile({ "dev | stage" })
-public class MockVideo_Prasad_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
-    private static final Logger logger = LoggerFactory.getLogger(MockVideo_Prasad_Transcoding_TaskExecutor.class);
+public class MockVideo_Digitization_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
+    private static final Logger logger = LoggerFactory.getLogger(MockVideo_Digitization_Transcoding_TaskExecutor.class);
 
 
 	@Override

@@ -502,7 +502,6 @@ public class StagedService extends DwaraService{
     }
 
     private java.io.File moveFile(java.io.File src, java.io.File dest) throws Exception {
-		// TODO USE MOVE using commandline
     	try {
     		Files.move(src.toPath(), dest.toPath(), StandardCopyOption.ATOMIC_MOVE);
 //    		if(src.isDirectory())

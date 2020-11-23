@@ -1,4 +1,4 @@
-package org.ishafoundation.prasad.mxf;
+package org.ishafoundation.digitization.mxf;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -143,7 +143,7 @@ public class MxfMetaDataCollector implements IProcessingTask {
     
 	private byte[] extractFooterChunk(String filePathName, long bytesToBeSkipped) throws Exception{
 		byte[] data = new byte[(int) bytesToBeSkipped];
-		String extractedChunkTmpFile = filePathName.replace(".mxf", ".ftr.tmp");
+		String extractedChunkTmpFile = filePathName.replace(PfrConstants.MXF_EXTN, PfrConstants.FTR_EXTN + ".tmp");
 		String ddCommand = "dd if=" + filePathName + " skip=" + bytesToBeSkipped + " iflag=skip_bytes,count_bytes of=" + extractedChunkTmpFile;
 		
 		logger.trace("ddCommand " + ddCommand);

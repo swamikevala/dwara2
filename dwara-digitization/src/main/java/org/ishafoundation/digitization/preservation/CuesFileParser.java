@@ -1,4 +1,4 @@
-package org.ishafoundation.videopub.transcoding.ffmpeg.video;
+package org.ishafoundation.digitization.preservation;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package org.ishafoundation.videopub.transcoding.ffmpeg.video;
+package org.ishafoundation.digitization.preservation;
 
 public class Cues {
 
