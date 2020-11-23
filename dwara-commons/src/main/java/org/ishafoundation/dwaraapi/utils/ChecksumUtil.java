@@ -21,18 +21,6 @@ public class ChecksumUtil {
 
 	
 	public static byte[] getChecksum(java.io.File file, Checksumtype checksumtype) throws Exception{
-
-		// TODO : read byte chunks than full file - Added only for testing... 
-//		MessageDigest md = null;
-//		 try {
-//			 md = MessageDigest.getInstance(checksumtype.getJavaStyleChecksumtype());
-//		     md.update(FileUtils.readFileToByteArray(file));
-//		} catch (Exception e) {
-//			// TODO : Swallow it or cascade to top?
-//			logger.error("Unable to generate File checksum " + file.getAbsolutePath(), e);
-//		}
-//		return md.digest();
-
 		//TODO : Hardcoded bufferSize - Configure it... What is the optimum buffersize???
 		int bufferSize = 524288; // 512k
 		BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file), bufferSize);

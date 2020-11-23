@@ -54,7 +54,7 @@ public class Video_Prasad_Transcoding_TaskExecutor extends MediaTask implements 
 		
 		String compressedFileTmpTargetLocation = destinationDirPath + File.separator + fileName + "_tmp" + PfrConstants.MKV_EXTN ;// TODO How do we know if it should be mkv or mxf or what not???
 		String compressedFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.MKV_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
-		String headerFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.HDR_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
+		String headerFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.PFR_HDR_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
 		String cuesFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.INDEX_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
 		
 		/*************** COMPRESSION ***************/

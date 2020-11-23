@@ -44,6 +44,9 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
+import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
+import org.ishafoundation.dwaraapi.utils.HttpClientUtil;
 
 
 /**
@@ -247,14 +250,6 @@ public class DirectoryWatcher {
 				it.remove();
 			}
 		}
-
-		//		for(Entry<Path, Long> entry : expirationTimes.entrySet()) {
-		//			if(entry.getValue() <= currentTime) {
-		//				System.out.println("expired " + entry);
-		//				// do something with the file
-		//				expirationTimes.remove(entry.getKey());
-		//			}
-		//		}
 	}
 
     private void action(Path child){
@@ -268,14 +263,13 @@ public class DirectoryWatcher {
 			for (File file : files) {
 				String fileName = file.getName();
 				//System.out.println(fileName);
-				if(fileName.equals("MD5.txt")) {
-					expectedMd5 = FileUtils.readFileToString(file).trim().toUpperCase();
+				if(fileName.endsWith(".md5")) {
+					// TODO : What will be the md5 file content sample looking like ? // d44f11c6df36d8be680db44e969e7ff0  sample-ntsc.mxf
+					expectedMd5 = StringUtils.substringBefore(FileUtils.readFileToString(file), "  ").trim().toUpperCase();
 					System.out.println("expectedMd5 " + expectedMd5);
 				}
 				else if(fileName.endsWith(".mxf")) {
-				    MessageDigest md = MessageDigest.getInstance("MD5");
-				    md.update(Files.readAllBytes(file.toPath()));
-				    byte[] digest = md.digest();
+				    byte[] digest = ChecksumUtil.getChecksum(file, Checksumtype.md5);
 				    actualMd5 = DatatypeConverter.printHexBinary(digest).toUpperCase();
 				    System.out.println("actualMd5 " + actualMd5);
 				}
@@ -302,7 +296,7 @@ public class DirectoryWatcher {
 
 		String response = null;
 		try {
-			response = postIt(endpointUrl, null, payload);
+			response = HttpClientUtil.postIt(endpointUrl, null, payload);
 			System.out.println("resp " + response);
 		}catch (Exception e) {
 			// TODO: handle exception
@@ -330,56 +324,5 @@ public class DirectoryWatcher {
 		Path dir = Paths.get(args[dirArg]);
 
 		new DirectoryWatcher(dir, waitTimes).processEvents();
-	}
-	
-	public static String postIt(String endpointUrl, String authHeader, String postBodyPayload) throws Exception{
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        String responseBody = executePost(httpClient, endpointUrl, authHeader, postBodyPayload);
-        return responseBody;
-	}
-	
-	private static String executePost(CloseableHttpClient httpClient, String endpointUrl, String authHeader, String postBodyPayload) throws Exception {
-        String responseBody = null;
-        try {
-	        StringEntity reqEntity = new StringEntity(postBodyPayload, "UTF-8");
-	
-	        HttpPost httpPost = new HttpPost(endpointUrl);
-	        httpPost.setEntity(reqEntity);
-	        if(authHeader != null)
-	        	httpPost.setHeader(HttpHeaders.AUTHORIZATION, authHeader);    
-	        httpPost.setHeader("Content-Type", "application/json");        
-	        
-	        ResponseHandler<String> responseHandler = createResponseHandler();
-	
-	        
-	        responseBody = httpClient.execute(httpPost, responseHandler);
-	
-		}
-		catch (Exception e) {
-			System.err.println("httpCall failed - " + e.getMessage());
-			throw e;
-		} finally {
-	        httpClient.close();
-	    }
-        return responseBody;		
-	}
-	
-	private static ResponseHandler<String> createResponseHandler(){
-        // Create a custom response handler
-        ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
-            public String handleResponse(
-                    final HttpResponse response) throws ClientProtocolException, IOException {
-                int status = response.getStatusLine().getStatusCode();
-                System.out.println("Status: " + status);
-                HttpEntity entity = response.getEntity();
-                String resp = entity != null ? EntityUtils.toString(entity) : null;
-                if (status >= 200 && status < 300) {
-                    return resp;
-                } else {
-                    throw new ClientProtocolException("Unexpected response status : " + status + ". Resp body is : " + resp);
-                }
-            }
-        };
-		return responseHandler;
 	}
 }

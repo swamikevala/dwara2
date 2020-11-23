@@ -2,7 +2,7 @@
 	"stagedFiles": [
 		{
 			"name": "<<artifact_name_1>>",
-			"path": "c:\\data\\user\\pgurumurthy\\ingest\\video-pub"
+			"path": "c:\\data\\user\\pgurumurthy\\ingest\\<<artifact_class>>"
 		}
 	],
 	"artifactclass": "<<artifact_class>>",

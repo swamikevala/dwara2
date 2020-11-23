@@ -24,7 +24,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @EnableSwagger2
 @EnableScheduling
-@ComponentScan({"org.ishafoundation.dwaraapi","org.ishafoundation.videopub"})
+@ComponentScan({"org.ishafoundation.dwaraapi","org.ishafoundation.videopub","org.ishafoundation.prasad"})
 @SpringBootApplication
 public class DwaraApiApplication {
 	

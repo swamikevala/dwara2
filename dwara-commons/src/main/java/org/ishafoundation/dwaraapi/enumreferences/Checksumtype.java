@@ -1,7 +1,8 @@
 package org.ishafoundation.dwaraapi.enumreferences;
 
 public enum Checksumtype {
-	sha256("SHA-256");
+	sha256("SHA-256"),
+	md5("MD5");
 	
 	private String javaStyleChecksumtype;
 	

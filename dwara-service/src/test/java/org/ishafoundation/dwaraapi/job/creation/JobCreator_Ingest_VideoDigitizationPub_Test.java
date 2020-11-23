@@ -9,7 +9,6 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.api.req.ingest.UserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.StagedFile;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
@@ -37,13 +36,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import net.lingala.zip4j.ZipFile;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringRunner.class)
@@ -79,11 +77,13 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends DwaraService {
 	
 	@Test
 	public void test_a_ingest() throws Exception {
+		SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("pgurumurthy", "ShivaShambho"));
+		
 		ObjectMapper mapper = new ObjectMapper();
 		URL fileUrl = this.getClass().getResource("/testcases/ingest/ingest_request.json");
 
-		String testIngestArtifactName1 =  "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9";
-		String artifactNameToBeIngested = extractZip(testIngestArtifactName1);
+		String testIngestArtifactName1 =  "P22197_prasad-artifact-1";
+		String artifactNameToBeIngested = testIngestArtifactName1;//extractZip(testIngestArtifactName1);
 		
 		String artifactclassId =  "video-digitization-pub";
 		
@@ -97,22 +97,8 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends DwaraService {
 		//String readyToIngestPath =  artifactclass.getPathPrefix();
 		Domain domain = artifactclass.getDomain();
 
-    	Request userRequest = new Request();
-    	userRequest.setType(RequestType.user);
-		userRequest.setActionId(Action.ingest);
-		userRequest.setStatus(Status.queued);
-    	//userRequest.setRequestedBy(getUserObjFromContext());
-		userRequest.setRequestedAt(LocalDateTime.now());
-		
-		RequestDetails details = new RequestDetails();
-		JsonNode postBodyJson = getRequestDetails(ingestUserRequest); 
-		details.setBody(postBodyJson);
-		userRequest.setDetails(details);
-		
-    	userRequest = requestDao.save(userRequest);
-    	int userRequestId = userRequest.getId();
-    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
-
+		Request userRequest = createUserRequest(Action.ingest, ingestUserRequest);
+    	//int userRequestId = userRequest.getId();
     	
     	List<StagedFile> stagedFileList = ingestUserRequest.getStagedFiles();
     	for (StagedFile stagedFile : stagedFileList) {
@@ -158,14 +144,15 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends DwaraService {
 			for (Job job : jobList) {
 				logger.info(job.getId() + ":" + job.getStoragetaskActionId()  + ":" + job.getProcessingtaskId() + ":" + (job.getGroupVolume() != null ? job.getGroupVolume().getId() : null));
 			}
-			test_b_checksum_complete_writes_still_in_progress_checksum_calls(jobList);
-			test_c_checksum_complete_write1_complete_write2_still_in_progress_checksum_calls(jobList);
-			test_d_checksum_complete_writes_complete_checksum_calls(jobList);
-			test_e_checksum_in_progress_write1_complete_write1_calls(jobList);
-			test_f_checksum_complete_write1_complete_write1_calls(jobList);
+//			test_b_checksum_complete_writes_still_in_progress_checksum_calls(jobList);
+//			test_c_checksum_complete_write1_complete_write2_still_in_progress_checksum_calls(jobList);
+//			test_d_checksum_complete_writes_complete_checksum_calls(jobList);
+//			test_e_checksum_in_progress_write1_complete_write1_calls(jobList);
+//			test_f_checksum_complete_write1_complete_write1_calls(jobList);
 
-			test_z_proxy_complete_proxy_calls(jobList);
-
+//			test_z_proxy_complete_proxy_calls(jobList);
+			test_ba_hfe_complete_hfe_calls(jobList);
+			test_bb_preservation_gen_complete_preservation_gen_calls(jobList);
     	}
 //		
 //		Request systemrequest = requestDao.findById(4).get();
@@ -184,6 +171,33 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends DwaraService {
 //		}
 	}
 
+	public void test_ba_hfe_complete_hfe_calls(List<Job> jobList) {
+		Job hfeJob = jobDao.findById(jobList.get(0).getId()).get();
+		hfeJob.setStatus(Status.completed);
+		hfeJob.setOutputArtifactId(hfeJob.getInputArtifactId());
+		jobDao.save(hfeJob);
+
+		List<Job> dependentJobList = jobCreator.createDependentJobs(hfeJob);
+		for (Job job : dependentJobList) {
+			logger.info(job.getId() + ":" + job.getStoragetaskActionId()  + ":" + job.getProcessingtaskId() + ":" + (job.getGroupVolume() != null ? job.getGroupVolume().getId() : null));
+		}
+		// TODO - expected is ??? 
+	}
+	
+	public void test_bb_preservation_gen_complete_preservation_gen_calls(List<Job> jobList) {
+		Job preservation_gen_Job = jobDao.findById(jobList.get(1).getId()).get();
+		preservation_gen_Job.setStatus(Status.completed);
+		preservation_gen_Job.setOutputArtifactId(preservation_gen_Job.getInputArtifactId());
+		jobDao.save(preservation_gen_Job);
+
+		List<Job> dependentJobList = jobCreator.createDependentJobs(preservation_gen_Job);
+		for (Job job : dependentJobList) {
+			logger.info(job.getId() + ":" + job.getStoragetaskActionId()  + ":" + job.getProcessingtaskId() + ":" + (job.getGroupVolume() != null ? job.getGroupVolume().getId() : null));
+		}
+				
+		// expected is ...
+	}
+	
 	//@Test
 	public void test_b_checksum_complete_writes_still_in_progress_checksum_calls(List<Job> jobList) {
 //		for (Job job : jobList) {
@@ -347,67 +361,6 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends DwaraService {
 	}
 
 	//@Test
-	public void test_z_proxy_complete_proxy_calls(List<Job> jobList) {
-		Job proxyJob = jobDao.findById(jobList.get(3).getId()).get();
-		proxyJob.setStatus(Status.completed);
-		proxyJob.setOutputArtifactId(artifactId);
-		jobDao.save(proxyJob);
 
-		List<Job> dependentJobList = jobCreator.createDependentJobs(proxyJob);
-		for (Job job : dependentJobList) {
-			logger.info(job.getId() + ":" + job.getStoragetaskActionId()  + ":" + job.getProcessingtaskId() + ":" + (job.getGroupVolume() != null ? job.getGroupVolume().getId() : null));
-		}
-		
-		System.out.println("breakpoint here");
-		
-		// expected is mam job, proxy checksum job and write jobs created..
-	}
 
-	//@Test
-	public void test_b_Ingest() {
-		try {
-			ObjectMapper mapper = new ObjectMapper();
-			URL fileUrl = this.getClass().getResource("/testcases/ingest/ingest_request.json");
-
-			String testIngestArtifactName1 =  "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9";
-			String artifact_name_1 = extractZip(testIngestArtifactName1);
-			
-			String testIngestArtifactName2 = "Shiva-Shambho_Everywhere_18-Nov-1980_Drone";
-			String artifact_name_2 = extractZip(testIngestArtifactName2);
-
-//			String testIngestArtifactName3 = "Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoProApr6";
-//			String artifact_name_3 = extractZip(testIngestArtifactName3);
-
-			String postBodyJson = FileUtils.readFileToString(new File(fileUrl.getFile()));
-			postBodyJson = postBodyJson.replace("<<artifact_name_1>>", artifact_name_1);
-			postBodyJson = postBodyJson.replace("<<artifact_name_2>>", artifact_name_2);
-//			postBodyJson = postBodyJson.replace("<<artifact_name_3>>", artifact_name_3);
-			
-			UserRequest ur = mapper.readValue(postBodyJson, new TypeReference<UserRequest>() {});
-			//artifactService.ingest(ur);
-			
-			// Delete the files after the creation is done...
-//			FileUtils.deleteDirectory(new File(readyToIngestPath + File.separator + artifact_name_1));
-//			FileUtils.deleteDirectory(new File(readyToIngestPath + File.separator + artifact_name_2));
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		}
-	}
-	
-	private String extractZip(String testIngestArtifactName) throws Exception {	
-		
-		URL fileUrl = JobCreator_Ingest_VideoDigitizationPub_Test.class.getResource("/" + testIngestArtifactName + ".zip");
-		ZipFile zipFile = new ZipFile(fileUrl.getFile());
-
-		zipFile.extractAll(readyToIngestPath);
-		
-		String ingestFileSourcePath = readyToIngestPath + File.separator + testIngestArtifactName;
-		String artifactNameToBeIngested = testIngestArtifactName + "_" + System.currentTimeMillis(); // TO have the artifact name uniqued...
-		
-		String artifactPath = readyToIngestPath + File.separator +  artifactNameToBeIngested;
-		FileUtils.moveDirectory(new File(ingestFileSourcePath), new File(artifactPath));
-		return artifactNameToBeIngested;
-		
-	}
 }

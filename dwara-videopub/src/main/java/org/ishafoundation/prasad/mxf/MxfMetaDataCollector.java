@@ -12,6 +12,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -48,17 +49,17 @@ public class MxfMetaDataCollector implements IProcessingTask {
 		
 		FileUtils.forceMkdir(new File(destinationDirPath));
 		
-		String hdrTargetLocation = destinationDirPath + File.separator + fileName + ".hdr";
-		String ftrTargetLocation = destinationDirPath + File.separator + fileName + ".ftr";
-		String qcrTargetLocation = destinationDirPath + File.separator + fileName + ".qcr";
+		String hdrTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.HDR_EXTN;
+		String ftrTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.FTR_EXTN;
+//		String qcrTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.QC_REPORT_EXTN;
 		
 		extractAndSaveHeader(sourceFilePathname, hdrTargetLocation);
 		extractAndSaveFooter(sourceFilePathname, ftrTargetLocation);
 		
 		
-		// copies the QCReport file;
-		File qcReportFile = logicalFile.getSidecarFile("qcr");
-		FileUtils.copyFile(qcReportFile, new File(qcrTargetLocation));
+//		// copies the QCReport file;
+//		File qcReportFile = logicalFile.getSidecarFile("qcr");
+//		FileUtils.copyFile(qcReportFile, new File(qcrTargetLocation));
 		
 		// TODO : better this...
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
@@ -140,7 +141,7 @@ public class MxfMetaDataCollector implements IProcessingTask {
         }
 	}
     
-	public byte[] extractFooterChunk(String filePathName, long bytesToBeSkipped) throws Exception{
+	private byte[] extractFooterChunk(String filePathName, long bytesToBeSkipped) throws Exception{
 		byte[] data = new byte[(int) bytesToBeSkipped];
 		String extractedChunkTmpFile = filePathName.replace(".mxf", ".ftr.tmp");
 		String ddCommand = "dd if=" + filePathName + " skip=" + bytesToBeSkipped + " iflag=skip_bytes,count_bytes of=" + extractedChunkTmpFile;
