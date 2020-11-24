@@ -77,7 +77,6 @@ public class StoragetypeJobDelegator {
 		long blockingJobsLinedUp = jobDao.countByStoragetaskActionIdInAndStatus(actionList, Status.queued);
 		long blockingJobsInFlight = jobDao.countByStoragetaskActionIdInAndStatus(actionList, Status.in_progress);
 		
-		List<StorageJob> readyToBeExecutedStorageJobsList = new ArrayList<StorageJob>();
 		Map<Volume, Job> volume_InProgressJob_Map = new HashMap<Volume, Job>();
 		Map<Volume, ArtifactVolume> volume_LastArtifactOnVolume_Map = new HashMap<Volume, ArtifactVolume>();
 		for (Job job : jobsList) {
@@ -147,7 +146,7 @@ public class StoragetypeJobDelegator {
 							if(lastArtifactOnVolume != null) { // check if the job has dependencies and ensure all nested dependencies are completed...
 								//last write job on the volume needed by this job
 								Job lastWriteJob = lastArtifactOnVolume.getJob();
-								if(!jobUtil.isWriteJobReadyToBeExecuted(lastWriteJob)) {
+								if(!jobUtil.isWriteJobAndItsDependentJobsComplete(lastWriteJob)) {
 									logger.info("Skipping as previous write job' " + lastWriteJob.getId() + " dependent jobs are yet to complete");
 									continue;
 								}
@@ -162,9 +161,9 @@ public class StoragetypeJobDelegator {
 
 		}
 		
-		if(readyToBeExecutedStorageJobsList.size() > 0) {
-			logger.debug(readyToBeExecutedStorageJobsList.size() + " storage jobs are process ready");
-			delegate_internal(readyToBeExecutedStorageJobsList);
+		if(storageJobList.size() > 0) {
+			logger.debug(storageJobList.size() + " storage jobs are process ready");
+			delegate_internal(storageJobList);
 		}else {
 			logger.trace("No storage job to be processed");
 		}

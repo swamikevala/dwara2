@@ -35,7 +35,7 @@ public class JobController {
 		logger.info("/job?" + (status != null ? "status=" + status : "") + (systemRequestId != null ? "requestId=" + systemRequestId : ""));
 		List<JobResponse> jobResponseList = null;
 		try {
-			
+
 			List<Status> statusList = null;
 			if(status != null) { // TODO - use optional
 				statusList = new ArrayList<Status>();
@@ -47,7 +47,11 @@ public class JobController {
 				}
 			}
 			
-			jobResponseList = jobService.getJobs(systemRequestId, statusList);
+			// TODO - Hacked for testing - sort this out
+			if(systemRequestId != null && statusList == null)
+				jobResponseList = jobService.getJobs(systemRequestId);
+			else
+				jobResponseList = jobService.getJobs(systemRequestId, statusList);
 		}catch (Exception e) {
 			String errorMsg = "Unable to get Jobs - " + e.getMessage();
 			logger.error(errorMsg, e);

@@ -1,0 +1,16 @@
+{
+	"stagedFiles": [
+		{
+			"name": "<<artifact_name_1>>",
+			"path": "c:\\data\\user\\pgurumurthy\\ingest\\video-pub"
+		},
+		{
+			"name": "<<artifact_name_2>>",
+			"path": "c:\\data\\user\\pgurumurthy\\ingest\\video-pub"
+		}		
+	],
+	"artifactclass": "<<artifact_class>>",
+	"skipActionelements": [
+		0
+	]
+}

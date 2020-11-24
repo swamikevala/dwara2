@@ -84,23 +84,24 @@ public class FileService extends DwaraService{
     	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
     	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
     	
-		Request userRequest = new Request();
-    	userRequest.setType(RequestType.user);
-		userRequest.setActionId(Action.restore);
-		userRequest.setStatus(Status.queued);
-    	User user = getUserObjFromContext();
-    	String requestedBy = user.getName();
-    	userRequest.setRequestedBy(user);
-		userRequest.setRequestedAt(LocalDateTime.now());
-		RequestDetails details = new RequestDetails();
-		JsonNode postBodyJson = getRequestDetails(restoreUserRequest); 
-		details.setBody(postBodyJson);
-		userRequest.setDetails(details);
-		
-    	userRequest = requestDao.save(userRequest);
+//		Request userRequest = new Request();
+//    	userRequest.setType(RequestType.user);
+//		userRequest.setActionId(Action.restore);
+//		userRequest.setStatus(Status.queued);
+//    	User user = getUserObjFromContext();
+//    	String requestedBy = user.getName();
+//    	userRequest.setRequestedBy(user);
+//		userRequest.setRequestedAt(LocalDateTime.now());
+//		RequestDetails details = new RequestDetails();
+//		JsonNode postBodyJson = getRequestDetails(restoreUserRequest); 
+//		details.setBody(postBodyJson);
+//		userRequest.setDetails(details);
+//		
+//    	userRequest = requestDao.save(userRequest);
+//    	int userRequestId = userRequest.getId();
+//    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
+    	Request userRequest = createUserRequest(Action.restore, restoreUserRequest);
     	int userRequestId = userRequest.getId();
-    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
-
 	
     	Integer copyNumber = restoreUserRequest.getCopy();
     	String outputFolder = restoreUserRequest.getOutputFolder();
@@ -178,23 +179,25 @@ public class FileService extends DwaraService{
     	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
     	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
     	
-		Request userRequest = new Request();
-    	userRequest.setType(RequestType.user);
-		userRequest.setActionId(Action.restore);
-		userRequest.setStatus(Status.queued);
-    	User user = getUserObjFromContext();
-    	String requestedBy = user.getName();
-    	userRequest.setRequestedBy(user);
-		userRequest.setRequestedAt(LocalDateTime.now());
-		RequestDetails details = new RequestDetails();
-		JsonNode postBodyJson = getRequestDetails(pfRestoreUserRequest); 
-		details.setBody(postBodyJson);
-		userRequest.setDetails(details);
-		
-    	userRequest = requestDao.save(userRequest);
+//		Request userRequest = new Request();
+//    	userRequest.setType(RequestType.user);
+//		userRequest.setActionId(Action.restore);
+//		userRequest.setStatus(Status.queued);
+//    	User user = getUserObjFromContext();
+//    	String requestedBy = user.getName();
+//    	userRequest.setRequestedBy(user);
+//		userRequest.setRequestedAt(LocalDateTime.now());
+//		RequestDetails details = new RequestDetails();
+//		JsonNode postBodyJson = getRequestDetails(pfRestoreUserRequest); 
+//		details.setBody(postBodyJson);
+//		userRequest.setDetails(details);
+//		
+//    	userRequest = requestDao.save(userRequest);
+//    	int userRequestId = userRequest.getId();
+//    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
+    	
+    	Request userRequest = createUserRequest(Action.restore, pfRestoreUserRequest);
     	int userRequestId = userRequest.getId();
-    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
-
 	
     	Integer copyNumber = pfRestoreUserRequest.getCopy();
     	String outputFolder = pfRestoreUserRequest.getOutputFolder();

@@ -9,6 +9,8 @@ import org.springframework.data.repository.NoRepositoryBean;
 @NoRepositoryBean
 public interface ArtifactRepository<T extends Artifact> extends CrudRepository<T,Integer> {
 
+	List<Artifact> findAllByWriteRequestId(int ingestRequestId);
+	
 	Artifact findTopByWriteRequestIdOrderByIdAsc(int ingestRequestId);
 
 	Artifact findByName(String artifactName);

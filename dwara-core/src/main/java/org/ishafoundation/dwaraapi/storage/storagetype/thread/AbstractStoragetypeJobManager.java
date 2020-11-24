@@ -18,6 +18,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
+import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.service.JobServiceRequeueHelper;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
@@ -45,6 +46,9 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 	
 	@Autowired
 	private JobRunDao jobRunDao;
+	
+	@Autowired
+	private JobCreator jobCreator;
 	
 	@Autowired
 	private JobServiceRequeueHelper jobServiceRequeueHelper;
@@ -146,7 +150,10 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 	protected Job updateJobCompleted(Job job) {
 		job.setCompletedAt(LocalDateTime.now());
 		job.setMessage(null);
-		return updateJobStatus(job, Status.completed);
+		job = updateJobStatus(job, Status.completed);
+		
+		jobCreator.createDependentJobs(job);
+		return job;
 	}
 	
 	protected Job updateJobFailed(Job job) {
