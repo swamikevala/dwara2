@@ -368,8 +368,11 @@ public abstract class AbstractStoragetypeJobProcessor {
 		selectedStorageJob.setFile(file);
 		
 		// TODO : Not sure if we need to pass the destination id or path -- Destination destination = configurationTablesUtil.getDestination(storageJob.getDestination());
-		Destination destination = destinationDao.findByPath(storageJob.getDestinationPath());
-		selectedStorageJob.setUseBuffering(destination.isUseBuffering());
+		String destPath = storageJob.getDestinationPath();
+		if(destPath != null) {
+			Destination destination = destinationDao.findByPath(destPath);
+			selectedStorageJob.setUseBuffering(destination.isUseBuffering());
+		}
 		
     	Artifact artifact = fileEntityUtil.getArtifact(file, domain); 
     	

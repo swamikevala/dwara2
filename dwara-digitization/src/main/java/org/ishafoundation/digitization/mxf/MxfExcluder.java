@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
@@ -32,17 +33,20 @@ public class MxfExcluder implements IProcessingTask {
 	public ProcessingtaskResponse execute(String taskName, String inputArtifactClass, String inputArtifactName, String outputArtifactName,
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile, String category, String destinationDirPath) throws Exception {
 		
-		// Mark the file deleted...
+		// Mark the File deleted...
     	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
     	file.setDeleted(true);
     	domainSpecificFileRepository.save(file);
 		
-    	// move the file to junk
-    	String filePathname = file.getPathname();
-    	String junkFilesStagedDirName = config.getJunkFilesStagedDirName();
-    	String junkDirPrefixedFilePathname = junkFilesStagedDirName + File.separator + filePathname; 
+    	// move the File to junk
     	String path = logicalFile.getAbsolutePath();
-    	String destPath = path.replace(filePathname, junkDirPrefixedFilePathname);
+    	
+    	String junkFilesStagedDirName = config.getJunkFilesStagedDirName();
+    	String junkDirPrefixedFilePathname = inputArtifactName + File.separator + junkFilesStagedDirName; 
+
+    	
+    	String destPath = path.replace(inputArtifactName, junkDirPrefixedFilePathname);
+    	Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));
     	Files.move(Paths.get(path), Paths.get(destPath), StandardCopyOption.ATOMIC_MOVE);
     	
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();

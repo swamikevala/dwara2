@@ -129,7 +129,7 @@ public class StoragetypeJobDelegator {
 					}							
 
 					if(inProgressJobOnVolume != null) {
-						logger.info("Skipping as same volume is already in use " + inProgressJobOnVolume.getId());
+						logger.info("Skipping "  + job.getId() + " as same volume is already in use " + inProgressJobOnVolume.getId());
 						continue;
 					}
 					else {
@@ -147,7 +147,7 @@ public class StoragetypeJobDelegator {
 								//last write job on the volume needed by this job
 								Job lastWriteJob = lastArtifactOnVolume.getJob();
 								if(!jobUtil.isWriteJobAndItsDependentJobsComplete(lastWriteJob)) {
-									logger.info("Skipping as previous write job' " + lastWriteJob.getId() + " dependent jobs are yet to complete");
+									logger.info("Skipping "  + job.getId() + " as previous write job' " + lastWriteJob.getId() + " dependent jobs are yet to complete");
 									continue;
 								}
 							}

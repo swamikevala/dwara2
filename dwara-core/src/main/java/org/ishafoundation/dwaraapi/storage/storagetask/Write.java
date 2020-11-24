@@ -78,7 +78,8 @@ public class Write extends AbstractStoragetaskAction{
 					if(outputArtifactclassSuffix != null)
 						break;
 				}
-				artifactclassId =  artifactclassId + outputArtifactclassSuffix;
+				if(outputArtifactclassSuffix != null)
+					artifactclassId =  artifactclassId + outputArtifactclassSuffix;
 			}	
 			logger.trace("artifactclassId for getting domain - " + artifactclassId);
 			
