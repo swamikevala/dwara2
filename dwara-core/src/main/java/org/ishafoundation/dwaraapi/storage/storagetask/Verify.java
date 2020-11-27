@@ -74,7 +74,8 @@ public class Verify extends AbstractStoragetaskAction{
 				if(outputArtifactclassSuffix != null)
 					break;
 			}
-			artifactclassId = artifactclassId + outputArtifactclassSuffix;
+			if(outputArtifactclassSuffix != null)
+				artifactclassId = artifactclassId + outputArtifactclassSuffix;
 		}	
 		
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);

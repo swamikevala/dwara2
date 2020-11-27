@@ -22,10 +22,12 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobRun;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
+import org.ishafoundation.dwaraapi.job.JobManipulator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,9 +45,6 @@ public class JobService extends DwaraService{
 	private JobDao jobDao;
 	
 	@Autowired
-	private JobRunDao jobRunDao;
-	
-	@Autowired
 	private RequestDao requestDao;
 	
 	@Autowired
@@ -53,19 +52,10 @@ public class JobService extends DwaraService{
 
 	@Autowired
 	private JobServiceRequeueHelper jobServiceRequeueHelper;
-	
-	public List<JobResponse> getAllJobs(){
-		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
-		
-		List<Job> jobList = (List<Job>) jobDao.findAll();
-		for (Job job : jobList) {
-			JobResponse jobResponse = frameJobResponse(job);
 
-			jobResponseList.add(jobResponse);
-		}
-		return jobResponseList;
-	}
-	
+	@Autowired
+	private JobManipulator jobManipulator;
+
 	public List<JobResponse> getJobs(Integer systemRequestId, List<Status> statusList) {
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
 		
@@ -81,7 +71,15 @@ public class JobService extends DwaraService{
 	public List<JobResponse> getJobs(int systemRequestId){
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
 		
-		List<Job> jobList = jobDao.findAllByRequestId(systemRequestId);
+		Request request = requestDao.findById(systemRequestId).get();
+		Action requestAction = request.getActionId();
+		
+		List<Job> jobList = null;
+		if(requestAction == Action.ingest) {
+			jobList = jobManipulator.getJobs(request);
+		} else 
+			jobList = jobDao.findAllByRequestId(systemRequestId);
+		
 		for (Job job : jobList) {
 			JobResponse jobResponse = frameJobResponse(job);
 
@@ -98,7 +96,9 @@ public class JobService extends DwaraService{
 	private JobResponse frameJobResponse(Job job) {
 		JobResponse jobResponse = new JobResponse();
 		int jobId = job.getId();
+		
 		jobResponse.setId(jobId);
+		jobResponse.setuId(job.getuId());
 		jobResponse.setRequestId(job.getRequest().getId());
 		Action storagetaskAction = job.getStoragetaskActionId();
 		if(storagetaskAction != null)
@@ -110,11 +110,16 @@ public class JobService extends DwaraService{
 			jobResponse.setFlowelementId(flowelement.getId());
 		jobResponse.setInputArtifactId(job.getInputArtifactId());
 		jobResponse.setOutputArtifactId(job.getOutputArtifactId());
-		jobResponse.setCreatedAt(getDateForUI(job.getCreatedAt()));
-		jobResponse.setStartedAt(getDateForUI(job.getStartedAt()));
-		jobResponse.setCompletedAt(getDateForUI(job.getCompletedAt()));
-		if(job.getStatus() != null)
-			jobResponse.setStatus(job.getStatus().name());
+		
+		jobResponse.setDependencies(job.getDependencies());
+		jobResponse.setuIdDependencies(job.getuIdDependencies());
+		if(jobId > 0) { // For yet to be created jobs Job id is 0
+			jobResponse.setCreatedAt(getDateForUI(job.getCreatedAt()));
+			jobResponse.setStartedAt(getDateForUI(job.getStartedAt()));
+			jobResponse.setCompletedAt(getDateForUI(job.getCompletedAt()));
+			if(job.getStatus() != null)
+				jobResponse.setStatus(job.getStatus().name());
+		}
 		
 		Volume volume = job.getVolume();
 		if(volume != null)

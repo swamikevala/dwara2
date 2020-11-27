@@ -194,21 +194,24 @@ public class StagedService extends DwaraService{
 			
 			List<Integer> actionelementsToBeSkipped = ingestUserRequest.getSkipActionelements();
 			
-	    	Request userRequest = new Request();
-	    	userRequest.setType(RequestType.user);
-			userRequest.setActionId(Action.ingest);
-			userRequest.setStatus(Status.queued);
-	    	userRequest.setRequestedBy(getUserObjFromContext());
-			userRequest.setRequestedAt(LocalDateTime.now());
+//	    	Request userRequest = new Request();
+//	    	userRequest.setType(RequestType.user);
+//			userRequest.setActionId(Action.ingest);
+//			userRequest.setStatus(Status.queued);
+//	    	userRequest.setRequestedBy(getUserObjFromContext());
+//			userRequest.setRequestedAt(LocalDateTime.now());
+//			
+//			RequestDetails details = new RequestDetails();
+//			JsonNode postBodyJson = getRequestDetails(ingestUserRequest); 
+//			details.setBody(postBodyJson);
+//			userRequest.setDetails(details);
+//			
+//	    	userRequest = requestDao.save(userRequest);
+//	    	int userRequestId = userRequest.getId();
+//	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
 			
-			RequestDetails details = new RequestDetails();
-			JsonNode postBodyJson = getRequestDetails(ingestUserRequest); 
-			details.setBody(postBodyJson);
-			userRequest.setDetails(details);
-			
-	    	userRequest = requestDao.save(userRequest);
+			Request userRequest = createUserRequest(Action.ingest, ingestUserRequest);
 	    	int userRequestId = userRequest.getId();
-	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
 	    	
 	    	// TODO Move it to validation class
 	    	// Validation Level 1 - For empty folders
@@ -499,7 +502,6 @@ public class StagedService extends DwaraService{
     }
 
     private java.io.File moveFile(java.io.File src, java.io.File dest) throws Exception {
-		// TODO USE MOVE using commandline
     	try {
     		Files.move(src.toPath(), dest.toPath(), StandardCopyOption.ATOMIC_MOVE);
 //    		if(src.isDirectory())
@@ -515,7 +517,8 @@ public class StagedService extends DwaraService{
 		return dest;
 	}
     
-	private void createFilesAndExtensions(String pathPrefix, Domain domain, Artifact artifact, long artifactSize, Collection<java.io.File> libraryFileAndDirsList) throws Exception {
+    // made public so tests can access it...
+	public void createFilesAndExtensions(String pathPrefix, Domain domain, Artifact artifact, long artifactSize, Collection<java.io.File> libraryFileAndDirsList) throws Exception {
 		Set<String> extnsOnArtifactFolder =  new TreeSet<String>();
 	    List<File> toBeAddedFileTableEntries = new ArrayList<File>(); 
 	    for (Iterator<java.io.File> iterator = libraryFileAndDirsList.iterator(); iterator.hasNext();) {

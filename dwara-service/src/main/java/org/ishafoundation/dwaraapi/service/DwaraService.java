@@ -6,8 +6,17 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -16,8 +25,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class DwaraService {
 
+	private static final Logger logger = LoggerFactory.getLogger(DwaraService.class);
+	
 	@Autowired
 	private UserDao userDao;
+	
+	@Autowired
+	protected RequestDao requestDao;
 
 	protected String getUserFromContext() {
 		return SecurityContextHolder.getContext().getAuthentication().getName();
@@ -50,27 +64,27 @@ public class DwaraService {
 		return dateForUI;
 	}
 	
-//	protected Request createUserRequest(Action requestedBusinessAction, Object requestPayload) {
-//		Request request = new Request();
-//		request.setType(RequestType.user);
-//		request.setActionId(requestedBusinessAction);
-//		request.setStatus(Status.queued);
-//    	User user = getUserObjFromContext();
-//    	String requestedBy = user.getName();
-//
-//    	LocalDateTime requestedAt = LocalDateTime.now();
-//		request.setRequestedAt(requestedAt);
-//		request.setRequestedBy(user);
-//		RequestDetails details = new RequestDetails();
-//		JsonNode postBodyJson = getRequestDetails(requestPayload); 
-//		details.setBody(postBodyJson);
-//		request.setDetails(details);
-//
-//		request = requestDao.save(request);
-//		logger.info(DwaraConstants.USER_REQUEST + request.getId());
-//
-//		return request;
-//	}
+	protected Request createUserRequest(Action requestedBusinessAction, Object requestPayload) {
+		Request request = new Request();
+		request.setType(RequestType.user);
+		request.setActionId(requestedBusinessAction);
+		request.setStatus(Status.queued);
+    	User user = getUserObjFromContext();
+    	String requestedBy = user.getName();
+
+    	LocalDateTime requestedAt = LocalDateTime.now();
+		request.setRequestedAt(requestedAt);
+		request.setRequestedBy(user);
+		RequestDetails details = new RequestDetails();
+		JsonNode postBodyJson = getRequestDetails(requestPayload); 
+		details.setBody(postBodyJson);
+		request.setDetails(details);
+
+		request = requestDao.save(request);
+		logger.info(DwaraConstants.USER_REQUEST + request.getId());
+
+		return request;
+	}
 	
 	
 //	protected Request createSystemRequest(Request userRequest) {

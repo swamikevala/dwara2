@@ -15,7 +15,7 @@ public class ScheduledJobManagerInvoker {
 	@Autowired
 	private JobManager jobManager;
 	
-	@Value("${scheduler.enabled:true}")
+	@Value("${scheduler.jobManager.enabled:true}")
 	private boolean isEnabled;
 	
 	@Scheduled(fixedDelayString = "${scheduler.jobManager.fixedDelay}")

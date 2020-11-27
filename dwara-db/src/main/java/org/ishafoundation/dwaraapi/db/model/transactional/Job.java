@@ -20,6 +20,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.TableGenerator;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.Type;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
@@ -43,7 +44,10 @@ public class Job {
 	 pkColumnValue="job_id", allocationSize = 1)
 	@Column(name="id")
 	private int id;
-
+	
+	@Transient
+	private String uId;
+	
 	@Column(name = "storagetask_action_id")
 	private Action storagetaskActionId;
 
@@ -57,6 +61,9 @@ public class Job {
 	@Column(name="dependencies", columnDefinition = "json")
 	private List<Integer> dependencies;
 
+	@Transient
+	private List<String> uIdDependencies;
+	
 	// The FK constraints are removed so that this can point to one of the domain's artifact.
 	@Column(name="input_artifact_id")
 	private Integer inputArtifactId; // can contain one of the domain artifacts id
@@ -110,6 +117,14 @@ public class Job {
 		this.id = id;
 	}
 
+	public String getuId() {
+		return uId;
+	}
+
+	public void setuId(String uId) {
+		this.uId = uId;
+	}
+
 	public Action getStoragetaskActionId() {
 		return storagetaskActionId;
 	}
@@ -140,6 +155,14 @@ public class Job {
 
 	public void setDependencies(List<Integer> dependencies) {
 		this.dependencies = dependencies;
+	}
+
+	public List<String> getuIdDependencies() {
+		return uIdDependencies;
+	}
+
+	public void setuIdDependencies(List<String> uIdDependencies) {
+		this.uIdDependencies = uIdDependencies;
 	}
 
 	public Integer getInputArtifactId() {

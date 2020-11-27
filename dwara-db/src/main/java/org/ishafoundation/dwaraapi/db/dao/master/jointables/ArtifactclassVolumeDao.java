@@ -8,6 +8,6 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface ArtifactclassVolumeDao extends CrudRepository<ArtifactclassVolume, ArtifactclassVolumeKey> {
 	
-	List<ArtifactclassVolume> findAllByArtifactclassId(String artifactclassId);
+	List<ArtifactclassVolume> findAllByArtifactclassIdAndActiveTrue(String artifactclassId);
 	
 }

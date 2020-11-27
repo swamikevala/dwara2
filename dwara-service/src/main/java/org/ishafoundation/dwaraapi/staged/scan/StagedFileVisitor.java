@@ -3,7 +3,6 @@ package org.ishafoundation.dwaraapi.staged.scan;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
-import static java.nio.file.FileVisitResult.TERMINATE;
 
 import java.io.File;
 import java.io.IOException;
