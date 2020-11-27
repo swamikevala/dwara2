@@ -37,6 +37,8 @@ public class ScheduledIngestedArtifactAutoDeleter {
     public void autoDeleteIngestedArtifacts() {
 		logger.trace("invoking autoDeleteIngestedArtifacts");
 		File[] ingestableFiles = new File(configuration.getIngestCompleteDirRoot()).listFiles(); // get the list of ingested artifacts
+		if(ingestableFiles == null)
+			return;
 		for (File file : ingestableFiles) {// loop through the ingested artifacts
 			String artifactName = file.getName();
 			logger.trace("artifactName " + artifactName);
