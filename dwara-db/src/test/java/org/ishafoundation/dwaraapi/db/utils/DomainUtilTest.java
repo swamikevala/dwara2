@@ -1,7 +1,6 @@
 package org.ishafoundation.dwaraapi.db.utils;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.junit.FixMethodOrder;
 import org.junit.Test;

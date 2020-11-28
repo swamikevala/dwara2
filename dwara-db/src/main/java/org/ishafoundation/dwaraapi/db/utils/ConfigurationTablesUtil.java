@@ -1,6 +1,5 @@
 package org.ishafoundation.dwaraapi.db.utils;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
@@ -9,11 +8,9 @@ import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Archiveformat;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

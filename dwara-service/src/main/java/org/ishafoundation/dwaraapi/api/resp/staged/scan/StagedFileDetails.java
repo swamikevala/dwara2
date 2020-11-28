@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.api.resp.staged.scan;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.staged.scan.Error;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 

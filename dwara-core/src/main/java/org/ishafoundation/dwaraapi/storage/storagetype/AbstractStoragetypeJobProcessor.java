@@ -3,7 +3,6 @@ package org.ishafoundation.dwaraapi.storage.storagetype;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,7 +31,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.Arti
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
@@ -317,8 +315,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 			if(filePathname.startsWith(fileToBeRestored.getPathname())) {
 				FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());
 				
-				fileVolume.setVerifiedAt(LocalDateTime.now());
-				if(volume.getStoragelevel() == Storagelevel.block && storageJob.getJob().getStoragetaskActionId() == Action.verify) { // Only for block - TODO Should we move this to block specific impl??? 
+				//fileVolume.setVerifiedAt(LocalDateTime.now());
+				if(volume.getStoragelevel() == Storagelevel.block) {// && storageJob.getJob().getStoragetaskActionId() == Action.verify) { // Only for block - TODO Should we move this to block specific impl??? 
 					Map<String, Integer> archivedFilePathNameToHeaderBlockCnt = storageResponse.getArchiveResponse().getArchivedFilePathNameToHeaderBlockCnt();
 					if(archivedFilePathNameToHeaderBlockCnt != null) {
 						Integer headerBlockCnt = archivedFilePathNameToHeaderBlockCnt.get(filePathname);
@@ -359,7 +357,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 
     protected void beforeRestore(SelectedStorageJob selectedStorageJob) throws Exception {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
-    	storageJob.setTargetLocationPath(storageJob.getTargetLocationPath() + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier() + java.io.File.separator + "sr-" + storageJob.getJob().getRequest().getId());
+    	storageJob.setTargetLocationPath(storageJob.getTargetLocationPath() + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier());
     	Domain domain = storageJob.getDomain();
     	int fileIdToBeRestored = storageJob.getFileId();
 		
@@ -408,7 +406,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	protected void afterRestore(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception {
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
-		if(storageJob.isRestoreVerify())
+		//if(storageJob.isRestoreVerify())
 			updateFileVolumeTable(selectedStorageJob, storageResponse); // update the verified date here...
 		
 		// upon completion moving the file to the original requested dest path		
@@ -440,7 +438,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 		else
 			Files.createDirectories(Paths.get(destPath));
 
-		Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+		Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+		logger.info("Moved restored files from " + srcPath + " to " + destPath);
 	}
 	
 	private IStoragelevel getStoragelevelImpl(SelectedStorageJob selectedStorageJob){

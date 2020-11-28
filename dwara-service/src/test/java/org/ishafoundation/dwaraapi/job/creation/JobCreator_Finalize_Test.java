@@ -1,6 +1,5 @@
 package org.ishafoundation.dwaraapi.job.creation;
 
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.service.VolumeService;
 import org.junit.FixMethodOrder;
 import org.junit.Test;

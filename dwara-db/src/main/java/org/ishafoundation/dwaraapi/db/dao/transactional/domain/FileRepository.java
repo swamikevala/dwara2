@@ -7,7 +7,7 @@ import org.springframework.data.repository.NoRepositoryBean;
 @NoRepositoryBean
 public interface FileRepository<T extends File> extends CrudRepository<T,Integer> {
 	
-	public static final String FIND_ALL_BY_ARTIFACT_ID = "findAllBy<<DOMAIN_SPECIFIC_ARTIFACT>>Id";
+	public static final String FIND_ALL_BY_ARTIFACT_ID_AND_DELETED_FALSE = "findAllBy<<DOMAIN_SPECIFIC_ARTIFACT>>IdAndDeletedFalse";
 	
 	File findByPathname(String pathname);
 }

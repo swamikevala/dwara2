@@ -63,7 +63,7 @@ public class JobCreator_Ingest_UseJobId_Test{
 	
 	@Test
 	public void test_ab_updateStatus() {
-		Job job = jobDao.findById(105).get();
+		Job job = jobDao.findById(28).get();
 		// TODO - job.setOutputArtifactId(4);
 		job.setStatus(Status.completed);
 		jobDao.save(job);

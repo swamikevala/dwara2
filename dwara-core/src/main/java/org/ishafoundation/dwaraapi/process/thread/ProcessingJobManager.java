@@ -43,6 +43,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
@@ -50,6 +51,8 @@ import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.helpers.FiletypePathnameReqexVisitor;
 import org.ishafoundation.dwaraapi.process.helpers.LogicalFileHelper;
+import org.ishafoundation.dwaraapi.process.request.ProcessContext;
+import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,6 +105,15 @@ public class ProcessingJobManager implements Runnable{
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
 	
+	@Autowired
+	private Restore restoreStorageTask;
+
+	@Autowired
+	private JobEntityToJobForProcessConverter jobEntityToJobForProcessConverter;
+	
+	@Autowired
+	private FileEntityToFileForProcessConverter fileEntityToFileForProcessConverter;
+
 	private Job job;
 
 	public Job getJob() {
@@ -113,14 +125,16 @@ public class ProcessingJobManager implements Runnable{
 	}
 
 	public boolean isJobToBeCreated(String processingtaskId, String inputArtifactPath, Artifactclass inputArtifactclass) {
-		Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+		
 		Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPath, inputArtifactclass);
 		int filesToBeProcessedCount = selectedFileList.size();
 		logger.trace("filesToBeProcessedCount " + filesToBeProcessedCount);
 		
 		if(filesToBeProcessedCount == 0) {
 			String msg = "No files to process.";
-			if(!processingtask.getFiletypeId().equals("_all_")) {
+			
+			Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+			if(processingtask != null && !processingtask.getFiletypeId().equals("_all_")) {
 				msg = msg + " Check supported extensions...";
 			}
 			logger.warn(msg);
@@ -135,7 +149,7 @@ public class ProcessingJobManager implements Runnable{
 		
 		// TODO Cache filetypes...
 		Filetype ft = null;
-		if(!processingtask.getFiletypeId().equals("_all_")) { // if filetype is all means get all files...
+		if(processingtask != null && !processingtask.getFiletypeId().equals("_all_")) { // if filetype is all means get all files...
 			ft = filetypeDao.findById(processingtask.getFiletypeId()).get();
 		}
 			
@@ -180,7 +194,7 @@ public class ProcessingJobManager implements Runnable{
 			Domain domain = null;
 			Artifactclass outputArtifactclass = null;
 			
-			String outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix();
+			String outputArtifactclassSuffix = processingtask != null ? processingtask.getOutputArtifactclassSuffix() : null;
 			String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
 			logger.trace("outputArtifactclassSuffix " + outputArtifactclassSuffix);
 			if(outputArtifactclassSuffix != null) { // For processing tasks like checksum-gen this will be null...
@@ -206,6 +220,14 @@ public class ProcessingJobManager implements Runnable{
 			String inputArtifactName = inputArtifact.getName();
 			Artifactclass inputArtifactclass = inputArtifact.getArtifactclass();
 			String inputArtifactPath = inputArtifactclass.getPath() + File.separator + inputArtifactName;
+			
+			List<Integer> jobDependencyList = job.getDependencies(); // if current processing job has a dependency, and that too a restore job then inputpath = config tmp location + dependencyRestorejobid
+			for (Integer nthDependentJobId : jobDependencyList) {
+				Job nthDependentJob = jobDao.findById(nthDependentJobId).get();
+				if(nthDependentJob.getStoragetaskActionId() == Action.restore) {
+					inputArtifactPath = restoreStorageTask.getRestoreTempLocation(nthDependentJob.getId());
+				}
+			}
 	
 			// For the task getting processed check
 			// 1) if there are any dependent tasks 
@@ -237,6 +259,20 @@ public class ProcessingJobManager implements Runnable{
 			
 			boolean anyFileSentForProcessing = false;
 			if(filesToBeProcessedCount > 0) {
+				ProcessContext processContext = new ProcessContext();
+				processContext.setInputDirPath(inputArtifactPath);
+
+				org.ishafoundation.dwaraapi.process.request.Job jobForProcess = jobEntityToJobForProcessConverter.getJobForProcess(job);
+				org.ishafoundation.dwaraapi.process.request.Artifact inputArtifactForProcess = jobForProcess.getInputArtifact();
+				inputArtifactForProcess.setName(inputArtifactName);
+				org.ishafoundation.dwaraapi.process.request.Artifactclass inputArtifactclassForProcess = inputArtifactForProcess.getArtifactclass();
+				inputArtifactclassForProcess.setId(artifactclassId);
+				inputArtifactclassForProcess.setCategory(inputArtifact.getArtifactclass().getCategory());
+				inputArtifactclassForProcess.setDomain(domain.name());
+				jobForProcess.getOutputArtifact().setName(outputArtifactName);
+				processContext.setJob(jobForProcess);
+				
+ 
 				for (Iterator<LogicalFile> iterator = selectedFileList.iterator(); iterator.hasNext();) {
 					LogicalFile logicalFile = (LogicalFile) iterator.next(); // would have an absolute file like C:\data\ingested\14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS and its sidecar files
 					String logicalFilePath = logicalFile.getAbsolutePath();
@@ -270,6 +306,12 @@ public class ProcessingJobManager implements Runnable{
 					org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
 					if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
 						file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
+					
+					if(file == null) {
+						logger.warn(artifactNamePrefixedFilePathname + " not in DB. Skipping it");
+						continue;
+					}
+					
 					logger.debug("Delegating for processing -job-" + job.getId() + "-file-" + file.getId());
 	
 					// Requeue scenario - Only failed files are to be continued...
@@ -305,18 +347,18 @@ public class ProcessingJobManager implements Runnable{
 							tFileJobDao.save(tFileJob);
 							logger.debug("DB TFileJob Creation - Success");
 						}
-						
+					
+	
 						ProcessingJobProcessor processingJobProcessor = applicationContext.getBean(ProcessingJobProcessor.class);
+						processContext.setFile(fileEntityToFileForProcessConverter.getFileForProcess(file, domain));
+						processContext.setLogicalFile(logicalFile);
+						processContext.setOutputDestinationDirPath(outputFilePath);
+						processingJobProcessor.setProcessContext(processContext);
+						
 						processingJobProcessor.setJob(job);
-						processingJobProcessor.setDomain(domain);
 						processingJobProcessor.setInputArtifact(inputArtifact);
 						processingJobProcessor.setFile(file);
-						processingJobProcessor.setLogicalFile(logicalFile);
-						
 						processingJobProcessor.setOutputArtifactclass(outputArtifactclass);
-						processingJobProcessor.setOutputArtifactName(outputArtifactName); // VL20190701_071239
-						processingJobProcessor.setOutputArtifactPathname(outputArtifactPathname); // C:\data\transcoded\public\VL20190701_071239
-						processingJobProcessor.setDestinationDirPath(outputFilePath);
 						logger.info("Now kicking off - " + job.getId() + " " + logicalFilePath + " task " + processingtaskId);
 						executor.execute(processingJobProcessor);
 					}
@@ -325,7 +367,7 @@ public class ProcessingJobManager implements Runnable{
 			
 			if(filesToBeProcessedCount == 0 || !anyFileSentForProcessing) {
 				String msg = "No files to process.";
-				if(!processingtask.getFiletypeId().equals("_all_")) {
+				if(processingtask != null && !processingtask.getFiletypeId().equals("_all_")) {
 					msg = msg + " Check supported extensions...";
 				}
 				throw new Exception(msg);

@@ -10,10 +10,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
+import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.videopub.transcoding.ffmpeg.MediaTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,18 +31,21 @@ public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask imple
     private Pattern videoTrackIdentifierRegexPattern = Pattern.compile("Track ID ([0-9]*): video");
     
 	@Override
-	public ProcessingtaskResponse execute(String taskName, String artifactclass, String inputArtifactName, String outputArtifactName,
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile,
-			String category, String destinationDirPath) throws Exception {
-		
+	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
+	
+		String taskName = processContext.getJob().getProcessingtaskId();
+		LogicalFile logicalFile = processContext.getLogicalFile();
+		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
+		String destinationDirPath = processContext.getOutputDestinationDirPath();
+
 		if(logger.isTraceEnabled()) {
 			logger.trace("taskName " + taskName);
-			logger.trace("inputArtifactName " + inputArtifactName); // V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
-			logger.trace("outputArtifactName " + outputArtifactName); // VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
+//			logger.trace("inputArtifactName " + inputArtifactName); // V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
+//			logger.trace("outputArtifactName " + outputArtifactName); // VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
 			logger.trace("fileId " + file.getId());
-			logger.trace("domain " + domain.name()); 
+//			logger.trace("domain " + domain.name()); 
 			logger.trace("logicalFile " + logicalFile.getAbsolutePath()); // /data/ingested/V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12/DCIM/100EOS5D/MVI_5594.MOV
-			logger.trace("category " + category); // public
+//			logger.trace("category " + category); // public
 			logger.trace("destinationDirPath " + destinationDirPath); // /data/transcoded/public/VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12/DCIM/100EOS5D
 		}
 		String sourceFilePathname = logicalFile.getAbsolutePath();

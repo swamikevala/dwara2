@@ -2,8 +2,6 @@ package org.ishafoundation.dwaraapi.job;
 
 import java.io.File;
 import java.net.URL;
-import java.time.LocalDateTime;
-import java.util.Iterator;
 
 import org.dbunit.Assertion;
 import org.dbunit.database.IDatabaseConnection;
@@ -13,15 +11,9 @@ import org.dbunit.dataset.ITable;
 import org.dbunit.dataset.filter.DefaultColumnFilter;
 import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
-import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactFactory;
-import org.ishafoundation.dwaraapi.db.model.cache.CacheableTablesList;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.github.springtestdbunit.bean.DatabaseDataSourceConnectionFactoryBean;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)

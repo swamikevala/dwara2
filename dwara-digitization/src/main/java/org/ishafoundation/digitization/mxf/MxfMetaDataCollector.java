@@ -15,10 +15,10 @@ import org.apache.commons.io.IOUtils;
 import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
+import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,9 +40,10 @@ public class MxfMetaDataCollector implements IProcessingTask {
 	private String footerHexPattern = "06 0E 2B 34 02 05 01 01 0D 01 02 01 01 04 04 00".replaceAll("\\s", "");
 	
 	@Override
-	public ProcessingtaskResponse execute(String taskName, String inputArtifactClass, String inputArtifactName, String outputArtifactName,
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile, String category, String destinationDirPath) throws Exception {
-		
+	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
+		LogicalFile logicalFile = processContext.getLogicalFile();
+		String destinationDirPath = processContext.getOutputDestinationDirPath();
+
 		
 		String sourceFilePathname = logicalFile.getAbsolutePath();
 		String fileName = FilenameUtils.getBaseName(sourceFilePathname);

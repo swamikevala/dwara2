@@ -1,6 +1,5 @@
 package org.ishafoundation.dwaraapi.job;
 
-import org.ishafoundation.dwaraapi.job.JobManager;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;

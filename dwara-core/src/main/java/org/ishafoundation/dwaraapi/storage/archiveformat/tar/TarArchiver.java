@@ -317,6 +317,12 @@ public class TarArchiver implements IArchiveformatter {
 				if(!success)
 					throw new Exception("Restored file's verification failed");
 			}
+
+			ArchiveResponse archiveResponse = new ArchiveResponse();
+			archiveResponse.setArchivedFilePathNameToHeaderBlockCnt(tsr.getFilePathNameToHeaderBlockCnt());
+			
+			logger.info("Restoration complete");
+			return archiveResponse;
 		}else {
 			String timeCodeEnd = storageJob.getTimecodeEnd();
 			String filePathNameToBeRestored = file.getPathname();

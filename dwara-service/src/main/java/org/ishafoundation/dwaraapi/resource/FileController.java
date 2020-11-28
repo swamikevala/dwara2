@@ -2,7 +2,6 @@ package org.ishafoundation.dwaraapi.resource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.restore.PFRestoreUserRequest;

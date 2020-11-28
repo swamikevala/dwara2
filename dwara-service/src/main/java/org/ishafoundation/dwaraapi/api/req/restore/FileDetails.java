@@ -1,7 +1,5 @@
 package org.ishafoundation.dwaraapi.api.req.restore;
 
-import java.util.List;
-
 public class FileDetails {
 	
 	private Integer fileId;

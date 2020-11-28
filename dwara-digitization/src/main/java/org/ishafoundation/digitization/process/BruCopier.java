@@ -4,41 +4,36 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-import com.github.fracpete.processoutput4j.output.CollectingProcessOutput;
-import com.github.fracpete.rsync4j.RSync;
-
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
-import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
+import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.github.fracpete.processoutput4j.output.CollectingProcessOutput;
+import com.github.fracpete.rsync4j.RSync;
+
 @Component("bru-copier")
 public class BruCopier implements IProcessingTask {
 
 	private static final Logger logger = LoggerFactory.getLogger(BruCopier.class);
-	
-	@Autowired
-	private DomainUtil domainUtil;
-	
+		
 	@Autowired
 	private Configuration configuration;
 
 	@Override
-	public ProcessingtaskResponse execute(String taskName, String artifactclass, String inputArtifactName, String outputArtifactName,
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile,
-			String category, String destinationDirPath) throws Exception {
-        logger.info("processing bru copier: " +  inputArtifactName + ", output: " + outputArtifactName + ", destination: " + destinationDirPath);
-        destinationDirPath = "/Users/administrator/Desktop";
+	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
+        //logger.info("processing bru copier: " +  inputArtifactName + ", output: " + outputArtifactName + ", destination: " + destinationDirPath);
+        
+		String destinationDirPath = "/Users/administrator/Desktop";
+//		String destinationDirPath = processContext.getOutputDestinationDirPath();
+//		String destinationDirPath = TODO - Get this from config...
+        LogicalFile logicalFile = processContext.getLogicalFile();
+        
         RSync rsync = new RSync()
         .source(logicalFile.getAbsolutePath())
         .destination(destinationDirPath)

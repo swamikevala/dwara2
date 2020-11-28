@@ -34,6 +34,7 @@ import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
+import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,18 +84,24 @@ public class ProcessingJobProcessor implements Runnable{
 	@Autowired
 	private FileEntityUtil fileEntityUtil;
 	
-	private Job job;
-	private Domain domain;
-	private Artifact inputArtifact;
+	private ProcessContext processContext;
 
+	// All below are available in processcontext but to avoid DB calls per file passing it from Manager...
+	private Job job;
+	private Artifact inputArtifact;
 	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File file;
-	private LogicalFile logicalFile;
 	
 	private Artifactclass outputArtifactclass;
-	private String outputArtifactName;
-	private String outputArtifactPathname;
-	private String destinationDirPath;
+
 	
+
+	public ProcessContext getProcessContext() {
+		return processContext;
+	}
+
+	public void setProcessContext(ProcessContext processContext) {
+		this.processContext = processContext;
+	}
 
 	public Job getJob() {
 		return job;
@@ -102,14 +109,6 @@ public class ProcessingJobProcessor implements Runnable{
 
 	public void setJob(Job job) {
 		this.job = job;
-	}
-	
-	public Domain getDomain() {
-		return domain;
-	}
-
-	public void setDomain(Domain domain) {
-		this.domain = domain;
 	}
 
 	public Artifact getInputArtifact() {
@@ -128,14 +127,6 @@ public class ProcessingJobProcessor implements Runnable{
 		this.file = file;
 	}
 
-	public LogicalFile getLogicalFile() {
-		return logicalFile;
-	}
-
-	public void setLogicalFile(LogicalFile logicalFile) {
-		this.logicalFile = logicalFile;
-	}
-
 	public Artifactclass getOutputArtifactclass() {
 		return outputArtifactclass;
 	}
@@ -144,34 +135,8 @@ public class ProcessingJobProcessor implements Runnable{
 		this.outputArtifactclass = outputArtifactclass;
 	}
 
-	public String getOutputArtifactName() {
-		return outputArtifactName;
-	}
-
-	public void setOutputArtifactName(String outputArtifactName) {
-		this.outputArtifactName = outputArtifactName;
-	}
-
-	public String getOutputArtifactPathname() {
-		return outputArtifactPathname;
-	}
-
-	public void setOutputArtifactPathname(String outputArtifactPathname) {
-		this.outputArtifactPathname = outputArtifactPathname;
-	}
-
-	public String getDestinationDirPath() {
-		return destinationDirPath;
-	}
-
-	public void setDestinationDirPath(String destinationDirPath) {
-		this.destinationDirPath = destinationDirPath;
-	}
-
 	@Override
 	public void run(){
-		String identifierSuffix = "";//mediaFileId+"";//  +  "-" + VideoTasktypeingSteps.PROXY_GENERATION.toString();
-		
 		// This check is because of the same file getting queued up for processing again...
 		// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
 		// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
@@ -186,8 +151,9 @@ public class ProcessingJobProcessor implements Runnable{
 //				return;
 //			}
 //		}
-		
-		String containerName = identifierSuffix;	
+		Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
+		LogicalFile logicalFile = processContext.getLogicalFile();
+		String outputArtifactName = processContext.getJob().getOutputArtifact().getName();
 		
 		ThreadNameHelper threadNameHelper = new ThreadNameHelper();
 		threadNameHelper.setThreadName(job.getRequest().getId(), job.getId(), file.getId());
@@ -216,7 +182,6 @@ public class ProcessingJobProcessor implements Runnable{
 			
 			// If the job is QUEUED or IN_PROGRESS and cancellation is initiated ...
 			startms = System.currentTimeMillis();
-			Integer inputArtifactId = job.getInputArtifactId();
 
 			processingtaskName = job.getProcessingtaskId();
 			logger.trace(job.getId() + " " + processingtaskName);
@@ -227,13 +192,9 @@ public class ProcessingJobProcessor implements Runnable{
 			logger.debug("DB TFileJob Updation for file " + file.getId());
 			tFileJobDao.save(tFileJob);
 			logger.debug("DB TFileJob Updation - Success");
-
 			
-			String inputArtifactName = inputArtifact.getName();
-			Artifactclass artifactclass = inputArtifact.getArtifactclass();
-			String artifactCategory = artifactclass.getCategory(); // TODO How to distinguish pub/priv
+			ProcessingtaskResponse processingtaskResponse = processingtaskActionMap.get(processingtaskName).execute(processContext);
 			
-			ProcessingtaskResponse processingtaskResponse = processingtaskActionMap.get(processingtaskName).execute(processingtaskName, artifactclass.getId(), inputArtifactName, outputArtifactName, file, domain, logicalFile, artifactCategory, destinationDirPath);
 			if(processingtaskResponse == null) // TODO : Handle this...
 				return;
 			boolean isCancelInitiated = processingtaskResponse.isCancelled();
@@ -290,7 +251,7 @@ public class ProcessingJobProcessor implements Runnable{
 						FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
 						if(artifactFile == null) { // only if not already created... 
-							artifactFile = createFile(outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName, outputArtifact, domainSpecificFileRepository);	
+							artifactFile = createFile(outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName, outputArtifact, domainSpecificFileRepository, domain);	
 						}
 						
 						// creating File records for the process generated files
@@ -310,7 +271,7 @@ public class ProcessingJobProcessor implements Runnable{
 						for (String nthFileName : files) {
 							String filepathName = proxyFilePath + File.separator + nthFileName;
 							logger.trace("Now creating file record for - " + filepathName);
-							createFile(filepathName, outputArtifact, domainSpecificFileRepository);	
+							createFile(filepathName, outputArtifact, domainSpecificFileRepository, domain);	
 						}
 						
 						outputArtifact.setTotalSize(artifactFile.getSize());
@@ -324,7 +285,7 @@ public class ProcessingJobProcessor implements Runnable{
 			}
 		} catch (Exception e) {
 			staus = Status.failed;
-			failureReason = "Unable to complete " + processingtaskName + " for " + identifierSuffix + " :: " + e.getMessage();
+			failureReason = "Unable to complete " + processingtaskName + " for " + file.getId() + " :: " + e.getMessage();
 			logger.error(failureReason, e);
 			
 			Processingtask processingtask = processingtaskDao.findById(processingtaskName).get();
@@ -351,7 +312,7 @@ public class ProcessingJobProcessor implements Runnable{
 		}
 	}
 
-	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository) throws Exception {
+	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository, Domain domain) throws Exception {
 	    org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
 		
 	    fileEntityUtil.setDomainSpecificFileRef(nthFileRowToBeInserted, file);

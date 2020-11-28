@@ -59,6 +59,18 @@ public class DomainUtil {
 	public Artifact getDomainSpecificArtifactInstance(Domain domain) {
 		return DomainSpecificArtifactFactory.getInstance(domain);
 	}
+	
+	public Artifact getDomainSpecificArtifact(int artifactId) {
+		Artifact artifact = null;
+		Domain[] domains = Domain.values();
+		for (Domain nthDomain : domains) {
+			artifact = getDomainSpecificArtifact(nthDomain, artifactId);
+			if(artifact != null) {
+				break;
+			}
+		}
+		return artifact;
+	}
 
 	public Artifact getDomainSpecificArtifact(Domain domain, int artifactId) {
 		Optional artifactEntity = getDomainSpecificArtifactRepository(domain).findById(artifactId);

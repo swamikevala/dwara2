@@ -25,7 +25,6 @@ import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
@@ -81,15 +80,7 @@ public class JobCreator {
 		
 		int dependentJobInputArtifactId = job.getOutputArtifactId() != null ? job.getOutputArtifactId() : job.getInputArtifactId();
 		
-		Artifact dependentJobInputArtifact = null;
-		Domain[] domains = Domain.values();
-		for (Domain nthDomain : domains) {
-			dependentJobInputArtifact = domainUtil.getDomainSpecificArtifact(nthDomain, dependentJobInputArtifactId);
-			if(dependentJobInputArtifact != null) {
-				break;
-			}
-		}
-		
+		Artifact dependentJobInputArtifact = domainUtil.getDomainSpecificArtifact(dependentJobInputArtifactId);
 		
 		for (Flowelement nthFlowelement : dependentFlowelementList) {
 			Flow flowRef = nthFlowelement.getFlowRef();

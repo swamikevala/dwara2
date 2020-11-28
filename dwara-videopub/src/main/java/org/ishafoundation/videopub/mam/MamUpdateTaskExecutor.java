@@ -11,11 +11,12 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.commandline.remote.sch.RemoteCommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.remote.scp.SecuredCopier;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
+import org.ishafoundation.dwaraapi.process.request.Artifact;
+import org.ishafoundation.dwaraapi.process.request.Artifactclass;
+import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.dwaraapi.utils.DateAndTimeUtil;
 import org.ishafoundation.dwaraapi.utils.JsonPathUtil;
 import org.ishafoundation.videopub.mam.authn.Authenticator;
@@ -74,13 +75,18 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 	
 	@Autowired
     private SecuredCopier securedCopier;
-		
-	@Autowired
-    private  FileEntityUtil  fileEntityUtil;
 	
 	@Override
-	public ProcessingtaskResponse execute(String taskName, String inputArtifactClass, String inputArtifactName, String outputArtifactName,
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile, String category, String destinationDirPath) throws Exception {
+	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
+		
+		Artifact inputArtifact = processContext.getJob().getInputArtifact();
+		String inputArtifactName = inputArtifact.getName();
+		Artifactclass inputArtifactclass = inputArtifact.getArtifactclass();
+		String inputArtifactClass = inputArtifactclass.getId(); 
+		String category = inputArtifactclass.getCategory();
+		
+		LogicalFile logicalFile = processContext.getLogicalFile();
+		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
 		
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 		String catdvSessionId = null;
@@ -142,7 +148,7 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			}
 			logger.info("Now inserting the clip into catdv server");
 
-			int catdvClipId = insertClip(catdvSessionId, fileEntityUtil.getFileRef(file, domain).getId(), catalogId, generatedProxyMetaDataFilePath, proxyFilePathOnMamServer, generatedThumbnailPath); //(proxyGenerationCompletedEvent.getMediaLibraryId(), StorageType.PRIMARY_COPY);
+			int catdvClipId = insertClip(catdvSessionId, file.getFileRef().getId(), catalogId, generatedProxyMetaDataFilePath, proxyFilePathOnMamServer, generatedThumbnailPath); //(proxyGenerationCompletedEvent.getMediaLibraryId(), StorageType.PRIMARY_COPY);
 			processingtaskResponse.setIsComplete(true); 
 			processingtaskResponse.setStdOutResponse("catdvClipId - " + catdvClipId);// TODO : where/how do we update externalrefid in db ...
 			processingtaskResponse.setAppId(catdvClipId + ""); 

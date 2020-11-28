@@ -1,9 +1,5 @@
 package org.ishafoundation.videopub.mam.ingest;
 
-import java.io.IOException;
-import java.net.URL;
-
-import org.apache.commons.io.FileUtils;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.ishafoundation.dwaraapi.utils.HttpClientUtil;
 import org.ishafoundation.dwaraapi.utils.JsonPathUtil;

@@ -1,7 +1,6 @@
 package org.ishafoundation.videopub.mam.ingest;
 
 import java.io.File;
-import java.net.URL;
 import java.util.Base64;
 
 import org.apache.commons.io.FileUtils;

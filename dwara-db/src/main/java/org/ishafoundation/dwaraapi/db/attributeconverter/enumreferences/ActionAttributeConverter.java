@@ -3,7 +3,6 @@ package org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.springframework.stereotype.Component;
 

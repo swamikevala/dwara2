@@ -1,26 +1,23 @@
 package org.ishafoundation.dwaraapi.storage.storagetask;
 
 
-import java.util.ArrayList;
+import java.io.File;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +41,10 @@ public class Restore extends AbstractStoragetaskAction{
 	
 	@Autowired
 	private Configuration configuration;
+	
+	public String getRestoreTempLocation(int jobId) {
+		return configuration.getRestoreTmpLocationForVerification() + File.separator + "job-" + jobId;
+	}
 
 	@Override
 	public StorageJob buildStorageJob(Job job) throws Exception {
@@ -108,7 +109,7 @@ public class Restore extends AbstractStoragetaskAction{
 			storageJob.setArchiveBlock(fileVolume.getArchiveBlock());
 			
 			// to where
-			String targetLocationPath = configuration.getRestoreTmpLocationForVerification();
+			String targetLocationPath = getRestoreTempLocation(job.getId());
 			storageJob.setTargetLocationPath(targetLocationPath);
 		}
 		else {

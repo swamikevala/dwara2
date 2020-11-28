@@ -168,7 +168,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				tapeJob.setDriveDetails(preparedDrives);
 				manage(tapeJob);
 			} catch (Exception e1) {
-				logger.error(e1.getMessage());
+				logger.error(e1.getMessage(), e1);
 				updateJobFailed(firstStorageJob.getJob());
 			}
 		}

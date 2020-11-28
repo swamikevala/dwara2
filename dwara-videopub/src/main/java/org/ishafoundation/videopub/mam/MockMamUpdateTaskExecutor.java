@@ -1,9 +1,8 @@
 package org.ishafoundation.videopub.mam;
 
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
-import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
+import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -16,9 +15,7 @@ public class MockMamUpdateTaskExecutor implements IProcessingTask {
     private static final Logger logger = LoggerFactory.getLogger(MockMamUpdateTaskExecutor.class);
 
 	@Override
-	public ProcessingtaskResponse execute(String taskName, String artifactclass, String inputArtifactName, String outputArtifactName,
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain, LogicalFile logicalFile,
-			String category, String destinationDirPath) throws Exception {
+	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
 		
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 

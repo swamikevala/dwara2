@@ -1,11 +1,7 @@
 package org.ishafoundation.dwaraapi.device;
 
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.json.DeviceDetails;
-import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
 import org.junit.FixMethodOrder;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
