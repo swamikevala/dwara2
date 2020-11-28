@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.job;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
@@ -24,6 +25,7 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.process.checksum.ChecksumVerifier;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,50 +104,55 @@ public class JobManipulator {
 	//private void iterateFlow(Request request, String artifactclassId, String nthFlowId, Flowelement referencingFlowelement, List<Job> alreadyCreatedJobList, Map<String, Job> flowelementUid_Job_Map) {
 	private void iterateFlow(Request request, String artifactclassId, String nthFlowId, Flowelement referencingFlowelement, List<Job> alreadyCreatedJobList, List<Job> jobList) {
 		logger.trace("Iterating flow " + nthFlowId);
-		
-		Artifact artifact = null;
+
+		List<Artifact> artifactList = null;
 		Domain[] domains = Domain.values();
 		for (Domain nthDomain : domains) {
 			ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(nthDomain);
 
-			List<Artifact> artifactList = artifactRepository.findAllByWriteRequestId(request.getId());
-			for (Artifact nthArtifact : artifactList) {
-				if(nthArtifact.getArtifactclass().getId().equals(artifactclassId)) {
-					artifact = nthArtifact;
-					break;
-				}
-			}
+			artifactList = artifactRepository.findAllByWriteRequestId(request.getId());
 			
-			if(artifact != null) {
+			if(artifactList != null && artifactList.size() > 0) {
 				break;
 			}
 		}
-		Integer artifactId = (artifact != null ? artifact.getId() : null);
+		
 		//  get all the flow elements for the flow
 		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndActiveTrueOrderByDisplayOrderAsc(nthFlowId);
 		for (Flowelement nthFlowelement : flowelementList) {
 			int nthFlowelementId = nthFlowelement.getId();
 			logger.trace("Flowelement " + nthFlowelementId);
 
-			Flow referredFlow = nthFlowelement.getFlowRef(); 
-			if(referredFlow != null) { // If the flowelement references a flow(has a flowRef), that means one of this flowelement dependency is a processing task generating an output artifact, that is to be consumed as input
-				List<Integer> refFlowelementDepsList = nthFlowelement.getDependencies();
-				// Now use one of the processing task that too generating an output
+			List<Integer> refFlowelementDepsList = nthFlowelement.getDependencies();
+			// Now use one of the processing task that too generating an output
+
+			if(refFlowelementDepsList != null) {
 				String outputArtifactclassSuffix = null;
+				
 				for (Integer nthRefFlowelementDepId : refFlowelementDepsList) {
 					Flowelement prereqFlowelement = flowelementDao.findById(nthRefFlowelementDepId).get();
 					String processingtaskId = prereqFlowelement.getProcessingtaskId();  
 					if(processingtaskId == null) // Is the dependency a processing task?
 						continue;
 					logger.trace("A processing task " + processingtaskId);
-					Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
-					outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix(); // Does the dependent processing task generate an output?
+					Processingtask processingtask = null;
+					Optional<Processingtask> processingtaskOpt = processingtaskDao.findById(processingtaskId);
+					if(processingtaskOpt.isPresent())
+						processingtask = processingtaskOpt.get();
+					
+					outputArtifactclassSuffix = processingtask != null ? processingtask.getOutputArtifactclassSuffix() : null; // Does the dependent processing task generate an output?
 					if(outputArtifactclassSuffix != null)
 						break;
 				}
-				String outputArtifactclassId = artifactclassId + outputArtifactclassSuffix;
-				logger.trace("Output ArtifactclassId " + outputArtifactclassId);
-				iterateFlow(request, outputArtifactclassId, referredFlow.getId(), nthFlowelement, alreadyCreatedJobList, jobList);
+				if(outputArtifactclassSuffix != null)
+					artifactclassId = artifactclassId + outputArtifactclassSuffix;
+			}
+			
+			Flow referredFlow = nthFlowelement.getFlowRef(); 
+			if(referredFlow != null) { // If the flowelement references a flow(has a flowRef), that means one of this flowelement dependency is a processing task generating an output artifact, that is to be consumed as input
+
+				logger.trace("Output ArtifactclassId " + artifactclassId);
+				iterateFlow(request, artifactclassId, referredFlow.getId(), nthFlowelement, alreadyCreatedJobList, jobList);
 			} else {
 				
 				Action storagetaskAction = nthFlowelement.getStoragetaskActionId();
@@ -158,10 +165,17 @@ public class JobManipulator {
 						dependencies = referencingFlowelement.getDependencies();
 					}
 				}
-					
-
+				
+				Artifact artifact = null;
+				for (Artifact nthArtifact : artifactList) {
+					if(nthArtifact.getArtifactclass().getId().equals(artifactclassId)) {
+						artifact = nthArtifact;
+						break;
+					}
+				}
+				Integer artifactId = (artifact != null ? artifact.getId() : null);
 				List<String> uIdDependencies = null; 
-				if(storagetaskAction != null || processingtaskId.equals("verify")) {
+				if(storagetaskAction != null || processingtaskId.equals(ChecksumVerifier.CHECKSUM_VERIFIER_COMPONENT_NAME)) { // TODO - Get off the hardcoding...
 					
 					List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassIdAndActiveTrue(artifactclassId);
 					logger.trace("No. of copies " + artifactclassVolumeList.size());

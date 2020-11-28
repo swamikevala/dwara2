@@ -133,7 +133,7 @@ public class ProcessingJobManager implements Runnable{
 		if(filesToBeProcessedCount == 0) {
 			String msg = "No files to process.";
 			
-			Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+			Processingtask processingtask = getProcessingtask(processingtaskId);
 			if(processingtask != null && !processingtask.getFiletypeId().equals("_all_")) {
 				msg = msg + " Check supported extensions...";
 			}
@@ -144,8 +144,7 @@ public class ProcessingJobManager implements Runnable{
 	}
 	
 	private Collection<LogicalFile> getFilesToBeProcessed(String processingtaskId, String inputArtifactPath, Artifactclass inputArtifactclass){
-		
-		Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+		Processingtask processingtask = getProcessingtask(processingtaskId);
 		
 		// TODO Cache filetypes...
 		Filetype ft = null;
@@ -154,6 +153,28 @@ public class ProcessingJobManager implements Runnable{
 		}
 			
 		return  getLogicalFileList(ft, inputArtifactPath, inputArtifactclass.getId(), processingtaskId);
+	}
+	
+	public Processingtask getProcessingtask(String processingtaskId) {
+		Processingtask processingtask = null;
+		Optional<Processingtask> processingtaskOpt = processingtaskDao.findById(processingtaskId);
+		if(processingtaskOpt.isPresent())
+			processingtask = processingtaskOpt.get();
+		return processingtask;
+	}
+
+	public String getInputPath(Job job) {
+		String inputPath = null;
+		List<Integer> jobDependencyList = job.getDependencies(); // if current processing job has a dependency, and that too a restore job then inputpath = config tmp location + dependencyRestorejobid
+		if(jobDependencyList != null) {
+			for (Integer nthDependentJobId : jobDependencyList) {
+				Job nthDependentJob = jobDao.findById(nthDependentJobId).get();
+				if(nthDependentJob.getStoragetaskActionId() == Action.restore) {
+					inputPath = restoreStorageTask.getRestoreTempLocation(nthDependentJob.getId());
+				}
+			}
+		}
+		return inputPath;
 	}
 	
 	@Override
@@ -189,7 +210,7 @@ public class ProcessingJobManager implements Runnable{
 			Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
 			// TODO Any check needed on the configured executor? 
 			
-			Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
+			Processingtask processingtask = getProcessingtask(processingtaskId);
 			
 			Domain domain = null;
 			Artifactclass outputArtifactclass = null;
@@ -219,15 +240,10 @@ public class ProcessingJobManager implements Runnable{
 			
 			String inputArtifactName = inputArtifact.getName();
 			Artifactclass inputArtifactclass = inputArtifact.getArtifactclass();
-			String inputArtifactPath = inputArtifactclass.getPath() + File.separator + inputArtifactName;
-			
-			List<Integer> jobDependencyList = job.getDependencies(); // if current processing job has a dependency, and that too a restore job then inputpath = config tmp location + dependencyRestorejobid
-			for (Integer nthDependentJobId : jobDependencyList) {
-				Job nthDependentJob = jobDao.findById(nthDependentJobId).get();
-				if(nthDependentJob.getStoragetaskActionId() == Action.restore) {
-					inputArtifactPath = restoreStorageTask.getRestoreTempLocation(nthDependentJob.getId());
-				}
-			}
+			String inputPath = getInputPath(job); 
+			if(inputPath == null)
+				inputPath = inputArtifactclass.getPath();
+			String inputArtifactPath =  inputPath + File.separator + inputArtifactName;
 	
 			// For the task getting processed check
 			// 1) if there are any dependent tasks 
@@ -259,9 +275,6 @@ public class ProcessingJobManager implements Runnable{
 			
 			boolean anyFileSentForProcessing = false;
 			if(filesToBeProcessedCount > 0) {
-				ProcessContext processContext = new ProcessContext();
-				processContext.setInputDirPath(inputArtifactPath);
-
 				org.ishafoundation.dwaraapi.process.request.Job jobForProcess = jobEntityToJobForProcessConverter.getJobForProcess(job);
 				org.ishafoundation.dwaraapi.process.request.Artifact inputArtifactForProcess = jobForProcess.getInputArtifact();
 				inputArtifactForProcess.setName(inputArtifactName);
@@ -270,8 +283,6 @@ public class ProcessingJobManager implements Runnable{
 				inputArtifactclassForProcess.setCategory(inputArtifact.getArtifactclass().getCategory());
 				inputArtifactclassForProcess.setDomain(domain.name());
 				jobForProcess.getOutputArtifact().setName(outputArtifactName);
-				processContext.setJob(jobForProcess);
-				
  
 				for (Iterator<LogicalFile> iterator = selectedFileList.iterator(); iterator.hasNext();) {
 					LogicalFile logicalFile = (LogicalFile) iterator.next(); // would have an absolute file like C:\data\ingested\14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS and its sidecar files
@@ -350,6 +361,9 @@ public class ProcessingJobManager implements Runnable{
 					
 	
 						ProcessingJobProcessor processingJobProcessor = applicationContext.getBean(ProcessingJobProcessor.class);
+						ProcessContext processContext = new ProcessContext();
+						processContext.setInputDirPath(inputArtifactPath);
+						processContext.setJob(jobForProcess);
 						processContext.setFile(fileEntityToFileForProcessConverter.getFileForProcess(file, domain));
 						processContext.setLogicalFile(logicalFile);
 						processContext.setOutputDestinationDirPath(outputFilePath);

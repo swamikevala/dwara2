@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -32,7 +34,7 @@ public class DwaraApiApplication {
 	private Environment env;
 	
 	@Autowired
-	private ProcessingtaskDao processingtaskDao;		
+	private Map<String, IProcessingTask> processingtaskActionMap;
 
 	@Autowired
 	private VersionDao versionDao;	
@@ -52,11 +54,8 @@ public class DwaraApiApplication {
 	 */
 	@EventListener(ApplicationReadyEvent.class)
 	public void createThreadPoolsForTask() {
-		
-		Iterable<Processingtask> processingtaskList = processingtaskDao.findAll();
-		for (Processingtask processingtask : processingtaskList) {
-			String processingtaskName = processingtask.getId().toLowerCase();
-			
+		Set<String> processingtaskSet = processingtaskActionMap.keySet();
+		for (String processingtaskName : processingtaskSet) {
 			String propertyNamePrefix = "threadpoolexecutor."+processingtaskName;	
 			String corePoolSizePropName = propertyNamePrefix + ".corePoolSize";
 			String maxPoolSizePropName = propertyNamePrefix + ".maxPoolSize";

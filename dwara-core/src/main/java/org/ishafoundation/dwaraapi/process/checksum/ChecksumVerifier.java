@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.process.checksum;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
+import org.apache.commons.codec.binary.Hex;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
@@ -25,6 +26,8 @@ public class ChecksumVerifier implements IProcessingTask {
 
 	private static final Logger logger = LoggerFactory.getLogger(ChecksumVerifier.class);
 	
+	public static final String CHECKSUM_VERIFIER_COMPONENT_NAME = "checksum-verify";
+	
 	@Autowired
 	private DomainUtil domainUtil;
 	
@@ -40,16 +43,19 @@ public class ChecksumVerifier implements IProcessingTask {
 		
 		File file = processContext.getFile();
 		if(logicalFile.isFile()) {
+			logger.info("Verifying checksum for - " + file.getId() + ":" + logicalFile.getAbsolutePath());
 			byte[] originalChecksum = file.getChecksum();
+			logger.trace("originalChecksum " + Hex.encodeHexString(originalChecksum));
 //			String filePathname = file.getPathname();
 //			String fileAbsolutePath = logicalFile.getAbsolutePath();
 //			String filePathPrefix = StringUtils.substringBefore(fileAbsolutePath, filePathname);
 //			fileAbsolutePath.replace(filePathPrefix, processContext.getInputDirPath());
 			
 			byte[] checksumToBeVerified = ChecksumUtil.getChecksum(logicalFile, Checksumtype.valueOf(configuration.getChecksumType()));
-	
+			logger.trace("checksumToBeVerified " + Hex.encodeHexString(checksumToBeVerified));
+			
 			if (Arrays.equals(originalChecksum, checksumToBeVerified)) {
-				
+				logger.trace("originalChecksum = checksumToBeVerified. All good");	
 				Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
 				String volumeId = processContext.getJob().getDependencies().get(0).getVolume().getId();
 
@@ -64,6 +70,7 @@ public class ChecksumVerifier implements IProcessingTask {
 				logger.error(msg);
 				throw new Exception(msg);
 			}
+			
 		}
 		else {
 			logger.info(file.getId() + " not a file but a folder. Skipping it");

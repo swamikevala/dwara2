@@ -438,7 +438,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		else
 			Files.createDirectories(Paths.get(destPath));
 
-		Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+		Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
 		logger.info("Moved restored files from " + srcPath + " to " + destPath);
 	}
 	

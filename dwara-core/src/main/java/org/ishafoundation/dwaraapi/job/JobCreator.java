@@ -28,6 +28,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
+import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +63,9 @@ public class JobCreator {
 
 	@Autowired
 	private ApplicationContext applicationContext;
+	
+	@Autowired
+	private Restore restoreStorageTask;
 	
 	// if only request.action is complex this gets called.
 	public List<Job> createDependentJobs(Job job){
@@ -207,7 +211,11 @@ public class JobCreator {
 			String inputArtifactName = artifact.getName();
 			Artifactclass inputArtifactclass = artifact.getArtifactclass();
 			String inputArtifactPath = inputArtifactclass.getPath() + File.separator + inputArtifactName;
-			
+			Volume groupVolume = null;
+			if(sourceJob.getStoragetaskActionId() == Action.restore) {
+				inputArtifactPath = restoreStorageTask.getRestoreTempLocation(sourceJob.getId()) + File.separator + inputArtifactName;
+				groupVolume = sourceJob.getGroupVolume();
+			}
 			ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
 			if(!processingJobManager.isJobToBeCreated(processingtaskId, inputArtifactPath, inputArtifactclass)) { // Dont create jobs for something we know would eventually fail...
 				logger.trace("Job not to be created - " + nthFlowelement.getId());
@@ -224,6 +232,8 @@ public class JobCreator {
 			}
 			
 			job.setProcessingtaskId(processingtaskId);
+			if(groupVolume != null)
+				job.setGroupVolume(groupVolume);
 			job = saveJob(job);
 			jobsCreated.add(job);
 		}

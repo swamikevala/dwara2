@@ -26,10 +26,12 @@ import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
+import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -60,6 +62,9 @@ public class ScheduledStatusUpdater {
 	
 	@Autowired
 	private Configuration configuration;
+	
+	@Autowired
+	private ApplicationContext applicationContext;
 	
 	@Value("${scheduler.statusUpdater.enabled:true}")
 	private boolean isEnabled;
@@ -148,6 +153,14 @@ public class ScheduledStatusUpdater {
 						logger.info("tFileJob cleaned up files of Job " + job.getId());
 
 						jobCreator.createDependentJobs(job);
+						
+						// if the processing job has a dependency on restore - then delete the restored file from the tmp directory
+						ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
+						String inputPath = processingJobManager.getInputPath(job);
+						if(inputPath != null) {
+							File restoreTmpFolder = new File(inputPath);
+							restoreTmpFolder.delete();
+						}
 					}
 				}
 			}

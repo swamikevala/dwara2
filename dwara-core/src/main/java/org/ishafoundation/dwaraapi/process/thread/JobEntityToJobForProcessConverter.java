@@ -34,10 +34,12 @@ public class JobEntityToJobForProcessConverter {
 		
 		List<Job> dependencyJobList = new ArrayList<Job>();
 		List<Integer> dependencyJobIdList = jobEntity.getDependencies();
-		for (Integer dependencyJobId : dependencyJobIdList) {
-			dependencyJobList.add(getJobForProcess(jobDao.findById(dependencyJobId).get()));
+		if(dependencyJobIdList != null) {
+			for (Integer dependencyJobId : dependencyJobIdList) {
+				dependencyJobList.add(getJobForProcess(jobDao.findById(dependencyJobId).get()));
+			}
+			jobForProcess.setDependencies(dependencyJobList);
 		}
-		jobForProcess.setDependencies(dependencyJobList);
 		
 		Integer inputArtifactId = jobEntity.getInputArtifactId();
 		//org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact inputArtifactFromDB = domainUtil.getDomainSpecificArtifact(inputArtifactId);
