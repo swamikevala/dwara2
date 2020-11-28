@@ -12,10 +12,11 @@ import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.videopub.transcoding.ffmpeg.MediaTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component("video-preservation-gen")
-//@Profile({ "dev | stage" })
+@Profile({ "dev | stage" })
 public class MockVideo_Digitization_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
     private static final Logger logger = LoggerFactory.getLogger(MockVideo_Digitization_Transcoding_TaskExecutor.class);
 
