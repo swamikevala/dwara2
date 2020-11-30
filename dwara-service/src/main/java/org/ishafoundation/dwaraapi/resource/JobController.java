@@ -29,7 +29,25 @@ public class JobController {
 	@Autowired
 	JobService jobService;
 
+	@GetMapping(value = "/placeholderjob", produces = "application/json")
+	public ResponseEntity<List<JobResponse>> getPlaceholderJobs(@RequestParam(value="requestId", required=false) Integer systemRequestId){
+		logger.info("/placeholderjob?" + (systemRequestId != null ? "requestId=" + systemRequestId : ""));
+		List<JobResponse> jobResponseList = null;
+		try {
+			jobResponseList = jobService.getJobs(systemRequestId);
+		}catch (Exception e) {
+			String errorMsg = "Unable to get Jobs - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
 
+		return ResponseEntity.status(HttpStatus.OK).body(jobResponseList);
+	}
+	
 	@GetMapping(value = "/job", produces = "application/json")
 	public ResponseEntity<List<JobResponse>> getJobs(@RequestParam(value="requestId", required=false) Integer systemRequestId, @RequestParam(required=false) String status){
 		logger.info("/job?" + (status != null ? "status=" + status : "") + (systemRequestId != null ? "requestId=" + systemRequestId : ""));
@@ -47,7 +65,7 @@ public class JobController {
 				}
 			}
 			
-			// TODO - Hacked for testing - sort this out
+			// TODO - remove this - Hacked for testing - sort this out
 			if(systemRequestId != null && statusList == null)
 				jobResponseList = jobService.getJobs(systemRequestId);
 			else

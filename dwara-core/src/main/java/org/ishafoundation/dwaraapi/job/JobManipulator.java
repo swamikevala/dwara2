@@ -101,6 +101,15 @@ public class JobManipulator {
 		return jobList;
 	}
 
+	/**
+	 * 
+	 * @param request - 
+	 * @param artifactclassId - the artifactclass relevant to the flow 
+	 * @param nthFlowId -
+	 * @param referencingFlowelement - The flowelement that refers the above flow - It is neither a storage task nor a processing task but a references another flow
+	 * @param alreadyCreatedJobList - The jobs that are already in DB
+	 * @param jobList - the joblist for response...
+	 */
 	//private void iterateFlow(Request request, String artifactclassId, String nthFlowId, Flowelement referencingFlowelement, List<Job> alreadyCreatedJobList, Map<String, Job> flowelementUid_Job_Map) {
 	private void iterateFlow(Request request, String artifactclassId, String nthFlowId, Flowelement referencingFlowelement, List<Job> alreadyCreatedJobList, List<Job> jobList) {
 		logger.trace("Iterating flow " + nthFlowId);
@@ -123,18 +132,18 @@ public class JobManipulator {
 			int nthFlowelementId = nthFlowelement.getId();
 			logger.trace("Flowelement " + nthFlowelementId);
 
-			List<Integer> refFlowelementDepsList = nthFlowelement.getDependencies();
+			List<Integer> flowelementDepsList = nthFlowelement.getDependencies();
 			// Now use one of the processing task that too generating an output
-
-			if(refFlowelementDepsList != null) {
+			String outputArtifactclassId = null;
+			if(flowelementDepsList != null) {
 				String outputArtifactclassSuffix = null;
 				
-				for (Integer nthRefFlowelementDepId : refFlowelementDepsList) {
-					Flowelement prereqFlowelement = flowelementDao.findById(nthRefFlowelementDepId).get();
+				for (Integer nthFlowelementDepId : flowelementDepsList) {
+					Flowelement prereqFlowelement = flowelementDao.findById(nthFlowelementDepId).get();
 					String processingtaskId = prereqFlowelement.getProcessingtaskId();  
 					if(processingtaskId == null) // Is the dependency a processing task?
 						continue;
-					logger.trace("A processing task " + processingtaskId);
+					logger.trace("Prereq processing task potentially gen outputArtifactclass " + processingtaskId);
 					Processingtask processingtask = null;
 					Optional<Processingtask> processingtaskOpt = processingtaskDao.findById(processingtaskId);
 					if(processingtaskOpt.isPresent())
@@ -145,18 +154,20 @@ public class JobManipulator {
 						break;
 				}
 				if(outputArtifactclassSuffix != null)
-					artifactclassId = artifactclassId + outputArtifactclassSuffix;
+					outputArtifactclassId = artifactclassId + outputArtifactclassSuffix;
 			}
 			
 			Flow referredFlow = nthFlowelement.getFlowRef(); 
 			if(referredFlow != null) { // If the flowelement references a flow(has a flowRef), that means one of this flowelement dependency is a processing task generating an output artifact, that is to be consumed as input
 
-				logger.trace("Output ArtifactclassId " + artifactclassId);
-				iterateFlow(request, artifactclassId, referredFlow.getId(), nthFlowelement, alreadyCreatedJobList, jobList);
+				logger.trace("Output ArtifactclassId " + outputArtifactclassId);
+				iterateFlow(request, outputArtifactclassId, referredFlow.getId(), nthFlowelement, alreadyCreatedJobList, jobList);
 			} else {
 				
 				Action storagetaskAction = nthFlowelement.getStoragetaskActionId();
 				String processingtaskId = nthFlowelement.getProcessingtaskId();
+				
+				String artifactclassIdToBeUsed = artifactclassId;
 				String referencingFlowPrefix = "";
 				List<Integer> dependencies = nthFlowelement.getDependencies();
 				if(referencingFlowelement != null) {
@@ -164,11 +175,13 @@ public class JobManipulator {
 					if(dependencies == null) {
 						dependencies = referencingFlowelement.getDependencies();
 					}
+				} else if(outputArtifactclassId != null){
+					artifactclassIdToBeUsed = outputArtifactclassId;
 				}
 				
 				Artifact artifact = null;
 				for (Artifact nthArtifact : artifactList) {
-					if(nthArtifact.getArtifactclass().getId().equals(artifactclassId)) {
+					if(nthArtifact.getArtifactclass().getId().equals(artifactclassIdToBeUsed)) {
 						artifact = nthArtifact;
 						break;
 					}
@@ -199,7 +212,7 @@ public class JobManipulator {
 							}
 						}
 						
-						System.out.println("uId : " + uId);
+						logger.trace("uId : " + uId);
 						// check if job already created and details available... 
 						Job job = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifactId, nthFlowelementId, volume.getId());
 						if(job == null) {
@@ -221,7 +234,7 @@ public class JobManipulator {
 					}
 				}else {
 					String uId = referencingFlowPrefix + nthFlowelementId;
-					System.out.println("uid - " + uId);
+					logger.trace("uid - " + uId);
 					// check if job already created and details available... 
 					Job job = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifactId, nthFlowelementId, null);
 					if(job == null) {

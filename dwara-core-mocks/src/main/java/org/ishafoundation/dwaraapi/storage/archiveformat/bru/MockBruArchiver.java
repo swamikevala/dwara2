@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 
 @Component("bru"+DwaraConstants.ARCHIVER_SUFFIX)
 @Profile({ "dev | stage" })
-public class MockBruArchiver extends BruArchiver {
+public class MockBruArchiver extends AbstractBruArchiver{
 
 	private static final Logger logger = LoggerFactory.getLogger(MockBruArchiver.class);
 
