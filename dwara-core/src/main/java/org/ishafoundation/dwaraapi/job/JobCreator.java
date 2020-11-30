@@ -138,27 +138,29 @@ public class JobCreator {
 						}
 						
 						// validating if all its other dependencies other than sourceJob are complete[only on sourceJob's completion this is called...]
-						boolean isJobGoodToBeCreated = true;
-						List<Integer> preRequesiteFlowelements = nthFlowelement.getDependencies();
-						if(preRequesiteFlowelements != null) {
-							for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
-								if(sourceJob != null && sourceJob.getFlowelement().getId() == nthPreRequesiteFlowelementId)
-									continue;
-								
-								Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), nthPreRequesiteFlowelementId, grpVolume.getId());
-								
-								if(jobInQuestion == null || jobInQuestion.getStatus() != Status.completed) {
-									isJobGoodToBeCreated = false;
-									break;
-								}
-								dependentJobIds.add(jobInQuestion.getId());
-							}	
-						}
+						boolean isJobGoodToBeCreated = isJobGoodToBeCreated(nthFlowelement, sourceJob, request, artifactclassId, artifact, grpVolume.getId(), dependentJobIds);
+//						boolean isJobGoodToBeCreated = true;
+//						List<Integer> preRequesiteFlowelements = nthFlowelement.getDependencies();
+//						if(preRequesiteFlowelements != null) {
+//							for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
+//								if(sourceJob != null && sourceJob.getFlowelement().getId() == nthPreRequesiteFlowelementId)
+//									continue;
+//								
+//								Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), nthPreRequesiteFlowelementId, grpVolume.getId());
+//								
+//								if(jobInQuestion == null || jobInQuestion.getStatus() != Status.completed) {
+//									isJobGoodToBeCreated = false;
+//									break;
+//								}
+//								dependentJobIds.add(jobInQuestion.getId());
+//							}	
+//						}
 						if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
 							Job job = createJob(nthFlowelement, sourceJob, request, artifactclassId, artifact);
-							if(dependentJobIds.size() > 0)
+							if(dependentJobIds.size() > 0) {
+								Collections.sort(dependentJobIds);
 								job.setDependencies(dependentJobIds);
-							
+							}
 							job.setStoragetaskActionId(storagetaskAction);
 							job.setGroupVolume(grpVolume); // we dont know the physical volume yet... How about provisioned volumes?
 	
@@ -175,26 +177,28 @@ public class JobCreator {
 				}
 				
 				// validating if all its other dependencies other than sourceJob are complete[only on sourceJob's completion this is called...]
-				boolean isJobGoodToBeCreated = true;
-				List<Integer> preRequesiteFlowelements = nthFlowelement.getDependencies();
-				if(preRequesiteFlowelements != null) {
-					for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
-						if(sourceJob != null && sourceJob.getFlowelement().getId() == nthPreRequesiteFlowelementId)
-							continue;
-						
-						Flowelement prereqFlowelement = flowelementDao.findById(nthPreRequesiteFlowelementId).get();
-
-						String gvId = null;
-						if(prereqFlowelement.getStoragetaskActionId() != null)
-							gvId = sourceJob.getGroupVolume().getId();
-						
-						Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), nthPreRequesiteFlowelementId, gvId);
-						dependentJobIds.add(jobInQuestion.getId());
-						if(jobInQuestion.getStatus() != Status.completed) {
-							isJobGoodToBeCreated = false;
-						}
-					}	
-				}
+				boolean isJobGoodToBeCreated = isJobGoodToBeCreated(nthFlowelement, sourceJob, request, artifactclassId, artifact, null, dependentJobIds);
+//				boolean isJobGoodToBeCreated = true;
+//				List<Integer> preRequesiteFlowelements = nthFlowelement.getDependencies();
+//				if(preRequesiteFlowelements != null) {
+//					for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
+//						if(sourceJob != null && sourceJob.getFlowelement().getId() == nthPreRequesiteFlowelementId)
+//							continue;
+//						
+//						Flowelement prereqFlowelement = flowelementDao.findById(nthPreRequesiteFlowelementId).get();
+//
+//						String gvId = null;
+//						if(prereqFlowelement.getStoragetaskActionId() != null)
+//							gvId = sourceJob.getGroupVolume().getId();
+//						
+//						Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), nthPreRequesiteFlowelementId, gvId);
+//						if(jobInQuestion == null || jobInQuestion.getStatus() != Status.completed) {
+//							isJobGoodToBeCreated = false;
+//							break;
+//						}
+//						dependentJobIds.add(jobInQuestion.getId());
+//					}	
+//				}
 				if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
 					Job job = createJob(nthFlowelement, sourceJob, request, artifactclassId, artifact);
 					job.setStoragetaskActionId(storagetaskAction);
@@ -212,7 +216,7 @@ public class JobCreator {
 			Artifactclass inputArtifactclass = artifact.getArtifactclass();
 			String inputArtifactPath = inputArtifactclass.getPath() + File.separator + inputArtifactName;
 			Volume groupVolume = null;
-			if(sourceJob.getStoragetaskActionId() == Action.restore) {
+			if(sourceJob != null && sourceJob.getStoragetaskActionId() == Action.restore) {
 				inputArtifactPath = restoreStorageTask.getRestoreTempLocation(sourceJob.getId()) + File.separator + inputArtifactName;
 				groupVolume = sourceJob.getGroupVolume();
 			}
@@ -221,25 +225,58 @@ public class JobCreator {
 				logger.trace("Job not to be created - " + nthFlowelement.getId());
 				return jobsCreated;
 			}
-			logger.trace("Creating Job for " + processingtaskId + ":" + nthFlowelement.getId());
-			
-			Job job = createJob(nthFlowelement, sourceJob, request, artifactclassId, artifact);
 			
 			List<Integer> dependentJobIds = new ArrayList<Integer>();
 			if(sourceJob != null) {
 				dependentJobIds.add(sourceJob.getId());
-				job.setDependencies(dependentJobIds);
 			}
-			
-			job.setProcessingtaskId(processingtaskId);
-			if(groupVolume != null)
-				job.setGroupVolume(groupVolume);
-			job = saveJob(job);
-			jobsCreated.add(job);
+
+			boolean isJobGoodToBeCreated = isJobGoodToBeCreated(nthFlowelement, sourceJob, request, artifactclassId, artifact, groupVolume.getId(), dependentJobIds);
+			if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
+				logger.trace("Creating Job for " + processingtaskId + ":" + nthFlowelement.getId());
+				Job job = createJob(nthFlowelement, sourceJob, request, artifactclassId, artifact);
+				
+				if(dependentJobIds.size() > 0) {
+					Collections.sort(dependentJobIds);
+					job.setDependencies(dependentJobIds);
+				}
+				
+				job.setProcessingtaskId(processingtaskId);
+				if(groupVolume != null)
+					job.setGroupVolume(groupVolume);
+				job = saveJob(job);
+				jobsCreated.add(job);
+			}
 		}
 		return jobsCreated;
 	}
 
+	private boolean isJobGoodToBeCreated(Flowelement nthFlowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact, String groupVolumeId, List<Integer> dependentJobIds) {
+		boolean isJobGoodToBeCreated = true;
+		List<Integer> preRequesiteFlowelements = nthFlowelement.getDependencies();
+		if(preRequesiteFlowelements != null) {
+			for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
+				if(sourceJob != null && sourceJob.getFlowelement().getId() == nthPreRequesiteFlowelementId)
+					continue;
+				
+				if(groupVolumeId == null) {
+					Flowelement prereqFlowelement = flowelementDao.findById(nthPreRequesiteFlowelementId).get();
+					if(prereqFlowelement.getStoragetaskActionId() != null)
+						groupVolumeId = sourceJob.getGroupVolume().getId();
+				}				
+				Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), nthPreRequesiteFlowelementId, groupVolumeId);
+				
+				if(jobInQuestion == null || jobInQuestion.getStatus() != Status.completed) {
+					isJobGoodToBeCreated = false;
+					break;
+				}
+				dependentJobIds.add(jobInQuestion.getId());
+			}	
+		}
+		
+		return isJobGoodToBeCreated;
+	}
+	
 	private Job createJob(Flowelement nthFlowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact) {
 
 		Job job = new Job();

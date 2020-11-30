@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.storage.storagetask;
 
 
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
@@ -73,8 +74,12 @@ public class Write extends AbstractStoragetaskAction{
 					if(processingtaskId == null) // Is the dependency a processing job?
 						continue;
 					
-					Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
-					outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix(); // Does the dependent processing job generate an output?
+					Processingtask processingtask = null;
+					Optional<Processingtask> processingtaskOpt = processingtaskDao.findById(processingtaskId);
+					if(processingtaskOpt.isPresent()) {
+						processingtask = processingtaskOpt.get();
+						outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix(); // Does the dependent processing job generate an output?
+					}
 					if(outputArtifactclassSuffix != null)
 						break;
 				}

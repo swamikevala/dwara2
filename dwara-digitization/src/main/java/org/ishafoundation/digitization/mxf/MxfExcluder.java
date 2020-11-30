@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component("MxfExcluder")
+@Component("mxf-exclusion")
 public class MxfExcluder implements IProcessingTask {
     
     private static final Logger logger = LoggerFactory.getLogger(MxfExcluder.class);
