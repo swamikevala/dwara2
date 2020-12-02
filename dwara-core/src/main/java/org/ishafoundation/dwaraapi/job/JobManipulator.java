@@ -65,8 +65,6 @@ public class JobManipulator {
 	@Autowired
 	private DomainUtil domainUtil;
 	
-	
-	// only if action is async create job should be called...
 	public List<Job> getJobs(Request request){
 		Action requestedBusinessAction = request.getActionId();
 		org.ishafoundation.dwaraapi.db.model.master.reference.Action action = configurationTablesUtil.getAction(requestedBusinessAction);
@@ -110,7 +108,6 @@ public class JobManipulator {
 	 * @param alreadyCreatedJobList - The jobs that are already in DB
 	 * @param jobList - the joblist for response...
 	 */
-	//private void iterateFlow(Request request, String artifactclassId, String nthFlowId, Flowelement referencingFlowelement, List<Job> alreadyCreatedJobList, Map<String, Job> flowelementUid_Job_Map) {
 	private void iterateFlow(Request request, String artifactclassId, String nthFlowId, Flowelement referencingFlowelement, List<Job> alreadyCreatedJobList, List<Job> jobList) {
 		logger.trace("Iterating flow " + nthFlowId);
 
@@ -188,7 +185,7 @@ public class JobManipulator {
 				}
 				Integer artifactId = (artifact != null ? artifact.getId() : null);
 				List<String> uIdDependencies = null; 
-				if(storagetaskAction != null || processingtaskId.equals(ChecksumVerifier.CHECKSUM_VERIFIER_COMPONENT_NAME)) { // TODO - Get off the hardcoding...
+				if(storagetaskAction != null || ChecksumVerifier.CHECKSUM_VERIFIER_COMPONENT_NAME.equals(processingtaskId)) { // TODO - Get off the hardcoding...
 					
 					List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassIdAndActiveTrue(artifactclassId);
 					logger.trace("No. of copies " + artifactclassVolumeList.size());
@@ -222,9 +219,9 @@ public class JobManipulator {
 							job.setRequest(request);	
 							if(storagetaskAction != null) {
 								job.setStoragetaskActionId(storagetaskAction);
-								job.setGroupVolume(volume);
 							}else
 								job.setProcessingtaskId(processingtaskId);
+							job.setGroupVolume(volume);
 						}
 						job.setuId(uId);
 						job.setuIdDependencies(uIdDependencies);

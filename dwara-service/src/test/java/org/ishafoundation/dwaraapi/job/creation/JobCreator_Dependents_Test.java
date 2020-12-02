@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Flow;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -23,7 +25,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class JobCreator_Ingest_UseJobId_Test{
+public class JobCreator_Dependents_Test{
 
 	@Autowired
 	StagedService artifactService;
@@ -43,60 +45,25 @@ public class JobCreator_Ingest_UseJobId_Test{
 	//String readyToIngestPath =  "C:\\data\\user\\pgurumurthy\\ingest\\pub-video";
 	String readyToIngestPath =  "C:\\data\\ingested";
 	
-	//@Test
-	public void test_a_create() {
-		Request systemrequest = requestDao.findById(26).get();
-				
-		Artifact dependentJobInputArtifact = null;
-		Domain[] domains = Domain.values();
-		for (Domain nthDomain : domains) {
-			dependentJobInputArtifact = domainUtil.getDomainSpecificArtifact(nthDomain, 16);
-			if(dependentJobInputArtifact != null) {
-				break;
-			}
-		}
-		List<Job> jobList = jobCreator.createJobs(systemrequest, dependentJobInputArtifact);
-		for (Job job : jobList) {
-			System.out.println(job.getId() + job.getProcessingtaskId() + job.getStoragetaskActionId());
-		}
-	}
+	
 	
 	@Test
 	public void test_ab_updateStatus() {
-		Job job = jobDao.findById(18).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
+		Job job = jobDao.findById(34).get();
+		Flowelement flowelement = job.getFlowelement();
+		Flow flow = flowelement.getFlow();
+		List<Flowelement> dependentFlowelementList = jobCreator.getDependentFlowelements(flow, flowelement);
 		
-		job = jobDao.findById(19).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-
-		job = jobDao.findById(20).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-		
-		job = jobDao.findById(21).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-		
-		job = jobDao.findById(22).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-
-		job = jobDao.findById(17).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-		
-		job = jobDao.findById(23).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
+		System.out.println(dependentFlowelementList);
+//		job = jobDao.findById(28).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
+//
+//		job = jobDao.findById(23).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
 //
 //		
 //		job = jobDao.findById(29).get();

@@ -131,4 +131,9 @@ public class Flowelement {
 	public void setFlowelementRef(Flowelement flowelementRef) {
 		this.flowelementRef = flowelementRef;
 	}
+	
+	@Override
+	public String toString() {
+		return "Id : " + id;
+	}
 }

@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.process.checksum;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -14,6 +15,7 @@ import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
 import org.ishafoundation.dwaraapi.process.request.File;
+import org.ishafoundation.dwaraapi.process.request.Job;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
@@ -57,7 +59,13 @@ public class ChecksumVerifier implements IProcessingTask {
 			if (Arrays.equals(originalChecksum, checksumToBeVerified)) {
 				logger.trace("originalChecksum = checksumToBeVerified. All good");	
 				Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
-				String volumeId = processContext.getJob().getDependencies().get(0).getVolume().getId();
+				String volumeId = null;
+				List<Job> jobDependencies = processContext.getJob().getDependencies();
+				for (Job nthJobDependency : jobDependencies) {
+					if(nthJobDependency.getStoragetaskActionId() != null)
+						volumeId = nthJobDependency.getVolume().getId();
+				}
+				 
 
 		    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
 		    	FileVolume fileVolume = domainSpecificFileVolumeRepository.findByIdFileIdAndIdVolumeId(file.getId(), volumeId);

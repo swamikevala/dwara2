@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.StagedFile;
@@ -82,10 +83,10 @@ public class JobCreator_Ingest_VideoPub_Test2 extends DwaraService {
 		URL fileUrl = this.getClass().getResource("/testcases/ingest/ingest_request_with2.json");
 	
 		String testIngestArtifactName1 =  "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9";
-		String artifact_name_1 = extractZip(testIngestArtifactName1);
+		String artifact_name_1 = extractZip(testIngestArtifactName1,"V21000");
 
 		String testIngestArtifactName2 = "Shiva-Shambho_Everywhere_18-Nov-1980_Drone";
-		String artifact_name_2 = extractZip(testIngestArtifactName2);
+		String artifact_name_2 = extractZip(testIngestArtifactName2,"V21001");
 
 //		String testIngestArtifactName3 = "Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoProApr6";
 //		String artifact_name_3 = extractZip(testIngestArtifactName3);
@@ -122,6 +123,7 @@ public class JobCreator_Ingest_VideoPub_Test2 extends DwaraService {
 
     	
     	List<StagedFile> stagedFileList = ingestUserRequest.getStagedFiles();
+    	int cnt = 12345;
     	for (StagedFile stagedFile : stagedFileList) {
 			Request systemrequest = new Request();
 			systemrequest.setType(RequestType.system);
@@ -147,11 +149,12 @@ public class JobCreator_Ingest_VideoPub_Test2 extends DwaraService {
 			Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
 			artifact.setWriteRequest(systemrequest);
 			artifact.setqLatestRequest(systemrequest);
+			String seqCode = StringUtils.substringBefore(stagedFile.getName(), "_");
 			artifact.setName(stagedFile.getName());
 			artifact.setArtifactclass(artifactclass);
 			artifact.setFileCount(5);
 			artifact.setTotalSize(12345);
-			artifact.setSequenceCode("V123");
+			artifact.setSequenceCode(seqCode);
 			artifact.setPrevSequenceCode(null);
 			artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
 			
@@ -165,10 +168,11 @@ public class JobCreator_Ingest_VideoPub_Test2 extends DwaraService {
 			for (Job job : jobList) {
 				logger.info(job.getId() + ":" + job.getStoragetaskActionId()  + ":" + job.getProcessingtaskId() + ":" + (job.getGroupVolume() != null ? job.getGroupVolume().getId() : null));
 			}
+			cnt++;
     	}
 	}
 	
-	private String extractZip(String testIngestArtifactName) throws Exception {	
+	private String extractZip(String testIngestArtifactName, String seqCode) throws Exception {	
 		
 		URL fileUrl = JobCreator_Ingest_VideoPub_Test.class.getResource("/" + testIngestArtifactName + ".zip");
 		ZipFile zipFile = new ZipFile(fileUrl.getFile());
@@ -176,7 +180,7 @@ public class JobCreator_Ingest_VideoPub_Test2 extends DwaraService {
 		zipFile.extractAll(readyToIngestPath);
 		
 		String ingestFileSourcePath = readyToIngestPath + File.separator + testIngestArtifactName;
-		String artifactNameToBeIngested = testIngestArtifactName + "_" + System.currentTimeMillis(); // TO have the artifact name uniqued...
+		String artifactNameToBeIngested = seqCode + "_" + testIngestArtifactName; // TO have the artifact name uniqued...
 		
 		String artifactPath = readyToIngestPath + File.separator +  artifactNameToBeIngested;
 		FileUtils.moveDirectory(new File(ingestFileSourcePath), new File(artifactPath));

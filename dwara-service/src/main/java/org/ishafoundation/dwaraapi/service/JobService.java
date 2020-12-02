@@ -82,9 +82,21 @@ public class JobService extends DwaraService{
 	private JobResponse frameJobResponse(Job job) {
 		JobResponse jobResponse = new JobResponse();
 		int jobId = job.getId();
+		String uId = job.getuId();
 		
-		jobResponse.setId(jobId);
-		jobResponse.setuId(job.getuId());
+		if(uId != null) {
+			jobResponse.setId(uId);
+			jobResponse.setJobId(jobId + "");
+			jobResponse.setDependencies(job.getuIdDependencies());
+		}else {
+			jobResponse.setId(jobId + "");
+			List<Integer> jobDependencyIdsAsIntegerList = job.getDependencies();
+			List<String> jobDependencyIdsAsStringList = new ArrayList<>(jobDependencyIdsAsIntegerList.size());
+			for (Integer nthJobDependencyIdAsInteger : jobDependencyIdsAsIntegerList) { 
+			  jobDependencyIdsAsStringList.add(String.valueOf(nthJobDependencyIdAsInteger)); 
+			}
+			jobResponse.setDependencies(jobDependencyIdsAsStringList);
+		}
 		jobResponse.setRequestId(job.getRequest().getId());
 		Action storagetaskAction = job.getStoragetaskActionId();
 		if(storagetaskAction != null)
@@ -97,8 +109,8 @@ public class JobService extends DwaraService{
 		jobResponse.setInputArtifactId(job.getInputArtifactId());
 		jobResponse.setOutputArtifactId(job.getOutputArtifactId());
 		
-		jobResponse.setDependencies(job.getDependencies());
-		jobResponse.setuIdDependencies(job.getuIdDependencies());
+		
+		
 		if(jobId > 0) { // For yet to be created jobs Job id is 0
 			jobResponse.setCreatedAt(getDateForUI(job.getCreatedAt()));
 			jobResponse.setStartedAt(getDateForUI(job.getStartedAt()));

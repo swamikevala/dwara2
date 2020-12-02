@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
     "id",
-    "uid",
+    "jobId",
     "storagetaskAction",
     "processingTask",
     "requestId",
@@ -17,7 +17,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "inputArtifactId",
     "outputArtifactId",
     "dependencies",
-    "uIdDependencies",
     "createdAt",
     "startedAt",
     "completedAt",
@@ -30,9 +29,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class JobResponse {
 
     @JsonProperty("id")
-    private Integer id;
-    @JsonProperty("uid")
-    private String uId;
+    private String id;
+    @JsonProperty("jobId")
+    private String jobId;
     @JsonProperty("storagetaskAction")
     private String storagetaskAction;
     @JsonProperty("processingTask")
@@ -46,9 +45,7 @@ public class JobResponse {
     @JsonProperty("outputArtifactId")
     private Integer outputArtifactId;
     @JsonProperty("dependencies")
-    private List<Integer> dependencies;
-    @JsonProperty("uidDependencies")
-	private List<String> uIdDependencies;
+    private List<String> dependencies;
     @JsonProperty("createdAt")
     private String createdAt;
     @JsonProperty("startedAt")
@@ -67,23 +64,23 @@ public class JobResponse {
     private List<String> fileFailures; // failure reason
     
     @JsonProperty("id")
-    public Integer getId() {
+    public String getId() {
         return id;
     }
 
     @JsonProperty("id")
-    public void setId(Integer id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    @JsonProperty("uid")
-    public String getuId() {
-		return uId;
+    @JsonProperty("jobId")
+    public String getJobId() {
+		return jobId;
 	}
 
-    @JsonProperty("uid")
-	public void setuId(String uId) {
-		this.uId = uId;
+    @JsonProperty("jobId")
+	public void setJobId(String jobId) {
+		this.jobId = jobId;
 	}
 
 	@JsonProperty("storagetaskAction")
@@ -147,23 +144,13 @@ public class JobResponse {
     }
 
     @JsonProperty("dependencies")
-	public List<Integer> getDependencies() {
+	public List<String> getDependencies() {
 		return dependencies;
 	}
 
     @JsonProperty("dependencies")
-	public void setDependencies(List<Integer> dependencies) {
+	public void setDependencies(List<String> dependencies) {
 		this.dependencies = dependencies;
-	}
-
-    @JsonProperty("uidDependencies")
-	public List<String> getuIdDependencies() {
-		return uIdDependencies;
-	}
-
-    @JsonProperty("uidDependencies")
-	public void setuIdDependencies(List<String> uIdDependencies) {
-		this.uIdDependencies = uIdDependencies;
 	}
 
     @JsonProperty("createdAt")

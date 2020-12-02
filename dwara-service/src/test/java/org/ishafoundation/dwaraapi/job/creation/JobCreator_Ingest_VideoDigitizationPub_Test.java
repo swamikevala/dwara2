@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.StagedFile;
@@ -130,7 +131,8 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends DwaraService {
 			artifact.setArtifactclass(artifactclass);
 			artifact.setFileCount(5);
 			artifact.setTotalSize(12345);
-			artifact.setSequenceCode("V123");
+			String seqCode = StringUtils.substringBefore(stagedFile.getName(), "_");
+			artifact.setSequenceCode(seqCode);
 			artifact.setPrevSequenceCode(null);
 			artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
 			
@@ -151,8 +153,9 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends DwaraService {
 //			test_f_checksum_complete_write1_complete_write1_calls(jobList);
 
 //			test_z_proxy_complete_proxy_calls(jobList);
-			test_ba_hfe_complete_hfe_calls(jobList);
-			test_bb_preservation_gen_complete_preservation_gen_calls(jobList);
+			
+//			test_ba_hfe_complete_hfe_calls(jobList);
+//			test_bb_preservation_gen_complete_preservation_gen_calls(jobList);
     	}
 //		
 //		Request systemrequest = requestDao.findById(4).get();
