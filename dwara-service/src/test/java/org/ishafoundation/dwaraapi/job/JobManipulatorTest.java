@@ -34,7 +34,7 @@ public class JobManipulatorTest {
 	
 	@Test
 	public void test_a() {
-		Request request = requestDao.findById(3).get();
+		Request request = requestDao.findById(2).get();
 		List<Job> jobListForResponse = jobManipulator.getJobs(request);
 		for (Job job : jobListForResponse) {
 			System.out.println(job.getuId() + ":" + job.getuIdDependencies());	

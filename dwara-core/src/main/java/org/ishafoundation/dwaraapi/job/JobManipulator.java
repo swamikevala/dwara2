@@ -140,7 +140,7 @@ public class JobManipulator {
 					String processingtaskId = prereqFlowelement.getProcessingtaskId();  
 					if(processingtaskId == null) // Is the dependency a processing task?
 						continue;
-					logger.trace("Prereq processing task potentially gen outputArtifactclass " + processingtaskId);
+					logger.trace("Dependency processing task is " + processingtaskId);
 					Processingtask processingtask = null;
 					Optional<Processingtask> processingtaskOpt = processingtaskDao.findById(processingtaskId);
 					if(processingtaskOpt.isPresent())
@@ -152,6 +152,8 @@ public class JobManipulator {
 				}
 				if(outputArtifactclassSuffix != null)
 					outputArtifactclassId = artifactclassId + outputArtifactclassSuffix;
+				else
+					outputArtifactclassId = artifactclassId;
 			}
 			
 			Flow referredFlow = nthFlowelement.getFlowRef(); 
@@ -172,7 +174,9 @@ public class JobManipulator {
 					if(dependencies == null) {
 						dependencies = referencingFlowelement.getDependencies();
 					}
-				} else if(outputArtifactclassId != null){
+				} 
+				
+				if(outputArtifactclassId != null){
 					artifactclassIdToBeUsed = outputArtifactclassId;
 				}
 				

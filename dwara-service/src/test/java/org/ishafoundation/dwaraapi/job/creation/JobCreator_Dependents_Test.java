@@ -49,7 +49,7 @@ public class JobCreator_Dependents_Test{
 	
 	@Test
 	public void test_ab_updateStatus() {
-		Job job = jobDao.findById(34).get();
+		Job job = jobDao.findById(9).get();
 		Flowelement flowelement = job.getFlowelement();
 		Flow flow = flowelement.getFlow();
 		List<Flowelement> dependentFlowelementList = jobCreator.getDependentFlowelements(flow, flowelement);

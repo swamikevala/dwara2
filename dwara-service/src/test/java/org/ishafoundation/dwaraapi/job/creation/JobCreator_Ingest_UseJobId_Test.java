@@ -63,41 +63,41 @@ public class JobCreator_Ingest_UseJobId_Test{
 	
 	@Test
 	public void test_ab_updateStatus() {
-		Job job = jobDao.findById(18).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-		
-		job = jobDao.findById(19).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-
-		job = jobDao.findById(20).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-		
-		job = jobDao.findById(21).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-		
-		job = jobDao.findById(22).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-
-		job = jobDao.findById(17).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-		
-		job = jobDao.findById(23).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
+//		Job job = jobDao.findById(5).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
+//		
+//		job = jobDao.findById(6).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
 //
+//		job = jobDao.findById(7).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
+//		
+//		job = jobDao.findById(8).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
+		
+		Job job = jobDao.findById(12).get();
+		job.setStatus(Status.completed);
+		jobDao.save(job);
+		jobCreator.createDependentJobs(job);
+
+//		job = jobDao.findById(10).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
+//		
+//		job = jobDao.findById(11).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
+
 //		
 //		job = jobDao.findById(29).get();
 //		job.setStatus(Status.completed);
