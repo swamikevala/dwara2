@@ -12,15 +12,13 @@ import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.service.StagedService;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class JobCreator_Ingest_UseJobId_Test{

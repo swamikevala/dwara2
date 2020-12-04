@@ -50,7 +50,8 @@ public class DirectoryWatcher {
 	private boolean trace = true;
 	private final Map<Path, Long> expirationTimes = new HashMap<Path, Long>();
 	private Long newFileWait = 10000L;
-
+	private static String ingestEndpointUrl = null;
+	
 	@SuppressWarnings("unchecked")
 	static <T> WatchEvent<T> cast(WatchEvent<?> event) {
 		return (WatchEvent<T>)event;
@@ -243,7 +244,7 @@ public class DirectoryWatcher {
 
     private void action(Path child){
 		System.out.println(child + " copy completed");
-		System.out.println("Method assumes Prasad supplies a \"MD5.txt\" and the video file ending with \".mxf\" in the supplied folder");
+		//System.out.println("Method assumes Prasad supplies a \"MD5.txt\" and the video file ending with \".mxf\" in the supplied folder");
 		String expectedMd5 = null;
 		String actualMd5 = null;
 		
@@ -270,47 +271,57 @@ public class DirectoryWatcher {
 				System.out.println(child + "MD5 expected != actual, Now what??? ");
 			}
 		}catch (Exception e) {
-			// TODO: handle exception
+			
 			e.printStackTrace();
 		}
     }
     
-    private void invokeIngest(Path child) {
-    	String payload = "{\"artifactclass\":\"prasad-pub\",\"stagedFiles\":[{\"path\":\"/data/user/pgurumurthy/ingest/prasad-pub\",\"name\":\"<<DummyArtifactName>>\"}]}";
-    	String artifactName = StringUtils.substringAfterLast(child.toString(), File.separator);
-    	payload = payload.replace("<<DummyArtifactName>>", artifactName);
-    	System.out.println("payload "+ payload);
-    	String endpointUrl = "http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest";
+    private void invokeIngest(Path child) throws Exception {
 
+    	if(child.getNameCount() > 6) { // Expecting child = /data/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1
+    		throw new Exception("Path with more than 6 elements is not supported");
+    	}
+    	String path = child.getParent().toString();
+    	String artifactName = child.getFileName().toString();
+    	String artifactclass = child.getName(child.getNameCount() - 2).toString();
+
+    	
+    	String payload = "{\"artifactclass\":\"<<Artifactclass>>\",\"stagedFiles\":[{\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\"}]}";
+    	payload = payload.replace("<<Artifactclass>>", artifactclass);
+    	payload = payload.replace("<<Path>>", path);
+    	payload = payload.replace("<<ArtifactName>>", artifactName);
+    	System.out.println("payload "+ payload);
 
 		String response = null;
 		try {
-			response = HttpClientUtil.postIt(endpointUrl, null, payload);
+			response = HttpClientUtil.postIt(ingestEndpointUrl, null, payload);
 			System.out.println("resp " + response);
 		}catch (Exception e) {
-			// TODO: handle exception
+			System.out.println("Error on invoking ingest endpoint - " + e.getMessage());
 		}
     }
     
 	static void usage() {
-		System.err.println("usage: java DirectoryWatcher [waitTimeInSecs] <dirToBeWatched>");
+		System.err.println("usage: java DirectoryWatcher [waitTimeInSecs] <dirToBeWatched(\"/data/user/pgurumurthy/ingest\")> <ingestEndpointUrl(\"http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest\")>");
 		System.exit(-1);
 	}
 
 	public static void main(String[] args) throws Exception {
 		// parse arguments
-		if (args.length == 0 || args.length > 2)
+		if (args.length == 0 || args.length > 3)
 			usage();
 
 		int dirArg = 0;
 		long waitTimes = 0L;
-		if (args.length == 2) {
+		if (args.length == 3) {
 			waitTimes = Long.parseLong(args[0]) * 1000;
 			dirArg++;
 		}
 
 		// register directory and process its events
 		Path dir = Paths.get(args[dirArg]);
+		
+		ingestEndpointUrl = args[dirArg + 1]; // "http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest";
 
 		new DirectoryWatcher(dir, waitTimes).processEvents();
 	}

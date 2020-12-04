@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+  <job id="1" processingtask_id="checksum-gen" storagetask_action_id="null" group_volume_id="null" status="queued"/>
+  <job id="2" processingtask_id="null" storagetask_action_id="write" group_volume_id="R1" status="queued"/>
+  <job id="3" processingtask_id="null" storagetask_action_id="write" group_volume_id="R2" status="queued"/>
+  <job id="4" processingtask_id="null" storagetask_action_id="write" group_volume_id="R3" status="queued"/>
+  <job id="5" processingtask_id="video-proxy-low-gen" storagetask_action_id="null" group_volume_id="null" status="queued"/>
+</dataset>

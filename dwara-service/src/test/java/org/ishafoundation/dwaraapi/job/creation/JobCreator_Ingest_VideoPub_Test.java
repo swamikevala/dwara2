@@ -29,10 +29,8 @@ import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.resource.mapper.RequestToEntityObjectMapper;
 import org.ishafoundation.dwaraapi.service.DwaraService;
 import org.ishafoundation.dwaraapi.service.StagedService;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +43,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.lingala.zip4j.ZipFile;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class JobCreator_Ingest_VideoPub_Test extends DwaraService {
