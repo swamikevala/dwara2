@@ -6,10 +6,8 @@ import java.net.URL;
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.service.FileService;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class JobCreator_Restore_Test {

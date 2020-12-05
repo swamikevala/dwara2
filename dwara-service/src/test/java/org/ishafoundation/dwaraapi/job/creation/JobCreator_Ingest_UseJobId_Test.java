@@ -12,15 +12,13 @@ import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.service.StagedService;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class JobCreator_Ingest_UseJobId_Test{
@@ -63,41 +61,41 @@ public class JobCreator_Ingest_UseJobId_Test{
 	
 	@Test
 	public void test_ab_updateStatus() {
-		Job job = jobDao.findById(18).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-		
-		job = jobDao.findById(19).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-
-		job = jobDao.findById(20).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-		
-		job = jobDao.findById(21).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-		
-		job = jobDao.findById(22).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-
-		job = jobDao.findById(17).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
-		
-		job = jobDao.findById(23).get();
-		job.setStatus(Status.completed);
-		jobDao.save(job);
-		jobCreator.createDependentJobs(job);
+//		Job job = jobDao.findById(5).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
+//		
+//		job = jobDao.findById(6).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
 //
+//		job = jobDao.findById(7).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
+//		
+//		job = jobDao.findById(8).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
+		
+		Job job = jobDao.findById(12).get();
+		job.setStatus(Status.completed);
+		jobDao.save(job);
+		jobCreator.createDependentJobs(job);
+
+//		job = jobDao.findById(10).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
+//		
+//		job = jobDao.findById(11).get();
+//		job.setStatus(Status.completed);
+//		jobDao.save(job);
+//		jobCreator.createDependentJobs(job);
+
 //		
 //		job = jobDao.findById(29).get();
 //		job.setStatus(Status.completed);

@@ -6,17 +6,15 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class JobManipulatorTest {
@@ -34,7 +32,7 @@ public class JobManipulatorTest {
 	
 	@Test
 	public void test_a() {
-		Request request = requestDao.findById(3).get();
+		Request request = requestDao.findById(2).get();
 		List<Job> jobListForResponse = jobManipulator.getJobs(request);
 		for (Job job : jobListForResponse) {
 			System.out.println(job.getuId() + ":" + job.getuIdDependencies());	

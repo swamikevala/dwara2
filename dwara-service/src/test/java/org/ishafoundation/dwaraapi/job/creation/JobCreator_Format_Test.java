@@ -5,10 +5,8 @@ import java.net.URL;
 
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.service.VolumeService;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +15,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class JobCreator_Format_Test {

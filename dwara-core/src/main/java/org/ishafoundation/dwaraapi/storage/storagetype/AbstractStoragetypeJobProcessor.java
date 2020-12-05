@@ -433,12 +433,13 @@ public abstract class AbstractStoragetypeJobProcessor {
 		java.io.File srcFile = new java.io.File(srcPath);
 		java.io.File destFile = new java.io.File(destPath);
 
-		if(srcFile.isFile())
-			Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
+		if(srcFile.isFile()) {
+			Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));
+			Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+		}
 		else
 			Files.createDirectories(Paths.get(destPath));
-
-		Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+		
 		logger.info("Moved restored files from " + srcPath + " to " + destPath);
 	}
 	
