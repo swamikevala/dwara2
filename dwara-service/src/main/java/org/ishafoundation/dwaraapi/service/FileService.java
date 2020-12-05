@@ -267,8 +267,11 @@ public class FileService extends DwaraService{
 
     private void validate(List<Integer> fileIds, Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map, Map<Integer, Domain> fileId_Domain_Map) {
     	Domain[] domains = Domain.values();
+    	List<String> requestedDirectoriesPathNameList = new ArrayList<String>();
     	List<String> errorFileList = new ArrayList<String>();
     	boolean hasErrors = false;
+    	
+    	// if any requested file is a directory and if any other file or directory requested has the same conflicting path throw error... 
     	for (Integer nthFileId : fileIds) {
     		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = null;
     		
@@ -284,7 +287,19 @@ public class FileService extends DwaraService{
     		if(fileFromDB == null) {
     			errorFileList.add(nthFileId + " is invalid");
     			hasErrors = true;
-    		}
+    		} 
+    		
+    		String filePathname = fileFromDB.getPathname();
+    		for (String alreadyRequestedDirectoriesPathName : requestedDirectoriesPathNameList) {
+    			if(filePathname.startsWith(alreadyRequestedDirectoriesPathName)) {
+        			errorFileList.add(nthFileId + " is a file of the already requested directory " + alreadyRequestedDirectoriesPathName + ". Please remove it from the request");
+        			hasErrors = true;
+    			}
+			}
+    		
+    		java.io.File requestedFile = new java.io.File(filePathname);    		
+    		if(requestedFile.isDirectory())
+    			requestedDirectoriesPathNameList.add(filePathname);
     	}
     	
     	if(hasErrors) {
