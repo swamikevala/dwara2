@@ -12,6 +12,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
@@ -53,6 +54,8 @@ public class RequestService extends DwaraService{
 	@Autowired
 	private VolumeService volumeService;
 
+	@Autowired
+	private JobService jobService;
 	
 	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
@@ -67,6 +70,8 @@ public class RequestService extends DwaraService{
 		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, fromDate, toDate, pageNumber, pageSize);
 		for (Request request : requestList) {
 			RequestResponse requestResponse = frameRequestResponse(request, requestType);
+			List<JobResponse> jobList = jobService.getJobs(request.getId());
+			requestResponse.setJobList(jobList);
 			requestResponseList.add(requestResponse);
 		}
 		return requestResponseList;

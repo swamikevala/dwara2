@@ -1,5 +1,8 @@
 package org.ishafoundation.dwaraapi.api.resp.request;
 
+import java.util.List;
+
+import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 
@@ -18,7 +21,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "status",
     "artifact",
     "file",
-    "volume"
+    "volume",
+    "jobList"
 })
 public class RequestResponse {
 
@@ -38,7 +42,9 @@ public class RequestResponse {
 	private String destinationPath;
 	private String outputFolder;
     private File file;
-
+   
+    // The job List for the each request
+    private List<JobResponse> jobList;
     // For volume relate actions like initialize, map_drives etc.
     @JsonProperty("volume")
     private VolumeResponse volume;
@@ -146,5 +152,14 @@ public class RequestResponse {
 	public void setVolume(VolumeResponse volume) {
 		this.volume = volume;
 	}
+
+	public List<JobResponse> getJobList() {
+		return jobList;
+	}
+
+	public void setJobList(List<JobResponse> jobList) {
+		this.jobList = jobList;
+	}
+	 
 }
 
