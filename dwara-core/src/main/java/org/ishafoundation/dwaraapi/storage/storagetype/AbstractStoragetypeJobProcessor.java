@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,6 +25,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.Artifa
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
@@ -31,6 +33,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.Arti
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
@@ -303,6 +306,9 @@ public abstract class AbstractStoragetypeJobProcessor {
 
 	private void updateFileVolumeTable(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
+	
+		Request request = storageJob.getJob().getRequest();
+		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 		
 		Volume volume = storageJob.getVolume();
 		Domain domain = storageJob.getDomain();
@@ -314,8 +320,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 			String filePathname = nthFile.getPathname();
 			if(filePathname.startsWith(fileToBeRestored.getPathname())) {
 				FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());
+			
+				if(requestedAction == Action.restore && storageJob.isRestoreVerify())
+					fileVolume.setVerifiedAt(LocalDateTime.now());
 				
-				//fileVolume.setVerifiedAt(LocalDateTime.now());
 				if(volume.getStoragelevel() == Storagelevel.block) {// && storageJob.getJob().getStoragetaskActionId() == Action.verify) { // Only for block - TODO Should we move this to block specific impl??? 
 					Map<String, Integer> archivedFilePathNameToHeaderBlockCnt = storageResponse.getArchiveResponse().getArchivedFilePathNameToHeaderBlockCnt();
 					if(archivedFilePathNameToHeaderBlockCnt != null) {
@@ -406,7 +414,11 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	protected void afterRestore(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception {
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
-		//if(storageJob.isRestoreVerify())
+		
+		Request request = storageJob.getJob().getRequest();
+		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
+	
+		if(requestedAction == Action.ingest || (requestedAction == Action.restore && storageJob.isRestoreVerify()))
 			updateFileVolumeTable(selectedStorageJob, storageResponse); // update the verified date here...
 		
 		// upon completion moving the file to the original requested dest path		

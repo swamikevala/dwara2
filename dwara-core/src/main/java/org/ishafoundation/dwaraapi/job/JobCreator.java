@@ -9,12 +9,14 @@ import java.util.Map;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Flow;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassFlow;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassTask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
@@ -26,7 +28,6 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
-import org.ishafoundation.dwaraapi.process.checksum.ChecksumVerifier;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
@@ -52,6 +53,9 @@ public class JobCreator {
 
 	@Autowired
 	private ArtifactclassVolumeDao artifactclassVolumeDao;
+	
+	@Autowired
+	private ArtifactclassTaskDao artifactclassTaskDao;
 
 	@Autowired
 	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
@@ -67,11 +71,59 @@ public class JobCreator {
 	
 	@Autowired
 	private Restore restoreStorageTask;
+
+	// only if action is async create job should be called...
+	public List<Job> createJobs(Request request, Artifact sourceArtifact){
+		Action requestedBusinessAction = request.getActionId();
+		org.ishafoundation.dwaraapi.db.model.master.reference.Action action = configurationTablesUtil.getAction(requestedBusinessAction);
+
+		List<Job> jobList = new ArrayList<Job>();
+
+		if(Actiontype.complex == action.getType()) {
+			logger.trace("Complex action");
+			String sourceArtifactclassId = sourceArtifact.getArtifactclass().getId();
+			// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
+			List<ActionArtifactclassFlow> actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByArtifactclassIdOrArtifactclassIdAndActionIdAndActiveTrue("_all_", sourceArtifactclassId, requestedBusinessAction.name()); //
+			for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
+				String nthFlowId = actionArtifactclassFlow.getFlow().getId();
+				logger.trace("flow " + nthFlowId);
+				jobList.addAll(iterateFlow(request, sourceArtifactclassId, sourceArtifact, nthFlowId));
+			}
+		}
+		else if(Actiontype.storage_task == action.getType()){
+			String actionName = requestedBusinessAction.name();
+			logger.debug("Calling storage task impl " + actionName);
+			AbstractStoragetaskAction actionImpl = storagetaskActionMap.get(actionName);
+			jobList.addAll(actionImpl.createJobsForStoragetaskAction(request, requestedBusinessAction));
+		}
+		return jobList;
+	}
+
+	private List<Job> iterateFlow(Request request, String artifactclassId, Artifact artifact, String nthFlowId) {
+		List<Job> jobsCreated = new ArrayList<Job>();
+		
+		logger.trace("Iterating flow " + nthFlowId);
+		logger.trace("artifactclassId " + artifactclassId);
+		logger.trace("artifactId " + artifact.getId());
+		//  get all the flow elements for the flow
+		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc(nthFlowId);
+		for (Flowelement nthFlowelement : flowelementList) {
+			logger.trace("Flowelement " + nthFlowelement.getId());
+			
+			List<Integer> refFlowelementDepsList = nthFlowelement.getDependencies();
+			if(refFlowelementDepsList == null) {
+				jobsCreated.addAll(createJobs(nthFlowelement, null, request, artifactclassId, artifact));
+			}
+		}
+		return jobsCreated;
+	}
 	
 	/**
 	 * Naming convention - 
-	 * Dependencies - For checksum-verify flowelement/job checksum-gen and restore are dependencies/prerequisites
-	 * Depende(a)nts - For a restore job checksum-verify is a dependent.
+	 * Dependencies - For checksum-verify flowelement/job, checksum-gen and restore are dependencies/prerequisites
+	 * Depende(a)nts - For a restore job, checksum-verify is a dependent.
+	 * 
+	 * Method called by the job that needs its dependent Jobs created
 	 * 
 	 * @param job - source job for which dependent jobs need to be created
 	 * @return
@@ -85,12 +137,12 @@ public class JobCreator {
 		
 		logger.trace("Creating dependent job(s) for sourceJob " + job.getId() + " with flowelement " + flowelement);
 		List<Job> jobsCreated = new ArrayList<Job>();
-		iterateDepenedents(job, request, flow, flowelement, jobsCreated);
+		iterateDependentFlowelements(job, request, flow, flowelement, jobsCreated);
 		logger.trace("Dependent job(s) created for " + job.getId() + " - " + jobsCreated);
 		return jobsCreated;
 	}
 
-	private void iterateDepenedents(Job job, Request request, Flow flow, Flowelement flowelement, List<Job> jobList) {
+	private void iterateDependentFlowelements(Job job, Request request, Flow flow, Flowelement flowelement, List<Job> jobList) {
 		List<Flowelement> dependentFlowelementList = getDependentFlowelements(flow, flowelement);
 		logger.trace("Dependent Flowelements of flowelement " + flowelement.getId() + " - " + dependentFlowelementList);
 		
@@ -104,7 +156,7 @@ public class JobCreator {
 			
 			if(flowRef != null) { // If the flowelement has a flowref, that means one of this flowelement dependency is a processing task generating an output artifact, that is to be consumed as input
 				logger.trace("References a flow again " + flowRef.getId());
-				iterateDepenedents(job, request, flowRef, nthDependentFlowelement, jobList);
+				iterateDependentFlowelements(job, request, flowRef, nthDependentFlowelement, jobList);
 			} else {
 				jobList.addAll(createJobs(nthDependentFlowelement, job, request, dependentJobInputArtifact.getArtifactclass().getId(), dependentJobInputArtifact));
 			}
@@ -122,108 +174,78 @@ public class JobCreator {
 	 */
 
 	/*
-	 * flow element passed here should be either a storage or a processing task one.
-	 * 1 flow element = As many storage jobs configured in artifactclassVolume (hence the method name createJobs - Note the Jobs plural)
-	 * 1 flow element = 1 job for all processing tasks 
+	 * dependent flow element passed here results in
+	 * Either 
+	 * As many jobs configured in artifactclassVolume (hence the method name createJobs - Note the Jobs plural)
+	 * 		if Action = Storage or (Action = Processing but one of the dependency is storage)
+	 * OR
+	 * 1 job for a processing tasks 
 	 */
-	private synchronized List<Job> createJobs(Flowelement dependentFlowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact) {
+	private synchronized List<Job> createJobs(Flowelement flowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact) {
 		List<Job> jobsCreated = new ArrayList<Job>();
 		
-		Action storagetaskAction = dependentFlowelement.getStoragetaskActionId();
-		String processingtaskId = dependentFlowelement.getProcessingtaskId();
-		
+		Action storagetaskAction = flowelement.getStoragetaskActionId();
+		String processingtaskId = flowelement.getProcessingtaskId();
+		boolean processingtaskWithDependencyStoragetask = false;
+		if(processingtaskId != null) {
+			List<Integer> flowelementDependenciesList = flowelement.getDependencies();
+			// Now check if any of the dependency is a storage task
+			if(flowelementDependenciesList != null) {
+				for (Integer nthFlowelementDependencyId : flowelementDependenciesList) {
+					Flowelement prereqFlowelement = flowelementDao.findById(nthFlowelementDependencyId).get();
+					Action storagetaskDependency = prereqFlowelement.getStoragetaskActionId();  
+					if(storagetaskDependency != null) { // Is the dependency a Storage task?
+						processingtaskWithDependencyStoragetask = true;
+						break;
+					}
+				}
+			}
+		}
 		// if the sourceJob for which the dependants are to be created is a processing task and the flowelement is a storagetask we may have to create as many jobs as copies needed...
 		// But we should verify if they are not already created and create here... - 
 		// We might have race conditions with write completion thread creating one and just at the same time this one does too... Need to ensure that doesnt happen...
 		// TODO Synchronize this...
-		if(storagetaskAction != null || ChecksumVerifier.CHECKSUM_VERIFIER_COMPONENT_NAME.equals(processingtaskId)) {
-			logger.trace(dependentFlowelement.getId() + " is a storagetask");
-			if(sourceJob == null || (sourceJob != null && sourceJob.getProcessingtaskId() != null)) { // only srcjob = processing task is from scheduler which needs multiple job updates 
-				logger.trace("Creating Job(s) for " + dependentFlowelement.getId() + ":" + storagetaskAction);
+		if(storagetaskAction != null || processingtaskWithDependencyStoragetask) {
+			if(sourceJob == null || (sourceJob != null && sourceJob.getProcessingtaskId() != null)) { // only srcjob = processing task is from scheduler which needs multiple job creation 
+				logger.trace("Creating Job(s) for " + flowelement.getId() + ":" + storagetaskAction);
 				List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassIdAndActiveTrue(artifactclassId);
 				logger.trace("No. of copies for artifactclass " + artifactclassId + "-" + artifactclassVolumeList.size());
 				for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {
-//					if(artifactclassVolume.isActive()) {
-						Volume grpVolume = artifactclassVolume.getVolume();
+					Volume grpVolume = artifactclassVolume.getVolume();
 
-						List<Integer> dependentJobIds = new ArrayList<Integer>();
-						if(sourceJob != null) {
-							dependentJobIds.add(sourceJob.getId());
+					List<Integer> dependentJobIds = new ArrayList<Integer>();
+					if(sourceJob != null) {
+						dependentJobIds.add(sourceJob.getId());
+					}
+					// validating if all its other dependencies are complete
+					boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, grpVolume.getId(), dependentJobIds);
+					if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
+						Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
+						if(dependentJobIds.size() > 0) {
+							Collections.sort(dependentJobIds);
+							job.setDependencies(dependentJobIds);
 						}
-						
-						// check if job already created and details available... 
-//						Job job = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), nthFlowelement.getId(), grpVolume.getId());
-//						if(job != null) {
-//							logger.trace("Job for requestId " + request.getId() + " artifactId " + artifact.getId() +  " flowelement " + nthFlowelement.getId() + " groupVolumeId " + grpVolume.getId() + " is already created. So skipping creating Job");
-//						}else {
-							// validating if all its other dependencies other than sourceJob are complete[only on sourceJob's completion this is called...]
-							boolean isJobGoodToBeCreated = isJobGoodToBeCreated(dependentFlowelement, sourceJob, request, artifactclassId, artifact, grpVolume.getId(), dependentJobIds);
-	//						boolean isJobGoodToBeCreated = true;
-	//						List<Integer> preRequesiteFlowelements = nthFlowelement.getDependencies();
-	//						if(preRequesiteFlowelements != null) {
-	//							for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
-	//								if(sourceJob != null && sourceJob.getFlowelement().getId() == nthPreRequesiteFlowelementId)
-	//									continue;
-	//								
-	//								Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), nthPreRequesiteFlowelementId, grpVolume.getId());
-	//								
-	//								if(jobInQuestion == null || jobInQuestion.getStatus() != Status.completed) {
-	//									isJobGoodToBeCreated = false;
-	//									break;
-	//								}
-	//								dependentJobIds.add(jobInQuestion.getId());
-	//							}	
-	//						}
-							if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
-								Job job = createJob(dependentFlowelement, sourceJob, request, artifactclassId, artifact);
-								if(dependentJobIds.size() > 0) {
-									Collections.sort(dependentJobIds);
-									job.setDependencies(dependentJobIds);
-								}
-								job.setStoragetaskActionId(storagetaskAction);
-								job.setProcessingtaskId(processingtaskId);
-								job.setGroupVolume(grpVolume); // we dont know the physical volume yet... How about provisioned volumes?
-		
-								job = saveJob(job);
-								jobsCreated.add(job);
-							}
-//						}
-//					}
+						job.setStoragetaskActionId(storagetaskAction);
+						job.setProcessingtaskId(processingtaskId);
+						job.setGroupVolume(grpVolume); // we dont know the physical volume yet... How about provisioned volumes?
+
+						job = saveJob(job);
+						jobsCreated.add(job);
+					}
 				}
 			}
 			else { // sourceJob != null - called from a storage dependency job 
-				logger.trace("Creating Job for flowelement " + dependentFlowelement.getId() + " from source Job " + sourceJob.getId());
+				logger.trace("Creating Job for flowelement " + flowelement.getId() + " from source Job " + sourceJob.getId());
 				List<Integer> dependentJobIds = new ArrayList<Integer>();
 				if(sourceJob != null) {
 					dependentJobIds.add(sourceJob.getId());
 				}
 				
-				// validating if all its other dependencies other than sourceJob are complete[only on sourceJob's completion this is called...]
-				boolean isJobGoodToBeCreated = isJobGoodToBeCreated(dependentFlowelement, sourceJob, request, artifactclassId, artifact, null, dependentJobIds);
-				
-//				boolean isJobGoodToBeCreated = true;
-//				List<Integer> preRequesiteFlowelements = nthFlowelement.getDependencies();
-//				if(preRequesiteFlowelements != null) {
-//					for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
-//						if(sourceJob != null && sourceJob.getFlowelement().getId() == nthPreRequesiteFlowelementId)
-//							continue;
-//						
-//						Flowelement prereqFlowelement = flowelementDao.findById(nthPreRequesiteFlowelementId).get();
-//
-//						String gvId = null;
-//						if(prereqFlowelement.getStoragetaskActionId() != null)
-//							gvId = sourceJob.getGroupVolume().getId();
-//						
-//						Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), nthPreRequesiteFlowelementId, gvId);
-//						if(jobInQuestion == null || jobInQuestion.getStatus() != Status.completed) {
-//							isJobGoodToBeCreated = false;
-//							break;
-//						}
-//						dependentJobIds.add(jobInQuestion.getId());
-//					}	
-//				}
+				// validating if all its other dependencies are complete
+				boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, null, dependentJobIds);
+
 				if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
-					Job job = createJob(dependentFlowelement, sourceJob, request, artifactclassId, artifact);
+					Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
 					job.setStoragetaskActionId(storagetaskAction);
 					job.setProcessingtaskId(processingtaskId);
 					job.setGroupVolume(sourceJob.getGroupVolume()); // we already know the physical volume used by its parent job
@@ -236,20 +258,22 @@ public class JobCreator {
 			}
 		}
 		else {
-			logger.trace("Creating Job for " + dependentFlowelement.getId() + ":" + processingtaskId);
+			logger.trace("Creating Job for " + flowelement.getId() + ":" + processingtaskId);
 			String inputArtifactName = artifact.getName();
 			Artifactclass inputArtifactclass = artifact.getArtifactclass();
 			String inputArtifactPath = inputArtifactclass.getPath() + File.separator + inputArtifactName;
 			Volume groupVolume = null;
 			String groupVolumeId = null;
+			// If sourceJob of this processing flowelement is restore then the processing f/w should pick up the file from the restored tmp location instead of the artifactclass.pathprefix 
 			if(sourceJob != null && sourceJob.getStoragetaskActionId() == Action.restore) {
 				inputArtifactPath = restoreStorageTask.getRestoreTempLocation(sourceJob.getId()) + File.separator + inputArtifactName;
 				groupVolume = sourceJob.getGroupVolume();
 				//groupVolumeId = groupVolume != null ? groupVolume.getId() : null;
 			}
+			// TODO : What if the first parent job is a processing that has no files to process and hence no job created. So DependentJobs wont be created. Fine. So there is no Job in the request. Is it ok to create a request with no Jobs
 			ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
 			if(!processingJobManager.isJobToBeCreated(processingtaskId, inputArtifactPath, inputArtifactclass)) { // Dont create jobs for something we know would eventually fail...
-				logger.trace("Job not to be created - " + dependentFlowelement.getId());
+				logger.trace("Job not to be created - " + flowelement.getId());
 				return jobsCreated;
 			}
 			
@@ -257,11 +281,12 @@ public class JobCreator {
 			if(sourceJob != null) {
 				dependentJobIds.add(sourceJob.getId());
 			}
-
-			boolean isJobGoodToBeCreated = isJobGoodToBeCreated(dependentFlowelement, sourceJob, request, artifactclassId, artifact, groupVolumeId, dependentJobIds);
+			
+			// validating if all its other dependencies are complete
+			boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, groupVolumeId, dependentJobIds);
 			if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
-				logger.trace("Creating Job for " + processingtaskId + ":" + dependentFlowelement.getId());
-				Job job = createJob(dependentFlowelement, sourceJob, request, artifactclassId, artifact);
+				logger.trace("Creating Job for " + processingtaskId + ":" + flowelement.getId());
+				Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
 				
 				if(dependentJobIds.size() > 0) {
 					Collections.sort(dependentJobIds);
@@ -312,39 +337,30 @@ public class JobCreator {
 	}
 	
 	private Job createJob(Flowelement nthFlowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact) {
-
 		Job job = new Job();
 		job.setInputArtifactId(artifact.getId());
 		job.setFlowelement(nthFlowelement);
 		job.setRequest(request);				
 		job.setCreatedAt(LocalDateTime.now());
-		job.setStatus(Status.queued);
+		
+		Status status = Status.queued;
+//		if(sourceJob == null) {
+			ArtifactclassTask artifactclassTask = null;
+			if(nthFlowelement.getProcessingtaskId() != null)
+				artifactclassTask = artifactclassTaskDao.findByArtifactclassIdAndProcessingtaskId(artifactclassId, nthFlowelement.getProcessingtaskId());
+			else if(nthFlowelement.getStoragetaskActionId() != null)
+				artifactclassTask = artifactclassTaskDao.findByArtifactclassIdAndStoragetaskActionId(artifactclassId, nthFlowelement.getStoragetaskActionId());
 
-//		List<Integer> dependentJobIds = new ArrayList<Integer>();
-//		List<Integer> preRequesiteFlowelements = nthFlowelement.getDependencies();
-//		if(preRequesiteFlowelements != null && preRequesiteFlowelements.size() > 1) { // Do this only for multiple dependencies
-//			for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
-//				Flowelement prereqFlowelement = flowelementDao.findById(nthPreRequesiteFlowelementId).get();
-//				Job nthPreRequesiteJob = null;
-//				
-//				String gvId = null;
-//				if(prereqFlowelement.getStoragetaskActionId() != null)
-//					gvId = job.getGroupVolume().getId();
-//
-//				nthPreRequesiteJob = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(job.getRequest().getId(), artifact.getId(), nthPreRequesiteFlowelementId, gvId);	
-//				dependentJobIds.add(nthPreRequesiteJob.getId());
-//			}
+			if(artifactclassTask != null && artifactclassTask.getConfig().isCreateHeldJobs())
+				status = Status.on_hold;
 //		}
-//		else if(sourceJob != null)
-//			dependentJobIds.add(sourceJob.getId());
-//		
-//		job.setDependencies(dependentJobIds);
+		job.setStatus(status);
 		return job;
 	}
 	
 	// public so can be used in unit testing
 	public List<Flowelement> getDependentFlowelements(Flow flow, Flowelement flowelement) {
-		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndActiveTrueOrderByDisplayOrderAsc(flow.getId());
+		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc(flow.getId());
 		List<Flowelement> dependentFlowelementList = new ArrayList<Flowelement>();
 		for (Flowelement nthFlowelement : flowelementList) {
 			if(nthFlowelement.getId() == flowelement.getId())
@@ -361,221 +377,6 @@ public class JobCreator {
 		}
 		return dependentFlowelementList;
 	}
-	
-	// only if action is async create job should be called...
-	public List<Job> createJobs(Request request, Artifact sourceArtifact){
-		Action requestedBusinessAction = request.getActionId();
-		org.ishafoundation.dwaraapi.db.model.master.reference.Action action = configurationTablesUtil.getAction(requestedBusinessAction);
-
-		List<Job> jobList = new ArrayList<Job>();
-
-		if(Actiontype.complex == action.getType()) {
-			logger.trace("Complex action");
-			String sourceArtifactclassId = sourceArtifact.getArtifactclass().getId();
-			// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
-			List<ActionArtifactclassFlow> actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByArtifactclassIdOrArtifactclassIdAndActionIdAndActiveTrue("_all_", sourceArtifactclassId, requestedBusinessAction.name()); //
-			for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
-				String nthFlowId = actionArtifactclassFlow.getFlow().getId();
-				logger.trace("flow " + nthFlowId);
-//				Map<String, Job> flowelementId_Job_Map = new HashMap<>();// used for getting referenced jobs
-//				Map<String, Job> flowelementId_CopyNumber_Job_Map = new HashMap<>();
-//
-				jobList.addAll(iterateFlow(request, sourceArtifactclassId, sourceArtifact, nthFlowId));
-
-			}
-		}
-		else if(Actiontype.storage_task == action.getType()){
-			String actionName = requestedBusinessAction.name();
-			logger.debug("Calling storage task impl " + actionName);
-			AbstractStoragetaskAction actionImpl = storagetaskActionMap.get(actionName);
-
-			jobList.addAll(actionImpl.createJobsForStoragetaskAction(request, requestedBusinessAction));
-		}
-		return jobList;
-	}
-
-	private List<Job> iterateFlow(Request request, String artifactclassId, Artifact artifact, String nthFlowId) {
-		List<Job> jobsCreated = new ArrayList<Job>();
-		
-		logger.trace("Iterating flow " + nthFlowId);
-		logger.trace("artifactclassId " + artifactclassId);
-		logger.trace("artifactId " + artifact.getId());
-		//  get all the flow elements for the flow
-		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndActiveTrueOrderByDisplayOrderAsc(nthFlowId);
-		for (Flowelement nthFlowelement : flowelementList) {
-			logger.trace("Flowelement " + nthFlowelement.getId());
-			
-			List<Integer> refFlowelementDepsList = nthFlowelement.getDependencies();
-			if(refFlowelementDepsList == null) {
-				jobsCreated.addAll(createJobs(nthFlowelement, null, request, artifactclassId, artifact));
-			}
-			// *** Dont create dependent jobs upfront. Create them as and when prerequisite jobs are complete
-//			Flow flowRef = nthFlowelement.getFlowRef();
-//			if(flowRef != null) { // If the flowelement has a flowref, that means one of this flowelement dependency is a processing task generating an output artifact, that is to be consumed as input
-//				logger.trace("References a flow again " + flowRef.getId());
-//				List<Integer> refFlowelementDepsList = nthFlowelement.getDependencies();
-//				if(refFlowelementDepsList == null) {
-//					logger.warn("Are you sure you dont want any dependencies defined on - " + nthFlowelement.getId() + ". Whats the point of this flowelement with flowref then?");
-//				}else {
-//					logger.trace("Has dependencies " + refFlowelementDepsList);
-//					// Now use one of the processing task that too generating an output
-//					String outputArtifactclassSuffix = null;
-//					for (Integer nthRefFlowelementDepId : refFlowelementDepsList) {
-//						Flowelement prereqFlowelement = flowelementDao.findById(nthRefFlowelementDepId).get();
-//						String processingtaskId = prereqFlowelement.getProcessingtaskId();  
-//						if(processingtaskId == null) // Is the dependency a processing task?
-//							continue;
-//						logger.trace("A processing task " + processingtaskId);
-//						Processingtask processingtask = processingtaskDao.findById(processingtaskId).get();
-//						outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix(); // Does the dependent processing task generate an output?
-//						if(outputArtifactclassSuffix != null)
-//							break;
-//					}
-//					String outputArtifactclassId = request.getDetails().getArtifactclassId() + outputArtifactclassSuffix;
-//					logger.trace("Output ArtifactclassId " + outputArtifactclassId);
-//					iterateFlow(request, outputArtifactclassId, null, flowRef.getId(), nthFlowelement, jobList, flowelementId_Job_Map, flowelementId_CopyNumber_Job_Map);
-//				}
-//			} else {
-//				createJob(request, artifactclassId, artifactId, flowRefFlowelement, nthFlowelement, jobList, flowelementId_Job_Map, flowelementId_CopyNumber_Job_Map);
-//			}
-		}
-		return jobsCreated;
-	}
-	
-//	private String getKeyPrefix(Flowelement flowRefFlowelement, String keyPrefix) {
-//		String keyPrefixTmp = null;
-//		Flowelement flowRefFlowelementParent = flowRefFlowelement.getFlowelementRef();
-//		if(flowRefFlowelementParent != null) {
-//			keyPrefixTmp = getKeyPrefix(flowRefFlowelementParent, keyPrefix + flowRefFlowelementParent.getId() + "_");
-//		}
-//		else
-//			keyPrefixTmp = keyPrefix;
-//		
-//		logger.trace("keyPrefixTmp - " + keyPrefixTmp);
-//		return keyPrefixTmp;
-//	}
-	
-//	private void createJob(Request request, String artifactclassId, Artifact artifact, Flowelement flowRefFlowelement, Flowelement nthFlowelement, List<Job> jobList,
-//			Map<String, Job> flowelementId_Job_Map, Map<String, Job> flowelementId_CopyNumber_Job_Map) {
-//	
-//		String putKeyPrefix="";
-//		String getKeyPrefix = "";
-//		List<Integer> preRequesiteFlowelements = null;
-//		if(flowRefFlowelement == null) {
-//			preRequesiteFlowelements = nthFlowelement.getDependencies();
-//		}
-//		else {
-//			String keyPrefix = getKeyPrefix(flowRefFlowelement, "");
-//			logger.trace("keyPrefix " + keyPrefix);
-//			
-//			putKeyPrefix = keyPrefix + flowRefFlowelement.getId() + "_";
-//			getKeyPrefix = keyPrefix;
-//			
-//			if(nthFlowelement.getDependencies() == null)
-//				preRequesiteFlowelements = flowRefFlowelement.getDependencies();
-//			if(nthFlowelement.getDependencies() != null) {
-//				preRequesiteFlowelements = nthFlowelement.getDependencies();
-//				getKeyPrefix = getKeyPrefix + flowRefFlowelement.getId() + "_";
-//			}
-//			logger.trace("putKeyPrefix " + putKeyPrefix);
-//			logger.trace("preRequesiteFlowelements " + preRequesiteFlowelements);
-//			logger.trace("getKeyPrefix " + getKeyPrefix);
-//		}
-//		// TODO Skip individual flow elements - How? Need to be defined
-//		Action storagetaskAction = nthFlowelement.getStoragetaskActionId();
-//		if(storagetaskAction == Action.write || storagetaskAction == Action.verify) {
-//			logger.trace("Creating Job for " + storagetaskAction + ":" + nthFlowelement.getId());
-//			List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassId(artifactclassId);
-//			logger.trace("No. of copies " + artifactclassVolumeList.size());
-//			for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {
-//				if(artifactclassVolume.isActive()) {
-//					Volume volume = artifactclassVolume.getVolume();
-//					Job job = new Job();
-//					job.setStoragetaskActionId(storagetaskAction);
-//					job.setInputArtifactId(artifact.getId());
-//					job.setFlowelement(nthFlowelement);
-//					job.setRequest(request);				
-//					job.setCreatedAt(LocalDateTime.now());
-//					job.setStatus(Status.queued);
-//					job.setGroupVolume(volume); // we dont know the physical volume yet... How about provisioned volumes?
-//
-//					// saving all the pre requisite jobs needed for this job...
-//					List<Integer> dependentJobIds = new ArrayList<Integer>();
-//					if(preRequesiteFlowelements != null) {
-//						for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
-//							Job nthPreRequesiteJob = null;
-//							Flowelement nthPreRequesiteFlowelement = flowelementDao.findById(nthPreRequesiteFlowelementId).get(); // TODO Cache it
-//							if(nthPreRequesiteFlowelement.getStoragetaskActionId() == Action.write) {
-//								logger.trace("Getting write job from copy map with key " + getKeyPrefix + nthPreRequesiteFlowelement.getId() + "_" + volume.getCopy().getId());
-//								nthPreRequesiteJob = flowelementId_CopyNumber_Job_Map.get(getKeyPrefix + nthPreRequesiteFlowelement.getId() + "_" + volume.getCopy().getId());
-//							}
-//							else {
-//								logger.trace("Getting verify job with key " + getKeyPrefix + nthPreRequesiteFlowelement.getId());
-//								nthPreRequesiteJob = flowelementId_Job_Map.get(getKeyPrefix + nthPreRequesiteFlowelement.getId());
-//							}
-//
-//							dependentJobIds.add(nthPreRequesiteJob.getId());
-//						}
-//					}
-//					if(dependentJobIds.size() > 0)
-//						job.setDependencies(dependentJobIds);
-//					job = saveJob(job);
-//					jobList.add(job);
-//					
-//					logger.trace("Added job " + job.getId() + " to copy map with key " + putKeyPrefix + nthFlowelement.getId() + "_" + volume.getCopy().getId());
-//					flowelementId_CopyNumber_Job_Map.put(putKeyPrefix + nthFlowelement.getId() + "_" + volume.getCopy().getId(), job);
-//					logger.trace("Added job " + job.getId() + " to map with key " + putKeyPrefix + nthFlowelement.getId());
-//					flowelementId_Job_Map.put(putKeyPrefix + nthFlowelement.getId(), job);		
-//				}
-//			}
-//		}
-//		else {
-//			String processingtaskId = nthFlowelement.getProcessingtaskId();
-//			
-//			String inputArtifactName = artifact.getName();
-//			Artifactclass inputArtifactclass = artifact.getArtifactclass();
-//			String inputArtifactPath = inputArtifactclass.getPath() + File.separator + inputArtifactName;
-//			
-//			ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
-//			if(!processingJobManager.isJobToBeCreated(processingtaskId, inputArtifactPath, inputArtifactclass)) // Dont create jobs for something we know would eventually fail...
-//				return;
-//			
-//			logger.trace("Creating Job for " + processingtaskId + ":" + nthFlowelement.getId());
-//			
-//			Job job = new Job();
-//			if(processingtaskId != null)
-//				job.setProcessingtaskId(processingtaskId);
-//			else
-//				job.setStoragetaskActionId(storagetaskAction);
-//
-//			if(storagetaskAction != null || (processingtaskId != null && preRequesiteFlowelements == null)) {
-//				// If a processing task contains prerequisite task that means its a derived one, for which the input library id needs to set by the prerequisite/parent task's job at the time of its processing and not at the time of job creation...
-//				// for eg., Mezz copy wont have a input library id upfront, which will be generated by its prerequisite/parent Mezz Transcoding job...
-//				job.setInputArtifactId(artifact.getId());
-//			}
-//			job.setFlowelement(nthFlowelement);
-//			job.setRequest(request);				
-//			job.setCreatedAt(LocalDateTime.now());
-//			job.setStatus(Status.queued);
-//			List<Integer> dependentJobIds = new ArrayList<Integer>();
-//			if(preRequesiteFlowelements != null) {
-//				for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
-//					Job nthPreRequesiteJob = null;
-//					//					Flowelement nthPreRequesiteFlowelement = flowelementDao.findById(nthPreRequesiteFlowelementId).get(); // TODO Cache it
-//					//					nthPreRequesiteJob = flowelementId_Job_Map.get(nthPreRequesiteFlowelement.getId());
-//					logger.trace("Getting job with key " + getKeyPrefix + nthPreRequesiteFlowelementId);
-//					nthPreRequesiteJob = flowelementId_Job_Map.get(getKeyPrefix + nthPreRequesiteFlowelementId);
-//					dependentJobIds.add(nthPreRequesiteJob.getId());
-//				}
-//				job.setDependencies(dependentJobIds);
-//			}
-//			
-//			job = saveJob(job);
-//			jobList.add(job);
-//			logger.trace("Added job " + job.getId() + " to map with key " + putKeyPrefix + nthFlowelement.getId());
-//			flowelementId_Job_Map.put(putKeyPrefix + nthFlowelement.getId(), job);
-//		}
-//	}
 	
 	private Job saveJob(Job job) {
 		//logger.debug("DB Job row Creation");   

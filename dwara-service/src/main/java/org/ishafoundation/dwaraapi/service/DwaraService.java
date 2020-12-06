@@ -65,10 +65,14 @@ public class DwaraService {
 	}
 	
 	protected Request createUserRequest(Action requestedBusinessAction, Object requestPayload) {
+		return createUserRequest(requestedBusinessAction, Status.queued, requestPayload);
+	}
+		
+	protected Request createUserRequest(Action requestedBusinessAction, Status status, Object requestPayload) {		
 		Request request = new Request();
 		request.setType(RequestType.user);
 		request.setActionId(requestedBusinessAction);
-		request.setStatus(Status.queued);
+		request.setStatus(status);
     	User user = getUserObjFromContext();
     	String requestedBy = user.getName();
 

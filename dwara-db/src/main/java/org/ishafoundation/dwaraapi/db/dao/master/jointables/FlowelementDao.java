@@ -7,6 +7,6 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface FlowelementDao extends CrudRepository<Flowelement,Integer> {
 	
-	List<Flowelement> findAllByFlowIdAndActiveTrueOrderByDisplayOrderAsc(String flowId);
+	List<Flowelement> findAllByFlowIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc(String flowId);
 	
 }

@@ -7,12 +7,9 @@ public enum Status {
 	queued,
 	in_progress,
 	completed,
-	partially_completed,
 	completed_failures,
 	on_hold,
-	skipped,
 	cancelled,
-	aborted,
 	failed,
 	marked_completed
 }
