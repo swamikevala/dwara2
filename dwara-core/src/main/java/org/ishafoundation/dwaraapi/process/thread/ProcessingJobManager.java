@@ -24,18 +24,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassProcessingtaskDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
-import org.ishafoundation.dwaraapi.db.keys.ArtifactclassProcessingtaskKey;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassProcessingtask;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassTask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -79,7 +78,7 @@ public class ProcessingJobManager implements Runnable{
 	private JobDao jobDao;
 	
 	@Autowired
-	private ArtifactclassProcessingtaskDao artifactclassProcessingtaskDao;
+	private ArtifactclassTaskDao artifactclassTaskDao;
 	
 	@Autowired
 	private TFileJobDao tFileJobDao;
@@ -442,8 +441,8 @@ public class ProcessingJobManager implements Runnable{
 		boolean includeSidecarFiles = false;
 		if(filetype != null) { // if filetype is null, extensions are set to null - which will get all the files listed - eg., process like checksum-gen
 			Set<String> pathsToBeUsed = new TreeSet<String>(); 
-			Optional<ArtifactclassProcessingtask> artifactclassProcessingtask = artifactclassProcessingtaskDao.findById(new ArtifactclassProcessingtaskKey(inputArtifactclassId, processingtaskId));
-			String pathnameRegex = artifactclassProcessingtask.isPresent() ? artifactclassProcessingtask.get().getPathnameRegex() : null;
+			ArtifactclassTask artifactclassTask = artifactclassTaskDao.findByArtifactclassIdAndProcessingtaskId(inputArtifactclassId, processingtaskId);
+			String pathnameRegex = artifactclassTask != null ? artifactclassTask.getConfig().getPathnameRegex() : null;
 			Set<String> extnsToBeUsed = null; 
 			if(pathnameRegex != null) { // if artifactclass_processingtask has a pathregex we need to only get the processable files from that folder path and not from the entire archives directory... e.g., video-pub-edit will have .mov files under output folder
 				FiletypePathnameReqexVisitor filetypePathnameReqexVisitor = new FiletypePathnameReqexVisitor(pathnameRegex);

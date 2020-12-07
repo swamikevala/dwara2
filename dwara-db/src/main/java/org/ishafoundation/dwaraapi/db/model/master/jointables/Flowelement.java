@@ -44,7 +44,10 @@ public class Flowelement {
 
 	@Column(name = "active")
 	private boolean active;
-
+	
+	@Column(name="\"deprecated\"")
+	private boolean deprecated;
+	
 	@Transient
 	private Flowelement flowelementRef;
 	
@@ -122,6 +125,14 @@ public class Flowelement {
 
 	public void setActive(boolean active) {
 		this.active = active;
+	}
+	
+	public boolean isDeprecated() {
+		return deprecated;
+	}
+
+	public void setDeprecated(boolean deprecated) {
+		this.deprecated = deprecated;
 	}
 
 	public Flowelement getFlowelementRef() {

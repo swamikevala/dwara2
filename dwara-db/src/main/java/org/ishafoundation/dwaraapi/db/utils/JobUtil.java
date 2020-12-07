@@ -28,7 +28,7 @@ public class JobUtil {
 		boolean isWriteJobReadyToBeExecuted = true;
 		Flowelement fe = writeJob.getFlowelement();
 		
-		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndActiveTrueOrderByDisplayOrderAsc(fe.getFlow().getId());
+		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc(fe.getFlow().getId());
 		Map<Integer, List<Flowelement>> flowelementId_DependentFlowelements_Map = new HashMap<Integer, List<Flowelement>>();
 		getWriteJobNestedDependentFlowelements(fe, flowelementList, flowelementId_DependentFlowelements_Map);
 		
@@ -208,7 +208,7 @@ public class JobUtil {
 		if(dependencies != null) {
 			for (Integer nthPreReqJobId : dependencies) {
 				Status preReqJobStatus = jobDao.findById(nthPreReqJobId).get().getStatus();
-				if(preReqJobStatus != Status.completed && preReqJobStatus != Status.partially_completed && preReqJobStatus != Status.completed_failures && preReqJobStatus != Status.marked_completed)
+				if(preReqJobStatus != Status.completed && preReqJobStatus != Status.completed_failures && preReqJobStatus != Status.marked_completed)
 					return false;			
 			}
 		}

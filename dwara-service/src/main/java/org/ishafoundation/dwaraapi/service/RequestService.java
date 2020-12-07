@@ -12,16 +12,15 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -32,9 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class RequestService extends DwaraService{
@@ -53,6 +49,8 @@ public class RequestService extends DwaraService{
 	@Autowired
 	private VolumeService volumeService;
 
+	@Autowired
+	private JobService jobService;
 	
 	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
@@ -67,6 +65,8 @@ public class RequestService extends DwaraService{
 		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, fromDate, toDate, pageNumber, pageSize);
 		for (Request request : requestList) {
 			RequestResponse requestResponse = frameRequestResponse(request, requestType);
+			List<JobResponse> jobList = jobService.getJobs(request.getId());
+			requestResponse.setJobList(jobList);
 			requestResponseList.add(requestResponse);
 		}
 		return requestResponseList;
@@ -85,26 +85,9 @@ public class RequestService extends DwaraService{
 					throw new DwaraException(requestId + " request cannot be cancelled. All jobs should be in queued status");
 			}
 			
-			userRequest = new Request();
-	    	userRequest.setType(RequestType.user);
-			userRequest.setActionId(Action.cancel);
-			userRequest.setStatus(Status.in_progress);
-			User user = getUserObjFromContext();
-	    	String requestedBy = user.getName();
-	    	userRequest.setRequestedBy(user);
-			userRequest.setRequestedAt(LocalDateTime.now());
-			RequestDetails details = new RequestDetails();
-			ObjectMapper mapper = new ObjectMapper();
-	
 			HashMap<String, Object> data = new HashMap<String, Object>();
 	    	data.put("requestId", requestId);
-	    	
-	    	String jsonAsString = mapper.writeValueAsString(data);
-			JsonNode postBodyJson = mapper.readValue(jsonAsString, JsonNode.class);
-			details.setBody(postBodyJson);
-			userRequest.setDetails(details);
-			
-	    	userRequest = requestDao.save(userRequest);
+			userRequest = createUserRequest(Action.cancel, Status.in_progress, data);
 	    	int userRequestId = userRequest.getId();
 	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
 	
@@ -144,6 +127,49 @@ public class RequestService extends DwaraService{
 			userRequest = requestDao.save(userRequest);
 			
 			return frameRequestResponse(requestToBeCancelled, RequestType.system);
+		}
+		catch (Exception e) {
+			if(userRequest != null && userRequest.getId() != 0) {
+				userRequest.setStatus(Status.failed);
+				userRequest = requestDao.save(userRequest);
+			}
+			throw e;
+		}
+	}
+
+	public RequestResponse releaseRequest(int requestId) throws Exception{
+		logger.info("Releasing request " + requestId);
+		Request userRequest = null;
+		try {
+			boolean anyReleased = false;
+			List<Job> jobList = jobDao.findAllByRequestId(requestId);
+			for (Job job : jobList) {
+				if(job.getStatus() == Status.on_hold) {
+					job.setStatus(Status.queued);
+					anyReleased = true;
+				}
+			}
+
+			if(!anyReleased)
+				throw new DwaraException(requestId + " has no jobs in on_hold status to be released");
+
+			HashMap<String, Object> data = new HashMap<String, Object>();
+	    	data.put("requestId", requestId);
+			userRequest = createUserRequest(Action.release, Status.in_progress, data);
+	    	int userRequestId = userRequest.getId();
+	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
+	
+			
+			jobDao.saveAll(jobList);
+			
+			Request requestToBeReleased = requestDao.findById(requestId).get();
+			requestToBeReleased.setStatus(Status.queued);
+			requestDao.save(requestToBeReleased);
+			
+			userRequest.setStatus(Status.completed);
+			userRequest = requestDao.save(userRequest);
+			
+			return frameRequestResponse(requestToBeReleased, RequestType.system);
 		}
 		catch (Exception e) {
 			if(userRequest != null && userRequest.getId() != 0) {

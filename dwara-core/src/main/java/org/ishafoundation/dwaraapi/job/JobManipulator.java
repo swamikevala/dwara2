@@ -117,7 +117,7 @@ public class JobManipulator {
 		}
 		
 		//  get all the flow elements for the flow
-		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndActiveTrueOrderByDisplayOrderAsc(nthFlowId);
+		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc(nthFlowId);
 		for (Flowelement nthFlowelement : flowelementList) {
 			int nthFlowelementId = nthFlowelement.getId();
 			logger.trace("Flowelement " + nthFlowelementId);
