@@ -72,6 +72,9 @@ public class RequestDetails {
 	
 	private Boolean verify; // overwrites whatever is configured in archiveformat.restore_verify = true
 	
+	@JsonProperty("flow_name")
+	private String flowName;
+	
 	@JsonProperty("domain_id")
 	private Integer domainId;
 	
@@ -268,6 +271,14 @@ public class RequestDetails {
 
 	public void setVerify(Boolean verify) {
 		this.verify = verify;
+	}
+
+	public String getFlowName() {
+		return flowName;
+	}
+
+	public void setFlowName(String flowName) {
+		this.flowName = flowName;
 	}
 
 	public Integer getDomainId() {

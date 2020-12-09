@@ -11,7 +11,6 @@ import javax.persistence.MapsId;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.keys.ActionArtifactclassFlowKey;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Flow;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Action;
 
@@ -25,10 +24,6 @@ public class ActionArtifactclassFlow {
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("actionId")
 	private Action action;
-	
-	@ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("artifactclassId")
-	private Artifactclass artifactclass;
 
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("flowId")
@@ -41,11 +36,10 @@ public class ActionArtifactclassFlow {
 		
 	}
 
-	public ActionArtifactclassFlow(Artifactclass artifactclass, Action action, Flow flow) {
-		this.artifactclass = artifactclass;
+	public ActionArtifactclassFlow(Action action, String artifactclassId, Flow flow) {
 		this.action = action;
 		this.flow = flow;
-		this.id = new ActionArtifactclassFlowKey(action.getId(), artifactclass.getId(), flow.getId());
+		this.id = new ActionArtifactclassFlowKey(action.getId(), artifactclassId, flow.getId());
 	}
 	
     public ActionArtifactclassFlowKey getId() {
@@ -54,14 +48,6 @@ public class ActionArtifactclassFlow {
 
 	public void setId(ActionArtifactclassFlowKey id) {
 		this.id = id;
-	}
-
-	public Artifactclass getArtifactclass() {
-		return artifactclass;
-	}
-
-	public void setArtifactclass(Artifactclass artifactclass) {
-		this.artifactclass = artifactclass;
 	}
 
 	public Action getAction() {
@@ -97,14 +83,15 @@ public class ActionArtifactclassFlow {
             return false;
  
         ActionArtifactclassFlow that = (ActionArtifactclassFlow) o;
-        return Objects.equals(artifactclass, that.artifactclass) &&
+        return 
         		Objects.equals(action, that.action) &&
+        		Objects.equals(id.getArtifactclassId(), that.id.getArtifactclassId()) &&
                 Objects.equals(flow, that.flow);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(artifactclass, action, flow);
+        return Objects.hash(action, id.getArtifactclassId(), flow);
     }
 
 }

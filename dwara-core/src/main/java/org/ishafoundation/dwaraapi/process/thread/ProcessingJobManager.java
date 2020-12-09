@@ -169,7 +169,7 @@ public class ProcessingJobManager implements Runnable{
 			for (Integer nthDependentJobId : jobDependencyList) {
 				Job nthDependentJob = jobDao.findById(nthDependentJobId).get();
 				if(nthDependentJob.getStoragetaskActionId() == Action.restore) {
-					inputPath = restoreStorageTask.getRestoreTempLocation(nthDependentJob.getId());
+					inputPath = restoreStorageTask.getRestoreLocation(nthDependentJob);
 				}
 			}
 		}

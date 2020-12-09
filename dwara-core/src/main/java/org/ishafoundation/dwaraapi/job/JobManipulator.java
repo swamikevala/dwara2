@@ -76,7 +76,7 @@ public class JobManipulator {
 			logger.trace("Complex action");
 			String sourceArtifactclassId = request.getDetails().getArtifactclassId();
 			// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
-			List<ActionArtifactclassFlow> actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByArtifactclassIdOrArtifactclassIdAndActionIdAndActiveTrue("_all_", sourceArtifactclassId, requestedBusinessAction.name()); //
+			List<ActionArtifactclassFlow> actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByIdArtifactclassIdOrIdArtifactclassIdAndActionIdAndActiveTrue("_all_", sourceArtifactclassId, requestedBusinessAction.name()); //
 			for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
 				String nthFlowId = actionArtifactclassFlow.getFlow().getId();
 				logger.trace("flow " + nthFlowId);

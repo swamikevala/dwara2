@@ -320,11 +320,11 @@ public abstract class AbstractStoragetypeJobProcessor {
 			String filePathname = nthFile.getPathname();
 			if(filePathname.startsWith(fileToBeRestored.getPathname())) {
 				FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());
-			
-				if(requestedAction == Action.restore && storageJob.isRestoreVerify())
-					fileVolume.setVerifiedAt(LocalDateTime.now());
+
+				//if(requestedAction == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(request.getDetails().getFlowName())) // called during normal restore with verify option
+					//fileVolume.setVerifiedAt(LocalDateTime.now());
 				
-				if(volume.getStoragelevel() == Storagelevel.block) {// && storageJob.getJob().getStoragetaskActionId() == Action.verify) { // Only for block - TODO Should we move this to block specific impl??? 
+				if(requestedAction == Action.ingest && volume.getStoragelevel() == Storagelevel.block) {// && storageJob.getJob().getStoragetaskActionId() == Action.verify) { // Only for block - TODO Should we move this to block specific impl??? 
 					Map<String, Integer> archivedFilePathNameToHeaderBlockCnt = storageResponse.getArchiveResponse().getArchivedFilePathNameToHeaderBlockCnt();
 					if(archivedFilePathNameToHeaderBlockCnt != null) {
 						Integer headerBlockCnt = archivedFilePathNameToHeaderBlockCnt.get(filePathname);
@@ -365,7 +365,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 
     protected void beforeRestore(SelectedStorageJob selectedStorageJob) throws Exception {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
-    	storageJob.setTargetLocationPath(storageJob.getTargetLocationPath() + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier());
+    	//storageJob.setTargetLocationPath(storageJob.getTargetLocationPath() + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier());
     	Domain domain = storageJob.getDomain();
     	int fileIdToBeRestored = storageJob.getFileId();
 		
@@ -418,41 +418,43 @@ public abstract class AbstractStoragetypeJobProcessor {
 		Request request = storageJob.getJob().getRequest();
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 	
-		if(requestedAction == Action.ingest || (requestedAction == Action.restore && storageJob.isRestoreVerify()))
+		//if(requestedAction == Action.ingest || (requestedAction == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(request.getDetails().getFlowName())))
+		if(requestedAction == Action.ingest)
 			updateFileVolumeTable(selectedStorageJob, storageResponse); // update the verified date here...
 		
-		// upon completion moving the file to the original requested dest path		
-		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
-		String restoredFilePathName = file.getPathname();
-		
-		String srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName;
-		
-		
-		String timeCodeStart = storageJob.getTimecodeStart();
-		String timeCodeEnd = storageJob.getTimecodeEnd();
-		boolean pfr = false;
-		if(timeCodeStart != null)
-			pfr = true;
-		
-		if(pfr)
-			//srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
-			srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".mxf");
-		
-		String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");	
-		logger.trace("src " + srcPath);
-		logger.trace("dest " + destPath);
-		
-		java.io.File srcFile = new java.io.File(srcPath);
-		java.io.File destFile = new java.io.File(destPath);
-
-		if(srcFile.isFile()) {
-			Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));
+		if(requestedAction == Action.restore) { // for ingest and restore_process this happens in the scheduler... 
+			// upon completion moving the file to the original requested dest path		
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
+			String restoredFilePathName = file.getPathname();
+			
+			String srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName;
+			
+			
+			String timeCodeStart = storageJob.getTimecodeStart();
+			String timeCodeEnd = storageJob.getTimecodeEnd();
+			boolean pfr = false;
+			if(timeCodeStart != null)
+				pfr = true;
+			
+			if(pfr)
+				//srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
+				srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".mxf");
+			
+			String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");	
+			logger.trace("src " + srcPath);
+			logger.trace("dest " + destPath);
+			
+			java.io.File srcFile = new java.io.File(srcPath);
+			java.io.File destFile = new java.io.File(destPath);
+	
+			if(srcFile.isFile())
+				Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
+			else
+				Files.createDirectories(Paths.get(destPath));
+	
 			Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+			logger.info("Moved restored files from " + srcPath + " to " + destPath);
 		}
-		else
-			Files.createDirectories(Paths.get(destPath));
-		
-		logger.info("Moved restored files from " + srcPath + " to " + destPath);
 	}
 	
 	private IStoragelevel getStoragelevelImpl(SelectedStorageJob selectedStorageJob){

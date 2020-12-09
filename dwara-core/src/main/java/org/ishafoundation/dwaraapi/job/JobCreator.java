@@ -81,9 +81,16 @@ public class JobCreator {
 
 		if(Actiontype.complex == action.getType()) {
 			logger.trace("Complex action");
-			String sourceArtifactclassId = sourceArtifact.getArtifactclass().getId();
-			// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
-			List<ActionArtifactclassFlow> actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByArtifactclassIdOrArtifactclassIdAndActionIdAndActiveTrue("_all_", sourceArtifactclassId, requestedBusinessAction.name()); //
+			List<ActionArtifactclassFlow> actionArtifactclassFlowList = null;
+			String sourceArtifactclassId = null;
+			if(action.getId().equals(Action.ingest.name())) {
+				sourceArtifactclassId = sourceArtifact.getArtifactclass().getId();
+				// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
+				actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByIdArtifactclassIdOrIdArtifactclassIdAndActionIdAndActiveTrue("_all_", sourceArtifactclassId, requestedBusinessAction.name()); //
+			}else if(action.getId().equals(Action.restore_process.name())) {
+				actionArtifactclassFlowList = new ArrayList<ActionArtifactclassFlow>();
+				actionArtifactclassFlowList.add(actionArtifactclassFlowDao.findByActionIdAndFlowIdAndActiveTrue(requestedBusinessAction.name(), DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME)); //
+			}
 			for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
 				String nthFlowId = actionArtifactclassFlow.getFlow().getId();
 				logger.trace("flow " + nthFlowId);
@@ -104,7 +111,7 @@ public class JobCreator {
 		
 		logger.trace("Iterating flow " + nthFlowId);
 		logger.trace("artifactclassId " + artifactclassId);
-		logger.trace("artifactId " + artifact.getId());
+		logger.trace("artifactId " + (artifact != null ? artifact.getId() : null));
 		//  get all the flow elements for the flow
 		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc(nthFlowId);
 		for (Flowelement nthFlowelement : flowelementList) {
@@ -204,9 +211,14 @@ public class JobCreator {
 		// if the sourceJob for which the dependants are to be created is a processing task and the flowelement is a storagetask we may have to create as many jobs as copies needed...
 		// But we should verify if they are not already created and create here... - 
 		// We might have race conditions with write completion thread creating one and just at the same time this one does too... Need to ensure that doesnt happen...
-		// TODO Synchronize this...
 		if(storagetaskAction != null || processingtaskWithDependencyStoragetask) {
-			if(sourceJob == null || (sourceJob != null && sourceJob.getProcessingtaskId() != null)) { // only srcjob = processing task is from scheduler which needs multiple job creation 
+			if(sourceJob == null && request.getActionId() == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(request.getDetails().getFlowName())){
+				Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
+				job.setStoragetaskActionId(storagetaskAction);
+				job = saveJob(job);
+				jobsCreated.add(job);
+			}
+			else if(sourceJob == null || (sourceJob != null && sourceJob.getProcessingtaskId() != null)) { // only srcjob = processing task is from scheduler which needs multiple job creation 
 				logger.trace("Creating Job(s) for " + flowelement.getId() + ":" + storagetaskAction);
 				List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassIdAndActiveTrue(artifactclassId);
 				logger.trace("No. of copies for artifactclass " + artifactclassId + "-" + artifactclassVolumeList.size());
@@ -266,7 +278,7 @@ public class JobCreator {
 			String groupVolumeId = null;
 			// If sourceJob of this processing flowelement is restore then the processing f/w should pick up the file from the restored tmp location instead of the artifactclass.pathprefix 
 			if(sourceJob != null && sourceJob.getStoragetaskActionId() == Action.restore) {
-				inputArtifactPath = restoreStorageTask.getRestoreTempLocation(sourceJob.getId()) + File.separator + inputArtifactName;
+				inputArtifactPath = restoreStorageTask.getRestoreLocation(sourceJob) + File.separator + inputArtifactName;
 				groupVolume = sourceJob.getGroupVolume();
 				//groupVolumeId = groupVolume != null ? groupVolume.getId() : null;
 			}
@@ -338,13 +350,13 @@ public class JobCreator {
 	
 	private Job createJob(Flowelement nthFlowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact) {
 		Job job = new Job();
-		job.setInputArtifactId(artifact.getId());
+		job.setInputArtifactId(artifact != null ? artifact.getId() : null);
 		job.setFlowelement(nthFlowelement);
 		job.setRequest(request);				
 		job.setCreatedAt(LocalDateTime.now());
 		
 		Status status = Status.queued;
-//		if(sourceJob == null) {
+		if(artifactclassId != null) {
 			ArtifactclassTask artifactclassTask = null;
 			if(nthFlowelement.getProcessingtaskId() != null)
 				artifactclassTask = artifactclassTaskDao.findByArtifactclassIdAndProcessingtaskId(artifactclassId, nthFlowelement.getProcessingtaskId());
@@ -353,7 +365,7 @@ public class JobCreator {
 
 			if(artifactclassTask != null && artifactclassTask.getConfig().isCreateHeldJobs())
 				status = Status.on_hold;
-//		}
+		}
 		job.setStatus(status);
 		return job;
 	}

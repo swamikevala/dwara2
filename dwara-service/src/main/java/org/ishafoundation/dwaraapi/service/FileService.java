@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.restore.FileDetails;
 import org.ishafoundation.dwaraapi.api.req.restore.PFRestoreUserRequest;
@@ -99,7 +101,10 @@ public class FileService extends DwaraService{
 //    	userRequest = requestDao.save(userRequest);
 //    	int userRequestId = userRequest.getId();
 //    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
-    	Request userRequest = createUserRequest(Action.restore, restoreUserRequest);
+    	Action action = Action.restore;
+    	if(restoreUserRequest.isVerify())
+    		action = Action.restore_process;
+    	Request userRequest = createUserRequest(action, restoreUserRequest);
     	int userRequestId = userRequest.getId();
 	
     	Integer copyNumber = restoreUserRequest.getCopy();
@@ -128,6 +133,8 @@ public class FileService extends DwaraService{
 			systemrequestDetails.setOutputFolder(outputFolder);
 			systemrequestDetails.setDestinationPath(destinationPath);
 			systemrequestDetails.setVerify(verify); // overwriting default archiveformat.verify during restore
+			if(verify)
+				systemrequestDetails.setFlowName(DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME);
 			systemrequestDetails.setDomainId(domainUtil.getDomainId(fileId_Domain_Map.get(nthFileId)));
 			
 			systemRequest.setDetails(systemrequestDetails);
@@ -297,8 +304,7 @@ public class FileService extends DwaraService{
     			}
 			}
     		
-    		java.io.File requestedFile = new java.io.File(filePathname);    		
-    		if(requestedFile.isDirectory())
+    		if(StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) // if the file's is a directory - NOTE (checksum could be blank for files too if they are imported...)
     			requestedDirectoriesPathNameList.add(filePathname);
     	}
     	
@@ -306,7 +312,7 @@ public class FileService extends DwaraService{
     		ObjectMapper mapper = new ObjectMapper(); 
     		mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     		JsonNode jsonNode = mapper.valueToTree(errorFileList);
-    		throw new DwaraException("Files not in system requested...", jsonNode);
+    		throw new DwaraException("Validation failed for file(s) to be restored ...", jsonNode);
     	}
     }
 }

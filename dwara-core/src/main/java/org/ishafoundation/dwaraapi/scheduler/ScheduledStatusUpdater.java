@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -20,6 +22,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -158,8 +161,50 @@ public class ScheduledStatusUpdater {
 						ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
 						String inputPath = processingJobManager.getInputPath(job);
 						if(inputPath != null) {
-							File restoreTmpFolder = new File(inputPath);
-							restoreTmpFolder.delete();
+							Request request = job.getRequest();
+							RequestDetails requestDetails = request.getDetails();
+							org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
+							if(requestedAction == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(requestDetails.getFlowName())) {
+								// what need to be restored
+								int fileIdRestored = requestDetails.getFileId();
+								
+								String restoredFilePathName = null;
+								
+						    	Domain[] domains = Domain.values();
+					    		for (Domain nthDomain : domains) {
+					    			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainUtil.getDomainSpecificFile(nthDomain, fileIdRestored);
+					    			if(file != null) {
+					    				restoredFilePathName = file.getPathname();
+					    				break;
+					    			}
+								}
+								// inputPath = something like - /data/restored/someoutputfolder/.restoring
+								String srcPath = inputPath + java.io.File.separator + restoredFilePathName;
+								String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");	
+								logger.trace("src " + srcPath);
+								logger.trace("dest " + destPath);
+
+					    		try {
+									java.io.File srcFile = new java.io.File(srcPath);
+									java.io.File destFile = new java.io.File(destPath);
+							
+									if(srcFile.isFile())
+										Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
+									else
+										Files.createDirectories(Paths.get(destPath));
+								
+										Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+										logger.info("Moved restored files from " + srcPath + " to " + destPath);
+									}
+								catch (Exception e) {
+									logger.error("Unable to move files from " + srcPath + " to " + destPath);
+								}
+							}
+							else if(requestedAction == Action.ingest || requestedAction == Action.restore_process) {
+								// inputPath = something like - /data/tmp/job-1234
+								File restoreTmpFolder = new File(inputPath);
+								restoreTmpFolder.delete();
+							}
 						}
 					}
 				}
@@ -397,7 +442,7 @@ public class ScheduledStatusUpdater {
 			logger.trace("User request status - " + nthUserRequest.getId() + " ::: " + status);
 			
 			// For completed restore jobs the .restoring folder is cleaned up...
-			if(nthUserRequest.getActionId() == Action.restore && status == Status.completed) {
+			if((nthUserRequest.getActionId() == Action.restore || nthUserRequest.getActionId() == Action.restore_process) && status == Status.completed) {
 				JsonNode jsonNode = nthUserRequest.getDetails().getBody();
 				String outputFolder = jsonNode.get("outputFolder").asText();
 				String destinationPath = jsonNode.get("destinationPath").asText();

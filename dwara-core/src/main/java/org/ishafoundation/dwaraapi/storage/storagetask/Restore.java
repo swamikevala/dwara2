@@ -4,6 +4,7 @@ package org.ishafoundation.dwaraapi.storage.storagetask;
 import java.io.File;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
@@ -15,7 +16,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -35,21 +35,31 @@ public class Restore extends AbstractStoragetaskAction{
 	
 	@Autowired
 	private DomainUtil domainUtil;
-
-	@Autowired
-	private JobUtil jobUtil;
 	
 	@Autowired
 	private Configuration configuration;
 	
-	public String getRestoreTempLocation(int jobId) {
-		return configuration.getRestoreTmpLocationForVerification() + File.separator + "job-" + jobId;
+	public String getRestoreLocation(Job job) {
+		String restoreLocation = null;
+	
+		Request request = job.getRequest();
+		RequestDetails requestDetails = request.getDetails();
+		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
+		if(requestedAction == Action.restore || (requestedAction == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(requestDetails.getFlowName()))) {
+			String destinationPath = requestDetails.getDestinationPath();//requested destination path
+			String outputFolder = requestDetails.getOutputFolder();
+			restoreLocation = destinationPath + java.io.File.separator + outputFolder + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier();
+		}
+		else if(requestedAction == Action.ingest || requestedAction == Action.restore_process)
+			restoreLocation = configuration.getRestoreTmpLocationForVerification() + File.separator + "job-" + job.getId();
+		
+		return restoreLocation;
 	}
 
 	@Override
 	public StorageJob buildStorageJob(Job job) throws Exception {
 		Request request = job.getRequest();
-		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
+		Action requestedAction = request.getActionId();
 
 		StorageJob storageJob = new StorageJob();
 		storageJob.setJob(job);
@@ -109,7 +119,7 @@ public class Restore extends AbstractStoragetaskAction{
 			storageJob.setArchiveBlock(fileVolume.getArchiveBlock());
 			
 			// to where
-			String targetLocationPath = getRestoreTempLocation(job.getId());
+			String targetLocationPath = getRestoreLocation(job);
 			storageJob.setTargetLocationPath(targetLocationPath);
 		}
 		else {
@@ -156,18 +166,19 @@ public class Restore extends AbstractStoragetaskAction{
 				verify = volume.getArchiveformat().isRestoreVerify();
 			storageJob.setRestoreVerify(verify);
 			
-			String destinationPath = null;
-			if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.restore) {
-				destinationPath = requestDetails.getDestinationPath();//requested destination path 
+			if(requestedAction == Action.restore || (requestedAction == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(requestDetails.getFlowName()))) {
+//			if(requestedAction == Action.restore && !storageJob.isRestoreVerify()) {
+				String destinationPath = requestDetails.getDestinationPath();//requested destination path
+				storageJob.setDestinationPath(destinationPath);
+				String outputFolder = requestDetails.getOutputFolder();
+				storageJob.setOutputFolder(outputFolder);
+				String targetLocationPath = getRestoreLocation(job);
+				storageJob.setTargetLocationPath(targetLocationPath);
 			}
-			else if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.restore_process) {
-				List<Job> dependentJobList = jobUtil.getDependentJobs(job);
-				//destinationPath = dependentJobList.get(0).inputlc.path_prefix;
+			else if(requestedAction == Action.restore_process) {
+				String targetLocationPath = getRestoreLocation(job);
+				storageJob.setTargetLocationPath(targetLocationPath);
 			}
-			storageJob.setDestinationPath(destinationPath);
-			String outputFolder = request.getDetails().getOutputFolder();
-			storageJob.setOutputFolder(outputFolder);
-			storageJob.setTargetLocationPath(destinationPath + java.io.File.separator + outputFolder);
 		}
 		
 		
