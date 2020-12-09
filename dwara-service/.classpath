@@ -40,13 +40,12 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dwara-db"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dwara-dev-tools"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dwara-tape"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/dwara-tape-mocks"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/dwara-videopub"/>
 	<classpathentry kind="src" path="target/generated-sources/annotations">
 		<attributes>
+			<attribute name="ignore_optional_problems" value="true"/>
 			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="ignore_optional_problems" value="true"/>
 			<attribute name="m2e-apt" value="true"/>
 		</attributes>
 	</classpathentry>
