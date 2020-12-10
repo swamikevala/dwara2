@@ -34,7 +34,7 @@ public class JobController {
 		logger.info("/placeholderjob?" + (systemRequestId != null ? "requestId=" + systemRequestId : ""));
 		List<JobResponse> jobResponseList = null;
 		try {
-			jobResponseList = jobService.getJobs(systemRequestId);
+			jobResponseList = jobService.getPlaceholderJobs(systemRequestId);
 		}catch (Exception e) {
 			String errorMsg = "Unable to get Jobs - " + e.getMessage();
 			logger.error(errorMsg, e);
@@ -67,7 +67,7 @@ public class JobController {
 			
 			// TODO - remove this - Hacked for testing - sort this out
 			if(systemRequestId != null && statusList == null)
-				jobResponseList = jobService.getJobs(systemRequestId);
+				jobResponseList = jobService.getPlaceholderJobs(systemRequestId);
 			else
 				jobResponseList = jobService.getJobs(systemRequestId, statusList);
 		}catch (Exception e) {

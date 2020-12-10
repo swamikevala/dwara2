@@ -279,7 +279,7 @@ public class DirectoryWatcher {
     private void invokeIngest(Path child) throws Exception {
 
     	if(child.getNameCount() > 6) { // Expecting child = /data/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1
-    		throw new Exception("Path with more than 6 elements is not supported");
+    		throw new Exception("File Path with more than 6 elements is not supported. Expected something like /data/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1 but actual is " + child);
     	}
     	String path = child.getParent().toString();
     	String artifactName = child.getFileName().toString();

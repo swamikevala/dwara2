@@ -26,7 +26,6 @@ import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
@@ -212,8 +211,7 @@ public class ProcessingJobManager implements Runnable{
 			Processingtask processingtask = getProcessingtask(processingtaskId);
 			
 			Domain domain = null;
-			Artifactclass outputArtifactclass = null;
-			
+/*			Artifactclass outputArtifactclass = null;
 			String outputArtifactclassSuffix = processingtask != null ? processingtask.getOutputArtifactclassSuffix() : null;
 			String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
 			logger.trace("outputArtifactclassSuffix " + outputArtifactclassSuffix);
@@ -232,10 +230,29 @@ public class ProcessingJobManager implements Runnable{
 				logger.error("Unable to get domain from the request");
 				throw new Exception("Unable to get domain from the request");
 			}
-			ArtifactRepository artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-			
+*/
 			Integer inputArtifactId = job.getInputArtifactId();
-			Artifact inputArtifact = (Artifact) artifactRepository.findById(inputArtifactId).get();
+			Artifact inputArtifact = null;
+
+	    	Domain[] domains = Domain.values();
+	   		
+    		for (Domain nthDomain : domains) {
+    			inputArtifact = domainUtil.getDomainSpecificArtifact(nthDomain, inputArtifactId);
+    			if(inputArtifact != null) {
+    				domain = nthDomain;
+    				break;
+    			}
+			}
+			
+    		Artifactclass outputArtifactclass = null;
+			String outputArtifactclassSuffix = processingtask != null ? processingtask.getOutputArtifactclassSuffix() : null;
+			String artifactclassId = inputArtifact.getArtifactclass().getId();
+			logger.trace("outputArtifactclassSuffix " + outputArtifactclassSuffix);
+			if(outputArtifactclassSuffix != null) { // For processing tasks like checksum-gen this will be null...
+				String outputArtifactclassId =  artifactclassId + outputArtifactclassSuffix;
+				logger.trace("outputArtifactclassId " + outputArtifactclassId);
+				outputArtifactclass = configurationTablesUtil.getArtifactclass(outputArtifactclassId);
+			}
 			
 			String inputArtifactName = inputArtifact.getName();
 			Artifactclass inputArtifactclass = inputArtifact.getArtifactclass();

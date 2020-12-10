@@ -14,6 +14,7 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
@@ -86,6 +87,9 @@ public abstract class AbstractStoragetypeJobProcessor {
 	@Autowired
 	private LabelManager labelManager;
 
+	@Autowired
+	private CommandLineExecuter commandLineExecuter;
+	
 	public AbstractStoragetypeJobProcessor() {
 		logger.debug(this.getClass().getName());
 	}
@@ -381,7 +385,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		}
 		
     	Artifact artifact = fileEntityUtil.getArtifact(file, domain); 
-    	
+    	storageJob.getJob().setInputArtifactId(artifact.getId());
 		storageJob.setArtifact(artifact);
 		
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
@@ -415,12 +419,16 @@ public abstract class AbstractStoragetypeJobProcessor {
 	protected void afterRestore(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception {
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		
+		commandLineExecuter.executeCommand("chmod -R 777 " + storageJob.getTargetLocationPath());
+		
 		Request request = storageJob.getJob().getRequest();
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 	
 		//if(requestedAction == Action.ingest || (requestedAction == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(request.getDetails().getFlowName())))
 		if(requestedAction == Action.ingest)
 			updateFileVolumeTable(selectedStorageJob, storageResponse); // update the verified date here...
+		
+		
 		
 		if(requestedAction == Action.restore) { // for ingest and restore_process this happens in the scheduler... 
 			// upon completion moving the file to the original requested dest path		

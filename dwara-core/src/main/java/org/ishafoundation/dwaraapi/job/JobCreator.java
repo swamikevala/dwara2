@@ -137,15 +137,19 @@ public class JobCreator {
 	 */
 	
 	public List<Job> createDependentJobs(Job job){
+		List<Job> jobsCreated = new ArrayList<Job>();
 		
 		Flowelement flowelement = job.getFlowelement();
-		Flow flow = flowelement.getFlow();
-		Request request = job.getRequest();
+		if(flowelement != null) {
+			Flow flow = flowelement.getFlow();
+			Request request = job.getRequest();
+			
+			logger.trace("Creating dependent job(s) for sourceJob " + job.getId() + " with flowelement " + flowelement);
+			iterateDependentFlowelements(job, request, flow, flowelement, jobsCreated);
+			logger.trace("Dependent job(s) created for " + job.getId() + " - " + jobsCreated);
+		}else
+			logger.trace(job.getId() + " not a complex task and doesnt involve a flow");
 		
-		logger.trace("Creating dependent job(s) for sourceJob " + job.getId() + " with flowelement " + flowelement);
-		List<Job> jobsCreated = new ArrayList<Job>();
-		iterateDependentFlowelements(job, request, flow, flowelement, jobsCreated);
-		logger.trace("Dependent job(s) created for " + job.getId() + " - " + jobsCreated);
 		return jobsCreated;
 	}
 
@@ -153,9 +157,10 @@ public class JobCreator {
 		List<Flowelement> dependentFlowelementList = getDependentFlowelements(flow, flowelement);
 		logger.trace("Dependent Flowelements of flowelement " + flowelement.getId() + " - " + dependentFlowelementList);
 		
-		int dependentJobInputArtifactId = job.getOutputArtifactId() != null ? job.getOutputArtifactId() : job.getInputArtifactId();
-		
-		Artifact dependentJobInputArtifact = domainUtil.getDomainSpecificArtifact(dependentJobInputArtifactId);
+		Integer dependentJobInputArtifactId = job.getOutputArtifactId() != null ? job.getOutputArtifactId() : job.getInputArtifactId();
+		Artifact dependentJobInputArtifact = null;
+		if(dependentJobInputArtifactId != null)
+			dependentJobInputArtifact = domainUtil.getDomainSpecificArtifact(dependentJobInputArtifactId);
 		
 		for (Flowelement nthDependentFlowelement : dependentFlowelementList) {
 			logger.trace("Now processing - " + nthDependentFlowelement);
@@ -165,7 +170,8 @@ public class JobCreator {
 				logger.trace("References a flow again " + flowRef.getId());
 				iterateDependentFlowelements(job, request, flowRef, nthDependentFlowelement, jobList);
 			} else {
-				jobList.addAll(createJobs(nthDependentFlowelement, job, request, dependentJobInputArtifact.getArtifactclass().getId(), dependentJobInputArtifact));
+				String artifactclassId = dependentJobInputArtifact!=null ? dependentJobInputArtifact.getArtifactclass().getId() : null;
+				jobList.addAll(createJobs(nthDependentFlowelement, job, request, artifactclassId, dependentJobInputArtifact));
 			}
 		}
 	}

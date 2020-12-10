@@ -54,17 +54,12 @@ public class JobService extends DwaraService{
 		return jobResponseList;
 	}
 	
-	public List<JobResponse> getJobs(int systemRequestId){
+	public List<JobResponse> getPlaceholderJobs(int systemRequestId){
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
 		
 		Request request = requestDao.findById(systemRequestId).get();
-		Action requestAction = request.getActionId();
-		
-		List<Job> jobList = null;
-		if(requestAction == Action.ingest) {
-			jobList = jobManipulator.getJobs(request);
-		} else 
-			jobList = jobDao.findAllByRequestId(systemRequestId);
+				
+		List<Job> jobList = jobManipulator.getJobs(request);
 		
 		for (Job job : jobList) {
 			JobResponse jobResponse = frameJobResponse(job);
@@ -91,11 +86,13 @@ public class JobService extends DwaraService{
 		}else {
 			jobResponse.setId(jobId + "");
 			List<Integer> jobDependencyIdsAsIntegerList = job.getDependencies();
-			List<String> jobDependencyIdsAsStringList = new ArrayList<>(jobDependencyIdsAsIntegerList.size());
-			for (Integer nthJobDependencyIdAsInteger : jobDependencyIdsAsIntegerList) { 
-			  jobDependencyIdsAsStringList.add(String.valueOf(nthJobDependencyIdAsInteger)); 
+			if(jobDependencyIdsAsIntegerList != null) {
+				List<String> jobDependencyIdsAsStringList = new ArrayList<>(jobDependencyIdsAsIntegerList.size());
+				for (Integer nthJobDependencyIdAsInteger : jobDependencyIdsAsIntegerList) { 
+				  jobDependencyIdsAsStringList.add(String.valueOf(nthJobDependencyIdAsInteger)); 
+				}
+				jobResponse.setDependencies(jobDependencyIdsAsStringList);
 			}
-			jobResponse.setDependencies(jobDependencyIdsAsStringList);
 		}
 		jobResponse.setRequestId(job.getRequest().getId());
 		Action storagetaskAction = job.getStoragetaskActionId();
