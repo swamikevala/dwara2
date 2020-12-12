@@ -10,5 +10,4 @@ public interface ActionArtifactclassFlowDao extends CrudRepository<ActionArtifac
 	
 	List<ActionArtifactclassFlow> findAllByIdArtifactclassIdAndActionIdAndActiveTrue(String artifactclassId, String actionId);
 	
-	ActionArtifactclassFlow findByActionIdAndFlowIdAndActiveTrue(String actionId, String flowId);
 }
