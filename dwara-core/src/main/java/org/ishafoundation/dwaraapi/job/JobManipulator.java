@@ -90,7 +90,7 @@ public class JobManipulator {
 			
 			if(actionArtifactclassFlowList != null) {
 				for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
-					String nthFlowId = actionArtifactclassFlow.getFlow().getId();
+					String nthFlowId = actionArtifactclassFlow.getId().getFlowId();
 					logger.trace("flow " + nthFlowId);
 					iterateFlow(request, sourceArtifactclassId, nthFlowId, null, alreadyCreatedJobList, jobList);
 				}

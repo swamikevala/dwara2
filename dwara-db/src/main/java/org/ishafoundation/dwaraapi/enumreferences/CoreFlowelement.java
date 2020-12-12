@@ -9,8 +9,8 @@ public enum CoreFlowelement {
 	core_archive_flow_restore(-3, "core-archive-flow", "restore", null, new Integer[] {-2}, null, -3, true, false),
 	core_archive_flow_checksum_verify(-4, "core-archive-flow", null, "checksum-verify", new Integer[] {-1,-3}, null, -4, true, false),
 	
-	core_restore_checksumverify_flow_restore(-11, "core-restore-checksumverify-flow", "restore", null, null, null, -11, true, false),
-	core_restore_checksumverify_flow_checksum_verify(-12, "core-restore-checksumverify-flow", null, "checksum-verify", new Integer[] {-11}, null, -12, true, false);
+	core_restore_verify_flow_restore(-11, "core-restore-verify-flow", "restore", null, null, null, -11, true, false),
+	core_restore_verify_flow_checksum_verify(-12, "core-restore-verify-flow", null, "checksum-verify", new Integer[] {-11}, null, -12, true, false);
 
 	private int id;
 	private String flowId;

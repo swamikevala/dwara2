@@ -97,8 +97,7 @@ public class JobCreator {
 			
 			if(actionArtifactclassFlowList != null) {
 				for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
-					Flow nthFlow = actionArtifactclassFlow.getFlow();
-					String nthFlowId = nthFlow.getId();
+					String nthFlowId = actionArtifactclassFlow.getId().getFlowId();
 					logger.trace("flow " + nthFlowId);
 					jobList.addAll(iterateFlow(request, sourceArtifactclassId, sourceArtifact, nthFlowId));
 				}
