@@ -24,7 +24,6 @@ import javax.persistence.Transient;
 
 import org.hibernate.annotations.Type;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;

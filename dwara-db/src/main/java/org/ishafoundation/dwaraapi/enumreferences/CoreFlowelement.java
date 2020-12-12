@@ -79,4 +79,13 @@ public enum CoreFlowelement {
 	    }
 		return coreFlowelementList;
 	}
+	
+	public static CoreFlowelement findById(int flowelementId){
+	    for (CoreFlowelement nthCoreFlowelement : CoreFlowelement.values()) {
+	        if (nthCoreFlowelement.getId() == flowelementId) {
+	        	return nthCoreFlowelement;
+	        }
+	    }
+		return null;
+	}
 }

@@ -147,7 +147,10 @@ public class StoragetypeJobDelegator {
 								//last write job on the volume needed by this job
 								Job lastWriteJob = lastArtifactOnVolume.getJob();
 								if(!jobUtil.isWriteJobAndItsDependentJobsComplete(lastWriteJob)) {
-									logger.info("Skipping "  + job.getId() + " as previous write job' " + lastWriteJob.getId() + " dependent jobs are yet to complete");
+									String msg = "Skipping "  + job.getId() + " as previous write job' " + lastWriteJob.getId() + " and/or its dependent jobs are yet to complete";
+									logger.info(msg);
+									job.setMessage(msg);
+									jobDao.save(job);
 									continue;
 								}
 							}

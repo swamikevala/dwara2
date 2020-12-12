@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
@@ -22,9 +21,6 @@ public class JobUtil {
 	private static final Logger logger = LoggerFactory.getLogger(JobUtil.class);
 	
 	@Autowired
-	private FlowelementDao flowelementDao;
-	
-	@Autowired
 	private JobDao jobDao;
 	
 	@Autowired
@@ -34,7 +30,7 @@ public class JobUtil {
 	public boolean isWriteJobAndItsDependentJobsComplete(Job writeJob){
 		boolean isWriteJobReadyToBeExecuted = true;
 		
-		Flowelement fe = flowelementDao.findById(writeJob.getFlowelementId()).get(); 
+		Flowelement fe = flowelementUtil.findById(writeJob.getFlowelementId()); 
 		
 		List<Flowelement> flowelementList = flowelementUtil.getAllFlowElements(fe.getFlowId());
 		Map<Integer, List<Flowelement>> flowelementId_DependentFlowelements_Map = new HashMap<Integer, List<Flowelement>>();

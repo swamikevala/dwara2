@@ -8,7 +8,6 @@ import java.util.Optional;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
@@ -46,9 +45,6 @@ public class JobManipulator {
 
 	@Autowired
 	private ActionArtifactclassFlowDao actionArtifactclassFlowDao;
-
-	@Autowired
-	private FlowelementDao flowelementDao;
 
 	@Autowired
 	private ArtifactclassVolumeDao artifactclassVolumeDao;
@@ -147,7 +143,7 @@ public class JobManipulator {
 				String outputArtifactclassSuffix = null;
 				
 				for (Integer nthFlowelementDependencyId : flowelementDepsList) {
-					Flowelement prereqFlowelement = flowelementDao.findById(nthFlowelementDependencyId).get();
+					Flowelement prereqFlowelement = flowelementUtil.findById(nthFlowelementDependencyId);
 					
 					Action storagetaskDependency = prereqFlowelement.getStoragetaskActionId();  
 					if(storagetaskDependency != null) // Is the dependency a Storage task?
@@ -218,7 +214,7 @@ public class JobManipulator {
 						if(dependencies != null) {
 							uIdDependencies = new ArrayList<String>();
 							for (Integer dependentFlowelementId : dependencies) {
-								Flowelement dependentFlowelement = flowelementDao.findById(dependentFlowelementId).get();
+								Flowelement dependentFlowelement = flowelementUtil.findById(dependentFlowelementId);
 
 								String copyId = "";
 								if(dependentFlowelement.getStoragetaskActionId() != null)
@@ -267,7 +263,7 @@ public class JobManipulator {
 					if(dependencies != null) {
 						uIdDependencies = new ArrayList<String>();
 						for (Integer dependentFlowelementId : dependencies) {
-							Flowelement dependentFlowelement = flowelementDao.findById(dependentFlowelementId).get();
+							Flowelement dependentFlowelement = flowelementUtil.findById(dependentFlowelementId);
 
 							String copyId = "";
 							if(dependentFlowelement.getStoragetaskActionId() != null)

@@ -11,7 +11,6 @@ import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Flow;
@@ -49,9 +48,6 @@ public class JobCreator {
 
 	@Autowired
 	private ActionArtifactclassFlowDao actionArtifactclassFlowDao;
-
-	@Autowired
-	private FlowelementDao flowelementDao;
 
 	@Autowired
 	private ArtifactclassVolumeDao artifactclassVolumeDao;
@@ -154,7 +150,7 @@ public class JobCreator {
 		
 		
 		if(flowelementId != null) {
-			Flowelement flowelement = flowelementDao.findById(flowelementId).get();
+			Flowelement flowelement = flowelementUtil.findById(flowelementId);
 			String flowId = flowelement.getFlowId();
 			Request request = job.getRequest();
 			
@@ -219,7 +215,7 @@ public class JobCreator {
 			// Now check if any of the dependency is a storage task
 			if(flowelementDependenciesList != null) {
 				for (Integer nthFlowelementDependencyId : flowelementDependenciesList) {
-					Flowelement prereqFlowelement = flowelementDao.findById(nthFlowelementDependencyId).get();
+					Flowelement prereqFlowelement = flowelementUtil.findById(nthFlowelementDependencyId);
 					Action storagetaskDependency = prereqFlowelement.getStoragetaskActionId();  
 					if(storagetaskDependency != null) { // Is the dependency a Storage task?
 						processingtaskWithDependencyStoragetask = true;
@@ -346,7 +342,7 @@ public class JobCreator {
 				
 				logger.trace("Now verifying if flowelement " + nthFlowelement + "'s dependency flowelement " + nthPreRequesiteFlowelementId + " has job created and completed");
 				if(groupVolumeId == null) {
-					Flowelement prereqFlowelement = flowelementDao.findById(nthPreRequesiteFlowelementId).get();
+					Flowelement prereqFlowelement = flowelementUtil.findById(nthPreRequesiteFlowelementId);
 					if(prereqFlowelement.getStoragetaskActionId() != null && sourceJob.getGroupVolume() != null)
 						groupVolumeId = sourceJob.getGroupVolume().getId();
 					logger.trace("Group Volume Id " + groupVolumeId);

@@ -13,7 +13,6 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
@@ -85,9 +84,6 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private LabelManager labelManager;
-
-	@Autowired
-	private CommandLineExecuter commandLineExecuter;
 	
 	public AbstractStoragetypeJobProcessor() {
 		logger.debug(this.getClass().getName());
@@ -418,7 +414,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	protected void afterRestore(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception {
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		
-		commandLineExecuter.executeCommand("chmod -R 777 " + storageJob.getTargetLocationPath());
+		//commandLineExecuter.executeCommand("chmod -R 777 " + storageJob.getTargetLocationPath());
 		
 		Request request = storageJob.getJob().getRequest();
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
