@@ -7,7 +7,7 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface MockDataTransferElementDao extends CrudRepository<MockDataTransferElement,Integer> {
 
-	MockDataTransferElement findBySNo(int sNo);
+	MockDataTransferElement findBysNum(int sNo);
 	
 	MockDataTransferElement findByTapedriveUid(String tapedriveUid);
 	

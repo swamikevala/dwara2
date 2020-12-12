@@ -4,7 +4,6 @@ package org.ishafoundation.dwaraapi.storage.storagetask;
 import java.io.File;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
@@ -17,6 +16,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.File
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
@@ -45,7 +45,7 @@ public class Restore extends AbstractStoragetaskAction{
 		Request request = job.getRequest();
 		RequestDetails requestDetails = request.getDetails();
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
-		if(requestedAction == Action.restore || (requestedAction == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(requestDetails.getFlowName()))) {
+		if(requestedAction == Action.restore || (requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlow()))){
 			String destinationPath = requestDetails.getDestinationPath();//requested destination path
 			String outputFolder = requestDetails.getOutputFolder();
 			restoreLocation = destinationPath + java.io.File.separator + outputFolder + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier();
@@ -165,8 +165,8 @@ public class Restore extends AbstractStoragetaskAction{
 			if(verify == null)
 				verify = volume.getArchiveformat().isRestoreVerify();
 			storageJob.setRestoreVerify(verify);
-			
-			if(requestedAction == Action.restore || (requestedAction == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(requestDetails.getFlowName()))) {
+
+			if(requestedAction == Action.restore || (requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlow()))){
 //			if(requestedAction == Action.restore && !storageJob.isRestoreVerify()) {
 				String destinationPath = requestDetails.getDestinationPath();//requested destination path
 				storageJob.setDestinationPath(destinationPath);

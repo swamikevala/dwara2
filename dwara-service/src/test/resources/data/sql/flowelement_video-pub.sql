@@ -33,11 +33,7 @@ CREATE TABLE `flowelement` (
   `flow_id` varchar(255) DEFAULT NULL,
   `flow_ref_id` varchar(255) DEFAULT NULL,
   `deprecated` bit(1) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `FKg569mrqbx358sk1yjbt597yor` (`flow_id`),
-  KEY `FK15fjogr6a6dv8j94xv7h82u34` (`flow_ref_id`),
-  CONSTRAINT `FK15fjogr6a6dv8j94xv7h82u34` FOREIGN KEY (`flow_ref_id`) REFERENCES `flow` (`id`),
-  CONSTRAINT `FKg569mrqbx358sk1yjbt597yor` FOREIGN KEY (`flow_id`) REFERENCES `flow` (`id`)
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

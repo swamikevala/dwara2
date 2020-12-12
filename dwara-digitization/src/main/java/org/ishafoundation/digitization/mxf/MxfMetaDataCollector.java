@@ -84,15 +84,15 @@ public class MxfMetaDataCollector implements IProcessingTask {
         int n = 0;
         long count = 1;
         while (-1 != (n = is.read(buffer))) {
-        	System.out.println(count);
+        	logger.trace(""+count);
         	byteArrayOutputStream.write(buffer, 0, n);
         	byte[] data = byteArrayOutputStream.toByteArray();
         	int headerLength = HexPatternFinderUtil.indexOf(data, headerIdentifierPattern);
         	
         	if(headerLength != -1) {
-        		System.out.println("found it after " + count + " loops");
+        		logger.trace("found it after " + count + " loops");
             	byte[] headerData = new byte[headerLength];
-            	System.out.println("headerLength " + headerLength);
+            	logger.trace("headerLength " + headerLength);
             	ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data);
             	InputStream bis = new BufferedInputStream(byteArrayInputStream, bufferSize);
             	IOUtils.read(bis, headerData, 0, headerLength);
@@ -100,7 +100,7 @@ public class MxfMetaDataCollector implements IProcessingTask {
         		break;
         	}
         	if(count == 5) {
-        		System.out.println("Couldnt find header even after " + count + " loops. Is it even possible?");
+        		logger.trace("Couldnt find header even after " + count + " loops. Is it even possible?");
         		break;
         	}
         	count += 1;
@@ -113,17 +113,17 @@ public class MxfMetaDataCollector implements IProcessingTask {
     	byte[] footerIdentifierPattern = Hex.decodeHex(footerHexPattern);
 
         for (int count = 1; count <= 5; count++) {
-        	System.out.println(count);
+        	logger.trace(""+count);
         	long chunkByteSize = bufferSize * count;
         	
         	byte[] data = extractFooterChunk(sourceFilePathname, srcFileSize - chunkByteSize);
         	int footerIndexPos = HexPatternFinderUtil.indexOf(data, footerIdentifierPattern);
-        	System.out.println("footerIndexPos " + footerIndexPos);
+        	logger.trace("footerIndexPos " + footerIndexPos);
         	if(footerIndexPos != -1) {
-        		System.out.println("found it after " + count + " loops");
+        		logger.trace("found it after " + count + " loops");
             	
             	int footerLength = (int) (chunkByteSize - footerIndexPos);
-            	System.out.println("footerLength " + footerLength);
+            	logger.trace("footerLength " + footerLength);
             	
             	byte[] footerData = new byte[footerLength];
             	
@@ -137,7 +137,7 @@ public class MxfMetaDataCollector implements IProcessingTask {
         		break;
         	}
         	else {
-        		System.out.println("couldnt found the footer. retrying again...");
+        		logger.trace("couldnt found the footer. retrying again...");
         	}
         }
 	}

@@ -421,7 +421,7 @@ public class TapeJobSelector {
 			StorageJob tapeJob = (StorageJob) iterator.next();
 			Action action = tapeJob.getJob().getStoragetaskActionId();
 			String storagetaskAction = marshallKey(action);
-			System.out.println(storagetaskAction + tapeJob.getJob().getId());
+			logger.trace(storagetaskAction + tapeJob.getJob().getId());
 			if(storagetaskAction_storagetaskActionGroupedJobs.containsKey(storagetaskAction)) {
 				List<StorageJob> groupedOnActionJobsList = storagetaskAction_storagetaskActionGroupedJobs.get(storagetaskAction);
 				groupedOnActionJobsList.add(tapeJob);

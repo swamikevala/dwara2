@@ -25,8 +25,10 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
+import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
@@ -64,6 +66,9 @@ public class JobCreator {
 	private DomainUtil domainUtil;
 	
 	@Autowired
+	private FlowelementUtil flowelementUtil;
+	
+	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
 
 	@Autowired
@@ -83,18 +88,24 @@ public class JobCreator {
 			logger.trace("Complex action");
 			List<ActionArtifactclassFlow> actionArtifactclassFlowList = null;
 			String sourceArtifactclassId = null;
-			if(action.getId().equals(Action.ingest.name())) {
+			if(requestedBusinessAction == Action.ingest) {
 				sourceArtifactclassId = sourceArtifact.getArtifactclass().getId();
 				// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
-				actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByIdArtifactclassIdOrIdArtifactclassIdAndActionIdAndActiveTrue("_all_", sourceArtifactclassId, requestedBusinessAction.name()); //
-			}else if(action.getId().equals(Action.restore_process.name())) {
-				actionArtifactclassFlowList = new ArrayList<ActionArtifactclassFlow>();
-				actionArtifactclassFlowList.add(actionArtifactclassFlowDao.findByActionIdAndFlowIdAndActiveTrue(requestedBusinessAction.name(), DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME)); //
+				actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByIdArtifactclassIdAndActionIdAndActiveTrue(sourceArtifactclassId, requestedBusinessAction.name()); //
+			}else if(requestedBusinessAction == Action.restore_process) {
+				if(request.getDetails().getFlow().equals(CoreFlow.core_restore_checksumverify_flow.getFlowName()))
+					jobList.addAll(iterateFlow(request, sourceArtifactclassId, sourceArtifact, CoreFlow.core_restore_checksumverify_flow.getFlowName()));
+//				actionArtifactclassFlowList = new ArrayList<ActionArtifactclassFlow>();
+//				actionArtifactclassFlowList.add(actionArtifactclassFlowDao.findByActionIdAndFlowIdAndActiveTrue(requestedBusinessAction.name(), DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME)); //
 			}
-			for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
-				String nthFlowId = actionArtifactclassFlow.getFlow().getId();
-				logger.trace("flow " + nthFlowId);
-				jobList.addAll(iterateFlow(request, sourceArtifactclassId, sourceArtifact, nthFlowId));
+			
+			if(actionArtifactclassFlowList != null) {
+				for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
+					Flow nthFlow = actionArtifactclassFlow.getFlow();
+					String nthFlowId = nthFlow.getId();
+					logger.trace("flow " + nthFlowId);
+					jobList.addAll(iterateFlow(request, sourceArtifactclassId, sourceArtifact, nthFlowId));
+				}
 			}
 		}
 		else if(Actiontype.storage_task == action.getType()){
@@ -106,14 +117,14 @@ public class JobCreator {
 		return jobList;
 	}
 
-	private List<Job> iterateFlow(Request request, String artifactclassId, Artifact artifact, String nthFlowId) {
+	private List<Job> iterateFlow(Request request, String artifactclassId, Artifact artifact, String flowId) {
 		List<Job> jobsCreated = new ArrayList<Job>();
 		
-		logger.trace("Iterating flow " + nthFlowId);
+		logger.trace("Iterating flow " + flowId);
 		logger.trace("artifactclassId " + artifactclassId);
 		logger.trace("artifactId " + (artifact != null ? artifact.getId() : null));
 		//  get all the flow elements for the flow
-		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc(nthFlowId);
+		List<Flowelement> flowelementList = flowelementUtil.getAllFlowElements(flowId);
 		for (Flowelement nthFlowelement : flowelementList) {
 			logger.trace("Flowelement " + nthFlowelement.getId());
 			
@@ -125,6 +136,7 @@ public class JobCreator {
 		return jobsCreated;
 	}
 	
+
 	/**
 	 * Naming convention - 
 	 * Dependencies - For checksum-verify flowelement/job, checksum-gen and restore are dependencies/prerequisites
@@ -138,14 +150,16 @@ public class JobCreator {
 	
 	public List<Job> createDependentJobs(Job job){
 		List<Job> jobsCreated = new ArrayList<Job>();
+		Integer flowelementId = job.getFlowelementId();
 		
-		Flowelement flowelement = job.getFlowelement();
-		if(flowelement != null) {
-			Flow flow = flowelement.getFlow();
+		
+		if(flowelementId != null) {
+			Flowelement flowelement = flowelementDao.findById(flowelementId).get();
+			String flowId = flowelement.getFlowId();
 			Request request = job.getRequest();
 			
 			logger.trace("Creating dependent job(s) for sourceJob " + job.getId() + " with flowelement " + flowelement);
-			iterateDependentFlowelements(job, request, flow, flowelement, jobsCreated);
+			iterateDependentFlowelements(job, request, flowId, flowelement, jobsCreated);
 			logger.trace("Dependent job(s) created for " + job.getId() + " - " + jobsCreated);
 		}else
 			logger.trace(job.getId() + " not a complex task and doesnt involve a flow");
@@ -153,8 +167,8 @@ public class JobCreator {
 		return jobsCreated;
 	}
 
-	private void iterateDependentFlowelements(Job job, Request request, Flow flow, Flowelement flowelement, List<Job> jobList) {
-		List<Flowelement> dependentFlowelementList = getDependentFlowelements(flow, flowelement);
+	private void iterateDependentFlowelements(Job job, Request request, String flowId, Flowelement flowelement, List<Job> jobList) {
+		List<Flowelement> dependentFlowelementList = getDependentFlowelements(flowId, flowelement);
 		logger.trace("Dependent Flowelements of flowelement " + flowelement.getId() + " - " + dependentFlowelementList);
 		
 		Integer dependentJobInputArtifactId = job.getOutputArtifactId() != null ? job.getOutputArtifactId() : job.getInputArtifactId();
@@ -164,11 +178,11 @@ public class JobCreator {
 		
 		for (Flowelement nthDependentFlowelement : dependentFlowelementList) {
 			logger.trace("Now processing - " + nthDependentFlowelement);
-			Flow flowRef = nthDependentFlowelement.getFlowRef();
+			String flowRefId = nthDependentFlowelement.getFlowRefId();
 			
-			if(flowRef != null) { // If the flowelement has a flowref, that means one of this flowelement dependency is a processing task generating an output artifact, that is to be consumed as input
-				logger.trace("References a flow again " + flowRef.getId());
-				iterateDependentFlowelements(job, request, flowRef, nthDependentFlowelement, jobList);
+			if(flowRefId != null) { // If the flowelement has a flowref, that means one of this flowelement dependency is a processing task generating an output artifact, that is to be consumed as input
+				logger.trace("References a flow again " + flowRefId);
+				iterateDependentFlowelements(job, request, flowRefId, nthDependentFlowelement, jobList);
 			} else {
 				String artifactclassId = dependentJobInputArtifact!=null ? dependentJobInputArtifact.getArtifactclass().getId() : null;
 				jobList.addAll(createJobs(nthDependentFlowelement, job, request, artifactclassId, dependentJobInputArtifact));
@@ -218,7 +232,7 @@ public class JobCreator {
 		// But we should verify if they are not already created and create here... - 
 		// We might have race conditions with write completion thread creating one and just at the same time this one does too... Need to ensure that doesnt happen...
 		if(storagetaskAction != null || processingtaskWithDependencyStoragetask) {
-			if(sourceJob == null && request.getActionId() == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(request.getDetails().getFlowName())){
+			if(sourceJob == null && request.getActionId() == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlow())){
 				Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
 				job.setStoragetaskActionId(storagetaskAction);
 				job = saveJob(job);
@@ -327,7 +341,7 @@ public class JobCreator {
 		List<Integer> preRequesiteFlowelements = nthFlowelement.getDependencies();
 		if(preRequesiteFlowelements != null) {
 			for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
-				if(sourceJob != null && sourceJob.getFlowelement().getId() == nthPreRequesiteFlowelementId)
+				if(sourceJob != null && sourceJob.getFlowelementId() == nthPreRequesiteFlowelementId)
 					continue;
 				
 				logger.trace("Now verifying if flowelement " + nthFlowelement + "'s dependency flowelement " + nthPreRequesiteFlowelementId + " has job created and completed");
@@ -357,7 +371,7 @@ public class JobCreator {
 	private Job createJob(Flowelement nthFlowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact) {
 		Job job = new Job();
 		job.setInputArtifactId(artifact != null ? artifact.getId() : null);
-		job.setFlowelement(nthFlowelement);
+		job.setFlowelementId(nthFlowelement.getId());
 		job.setRequest(request);				
 		job.setCreatedAt(LocalDateTime.now());
 		
@@ -377,15 +391,15 @@ public class JobCreator {
 	}
 	
 	// public so can be used in unit testing
-	public List<Flowelement> getDependentFlowelements(Flow flow, Flowelement flowelement) {
-		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc(flow.getId());
+	public List<Flowelement> getDependentFlowelements(String flowId, Flowelement flowelement) {
+		List<Flowelement> flowelementList = flowelementUtil.getAllFlowElements(flowId);
 		List<Flowelement> dependentFlowelementList = new ArrayList<Flowelement>();
 		for (Flowelement nthFlowelement : flowelementList) {
 			if(nthFlowelement.getId() == flowelement.getId())
 				continue;
 			
 			List<Integer> preReqs = nthFlowelement.getDependencies();
-			if(flowelement.getFlowRef() != null) {
+			if(flowelement.getFlowRefId() != null) {
 				if(preReqs == null)
 					dependentFlowelementList.add(nthFlowelement);
 			}
