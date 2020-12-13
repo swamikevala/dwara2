@@ -37,13 +37,13 @@ public class MockTapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl {
 	
 	@Override
 	public boolean load(String tapeLibraryName, int seSNo, int driveSNo) {
-		MockStorageElement mockStorageElement= mockStorageElementDao.findBySNo(seSNo);
+		MockStorageElement mockStorageElement= mockStorageElementDao.findBysNo(seSNo);
 		String volumeTag = mockStorageElement.getVolumeTag();
 		mockStorageElement.setEmpty(true);
 		mockStorageElement.setVolumeTag(null);
 		mockStorageElementDao.save(mockStorageElement);
 		
-		MockDataTransferElement mockDataTransferElement = mockDataTransferElementDao.findBySNo(driveSNo);
+		MockDataTransferElement mockDataTransferElement = mockDataTransferElementDao.findBysNum(driveSNo);
 		mockDataTransferElement.setStorageElementNo(seSNo);
 		mockDataTransferElement.setEmpty(false);
 		mockDataTransferElement.setVolumeTag(volumeTag);
@@ -63,7 +63,7 @@ public class MockTapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl {
 
 	@Override
 	public boolean unload(String tapeLibraryName, int seSNo, int driveSNo) {
-		MockDataTransferElement mockDataTransferElement = mockDataTransferElementDao.findBySNo(driveSNo);
+		MockDataTransferElement mockDataTransferElement = mockDataTransferElementDao.findBysNum(driveSNo);
 		String volumeTag = mockDataTransferElement.getVolumeTag();
 		
 		mockDataTransferElement.setStorageElementNo(null);
@@ -83,7 +83,7 @@ public class MockTapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl {
 		mockDataTransferElementDao.save(mockDataTransferElement);
 
 
-		MockStorageElement mockStorageElement= mockStorageElementDao.findBySNo(seSNo);
+		MockStorageElement mockStorageElement= mockStorageElementDao.findBysNo(seSNo);
 		mockStorageElement.setEmpty(false);
 		mockStorageElement.setVolumeTag(volumeTag);
 		mockStorageElementDao.save(mockStorageElement);

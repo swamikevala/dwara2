@@ -100,9 +100,7 @@ public class JobService extends DwaraService{
 			jobResponse.setStoragetaskAction(storagetaskAction.name());
 		String processingtaskId = job.getProcessingtaskId();
 		jobResponse.setProcessingTask(processingtaskId);
-		Flowelement flowelement = job.getFlowelement();
-		if(flowelement != null)
-			jobResponse.setFlowelementId(flowelement.getId());
+			jobResponse.setFlowelementId(job.getFlowelementId());
 		jobResponse.setInputArtifactId(job.getInputArtifactId());
 		jobResponse.setOutputArtifactId(job.getOutputArtifactId());
 		

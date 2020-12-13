@@ -24,7 +24,6 @@ import javax.persistence.Transient;
 
 import org.hibernate.annotations.Type;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -54,8 +53,10 @@ public class Job {
 	@Column(name="processingtask_id")
 	private String processingtaskId;
 	
-	@ManyToOne(fetch = FetchType.LAZY)
-    private Flowelement flowelement;
+//	@ManyToOne(fetch = FetchType.LAZY)
+//    private Flowelement flowelement;
+	@Column(name="flowelement_id")
+	private Integer flowelementId;
 	
 	@Type(type = "json")
 	@Column(name="dependencies", columnDefinition = "json")
@@ -140,15 +141,23 @@ public class Job {
 	public void setProcessingtaskId(String processingtaskId) {
 		this.processingtaskId = processingtaskId;
 	}
+//
+//	public Flowelement getFlowelement() {
+//		return flowelement;
+//	}
+//
+//	public void setFlowelement(Flowelement flowelement) {
+//		this.flowelement = flowelement;
+//	}
 
-	public Flowelement getFlowelement() {
-		return flowelement;
+	public Integer getFlowelementId() {
+		return flowelementId;
 	}
 
-	public void setFlowelement(Flowelement flowelement) {
-		this.flowelement = flowelement;
+	public void setFlowelementId(Integer flowelementId) {
+		this.flowelementId = flowelementId;
 	}
-
+	
 	public List<Integer> getDependencies() {
 		return dependencies;
 	}

@@ -7,7 +7,7 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface MockStorageElementDao extends CrudRepository<MockStorageElement,Integer> {
 
-	MockStorageElement findBySNo(int sNo);
+	MockStorageElement findBysNo(int sNo);
 	
 	List<MockStorageElement> findAllByTapelibraryUid(String tapelibraryName);
 

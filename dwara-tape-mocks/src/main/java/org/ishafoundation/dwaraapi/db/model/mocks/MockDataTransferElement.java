@@ -25,7 +25,9 @@ public class MockDataTransferElement{// extends DataTransferElement{
 	@OneToOne(cascade = CascadeType.PERSIST)
 	private MockMtStatus mockMtStatus;
 
-	private int sNo;
+	@Column(name="\"s_num\"")
+	private int sNum;
+	
 	private boolean empty;
 	private Integer storageElementNo;
 	private String volumeTag;
@@ -66,11 +68,11 @@ public class MockDataTransferElement{// extends DataTransferElement{
 
 
 	public int getsNo() {
-		return sNo;
+		return sNum;
 	}
 
 	public void setsNo(int sNo) {
-		this.sNo = sNo;
+		this.sNum = sNo;
 	}
 
 	public boolean isEmpty() {

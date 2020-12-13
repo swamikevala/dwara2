@@ -24,10 +24,6 @@ public class ActionArtifactclassFlow {
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("actionId")
 	private Action action;
-
-	@ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("flowId")
-	private Flow flow;
 	
     @Column(name = "active")
     private boolean active;
@@ -38,7 +34,6 @@ public class ActionArtifactclassFlow {
 
 	public ActionArtifactclassFlow(Action action, String artifactclassId, Flow flow) {
 		this.action = action;
-		this.flow = flow;
 		this.id = new ActionArtifactclassFlowKey(action.getId(), artifactclassId, flow.getId());
 	}
 	
@@ -56,14 +51,6 @@ public class ActionArtifactclassFlow {
 
 	public void setAction(Action action) {
 		this.action = action;
-	}
-
-	public Flow getFlow() {
-		return flow;
-	}
-
-	public void setFlow(Flow flow) {
-		this.flow = flow;
 	}
 
 	public boolean isActive() {
@@ -86,12 +73,12 @@ public class ActionArtifactclassFlow {
         return 
         		Objects.equals(action, that.action) &&
         		Objects.equals(id.getArtifactclassId(), that.id.getArtifactclassId()) &&
-                Objects.equals(flow, that.flow);
+                Objects.equals(id.getFlowId(), that.id.getFlowId());
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(action, id.getArtifactclassId(), flow);
+        return Objects.hash(action, id.getArtifactclassId(), id.getFlowId());
     }
 
 }

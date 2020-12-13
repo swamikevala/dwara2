@@ -8,7 +8,6 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface ActionArtifactclassFlowDao extends CrudRepository<ActionArtifactclassFlow,ActionArtifactclassFlowKey> {
 	
-	List<ActionArtifactclassFlow> findAllByIdArtifactclassIdOrIdArtifactclassIdAndActionIdAndActiveTrue(String allArtifactclassId, String artifactclassId, String actionId);
+	List<ActionArtifactclassFlow> findAllByIdArtifactclassIdAndActionIdAndActiveTrue(String artifactclassId, String actionId);
 	
-	ActionArtifactclassFlow findByActionIdAndFlowIdAndActiveTrue(String actionId, String flowId);
 }

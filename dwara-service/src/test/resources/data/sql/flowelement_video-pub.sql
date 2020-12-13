@@ -33,11 +33,7 @@ CREATE TABLE `flowelement` (
   `flow_id` varchar(255) DEFAULT NULL,
   `flow_ref_id` varchar(255) DEFAULT NULL,
   `deprecated` bit(1) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `FKg569mrqbx358sk1yjbt597yor` (`flow_id`),
-  KEY `FK15fjogr6a6dv8j94xv7h82u34` (`flow_ref_id`),
-  CONSTRAINT `FK15fjogr6a6dv8j94xv7h82u34` FOREIGN KEY (`flow_ref_id`) REFERENCES `flow` (`id`),
-  CONSTRAINT `FKg569mrqbx358sk1yjbt597yor` FOREIGN KEY (`flow_id`) REFERENCES `flow` (`id`)
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -47,7 +43,7 @@ CREATE TABLE `flowelement` (
 
 LOCK TABLES `flowelement` WRITE;
 /*!40000 ALTER TABLE `flowelement` DISABLE KEYS */;
-INSERT INTO `flowelement` VALUES (1,'',NULL,1,'checksum-gen',NULL,'archive-flow',NULL,'\0'),(2,'',NULL,2,NULL,'write','archive-flow',NULL,'\0'),(3,'','[2]',3,NULL,'restore','archive-flow',NULL,'\0'),(4,'','[1, 3]',4,'checksum-verify',NULL,'archive-flow',NULL,'\0'),(5,'',NULL,5,'video-proxy-low-gen',NULL,'video-proxy-flow',NULL,'\0'),(6,'','[5]',6,'video-mam-update',NULL,'video-proxy-flow',NULL,'\0'),(7,'','[5]',7,NULL,NULL,'video-proxy-flow','archive-flow','\0');
+INSERT INTO `flowelement` VALUES (1,'',NULL,1,'checksum-gen',NULL,'archive-flow',NULL,''),(2,'',NULL,2,NULL,'write','archive-flow',NULL,''),(3,'','[2]',3,NULL,'restore','archive-flow',NULL,''),(4,'','[1, 3]',4,'checksum-verify',NULL,'archive-flow',NULL,''),(5,'',NULL,5,'video-proxy-low-gen',NULL,'video-proxy-flow',NULL,'\0'),(6,'','[5]',6,'video-mam-update',NULL,'video-proxy-flow',NULL,'\0'),(7,'','[5]',7,NULL,NULL,'video-proxy-flow','core-archive-flow','\0');
 /*!40000 ALTER TABLE `flowelement` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

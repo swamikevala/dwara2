@@ -8,6 +8,7 @@ import org.ishafoundation.dwaraapi.api.req.restore.PFRestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.FileService;
 import org.slf4j.Logger;
@@ -49,15 +50,25 @@ public class FileController {
 
 	
 	@ApiOperation(value = "Restores the list of files requested from location into the target volume grouped under the output dir")
-	@PostMapping("/file/restore")
+	@PostMapping("/file/restore/v2")
 	public ResponseEntity<RestoreResponse> restore(@RequestBody RestoreUserRequest restoreUserRequest){
+		return restore_internal(restoreUserRequest, Action.restore, null);
+	}
+
+	@ApiOperation(value = "Restores the list of files requested from location into the target volume grouped under the output dir")
+	@PostMapping("/file/restore_process")
+	public ResponseEntity<RestoreResponse> restoreProcess(@RequestBody RestoreUserRequest restoreUserRequest){
+		return restore_internal(restoreUserRequest, Action.restore_process, restoreUserRequest.getFlow());
+	}
+	
+	private ResponseEntity<RestoreResponse> restore_internal(RestoreUserRequest restoreUserRequest, Action action, String flow){		
 		RestoreResponse restoreResponse = null;
 		try {
-			restoreResponse = fileService.restore(restoreUserRequest);
+			restoreResponse = fileService.restore(restoreUserRequest, action, flow);
 		}catch (Exception e) {
-			String errorMsg = "Unable to get data for ltowala - " + e.getMessage();
+			String errorMsg = "Unable to restore - " + e.getMessage();
 			logger.error(errorMsg, e);
-
+	
 			if(e instanceof DwaraException)
 				throw (DwaraException) e;
 			else
@@ -66,7 +77,7 @@ public class FileController {
 
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body(restoreResponse);
 	}
-	
+
 	@ApiOperation(value = "Restores the list of files requested from location into the target volume grouped under the output dir")
 	@PostMapping("/file/partialFileRestore")
 	public ResponseEntity<RestoreResponse> partialFileRestore(@RequestBody PFRestoreUserRequest pfRestoreUserRequest){

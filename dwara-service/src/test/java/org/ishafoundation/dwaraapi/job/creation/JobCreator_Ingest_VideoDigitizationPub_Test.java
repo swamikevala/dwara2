@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -113,6 +114,8 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends JobCreator_Inge
 		/**
 		 * Now run proxy job so it generates output aritifact
 		 */
+		// proxy job is on_hold now release it first 
+		updateJobStatus(9, Status.queued);		
 		callJobManagerAndStatusUpdater(job.getRequest(), artifactId + 1);
 		
 		// TODO - call archive flow...

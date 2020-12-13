@@ -164,15 +164,23 @@ public class JobCreator_Ingest extends DwaraService {
 //    	}
 	}
 
+	protected Job updateJobStatus(int jobId, Status status){
+		Job job = jobDao.findById(jobId).get();
+		return updateJobStatus(job, status);
+	}
+
+	protected Job updateJobStatus(Job job, Status status){
+		job.setStatus(status);
+		return jobDao.save(job);
+	}
+
 	protected Job completeJob(int jobId){
 		Job job = jobDao.findById(jobId).get();
-		job.setStatus(Status.completed);
-		return jobDao.save(job);
+		return completeJob(job);
 	}
 	
 	protected Job completeJob(Job job){
-		job.setStatus(Status.completed);
-		return jobDao.save(job);
+		return updateJobStatus(job, Status.completed);
 	}
 	
 	protected List<Job> completeJobAndCreateDependentJobs(int jobId){

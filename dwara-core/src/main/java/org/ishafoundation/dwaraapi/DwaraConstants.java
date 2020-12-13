@@ -17,8 +17,6 @@ public interface DwaraConstants {
 	public static final String ARTIFACT = "";
 	public static final String FILE = "";
 	
-	public static final String RESTORE_AND_VERIFY_FLOW_NAME = "restore-checksumverify-flow";
-	
 	public static final String DRIVE_BUSY_ERROR = "Device or resource busy";
 
 }

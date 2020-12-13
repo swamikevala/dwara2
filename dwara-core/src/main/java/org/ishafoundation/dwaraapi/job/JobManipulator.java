@@ -8,10 +8,8 @@ import java.util.Optional;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Flow;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassFlow;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
@@ -22,8 +20,10 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
+import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
 import org.slf4j.Logger;
@@ -47,9 +47,6 @@ public class JobManipulator {
 	private ActionArtifactclassFlowDao actionArtifactclassFlowDao;
 
 	@Autowired
-	private FlowelementDao flowelementDao;
-
-	@Autowired
 	private ArtifactclassVolumeDao artifactclassVolumeDao;
 
 	@Autowired
@@ -64,6 +61,9 @@ public class JobManipulator {
 	@Autowired
 	private DomainUtil domainUtil;
 	
+	@Autowired
+	private FlowelementUtil flowelementUtil;
+	
 	public List<Job> getJobs(Request request){
 		Action requestedBusinessAction = request.getActionId();
 		org.ishafoundation.dwaraapi.db.model.master.reference.Action action = configurationTablesUtil.getAction(requestedBusinessAction);
@@ -74,13 +74,26 @@ public class JobManipulator {
 
 		if(Actiontype.complex == action.getType()) {
 			logger.trace("Complex action");
-			String sourceArtifactclassId = request.getDetails().getArtifactclassId();
-			// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
-			List<ActionArtifactclassFlow> actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByIdArtifactclassIdOrIdArtifactclassIdAndActionIdAndActiveTrue("_all_", sourceArtifactclassId, requestedBusinessAction.name()); //
-			for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
-				String nthFlowId = actionArtifactclassFlow.getFlow().getId();
-				logger.trace("flow " + nthFlowId);
-				iterateFlow(request, sourceArtifactclassId, nthFlowId, null, alreadyCreatedJobList, jobList);
+			
+			List<ActionArtifactclassFlow> actionArtifactclassFlowList = null;
+			String sourceArtifactclassId = null;
+			if(requestedBusinessAction == Action.ingest) {
+				sourceArtifactclassId = request.getDetails().getArtifactclassId();
+				// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
+				actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByIdArtifactclassIdAndActionIdAndActiveTrue(sourceArtifactclassId, requestedBusinessAction.name()); //
+			}else if(requestedBusinessAction == Action.restore_process) {
+				if(request.getDetails().getFlow().equals(CoreFlow.core_restore_checksumverify_flow.getFlowName()))
+					iterateFlow(request, sourceArtifactclassId, CoreFlow.core_restore_checksumverify_flow.getFlowName(), null, alreadyCreatedJobList, jobList);
+//				actionArtifactclassFlowList = new ArrayList<ActionArtifactclassFlow>();
+//				actionArtifactclassFlowList.add(actionArtifactclassFlowDao.findByActionIdAndFlowIdAndActiveTrue(requestedBusinessAction.name(), DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME)); //
+			}
+			
+			if(actionArtifactclassFlowList != null) {
+				for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
+					String nthFlowId = actionArtifactclassFlow.getId().getFlowId();
+					logger.trace("flow " + nthFlowId);
+					iterateFlow(request, sourceArtifactclassId, nthFlowId, null, alreadyCreatedJobList, jobList);
+				}
 			}
 		}
 		else if(Actiontype.storage_task == action.getType()){
@@ -117,7 +130,7 @@ public class JobManipulator {
 		}
 		
 		//  get all the flow elements for the flow
-		List<Flowelement> flowelementList = flowelementDao.findAllByFlowIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc(nthFlowId);
+		List<Flowelement> flowelementList = flowelementUtil.getAllFlowElements(nthFlowId);
 		for (Flowelement nthFlowelement : flowelementList) {
 			int nthFlowelementId = nthFlowelement.getId();
 			logger.trace("Flowelement " + nthFlowelementId);
@@ -130,7 +143,7 @@ public class JobManipulator {
 				String outputArtifactclassSuffix = null;
 				
 				for (Integer nthFlowelementDependencyId : flowelementDepsList) {
-					Flowelement prereqFlowelement = flowelementDao.findById(nthFlowelementDependencyId).get();
+					Flowelement prereqFlowelement = flowelementUtil.findById(nthFlowelementDependencyId);
 					
 					Action storagetaskDependency = prereqFlowelement.getStoragetaskActionId();  
 					if(storagetaskDependency != null) // Is the dependency a Storage task?
@@ -157,11 +170,11 @@ public class JobManipulator {
 					outputArtifactclassId = artifactclassId;
 			}
 			
-			Flow referredFlow = nthFlowelement.getFlowRef(); 
-			if(referredFlow != null) { // If the flowelement references a flow(has a flowRef), that means one of this flowelement dependency is a processing task generating an output artifact, that is to be consumed as input
+			String referredFlowId = nthFlowelement.getFlowRefId(); 
+			if(referredFlowId != null) { // If the flowelement references a flow(has a flowRef), that means one of this flowelement dependency is a processing task generating an output artifact, that is to be consumed as input
 
 				logger.trace("Output ArtifactclassId " + outputArtifactclassId);
-				iterateFlow(request, outputArtifactclassId, referredFlow.getId(), nthFlowelement, alreadyCreatedJobList, jobList);
+				iterateFlow(request, outputArtifactclassId, referredFlowId, nthFlowelement, alreadyCreatedJobList, jobList);
 			} else {
 				
 				Action storagetaskAction = nthFlowelement.getStoragetaskActionId();
@@ -201,7 +214,7 @@ public class JobManipulator {
 						if(dependencies != null) {
 							uIdDependencies = new ArrayList<String>();
 							for (Integer dependentFlowelementId : dependencies) {
-								Flowelement dependentFlowelement = flowelementDao.findById(dependentFlowelementId).get();
+								Flowelement dependentFlowelement = flowelementUtil.findById(dependentFlowelementId);
 
 								String copyId = "";
 								if(dependentFlowelement.getStoragetaskActionId() != null)
@@ -220,7 +233,7 @@ public class JobManipulator {
 						if(job == null) {
 							job = new Job();
 							job.setInputArtifactId(artifactId);
-							job.setFlowelement(nthFlowelement);
+							job.setFlowelementId(nthFlowelementId);
 							job.setRequest(request);	
 							if(storagetaskAction != null) {
 								job.setStoragetaskActionId(storagetaskAction);
@@ -242,7 +255,7 @@ public class JobManipulator {
 					if(job == null) {
 						job = new Job();
 						job.setInputArtifactId(artifactId);
-						job.setFlowelement(nthFlowelement);
+						job.setFlowelementId(nthFlowelementId);
 						job.setRequest(request);	
 						job.setProcessingtaskId(processingtaskId);
 					}
@@ -250,7 +263,7 @@ public class JobManipulator {
 					if(dependencies != null) {
 						uIdDependencies = new ArrayList<String>();
 						for (Integer dependentFlowelementId : dependencies) {
-							Flowelement dependentFlowelement = flowelementDao.findById(dependentFlowelementId).get();
+							Flowelement dependentFlowelement = flowelementUtil.findById(dependentFlowelementId);
 
 							String copyId = "";
 							if(dependentFlowelement.getStoragetaskActionId() != null)

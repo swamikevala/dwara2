@@ -81,7 +81,7 @@ public class JobCreator_Ingest_UseJobId_Test{
 //		jobDao.save(job);
 //		jobCreator.createDependentJobs(job);
 		
-		Job job = jobDao.findById(12).get();
+		Job job = jobDao.findById(10).get();
 		job.setStatus(Status.completed);
 		jobDao.save(job);
 		jobCreator.createDependentJobs(job);

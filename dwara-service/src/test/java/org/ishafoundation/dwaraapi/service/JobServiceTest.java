@@ -21,7 +21,7 @@ public class JobServiceTest {
 	
 	@Test
 	public void test_a() throws Exception {
-		List<JobResponse> jobResList = jobService.getJobs(2);
+		List<JobResponse> jobResList = jobService.getPlaceholderJobs(2);
 		ObjectMapper mapper = new ObjectMapper(); 
 		System.out.println(mapper.writeValueAsString(jobResList));
 	}

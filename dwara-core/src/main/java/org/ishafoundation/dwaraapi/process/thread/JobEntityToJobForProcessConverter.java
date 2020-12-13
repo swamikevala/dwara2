@@ -30,7 +30,7 @@ public class JobEntityToJobForProcessConverter {
 		if(action != null)
 			jobForProcess.setStoragetaskActionId(action.name());
 		jobForProcess.setProcessingtaskId(jobEntity.getProcessingtaskId());
-		jobForProcess.setFlowelementId(jobEntity.getFlowelement().getId());
+		jobForProcess.setFlowelementId(jobEntity.getFlowelementId());
 		
 		List<Job> dependencyJobList = new ArrayList<Job>();
 		List<Integer> dependencyJobIdList = jobEntity.getDependencies();

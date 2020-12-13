@@ -70,10 +70,11 @@ public class RequestDetails {
 	@JsonProperty("output_folder")
 	private String outputFolder;
 	
+	@Deprecated
 	private Boolean verify; // overwrites whatever is configured in archiveformat.restore_verify = true
 	
-	@JsonProperty("flow_name")
-	private String flowName;
+	@JsonProperty("flow")
+	private String flow;
 	
 	@JsonProperty("domain_id")
 	private Integer domainId;
@@ -265,20 +266,22 @@ public class RequestDetails {
 		this.outputFolder = outputFolder;
 	}
 
+	@Deprecated
 	public Boolean getVerify() {
 		return verify;
 	}
 
+	@Deprecated
 	public void setVerify(Boolean verify) {
 		this.verify = verify;
 	}
 
-	public String getFlowName() {
-		return flowName;
+	public String getFlow() {
+		return flow;
 	}
 
-	public void setFlowName(String flowName) {
-		this.flowName = flowName;
+	public void setFlow(String flow) {
+		this.flow = flow;
 	}
 
 	public Integer getDomainId() {

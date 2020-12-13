@@ -6,7 +6,7 @@ public class RestoreUserRequest {
 	private Integer copy;
 	private String outputFolder;
 	private String destinationPath;
-	private boolean verify;
+	private String flow;
 	private List<Integer> fileIds;
 
 	public Integer getCopy() {
@@ -33,12 +33,12 @@ public class RestoreUserRequest {
 		this.destinationPath = destinationPath;
 	}
 
-	public boolean isVerify() {
-		return verify;
+	public String getFlow() {
+		return flow;
 	}
 
-	public void setVerify(boolean verify) {
-		this.verify = verify;
+	public void setFlow(String flow) {
+		this.flow = flow;
 	}
 
 	public List<Integer> getFileIds() {

@@ -4,15 +4,12 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Type;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Flow;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 
 @Entity(name = "Flowelement")
@@ -23,8 +20,10 @@ public class Flowelement {
 	@Column(name="id")
 	private int id;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	private Flow flow;
+//	@ManyToOne(fetch = FetchType.LAZY)
+//	private Flow flow;
+	@Column(name="flow_id")
+	private String flowId;
 	
 	@Column(name = "storagetask_action_id")
 	private Action storagetaskActionId;
@@ -36,8 +35,10 @@ public class Flowelement {
 	@Column(name="dependencies", columnDefinition = "json")
 	private List<Integer> dependencies;
 	
-	@ManyToOne(fetch = FetchType.LAZY)
-	private Flow flowRef;
+//	@ManyToOne(fetch = FetchType.LAZY)
+//	private Flow flowRef;
+	@Column(name="flow_ref_id")
+	private String flowRefId;
 	
 	@Column(name = "display_order")
 	private int displayOrder;
@@ -58,13 +59,29 @@ public class Flowelement {
 	public void setId(int id) {
 		this.id = id;
 	}
+//
+//	public Flow getFlow() {
+//		return flow;
+//	}
+//
+//	public void setFlow(Flow flow) {
+//		this.flow = flow;
+//	}
 
-	public Flow getFlow() {
-		return flow;
+	public String getFlowId() {
+		return flowId;
 	}
 
-	public void setFlow(Flow flow) {
-		this.flow = flow;
+	public void setFlowId(String flowId) {
+		this.flowId = flowId;
+	}
+
+	public String getFlowRefId() {
+		return flowRefId;
+	}
+
+	public void setFlowRefId(String flowRefId) {
+		this.flowRefId = flowRefId;
 	}
 
 	public Action getStoragetaskActionId() {
@@ -110,14 +127,14 @@ public class Flowelement {
 	public void setDisplayOrder(int displayOrder) {
 		this.displayOrder = displayOrder;
 	}
-
-	public Flow getFlowRef() {
-		return flowRef;
-	}
-
-	public void setFlowRef(Flow flowRef) {
-		this.flowRef = flowRef;
-	}
+//
+//	public Flow getFlowRef() {
+//		return flowRef;
+//	}
+//
+//	public void setFlowRef(Flow flowRef) {
+//		this.flowRef = flowRef;
+//	}
 
 	public boolean isActive() {
 		return active;

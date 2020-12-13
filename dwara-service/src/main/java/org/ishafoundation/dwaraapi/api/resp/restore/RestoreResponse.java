@@ -12,7 +12,7 @@ public class RestoreResponse {
 	private String requestedAt;
 	private String outputFolder;
 	private String destinationPath;
-	private boolean verify;
+	private String flow;
 	private String location;
 	List<File> files;
 	
@@ -52,11 +52,11 @@ public class RestoreResponse {
 	public void setDestinationPath(String destinationPath) {
 		this.destinationPath = destinationPath;
 	}
-	public boolean isVerify() {
-		return verify;
+	public String getFlow() {
+		return flow;
 	}
-	public void setVerify(boolean verify) {
-		this.verify = verify;
+	public void setFlow(String flow) {
+		this.flow = flow;
 	}
 	public String getLocation() {
 		return location;

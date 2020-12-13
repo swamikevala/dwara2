@@ -2,9 +2,9 @@ package org.ishafoundation.dwaraapi.job.creation;
 
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Flow;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
@@ -34,6 +34,9 @@ public class JobCreator_Dependents_Test{
 	JobDao jobDao;
 
 	@Autowired
+	FlowelementDao flowelementDao;
+	
+	@Autowired
 	DomainUtil domainUtil;
 	
 	//String readyToIngestPath =  "C:\\data\\user\\pgurumurthy\\ingest\\pub-video";
@@ -44,9 +47,8 @@ public class JobCreator_Dependents_Test{
 	@Test
 	public void test_ab_updateStatus() {
 		Job job = jobDao.findById(9).get();
-		Flowelement flowelement = job.getFlowelement();
-		Flow flow = flowelement.getFlow();
-		List<Flowelement> dependentFlowelementList = jobCreator.getDependentFlowelements(flow, flowelement);
+		Flowelement flowelement = flowelementDao.findById(job.getFlowelementId()).get(); 
+		List<Flowelement> dependentFlowelementList = jobCreator.getDependentFlowelements(flowelement.getFlowId(), flowelement);
 		
 		System.out.println(dependentFlowelementList);
 //		job = jobDao.findById(28).get();

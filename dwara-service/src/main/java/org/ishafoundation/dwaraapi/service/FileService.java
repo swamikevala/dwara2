@@ -76,7 +76,7 @@ public class FileService extends DwaraService{
 		
 	}
 	
-    public RestoreResponse restore(RestoreUserRequest restoreUserRequest) throws Exception{	
+    public RestoreResponse restore(RestoreUserRequest restoreUserRequest, Action action, String flow) throws Exception{	
     	RestoreResponse restoreResponse = new RestoreResponse();
 
     	List<Integer> fileIds = restoreUserRequest.getFileIds();
@@ -101,16 +101,12 @@ public class FileService extends DwaraService{
 //    	userRequest = requestDao.save(userRequest);
 //    	int userRequestId = userRequest.getId();
 //    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
-    	Action action = Action.restore;
-    	if(restoreUserRequest.isVerify())
-    		action = Action.restore_process;
     	Request userRequest = createUserRequest(action, restoreUserRequest);
     	int userRequestId = userRequest.getId();
 	
     	Integer copyNumber = restoreUserRequest.getCopy();
     	String outputFolder = restoreUserRequest.getOutputFolder();
     	String destinationPath = restoreUserRequest.getDestinationPath();
-    	boolean verify = restoreUserRequest.isVerify();
     	List<File> files = new ArrayList<File>();
     	
 
@@ -132,11 +128,8 @@ public class FileService extends DwaraService{
     		systemrequestDetails.setCopyId(copyNumber);
 			systemrequestDetails.setOutputFolder(outputFolder);
 			systemrequestDetails.setDestinationPath(destinationPath);
-			systemrequestDetails.setVerify(verify); // overwriting default archiveformat.verify during restore
-			if(verify)
-				systemrequestDetails.setFlowName(DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME);
 			systemrequestDetails.setDomainId(domainUtil.getDomainId(fileId_Domain_Map.get(nthFileId)));
-			
+			systemrequestDetails.setFlow(flow);
 			systemRequest.setDetails(systemrequestDetails);
 			systemRequest = requestDao.save(systemRequest);
 			logger.info(DwaraConstants.SYSTEM_REQUEST + systemRequest.getId());
@@ -166,7 +159,7 @@ public class FileService extends DwaraService{
     	restoreResponse.setRequestedBy(userRequest.getRequestedBy().getName());
 
     	restoreResponse.setDestinationPath(destinationPath);
-    	restoreResponse.setVerify(verify);
+    	restoreResponse.setFlow(flow);
     	restoreResponse.setOutputFolder(outputFolder);
     	
     	restoreResponse.setFiles(files);    	
@@ -208,7 +201,6 @@ public class FileService extends DwaraService{
     	Integer copyNumber = pfRestoreUserRequest.getCopy();
     	String outputFolder = pfRestoreUserRequest.getOutputFolder();
     	String destinationPath = pfRestoreUserRequest.getDestinationPath();
-    	boolean verify = pfRestoreUserRequest.isVerify();
     	List<File> files = new ArrayList<File>();
     	
 
@@ -230,7 +222,6 @@ public class FileService extends DwaraService{
     		systemrequestDetails.setCopyId(copyNumber);
 			systemrequestDetails.setOutputFolder(outputFolder);
 			systemrequestDetails.setDestinationPath(destinationPath);
-			systemrequestDetails.setVerify(verify); // overwriting default archiveformat.verify during restore
 			systemrequestDetails.setDomainId(domainUtil.getDomainId(fileId_Domain_Map.get(nthFileId)));
 			systemrequestDetails.setTimecodeStart(nthFileDetails.getTimecodeStart());
 			systemrequestDetails.setTimecodeEnd(nthFileDetails.getTimecodeEnd());
@@ -264,7 +255,6 @@ public class FileService extends DwaraService{
     	restoreResponse.setRequestedBy(userRequest.getRequestedBy().getName());
 
     	restoreResponse.setDestinationPath(destinationPath);
-    	restoreResponse.setVerify(verify);
     	restoreResponse.setOutputFolder(outputFolder);
     	
     	restoreResponse.setFiles(files);    	
