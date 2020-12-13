@@ -1,0 +1,10 @@
+{
+	"outputFolder": "eee",
+	"destinationPath": "/data/RESTORED",
+	"flow": "core-restore-verify-flow",
+	"copy": "1",
+	"fileIds": [
+		<<file_id_1>>,
+		<<file_id_2>>
+	]
+}

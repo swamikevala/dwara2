@@ -97,10 +97,7 @@ public class JobManipulator {
 			}
 		}
 		else if(Actiontype.storage_task == action.getType()){
-			String actionName = requestedBusinessAction.name();
-			logger.debug("Calling storage task impl " + actionName);
-			AbstractStoragetaskAction actionImpl = storagetaskActionMap.get(actionName);
-			jobList.addAll(actionImpl.createJobsForStoragetaskAction(request, requestedBusinessAction));
+			jobList.addAll(alreadyCreatedJobList);
 		}
 		return jobList;
 	}
@@ -202,9 +199,44 @@ public class JobManipulator {
 					}
 				}
 				Integer artifactId = (artifact != null ? artifact.getId() : null);
-				List<String> uIdDependencies = null; 
-				if(storagetaskAction != null || processingtaskWithDependencyStoragetask) {
-					
+				List<String> uIdDependencies = null;
+				if(request.getActionId() == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlow())){
+					String uId = referencingFlowPrefix + nthFlowelementId;
+					logger.trace("uid - " + uId);
+					// check if job already created and details available... 
+					Job job = jobDao.findByRequestIdAndFlowelementId(request.getId(), nthFlowelementId);
+					if(job == null) {
+						job = new Job();
+						job.setFlowelementId(nthFlowelementId);
+						job.setRequest(request);	
+						if(storagetaskAction != null) {
+							job.setStoragetaskActionId(storagetaskAction);
+						}else
+							job.setProcessingtaskId(processingtaskId);
+					}
+						
+					if(dependencies != null) {
+						uIdDependencies = new ArrayList<String>();
+						for (Integer dependentFlowelementId : dependencies) {
+							Flowelement dependentFlowelement = flowelementUtil.findById(dependentFlowelementId);
+
+							String copyId = "";
+							if(dependentFlowelement.getStoragetaskActionId() != null)
+								copyId = ""; // TODO : We dont know how to support this just yet...  "_" + volume.getCopy().getId();
+
+							if(nthFlowelement.getDependencies() == null)
+								uIdDependencies.add(dependentFlowelementId + copyId);
+							else
+								uIdDependencies.add(referencingFlowPrefix + dependentFlowelementId + copyId);
+						}
+					}
+
+					job.setuId(uId);
+					job.setuIdDependencies(uIdDependencies);
+					jobList.add(job);
+				}
+				else if(storagetaskAction != null || processingtaskWithDependencyStoragetask) {
+
 					List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassIdAndActiveTrue(artifactclassId);
 					logger.trace("No. of copies " + artifactclassVolumeList.size());
 					for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {

@@ -221,10 +221,10 @@ public class ScheduledStatusUpdater {
 			 * in_progress
 				queued
 				on_hold
+				cancelled
 				completed_failures
 				failed
 				completed
-				cancelled
 				*/
 			boolean anyInProgress = false;
 			boolean anyQueued = false;

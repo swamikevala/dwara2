@@ -23,6 +23,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -65,8 +66,8 @@ public class RequestService extends DwaraService{
 		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, fromDate, toDate, pageNumber, pageSize);
 		for (Request request : requestList) {
 			RequestResponse requestResponse = frameRequestResponse(request, requestType);
-			List<JobResponse> jobList = jobService.getPlaceholderJobs(request.getId());
-			requestResponse.setJobList(jobList);
+//			List<JobResponse> jobList = jobService.getPlaceholderJobs(request.getId());
+//			requestResponse.setJobList(jobList);
 			requestResponseList.add(requestResponse);
 		}
 		return requestResponseList;
@@ -169,7 +170,7 @@ public class RequestService extends DwaraService{
 			userRequest.setStatus(Status.completed);
 			userRequest = requestDao.save(userRequest);
 			
-			return frameRequestResponse(requestToBeReleased, RequestType.system);
+			return frameRequestResponse(userRequest, RequestType.user);
 		}
 		catch (Exception e) {
 			if(userRequest != null && userRequest.getId() != 0) {
@@ -213,7 +214,7 @@ public class RequestService extends DwaraService{
 					requestResponse.setArtifact(artifactForResponse);
 				}
 			} 
-			else if(requestAction == Action.restore) {
+			else if(requestAction == Action.restore || (requestAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlow()))) {
 				Domain domain = domainUtil.getDomain(request);
 				if(domain == null)
 					domain = domainUtil.getDefaultDomain();
