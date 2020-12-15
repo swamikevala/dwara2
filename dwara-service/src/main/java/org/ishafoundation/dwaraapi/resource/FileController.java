@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -97,5 +98,11 @@ public class FileController {
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body(restoreResponse);
 	}
 	
-
+	@ApiOperation(value = "Marks the file as deleted in DB")
+	@PostMapping(value = "/file/{fileId}/delete", produces = "application/json")
+	public ResponseEntity<String> delete(@PathVariable("fileId") int fileId) {
+		logger.info(fileId+"");
+		fileService.deleteFile(fileId);
+		return ResponseEntity.status(HttpStatus.OK).body("Done");
+	}
 }

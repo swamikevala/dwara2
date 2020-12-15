@@ -12,7 +12,6 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
@@ -51,7 +50,7 @@ public class RequestService extends DwaraService{
 	private VolumeService volumeService;
 
 	@Autowired
-	private JobService jobService;
+	private ArtifactService artifactService;
 	
 	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
@@ -73,8 +72,24 @@ public class RequestService extends DwaraService{
 		return requestResponseList;
 	}
 	
-	
 	public RequestResponse cancelRequest(int requestId) throws Exception{
+		logger.info("Cancelling request " + requestId);
+		Request userRequest = null;
+		try {
+			userRequest = artifactService.cancelRequest(requestId);
+			
+			return frameRequestResponse(userRequest, RequestType.user);
+		}
+		catch (Exception e) {
+			if(userRequest != null && userRequest.getId() != 0) {
+				userRequest.setStatus(Status.failed);
+				userRequest = requestDao.save(userRequest);
+			}
+			throw e;
+		}
+	}
+	
+	public RequestResponse cancelRequestPlain(int requestId) throws Exception{
 		logger.info("Cancelling request " + requestId);
 		Request userRequest = null;
 		try {

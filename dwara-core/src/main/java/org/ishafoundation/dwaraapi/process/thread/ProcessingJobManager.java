@@ -26,7 +26,6 @@ import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
@@ -60,7 +59,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Scope("prototype")
-public class ProcessingJobManager implements Runnable{
+public class ProcessingJobManager extends ProcessingJobHelper implements Runnable {
 
 	private static final Logger logger = LoggerFactory.getLogger(ProcessingJobManager.class);
 	
@@ -99,9 +98,6 @@ public class ProcessingJobManager implements Runnable{
 	
 	@Autowired
 	private Configuration configuration;
-
-	@Autowired
-	private FileRepositoryUtil fileRepositoryUtil;
 	
 	@Autowired
 	private Restore restoreStorageTask;
@@ -434,17 +430,6 @@ public class ProcessingJobManager implements Runnable{
 
 	private String getOutputArtifactPathname(Artifactclass outputArtifactclass, String outputArtifactName) {
 		return outputArtifactclass.getPath() + java.io.File.separator + outputArtifactName;
-	}
-	
-	private HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getFilePathToFileObj(Domain domain, Artifact artifactDbObj) throws Exception{
-		HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathTofileObj = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
-		
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactDbObj, domain);
-		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
-			filePathTofileObj.put(nthFile.getPathname(), nthFile);
-		}
-		//logger.trace("file collection - " + filePathTofileObj.keySet().toString());
-		return filePathTofileObj;
 	}
 	
 	private Collection<LogicalFile> getLogicalFileList(Filetype filetype, String inputArtifactPath, String inputArtifactclassId, String processingtaskId){

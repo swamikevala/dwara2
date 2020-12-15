@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.process.thread;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +50,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Scope("prototype")
-public class ProcessingJobProcessor implements Runnable{
+public class ProcessingJobProcessor extends ProcessingJobHelper implements Runnable{
 
 
 	private static final Logger logger = LoggerFactory.getLogger(ProcessingJobProcessor.class);
@@ -248,8 +249,11 @@ public class ProcessingJobProcessor implements Runnable{
 						}
 						
 						// Output Artifact as a file record
+						HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, outputArtifact);
+						
 						FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
+//						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
+						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = filePathToFileObj.get(outputArtifactName);
 						if(artifactFile == null) { // only if not already created... 
 							artifactFile = createFile(outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName, outputArtifact, domainSpecificFileRepository, domain);	
 						}
@@ -269,9 +273,13 @@ public class ProcessingJobProcessor implements Runnable{
 				         };
 						String[] files = new File(proxyFilePath).list(fileNameFilter);
 						for (String nthFileName : files) {
-							String filepathName = proxyFilePath + File.separator + nthFileName;
-							logger.trace("Now creating file record for - " + filepathName);
-							createFile(filepathName, outputArtifact, domainSpecificFileRepository, domain);	
+							String filepathName = proxyFilePath.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "") + File.separator + nthFileName;
+							org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = filePathToFileObj.get(filepathName);
+							//org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = domainSpecificFileRepository.findByPathname(filepathName);
+							if(nthFile == null) { // only if not already created... 
+								logger.trace("Now creating file record for - " + filepathName);
+								createFile(filepathName, outputArtifact, domainSpecificFileRepository, domain);	
+							}
 						}
 						
 						outputArtifact.setTotalSize(artifactFile.getSize());

@@ -19,28 +19,25 @@ public class FlowelementUtil {
 	private FlowelementDao flowelementDao;
 
 	public Flowelement findById(Integer flowelementId) {
-		Optional<Flowelement> optFlowelement = flowelementDao.findById(flowelementId);
-		
 		Flowelement flowelement = null;
-		if(optFlowelement.isPresent())
-			flowelement = optFlowelement.get();
-		else {
-			flowelement =  getFlowelement(flowelementId);
+		CoreFlowelement coreFlowelement = CoreFlowelement.findById(flowelementId);
+		
+		if(coreFlowelement != null)
+			flowelement = getFlowelement(coreFlowelement);
+		else {		
+			Optional<Flowelement> optFlowelement = flowelementDao.findById(flowelementId);
+			if(optFlowelement.isPresent())
+				flowelement = optFlowelement.get();
 		}
 		return flowelement;
 	}
 	
-	private Flowelement getFlowelement(Integer flowelementId){
-		return getFlowelement(CoreFlowelement.findById(flowelementId));
-	}
-	
 	public List<Flowelement> getAllFlowElements(String flowId) {
-		List<Flowelement> flowelementList = null;
+		List<Flowelement> flowelementList = getCoreFlowelements(flowId);
 		
-		if(flowId.startsWith("core"))
-			flowelementList = getCoreFlowelements(flowId);
-		else
+		if(flowelementList.size() == 0)
 			flowelementList = flowelementDao.findAllByFlowIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc(flowId);
+
 		return flowelementList;
 	}
 

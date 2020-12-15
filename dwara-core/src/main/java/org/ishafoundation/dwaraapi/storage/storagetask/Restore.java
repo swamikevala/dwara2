@@ -161,10 +161,10 @@ public class Restore extends AbstractStoragetaskAction{
 			Volume volume = fileVolume.getVolume(); // need the volume for job selection
 			storageJob.setVolume(volume);
 	
-			Boolean verify = requestDetails.getVerify();
-			if(verify == null)
-				verify = volume.getArchiveformat().isRestoreVerify();
-			storageJob.setRestoreVerify(verify);
+//			Boolean verify = requestDetails.getVerify();
+//			if(verify == null)
+//				verify = volume.getArchiveformat().isRestoreVerify();
+//			storageJob.setRestoreVerify(verify);
 
 			if(requestedAction == Action.restore || (requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlow()))){
 //			if(requestedAction == Action.restore && !storageJob.isRestoreVerify()) {
