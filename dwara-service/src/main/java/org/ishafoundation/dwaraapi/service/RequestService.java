@@ -72,8 +72,8 @@ public class RequestService extends DwaraService{
 		return requestResponseList;
 	}
 	
-	public RequestResponse cancelRequest(int requestId) throws Exception{
-		logger.info("Cancelling request " + requestId);
+	public RequestResponse deleteRequest(int requestId) throws Exception{
+		logger.info("Deleting request " + requestId);
 		Request userRequest = null;
 		try {
 			userRequest = artifactService.cancelRequest(requestId);
@@ -89,7 +89,7 @@ public class RequestService extends DwaraService{
 		}
 	}
 	
-	public RequestResponse cancelRequestPlain(int requestId) throws Exception{
+	public RequestResponse cancelRequest(int requestId) throws Exception{
 		logger.info("Cancelling request " + requestId);
 		Request userRequest = null;
 		try {

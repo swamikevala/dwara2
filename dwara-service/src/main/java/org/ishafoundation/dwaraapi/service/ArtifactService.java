@@ -23,9 +23,9 @@ import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
+import org.ishafoundation.videopub.mam.MamUpdateTaskExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +51,9 @@ public class ArtifactService extends DwaraService{
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
 	
+	@Autowired
+	private MamUpdateTaskExecutor mamUpdateTaskExecutor;
+	
     public String renameArtifact(int artifactId) throws DwaraException{
 		return null;
 	}
@@ -71,11 +74,7 @@ public class ArtifactService extends DwaraService{
 			}
 		}
 		
-		if(!artifact.getArtifactclass().getId().equals("video-digitization-pub")) {
-			String errorMsg = "Only deletion of artifactclass video-digitization-pub is supported.";
-        	logger.error(errorMsg);
-        	throw new DwaraException(errorMsg);
-		}
+		validateArtifactclass(artifact.getArtifactclass().getId());
 			
 		Request request = artifact.getWriteRequest();//artifact.getqLatestRequest();
 		
@@ -99,6 +98,8 @@ public class ArtifactService extends DwaraService{
 		Request userRequest = null;
 		try {
 	    	Request requestToBeCancelled = requestDao.findById(requestId).get();
+	    	String artifactclassId = requestToBeCancelled.getDetails().getArtifactclassId();
+	    	validateArtifactclass(artifactclassId);
 	    	
 	    	validateRequest(requestToBeCancelled);
 	    	
@@ -107,9 +108,9 @@ public class ArtifactService extends DwaraService{
 			// Step 1 - Create User Request
 			HashMap<String, Object> data = new HashMap<String, Object>();
 	    	data.put("requestId", requestId);
-	    	userRequest = createUserRequest(Action.cancel, Status.in_progress, data);
+	    	userRequest = createUserRequest(Action.delete, Status.in_progress, data);
 	    	
-			String artifactclassId = requestToBeCancelled.getDetails().getArtifactclassId();
+			
 			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 			
 			Domain domain = artifactclass.getDomain();
@@ -131,7 +132,15 @@ public class ArtifactService extends DwaraService{
         return userRequest;
     }
     
-    private void validateRequest(Request request) throws Exception{
+    private void validateArtifactclass(String artifactclassId){
+		if(!artifactclassId.equals("video-digitization-pub")) {
+			String errorMsg = "Only deletion of artifactclass video-digitization-pub is supported.";
+        	logger.error(errorMsg);
+        	throw new DwaraException(errorMsg);
+		}
+    }
+    
+    private void validateRequest(Request request){
     	if(request.getActionId() != Action.ingest) {
     		String errorMsg = "Right now Cancel/Delete is only supported for " + Action.ingest;
 	    	logger.error(errorMsg);
@@ -146,7 +155,7 @@ public class ArtifactService extends DwaraService{
     	}
 	}
     
-    private void validateJobsAndUpdateStatus(Request request) throws Exception{
+    private void validateJobsAndUpdateStatus(Request request){
     	int requestId = request.getId();
 		List<Job> jobList = jobDao.findAllByRequestId(requestId);
 		for (Job job : jobList) {
@@ -166,15 +175,20 @@ public class ArtifactService extends DwaraService{
 	private void nextSteps(Request request, Domain domain, ArtifactRepository artifactRepository) throws Exception{	
 		int requestId = request.getId();
 		HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>> artifactId_ArtifactFileList = new HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>>();
-    	
+		HashMap<Integer, Artifact> artifactId_Artifact = new HashMap<Integer, Artifact>();
+		
     	// Step 3 - Find all artifacts involved
     	List<Artifact> artifactList = artifactRepository.findAllByWriteRequestId(requestId);
     	for (Iterator iterator = artifactList.iterator(); iterator.hasNext();) {
 			Artifact nthArtifact = (Artifact) iterator.next();
-
+			logger.info("Now deleting " + nthArtifact.getName() + "[" + nthArtifact.getId() + "] related File/Artifact DB entries and Filesystem files");
+			
+			artifactId_Artifact.put(nthArtifact.getId(), nthArtifact);
+			
 	    	// Step 4 - Flag all the file entries as softdeleted
 			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(nthArtifact, domain);
 			artifactId_ArtifactFileList.put(nthArtifact.getId(), artifactFileList);
+			
 			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
 				nthFile.setDeleted(true);
 			}
@@ -186,7 +200,7 @@ public class ArtifactService extends DwaraService{
 	    	// Step 5 - Flag the artifact as softdeleted
 			nthArtifact.setDeleted(true);
 	    	artifactRepository.save(nthArtifact);
-	    	logger.info(nthArtifact.getId() + " flagged Deleted");
+	    	logger.info("Artifact flagged Deleted");
 	    	
 	    	// Step 6 - Flag the artifactVolume deleted
 	    	// N/A
@@ -213,7 +227,9 @@ public class ArtifactService extends DwaraService{
 				
 				Action storagetaskAction = nthJob.getStoragetaskActionId();
 				String processingtaskId = nthJob.getProcessingtaskId();
- 
+				Integer artifactId = nthJob.getInputArtifactId();
+				Artifact artifact = artifactId_Artifact.get(artifactId);
+				
 				if(storagetaskAction != null && storagetaskAction == Action.write) {
 					// softDelete Filevolume entries
 					List<FileVolume> toBeAddedFileVolumeTableEntries = new ArrayList<FileVolume>();
@@ -227,24 +243,25 @@ public class ArtifactService extends DwaraService{
 				    if(toBeAddedFileVolumeTableEntries.size() > 0) {
 				    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
 				    	domainSpecificFileVolumeRepository.saveAll(toBeAddedFileVolumeTableEntries);
-				    	logger.info("FileVolume records updated with deleted flag successfully");
+				    	logger.info("All FileVolume records for " + artifact.getName() + " [" + artifactId + "] in volume " + nthJob.getVolume().getId() + " flagged deleted successfully");
 				    }
 				}
 				else if(processingtaskId != null) {
-//					outputArtifactclass.getpath + File.sep + artifactName
-//			    	processing task output artifactclass remove
-//			    	job cancelled
-//			    	remove source artifact folder					
-					// Need to call processingTask specific delete method here
-					
-					
+					// TODO - Need to call processingTask specific delete method here 
+					// Tentatively calling hardcoded
+					//processingtaskActionMap.get(processingtaskName)
+					if(processingtaskId.equals("video-mam-update")) {
+						mamUpdateTaskExecutor.cleanUp(artifact.getName(), artifact.getArtifactclass().getCategory());
+					}
 				}
 			}
 		}
 
-    	request.setStatus(Status.cancelled);
-    	requestDao.save(request);
-    	logger.info(request.getId() + " - Cancelled");
+		if(request.getStatus() == Status.queued || request.getStatus() == Status.on_hold) {
+	    	request.setStatus(Status.cancelled);
+	    	requestDao.save(request);
+	    	logger.info(request.getId() + " - Cancelled");
+		}
     }
 }
 

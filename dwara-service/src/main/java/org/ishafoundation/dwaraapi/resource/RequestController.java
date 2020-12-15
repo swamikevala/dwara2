@@ -105,6 +105,24 @@ public class RequestController {
     	return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
     }
     
+    @PostMapping("/request/{requestId}/delete")
+    public ResponseEntity<RequestResponse> deleteRequest(@PathVariable("requestId") int requestId) {
+    	logger.info("/request/" + requestId + "/delete");
+    	RequestResponse requestResponse = null;
+    	try {
+    		requestResponse = requestService.deleteRequest(requestId);
+		}catch (Exception e) {
+			String errorMsg = "Unable to get Request - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+    	return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
+    }
+    
     @PostMapping("/request/{requestId}/release")
     public ResponseEntity<RequestResponse> releaseRequest(@PathVariable("requestId") int requestId) {
     	logger.info("/request/" + requestId + "/release");
