@@ -89,6 +89,7 @@ public class ScheduledStatusUpdater {
 		List<Status> statusList = new ArrayList<Status>();
 		statusList.add(Status.in_progress);
 		statusList.add(Status.queued);
+		statusList.add(Status.on_hold);
 		
 		List<Request> systemRequestList = requestDao.findAllByTypeAndStatusIn(RequestType.system, statusList);
 		//updateDependentJobsStatus(systemRequestList);

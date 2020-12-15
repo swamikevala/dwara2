@@ -133,11 +133,12 @@ public class ArtifactService extends DwaraService{
     }
     
     private void validateArtifactclass(String artifactclassId){
-		if(!artifactclassId.equals("video-digitization-pub")) {
-			String errorMsg = "Only deletion of artifactclass video-digitization-pub is supported.";
-        	logger.error(errorMsg);
-        	throw new DwaraException(errorMsg);
-		}
+    	// Commenting out for now
+//		if(!artifactclassId.equals("video-digitization-pub")) {
+//			String errorMsg = "Only deletion of artifactclass video-digitization-pub is supported.";
+//        	logger.error(errorMsg);
+//        	throw new DwaraException(errorMsg);
+//		}
     }
     
     private void validateRequest(Request request){

@@ -226,9 +226,9 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			// delete the tar remotely
 			String removeCommand = "rm -rf " + copiedProxyFilePath;
 			jSchSession = catdvSshSessionHelper.getSession();
-			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, removeCommand, "/data/rmProxyFolderErr.out");
+			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, removeCommand, "rmProxyFolderErr.out");
 			catdvSshSessionHelper.disconnectSession(jSchSession);
-			logger.debug("Deleted the proxy folder");
+			logger.info("Deleted the proxy folder on MAM server");
 		} catch (Exception e) {
 			logger.error("Unable to cleanup the cancelled medialibrary artifacts " + e.getMessage());
 		}finally {
@@ -245,7 +245,7 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			int catalogId = catalogChecker.getCatalogId(catdvSessionId, catalogName);
 			if(catalogId != 0) { // If catalog exists
 				cd.deleteCatalog(catdvSessionId, catalogId);
-				logger.debug("Removed the catalog from MAM DB");
+				logger.info("Removed the catalog from MAM DB");
 			}else {
 				logger.debug("No catalog found on MAM side");
 			}
