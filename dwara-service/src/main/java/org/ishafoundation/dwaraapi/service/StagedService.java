@@ -525,14 +525,15 @@ public class StagedService extends DwaraService{
 			
 			java.io.File file = (java.io.File) iterator.next();
 			String fileName = file.getName();
-			if(!file.isDirectory()) {
-				// assumes there arent any file without extension - Checking and excluding it is the role of junkFilesMover...   
-				extnsOnArtifactFolder.add(FilenameUtils.getExtension(fileName));
-			}
 			String filePath = file.getAbsolutePath();
 			filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); // just holding the file path from the artifact folder and not the absolute path.
 			logger.trace("filePath - " + filePath);
 			File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
+			if(file.isDirectory())
+				nthFileRowToBeInserted.setDirectory(true);
+			else
+				extnsOnArtifactFolder.add(FilenameUtils.getExtension(fileName)); // assumes there arent any file without extension - Checking and excluding it is the role of junkFilesMover...
+			
 			nthFileRowToBeInserted.setPathname(filePath);
 			fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, artifact);
 

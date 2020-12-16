@@ -342,6 +342,8 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		//nthFileRowToBeInserted.setChecksum(ChecksumUtil.getChecksum(new File(processingtaskResponse.getDestinationPathname()), Checksumtype.sha256)); 
 		logger.trace("Calc size of " + filePathname);
 		File file = new File(fileAbsolutePathName);
+		if(file.isDirectory())
+			nthFileRowToBeInserted.setDirectory(true);
 		if(file.exists()) {
 			try {
 				nthFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
