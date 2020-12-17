@@ -153,21 +153,43 @@ public class RequestService extends DwaraService{
 		}
 	}
 
+
+	public RequestResponse releaseRequest(List<Integer> requestIdList)  throws Exception {
+		Request userRequest = null;
+		try {
+			for (Integer requestId : requestIdList) {
+				validateReleaseRequest(requestId);
+			}
+			
+			HashMap<String, Object> data = new HashMap<String, Object>();
+	    	data.put("requestIds", requestIdList);
+			userRequest = createUserRequest(Action.release, Status.in_progress, data);
+	    	int userRequestId = userRequest.getId();
+	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
+
+	    	for (Integer requestId : requestIdList) {
+	    		releaseJobsAndSystemRequest(requestId);
+			}
+	    	
+			userRequest.setStatus(Status.completed);
+			userRequest = requestDao.save(userRequest);
+
+	    	return frameRequestResponse(userRequest, RequestType.user);	
+		}catch (Exception e) {
+			if(userRequest != null && userRequest.getId() != 0) {
+				userRequest.setStatus(Status.failed);
+				userRequest = requestDao.save(userRequest);
+			}
+			throw e;
+		}
+		
+	}
+	
 	public RequestResponse releaseRequest(int requestId) throws Exception{
 		logger.info("Releasing request " + requestId);
 		Request userRequest = null;
 		try {
-			boolean anyReleased = false;
-			List<Job> jobList = jobDao.findAllByRequestId(requestId);
-			for (Job job : jobList) {
-				if(job.getStatus() == Status.on_hold) {
-					job.setStatus(Status.queued);
-					anyReleased = true;
-				}
-			}
-
-			if(!anyReleased)
-				throw new DwaraException(requestId + " has no jobs in on_hold status to be released");
+			validateReleaseRequest(requestId);
 
 			HashMap<String, Object> data = new HashMap<String, Object>();
 	    	data.put("requestId", requestId);
@@ -175,13 +197,8 @@ public class RequestService extends DwaraService{
 	    	int userRequestId = userRequest.getId();
 	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
 	
-			
-			jobDao.saveAll(jobList);
-			
-			Request requestToBeReleased = requestDao.findById(requestId).get();
-			requestToBeReleased.setStatus(Status.queued);
-			requestDao.save(requestToBeReleased);
-			
+	    	releaseJobsAndSystemRequest(requestId);
+	    	
 			userRequest.setStatus(Status.completed);
 			userRequest = requestDao.save(userRequest);
 			
@@ -194,6 +211,33 @@ public class RequestService extends DwaraService{
 			}
 			throw e;
 		}
+	}
+	
+	private void validateReleaseRequest(int requestId){
+		boolean anyToBeReleased = false;
+		List<Job> jobList = jobDao.findAllByRequestId(requestId);
+		for (Job job : jobList) {
+			if(job.getStatus() == Status.on_hold) {
+				anyToBeReleased = true;
+			}
+		}
+
+		if(!anyToBeReleased)
+			throw new DwaraException(requestId + " has no jobs in on_hold status to be released");
+	}
+	
+	private void releaseJobsAndSystemRequest(int requestId){
+		List<Job> jobList = jobDao.findAllByRequestId(requestId);
+		for (Job job : jobList) {
+			if(job.getStatus() == Status.on_hold) {
+				job.setStatus(Status.queued);
+			}
+		}
+		jobDao.saveAll(jobList);
+		
+		Request requestToBeReleased = requestDao.findById(requestId).get();
+		requestToBeReleased.setStatus(Status.queued);
+		requestDao.save(requestToBeReleased);
 	}
 	
 	private RequestResponse frameRequestResponse(Request request, RequestType requestType){
@@ -229,7 +273,7 @@ public class RequestService extends DwaraService{
 					requestResponse.setArtifact(artifactForResponse);
 				}
 			} 
-			else if(requestAction == Action.restore || (requestAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlow()))) {
+			else if(requestAction == Action.restore || (requestAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId()))) {
 				Domain domain = domainUtil.getDomain(request);
 				if(domain == null)
 					domain = domainUtil.getDefaultDomain();
@@ -257,5 +301,6 @@ public class RequestService extends DwaraService{
 		}
 		return requestResponse;
 	}
+
 }
 

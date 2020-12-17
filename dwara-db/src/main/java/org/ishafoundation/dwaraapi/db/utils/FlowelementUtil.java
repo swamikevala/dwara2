@@ -18,7 +18,7 @@ public class FlowelementUtil {
 	@Autowired
 	private FlowelementDao flowelementDao;
 
-	public Flowelement findById(Integer flowelementId) {
+	public Flowelement findById(String flowelementId) {
 		Flowelement flowelement = null;
 		CoreFlowelement coreFlowelement = CoreFlowelement.findById(flowelementId);
 		

@@ -94,7 +94,7 @@ public class RequestController {
     	try {
     		requestResponse = requestService.cancelRequest(requestId);
 		}catch (Exception e) {
-			String errorMsg = "Unable to get Request - " + e.getMessage();
+			String errorMsg = "Unable to cancel Request - " + e.getMessage();
 			logger.error(errorMsg, e);
 			
 			if(e instanceof DwaraException)
@@ -112,7 +112,7 @@ public class RequestController {
     	try {
     		requestResponse = requestService.deleteRequest(requestId);
 		}catch (Exception e) {
-			String errorMsg = "Unable to get Request - " + e.getMessage();
+			String errorMsg = "Unable to delete Request - " + e.getMessage();
 			logger.error(errorMsg, e);
 			
 			if(e instanceof DwaraException)
@@ -130,7 +130,7 @@ public class RequestController {
     	try {
     		requestResponse = requestService.releaseRequest(requestId);
 		}catch (Exception e) {
-			String errorMsg = "Unable to get Request - " + e.getMessage();
+			String errorMsg = "Unable to release Request - " + e.getMessage();
 			logger.error(errorMsg, e);
 			
 			if(e instanceof DwaraException)
@@ -142,14 +142,13 @@ public class RequestController {
 	}
 	
 	@PostMapping("/request/release")
-    public ResponseEntity<List<RequestResponse>> releaseListRequest(@RequestBody List<Integer> listRequestId) {
-    	List<RequestResponse> requestResponse = new ArrayList<RequestResponse>();
+    public ResponseEntity<RequestResponse> releaseRequest(@RequestBody List<Integer> listRequestId) {
+    	logger.info("/request/release " + listRequestId);
+    	RequestResponse requestResponse = null;
     	try {
-			for (Integer requestId : listRequestId) {
-				requestResponse.add(requestService.releaseRequest(requestId));	
-			}
+    		requestResponse = requestService.releaseRequest(listRequestId);	
 		}catch (Exception e) {
-			String errorMsg = "Unable to get Request - " + e.getMessage();
+			String errorMsg = "Unable to release Requests - " + e.getMessage();
 			logger.error(errorMsg, e);
 			
 			if(e instanceof DwaraException)

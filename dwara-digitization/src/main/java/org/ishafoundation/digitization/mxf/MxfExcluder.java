@@ -7,10 +7,6 @@ import java.nio.file.StandardCopyOption;
 
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
@@ -26,14 +22,9 @@ public class MxfExcluder implements IProcessingTask {
     
     private static final Logger logger = LoggerFactory.getLogger(MxfExcluder.class);
 	
-//    @Autowired
-//    private ApplicationContext appcont;
-    
 	@Autowired
 	private Configuration config;
 	
-	@Autowired
-	private DomainUtil domainUtil;
 	
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -83,10 +74,10 @@ public class MxfExcluder implements IProcessingTask {
 		
 		
 		// TODO - Have to call this as API
-    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(Domain.ONE);
-    	org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainSpecificFileRepository.findById(file.getId()).get();
-    	fileFromDB.setDeleted(true);
-    	domainSpecificFileRepository.save(fileFromDB);
+//    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(Domain.ONE);
+//    	org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainSpecificFileRepository.findById(file.getId()).get();
+//    	fileFromDB.setDeleted(true);
+//    	domainSpecificFileRepository.save(fileFromDB);
 		
     	// move the File to junk
     	String path = logicalFile.getAbsolutePath();

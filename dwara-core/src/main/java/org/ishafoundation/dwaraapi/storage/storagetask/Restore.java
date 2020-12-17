@@ -45,7 +45,7 @@ public class Restore extends AbstractStoragetaskAction{
 		Request request = job.getRequest();
 		RequestDetails requestDetails = request.getDetails();
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
-		if(requestedAction == Action.restore || (requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlow()))){
+		if(requestedAction == Action.restore || (requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId()))){
 			String destinationPath = requestDetails.getDestinationPath();//requested destination path
 			String outputFolder = requestDetails.getOutputFolder();
 			restoreLocation = destinationPath + java.io.File.separator + outputFolder + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier();
@@ -166,7 +166,7 @@ public class Restore extends AbstractStoragetaskAction{
 //				verify = volume.getArchiveformat().isRestoreVerify();
 //			storageJob.setRestoreVerify(verify);
 
-			if(requestedAction == Action.restore || (requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlow()))){
+			if(requestedAction == Action.restore || (requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId()))){
 //			if(requestedAction == Action.restore && !storageJob.isRestoreVerify()) {
 				String destinationPath = requestDetails.getDestinationPath();//requested destination path
 				storageJob.setDestinationPath(destinationPath);

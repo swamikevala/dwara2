@@ -70,11 +70,11 @@ public class RequestDetails {
 	@JsonProperty("output_folder")
 	private String outputFolder;
 	
-	@Deprecated
+	@Deprecated // retaining so as already created DB records wont fail
 	private Boolean verify; // overwrites whatever is configured in archiveformat.restore_verify = true
 	
-	@JsonProperty("flow")
-	private String flow;
+	@JsonProperty("flow_id")
+	private String flowId;
 	
 	@JsonProperty("domain_id")
 	private Integer domainId;
@@ -276,12 +276,12 @@ public class RequestDetails {
 		this.verify = verify;
 	}
 
-	public String getFlow() {
-		return flow;
+	public String getFlowId() {
+		return flowId;
 	}
 
-	public void setFlow(String flow) {
-		this.flow = flow;
+	public void setFlowId(String flowId) {
+		this.flowId = flowId;
 	}
 
 	public Integer getDomainId() {

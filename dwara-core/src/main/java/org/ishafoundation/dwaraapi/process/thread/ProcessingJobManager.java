@@ -50,6 +50,7 @@ import org.ishafoundation.dwaraapi.process.helpers.FiletypePathnameReqexVisitor;
 import org.ishafoundation.dwaraapi.process.helpers.LogicalFileHelper;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
+import org.ishafoundation.dwaraapi.thread.executor.ProcessingtaskThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,6 +108,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	
 	@Autowired
 	private FileEntityToFileForProcessConverter fileEntityToFileForProcessConverter;
+	
+	@Autowired
+	private ProcessingtaskThreadPoolExecutor processingtaskThreadPoolExecutor;
 
 	private Job job;
 
@@ -201,32 +205,14 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			if(processingtaskImpl == null)
 				throw new Exception(processingtaskId + " class is still not impl. Please refer IProcessingTask doc...");
 			
-			Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
+			//Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
+			Executor executor = processingtaskThreadPoolExecutor.getExecutor();
 			// TODO Any check needed on the configured executor? 
 			
 			Processingtask processingtask = getProcessingtask(processingtaskId);
+
 			
 			Domain domain = null;
-/*			Artifactclass outputArtifactclass = null;
-			String outputArtifactclassSuffix = processingtask != null ? processingtask.getOutputArtifactclassSuffix() : null;
-			String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
-			logger.trace("outputArtifactclassSuffix " + outputArtifactclassSuffix);
-			if(outputArtifactclassSuffix != null) { // For processing tasks like checksum-gen this will be null...
-				String outputArtifactclassId =  artifactclassId + outputArtifactclassSuffix;
-				logger.trace("outputArtifactclassId " + outputArtifactclassId);
-				outputArtifactclass = configurationTablesUtil.getArtifactclass(outputArtifactclassId);
-				domain = outputArtifactclass.getDomain();
-			}
-			else{
-				Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
-				domain = artifactclass.getDomain();
-			}
-			
-			if(domain == null) {
-				logger.error("Unable to get domain from the request");
-				throw new Exception("Unable to get domain from the request");
-			}
-*/
 			Integer inputArtifactId = job.getInputArtifactId();
 			Artifact inputArtifact = null;
 
@@ -240,38 +226,36 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
     			}
 			}
 			
-    		Artifactclass outputArtifactclass = null;
-			String outputArtifactclassSuffix = processingtask != null ? processingtask.getOutputArtifactclassSuffix() : null;
-			String artifactclassId = inputArtifact.getArtifactclass().getId();
-			logger.trace("outputArtifactclassSuffix " + outputArtifactclassSuffix);
-			if(outputArtifactclassSuffix != null) { // For processing tasks like checksum-gen this will be null...
-				String outputArtifactclassId =  artifactclassId + outputArtifactclassSuffix;
-				logger.trace("outputArtifactclassId " + outputArtifactclassId);
-				outputArtifactclass = configurationTablesUtil.getArtifactclass(outputArtifactclassId);
-			}
-			
 			String inputArtifactName = inputArtifact.getName();
 			Artifactclass inputArtifactclass = inputArtifact.getArtifactclass();
+			String inputArtifactclassId = inputArtifactclass.getId();
 			String inputPath = getInputPath(job); 
 			if(inputPath == null)
 				inputPath = inputArtifactclass.getPath();
-			String inputArtifactPath =  inputPath + File.separator + inputArtifactName;
-	
-			// For the task getting processed check
-			// 1) if there are any dependent tasks 
-			// 2) and is responsible for generating a artifactclass
-			
-			// then it means the output of the current task is the input for the dependent task
+			String inputArtifactPathname =  inputPath + File.separator + inputArtifactName;
 			
 			
-			String outputArtifactName = null;
-			String outputArtifactPathname = null; // holds where to generate the files in the physical system...
-			if(outputArtifactclass != null) {
-				outputArtifactName = getOutputArtifactName(outputArtifactclass, inputArtifactName);
-				outputArtifactPathname = getOutputArtifactPathname(outputArtifactclass, outputArtifactName);
+			String outputArtifactName = inputArtifactName;
+			String outputArtifactPathname = inputArtifactPathname; // holds where to generate the files in the physical system...
+    		Artifactclass outputArtifactclass = null;
+			String outputArtifactclassSuffix = processingtask != null ? processingtask.getOutputArtifactclassSuffix() : null;
+			logger.trace("outputArtifactclassSuffix " + outputArtifactclassSuffix);
+			if(outputArtifactclassSuffix != null) { // For processing tasks like checksum-gen this will be null...
+				if(outputArtifactclassSuffix.equals(""))
+					outputArtifactclass = inputArtifactclass;
+				else {
+					String outputArtifactclassId =  inputArtifactclassId + outputArtifactclassSuffix;
+					logger.trace("outputArtifactclassId " + outputArtifactclassId);
+					outputArtifactclass = configurationTablesUtil.getArtifactclass(outputArtifactclassId);
+					
+					if(outputArtifactclass != null) {
+						outputArtifactName = getOutputArtifactName(outputArtifactclass, inputArtifactName);
+						outputArtifactPathname = getOutputArtifactPathname(outputArtifactclass, outputArtifactName);
+					}
+				}
 			}
 			
-			logger.trace("inputArtifactPath " + inputArtifactPath); 	// /data/ingested/V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12 
+			logger.trace("inputArtifactPath " + inputArtifactPathname); 	// /data/ingested/V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12 
 																		// /data/ingested/V22204_Test2_MBT20481_01.MP4 OR 
 																		// /data/transcoded/public/VL22204_Test2_MBT20481_01
 			logger.trace("outputArtifactName " + outputArtifactName); 	// null for processes that has no outputartifactclass OR 
@@ -281,7 +265,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			
 			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, inputArtifact);
 	
-			Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPath, inputArtifactclass);
+			Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPathname, inputArtifactclass);
 			int filesToBeProcessedCount = selectedFileList.size();
 			logger.trace("filesToBeProcessedCount " + filesToBeProcessedCount);
 			
@@ -291,7 +275,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				org.ishafoundation.dwaraapi.process.request.Artifact inputArtifactForProcess = jobForProcess.getInputArtifact();
 				inputArtifactForProcess.setName(inputArtifactName);
 				org.ishafoundation.dwaraapi.process.request.Artifactclass inputArtifactclassForProcess = inputArtifactForProcess.getArtifactclass();
-				inputArtifactclassForProcess.setId(artifactclassId);
+				inputArtifactclassForProcess.setId(inputArtifactclassId);
+				inputArtifactclassForProcess.setSource(inputArtifact.getArtifactclass().getSource());
+				inputArtifactclassForProcess.setPathPrefix(inputArtifact.getArtifactclass().getPathPrefix());
 				inputArtifactclassForProcess.setCategory(inputArtifact.getArtifactclass().getCategory());
 				inputArtifactclassForProcess.setDomain(domain.name());
 				jobForProcess.getOutputArtifact().setName(outputArtifactName);
@@ -307,14 +293,14 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					anyFileSentForProcessing = true;
 					String artifactNamePrefixedFilePathname = null; // 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4 || 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
 					String outputFilePath = null; // /data/transcoded/public
-					if(StringUtils.isNotBlank(FilenameUtils.getExtension(inputArtifactPath))) { // means input artifact is a file and not a directory
+					if(StringUtils.isNotBlank(FilenameUtils.getExtension(inputArtifactPathname))) { // means input artifact is a file and not a directory
 						artifactNamePrefixedFilePathname = inputArtifactName; // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4
 						if(outputArtifactPathname != null)
 							outputFilePath = outputArtifactPathname;
 					}
 					else {
-						String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPath + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
-						artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPath + File.separator, inputArtifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
+						String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPathname + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
+						artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPathname + File.separator, inputArtifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
 						
 						if(outputArtifactPathname != null) {
 							String suffixPath = FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
@@ -374,7 +360,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	
 						ProcessingJobProcessor processingJobProcessor = applicationContext.getBean(ProcessingJobProcessor.class);
 						ProcessContext processContext = new ProcessContext();
-						processContext.setInputDirPath(inputArtifactPath);
+						processContext.setInputDirPath(inputArtifactPathname);
 						processContext.setJob(jobForProcess);
 						processContext.setFile(fileEntityToFileForProcessConverter.getFileForProcess(file, domain));
 						processContext.setLogicalFile(logicalFile);

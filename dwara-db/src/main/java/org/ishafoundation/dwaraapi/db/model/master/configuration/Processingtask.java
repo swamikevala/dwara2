@@ -22,17 +22,14 @@ public class Processingtask{
 	@Column(name="max_errors")
 	private int maxErrors;
 
-	// Many Task can share the same filetype...
-	// Eg.,
-	// Pubvideo - video
-	// Privvideo - video
-//	@ManyToOne(fetch = FetchType.LAZY)
-//	private Filetype filetype;
 	@Column(name="filetype_id")
 	private String filetypeId;
 	
 	@Column(name="output_artifactclass_suffix")
 	private String outputArtifactclassSuffix;
+	
+	@Column(name="output_filetype_id")
+	private String outputFiletypeId;
 	
     public String getId() {
 		return id;
@@ -72,6 +69,14 @@ public class Processingtask{
 
 	public void setOutputArtifactclassSuffix(String outputArtifactclassSuffix) {
 		this.outputArtifactclassSuffix = outputArtifactclassSuffix;
+	}
+	
+	public String getOutputFiletypeId() {
+		return outputFiletypeId;
+	}
+
+	public void setOutputFiletypeId(String outputFiletypeId) {
+		this.outputFiletypeId = outputFiletypeId;
 	}
 
 	@Override

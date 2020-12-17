@@ -56,7 +56,7 @@ public class Job {
 //	@ManyToOne(fetch = FetchType.LAZY)
 //    private Flowelement flowelement;
 	@Column(name="flowelement_id")
-	private Integer flowelementId;
+	private String flowelementId;
 	
 	@Type(type = "json")
 	@Column(name="dependencies", columnDefinition = "json")
@@ -150,11 +150,11 @@ public class Job {
 //		this.flowelement = flowelement;
 //	}
 
-	public Integer getFlowelementId() {
+	public String getFlowelementId() {
 		return flowelementId;
 	}
 
-	public void setFlowelementId(Integer flowelementId) {
+	public void setFlowelementId(String flowelementId) {
 		this.flowelementId = flowelementId;
 	}
 	

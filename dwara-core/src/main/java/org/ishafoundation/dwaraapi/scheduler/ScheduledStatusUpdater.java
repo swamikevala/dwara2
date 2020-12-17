@@ -165,7 +165,7 @@ public class ScheduledStatusUpdater {
 							Request request = job.getRequest();
 							RequestDetails requestDetails = request.getDetails();
 							org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
-							if(requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlow())){
+							if(requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId())){
 								// what need to be restored
 								int fileIdRestored = requestDetails.getFileId();
 								

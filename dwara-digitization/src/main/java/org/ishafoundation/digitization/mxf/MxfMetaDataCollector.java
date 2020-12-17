@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Component("video-header-footer-extraction")//mxf-meta-collection")
+@Component("video-digi-2020-header-extract")//mxf-meta-collection")
 @Primary
 @Profile({ "!dev & !stage" })
 public class MxfMetaDataCollector implements IProcessingTask {

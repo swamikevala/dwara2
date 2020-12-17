@@ -39,7 +39,7 @@ public class JobResponse {
     @JsonProperty("requestId")
     private Integer requestId;
     @JsonProperty("flowelementId")
-    private Integer flowelementId;
+    private String flowelementId;
     @JsonProperty("inputArtifactId")
     private Integer inputArtifactId;
     @JsonProperty("outputArtifactId")
@@ -114,12 +114,12 @@ public class JobResponse {
     }
 
     @JsonProperty("flowelementId")
-    public Integer getFlowelementId() {
+    public String getFlowelementId() {
         return flowelementId;
     }
 
     @JsonProperty("flowelementId")
-    public void setFlowelementId(Integer flowelementId) {
+    public void setFlowelementId(String flowelementId) {
         this.flowelementId = flowelementId;
     }
 
