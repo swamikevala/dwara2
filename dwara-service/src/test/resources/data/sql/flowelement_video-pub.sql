@@ -24,15 +24,15 @@ DROP TABLE IF EXISTS `flowelement`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `flowelement` (
-  `id` int(11) NOT NULL,
+  `id` varchar(255) NOT NULL,
   `active` bit(1) DEFAULT NULL,
   `dependencies` json DEFAULT NULL,
+  `deprecated` bit(1) DEFAULT NULL,
   `display_order` int(11) DEFAULT NULL,
-  `processingtask_id` varchar(255) DEFAULT NULL,
-  `storagetask_action_id` varchar(255) DEFAULT NULL,
   `flow_id` varchar(255) DEFAULT NULL,
   `flow_ref_id` varchar(255) DEFAULT NULL,
-  `deprecated` bit(1) DEFAULT NULL,
+  `processingtask_id` varchar(255) DEFAULT NULL,
+  `storagetask_action_id` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -43,7 +43,13 @@ CREATE TABLE `flowelement` (
 
 LOCK TABLES `flowelement` WRITE;
 /*!40000 ALTER TABLE `flowelement` DISABLE KEYS */;
-INSERT INTO `flowelement` VALUES (1,'',NULL,1,'checksum-gen',NULL,'archive-flow',NULL,''),(2,'',NULL,2,NULL,'write','archive-flow',NULL,''),(3,'','[2]',3,NULL,'restore','archive-flow',NULL,''),(4,'','[1, 3]',4,'checksum-verify',NULL,'archive-flow',NULL,''),(5,'',NULL,5,'video-proxy-low-gen',NULL,'video-proxy-flow',NULL,'\0'),(6,'','[5]',6,'video-mam-update',NULL,'video-proxy-flow',NULL,'\0'),(7,'','[5]',7,NULL,NULL,'video-proxy-flow','core-archive-flow','\0');
+INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('4', 'video-proxy-flow', null, 'video-proxy-low-gen', null, null, 4, 1, 1);
+INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('5', 'video-proxy-flow', null, 'video-mam-update', null, '[4]', 5, 1, 1);
+INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('6', 'video-proxy-flow', null, null, 'archive-flow', '[4]', 6, 1, 1);
+INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U1', 'video-proxy-flow', null, 'video-proxy-low-gen', null, null, 4, 1, 0);
+INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U2', 'video-proxy-flow', null, 'video-mam-update', null, '["U1"]', 5, 1, 0);
+INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U3', 'video-proxy-flow', null, null, 'archive-flow', '["U1"]', 6, 1, 0);
+
 /*!40000 ALTER TABLE `flowelement` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

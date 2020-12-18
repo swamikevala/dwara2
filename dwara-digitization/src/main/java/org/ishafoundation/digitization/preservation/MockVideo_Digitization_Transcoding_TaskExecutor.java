@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Component("video-preservation-gen")
+@Component("video-digi-2020-preservation-gen")
 @Profile({ "dev | stage" })
 public class MockVideo_Digitization_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
     private static final Logger logger = LoggerFactory.getLogger(MockVideo_Digitization_Transcoding_TaskExecutor.class);

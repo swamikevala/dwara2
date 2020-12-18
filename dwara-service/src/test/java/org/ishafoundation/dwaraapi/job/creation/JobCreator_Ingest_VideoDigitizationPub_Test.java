@@ -28,30 +28,35 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends JobCreator_Inge
 		1 - complete
 		jobmanager
 		scheduler
-			3 bru
-			4 checksum-gen
-				5 mxf - complete
-					6 W 1
-					7 W 2
-					8 W 3
-					9 proxy
-						10 R 1
-						11 CSV 1
+			3 checksum-gen
+				4 mxf - complete
+					5 W 1
+					6 W 2
+					7 W 3
+					8 proxy
+						9 R 1
+						10 CSV 1
 						jobmanager
 						scheduler
-						12 : Mam
-						13 : chs
-						14 : w1
-						15 : w2
-						16 : w3
+						11 : Mam
+						12 : checksum-gen
+						13 : w1
+						14 : w2
+						15 : w3
 	 */
 
 	@Test
 	@Sql(scripts = {"/data/sql/truncate_transaction_tables.sql","/data/sql/flowelement_video-digitization-pub.sql"})
 	public void test_a_ingest() throws Exception {
+		int hdrNftrExtractionJobId = 1;
+		int rawCheksumGenJobId = 3;
+		int rawW1JobId = 5;
+		int proxyJobId = 8;
+		int proxyArchiveFlowJobId = 12;
+		
 		String testIngestArtifactName1 =  "prasad-artifact-1";
-		String artifact_name_1 = extractZip(testIngestArtifactName1,"P22197");
-		String artifactclassId =  "video-digitization-pub";
+		String artifact_name_1 = extractZip(testIngestArtifactName1,"D1");
+		String artifactclassId =  "video-digi-2020-pub";
 
 		List<Job> jobList = synchronousActionForRequest(artifact_name_1, artifactclassId);
         
@@ -65,7 +70,7 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends JobCreator_Inge
 		
 		// 1 complete - Header and footer extraction - so we can run preservation call using JobManager
 		// TODO: What if this job is not complete but just ffv1 generation is complete we should not move to the next step? 
-		Job job = completeJob(1);
+		Job job = completeJob(hdrNftrExtractionJobId);
 		
 		// 2 - run preservation call using JobManager
 		List<Job> dependentJobList = callJobManagerAndStatusUpdater(job.getRequest(), artifactId);
@@ -75,15 +80,12 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends JobCreator_Inge
 			String actual = "";
 			//assertEquals(expected, actual);
 		}
-			
-		// 3 bru - complete
-		completeJob(3);
-			
-		// 4 checksum-gen - generates mxfexclusion job
-		List<Job> checksumGenDependentJobList = completeJobAndCreateDependentJobs(4);
+		
+		// 3 checksum-gen - generates mxfexclusion job
+		List<Job> checksumGenDependentJobList = completeJobAndCreateDependentJobs(rawCheksumGenJobId);
 		assertEquals(checksumGenDependentJobList.size(), 1);
 
-		// 5
+		// 4
 		Job mxfExclusionJob = checksumGenDependentJobList.get(0);
 		List<Job> mxfExclusionDependentJobList = completeJobAndCreateDependentJobs(mxfExclusionJob);
 		assertEquals(mxfExclusionDependentJobList.size(), 4);
@@ -94,10 +96,10 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends JobCreator_Inge
 			//assertEquals(expected, actual);
 		}
 		
-		// 6 through 9 
+		// 5 through 8 
 		int nthCopy = 1;
 		String groupVolumePrefix = "R";
-		List<Job> write1DependentJobList = completeJobAndCreateDependentJobs(6);
+		List<Job> write1DependentJobList = completeJobAndCreateDependentJobs(rawW1JobId);
 		assertEquals(write1DependentJobList.size(), 1);
 		Job restore1Job = write1DependentJobList.get(0);
 		assertEquals(restore1Job.getStoragetaskActionId() + ":" + restore1Job.getGroupVolume().getId(), "restore:" + groupVolumePrefix + nthCopy);
@@ -115,11 +117,11 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends JobCreator_Inge
 		 * Now run proxy job so it generates output aritifact
 		 */
 		// proxy job is on_hold now release it first 
-		updateJobStatus(9, Status.queued);		
+		updateJobStatus(proxyJobId, Status.queued);		
 		callJobManagerAndStatusUpdater(job.getRequest(), artifactId + 1);
 		
 		// TODO - call archive flow...
-		validateArchiveFlow(13, "G");
+		validateArchiveFlow(proxyArchiveFlowJobId, "G");
 		//assertEquals(mxfExclusionJob.getStoragetaskActionId() + ":" + restore1Job.getGroupVolume().getId(), "restore:" + groupVolumePrefix + nthCopy);
 	}
 }

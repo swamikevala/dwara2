@@ -193,7 +193,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 				fileVolume.setVolumeBlock(volumeBlock);
 				fileVolume.setArchiveBlock(archivedFile.getArchiveBlock());
 			}
-			toBeAddedFileVolumeTableEntries.add(fileVolume);
+			toBeAddedFileVolumeTableEntries.add(fileVolume); // Should we add null entries...
+			// TODO Should we report if archivedFile == null, file not archived...
 		}
 		
 	    if(toBeAddedFileVolumeTableEntries.size() > 0) {
