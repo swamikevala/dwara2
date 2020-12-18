@@ -1,3 +1,17 @@
+/UI changes
+	log view
+		call job api and not placehold api
+		artifact delete api
+	held/process view
+		cancel for non in_progress requests
+		
+		
+2.0.3 sql
+application.properties with global thread pool
+
+Some partially_completed requests are there and we have removed the status causing scheduler to fail
+
+
 # Dwara App Version - 2.0.06
 # Dwara DB Version - 2.0.2
 ### New features 

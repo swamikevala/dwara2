@@ -235,21 +235,27 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				inputPath = inputArtifactclass.getPath();
 			String inputArtifactPathname =  inputPath + File.separator + inputArtifactName;
 			
-			
-			String outputArtifactName = inputArtifactName;
-			String outputArtifactPathname = inputArtifactPathname; // holds where to generate the files in the physical system...
+	
+			String outputArtifactName = null;
+			String outputArtifactPathname = null; // holds where to generate the files in the physical system...
     		Artifactclass outputArtifactclass = null;
 			String outputArtifactclassSuffix = processingtask != null ? processingtask.getOutputArtifactclassSuffix() : null;
 			logger.trace("outputArtifactclassSuffix " + outputArtifactclassSuffix);
 			if(outputArtifactclassSuffix != null) { // For processing tasks like checksum-gen this will be null...
-				if(outputArtifactclassSuffix.equals(""))
+				if(outputArtifactclassSuffix.equals("")) {
 					outputArtifactclass = inputArtifactclass;
+					outputArtifactName = inputArtifactName;
+					outputArtifactPathname = inputArtifactPathname; // holds where to generate the files in the physical system...
+				}
 				else {
 					String outputArtifactclassId =  inputArtifactclassId + outputArtifactclassSuffix;
 					logger.trace("outputArtifactclassId " + outputArtifactclassId);
 					outputArtifactclass = configurationTablesUtil.getArtifactclass(outputArtifactclassId);
 					
-					if(outputArtifactclass != null) {
+					if(outputArtifactclass == null) {
+						throw new DwaraException(outputArtifactclassId + " not configured in artifactclass table. Please double check");
+					}
+					else {
 						outputArtifactName = getOutputArtifactName(outputArtifactclass, inputArtifactName);
 						outputArtifactPathname = getOutputArtifactPathname(outputArtifactclass, outputArtifactName);
 					}
@@ -281,7 +287,8 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				inputArtifactclassForProcess.setPathPrefix(inputArtifact.getArtifactclass().getPathPrefix());
 				inputArtifactclassForProcess.setCategory(inputArtifact.getArtifactclass().getCategory());
 				inputArtifactclassForProcess.setDomain(domain.name());
-				jobForProcess.getOutputArtifact().setName(outputArtifactName);
+				if(jobForProcess.getOutputArtifact() != null)
+					jobForProcess.getOutputArtifact().setName(outputArtifactName);
  
 				for (Iterator<LogicalFile> iterator = selectedFileList.iterator(); iterator.hasNext();) {
 					LogicalFile logicalFile = (LogicalFile) iterator.next(); // would have an absolute file like C:\data\ingested\14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS and its sidecar files

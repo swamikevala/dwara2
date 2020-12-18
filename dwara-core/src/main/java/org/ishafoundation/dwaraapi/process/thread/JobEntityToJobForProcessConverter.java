@@ -56,12 +56,13 @@ public class JobEntityToJobForProcessConverter {
 		jobForProcess.setInputArtifact(inputArtifact);
 		
 		Integer outputArtifactId = jobEntity.getOutputArtifactId();
-		Artifact outputArtifact = new Artifact();
-		outputArtifact.setId(outputArtifactId);
-		Artifactclass outputArtifactclass = new Artifactclass();
-		outputArtifact.setArtifactclass(outputArtifactclass);
-		jobForProcess.setOutputArtifact(outputArtifact);
-		
+		// Job will not have the outputArtifact generated at this point so the check is not right. We are passing this so as the generated files go in here... if(outputArtifactId != null) {
+			Artifact outputArtifact = new Artifact();
+			outputArtifact.setId(outputArtifactId);
+			Artifactclass outputArtifactclass = new Artifactclass();
+			outputArtifact.setArtifactclass(outputArtifactclass);
+			jobForProcess.setOutputArtifact(outputArtifact);
+		//}
 		
 		Volume volume = new Volume();
 		if(jobEntity.getVolume() != null)
