@@ -1,4 +1,15 @@
-/UI changes
+Apply Full dump from prod
+
+Apply (/dwara-db/src/data/sql/dwara_update_2_0_3.sql)
+
+ensure application.properties has entries for the global thread pool
+threadpoolexecutor.processingtask.corePoolSize=5
+threadpoolexecutor.processingtask.maxPoolSize=5
+The other threadpoolexecutor.*.* can all be cleaned up...
+
+Deploy the latest war from dev server
+
+Pending UI changes
 	log view
 		call job api and not placehold api
 		artifact delete api
@@ -6,10 +17,7 @@
 		cancel for non in_progress requests
 		
 		
-2.0.3 sql
-application.properties with global thread pool
-
-Some partially_completed requests are there and we have removed the status causing scheduler to fail
+-- 2.0.3 sql
 
 
 # Dwara App Version - 2.0.06

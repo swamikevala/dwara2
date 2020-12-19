@@ -1,4 +1,4 @@
-use `frm_prd`;
+-- use `frm_prd`;
 SET foreign_key_checks = 0; 
 
 -- UPDATE `version` SET `version`='2.0.3' WHERE `version`='2.0.2';
@@ -54,14 +54,21 @@ INSERT INTO extension_filetype (extension_id, filetype_id, sidecar) VALUES ('idx
 
 INSERT INTO extension_filetype (extension_id, filetype_id, sidecar) VALUES ('mxf', 'mxf', 0);
 
+
+-- SEQUENCE --
+INSERT INTO sequence (id, `type`, prefix, code_regex, number_regex, `group`, starting_number, ending_number, current_number, sequence_ref_id, force_match, keep_code) VALUES ('video-digi-2020-grp','artifact',null,null,null,1,1,-1,0,null,0,0);
+INSERT INTO sequence (id, `type`, prefix, code_regex, number_regex, `group`, starting_number, ending_number, current_number, sequence_ref_id, force_match, keep_code) VALUES ('video-digi-2020-pub','artifact','VD','^[A-Z]{1,2}\\d+',null,0,null,null,null,'video-digi-2020-grp',1,0);
+INSERT INTO sequence (id, `type`, prefix, code_regex, number_regex, `group`, starting_number, ending_number, current_number, sequence_ref_id, force_match, keep_code) VALUES ('video-digi-2020-pub-proxy-low','artifact','VDL','^VD\d+(?=_)',null,0,null,null,null,'video-digi-2020-grp',1,0);
+-- INSERT INTO sequence (id, `type`, prefix, code_regex, number_regex, `group`, starting_number, ending_number, current_number, sequence_ref_id, force_match, keep_code) VALUES ('video-digi-2020-priv2','artifact','VDX','^[A-Z]{1,2}\\d+',null,0,null,null,null,'video-digi-2020-grp',1,0);
+
 -- ARTIFACTCLASS --
 
 INSERT INTO artifactclass (id, `description`, domain_id, sequence_id, source, concurrent_volume_copies, display_order, path_prefix, artifactclass_ref_id, import_only) VALUES ('video-digi-2020-pub','',1,'video-digi-2020-pub',1,1,28,'/data/dwara/staged',null,0);
-INSERT INTO artifactclass (id, `description`, domain_id, sequence_id, source, concurrent_volume_copies, display_order, path_prefix, artifactclass_ref_id, import_only) VALUES ('video-digi-2020-priv1','',1,'video-digi-2020-pub',1,1,29,'/data/dwara/staged',null,0);
-INSERT INTO artifactclass (id, `description`, domain_id, sequence_id, source, concurrent_volume_copies, display_order, path_prefix, artifactclass_ref_id, import_only) VALUES ('video-digi-2020-priv2','',1,'video-digi-2020-priv2',1,1,30,'/data/dwara/staged',null,0);
+-- INSERT INTO artifactclass (id, `description`, domain_id, sequence_id, source, concurrent_volume_copies, display_order, path_prefix, artifactclass_ref_id, import_only) VALUES ('video-digi-2020-priv1','',1,'video-digi-2020-pub',1,1,29,'/data/dwara/staged',null,0);
+-- INSERT INTO artifactclass (id, `description`, domain_id, sequence_id, source, concurrent_volume_copies, display_order, path_prefix, artifactclass_ref_id, import_only) VALUES ('video-digi-2020-priv2','',1,'video-digi-2020-priv2',1,1,30,'/data/dwara/staged',null,0);
 INSERT INTO artifactclass (id, `description`, domain_id, sequence_id, source, concurrent_volume_copies, display_order, path_prefix, artifactclass_ref_id, import_only) VALUES ('video-digi-2020-pub-proxy-low','',1,'video-digi-2020-pub-proxy-low',0,1,0,'/data/dwara/transcoded','video-digi-2020-pub',0);
-INSERT INTO artifactclass (id, `description`, domain_id, sequence_id, source, concurrent_volume_copies, display_order, path_prefix, artifactclass_ref_id, import_only) VALUES ('video-digi-2020-priv1-proxy-low','',1,'video-digi-2020-pub-proxy-low',0,1,0,'/data/dwara/transcoded','video-digi-2020-priv1',0);
-INSERT INTO artifactclass (id, `description`, domain_id, sequence_id, source, concurrent_volume_copies, display_order, path_prefix, artifactclass_ref_id, import_only) VALUES ('video-digi-2020-priv2-proxy-low','',1,'video-digi-2020-priv2-proxy-low',0,1,0,'/data/dwara/transcoded','video-digi-2020-priv2',0);
+-- INSERT INTO artifactclass (id, `description`, domain_id, sequence_id, source, concurrent_volume_copies, display_order, path_prefix, artifactclass_ref_id, import_only) VALUES ('video-digi-2020-priv1-proxy-low','',1,'video-digi-2020-pub-proxy-low',0,1,0,'/data/dwara/transcoded','video-digi-2020-priv1',0);
+-- INSERT INTO artifactclass (id, `description`, domain_id, sequence_id, source, concurrent_volume_copies, display_order, path_prefix, artifactclass_ref_id, import_only) VALUES ('video-digi-2020-priv2-proxy-low','',1,'video-digi-2020-priv2-proxy-low',0,1,0,'/data/dwara/transcoded','video-digi-2020-priv2',0);
 
 
 -- ARTIFACTCLASS_TASK
@@ -90,38 +97,33 @@ INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, pro
 INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (2, 'video-digi-2020-pub', 'write', NULL, '{"create_held_jobs": true}');
 INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (3, 'video-digi-2020-pub', NULL, 'video-proxy-low-gen', '{"create_held_jobs": true}');
 INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (4, 'video-digi-2020-pub', NULL, 'file-delete', '{"pathname_regex": ".*.mxf$"}');
-INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (5, 'video-digi-2020-priv1', 'write', NULL, '{"create_held_jobs": true}');
-INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (6, 'video-digi-2020-priv1', NULL, 'video-proxy-low-gen', '{"create_held_jobs": true}');
-INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (7, 'video-digi-2020-priv1', NULL, 'file-delete', '{"pathname_regex": ".*.mxf$"}');
-INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (8, 'video-digi-2020-priv2', 'write', NULL, '{"create_held_jobs": true}');
-INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (9, 'video-digi-2020-priv2', NULL, 'video-proxy-low-gen', '{"create_held_jobs": true}');
-INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (10, 'video-digi-2020-priv2', NULL, 'file-delete', '{"pathname_regex": ".*.mxf$"}');
+-- INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (5, 'video-digi-2020-priv1', 'write', NULL, '{"create_held_jobs": true}');
+-- INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (6, 'video-digi-2020-priv1', NULL, 'video-proxy-low-gen', '{"create_held_jobs": true}');
+-- INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (7, 'video-digi-2020-priv1', NULL, 'file-delete', '{"pathname_regex": ".*.mxf$"}');
+-- INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (8, 'video-digi-2020-priv2', 'write', NULL, '{"create_held_jobs": true}');
+-- INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (9, 'video-digi-2020-priv2', NULL, 'video-proxy-low-gen', '{"create_held_jobs": true}');
+-- INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (10, 'video-digi-2020-priv2', NULL, 'file-delete', '{"pathname_regex": ".*.mxf$"}');
 INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (11, 'video-digi-2020-pub', NULL, 'video-digi-2020-preservation-gen', '{"output_path": "/"}');
-INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (12, 'video-digi-2020-priv1', NULL, 'video-digi-2020-preservation-gen', '{"output_path": "/"}');
-INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (13, 'video-digi-2020-priv2', NULL, 'video-digi-2020-preservation-gen', '{"output_path": "/"}');
+-- INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (12, 'video-digi-2020-priv1', NULL, 'video-digi-2020-preservation-gen', '{"output_path": "/"}');
+-- INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (13, 'video-digi-2020-priv2', NULL, 'video-digi-2020-preservation-gen', '{"output_path": "/"}');
 
 -- ARTIFACTCLASS_VOLUME --
 INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-pub', 'R1', 0, 1);
-INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-priv1', 'R198', 0, 1);
-INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-priv2', 'X1', 0, 1);
+-- INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-priv1', 'R198', 0, 1);
+-- INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-priv2', 'X1', 0, 1);
 
 INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-pub', 'R2', 0, 1);
-INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-priv1', 'R298', 0, 1);
-INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-priv2', 'X2', 0, 1);
+-- INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-priv1', 'R298', 0, 1);
+-- INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-priv2', 'X2', 0, 1);
 
 INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-pub', 'R3', 0, 1);
-INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-priv1', 'R398', 0, 1);
-INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-priv2', 'X3', 0, 1);
+-- INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-priv1', 'R398', 0, 1);
+-- INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-priv2', 'X3', 0, 1);
 
 INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-pub-proxy-low', 'G1', 0, 1);
 INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-pub-proxy-low', 'G2', 0, 1);
 INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-pub-proxy-low', 'G3', 0, 1);
 
-
--- SEQUENCE --
-INSERT INTO sequence (id, `type`, prefix, code_regex, number_regex, `group`, starting_number, ending_number, current_number, sequence_ref_id, force_match, keep_code) VALUES ('video-digi-2020-grp','artifact',null,null,null,1,1,-1,0,null,0,0);
-INSERT INTO sequence (id, `type`, prefix, code_regex, number_regex, `group`, starting_number, ending_number, current_number, sequence_ref_id, force_match, keep_code) VALUES ('video-digi-2020-pub','artifact','VD','^[A-Z]{1,2}\\d+',null,0,null,null,null,'video-digi-2020-grp',1,0);
-INSERT INTO sequence (id, `type`, prefix, code_regex, number_regex, `group`, starting_number, ending_number, current_number, sequence_ref_id, force_match, keep_code) VALUES ('video-digi-2020-priv2','artifact','VDX','^[A-Z]{1,2}\\d+',null,0,null,null,null,'video-digi-2020-grp',1,0);
 
 -- ACTION_ARTIFACTCLASS_USER --
 INSERT INTO action_artifactclass_user (action_id, artifactclass_id, user_id) VALUES ('ingest', 'video-digi-2020-pub', 2);
@@ -203,14 +205,14 @@ CREATE TABLE `action_artifactclass_flow` (
 INSERT INTO action_artifactclass_flow (action_id, artifactclass_id, flow_id, active) VALUES ('ingest', 'video-pub', 'archive-flow', 1);
 INSERT INTO action_artifactclass_flow (action_id, artifactclass_id, flow_id, active) VALUES ('ingest', 'video-pub', 'video-proxy-flow', 1);
 INSERT INTO action_artifactclass_flow (action_id, artifactclass_id, flow_id, active) VALUES ('ingest', 'video-digi-2020-pub', 'video-digi-2020-flow', 1);
-INSERT INTO action_artifactclass_flow (action_id, artifactclass_id, flow_id, active) VALUES ('ingest', 'video-digi-2020-priv1', 'video-digi-2020-flow', 1);
-INSERT INTO action_artifactclass_flow (action_id, artifactclass_id, flow_id, active) VALUES ('ingest', 'video-digi-2020-priv2', 'video-digi-2020-flow', 0);
+-- INSERT INTO action_artifactclass_flow (action_id, artifactclass_id, flow_id, active) VALUES ('ingest', 'video-digi-2020-priv1', 'video-digi-2020-flow', 1);
+-- INSERT INTO action_artifactclass_flow (action_id, artifactclass_id, flow_id, active) VALUES ('ingest', 'video-digi-2020-priv2', 'video-digi-2020-flow', 0);
 
 
 -- VOLUME --
-INSERT INTO volume (id,capacity,checksumtype,details,finalized,imported,storagelevel,storagesubtype,storagetype,`type`,archiveformat_id,copy_id,location_id,suspect,defective,group_ref_id,sequence_id,initialized_at) VALUES ('R198',null,'sha256','{"blocksize": 262144}',0,0,'block',null,'tape','group','tar',1,null,0,0,null,'video-digi-2020-1',null);
-INSERT INTO volume (id,capacity,checksumtype,details,finalized,imported,storagelevel,storagesubtype,storagetype,`type`,archiveformat_id,copy_id,location_id,suspect,defective,group_ref_id,sequence_id,initialized_at) VALUES ('R298',null,'sha256','{"blocksize": 262144}',0,0,'block',null,'tape','group','bru',2,null,0,0,null,'video-digi-2020-2',null);
-INSERT INTO volume (id,capacity,checksumtype,details,finalized,imported,storagelevel,storagesubtype,storagetype,`type`,archiveformat_id,copy_id,location_id,suspect,defective,group_ref_id,sequence_id,initialized_at) VALUES ('R398',null,'sha256','{"blocksize": 262144}',0,0,'block',null,'tape','group','tar',3,null,0,0,null,'video-digi-2020-3',null);
+-- INSERT INTO volume (id,capacity,checksumtype,details,finalized,imported,storagelevel,storagesubtype,storagetype,`type`,archiveformat_id,copy_id,location_id,suspect,defective,group_ref_id,sequence_id,initialized_at) VALUES ('R198',null,'sha256','{"blocksize": 262144}',0,0,'block',null,'tape','group','tar',1,null,0,0,null,'video-digi-2020-1',null);
+-- INSERT INTO volume (id,capacity,checksumtype,details,finalized,imported,storagelevel,storagesubtype,storagetype,`type`,archiveformat_id,copy_id,location_id,suspect,defective,group_ref_id,sequence_id,initialized_at) VALUES ('R298',null,'sha256','{"blocksize": 262144}',0,0,'block',null,'tape','group','bru',2,null,0,0,null,'video-digi-2020-2',null);
+-- INSERT INTO volume (id,capacity,checksumtype,details,finalized,imported,storagelevel,storagesubtype,storagetype,`type`,archiveformat_id,copy_id,location_id,suspect,defective,group_ref_id,sequence_id,initialized_at) VALUES ('R398',null,'sha256','{"blocksize": 262144}',0,0,'block',null,'tape','group','tar',3,null,0,0,null,'video-digi-2020-3',null);
 
 
 SET foreign_key_checks = 1; 
