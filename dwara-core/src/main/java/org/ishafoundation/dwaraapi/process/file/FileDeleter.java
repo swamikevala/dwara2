@@ -40,7 +40,7 @@ public class FileDeleter implements IProcessingTask {
 		Artifact inputArtifact = processContext.getJob().getInputArtifact();
 		String inputArtifactName = inputArtifact.getName();
 		Artifactclass inputArtifactclass = inputArtifact.getArtifactclass();
-		String pathPrefix = getPath(inputArtifactclass);
+		String pathPrefix = inputArtifactclass.getPath();
 		
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		
@@ -52,13 +52,14 @@ public class FileDeleter implements IProcessingTask {
 
     	// deleting all its side cars
 		HashMap<String, File> sidecarFileMap = logicalFile.getSidecarFiles();
-		Set<String> sidecarFileSet = sidecarFileMap.keySet();
-		for (String nthSideCarExtn : sidecarFileSet) {
-			File nthSideCarFile = sidecarFileMap.get(nthSideCarExtn);
-			
-			deleteFileFromFilesystemAndUpdateDB(nthSideCarFile, domainSpecificFileRepository, pathPrefix);
+		if (sidecarFileMap != null) {
+			Set<String> sidecarFileSet = sidecarFileMap.keySet();
+			for (String nthSideCarExtn : sidecarFileSet) {
+				File nthSideCarFile = sidecarFileMap.get(nthSideCarExtn);
+				
+				deleteFileFromFilesystemAndUpdateDB(nthSideCarFile, domainSpecificFileRepository, pathPrefix);
+			}
 		}
-    	
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 		processingtaskResponse.setIsComplete(true);
 
@@ -77,13 +78,5 @@ public class FileDeleter implements IProcessingTask {
 
 	}
 	
-	public String getPath(Artifactclass artifactclass) {
-		String pathWithOutLibrary = null;
-		if(artifactclass.getSource())
-			pathWithOutLibrary = artifactclass.getPathPrefix();
-		else
-			pathWithOutLibrary = artifactclass.getPathPrefix() + java.io.File.separator + artifactclass.getCategory();
 
-		return pathWithOutLibrary;
-	}
 }

@@ -23,6 +23,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
@@ -73,6 +74,9 @@ public class JobCreator_Ingest extends DwaraService {
 	
 	@Autowired
 	private DomainUtil domainUtil;
+	
+	@Autowired
+	private JobUtil jobUtil;
 	
 	@Autowired 
 	private ScheduledStatusUpdater scheduledStatusUpdater;
@@ -290,7 +294,8 @@ public class JobCreator_Ingest extends DwaraService {
 
 	}
 	
-	protected List<Job> callJobManagerAndStatusUpdater(Request systemrequest, int artifactId){
+	//protected List<Job> callJobManagerAndStatusUpdater(Request systemrequest, int artifactId){
+	protected List<Job> callJobManagerAndStatusUpdater(Job job){
 		/**
 		 * Now run the preservation-gen job so it generates output files
 		 */
@@ -309,7 +314,7 @@ public class JobCreator_Ingest extends DwaraService {
 		// Run the status update scheduler so the status of the proxy job gets updated
 		scheduledStatusUpdater.updateTransactionalTablesStatus();
 		
-		return jobDao.findAllByRequestIdAndInputArtifactId(systemrequest.getId(), artifactId);
+		return jobUtil.getDependentJobs(job);//jobDao.findAllByRequestIdAndInputArtifactId(systemrequest.getId(), artifactId);
 	}
 	
 	

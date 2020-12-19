@@ -7,10 +7,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -21,7 +23,9 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -31,6 +35,7 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
@@ -60,9 +65,6 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	
 	@Autowired
 	private JobDao jobDao;	
-	
-	@Autowired
-	private ProcessingtaskDao processingtaskDao;
 	
 	@Autowired
 	private ProcessingFailureDao failureDao;
@@ -169,6 +171,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		// Its pretty expensive to make a DB call for every tasktype to be run, but its worth to cancel a job than run an expensive tasktype say like transcoding
 		TFileJob tFileJob = null;
 		String processingtaskName = null;
+		Processingtask processingtask = null;
 		try {
 			logger.trace("fileId - " + file.getId());
 			// if the current status of the job is queued - update it to inprogress and do so with the artifact status and request status...
@@ -186,6 +189,8 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 
 			processingtaskName = job.getProcessingtaskId();
 			logger.trace(job.getId() + " " + processingtaskName);
+			
+			processingtask = getProcessingtask(processingtaskName);
 			
 			tFileJob = tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId())).get();
 			tFileJob.setStatus(Status.in_progress);
@@ -205,9 +210,55 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			if(isComplete) {
 				logger.info("Processing complete - " + logicalFile.getAbsolutePath());
 				endms = System.currentTimeMillis();
-				
+
 				//synchronized (processingtaskResponse) { // A Synchronized block to ensure only one thread at a time updates... Handling it differently with extra checks..
 					if(outputArtifactName != null) {
+						
+						
+						String destinationDirPath = processContext.getOutputDestinationDirPath();
+						// Dont be tempted to call the logicalfilehelper as it will return only if files are available
+//						 Collection<LogicalFile> processedFileList = getLogicalFileList(outputFiletype, destinationDirPath, null, null);
+//						int processedFilesCount = processedFileList.size();
+//						if(processedFilesCount != 1)
+//							throw new DwaraException("Something wrong. Expected just one output logical file " + outputFiletypeId + ", but found " + processedFilesCount);
+
+						// get all the processed files and check if all the filetype extensions are returned...
+						//String processedFilePathName = processingtaskResponse.getDestinationPathname(); 
+						String processedFileBaseName = FilenameUtils.getBaseName(logicalFile.getAbsolutePath());
+						
+				        FilenameFilter fileNameFilter = new FilenameFilter() {
+				            @Override
+				            public boolean accept(File dir, String name) {
+				            	if(FilenameUtils.getBaseName(name).equals(processedFileBaseName))
+				            		return true;
+				               
+				               return false;
+				            }
+				         };
+						String[] processedFileNames = new File(destinationDirPath).list(fileNameFilter);
+
+						//Validating if all files needed are generated
+						String outputFiletypeId = processingtask != null ? processingtask.getOutputFiletypeId() : null;
+						if(outputFiletypeId != null) {
+							Filetype filetype = getFiletype(outputFiletypeId);
+							List<ExtensionFiletype> extn_Filetype_List = filetype.getExtensions(); //extensionFiletypeDao.findAllByFiletypeId(filetype.getId());
+							for (ExtensionFiletype extensionFiletype : extn_Filetype_List) {
+								String extensionName = extensionFiletype.getExtension().getId();
+								boolean isExtensionFileAvailable = false;
+								for (String nthProcessedFileName : processedFileNames) {
+									String processedFileExtn = FileNameUtils.getExtension(nthProcessedFileName);
+									if(extensionName.equals(processedFileExtn)) {
+										isExtensionFileAvailable = true;
+										break;
+									}
+								}
+								if(!isExtensionFileAvailable) {
+									throw new DwaraException("Missing expected " + processedFileBaseName + "." + extensionName + " to be generated as output by the processing task");
+								}
+							}
+						}					
+
+						
 						ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 						Artifact outputArtifact = artifactRepository.findByName(outputArtifactName); 
 						if(outputArtifact == null) {// not already created.
@@ -259,21 +310,8 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 						}
 						
 						// creating File records for the process generated files
-						String proxyFilePathName = processingtaskResponse.getDestinationPathname(); 
-						String proxyFileBaseName = FilenameUtils.getBaseName(proxyFilePathName);
-						String proxyFilePath = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathName);
-				        FilenameFilter fileNameFilter = new FilenameFilter() {
-				            @Override
-				            public boolean accept(File dir, String name) {
-				            	if(FilenameUtils.getBaseName(name).equals(proxyFileBaseName))
-				            		return true;
-				               
-				               return false;
-				            }
-				         };
-						String[] files = new File(proxyFilePath).list(fileNameFilter);
-						for (String nthFileName : files) {
-							String filepathName = proxyFilePath.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "") + File.separator + nthFileName;
+						for (String nthFileName : processedFileNames) {
+							String filepathName = destinationDirPath.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "") + File.separator + nthFileName;
 							org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = filePathToFileObj.get(filepathName);
 							//org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = domainSpecificFileRepository.findByPathname(filepathName);
 							if(nthFile == null) { // only if not already created... 
@@ -283,7 +321,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 						}
 						
 						outputArtifact.setTotalSize(artifactFile.getSize());
-					    outputArtifact.setFileCount(files.length);
+					    outputArtifact.setFileCount(processedFileNames.length);
 					    outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
 					}
 				//}
@@ -296,8 +334,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			failureReason = "Unable to complete " + processingtaskName + " for " + file.getId() + " :: " + e.getMessage();
 			logger.error(failureReason, e);
 			
-			Processingtask processingtask = processingtaskDao.findById(processingtaskName).get();
-			int maxErrorsAllowed = processingtask.getMaxErrors();
+			int maxErrorsAllowed = processingtask != null ? processingtask.getMaxErrors() : 1;
 			long noOfFailuresLogged = failureDao.countByJobId(job.getId());
 
 			// Only the threshold no. of failures on a job need to be persisted in DB...

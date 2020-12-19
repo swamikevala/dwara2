@@ -11,7 +11,6 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.json.ArtifactclassTaskConfig;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 
@@ -26,9 +25,9 @@ public class ArtifactclassTask {
 	@ManyToOne(fetch = FetchType.LAZY)
 	private Artifactclass artifactclass;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	private Processingtask processingtask;
-	
+	@Column(name="processingtask_id")
+	private String processingtaskId;
+
 	@Column(name = "storagetask_action_id")
 	private Action storagetaskActionId;
 	
@@ -52,14 +51,14 @@ public class ArtifactclassTask {
 		this.artifactclass = artifactclass;
 	}
 
-	public Processingtask getProcessingtask() {
-		return processingtask;
+	public String getProcessingtaskId() {
+		return processingtaskId;
 	}
 
-	public void setProcessingtask(Processingtask processingtask) {
-		this.processingtask = processingtask;
+	public void setProcessingtaskId(String processingtaskId) {
+		this.processingtaskId = processingtaskId;
 	}
-	
+
 	public Action getStoragetaskActionId() {
 		return storagetaskActionId;
 	}
@@ -85,12 +84,13 @@ public class ArtifactclassTask {
  
         ArtifactclassTask that = (ArtifactclassTask) o;
         return Objects.equals(artifactclass, that.artifactclass) &&
-               Objects.equals(processingtask, that.processingtask);
+               Objects.equals(storagetaskActionId, that.storagetaskActionId) &&
+               Objects.equals(processingtaskId, that.processingtaskId) ;
     }
 
 	@Override
     public int hashCode() {
-        return Objects.hash(artifactclass, processingtask);
+        return Objects.hash(artifactclass, storagetaskActionId, processingtaskId);
     }
 
 }

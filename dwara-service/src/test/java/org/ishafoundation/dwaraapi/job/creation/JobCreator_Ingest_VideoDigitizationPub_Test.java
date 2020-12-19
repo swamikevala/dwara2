@@ -70,10 +70,10 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends JobCreator_Inge
 		
 		// 1 complete - Header and footer extraction - so we can run preservation call using JobManager
 		// TODO: What if this job is not complete but just ffv1 generation is complete we should not move to the next step? 
-		Job job = completeJob(hdrNftrExtractionJobId);
+		//Job job = completeJob(hdrNftrExtractionJobId);
 		
 		// 2 - run preservation call using JobManager
-		List<Job> dependentJobList = callJobManagerAndStatusUpdater(job.getRequest(), artifactId);
+		List<Job> dependentJobList = callJobManagerAndStatusUpdater(jobList.get(1));
 		for (Job nthDependentJob : dependentJobList) {
 			String expected = getExpected(nthDependentJob);
 			logger.info("***" + expected);
@@ -85,9 +85,10 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends JobCreator_Inge
 		List<Job> checksumGenDependentJobList = completeJobAndCreateDependentJobs(rawCheksumGenJobId);
 		assertEquals(checksumGenDependentJobList.size(), 1);
 
-		// 4
+		// 4 File deleter
 		Job mxfExclusionJob = checksumGenDependentJobList.get(0);
-		List<Job> mxfExclusionDependentJobList = completeJobAndCreateDependentJobs(mxfExclusionJob);
+		List<Job> mxfExclusionDependentJobList = callJobManagerAndStatusUpdater(mxfExclusionJob);
+//		List<Job> mxfExclusionDependentJobList = completeJobAndCreateDependentJobs(mxfExclusionJob);
 		assertEquals(mxfExclusionDependentJobList.size(), 4);
 		for (Job nthDependentJob : mxfExclusionDependentJobList) {
 			String expected = getExpected(nthDependentJob);
@@ -118,7 +119,7 @@ public class JobCreator_Ingest_VideoDigitizationPub_Test extends JobCreator_Inge
 		 */
 		// proxy job is on_hold now release it first 
 		updateJobStatus(proxyJobId, Status.queued);		
-		callJobManagerAndStatusUpdater(job.getRequest(), artifactId + 1);
+		callJobManagerAndStatusUpdater(mxfExclusionDependentJobList.get(3));
 		
 		// TODO - call archive flow...
 		validateArchiveFlow(proxyArchiveFlowJobId, "G");

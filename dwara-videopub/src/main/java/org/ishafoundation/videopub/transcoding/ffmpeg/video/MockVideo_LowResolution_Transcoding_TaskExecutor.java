@@ -45,7 +45,7 @@ public class MockVideo_LowResolution_Transcoding_TaskExecutor extends MediaTask 
 		long thumbnailStartTime = System.currentTimeMillis();
 		logger.info("Thumbnail Generation start for " + containerName + " - targetLocation is - " + thumbnailTargetLocation);
 		
-		createFileInIngestServer(thumbnailStdErrFileLoc);
+		//createFileInIngestServer(thumbnailStdErrFileLoc);
 		
 		createFileInIngestServer(thumbnailTargetLocation);
 		
@@ -60,8 +60,8 @@ public class MockVideo_LowResolution_Transcoding_TaskExecutor extends MediaTask 
 		String highResMetaTargetLocation = proxyTargetLocation.replace(".mp4", ".mp4_ffprobe_out");
 		String metaStdErrFileLoc = proxyTargetLocation.replace(".mp4", ".mp4_ffprobe_log");
 		
-		createFileInIngestServer(proxyStdErrFileLoc);
-		createFileInIngestServer(metaStdErrFileLoc);
+		//createFileInIngestServer(proxyStdErrFileLoc);
+		//createFileInIngestServer(metaStdErrFileLoc);
 		
 		createFileInIngestServer(highResMetaTargetLocation);
 		

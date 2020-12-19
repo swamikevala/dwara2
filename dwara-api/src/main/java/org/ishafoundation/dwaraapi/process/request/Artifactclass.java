@@ -51,4 +51,14 @@ public class Artifactclass {
 	public void setCategory(String category) {
 		this.category = category;
 	}
+	
+	public String getPath() {
+		String pathWithOutLibrary = null;
+		if(getSource())
+			pathWithOutLibrary = getPathPrefix();
+		else
+			pathWithOutLibrary = getPathPrefix() + java.io.File.separator + getCategory();//getId();//
+
+		return pathWithOutLibrary;
+	}
 }

@@ -12,6 +12,9 @@ public class ArtifactclassTaskConfig {
 	@JsonProperty("create_held_jobs")
 	private boolean createHeldJobs;
 
+	@JsonProperty("output_path")
+	private String outputPath;
+
 	public String getPathnameRegex() {
 		return pathnameRegex;
 	}
@@ -26,5 +29,13 @@ public class ArtifactclassTaskConfig {
 
 	public void setCreateHeldJobs(boolean createHeldJobs) {
 		this.createHeldJobs = createHeldJobs;
+	}
+
+	public String getOutputPath() {
+		return outputPath;
+	}
+
+	public void setOutputPath(String outputPath) {
+		this.outputPath = outputPath;
 	}
 }

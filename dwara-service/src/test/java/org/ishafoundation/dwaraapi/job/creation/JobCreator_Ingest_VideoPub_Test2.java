@@ -92,7 +92,7 @@ public class JobCreator_Ingest_VideoPub_Test2 extends JobCreator_Ingest {
 		/**
 		 * Now run proxy job so it generates output aritifact
 		 */
-		List<Job> proxyDependentJobList = callJobManagerAndStatusUpdater(systemrequest, artifactId + 1);
+		List<Job> proxyDependentJobList = callJobManagerAndStatusUpdater(jobList.get(4));//(systemrequest, artifactId + 1);
 		for (Job proxyDependentJob : proxyDependentJobList) {
 			String expected = getExpected(proxyDependentJob);
 			//12:"mam-update"

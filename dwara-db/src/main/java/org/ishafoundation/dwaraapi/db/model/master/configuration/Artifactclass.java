@@ -222,7 +222,7 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 		if(isSource())
 			pathWithOutLibrary = getPathPrefix();
 		else
-			pathWithOutLibrary = getPathPrefix() + java.io.File.separator + getCategory();
+			pathWithOutLibrary = getPathPrefix() + java.io.File.separator + getCategory();// getId();//getCategory();
 
 		return pathWithOutLibrary;
 	}
