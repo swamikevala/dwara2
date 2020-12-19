@@ -4,6 +4,8 @@ SET foreign_key_checks = 0;
 -- UPDATE `version` SET `version`='2.0.3' WHERE `version`='2.0.2';
 
 -- transactional
+UPDATE `request` SET `status`='completed_failures' WHERE status = 'partially_completed';
+
 -- ensure job table flowelement constraint is dropped in prod and also datatype is String
 -- update job table removing flowelement constraint and change to varchar;
 ALTER TABLE `job` DROP FOREIGN KEY `FKegnlvrvev239boi0ta4nyi6ps`;
@@ -81,7 +83,7 @@ CREATE TABLE `artifactclass_task` (
 INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (1, 'video-edit-pub', NULL, 'video-proxy-low-gen', '{"pathname_regex": ".*/Outputs?/[^/]*.mov$"}');
 INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (2, 'video-digi-2020-pub', 'write', NULL, '{"create_held_jobs": true}');
 INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (3, 'video-digi-2020-pub', NULL, 'video-proxy-low-gen', '{"create_held_jobs": true}');
-INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (4, 'video-digi-2020-pub', NULL, 'file-delete', '{"pathname_regex": "*.mxf$"}');
+INSERT INTO artifactclass_task (id, artifactclass_id, storagetask_action_id, processingtask_id, config) VALUES (4, 'video-digi-2020-pub', NULL, 'file-delete', '{"pathname_regex": ".*.mxf$"}');
 
 -- ARTIFACTCLASS_VOLUME --
 INSERT INTO artifactclass_volume (artifactclass_id, volume_id, encrypted, active) VALUES ('video-digi-2020-pub', 'R1', 0, 1);
