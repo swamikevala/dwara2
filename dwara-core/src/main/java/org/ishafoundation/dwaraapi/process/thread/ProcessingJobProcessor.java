@@ -7,12 +7,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -246,7 +243,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 								String extensionName = extensionFiletype.getExtension().getId();
 								boolean isExtensionFileAvailable = false;
 								for (String nthProcessedFileName : processedFileNames) {
-									String processedFileExtn = FileNameUtils.getExtension(nthProcessedFileName);
+									String processedFileExtn = FilenameUtils.getExtension(nthProcessedFileName);
 									if(extensionName.equals(processedFileExtn)) {
 										isExtensionFileAvailable = true;
 										break;
