@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.resource;
 
+import org.ishafoundation.dwaraapi.api.resp.artifact.DeleteArtifactResponse;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.ArtifactService;
 import org.slf4j.Logger;
@@ -30,10 +31,11 @@ public class ArtifactController {
 		    @ApiResponse(code = 200, message = "Ok")
 	})
 	@PostMapping(value = "/artifact/{artifactId}/delete", produces = "application/json")
-    public ResponseEntity<String> deleteArtifact(@PathVariable("artifactId") int artifactId) {
+    public ResponseEntity<DeleteArtifactResponse> deleteArtifact(@PathVariable("artifactId") int artifactId) {
 		logger.info("/artifact/" + artifactId + "/delete");
+		DeleteArtifactResponse deleteArtifactResponse = null;
 		try {
-			artifactService.deleteArtifact(artifactId);
+			deleteArtifactResponse = artifactService.deleteArtifact(artifactId);
 		}catch (Exception e) {
 			String errorMsg = "Unable to delete artifact - " + e.getMessage();
 			logger.error(errorMsg, e);
@@ -44,7 +46,7 @@ public class ArtifactController {
 				throw new DwaraException(errorMsg, null);
 		}
 
-		return ResponseEntity.status(HttpStatus.OK).body("Done");
+		return ResponseEntity.status(HttpStatus.OK).body(deleteArtifactResponse);
 	}
 
 }	

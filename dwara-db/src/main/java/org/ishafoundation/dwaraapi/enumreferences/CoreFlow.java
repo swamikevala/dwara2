@@ -1,8 +1,8 @@
 package org.ishafoundation.dwaraapi.enumreferences;
 
 public enum CoreFlow {
-	core_archive_flow("core-archive-flow"),
-	core_restore_checksumverify_flow("core-restore-verify-flow");
+	core_archive_flow("archive-flow"),
+	core_restore_checksumverify_flow("restore-verify-flow");
 	
 	private String flowName;
 	

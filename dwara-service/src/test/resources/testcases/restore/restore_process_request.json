@@ -1,7 +1,7 @@
 {
 	"outputFolder": "eee",
 	"destinationPath": "/data/RESTORED",
-	"flow": "core-restore-verify-flow",
+	"flow": "restore-verify-flow",
 	"copy": "1",
 	"fileIds": [
 		<<file_id_1>>,
