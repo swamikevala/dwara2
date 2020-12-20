@@ -15,7 +15,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
@@ -61,12 +60,9 @@ public class TapeStreamer {
 				// we position to the first files right header already, so if the entry name
 				// doesnt match the folder path that means these are the tail part of the
 				// restored bytechunk which are not needed...
-				// We need to restore only files that match the following criteria else break
-				// 1) If filePathNameWeNeed is a file then the entrypath should match exactly
-				// 2) If filePathNameWeNeed is a directory then all the entrypath files starting with filePathNameWeNeed need to be restored
-				if (filePathNameWeNeed != null && ((!isFilePathNameWeNeedIsDirectory && !entryPathName.equals(filePathNameWeNeed)) || (isFilePathNameWeNeedIsDirectory && !entryPathName.startsWith(filePathNameWeNeed)))) { // if filePathNameWeNeed is a directory, get all the files that startwith the requested directory name else break
+				if (filePathNameWeNeed != null && !entryPathName.startsWith(filePathNameWeNeed)) { // if filePathNameWeNeed is a directory, get all the files that startwith the requested directory name else break
 					logger.trace("possibly all folder content completed...");
-					continue; // break; // if the file we need is not what we want we break
+					break;
 				}
 
 				if (!entry.isDirectory()) {
@@ -126,6 +122,10 @@ public class TapeStreamer {
 						}
 					}
 				}
+
+				// If filePathNameWeNeed is a file then no need to loop further - break
+				if(!isFilePathNameWeNeedIsDirectory)
+					break;
 				
 				totalNoOfBytesRead = tin.getBytesRead();
 				entry = getNextTarEntry(tin);
