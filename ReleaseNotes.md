@@ -1,24 +1,20 @@
-Apply Full dump from prod
+# Dwara App Version - 2.0.06
+# Dwara DB Version - 2.0.2
+### New features 
 
-Apply (/dwara-db/src/data/sql/dwara_update_2_0_3.sql)
+### Bug fixes
 
-ensure application.properties has entries for the global thread pool
-threadpoolexecutor.processingtask.corePoolSize=5
-threadpoolexecutor.processingtask.maxPoolSize=5
-The other threadpoolexecutor.*.* can all be cleaned up...
+### Upgrade steps
+  * Stop the app(For instructions please refer TODO confluence link here)
+  * Deploy the latest war from dev/test server
+  * Take DB backup.......
+  * For test/preprod environments - Apply the config dump from prod(/dwara-db/src/data/sql/dwara_update_2_0_0.sql). This excludes the config tables device,sequence and volume for which we need to apply env specific files...
+  * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_0_3.sql)
+  * Restart the app 
+  * ensure application.properties has entries for the global thread pool with appropriate values. The other threadpoolexecutor.*.* can all be cleaned up...
 
-Deploy the latest war from dev server
-
-Pending UI changes
-	log view
-		call job api and not placehold api
-		artifact delete api
-	held/process view
-		cancel for non in_progress requests
-		
-		
--- 2.0.3 sql
-
+> threadpoolexecutor.processingtask.corePoolSize=5
+> threadpoolexecutor.processingtask.maxPoolSize=5
 
 # Dwara App Version - 2.0.06
 # Dwara DB Version - 2.0.2

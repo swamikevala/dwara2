@@ -17,9 +17,11 @@ import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
@@ -27,6 +29,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
+import org.ishafoundation.dwaraapi.service.common.ArtifactDeleter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,10 +50,13 @@ public class RequestService extends DwaraService{
 	private DomainUtil domainUtil;
 
 	@Autowired
-	private VolumeService volumeService;
-
+	private ConfigurationTablesUtil configurationTablesUtil;
+	
 	@Autowired
-	private ArtifactService artifactService;
+	private VolumeService volumeService;
+	
+	@Autowired
+	private ArtifactDeleter artifactDeleter; 
 	
 	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
@@ -72,24 +78,24 @@ public class RequestService extends DwaraService{
 		return requestResponseList;
 	}
 	
-	public RequestResponse deleteRequest(int requestId) throws Exception{
-		logger.info("Deleting request " + requestId);
-		Request userRequest = null;
-		try {
-			userRequest = artifactService.cancelRequest(requestId);
-			
-			return frameRequestResponse(userRequest, RequestType.user);
-		}
-		catch (Exception e) {
-			if(userRequest != null && userRequest.getId() != 0) {
-				userRequest.setStatus(Status.failed);
-				userRequest = requestDao.save(userRequest);
-			}
-			throw e;
-		}
-	}
+//	public RequestResponse deleteRequest(int requestId) throws Exception{
+//		logger.info("Deleting request " + requestId);
+//		Request userRequest = null;
+//		try {
+//			userRequest = artifactService.cancelRequest(requestId);
+//			
+//			return frameRequestResponse(userRequest, RequestType.user);
+//		}
+//		catch (Exception e) {
+//			if(userRequest != null && userRequest.getId() != 0) {
+//				userRequest.setStatus(Status.failed);
+//				userRequest = requestDao.save(userRequest);
+//			}
+//			throw e;
+//		}
+//	}
 	
-	public RequestResponse cancelRequest(int requestId) throws Exception{
+	public RequestResponse cancelRequestOnlyIfAllJobsQueued(int requestId) throws Exception{
 		logger.info("Cancelling request " + requestId);
 		Request userRequest = null;
 		try {
@@ -152,6 +158,52 @@ public class RequestService extends DwaraService{
 			throw e;
 		}
 	}
+
+    
+    public RequestResponse cancelRequest(int requestId) throws Exception{
+		Request userRequest = null;
+		try {
+	    	Request requestToBeCancelled = requestDao.findById(requestId).get();
+	    	String artifactclassId = requestToBeCancelled.getDetails().getArtifactclassId();
+	    	artifactDeleter.validateArtifactclass(artifactclassId);
+	    	
+	    	artifactDeleter.validateRequest(requestToBeCancelled);
+	    	
+	    	artifactDeleter.validateJobsAndUpdateStatus(requestToBeCancelled);
+	    	
+			// Step 1 - Create User Request
+			HashMap<String, Object> data = new HashMap<String, Object>();
+	    	data.put("requestId", requestId);
+	    	userRequest = createUserRequest(Action.cancel, Status.in_progress, data);
+	    	
+			
+			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
+			
+			Domain domain = artifactclass.getDomain();
+			ArtifactRepository artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+			
+			artifactDeleter.cleanUp(requestToBeCancelled, domain, artifactRepository);
+
+			requestToBeCancelled.setStatus(Status.cancelled);
+	    	requestDao.save(requestToBeCancelled);
+	    	logger.info(requestToBeCancelled.getId() + " - Cancelled");
+			
+	    	userRequest.setStatus(Status.completed);
+	        requestDao.save(userRequest);
+	        logger.info(userRequest.getId() + " - Completed");
+	        
+	        return frameRequestResponse(userRequest, RequestType.user);
+	        //return frameRequestResponse(requestToBeCancelled, RequestType.system);
+		}
+		catch (Exception e) {
+			if(userRequest != null && userRequest.getId() != 0) {
+				userRequest.setStatus(Status.failed);
+				userRequest = requestDao.save(userRequest);
+			}
+			throw e;
+		}
+    }
+    
 
 
 	public RequestResponse releaseRequest(List<Integer> requestIdList)  throws Exception {
@@ -263,6 +315,8 @@ public class RequestService extends DwaraService{
 				Artifact systemArtifact = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(requestId); 
 				if(systemArtifact != null) {
 					org.ishafoundation.dwaraapi.api.resp.request.Artifact artifactForResponse = new org.ishafoundation.dwaraapi.api.resp.request.Artifact();
+					artifactForResponse.setId(systemArtifact.getId());
+					artifactForResponse.setName(systemArtifact.getName());
 					artifactForResponse.setArtifactclass(systemArtifact.getArtifactclass().getId());
 					artifactForResponse.setPrevSequenceCode(systemArtifact.getPrevSequenceCode());
 					artifactForResponse.setRerunNo(request.getDetails().getRerunNo());

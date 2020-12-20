@@ -1,8 +1,5 @@
 package org.ishafoundation.dwaraapi.resource;
 
-import java.util.List;
-
-import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.ArtifactService;
 import org.slf4j.Logger;

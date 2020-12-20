@@ -1,7 +1,7 @@
 -- use `frm_prd`;
 SET foreign_key_checks = 0; 
 
--- UPDATE `version` SET `version`='2.0.3' WHERE `version`='2.0.2';
+UPDATE `version` SET `version`='2.0.3' WHERE `version`='2.0.2';
 
 -- transactional
 UPDATE `request` SET `status`='completed_failures' WHERE status = 'partially_completed';
@@ -20,6 +20,7 @@ UPDATE `file1` SET `directory`=1 WHERE checksum is null;
 UPDATE `file1` SET `directory`=0 WHERE checksum is not null;
 
 -- Configuration
+UPDATE `dwara`.`action` SET `id`='restore_process' WHERE `id`='finalize_process';
 
 -- Extra digi related records
 -- FILETYPE --

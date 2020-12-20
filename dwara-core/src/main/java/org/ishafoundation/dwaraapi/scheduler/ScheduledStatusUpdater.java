@@ -277,8 +277,8 @@ public class ScheduledStatusUpdater {
 			// For completed restore jobs the .restoring folder is cleaned up...
 			if((nthUserRequest.getActionId() == Action.restore || nthUserRequest.getActionId() == Action.restore_process) && status == Status.completed) {
 				JsonNode jsonNode = nthUserRequest.getDetails().getBody();
-				String outputFolder = jsonNode.get("output_folder").asText();
-				String destinationPath = jsonNode.get("destinationpath").asText();
+				String outputFolder = jsonNode.get("outputFolder").asText();
+				String destinationPath = jsonNode.get("destinationPath").asText();
 				File restoreTmpFolder = FileUtils.getFile(destinationPath , outputFolder, configuration.getRestoreInProgressFileIdentifier());
 				restoreTmpFolder.delete();
 			}

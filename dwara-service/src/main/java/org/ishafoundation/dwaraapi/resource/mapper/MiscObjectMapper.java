@@ -17,5 +17,13 @@ public interface MiscObjectMapper {
     })	
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
 	org.ishafoundation.dwaraapi.api.resp.staged.ingest.Artifact getArtifactForIngestResponse(org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact);
-	
+
+	@Mappings({
+        @Mapping(source = "id", target = "artifactId"),
+        @Mapping(target = "artifactclass", ignore=true),
+        @Mapping(source = "fileStructureMd5", target = "md5")
+    })
+	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
+	org.ishafoundation.dwaraapi.api.resp.artifact.Artifact getArtifactForDeleteArtifactResponse(org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact);
+
 }

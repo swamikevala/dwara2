@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.api.resp.request;
+package org.ishafoundation.dwaraapi.api.resp.artifact;
 
 import java.util.List;
 
