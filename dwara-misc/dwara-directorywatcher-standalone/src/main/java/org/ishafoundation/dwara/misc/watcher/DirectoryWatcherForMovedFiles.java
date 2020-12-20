@@ -3,8 +3,6 @@ package org.ishafoundation.dwara.misc.watcher;
 
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 import java.io.File;
@@ -21,7 +19,6 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,12 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
-import javax.xml.bind.DatatypeConverter;
-
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
-import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.ishafoundation.dwaraapi.utils.HttpClientUtil;
 
 
@@ -42,7 +34,7 @@ import org.ishafoundation.dwaraapi.utils.HttpClientUtil;
  * Example to watch a directory (or tree) for changes to files.
  */
 
-public class DirectoryWatcher {
+public class DirectoryWatcherForMovedFiles {
 
 	private final WatchService watchService;
 	private final Path watchedDir;
@@ -60,7 +52,7 @@ public class DirectoryWatcher {
 	/**
 	 * Creates a WatchService and registers the given directory
 	 */
-	DirectoryWatcher(Path dir, Long waitTime) throws IOException {
+	DirectoryWatcherForMovedFiles(Path dir, Long waitTime) throws IOException {
 		this.watchService = FileSystems.getDefault().newWatchService();
 		this.watchedDir = dir;
 		this.newFileWait = waitTime;
@@ -95,7 +87,7 @@ public class DirectoryWatcher {
 	 * Register the given directory with the WatchService
 	 */
 	private void register(Path dir) throws IOException {
-		WatchKey key = dir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+		WatchKey key = dir.register(watchService, ENTRY_CREATE);
 		if (trace) {
 			Path prev = keys.get(key);
 			if (prev == null) {
@@ -154,15 +146,6 @@ public class DirectoryWatcher {
 						// if directory is created, and watching recursively, then
 						// register it and its sub-directories
 						if (kind == ENTRY_CREATE) {
-							try {
-								if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
-									registerAll(child);
-								}
-							} catch (IOException x) {
-								// ignore to keep sample readbale
-							}
-						}
-						else if (kind == ENTRY_MODIFY) {
 							Path artifactPath = getArtifactPath(child);
 							if (trace)
 								System.out.println("artifactPath " + artifactPath);
@@ -234,47 +217,20 @@ public class DirectoryWatcher {
 			Entry<Path, Long> item = (Entry<Path, Long>) it.next();
 			Long expiryTime = (Long) item.getValue();
 			if(expiryTime <= currentTime) {
-				action(item.getKey());
+				try {
+					invokeIngest(item.getKey());
+				}
+				catch (Exception e) {
+					System.err.println("Ingest failed for " + item.getKey());
+					e.printStackTrace();
+				}
+			
 				// System.out.println("expired " + item.getKey());
 				// do something with the file
 				it.remove();
 			}
 		}
 	}
-
-    private void action(Path child){
-		System.out.println(child + " copy completed");
-		//System.out.println("Method assumes Prasad supplies a \"MD5.txt\" and the video file ending with \".mxf\" in the supplied folder");
-		String expectedMd5 = null;
-		String actualMd5 = null;
-		
-		try {
-			Collection<File> files = FileUtils.listFiles(child.toFile(), null, false);
-			for (File file : files) {
-				String fileName = file.getName();
-				//System.out.println(fileName);
-				if(fileName.endsWith(".md5")) {
-					// TODO : What will be the md5 file content sample looking like ? // d44f11c6df36d8be680db44e969e7ff0  sample-ntsc.mxf
-					expectedMd5 = StringUtils.substringBefore(FileUtils.readFileToString(file), "  ").trim().toUpperCase();
-					System.out.println("expectedMd5 " + expectedMd5);
-				}
-				else if(fileName.endsWith(".mxf")) {
-				    byte[] digest = ChecksumUtil.getChecksum(file, Checksumtype.md5);
-				    actualMd5 = DatatypeConverter.printHexBinary(digest).toUpperCase();
-				    System.out.println("actualMd5 " + actualMd5);
-				}
-			}
-			if(expectedMd5.equals(actualMd5)) {
-				System.out.println("MD5 expected = actual, call dwara api for " + child);
-				invokeIngest(child);
-			}else {
-				System.out.println(child + "MD5 expected != actual, Now what??? ");
-			}
-		}catch (Exception e) {
-			
-			e.printStackTrace();
-		}
-    }
     
     private void invokeIngest(Path child) throws Exception {
 
@@ -323,6 +279,6 @@ public class DirectoryWatcher {
 		
 		ingestEndpointUrl = args[dirArg + 1]; // "http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest";
 
-		new DirectoryWatcher(dir, waitTimes).processEvents();
+		new DirectoryWatcherForMovedFiles(dir, waitTimes).processEvents();
 	}
 }
