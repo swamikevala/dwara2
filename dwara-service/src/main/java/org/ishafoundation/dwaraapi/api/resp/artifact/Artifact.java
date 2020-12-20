@@ -1,111 +1,79 @@
 package org.ishafoundation.dwaraapi.api.resp.artifact;
 
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({
-    "artifactclass",
-    "stagedFilename",
-    "stagedFilepath",
-    "skipActionElements",
-    "rerunNo",
-    "prevSequenceCode"
-})
 public class Artifact {
-    @JsonProperty("id")
-    private Integer id;
-    @JsonProperty("name")
-    private String name;
-    @JsonProperty("artifactclass")
-    private String artifactclass;
-    @JsonProperty("stagedFilename")
-    private String stagedFilename;
-    @JsonProperty("stagedFilepath")
-    private String stagedFilepath;
-    @JsonProperty("skipActionElements")
-    private List<Integer> skipActionElements = null;
-    @JsonProperty("rerunNo")
-    private Integer rerunNo;
-    @JsonProperty("prevSequenceCode")
-    private String prevSequenceCode;
-
-    public Integer getId() {
-		return id;
+	
+	private int artifactId;
+	private String artifactclass;
+	private String sequenceCode;
+	private String prevSequenceCode;
+	private String name;
+	private int fileCount;
+	private long totalSize;
+	private boolean deleted;
+	private String md5;
+	private Integer artifactIdRef;
+	
+	public int getArtifactId() {
+		return artifactId;
 	}
-
-	public void setId(Integer id) {
-		this.id = id;
+	public void setArtifactId(int artifactId) {
+		this.artifactId = artifactId;
 	}
-
+	public String getArtifactclass() {
+		return artifactclass;
+	}
+	public void setArtifactclass(String artifactclass) {
+		this.artifactclass = artifactclass;
+	}
+	public String getSequenceCode() {
+		return sequenceCode;
+	}
+	public void setSequenceCode(String sequenceCode) {
+		this.sequenceCode = sequenceCode;
+	}
+	public String getPrevSequenceCode() {
+		return prevSequenceCode;
+	}
+	public void setPrevSequenceCode(String prevSequenceCode) {
+		this.prevSequenceCode = prevSequenceCode;
+	}
 	public String getName() {
 		return name;
 	}
-
 	public void setName(String name) {
 		this.name = name;
 	}
-
-	@JsonProperty("artifactclass")
-    public String getArtifactclass() {
-        return artifactclass;
-    }
-
-    @JsonProperty("artifactclass")
-    public void setArtifactclass(String artifactclass) {
-        this.artifactclass = artifactclass;
-    }
-
-    @JsonProperty("stagedFilename")
-    public String getStagedFilename() {
-        return stagedFilename;
-    }
-
-    @JsonProperty("stagedFilename")
-    public void setStagedFilename(String stagedFilename) {
-        this.stagedFilename = stagedFilename;
-    }
-
-    @JsonProperty("stagedFilepath")
-    public String getStagedFilepath() {
-        return stagedFilepath;
-    }
-
-    @JsonProperty("stagedFilepath")
-    public void setStagedFilepath(String stagedFilepath) {
-        this.stagedFilepath = stagedFilepath;
-    }
-
-    @JsonProperty("skipActionElements")
-    public List<Integer> getSkipActionElements() {
-        return skipActionElements;
-    }
-
-    @JsonProperty("skipActionElements")
-    public void setSkipActionElements(List<Integer> skipActionElements) {
-        this.skipActionElements = skipActionElements;
-    }
-
-    @JsonProperty("rerunNo")
-    public Integer getRerunNo() {
-        return rerunNo;
-    }
-
-    @JsonProperty("rerunNo")
-    public void setRerunNo(Integer rerunNo) {
-        this.rerunNo = rerunNo;
-    }
-
-    @JsonProperty("prevSequenceCode")
-    public String getPrevSequenceCode() {
-        return prevSequenceCode;
-    }
-
-    @JsonProperty("prevSequenceCode")
-    public void setPrevSequenceCode(String prevSequenceCode) {
-        this.prevSequenceCode = prevSequenceCode;
-    }
+	public int getFileCount() {
+		return fileCount;
+	}
+	public void setFileCount(int fileCount) {
+		this.fileCount = fileCount;
+	}
+	public long getTotalSize() {
+		return totalSize;
+	}
+	public void setTotalSize(long totalSize) {
+		this.totalSize = totalSize;
+	}
+	public boolean isDeleted() {
+		return deleted;
+	}
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
+	}
+	public String getMd5() {
+		return md5;
+	}
+	public void setMd5(String md5) {
+		this.md5 = md5;
+	}
+	public Integer getArtifactIdRef() {
+		return artifactIdRef;
+	}
+	public void setArtifactIdRef(Integer artifactIdRef) {
+		this.artifactIdRef = artifactIdRef;
+	}
 }
