@@ -1,11 +1,15 @@
 package org.ishafoundation.dwaraapi.service.common;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
@@ -43,6 +47,9 @@ public class ArtifactDeleter {
 
 	@Autowired
 	private MamUpdateTaskExecutor mamUpdateTaskExecutor;
+	
+//	@Autowired
+//	private Map<String, IProcessingTask> processingtaskActionMap;
 
 
 	public void validateArtifactclass(String artifactclassId){
@@ -119,18 +126,43 @@ public class ArtifactDeleter {
 	    	// Step 6 - Flag the artifactVolume deleted
 	    	// N/A
 	    	
-	    	// Step 7 - Delete the file system files
-	    	String artifactFilepathName = nthArtifact.getArtifactclass().getPath() + java.io.File.separator + nthArtifact.getName(); 
-	    	
-    		logger.info("Now deleting the artifact " + artifactFilepathName);
-    		java.io.File artifactFile = new java.io.File(artifactFilepathName);
-    		if(artifactFile.exists()) {
-    			if(artifactFile.isDirectory())
-        			FileUtils.deleteDirectory(artifactFile);
-        		else
-        			artifactFile.delete();
-    			logger.info("Deleted successfully " + artifactFilepathName);
-    		}
+	    	// Step 7 - Move/Delete the file system files
+	    	// TODO - should we delete or move the file system files???
+	    	boolean shouldWeDelete = false;
+	    	if(nthArtifact.getArtifactclass().getId().startsWith("video-digi-2020"))
+	    		shouldWeDelete = true;
+	    	if(shouldWeDelete) {
+		    	String artifactFilepathName = nthArtifact.getArtifactclass().getPath() + java.io.File.separator + nthArtifact.getName(); 
+		    	
+	    		logger.info("Now deleting the artifact from file system " + artifactFilepathName);
+	    		java.io.File artifactFile = new java.io.File(artifactFilepathName);
+	    		if(artifactFile.exists()) {
+	    			if(artifactFile.isDirectory())
+	        			FileUtils.deleteDirectory(artifactFile);
+	        		else
+	        			artifactFile.delete();
+	    			logger.info("Deleted successfully " + artifactFilepathName);
+	    		}
+	    	}
+    		else {
+				String destRootLocation = request.getDetails().getStagedFilepath();
+				if(destRootLocation != null) {
+					try {
+						java.io.File srcFile = FileUtils.getFile(nthArtifact.getArtifactclass().getPath(), nthArtifact.getName());
+						java.io.File destFile = FileUtils.getFile(destRootLocation, Status.cancelled.name(), nthArtifact.getName());
+	
+						if(srcFile.isFile())
+							Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destFile.getAbsolutePath())));		
+						else
+							Files.createDirectories(destFile.toPath());
+		
+						Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+					}
+					catch (Exception e) {
+						logger.error("Unable to move file "  + e.getMessage());
+					}
+				}
+	    	}
 		}
     	
     	//boolean any 

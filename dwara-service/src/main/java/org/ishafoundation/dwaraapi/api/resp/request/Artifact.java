@@ -20,6 +20,8 @@ public class Artifact {
     private Integer id;
     @JsonProperty("name")
     private String name;
+    @JsonProperty("deleted")
+    private boolean deleted;
     @JsonProperty("artifactclass")
     private String artifactclass;
     @JsonProperty("stagedFilename")
@@ -47,6 +49,14 @@ public class Artifact {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	public boolean isDeleted() {
+		return deleted;
+	}
+
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
 	}
 
 	@JsonProperty("artifactclass")

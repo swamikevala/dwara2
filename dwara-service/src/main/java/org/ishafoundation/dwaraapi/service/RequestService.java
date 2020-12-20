@@ -94,8 +94,18 @@ public class RequestService extends DwaraService{
 //			throw e;
 //		}
 //	}
-	
-	public RequestResponse cancelRequestOnlyIfAllJobsQueued(int requestId) throws Exception{
+    
+    public RequestResponse cancelRequest(int requestId) throws Exception{
+    	Request requestToBeCancelled = requestDao.findById(requestId).get();
+    	if(requestToBeCancelled.getActionId() == Action.ingest) { // TODO should this behaviour be same for digi and video-pub or should we not move video-pub to cancelled dir...
+    		return cancelAndCleanupRequest(requestToBeCancelled);
+    	} else {
+    		return cancelRequestOnlyIfAllJobsQueued(requestToBeCancelled);
+    	}
+    }
+
+	private RequestResponse cancelRequestOnlyIfAllJobsQueued(Request requestToBeCancelled) throws Exception{
+		int requestId = requestToBeCancelled.getId();
 		logger.info("Cancelling request " + requestId);
 		Request userRequest = null;
 		try {
@@ -116,39 +126,14 @@ public class RequestService extends DwaraService{
 			
 			jobDao.saveAll(jobList);
 			
-			Request requestToBeCancelled = requestDao.findById(requestId).get();
 			requestToBeCancelled.setStatus(Status.cancelled);
 			requestDao.save(requestToBeCancelled);
-			
-			if(requestToBeCancelled.getActionId() == Action.ingest) {
-				
-				Domain domain = domainUtil.getDomain(requestToBeCancelled);
-				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-				Artifact artifact = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(requestToBeCancelled.getId()); 
-	
-				String destRootLocation = requestToBeCancelled.getDetails().getStagedFilepath();
-				if(destRootLocation != null) {
-					try {
-						java.io.File srcFile = FileUtils.getFile(artifact.getArtifactclass().getPathPrefix(), artifact.getName());
-						java.io.File destFile = FileUtils.getFile(destRootLocation, Status.cancelled.name(), artifact.getName());
-	
-						if(srcFile.isFile())
-							Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destFile.getAbsolutePath())));		
-						else
-							Files.createDirectories(destFile.toPath());
-		
-						Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
-					}
-					catch (Exception e) {
-						logger.error("Unable to move file "  + e.getMessage());
-					}
-				}
-			}
 			
 			userRequest.setStatus(Status.completed);
 			userRequest = requestDao.save(userRequest);
 			
-			return frameRequestResponse(requestToBeCancelled, RequestType.system);
+	        return frameRequestResponse(userRequest, RequestType.user);
+			//return frameRequestResponse(requestToBeCancelled, RequestType.system);
 		}
 		catch (Exception e) {
 			if(userRequest != null && userRequest.getId() != 0) {
@@ -158,12 +143,10 @@ public class RequestService extends DwaraService{
 			throw e;
 		}
 	}
-
     
-    public RequestResponse cancelRequest(int requestId) throws Exception{
+    private RequestResponse cancelAndCleanupRequest(Request requestToBeCancelled) throws Exception{
 		Request userRequest = null;
 		try {
-	    	Request requestToBeCancelled = requestDao.findById(requestId).get();
 	    	String artifactclassId = requestToBeCancelled.getDetails().getArtifactclassId();
 	    	artifactDeleter.validateArtifactclass(artifactclassId);
 	    	
@@ -173,7 +156,7 @@ public class RequestService extends DwaraService{
 	    	
 			// Step 1 - Create User Request
 			HashMap<String, Object> data = new HashMap<String, Object>();
-	    	data.put("requestId", requestId);
+	    	data.put("requestId", requestToBeCancelled.getId());
 	    	userRequest = createUserRequest(Action.cancel, Status.in_progress, data);
 	    	
 			
@@ -317,6 +300,7 @@ public class RequestService extends DwaraService{
 					org.ishafoundation.dwaraapi.api.resp.request.Artifact artifactForResponse = new org.ishafoundation.dwaraapi.api.resp.request.Artifact();
 					artifactForResponse.setId(systemArtifact.getId());
 					artifactForResponse.setName(systemArtifact.getName());
+					artifactForResponse.setDeleted(systemArtifact.isDeleted());
 					artifactForResponse.setArtifactclass(systemArtifact.getArtifactclass().getId());
 					artifactForResponse.setPrevSequenceCode(systemArtifact.getPrevSequenceCode());
 					artifactForResponse.setRerunNo(request.getDetails().getRerunNo());
