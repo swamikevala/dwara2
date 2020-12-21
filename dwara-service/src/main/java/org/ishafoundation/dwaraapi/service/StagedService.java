@@ -400,14 +400,10 @@ public class StagedService extends DwaraService{
 						// retaining the same name
 						toBeArtifactName = stagedFileName;
 					}
-//					else if(sequence.isKeepCode() && extractedCode == null){
-//						// TODO : what should happen when keepcode is true but code_regex match doesnt happen...Same as else block??? if yes, merge these blocks into one...
-//						toBeArtifactName = stagedFileName; // ???
-//					}
 					else {
 						prevSeqCode = extractedCode;
 						sequenceCode = sequenceUtil.getSequenceCode(sequence, stagedFileName);	
-						if(extractedCode != null)
+						if(extractedCode != null && sequence.isReplaceCode())
 							toBeArtifactName = stagedFileName.replace(extractedCode, sequenceCode);
 						else
 							toBeArtifactName = sequenceCode + "_" + stagedFileName;

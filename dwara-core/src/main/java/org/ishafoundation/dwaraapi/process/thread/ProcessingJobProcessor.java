@@ -306,14 +306,22 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 							artifactFile = createFile(outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName, outputArtifact, domainSpecificFileRepository, domain);	
 						}
 						
+//						String proxyFilePathName = processingtaskResponse.getDestinationPathname(); 
+//						String proxyFilePath = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathName);
+//						logger.info("destinationDirPath " + destinationDirPath);
+//						logger.info("proxyFilePath" +  proxyFilePath);
 						// creating File records for the process generated files
 						for (String nthFileName : processedFileNames) {
 							String filepathName = destinationDirPath.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "") + File.separator + nthFileName;
+//							logger.info("filepathName using destinationDirPath " + filepathName);
+//							filepathName = proxyFilePath.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "") + File.separator + nthFileName;
+//							logger.info("filepathName using proxyFilePath " + filepathName);
+
 							org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = filePathToFileObj.get(filepathName);
 							//org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = domainSpecificFileRepository.findByPathname(filepathName);
 							if(nthFile == null) { // only if not already created... 
 								logger.trace("Now creating file record for - " + filepathName);
-								createFile(filepathName, outputArtifact, domainSpecificFileRepository, domain);	
+								createFile(outputArtifact.getArtifactclass().getPath() + File.separator + filepathName, outputArtifact, domainSpecificFileRepository, domain);	
 							}
 						}
 						

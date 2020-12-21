@@ -54,7 +54,10 @@ public class Sequence implements Cacheable{
 	
 	@Column(name="keep_code")
 	private Boolean keepCode;
-		
+
+	@Column(name="replace_code")
+	private Boolean replaceCode;
+	
 	public String getId() {
 		return id;
 	}
@@ -149,6 +152,14 @@ public class Sequence implements Cacheable{
 
 	public void setKeepCode(Boolean keepCode) {
 		this.keepCode = keepCode;
+	}
+	
+	public Boolean isReplaceCode() {
+		return replaceCode;
+	}
+
+	public void setReplaceCode(Boolean replaceCode) {
+		this.replaceCode = replaceCode;
 	}
 
 	public Integer incrementCurrentNumber() {
