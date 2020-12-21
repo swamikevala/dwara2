@@ -143,7 +143,7 @@ public class MxfMetaDataCollector implements IProcessingTask {
 	}
     
 	private byte[] extractFooterChunk(String filePathName, long bytesToBeSkipped) throws Exception{
-		byte[] data = new byte[(int) bytesToBeSkipped];
+		byte[] data = null;
 		String extractedChunkTmpFile = filePathName.replace(PfrConstants.MXF_EXTN, PfrConstants.FTR_EXTN + ".tmp");
 		String ddCommand = "dd if=" + filePathName + " skip=" + bytesToBeSkipped + " iflag=skip_bytes,count_bytes of=" + extractedChunkTmpFile;
 		
