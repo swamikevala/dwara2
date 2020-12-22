@@ -84,6 +84,7 @@ public class JobService extends DwaraService{
 			jobResponse.setDependencies(job.getuIdDependencies());
 		}else {
 			jobResponse.setId(jobId + "");
+			jobResponse.setJobId(jobId + "");
 			List<Integer> jobDependencyIdsAsIntegerList = job.getDependencies();
 			if(jobDependencyIdsAsIntegerList != null) {
 				List<String> jobDependencyIdsAsStringList = new ArrayList<>(jobDependencyIdsAsIntegerList.size());
