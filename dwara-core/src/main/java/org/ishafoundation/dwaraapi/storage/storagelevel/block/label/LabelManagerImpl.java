@@ -258,7 +258,7 @@ public class LabelManagerImpl implements LabelManager{
 		String label = xmlMapper.writeValueAsString(artifactlabel);
 		logger.trace("artifactLabel" + label);
 
-		return writeLabel(label, artifactName + "_label", deviceName, blocksize);
+		return writeLabel(label, artifactName + volumeId + "_label", deviceName, blocksize);
 	}
 	
 	

@@ -146,7 +146,8 @@ public class StoragetypeJobDelegator {
 							if(lastArtifactOnVolume != null) { // check if the job has dependencies and ensure all nested dependencies are completed...
 								//last write job on the volume needed by this job
 								Job lastWriteJob = lastArtifactOnVolume.getJob();
-								if(!jobUtil.isWriteJobAndItsDependentJobsComplete(lastWriteJob)) {
+								// if a write job failed and we are requeing it its possible that the lastArtifactOnVolume is the same job. if so skip this check 
+								if(lastWriteJob.getId() != job.getId() && !jobUtil.isWriteJobAndItsDependentJobsComplete(lastWriteJob)) {
 									String msg = "Skipping "  + job.getId() + " as previous write job [" + lastWriteJob.getId() + "] and/or its dependent jobs are yet to complete";
 									logger.info(msg);
 									job.setMessage(msg);
