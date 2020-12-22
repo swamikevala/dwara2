@@ -68,6 +68,9 @@ INSERT INTO sequence (id, `type`, prefix, code_regex, number_regex, `group`, sta
 INSERT INTO sequence (id, `type`, prefix, code_regex, number_regex, `group`, starting_number, ending_number, current_number, sequence_ref_id, force_match, keep_code) VALUES ('video-digi-2020-2','volume','R',null,null,0,29801,29999,29800,null,0,0);
 INSERT INTO sequence (id, `type`, prefix, code_regex, number_regex, `group`, starting_number, ending_number, current_number, sequence_ref_id, force_match, keep_code) VALUES ('video-digi-2020-3','volume','R',null,null,0,39801,39999,39800,null,0,0);
 
+ALTER TABLE `sequence` ADD COLUMN `replace_code` BIT(1) NULL DEFAULT NULL;
+UPDATE `sequence` SET `replace_code`=0 WHERE type="artifact" AND `group`=0 AND id IN ("video-digi-2020-pub", "video-digi-2020-priv2");
+UPDATE `sequence` SET `replace_code`=1 WHERE type="artifact" AND `group`=0 AND id NOT IN ("video-digi-2020-pub", "video-digi-2020-priv2");
 
 -- ARTIFACTCLASS --
 

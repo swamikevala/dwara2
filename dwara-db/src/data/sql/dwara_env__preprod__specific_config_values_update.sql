@@ -1,13 +1,18 @@
 -- preprod env alterations
-
 truncate artifact1;
+truncate artifact1_volume;
 truncate artifact2;
+truncate artifact2_volume;
+truncate artifact_sequence;
+truncate dwara_sequences;
 truncate file1;
+truncate file1_volume;
 truncate file2;
+truncate file2_volume;
+truncate file1_volume;
+truncate file_sequence;
 truncate job;
 truncate jobrun;
-truncate artifact1_volume;
-truncate artifact2_volume;
 truncate request;
 truncate badfile;
 truncate processingfailure;
