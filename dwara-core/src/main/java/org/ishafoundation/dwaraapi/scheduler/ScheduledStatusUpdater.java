@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.scheduler;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -280,7 +281,13 @@ public class ScheduledStatusUpdater {
 				String outputFolder = jsonNode.get("outputFolder").asText();
 				String destinationPath = jsonNode.get("destinationPath").asText();
 				File restoreTmpFolder = FileUtils.getFile(destinationPath , outputFolder, configuration.getRestoreInProgressFileIdentifier());
-				restoreTmpFolder.delete();
+				try {
+					FileUtils.deleteDirectory(restoreTmpFolder);
+					logger.trace(restoreTmpFolder.getPath() + " deleted succesfully");
+				} catch (IOException e) {
+					logger.error("Unable to delete " + restoreTmpFolder.getPath());
+				}
+				
 			}
 			nthUserRequest.setStatus(status); 
 			requestDao.save(nthUserRequest);
