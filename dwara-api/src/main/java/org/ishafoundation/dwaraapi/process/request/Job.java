@@ -10,7 +10,7 @@ public class Job {
 
 	private String processingtaskId;
 	
-    private int flowelementId;
+    private String flowelementId;
 	
 	private List<Job> dependencies;
 	
@@ -46,11 +46,11 @@ public class Job {
 		this.processingtaskId = processingtaskId;
 	}
 
-	public int getFlowelementId() {
+	public String getFlowelementId() {
 		return flowelementId;
 	}
 
-	public void setFlowelementId(int flowelementId) {
+	public void setFlowelementId(String flowelementId) {
 		this.flowelementId = flowelementId;
 	}
 

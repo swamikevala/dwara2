@@ -16,7 +16,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "prevSequenceCode"
 })
 public class Artifact {
-
+    @JsonProperty("id")
+    private Integer id;
+    @JsonProperty("name")
+    private String name;
+    @JsonProperty("deleted")
+    private boolean deleted;
     @JsonProperty("artifactclass")
     private String artifactclass;
     @JsonProperty("stagedFilename")
@@ -30,7 +35,31 @@ public class Artifact {
     @JsonProperty("prevSequenceCode")
     private String prevSequenceCode;
 
-    @JsonProperty("artifactclass")
+    public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	public boolean isDeleted() {
+		return deleted;
+	}
+
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
+	}
+
+	@JsonProperty("artifactclass")
     public String getArtifactclass() {
         return artifactclass;
     }

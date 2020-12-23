@@ -83,11 +83,13 @@ public class FiletypePathnameReqexVisitor extends SimpleFileVisitor<Path> {
 
 	public static void main(String[] args) {
 		String inputArtifactPath = args[0];
+		inputArtifactPath = "C:\\data\\staged\\P22197_prasad-artifact-1_1608311147396";
+		
 		//String pathnameRegex = ".*\\\\Output";
 		//String pathnameRegex = ".*\\\\Video\\\\Output";
 		//String pathnameRegex = ".*\\\\Out.*";
-		String pathnameRegex = ".*\\\\Output\\\\[^\\\\]*.mov$";
-		
+		//String pathnameRegex = ".*\\\\Output\\\\[^\\\\]*.mov$";
+		String pathnameRegex = "\\\\.mxf$";
 		FiletypePathnameReqexVisitor filetypePathnameReqexVisitor = new FiletypePathnameReqexVisitor(pathnameRegex);
 		try {
 			Files.walkFileTree(Paths.get(inputArtifactPath), filetypePathnameReqexVisitor);

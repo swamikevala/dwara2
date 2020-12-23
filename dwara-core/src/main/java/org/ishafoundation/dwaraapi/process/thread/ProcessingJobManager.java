@@ -1,32 +1,22 @@
 package org.ishafoundation.dwaraapi.process.thread;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
-import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
@@ -34,7 +24,6 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassTask;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
@@ -44,13 +33,13 @@ import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
-import org.ishafoundation.dwaraapi.process.helpers.FiletypePathnameReqexVisitor;
-import org.ishafoundation.dwaraapi.process.helpers.LogicalFileHelper;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
+import org.ishafoundation.dwaraapi.thread.executor.ProcessingtaskThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,18 +49,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Scope("prototype")
-public class ProcessingJobManager implements Runnable{
+public class ProcessingJobManager extends ProcessingJobHelper implements Runnable {
 
 	private static final Logger logger = LoggerFactory.getLogger(ProcessingJobManager.class);
 	
 	@Autowired
 	private Map<String, IProcessingTask> processingtaskActionMap;
-	
-	@Autowired
-    private ProcessingtaskDao processingtaskDao;
-	
-	@Autowired
-	private FiletypeDao filetypeDao;
 	
 	@Autowired
 	private JobDao jobDao;
@@ -84,9 +67,6 @@ public class ProcessingJobManager implements Runnable{
 		
 	@Autowired
 	private DomainUtil domainUtil;
-
-	@Autowired
-	private	LogicalFileHelper fileHelper;
 	
 	@Autowired
 	private ApplicationContext applicationContext;
@@ -99,9 +79,6 @@ public class ProcessingJobManager implements Runnable{
 	
 	@Autowired
 	private Configuration configuration;
-
-	@Autowired
-	private FileRepositoryUtil fileRepositoryUtil;
 	
 	@Autowired
 	private Restore restoreStorageTask;
@@ -111,6 +88,9 @@ public class ProcessingJobManager implements Runnable{
 	
 	@Autowired
 	private FileEntityToFileForProcessConverter fileEntityToFileForProcessConverter;
+	
+	@Autowired
+	private ProcessingtaskThreadPoolExecutor processingtaskThreadPoolExecutor;
 
 	private Job job;
 
@@ -144,21 +124,9 @@ public class ProcessingJobManager implements Runnable{
 	private Collection<LogicalFile> getFilesToBeProcessed(String processingtaskId, String inputArtifactPath, Artifactclass inputArtifactclass){
 		Processingtask processingtask = getProcessingtask(processingtaskId);
 		
-		// TODO Cache filetypes...
-		Filetype ft = null;
-		if(processingtask != null && !processingtask.getFiletypeId().equals("_all_")) { // if filetype is all means get all files...
-			ft = filetypeDao.findById(processingtask.getFiletypeId()).get();
-		}
+		Filetype ft = getInputFiletype(processingtask);
 			
 		return  getLogicalFileList(ft, inputArtifactPath, inputArtifactclass.getId(), processingtaskId);
-	}
-	
-	public Processingtask getProcessingtask(String processingtaskId) {
-		Processingtask processingtask = null;
-		Optional<Processingtask> processingtaskOpt = processingtaskDao.findById(processingtaskId);
-		if(processingtaskOpt.isPresent())
-			processingtask = processingtaskOpt.get();
-		return processingtask;
 	}
 
 	public String getInputPath(Job job) {
@@ -205,32 +173,14 @@ public class ProcessingJobManager implements Runnable{
 			if(processingtaskImpl == null)
 				throw new Exception(processingtaskId + " class is still not impl. Please refer IProcessingTask doc...");
 			
-			Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
+			//Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
+			Executor executor = processingtaskThreadPoolExecutor.getExecutor();
 			// TODO Any check needed on the configured executor? 
 			
 			Processingtask processingtask = getProcessingtask(processingtaskId);
+
 			
 			Domain domain = null;
-/*			Artifactclass outputArtifactclass = null;
-			String outputArtifactclassSuffix = processingtask != null ? processingtask.getOutputArtifactclassSuffix() : null;
-			String artifactclassId = job.getRequest().getDetails().getArtifactclassId();
-			logger.trace("outputArtifactclassSuffix " + outputArtifactclassSuffix);
-			if(outputArtifactclassSuffix != null) { // For processing tasks like checksum-gen this will be null...
-				String outputArtifactclassId =  artifactclassId + outputArtifactclassSuffix;
-				logger.trace("outputArtifactclassId " + outputArtifactclassId);
-				outputArtifactclass = configurationTablesUtil.getArtifactclass(outputArtifactclassId);
-				domain = outputArtifactclass.getDomain();
-			}
-			else{
-				Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
-				domain = artifactclass.getDomain();
-			}
-			
-			if(domain == null) {
-				logger.error("Unable to get domain from the request");
-				throw new Exception("Unable to get domain from the request");
-			}
-*/
 			Integer inputArtifactId = job.getInputArtifactId();
 			Artifact inputArtifact = null;
 
@@ -244,38 +194,42 @@ public class ProcessingJobManager implements Runnable{
     			}
 			}
 			
-    		Artifactclass outputArtifactclass = null;
-			String outputArtifactclassSuffix = processingtask != null ? processingtask.getOutputArtifactclassSuffix() : null;
-			String artifactclassId = inputArtifact.getArtifactclass().getId();
-			logger.trace("outputArtifactclassSuffix " + outputArtifactclassSuffix);
-			if(outputArtifactclassSuffix != null) { // For processing tasks like checksum-gen this will be null...
-				String outputArtifactclassId =  artifactclassId + outputArtifactclassSuffix;
-				logger.trace("outputArtifactclassId " + outputArtifactclassId);
-				outputArtifactclass = configurationTablesUtil.getArtifactclass(outputArtifactclassId);
-			}
-			
 			String inputArtifactName = inputArtifact.getName();
 			Artifactclass inputArtifactclass = inputArtifact.getArtifactclass();
+			String inputArtifactclassId = inputArtifactclass.getId();
 			String inputPath = getInputPath(job); 
 			if(inputPath == null)
 				inputPath = inputArtifactclass.getPath();
-			String inputArtifactPath =  inputPath + File.separator + inputArtifactName;
+			String inputArtifactPathname =  inputPath + File.separator + inputArtifactName;
+			
 	
-			// For the task getting processed check
-			// 1) if there are any dependent tasks 
-			// 2) and is responsible for generating a artifactclass
-			
-			// then it means the output of the current task is the input for the dependent task
-			
-			
 			String outputArtifactName = null;
 			String outputArtifactPathname = null; // holds where to generate the files in the physical system...
-			if(outputArtifactclass != null) {
-				outputArtifactName = getOutputArtifactName(outputArtifactclass, inputArtifactName);
-				outputArtifactPathname = getOutputArtifactPathname(outputArtifactclass, outputArtifactName);
+    		Artifactclass outputArtifactclass = null;
+			String outputArtifactclassSuffix = processingtask != null ? processingtask.getOutputArtifactclassSuffix() : null;
+			logger.trace("outputArtifactclassSuffix " + outputArtifactclassSuffix);
+			if(outputArtifactclassSuffix != null) { // For processing tasks like checksum-gen this will be null...
+				if(outputArtifactclassSuffix.equals("")) {
+					outputArtifactclass = inputArtifactclass;
+					outputArtifactName = inputArtifactName;
+					outputArtifactPathname = inputArtifactPathname; // holds where to generate the files in the physical system...
+				}
+				else {
+					String outputArtifactclassId =  inputArtifactclassId + outputArtifactclassSuffix;
+					logger.trace("outputArtifactclassId " + outputArtifactclassId);
+					outputArtifactclass = configurationTablesUtil.getArtifactclass(outputArtifactclassId);
+					
+					if(outputArtifactclass == null) {
+						throw new DwaraException(outputArtifactclassId + " not configured in artifactclass table. Please double check");
+					}
+					else {
+						outputArtifactName = getOutputArtifactName(outputArtifactclass, inputArtifactName);
+						outputArtifactPathname = getOutputArtifactPathname(outputArtifactclass, outputArtifactName);
+					}
+				}
 			}
 			
-			logger.trace("inputArtifactPath " + inputArtifactPath); 	// /data/ingested/V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12 
+			logger.trace("inputArtifactPath " + inputArtifactPathname); 	// /data/ingested/V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12 
 																		// /data/ingested/V22204_Test2_MBT20481_01.MP4 OR 
 																		// /data/transcoded/public/VL22204_Test2_MBT20481_01
 			logger.trace("outputArtifactName " + outputArtifactName); 	// null for processes that has no outputartifactclass OR 
@@ -285,7 +239,7 @@ public class ProcessingJobManager implements Runnable{
 			
 			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, inputArtifact);
 	
-			Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPath, inputArtifactclass);
+			Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPathname, inputArtifactclass);
 			int filesToBeProcessedCount = selectedFileList.size();
 			logger.trace("filesToBeProcessedCount " + filesToBeProcessedCount);
 			
@@ -295,11 +249,25 @@ public class ProcessingJobManager implements Runnable{
 				org.ishafoundation.dwaraapi.process.request.Artifact inputArtifactForProcess = jobForProcess.getInputArtifact();
 				inputArtifactForProcess.setName(inputArtifactName);
 				org.ishafoundation.dwaraapi.process.request.Artifactclass inputArtifactclassForProcess = inputArtifactForProcess.getArtifactclass();
-				inputArtifactclassForProcess.setId(artifactclassId);
+				inputArtifactclassForProcess.setId(inputArtifactclassId);
+				inputArtifactclassForProcess.setSource(inputArtifact.getArtifactclass().getSource());
+				inputArtifactclassForProcess.setPathPrefix(inputArtifact.getArtifactclass().getPathPrefix());
 				inputArtifactclassForProcess.setCategory(inputArtifact.getArtifactclass().getCategory());
 				inputArtifactclassForProcess.setDomain(domain.name());
-				jobForProcess.getOutputArtifact().setName(outputArtifactName);
- 
+				if(jobForProcess.getOutputArtifact() != null)
+					jobForProcess.getOutputArtifact().setName(outputArtifactName);
+
+				String outputPathSuffix = null;
+				ArtifactclassTask artifactclassTask = artifactclassTaskDao.findByArtifactclassIdAndProcessingtaskId(inputArtifactclassId, processingtaskId);
+				String configuredOutputPath = artifactclassTask != null ? artifactclassTask.getConfig().getOutputPath() : null;
+				if(configuredOutputPath != null) {
+					String normalizedOutputPath = FilenameUtils.normalizeNoEndSeparator(configuredOutputPath);
+					if(normalizedOutputPath == null)
+						throw new DwaraException("ArtifactclassTask.config.output_path value " + configuredOutputPath + " is not supported");
+					else 
+						outputPathSuffix = normalizedOutputPath;
+				}
+
 				for (Iterator<LogicalFile> iterator = selectedFileList.iterator(); iterator.hasNext();) {
 					LogicalFile logicalFile = (LogicalFile) iterator.next(); // would have an absolute file like C:\data\ingested\14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS and its sidecar files
 					String logicalFilePath = logicalFile.getAbsolutePath();
@@ -311,21 +279,25 @@ public class ProcessingJobManager implements Runnable{
 					anyFileSentForProcessing = true;
 					String artifactNamePrefixedFilePathname = null; // 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4 || 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
 					String outputFilePath = null; // /data/transcoded/public
-					if(StringUtils.isNotBlank(FilenameUtils.getExtension(inputArtifactPath))) { // means input artifact is a file and not a directory
+					if(StringUtils.isNotBlank(FilenameUtils.getExtension(inputArtifactPathname))) { // means input artifact is a file and not a directory
 						artifactNamePrefixedFilePathname = inputArtifactName; // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A.MP4
 						if(outputArtifactPathname != null)
 							outputFilePath = outputArtifactPathname;
 					}
 					else {
-						String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPath + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
-						artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPath + File.separator, inputArtifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
+						String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPathname + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
+						artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPathname + File.separator, inputArtifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
 						
 						if(outputArtifactPathname != null) {
-							String suffixPath = FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
-							if(StringUtils.isBlank(suffixPath))
-								outputFilePath = outputArtifactPathname;
-							else
-								outputFilePath = outputArtifactPathname + File.separator + FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
+							if(outputPathSuffix != null) {
+								outputFilePath = FilenameUtils.normalizeNoEndSeparator(outputArtifactPathname + File.separator + outputPathSuffix);
+							}else {
+								String suffixPath = FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
+								if(StringUtils.isBlank(suffixPath))
+									outputFilePath = outputArtifactPathname;
+								else
+									outputFilePath = outputArtifactPathname + File.separator + FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
+							}
 						}
 					}
 					logger.trace("outputFilePath - " + outputFilePath);
@@ -378,7 +350,7 @@ public class ProcessingJobManager implements Runnable{
 	
 						ProcessingJobProcessor processingJobProcessor = applicationContext.getBean(ProcessingJobProcessor.class);
 						ProcessContext processContext = new ProcessContext();
-						processContext.setInputDirPath(inputArtifactPath);
+						processContext.setInputDirPath(inputArtifactPathname);
 						processContext.setJob(jobForProcess);
 						processContext.setFile(fileEntityToFileForProcessConverter.getFileForProcess(file, domain));
 						processContext.setLogicalFile(logicalFile);
@@ -425,6 +397,8 @@ public class ProcessingJobManager implements Runnable{
 		String outputArtifactClassSequenceId = outputArtifactclass.getSequenceId();
 		Sequence outputArtifactClassSequence = configurationTablesUtil.getSequence(outputArtifactClassSequenceId);
 		String inputArtifactSeqCode = sequenceUtil.getExtractedCode(outputArtifactClassSequence, inputArtifactName);
+		if(inputArtifactSeqCode == null)
+			throw new DwaraException("Unable to extract sequence code from " + inputArtifactName + " with sequence code_regex " + outputArtifactClassSequence.getCodeRegex());
 		String outputArtifactSeqCode = sequenceUtil.getSequenceCode(outputArtifactClassSequence, inputArtifactName);
 		String outputArtifactName = inputArtifactName.replace(inputArtifactSeqCode, outputArtifactSeqCode);
 		if(StringUtils.isNotBlank(FilenameUtils.getExtension(outputArtifactName))) // is a file - remove the extn
@@ -435,77 +409,5 @@ public class ProcessingJobManager implements Runnable{
 	private String getOutputArtifactPathname(Artifactclass outputArtifactclass, String outputArtifactName) {
 		return outputArtifactclass.getPath() + java.io.File.separator + outputArtifactName;
 	}
-	
-	private HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getFilePathToFileObj(Domain domain, Artifact artifactDbObj) throws Exception{
-		HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathTofileObj = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
-		
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactDbObj, domain);
-		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
-			filePathTofileObj.put(nthFile.getPathname(), nthFile);
-		}
-		//logger.trace("file collection - " + filePathTofileObj.keySet().toString());
-		return filePathTofileObj;
-	}
-	
-	private Collection<LogicalFile> getLogicalFileList(Filetype filetype, String inputArtifactPath, String inputArtifactclassId, String processingtaskId){
-		
-		Collection<LogicalFile> logicalFileCollection =  new ArrayList<LogicalFile>(); 
-		
-		List<String> extensions = null;
-		String[] extensionsArray = null;
-		List<String> sidecarExtensions = null;
-		String[] sidecarExtensionsArray = null;
-		boolean includeSidecarFiles = false;
-		if(filetype != null) { // if filetype is null, extensions are set to null - which will get all the files listed - eg., process like checksum-gen
-			Set<String> pathsToBeUsed = new TreeSet<String>(); 
-			ArtifactclassTask artifactclassTask = artifactclassTaskDao.findByArtifactclassIdAndProcessingtaskId(inputArtifactclassId, processingtaskId);
-			String pathnameRegex = artifactclassTask != null ? artifactclassTask.getConfig().getPathnameRegex() : null;
-			Set<String> extnsToBeUsed = null; 
-			if(pathnameRegex != null) { // if artifactclass_processingtask has a pathregex we need to only get the processable files from that folder path and not from the entire archives directory... e.g., video-pub-edit will have .mov files under output folder
-				FiletypePathnameReqexVisitor filetypePathnameReqexVisitor = new FiletypePathnameReqexVisitor(pathnameRegex);
-				try {
-					Files.walkFileTree(Paths.get(inputArtifactPath), filetypePathnameReqexVisitor);
-				} catch (IOException e) {
-					// swallow for now
-				}
-				if(filetypePathnameReqexVisitor != null) {
-					pathsToBeUsed.addAll(filetypePathnameReqexVisitor.getPaths());
-					if(filetypePathnameReqexVisitor.getExtns().size() > 0) { // if regex contains specific file extns we need to only use processable files with that extn only{
-						extnsToBeUsed = filetypePathnameReqexVisitor.getExtns();
-					}
-				}
-			} else { // all processable files from the entire artifact directory
-				pathsToBeUsed.add(inputArtifactPath);	
-			}
-			logger.trace("pathsToBeUsed - " + pathsToBeUsed);
-			logger.trace("extnsToBeUsed - " + extnsToBeUsed);
-			
-			extensions = new ArrayList<String>();
-			sidecarExtensions = new ArrayList<String>();
-			List<ExtensionFiletype> extn_Filetype_List = filetype.getExtensions(); //extensionFiletypeDao.findAllByFiletypeId(filetype.getId());
-			for (ExtensionFiletype extensionFiletype : extn_Filetype_List) {
-				String extensionName = extensionFiletype.getExtension().getId();
-				if(extnsToBeUsed == null || (extnsToBeUsed != null && extnsToBeUsed.contains(extensionName))) { // if regex contains specific file extns, we need to only use them and not all the extensions_filetype for that particular processingtasks' filetype
-					if(extensionFiletype.isSidecar()) {
-						sidecarExtensions.add(extensionName);
-						includeSidecarFiles = true;
-					}
-					else
-						extensions.add(extensionName);
-				}
-			}
-			extensionsArray = ArrayUtils.toStringArray(extensions.toArray());
-			sidecarExtensionsArray = ArrayUtils.toStringArray(sidecarExtensions.toArray());
-			
-			logger.trace("extensionsArray - " + extensionsArray);
-			logger.trace("sidecarExtensionsArray - " + sidecarExtensionsArray);
-			for (String nthPathToBeUsed : pathsToBeUsed) {
-				logicalFileCollection.addAll(fileHelper.getFiles(nthPathToBeUsed, extensionsArray, includeSidecarFiles, sidecarExtensionsArray));				
-			}
-		}
-		else
-			logicalFileCollection.addAll(fileHelper.getFiles(inputArtifactPath, extensionsArray, includeSidecarFiles, sidecarExtensionsArray));
-		
-		return logicalFileCollection;
-	}
+
 }

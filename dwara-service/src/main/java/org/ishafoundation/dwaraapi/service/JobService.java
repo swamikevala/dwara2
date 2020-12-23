@@ -8,7 +8,6 @@ import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -85,6 +84,7 @@ public class JobService extends DwaraService{
 			jobResponse.setDependencies(job.getuIdDependencies());
 		}else {
 			jobResponse.setId(jobId + "");
+			jobResponse.setJobId(jobId + "");
 			List<Integer> jobDependencyIdsAsIntegerList = job.getDependencies();
 			if(jobDependencyIdsAsIntegerList != null) {
 				List<String> jobDependencyIdsAsStringList = new ArrayList<>(jobDependencyIdsAsIntegerList.size());

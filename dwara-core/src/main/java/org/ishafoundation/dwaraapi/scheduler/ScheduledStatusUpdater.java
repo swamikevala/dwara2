@@ -89,6 +89,7 @@ public class ScheduledStatusUpdater {
 		List<Status> statusList = new ArrayList<Status>();
 		statusList.add(Status.in_progress);
 		statusList.add(Status.queued);
+		statusList.add(Status.on_hold);
 		
 		List<Request> systemRequestList = requestDao.findAllByTypeAndStatusIn(RequestType.system, statusList);
 		//updateDependentJobsStatus(systemRequestList);
@@ -164,7 +165,7 @@ public class ScheduledStatusUpdater {
 							Request request = job.getRequest();
 							RequestDetails requestDetails = request.getDetails();
 							org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
-							if(requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlow())){
+							if(requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId())){
 								// what need to be restored
 								int fileIdRestored = requestDetails.getFileId();
 								
@@ -215,98 +216,13 @@ public class ScheduledStatusUpdater {
 	private void updateSystemRequestStatus(List<Request> requestList) {
 		for (Request nthRequest : requestList) {
 			List<Job> nthRequestJobs = jobDao.findAllByRequestId(nthRequest.getId());
-			
-			/**
-			 * 
-			 * in_progress
-				queued
-				on_hold
-				completed_failures
-				failed
-				completed
-				cancelled
-				*/
-			boolean anyInProgress = false;
-			boolean anyQueued = false;
-			boolean anyOnHold = false;
-			boolean anyCompletedWithFailures = false;
-			boolean hasFailures = false;
-			boolean isAllComplete = true;
-			boolean isAllCancelled = true;
-						
+			List<Status> jobStatusList = new ArrayList<Status>();
 			for (Job nthJob : nthRequestJobs) {
-				Status status = nthJob.getStatus();
-				switch (status) {
-					case in_progress:
-						anyInProgress = true;
-						isAllComplete = false;
-						isAllCancelled = false;
-						break;
-					case queued:
-						anyQueued = true;
-						isAllComplete = false;
-						isAllCancelled = false;
-						break;
-					case on_hold:
-						anyOnHold = true;
-						isAllComplete = false;
-						isAllCancelled = false;
-						break;
-					case completed_failures:
-						anyCompletedWithFailures = true;
-						isAllComplete = false;
-						isAllCancelled = false;						
-						break;
-					case failed:
-						hasFailures = true;
-						isAllComplete = false;
-						isAllCancelled = false;						
-						break;
-					case marked_completed:
-					case completed:
-						isAllCancelled = false;
-						break;						
-					case cancelled:
-						isAllComplete = false;
-						break;
-					default:
-						break;
-				}
-			}
+				Status nthJobStatus = nthJob.getStatus();
+				jobStatusList.add(nthJobStatus);
+			}	
 			
-			/**
-			 * 
-			 * in_progress
-				queued
-				on_hold
-				completed_failures
-				failed
-				completed
-				cancelled
-				*/
-			Status status = Status.queued;
-			if(anyInProgress) {
-				status = Status.in_progress;
-			}
-			else if(anyQueued) {
-				status = Status.queued; 
-			}
-			else if(anyOnHold) {
-				status = Status.on_hold; 
-			}
-			else if(anyCompletedWithFailures) {
-				status = Status.completed_failures; 
-			}
-			else if(hasFailures) {
-				status = Status.failed;
-			}
-			else if(isAllCancelled) {
-				status = Status.cancelled;
-			}
-			else if(isAllComplete) { // All jobs have successfully completed.
-				status = Status.completed; 
-			}
-			
+			Status status = getStatus(jobStatusList);
 			logger.trace("System request status - " + nthRequest.getId() + " ::: " + status);
 			
 			nthRequest.setStatus(status); 
@@ -347,97 +263,14 @@ public class ScheduledStatusUpdater {
 		for (Request nthUserRequest : userRequestList) {
 			int userRequestId = nthUserRequest.getId();
 			List<Request> systemRequestList = requestDao.findAllByRequestRefId(userRequestId);
-
-			/**
-			 * 
-			 * in_progress
-				queued
-				on_hold
-				completed_failures
-				failed
-				completed
-				cancelled
-				*/
-			boolean anyInProgress = false;
-			boolean anyQueued = false;
-			boolean anyOnHold = false;
-			boolean anyCompletedWithFailures = false;
-			boolean hasFailures = false;
-			boolean isAllComplete = true;
-			boolean isAllCancelled = true;
-						
-			for (Request nthSystemRequest : systemRequestList) {
-			Status status = nthSystemRequest.getStatus();
-				switch (status) {
-					case in_progress:
-						anyInProgress = true;
-						isAllComplete = false;
-						isAllCancelled = false;
-						break;
-					case queued:
-						anyQueued = true;
-						isAllComplete = false;
-						isAllCancelled = false;
-						break;
-					case on_hold:
-						anyOnHold = true;
-						isAllComplete = false;
-						isAllCancelled = false;
-						break;
-					case completed_failures:
-						anyCompletedWithFailures = true;
-						isAllComplete = false;
-						isAllCancelled = false;						
-						break;
-					case failed:
-						hasFailures = true;
-						isAllComplete = false;
-						isAllCancelled = false;						
-						break;
-					case marked_completed:
-					case completed:
-						isAllCancelled = false;
-						break;						
-					case cancelled:
-						isAllComplete = false;
-						break;
-					default:
-						break;
-				}
-			}
 			
-			/**
-			 * 
-			 * in_progress
-				queued
-				on_hold
-				completed_failures
-				failed
-				completed
-				cancelled
-				*/
-			Status status = Status.queued;
-			if(anyInProgress) {
-				status = Status.in_progress;
-			}
-			else if(anyQueued) {
-				status = Status.queued; 
-			}
-			else if(anyOnHold) {
-				status = Status.on_hold; 
-			}
-			else if(anyCompletedWithFailures) { // Some jobs have successfully completed, and some were skipped, or failed and then marked completed.
-				status = Status.completed_failures; 
-			}
-			else if(hasFailures) {
-				status = Status.failed;
-			}
-			else if(isAllCancelled) {
-				status = Status.cancelled;
-			}
-			else if(isAllComplete) { // All jobs have successfully completed.
-				status = Status.completed; 
-			}
+			List<Status> systemRequestStatusList = new ArrayList<Status>();
+			for (Request nthSystemRequest : systemRequestList) {
+				Status nthSystemRequestStatus = nthSystemRequest.getStatus();
+				systemRequestStatusList.add(nthSystemRequestStatus);
+			}	
+		
+			Status status = getStatus(systemRequestStatusList);
 			
 			logger.trace("User request status - " + nthUserRequest.getId() + " ::: " + status);
 			
@@ -452,5 +285,84 @@ public class ScheduledStatusUpdater {
 			nthUserRequest.setStatus(status); 
 			requestDao.save(nthUserRequest);
 		}
+	}
+	
+	private Status getStatus(List<Status> entityStatusList) {
+		boolean anyInProgress = false;
+		boolean anyQueued = false;
+		boolean anyOnHold = false;
+		boolean anyCancelled = false;
+		boolean anyCompletedWithFailures = false;
+		boolean hasFailures = false;
+		boolean isAllComplete = true;
+					
+		for (Status status : entityStatusList) {
+			switch (status) {
+				case in_progress:
+					anyInProgress = true;
+					isAllComplete = false;
+					break;
+				case queued:
+					anyQueued = true;
+					isAllComplete = false;
+					break;
+				case on_hold:
+					anyOnHold = true;
+					isAllComplete = false;
+					break;
+				case cancelled:
+					anyCancelled = true;
+					isAllComplete = false;
+					break;
+				case completed_failures:
+					anyCompletedWithFailures = true;
+					isAllComplete = false;
+					break;
+				case failed:
+					hasFailures = true;
+					isAllComplete = false;
+					break;
+				case marked_completed:
+				case completed:
+					break;						
+				default:
+					break;
+			}
+		}
+		
+		/**
+		 * 
+		 * in_progress
+			queued
+			on_hold
+			cancelled
+			failed
+			completed_failures
+			completed
+			*/
+		Status status = Status.queued;
+		if(anyInProgress) {
+			status = Status.in_progress;
+		}
+		else if(anyQueued) {
+			status = Status.queued; 
+		}
+		else if(anyOnHold) {
+			status = Status.on_hold; 
+		}
+		else if(anyCancelled) {
+			status = Status.cancelled;
+		}
+		else if(hasFailures) {
+			status = Status.failed;
+		}
+		else if(anyCompletedWithFailures) {
+			status = Status.completed_failures; 
+		}
+		else if(isAllComplete) { // All jobs have successfully completed.
+			status = Status.completed; 
+		}
+		
+		return status;
 	}
 }

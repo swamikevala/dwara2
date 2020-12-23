@@ -30,6 +30,9 @@ public class File {
 
 	@Column(name="deleted")
 	private boolean deleted;
+	
+	@Column(name="directory")
+	private boolean directory;
 
 	public int getId() {
 		return id;
@@ -69,6 +72,14 @@ public class File {
 
 	public void setDeleted(boolean deleted) {
 		this.deleted = deleted;
+	}
+
+	public boolean isDirectory() {
+		return directory;
+	}
+
+	public void setDirectory(boolean directory) {
+		this.directory = directory;
 	}
 
 	@Override

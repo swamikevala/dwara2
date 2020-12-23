@@ -8,9 +8,9 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 public class File {
 	
 	@JacksonXmlProperty(isAttribute=true, localName="volumeBlock")
-	private int volumeblock; // volume start block
+	private Integer volumeblock; // volume start block
 	@JacksonXmlProperty(isAttribute=true, localName="archiveBlock")
-	private int archiveblock; // archive start block
+	private Integer archiveblock; // archive start block
 	@JacksonXmlProperty(isAttribute=true, localName="size") 
 	private Long size;
 	@JacksonXmlProperty(isAttribute=true, localName="checksum")
@@ -21,16 +21,16 @@ public class File {
 	private String name;
 	
 	
-	public int getVolumeblock() {
+	public Integer getVolumeblock() {
 		return volumeblock;
 	}
-	public void setVolumeblock(int volumeblock) {
+	public void setVolumeblock(Integer volumeblock) {
 		this.volumeblock = volumeblock;
 	}
-	public int getArchiveblock() {
+	public Integer getArchiveblock() {
 		return archiveblock;
 	}
-	public void setArchiveblock(int archiveblock) {
+	public void setArchiveblock(Integer archiveblock) {
 		this.archiveblock = archiveblock;
 	}
 	public Long getSize() {

@@ -24,7 +24,7 @@ public class TapeStreamer {
 
 	private static final Logger logger = LoggerFactory.getLogger(TapeStreamer.class);
 
-	public static TapeStreamerResponse stream(List<String> commandList, int bufferSize, int skipByteCount, String filePathNameWeNeed,
+	public static TapeStreamerResponse stream(List<String> commandList, int bufferSize, int skipByteCount, String filePathNameWeNeed, boolean isFilePathNameWeNeedIsDirectory,
 			boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
 			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
 
@@ -57,13 +57,12 @@ public class TapeStreamer {
 					entryPathName = FilenameUtils.getPathNoEndSeparator(entryPathName);
 				filePathNameToHeaderBlockCnt.put(entryPathName, (int) (headerBlockBytes/512));
 				
-				
 				// we position to the first files right header already, so if the entry name
 				// doesnt match the folder path that means these are the tail part of the
 				// restored bytechunk which are not needed...
-				if (filePathNameWeNeed != null && !entryPathName.startsWith(filePathNameWeNeed)) {
+				if (filePathNameWeNeed != null && !entryPathName.startsWith(filePathNameWeNeed)) { // if filePathNameWeNeed is a directory, get all the files that startwith the requested directory name else break
 					logger.trace("possibly all folder content completed...");
-					break; // if the file we need is not what we want we break
+					break;
 				}
 
 				if (!entry.isDirectory()) {
@@ -123,6 +122,10 @@ public class TapeStreamer {
 						}
 					}
 				}
+
+				// If filePathNameWeNeed is a file then no need to loop further - break
+				if(!isFilePathNameWeNeedIsDirectory)
+					break;
 				
 				totalNoOfBytesRead = tin.getBytesRead();
 				entry = getNextTarEntry(tin);

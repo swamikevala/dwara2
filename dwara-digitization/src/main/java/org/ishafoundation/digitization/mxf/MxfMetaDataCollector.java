@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Component("video-header-footer-extraction")//mxf-meta-collection")
+@Component("video-digi-2020-header-extract")//mxf-meta-collection")
 @Primary
 @Profile({ "!dev & !stage" })
 public class MxfMetaDataCollector implements IProcessingTask {
@@ -143,7 +143,7 @@ public class MxfMetaDataCollector implements IProcessingTask {
 	}
     
 	private byte[] extractFooterChunk(String filePathName, long bytesToBeSkipped) throws Exception{
-		byte[] data = new byte[(int) bytesToBeSkipped];
+		byte[] data = null;
 		String extractedChunkTmpFile = filePathName.replace(PfrConstants.MXF_EXTN, PfrConstants.FTR_EXTN + ".tmp");
 		String ddCommand = "dd if=" + filePathName + " skip=" + bytesToBeSkipped + " iflag=skip_bytes,count_bytes of=" + extractedChunkTmpFile;
 		

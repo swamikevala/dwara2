@@ -13,7 +13,6 @@ import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Flow;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassFlow;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassTask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
@@ -89,7 +88,7 @@ public class JobCreator {
 				// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
 				actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByIdArtifactclassIdAndActionIdAndActiveTrue(sourceArtifactclassId, requestedBusinessAction.name()); //
 			}else if(requestedBusinessAction == Action.restore_process) {
-				if(request.getDetails().getFlow().equals(CoreFlow.core_restore_checksumverify_flow.getFlowName()))
+				if(request.getDetails().getFlowId().equals(CoreFlow.core_restore_checksumverify_flow.getFlowName()))
 					jobList.addAll(iterateFlow(request, sourceArtifactclassId, sourceArtifact, CoreFlow.core_restore_checksumverify_flow.getFlowName()));
 //				actionArtifactclassFlowList = new ArrayList<ActionArtifactclassFlow>();
 //				actionArtifactclassFlowList.add(actionArtifactclassFlowDao.findByActionIdAndFlowIdAndActiveTrue(requestedBusinessAction.name(), DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME)); //
@@ -123,7 +122,7 @@ public class JobCreator {
 		for (Flowelement nthFlowelement : flowelementList) {
 			logger.trace("Flowelement " + nthFlowelement.getId());
 			
-			List<Integer> refFlowelementDepsList = nthFlowelement.getDependencies();
+			List<String> refFlowelementDepsList = nthFlowelement.getDependencies();
 			if(refFlowelementDepsList == null) {
 				jobsCreated.addAll(createJobs(nthFlowelement, null, request, artifactclassId, artifact));
 			}
@@ -145,7 +144,7 @@ public class JobCreator {
 	
 	public List<Job> createDependentJobs(Job job){
 		List<Job> jobsCreated = new ArrayList<Job>();
-		Integer flowelementId = job.getFlowelementId();
+		String flowelementId = job.getFlowelementId();
 		
 		
 		if(flowelementId != null) {
@@ -210,10 +209,10 @@ public class JobCreator {
 		String processingtaskId = flowelement.getProcessingtaskId();
 		boolean processingtaskWithDependencyStoragetask = false;
 		if(processingtaskId != null) {
-			List<Integer> flowelementDependenciesList = flowelement.getDependencies();
+			List<String> flowelementDependenciesList = flowelement.getDependencies();
 			// Now check if any of the dependency is a storage task
 			if(flowelementDependenciesList != null) {
-				for (Integer nthFlowelementDependencyId : flowelementDependenciesList) {
+				for (String nthFlowelementDependencyId : flowelementDependenciesList) {
 					Flowelement prereqFlowelement = flowelementUtil.findById(nthFlowelementDependencyId);
 					Action storagetaskDependency = prereqFlowelement.getStoragetaskActionId();  
 					if(storagetaskDependency != null) { // Is the dependency a Storage task?
@@ -227,7 +226,7 @@ public class JobCreator {
 		// But we should verify if they are not already created and create here... - 
 		// We might have race conditions with write completion thread creating one and just at the same time this one does too... Need to ensure that doesnt happen...
 		if(storagetaskAction != null || processingtaskWithDependencyStoragetask) {
-			if(sourceJob == null && request.getActionId() == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlow())){
+			if(sourceJob == null && request.getActionId() == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId())){
 				Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
 				job.setStoragetaskActionId(storagetaskAction);
 				job = saveJob(job);
@@ -333,10 +332,10 @@ public class JobCreator {
 	private boolean isJobGoodToBeCreated(Flowelement nthFlowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact, String groupVolumeId, List<Integer> dependentJobIds) {
 		boolean isJobGoodToBeCreated = true;
 		logger.trace("Validating if all dependencies Jobs of flowelement " + nthFlowelement + " are created and completed");
-		List<Integer> preRequesiteFlowelements = nthFlowelement.getDependencies();
+		List<String> preRequesiteFlowelements = nthFlowelement.getDependencies();
 		if(preRequesiteFlowelements != null) {
-			for (Integer nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
-				if(sourceJob != null && sourceJob.getFlowelementId() == nthPreRequesiteFlowelementId)
+			for (String nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
+				if(sourceJob != null && sourceJob.getFlowelementId().equals(nthPreRequesiteFlowelementId))
 					continue;
 				
 				logger.trace("Now verifying if flowelement " + nthFlowelement + "'s dependency flowelement " + nthPreRequesiteFlowelementId + " has job created and completed");
@@ -390,10 +389,10 @@ public class JobCreator {
 		List<Flowelement> flowelementList = flowelementUtil.getAllFlowElements(flowId);
 		List<Flowelement> dependentFlowelementList = new ArrayList<Flowelement>();
 		for (Flowelement nthFlowelement : flowelementList) {
-			if(nthFlowelement.getId() == flowelement.getId())
+			if(nthFlowelement.getId().equals(flowelement.getId()))
 				continue;
 			
-			List<Integer> preReqs = nthFlowelement.getDependencies();
+			List<String> preReqs = nthFlowelement.getDependencies();
 			if(flowelement.getFlowRefId() != null) {
 				if(preReqs == null)
 					dependentFlowelementList.add(nthFlowelement);

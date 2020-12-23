@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Component("video-preservation-gen")
+@Component("video-digi-2020-preservation-gen")
 @Primary
 @Profile({ "!dev & !stage" })
 public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
@@ -57,7 +57,7 @@ public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask imple
 		
 		String compressedFileTmpTargetLocation = destinationDirPath + File.separator + fileName + "_tmp" + PfrConstants.MKV_EXTN ;// TODO How do we know if it should be mkv or mxf or what not???
 		String compressedFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.MKV_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
-		String headerFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.PFR_HDR_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
+		String headerFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.HDR_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
 		String cuesFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.INDEX_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
 		
 		/*************** COMPRESSION ***************/

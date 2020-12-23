@@ -18,7 +18,7 @@ public class Flowelement {
 
 	@Id
 	@Column(name="id")
-	private int id;
+	private String id;
 
 //	@ManyToOne(fetch = FetchType.LAZY)
 //	private Flow flow;
@@ -33,7 +33,7 @@ public class Flowelement {
 	
 	@Type(type = "json")
 	@Column(name="dependencies", columnDefinition = "json")
-	private List<Integer> dependencies;
+	private List<String> dependencies;
 	
 //	@ManyToOne(fetch = FetchType.LAZY)
 //	private Flow flowRef;
@@ -52,11 +52,11 @@ public class Flowelement {
 	@Transient
 	private Flowelement flowelementRef;
 	
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 //
@@ -112,11 +112,11 @@ public class Flowelement {
 //		this.flowRefId = flowRefId;
 //	}
 
-	public List<Integer> getDependencies() {
+	public List<String> getDependencies() {
 		return dependencies;
 	}
 
-	public void setDependencies(List<Integer> dependencies) {
+	public void setDependencies(List<String> dependencies) {
 		this.dependencies = dependencies;
 	}
 

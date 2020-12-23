@@ -22,6 +22,7 @@ import org.ishafoundation.dwaraapi.utils.JsonPathUtil;
 import org.ishafoundation.videopub.mam.authn.Authenticator;
 import org.ishafoundation.videopub.mam.ingest.CatalogChecker;
 import org.ishafoundation.videopub.mam.ingest.CatalogCreator;
+import org.ishafoundation.videopub.mam.ingest.CatalogDeleter;
 import org.ishafoundation.videopub.mam.ingest.ClipInserter;
 import org.ishafoundation.videopub.mam.ingest.ClipUpdater;
 import org.ishafoundation.videopub.mam.ingest.ThumbnailInserter;
@@ -69,6 +70,9 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 	
 	@Autowired
 	private ClipUpdater cu;	
+	
+	@Autowired
+	private CatalogDeleter cd;	
 	
 	@Autowired
     private RemoteCommandLineExecuter remoteCommandLineExecuter;
@@ -211,6 +215,48 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 		return insertedClipID;
 	}
 	
+	public void cleanUp(String artifactName, String category) {
+		Session jSchSession = null;
+		try {
+			// STEP 2 - REMOVE THE CATALOG FROM CATDV DB...
+			deleteCatalog(artifactName);		
+			
+			// STEP 3 - DELETE THE PROXY FOLDER IN CATDV SERVER
+			String copiedProxyFilePath = catDVConfiguration.getSshProxiesRootLocation() + File.separator + category + File.separator + artifactName;
+			// delete the tar remotely
+			String removeCommand = "rm -rf " + copiedProxyFilePath;
+			jSchSession = catdvSshSessionHelper.getSession();
+			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, removeCommand, "rmProxyFolderErr.out");
+			catdvSshSessionHelper.disconnectSession(jSchSession);
+			logger.info("Deleted the proxy folder on MAM server");
+		} catch (Exception e) {
+			logger.error("Unable to cleanup the cancelled medialibrary artifacts " + e.getMessage());
+		}finally {
+    		if (jSchSession != null) 
+    			catdvSshSessionHelper.disconnectSession(jSchSession);
+		}
+	}
+	
+	private void deleteCatalog(String artifactName){
+		String catdvSessionId = null;
+		try {
+			catdvSessionId = getSessionId();
+			String catalogName = getCatalogName(artifactName);
+			int catalogId = catalogChecker.getCatalogId(catdvSessionId, catalogName);
+			if(catalogId != 0) { // If catalog exists
+				cd.deleteCatalog(catdvSessionId, catalogId);
+				logger.info("Removed the catalog from MAM DB");
+			}else {
+				logger.debug("No catalog found on MAM side");
+			}
+		} catch (Exception e) {
+			logger.error("Unable to remove catalog on MAM Side " + e.getMessage());
+		}finally {
+			if(catdvSessionId != null)
+				deleteSession(catdvSessionId);
+		}
+	}
+	
 	// Auth and get session id....
 	private String getSessionId() throws Exception {
 		String jsessionId = null;
@@ -238,7 +284,7 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 	
 	private Pattern datePattern = Pattern.compile("_([0-9]{1,2}(-[0-9]{1,2})?-([A-Za-z]{3})-([0-9]{2,4}))(_)?");	
 	
-	private String getCatalogName(String mediaLibraryFolderName) {
+	private String getCatalogName(String artifactName) {
 		
 		// MediaLibraryDirectoryName follows a pattern like this...
 		// <<SeqId>>_<<EventName>>_<<Venue>>_<<Date>>_<<CameraDetails>>
@@ -246,12 +292,12 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 		// 10449_Golf-Jaunt-With-Sadhguru-For-Sadhguru-Schools_Uganda-Golf-Club-Kampala-Uganda-Africa_13-Jun-2016
 		// 10446_ICWTM-Alan-Kasujja-With-Sadhguru_Speke-Resort-Munyonyo-Kampala-Uganda-Africa_12-Jun-2016_Cam3_5D
 		
-		String catalogName = "NO_DATE/" + mediaLibraryFolderName;
+		String catalogName = "NO_DATE/" + artifactName;
 
-//		String[] mediaLibraryFolderNameParts = mediaLibraryFolderName.split("_"); 
+//		String[] mediaLibraryFolderNameParts = artifactName.split("_"); 
 //		String eventDate = mediaLibraryFolderNameParts[3];
 		
-		Matcher m = datePattern.matcher(mediaLibraryFolderName); 	
+		Matcher m = datePattern.matcher(artifactName); 	
 		if(m.find()) {
 			String eventDate = m.group(1);
 			String month = m.group(3);
@@ -260,7 +306,7 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			if(eventDate.contains("-")) {
 				Calendar formattedDate = DateAndTimeUtil.getDateForCatalogNamePrefix(month + "-" + year);
 				if(formattedDate != null)
-					catalogName = formattedDate.get(Calendar.YEAR) + "/" + (formattedDate.get(Calendar.MONTH) + 1) + "/" + mediaLibraryFolderName;
+					catalogName = formattedDate.get(Calendar.YEAR) + "/" + (formattedDate.get(Calendar.MONTH) + 1) + "/" + artifactName;
 			}
 		}		
 		return catalogName;

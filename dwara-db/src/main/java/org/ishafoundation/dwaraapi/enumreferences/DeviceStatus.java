@@ -4,5 +4,5 @@ public enum DeviceStatus {
 	online,
 	offline,
 	not_found,
-	maintanence;
+	maintenance;
 }

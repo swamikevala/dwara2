@@ -33,12 +33,12 @@ public class JobUtil {
 		Flowelement fe = flowelementUtil.findById(writeJob.getFlowelementId()); 
 		
 		List<Flowelement> flowelementList = flowelementUtil.getAllFlowElements(fe.getFlowId());
-		Map<Integer, List<Flowelement>> flowelementId_DependentFlowelements_Map = new HashMap<Integer, List<Flowelement>>();
+		Map<String, List<Flowelement>> flowelementId_DependentFlowelements_Map = new HashMap<String, List<Flowelement>>();
 		getWriteJobNestedDependentFlowelements(fe, flowelementList, flowelementId_DependentFlowelements_Map);
 		
 		logger.trace("Dependants of Flowelement " + fe.getId());
-		Set<Integer> flowelementIdSet = flowelementId_DependentFlowelements_Map.keySet();
-		for (Integer nthFlowelementId : flowelementIdSet) {
+		Set<String> flowelementIdSet = flowelementId_DependentFlowelements_Map.keySet();
+		for (String nthFlowelementId : flowelementIdSet) {
 		
 			List<Flowelement> dependentFlowelementList = flowelementId_DependentFlowelements_Map.get(nthFlowelementId);
 			for (Flowelement flowelement : dependentFlowelementList) {
@@ -47,12 +47,12 @@ public class JobUtil {
 		}
 		
 		List<Job> jobsOnRequest = jobDao.findAllByRequestId(writeJob.getRequest().getId());
-		Map<Integer, Job> flowelementId_dependentJob_Map = new HashMap<Integer, Job>();
+		Map<String, Job> flowelementId_dependentJob_Map = new HashMap<String, Job>();
 		getWriteJobNestedDependentJobs(writeJob, jobsOnRequest, flowelementId_dependentJob_Map);
 
 		logger.trace("Dependent Jobs");
-		Set<Integer> flowelementIdSet2 = flowelementId_dependentJob_Map.keySet();
-		for (Integer nthFlowelementId : flowelementIdSet2) {
+		Set<String> flowelementIdSet2 = flowelementId_dependentJob_Map.keySet();
+		for (String nthFlowelementId : flowelementIdSet2) {
 			Job job = flowelementId_dependentJob_Map.get(nthFlowelementId);
 			logger.trace(nthFlowelementId + " --> " + (job != null ? job.getId() : null));
 		}
@@ -89,7 +89,7 @@ public class JobUtil {
 	
 	// made as public for testing
 	// Write Job's nested(depth >= 1) Dependent Jobs - For eg., Write --> Restore. Restore --> verify 
-	public void getWriteJobNestedDependentJobs(Job job, List<Job> jobsOnRequest, Map<Integer, Job> flowelementId_dependantJob_Map) {
+	public void getWriteJobNestedDependentJobs(Job job, List<Job> jobsOnRequest, Map<String, Job> flowelementId_dependantJob_Map) {
 		logger.trace("job " + job.getId());
 		for (Job nthJob : jobsOnRequest) {
 			List<Integer> preReqJobIds = nthJob.getDependencies();
@@ -103,12 +103,12 @@ public class JobUtil {
 	}
 	
 	// made as public for testing
-	private void getWriteJobNestedDependentFlowelements(Flowelement fe, List<Flowelement> flowelementList, Map<Integer, List<Flowelement>> flowelementId_DepenedentFlowelements_Map) {
+	private void getWriteJobNestedDependentFlowelements(Flowelement fe, List<Flowelement> flowelementList, Map<String, List<Flowelement>> flowelementId_DepenedentFlowelements_Map) {
 		for (Flowelement nthFlowelement : flowelementList) {
-			if(nthFlowelement.getId() == fe.getId())
+			if(nthFlowelement.getId().equals(fe.getId()))
 				continue;
 			
-			List<Integer> preReqs = nthFlowelement.getDependencies();
+			List<String> preReqs = nthFlowelement.getDependencies();
 			if(preReqs != null && preReqs.contains(fe.getId())) {
 				List<Flowelement> dependentFlowelementList = flowelementId_DepenedentFlowelements_Map.get(fe.getId());
 				if(dependentFlowelementList == null) {

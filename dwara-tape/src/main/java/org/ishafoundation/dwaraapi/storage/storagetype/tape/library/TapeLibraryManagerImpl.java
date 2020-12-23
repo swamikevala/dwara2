@@ -66,7 +66,7 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 			} catch (Exception e) {
 				// TODO : Regex this or even better look for mtx: Request Sense: Sense Key=Illegal Request
 				if(e.getMessage().contains("MOVE MEDIUM from Element Address")) {			//MOVE MEDIUM from Element Address 1021 to 5 Failed
-					throw new Exception("Generation not supported.", e);
+					throw new Exception("Tape LOAD operation failed", e);
 				}
 				throw e;
 			}

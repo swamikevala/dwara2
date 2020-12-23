@@ -4,25 +4,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public enum CoreFlowelement {
-	core_archive_flow_checksum_gen(-1, "core-archive-flow", null, "checksum-gen", null, null, -1, true, false),
-	core_archive_flow_write(-2, "core-archive-flow", "write", null, null, null, -2, true, false),
-	core_archive_flow_restore(-3, "core-archive-flow", "restore", null, new Integer[] {-2}, null, -3, true, false),
-	core_archive_flow_checksum_verify(-4, "core-archive-flow", null, "checksum-verify", new Integer[] {-1,-3}, null, -4, true, false),
+	dep_archive_flow_checksum_gen("1", "archive-flow", null, "checksum-gen", null, null, 1, false, true),
+	dep_archive_flow_write("2", "archive-flow", "write", null, null, null, 2, false, true),
+	dep_archive_flow_checksum_verify("3", "archive-flow", "verify", null, new String[] {"1","2"}, null, 3, false, true),
 	
-	core_restore_verify_flow_restore(-11, "core-restore-verify-flow", "restore", null, null, null, -11, true, false),
-	core_restore_verify_flow_checksum_verify(-12, "core-restore-verify-flow", null, "checksum-verify", new Integer[] {-11}, null, -12, true, false);
+	core_archive_flow_checksum_gen("C1", "archive-flow", null, "checksum-gen", null, null, 1, true, false),
+	core_archive_flow_write("C2", "archive-flow", "write", null, null, null, 2, true, false),
+	core_archive_flow_restore("C3", "archive-flow", "restore", null, new String[] {"C2"}, null, 3, true, false),
+	core_archive_flow_checksum_verify("C4", "archive-flow", null, "checksum-verify", new String[] {"C1","C3"}, null, 4, true, false),
+	
+	core_restore_verify_flow_restore("C11", "restore-verify-flow", "restore", null, null, null, 11, true, false),
+	core_restore_verify_flow_checksum_verify("C12", "restore-verify-flow", null, "checksum-verify", new String[] {"C11"}, null, 12, true, false);
 
-	private int id;
+	private String id;
 	private String flowId;
 	private String storagetaskActionId;
 	private String processingtaskId;
-	private Integer[] dependencies;
+	private String[] dependencies;
 	private String flowRefId;
 	private int displayOrder;
 	private boolean active;
 	private boolean deprecated;
 
-	CoreFlowelement(int id, String flowId, String storagetaskActionId, String processingtaskId, Integer[] dependencies, String flowRefId, int displayOrder, boolean active, boolean deprecated){
+	CoreFlowelement(String id, String flowId, String storagetaskActionId, String processingtaskId, String[] dependencies, String flowRefId, int displayOrder, boolean active, boolean deprecated){
 		this.id = id; 
 		this.flowId = flowId;
 		this.storagetaskActionId = storagetaskActionId;
@@ -34,7 +38,7 @@ public enum CoreFlowelement {
 		this.deprecated = deprecated;
 	}
 
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
@@ -50,7 +54,7 @@ public enum CoreFlowelement {
 		return processingtaskId;
 	}
 
-	public Integer[] getDependencies() {
+	public String[] getDependencies() {
 		return dependencies;
 	}
 
@@ -73,16 +77,16 @@ public enum CoreFlowelement {
 	public static List<CoreFlowelement> findAllByFlowId(String flowId){
 		List<CoreFlowelement> coreFlowelementList = new ArrayList<CoreFlowelement>();
 	    for (CoreFlowelement nthCoreFlowelement : CoreFlowelement.values()) {
-	        if (nthCoreFlowelement.getFlowId().equals(flowId)) {
+	        if (nthCoreFlowelement.getFlowId().equals(flowId) && nthCoreFlowelement.isActive() && !nthCoreFlowelement.isDeprecated()) {
 	        	coreFlowelementList.add(nthCoreFlowelement);
 	        }
 	    }
 		return coreFlowelementList;
 	}
 	
-	public static CoreFlowelement findById(int flowelementId){
+	public static CoreFlowelement findById(String flowelementId){
 	    for (CoreFlowelement nthCoreFlowelement : CoreFlowelement.values()) {
-	        if (nthCoreFlowelement.getId() == flowelementId) {
+	        if (nthCoreFlowelement.getId().equals(flowelementId)) {
 	        	return nthCoreFlowelement;
 	        }
 	    }

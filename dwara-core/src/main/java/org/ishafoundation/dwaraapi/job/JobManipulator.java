@@ -2,7 +2,6 @@ package org.ishafoundation.dwaraapi.job;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
@@ -25,7 +24,6 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,9 +49,6 @@ public class JobManipulator {
 
 	@Autowired
 	private ProcessingtaskDao processingtaskDao;
-
-	@Autowired
-	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
@@ -82,7 +77,7 @@ public class JobManipulator {
 				// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
 				actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByIdArtifactclassIdAndActionIdAndActiveTrue(sourceArtifactclassId, requestedBusinessAction.name()); //
 			}else if(requestedBusinessAction == Action.restore_process) {
-				if(request.getDetails().getFlow().equals(CoreFlow.core_restore_checksumverify_flow.getFlowName()))
+				if(request.getDetails().getFlowId().equals(CoreFlow.core_restore_checksumverify_flow.getFlowName()))
 					iterateFlow(request, sourceArtifactclassId, CoreFlow.core_restore_checksumverify_flow.getFlowName(), null, alreadyCreatedJobList, jobList);
 //				actionArtifactclassFlowList = new ArrayList<ActionArtifactclassFlow>();
 //				actionArtifactclassFlowList.add(actionArtifactclassFlowDao.findByActionIdAndFlowIdAndActiveTrue(requestedBusinessAction.name(), DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME)); //
@@ -97,10 +92,7 @@ public class JobManipulator {
 			}
 		}
 		else if(Actiontype.storage_task == action.getType()){
-			String actionName = requestedBusinessAction.name();
-			logger.debug("Calling storage task impl " + actionName);
-			AbstractStoragetaskAction actionImpl = storagetaskActionMap.get(actionName);
-			jobList.addAll(actionImpl.createJobsForStoragetaskAction(request, requestedBusinessAction));
+			jobList.addAll(alreadyCreatedJobList);
 		}
 		return jobList;
 	}
@@ -132,17 +124,17 @@ public class JobManipulator {
 		//  get all the flow elements for the flow
 		List<Flowelement> flowelementList = flowelementUtil.getAllFlowElements(nthFlowId);
 		for (Flowelement nthFlowelement : flowelementList) {
-			int nthFlowelementId = nthFlowelement.getId();
+			String nthFlowelementId = nthFlowelement.getId();
 			logger.trace("Flowelement " + nthFlowelementId);
 
-			List<Integer> flowelementDepsList = nthFlowelement.getDependencies();
+			List<String> flowelementDepsList = nthFlowelement.getDependencies();
 
 			String outputArtifactclassId = null;
 			boolean processingtaskWithDependencyStoragetask = false;
 			if(flowelementDepsList != null) {
 				String outputArtifactclassSuffix = null;
 				
-				for (Integer nthFlowelementDependencyId : flowelementDepsList) {
+				for (String nthFlowelementDependencyId : flowelementDepsList) {
 					Flowelement prereqFlowelement = flowelementUtil.findById(nthFlowelementDependencyId);
 					
 					Action storagetaskDependency = prereqFlowelement.getStoragetaskActionId();  
@@ -182,7 +174,7 @@ public class JobManipulator {
 				
 				String artifactclassIdToBeUsed = artifactclassId;
 				String referencingFlowPrefix = "";
-				List<Integer> dependencies = nthFlowelement.getDependencies();
+				List<String> dependencies = nthFlowelement.getDependencies();
 				if(referencingFlowelement != null) {
 					referencingFlowPrefix = referencingFlowelement.getId() + "_";
 					if(dependencies == null) {
@@ -202,9 +194,44 @@ public class JobManipulator {
 					}
 				}
 				Integer artifactId = (artifact != null ? artifact.getId() : null);
-				List<String> uIdDependencies = null; 
-				if(storagetaskAction != null || processingtaskWithDependencyStoragetask) {
-					
+				List<String> uIdDependencies = null;
+				if(request.getActionId() == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId())){
+					String uId = referencingFlowPrefix + nthFlowelementId;
+					logger.trace("uid - " + uId);
+					// check if job already created and details available... 
+					Job job = jobDao.findByRequestIdAndFlowelementId(request.getId(), nthFlowelementId);
+					if(job == null) {
+						job = new Job();
+						job.setFlowelementId(nthFlowelementId);
+						job.setRequest(request);	
+						if(storagetaskAction != null) {
+							job.setStoragetaskActionId(storagetaskAction);
+						}else
+							job.setProcessingtaskId(processingtaskId);
+					}
+						
+					if(dependencies != null) {
+						uIdDependencies = new ArrayList<String>();
+						for (String dependentFlowelementId : dependencies) {
+							Flowelement dependentFlowelement = flowelementUtil.findById(dependentFlowelementId);
+
+							String copyId = "";
+							if(dependentFlowelement.getStoragetaskActionId() != null)
+								copyId = ""; // TODO : We dont know how to support this just yet...  "_" + volume.getCopy().getId();
+
+							if(nthFlowelement.getDependencies() == null)
+								uIdDependencies.add(dependentFlowelementId + copyId);
+							else
+								uIdDependencies.add(referencingFlowPrefix + dependentFlowelementId + copyId);
+						}
+					}
+
+					job.setuId(uId);
+					job.setuIdDependencies(uIdDependencies);
+					jobList.add(job);
+				}
+				else if(storagetaskAction != null || processingtaskWithDependencyStoragetask) {
+
 					List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassIdAndActiveTrue(artifactclassId);
 					logger.trace("No. of copies " + artifactclassVolumeList.size());
 					for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {
@@ -213,7 +240,7 @@ public class JobManipulator {
 
 						if(dependencies != null) {
 							uIdDependencies = new ArrayList<String>();
-							for (Integer dependentFlowelementId : dependencies) {
+							for (String dependentFlowelementId : dependencies) {
 								Flowelement dependentFlowelement = flowelementUtil.findById(dependentFlowelementId);
 
 								String copyId = "";
@@ -262,7 +289,7 @@ public class JobManipulator {
 						
 					if(dependencies != null) {
 						uIdDependencies = new ArrayList<String>();
-						for (Integer dependentFlowelementId : dependencies) {
+						for (String dependentFlowelementId : dependencies) {
 							Flowelement dependentFlowelement = flowelementUtil.findById(dependentFlowelementId);
 
 							String copyId = "";

@@ -48,7 +48,7 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	
 	List<Job> findAllByRequestId(int requestId);
 	
-	Job findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(int requestId, Integer inputArtifactId,  int flowelementId, String groupVolumeId);
+	Job findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(int requestId, Integer inputArtifactId,  String flowelementId, String groupVolumeId);
 	
 	List<Job> findAllByRequestIdAndInputArtifactId(int requestId, Integer inputArtifactId);
 	
@@ -56,4 +56,6 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	List<Job> findAllByCompletedAtBetweenAndStoragetaskActionIdAndGroupVolumeCopyId(LocalDateTime startDateTime, LocalDateTime endDataTime, Action action, Integer copyNumber);
 	
 	Job findByFlowelementIdAndStatus(int id, Status status); // RequestId could be different if we are rerunning...
+	
+	Job findByRequestIdAndFlowelementId(int requestId, String flowelementId);
 }

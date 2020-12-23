@@ -3,6 +3,10 @@ package org.ishafoundation.dwaraapi.process.request;
 public class Artifactclass {
 	
 	private String id;
+
+	private Boolean source;
+	
+	private String pathPrefix;
 	
 	private String domain;
 	
@@ -16,6 +20,22 @@ public class Artifactclass {
 		this.id = id;
 	}
 
+	public Boolean getSource() {
+		return source;
+	}
+
+	public void setSource(Boolean source) {
+		this.source = source;
+	}
+
+	public String getPathPrefix() {
+		return pathPrefix;
+	}
+
+	public void setPathPrefix(String pathPrefix) {
+		this.pathPrefix = pathPrefix;
+	}
+	
 	public String getDomain() {
 		return domain;
 	}
@@ -30,5 +50,15 @@ public class Artifactclass {
 
 	public void setCategory(String category) {
 		this.category = category;
+	}
+	
+	public String getPath() {
+		String pathWithOutLibrary = null;
+		if(getSource())
+			pathWithOutLibrary = getPathPrefix();
+		else
+			pathWithOutLibrary = getPathPrefix() + java.io.File.separator + getCategory();//getId();//
+
+		return pathWithOutLibrary;
 	}
 }

@@ -16,6 +16,7 @@ import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
@@ -129,7 +130,7 @@ public class FileService extends DwaraService{
 			systemrequestDetails.setOutputFolder(outputFolder);
 			systemrequestDetails.setDestinationPath(destinationPath);
 			systemrequestDetails.setDomainId(domainUtil.getDomainId(fileId_Domain_Map.get(nthFileId)));
-			systemrequestDetails.setFlow(flow);
+			systemrequestDetails.setFlowId(flow);
 			systemRequest.setDetails(systemrequestDetails);
 			systemRequest = requestDao.save(systemRequest);
 			logger.info(DwaraConstants.SYSTEM_REQUEST + systemRequest.getId());
@@ -304,6 +305,19 @@ public class FileService extends DwaraService{
     		JsonNode jsonNode = mapper.valueToTree(errorFileList);
     		throw new DwaraException("Validation failed for file(s) to be restored ...", jsonNode);
     	}
+    }
+    
+    public void deleteFile(int fileId){
+    	Domain[] domains = Domain.values();
+		for (Domain nthDomain : domains) {
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(nthDomain, fileId);
+			if(fileFromDB != null) {
+				fileFromDB.setDeleted(true);
+		    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(nthDomain);
+		    	domainSpecificFileRepository.save(fileFromDB);
+				break;
+			}
+		}
     }
 }
 

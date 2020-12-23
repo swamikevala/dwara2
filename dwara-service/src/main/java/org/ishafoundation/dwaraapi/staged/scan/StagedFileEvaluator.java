@@ -143,7 +143,7 @@ public class StagedFileEvaluator {
 			Error error = new Error();
 			error.setType(Errortype.Warning);
 			error.setMessage("Unsupported file extensions. Please review - " + unSupportedExtns);
-			errorList.add(error);
+			// commented as per DU-261 errorList.add(error);
 		}
 
 		if(sfv != null) {

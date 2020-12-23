@@ -26,25 +26,25 @@
 			<artifactId>dwara-core</artifactId>
 			<version>${dwara-core.version}</version>
 		</dependency>
-		<dependency>
+		<!--<dependency>
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-core-mocks</artifactId>
 			<version>2.0</version>
-			<!-- <scope>test</scope> -->
 			<scope>test</scope>
-		</dependency>
+		</dependency>-->
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-tape</artifactId>
 			<version>2.0</version>
 		</dependency>
+		<!--
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-tape-mocks</artifactId>
 			<version>2.0</version>
-			<!-- <scope>test</scope> -->
 			<scope>test</scope>
 		</dependency>
+		-->
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-videopub</artifactId>
@@ -149,7 +149,6 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.12.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.json</groupId>

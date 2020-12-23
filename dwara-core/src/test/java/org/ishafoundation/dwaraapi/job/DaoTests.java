@@ -41,13 +41,13 @@ public class DaoTests{
 	
 	@Test
 	public void testFlowelementDao() {
-		Flowelement flowelement = flowelementDao.findById(3).get();
-		
-		List<Integer> dependencies = new ArrayList<Integer>();
-		dependencies.add(1);
-		dependencies.add(2);
-		flowelement.setDependencies(dependencies);
-		flowelementDao.save(flowelement);
+//		Flowelement flowelement = flowelementDao.findById(3).get();
+//		
+//		List<Integer> dependencies = new ArrayList<Integer>();
+//		dependencies.add(1);
+//		dependencies.add(2);
+//		flowelement.setDependencies(dependencies);
+//		flowelementDao.save(flowelement);
 	}
 
 	public void testRequestCustomDao() {

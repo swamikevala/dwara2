@@ -12,21 +12,24 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
+import org.ishafoundation.dwaraapi.service.common.ArtifactDeleter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,10 +50,13 @@ public class RequestService extends DwaraService{
 	private DomainUtil domainUtil;
 
 	@Autowired
-	private VolumeService volumeService;
-
+	private ConfigurationTablesUtil configurationTablesUtil;
+	
 	@Autowired
-	private JobService jobService;
+	private VolumeService volumeService;
+	
+	@Autowired
+	private ArtifactDeleter artifactDeleter; 
 	
 	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
@@ -65,15 +71,41 @@ public class RequestService extends DwaraService{
 		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, fromDate, toDate, pageNumber, pageSize);
 		for (Request request : requestList) {
 			RequestResponse requestResponse = frameRequestResponse(request, requestType);
-			List<JobResponse> jobList = jobService.getPlaceholderJobs(request.getId());
-			requestResponse.setJobList(jobList);
+//			List<JobResponse> jobList = jobService.getPlaceholderJobs(request.getId());
+//			requestResponse.setJobList(jobList);
 			requestResponseList.add(requestResponse);
 		}
 		return requestResponseList;
 	}
 	
-	
-	public RequestResponse cancelRequest(int requestId) throws Exception{
+//	public RequestResponse deleteRequest(int requestId) throws Exception{
+//		logger.info("Deleting request " + requestId);
+//		Request userRequest = null;
+//		try {
+//			userRequest = artifactService.cancelRequest(requestId);
+//			
+//			return frameRequestResponse(userRequest, RequestType.user);
+//		}
+//		catch (Exception e) {
+//			if(userRequest != null && userRequest.getId() != 0) {
+//				userRequest.setStatus(Status.failed);
+//				userRequest = requestDao.save(userRequest);
+//			}
+//			throw e;
+//		}
+//	}
+    
+    public RequestResponse cancelRequest(int requestId) throws Exception{
+    	Request requestToBeCancelled = requestDao.findById(requestId).get();
+    	if(requestToBeCancelled.getActionId() == Action.ingest) { // TODO should this behaviour be same for digi and video-pub or should we not move video-pub to cancelled dir...
+    		return cancelAndCleanupRequest(requestToBeCancelled);
+    	} else {
+    		return cancelRequestOnlyIfAllJobsQueued(requestToBeCancelled);
+    	}
+    }
+
+	private RequestResponse cancelRequestOnlyIfAllJobsQueued(Request requestToBeCancelled) throws Exception{
+		int requestId = requestToBeCancelled.getId();
 		logger.info("Cancelling request " + requestId);
 		Request userRequest = null;
 		try {
@@ -94,39 +126,14 @@ public class RequestService extends DwaraService{
 			
 			jobDao.saveAll(jobList);
 			
-			Request requestToBeCancelled = requestDao.findById(requestId).get();
 			requestToBeCancelled.setStatus(Status.cancelled);
 			requestDao.save(requestToBeCancelled);
-			
-			if(requestToBeCancelled.getActionId() == Action.ingest) {
-				
-				Domain domain = domainUtil.getDomain(requestToBeCancelled);
-				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-				Artifact artifact = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(requestToBeCancelled.getId()); 
-	
-				String destRootLocation = requestToBeCancelled.getDetails().getStagedFilepath();
-				if(destRootLocation != null) {
-					try {
-						java.io.File srcFile = FileUtils.getFile(artifact.getArtifactclass().getPathPrefix(), artifact.getName());
-						java.io.File destFile = FileUtils.getFile(destRootLocation, Status.cancelled.name(), artifact.getName());
-	
-						if(srcFile.isFile())
-							Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destFile.getAbsolutePath())));		
-						else
-							Files.createDirectories(destFile.toPath());
-		
-						Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
-					}
-					catch (Exception e) {
-						logger.error("Unable to move file "  + e.getMessage());
-					}
-				}
-			}
 			
 			userRequest.setStatus(Status.completed);
 			userRequest = requestDao.save(userRequest);
 			
-			return frameRequestResponse(requestToBeCancelled, RequestType.system);
+	        return frameRequestResponse(userRequest, RequestType.user);
+			//return frameRequestResponse(requestToBeCancelled, RequestType.system);
 		}
 		catch (Exception e) {
 			if(userRequest != null && userRequest.getId() != 0) {
@@ -136,40 +143,40 @@ public class RequestService extends DwaraService{
 			throw e;
 		}
 	}
-
-	public RequestResponse releaseRequest(int requestId) throws Exception{
-		logger.info("Releasing request " + requestId);
+    
+    private RequestResponse cancelAndCleanupRequest(Request requestToBeCancelled) throws Exception{
 		Request userRequest = null;
 		try {
-			boolean anyReleased = false;
-			List<Job> jobList = jobDao.findAllByRequestId(requestId);
-			for (Job job : jobList) {
-				if(job.getStatus() == Status.on_hold) {
-					job.setStatus(Status.queued);
-					anyReleased = true;
-				}
-			}
-
-			if(!anyReleased)
-				throw new DwaraException(requestId + " has no jobs in on_hold status to be released");
-
+	    	String artifactclassId = requestToBeCancelled.getDetails().getArtifactclassId();
+	    	artifactDeleter.validateArtifactclass(artifactclassId);
+	    	
+	    	artifactDeleter.validateRequest(requestToBeCancelled);
+	    	
+	    	artifactDeleter.validateJobsAndUpdateStatus(requestToBeCancelled);
+	    	
+			// Step 1 - Create User Request
 			HashMap<String, Object> data = new HashMap<String, Object>();
-	    	data.put("requestId", requestId);
-			userRequest = createUserRequest(Action.release, Status.in_progress, data);
-	    	int userRequestId = userRequest.getId();
-	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
-	
+	    	data.put("requestId", requestToBeCancelled.getId());
+	    	userRequest = createUserRequest(Action.cancel, Status.in_progress, data);
+	    	
 			
-			jobDao.saveAll(jobList);
+			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 			
-			Request requestToBeReleased = requestDao.findById(requestId).get();
-			requestToBeReleased.setStatus(Status.queued);
-			requestDao.save(requestToBeReleased);
+			Domain domain = artifactclass.getDomain();
+			ArtifactRepository artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 			
-			userRequest.setStatus(Status.completed);
-			userRequest = requestDao.save(userRequest);
+			artifactDeleter.cleanUp(requestToBeCancelled, domain, artifactRepository);
+
+			requestToBeCancelled.setStatus(Status.cancelled);
+	    	requestDao.save(requestToBeCancelled);
+	    	logger.info(requestToBeCancelled.getId() + " - Cancelled");
 			
-			return frameRequestResponse(requestToBeReleased, RequestType.system);
+	    	userRequest.setStatus(Status.completed);
+	        requestDao.save(userRequest);
+	        logger.info(userRequest.getId() + " - Completed");
+	        
+	        return frameRequestResponse(userRequest, RequestType.user);
+	        //return frameRequestResponse(requestToBeCancelled, RequestType.system);
 		}
 		catch (Exception e) {
 			if(userRequest != null && userRequest.getId() != 0) {
@@ -178,6 +185,94 @@ public class RequestService extends DwaraService{
 			}
 			throw e;
 		}
+    }
+    
+
+
+	public RequestResponse releaseRequest(List<Integer> requestIdList)  throws Exception {
+		Request userRequest = null;
+		try {
+			for (Integer requestId : requestIdList) {
+				validateReleaseRequest(requestId);
+			}
+			
+			HashMap<String, Object> data = new HashMap<String, Object>();
+	    	data.put("requestIds", requestIdList);
+			userRequest = createUserRequest(Action.release, Status.in_progress, data);
+	    	int userRequestId = userRequest.getId();
+	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
+
+	    	for (Integer requestId : requestIdList) {
+	    		releaseJobsAndSystemRequest(requestId);
+			}
+	    	
+			userRequest.setStatus(Status.completed);
+			userRequest = requestDao.save(userRequest);
+
+	    	return frameRequestResponse(userRequest, RequestType.user);	
+		}catch (Exception e) {
+			if(userRequest != null && userRequest.getId() != 0) {
+				userRequest.setStatus(Status.failed);
+				userRequest = requestDao.save(userRequest);
+			}
+			throw e;
+		}
+		
+	}
+	
+	public RequestResponse releaseRequest(int requestId) throws Exception{
+		logger.info("Releasing request " + requestId);
+		Request userRequest = null;
+		try {
+			validateReleaseRequest(requestId);
+
+			HashMap<String, Object> data = new HashMap<String, Object>();
+	    	data.put("requestId", requestId);
+			userRequest = createUserRequest(Action.release, Status.in_progress, data);
+	    	int userRequestId = userRequest.getId();
+	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
+	
+	    	releaseJobsAndSystemRequest(requestId);
+	    	
+			userRequest.setStatus(Status.completed);
+			userRequest = requestDao.save(userRequest);
+			
+			return frameRequestResponse(userRequest, RequestType.user);
+		}
+		catch (Exception e) {
+			if(userRequest != null && userRequest.getId() != 0) {
+				userRequest.setStatus(Status.failed);
+				userRequest = requestDao.save(userRequest);
+			}
+			throw e;
+		}
+	}
+	
+	private void validateReleaseRequest(int requestId){
+		boolean anyToBeReleased = false;
+		List<Job> jobList = jobDao.findAllByRequestId(requestId);
+		for (Job job : jobList) {
+			if(job.getStatus() == Status.on_hold) {
+				anyToBeReleased = true;
+			}
+		}
+
+		if(!anyToBeReleased)
+			throw new DwaraException(requestId + " has no jobs in on_hold status to be released");
+	}
+	
+	private void releaseJobsAndSystemRequest(int requestId){
+		List<Job> jobList = jobDao.findAllByRequestId(requestId);
+		for (Job job : jobList) {
+			if(job.getStatus() == Status.on_hold) {
+				job.setStatus(Status.queued);
+			}
+		}
+		jobDao.saveAll(jobList);
+		
+		Request requestToBeReleased = requestDao.findById(requestId).get();
+		requestToBeReleased.setStatus(Status.queued);
+		requestDao.save(requestToBeReleased);
 	}
 	
 	private RequestResponse frameRequestResponse(Request request, RequestType requestType){
@@ -203,6 +298,9 @@ public class RequestService extends DwaraService{
 				Artifact systemArtifact = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(requestId); 
 				if(systemArtifact != null) {
 					org.ishafoundation.dwaraapi.api.resp.request.Artifact artifactForResponse = new org.ishafoundation.dwaraapi.api.resp.request.Artifact();
+					artifactForResponse.setId(systemArtifact.getId());
+					artifactForResponse.setName(systemArtifact.getName());
+					artifactForResponse.setDeleted(systemArtifact.isDeleted());
 					artifactForResponse.setArtifactclass(systemArtifact.getArtifactclass().getId());
 					artifactForResponse.setPrevSequenceCode(systemArtifact.getPrevSequenceCode());
 					artifactForResponse.setRerunNo(request.getDetails().getRerunNo());
@@ -213,7 +311,7 @@ public class RequestService extends DwaraService{
 					requestResponse.setArtifact(artifactForResponse);
 				}
 			} 
-			else if(requestAction == Action.restore) {
+			else if(requestAction == Action.restore || (requestAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId()))) {
 				Domain domain = domainUtil.getDomain(request);
 				if(domain == null)
 					domain = domainUtil.getDefaultDomain();
@@ -241,5 +339,6 @@ public class RequestService extends DwaraService{
 		}
 		return requestResponse;
 	}
+
 }
 

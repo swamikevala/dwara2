@@ -230,7 +230,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, false, 0, targetLocationPath, noOfTapeBlocksToBeRead);
 
 		HashMap<String, byte[]> filePathNameToChecksumObj = selectedStorageJob.getFilePathNameToChecksum();
-		TapeStreamerResponse tsr = stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, false, targetLocationPath, true, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
+		TapeStreamerResponse tsr = stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, true, false, targetLocationPath, true, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
 		if(tsr.isSuccess())
 			logger.info("Verification success");
 		else
@@ -285,7 +285,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 				if(configuration.checksumTypeSupportsStreamingVerification()) // if stream verify supported by checksumtype, then set the streamverify = true
 					streamVerify = true;
 			}
-			TapeStreamerResponse tsr = stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, true, targetLocationPath, streamVerify, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
+			TapeStreamerResponse tsr = stream(deviceName, commandList, volumeBlocksize, skipByteCount, filePathNameToBeRestored, file.isDirectory(), true, targetLocationPath, streamVerify, storageJob.getVolume().getChecksumtype(), filePathNameToChecksumObj);
 			if(storageJob.isRestoreVerify()) {
 				boolean success = true;
 				if(streamVerify) { // TO be verified using standard approach but not the on the fly streaming and verifying
@@ -473,25 +473,25 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 	}
 
 	protected TapeStreamerResponse stream(String dataTransferElementName, List<String> commandList, int volumeBlocksize, int skipByteCount,
-			String filePathNameWeNeed, boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
+			String filePathNameWeNeed, boolean isFilePathNameWeNeedIsDirectory, boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
 			HashMap<String, byte[]> filePathNameToChecksumObj) throws Exception {
-		return streamWithRetriesOnDeviceBusyError(dataTransferElementName, commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj, DwaraConstants.DRIVE_BUSY_ERROR, 0);
+		return streamWithRetriesOnDeviceBusyError(dataTransferElementName, commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, isFilePathNameWeNeedIsDirectory, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj, DwaraConstants.DRIVE_BUSY_ERROR, 0);
 	}
 	
 	private TapeStreamerResponse streamWithRetriesOnDeviceBusyError(String dataTransferElementName, List<String> commandList, int volumeBlocksize, int skipByteCount,
-				String filePathNameWeNeed, boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
+				String filePathNameWeNeed, boolean isFilePathNameWeNeedIsDirectory, boolean toBeRestored, String destinationPath, boolean toBeVerified, Checksumtype checksumtype,
 				HashMap<String, byte[]> filePathNameToChecksumObj, String errorMsg, int nthRetryAttempt) throws Exception {
 	
 		TapeStreamerResponse tsr = null;
 		try {
-			tsr = TapeStreamer.stream(commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj);
+			tsr = TapeStreamer.stream(commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, isFilePathNameWeNeedIsDirectory, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj);
 		} catch (Exception e) {
 			String errorMessage = e.getMessage();
 			logger.error("Tar streaming failed " + e.getMessage());
 			
 			if(errorMessage.contains(errorMsg) && nthRetryAttempt <= 2){
 				logger.debug("Must be a parallel mt status call... Retrying again");
-				tsr = streamWithRetriesOnDeviceBusyError(dataTransferElementName, commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj, errorMsg, nthRetryAttempt);
+				tsr = streamWithRetriesOnDeviceBusyError(dataTransferElementName, commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, isFilePathNameWeNeedIsDirectory, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj, errorMsg, nthRetryAttempt);
 			}
 			else
 				throw e;
