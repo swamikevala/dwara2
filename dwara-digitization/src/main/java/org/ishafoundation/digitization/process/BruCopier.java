@@ -38,7 +38,7 @@ public class BruCopier implements IProcessingTask {
         .source(logicalFile.getAbsolutePath())
         .destination(destinationDirPath)
         .recursive(true)
-        .checksum(true);
+        .checksum(false);
 
         CollectingProcessOutput output = rsync.execute();
         logger.info(output.getStdOut());
@@ -49,7 +49,7 @@ public class BruCopier implements IProcessingTask {
         }
         else {
             //verify checksum
-            rsync.dryRun(true);
+            /* rsync.dryRun(true);
             ProcessBuilder builder = rsync.builder();
             builder.redirectErrorStream(true);
             Process process = builder.start();
@@ -74,7 +74,7 @@ public class BruCopier implements IProcessingTask {
             }
             else {
                 processingtaskResponse.setIsComplete(false);
-            }
+            } */
         }
 		return processingtaskResponse;
 	}
