@@ -105,7 +105,7 @@ public class TapeDeviceUtil {
 //					continue;
 //				}
 				String tapedriveDeviceStoragesubtype = tapedriveDevice.getDetails().getType();
-				if(tapedriveDevice.getDetails().getAutoloaderId().equals(tapelibraryId)) { // equivalent of calling the query devicetype=drive and details.autoloader_id=X, query NOT easy with json
+				if(tapelibraryId.equals(tapedriveDevice.getDetails().getAutoloaderId())) { // equivalent of calling the query devicetype=drive and details.autoloader_id=X, query NOT easy with json
 					logger.trace("Getting details for - " + tapedriveDeviceId);
 					DriveDetails driveDetails = null;
 					try {

@@ -1,3 +1,5 @@
+SET foreign_key_checks = 0; 
+
 -- preprod env alterations
 truncate artifact1;
 truncate artifact1_volume;
@@ -38,3 +40,5 @@ update sequence set prefix = replace(prefix, 'X', 'W') where type="volume";
 update destination set path = replace(path, '/dwara/', '/dwara-preprod/'); 
 update destination set path = '/mnt/san/test' where id = 'san-video';
 delete from destination where id = 'san-video1';
+
+SET foreign_key_checks = 1; 

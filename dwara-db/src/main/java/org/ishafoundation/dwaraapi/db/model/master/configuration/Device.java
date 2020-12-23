@@ -32,7 +32,7 @@ public class Device{// implements Cacheable{
 	@Column(name="type")
 	private Devicetype type;
 	
-	@Column(name="wwn_id", unique = true)
+	@Column(name="wwn_id")
 	private String wwnId;
 	
 	@Enumerated(EnumType.STRING)
@@ -53,6 +53,12 @@ public class Device{// implements Cacheable{
 		
 	@Column(name="model")
 	private String model;
+	
+	@Column(name="employed_date")
+	private LocalDateTime employedDate;
+	
+	@Column(name="retired_date")
+	private LocalDateTime retiredDate ;
 	
 	@Type(type = "json")
 	@Column(name="details", columnDefinition = "json")
@@ -113,6 +119,22 @@ public class Device{// implements Cacheable{
 
 	public void setWarrantyExpiryDate(LocalDateTime warrantyExpiryDate) {
 		this.warrantyExpiryDate = warrantyExpiryDate;
+	}
+
+	public LocalDateTime getEmployedDate() {
+		return employedDate;
+	}
+
+	public void setEmployedDate(LocalDateTime employedDate) {
+		this.employedDate = employedDate;
+	}
+
+	public LocalDateTime getRetiredDate() {
+		return retiredDate;
+	}
+
+	public void setRetiredDate(LocalDateTime retiredDate) {
+		this.retiredDate = retiredDate;
 	}
 
 	public String getManufacturer() {

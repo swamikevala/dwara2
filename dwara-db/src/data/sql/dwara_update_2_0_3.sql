@@ -230,4 +230,7 @@ INSERT INTO volume (id,capacity,checksumtype,details,finalized,imported,storagel
 INSERT INTO volume (id,capacity,checksumtype,details,finalized,imported,storagelevel,storagesubtype,storagetype,`type`,archiveformat_id,copy_id,location_id,suspect,defective,group_ref_id,sequence_id,initialized_at) VALUES ('R398',null,'sha256','{"blocksize": 262144}',0,0,'block',null,'tape','group','tar',3,null,0,0,null,'video-digi-2020-3',null);
 
 
+update device set status='offline', wwn_id=null, details='{"type": "LTO-7", "standalone": false, "autoloader_id": "xl80"}' where id='lto7-2';
+insert into device (id, defective, details, manufacturer, model, serial_number, status, type, warranty_expiry_date, wwn_id) values ('lto7-5', 0, '{"type": "LTO-7", "standalone": false, "autoloader_id": "xl80", "autoloader_address":2}', 'IBM', 'Ultrium HH7', 'YX10WT093970', 'online', 'tape_drive', '2023-07-12', '/dev/tape/by-id/scsi-35000e111c5aa70c9-nst');
+
 SET foreign_key_checks = 1; 

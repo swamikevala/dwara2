@@ -100,7 +100,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 			job.setMessage("[error] " + errorMsg);
 			updateJobFailed(job);
 			
-			if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.verify) { // Any write or verify failure should have the tape marked as suspect...
+			if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.restore) { // Any write or verify failure should have the tape marked as suspect...
 				long jobAlreadyRequeuedCount = jobRunDao.countByJobId(job.getId());
 				if(jobAlreadyRequeuedCount < configuration.getAllowedAutoRequeueAttemptsOnFailedStorageJobs()) {
 					try {
@@ -111,10 +111,12 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 					}
 				}
 				else {
-					Volume volume = selectedStorageJob.getStorageJob().getVolume();
-					volume.setSuspect(true);
-					volumeDao.save(volume);
-					logger.info("Marked the volume " + volume.getId() + " as suspect");
+					if(job.getStoragetaskActionId() == Action.write) { // TODO: Should we Mark a tape suspect on restore failures too or only for write?
+						Volume volume = selectedStorageJob.getStorageJob().getVolume();
+						volume.setSuspect(true);
+						volumeDao.save(volume);
+						logger.info("Marked the volume " + volume.getId() + " as suspect");
+					}
 				}	
 			}
 			// updateError Table;
