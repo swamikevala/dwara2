@@ -3,6 +3,7 @@ package org.ishafoundation.dwara.misc.watcher;
 
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 import java.io.File;
@@ -24,10 +25,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.utils.HttpClientUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -36,6 +41,7 @@ import org.ishafoundation.dwaraapi.utils.HttpClientUtil;
 
 public class DirectoryWatcherForMovedFiles {
 
+	private static Logger logger = LoggerFactory.getLogger(DirectoryWatcherForCopiedFiles.class);
 	private final WatchService watchService;
 	private final Path watchedDir;
 	private final Map<WatchKey,Path> keys;
@@ -43,6 +49,7 @@ public class DirectoryWatcherForMovedFiles {
 	private final Map<Path, Long> expirationTimes = new HashMap<Path, Long>();
 	private Long newFileWait = 10000L;
 	private static String ingestEndpointUrl = null;
+	private static Executor executor = null;
 	
 	@SuppressWarnings("unchecked")
 	static <T> WatchEvent<T> cast(WatchEvent<?> event) {
@@ -58,12 +65,11 @@ public class DirectoryWatcherForMovedFiles {
 		this.newFileWait = waitTime;
 		this.keys = new HashMap<WatchKey,Path>();
 
-		System.out.format("Scannnning %s ...\n", dir);
+		System.out.format("Scanning %s ...\n", dir);
 		registerAll(dir);
 		System.out.println("Done.");
-
 		// enable trace after initial registration
-		this.trace = true;
+		this.trace = false;
 	}
 
 	/**
@@ -149,6 +155,7 @@ public class DirectoryWatcherForMovedFiles {
 							Path artifactPath = getArtifactPath(child);
 							if (trace)
 								System.out.println("artifactPath " + artifactPath);
+							
 							// Update modified time
 							BasicFileAttributes attrs = null;
 							try {
@@ -162,6 +169,9 @@ public class DirectoryWatcherForMovedFiles {
 							if (trace)
 								System.out.println("lastModified " + lastModified);
 							expirationTimes.put(artifactPath, lastModified.toMillis()+newFileWait);
+						}
+						else if (kind == ENTRY_MODIFY) {
+							System.out.println("No modification expected as its a move, check out this" + child);
 						}
 					}
 
@@ -201,11 +211,26 @@ public class DirectoryWatcherForMovedFiles {
 	}
 
 	private Path getArtifactPath(Path child){
-		String filePathMinusWatchDirPrefix = child.toString().replace(watchedDir.toString() + File.separator, "");
-		String artifactName = StringUtils.substringBefore(filePathMinusWatchDirPrefix, File.separator);
-		if (trace)
-			System.out.println("artifactName " + artifactName);
-		return Paths.get(watchedDir.toString(), artifactName); 
+		// child path will be something like /data/dwara/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1/...
+		return Paths.get(File.separator, child.subpath(0, 6).toString());
+
+//		child.
+//		child.subpath(beginIndex, endIndex)
+//		String artifactName = child.getName(6).toString();
+//		Strin
+//    	String path = child.getParent().toString();
+//    	
+//    	String artifactclass = child.getName(5).toString();
+//
+//    	child.get
+//		child.
+//		ENTRY_CREATE
+		
+//		String filePathMinusWatchDirPrefix = child.toString().replace(watchedDir.toString() + File.separator, "");
+//		String artifactName = StringUtils.substringBefore(filePathMinusWatchDirPrefix, File.separator);
+//		if (trace)
+//			System.out.println("artifactName " + artifactName);
+//		return Paths.get(watchedDir.toString(), artifactName); 
 	}
 
 	private void handleExpiredWaitTimes(Long currentTime) {
@@ -218,7 +243,9 @@ public class DirectoryWatcherForMovedFiles {
 			Long expiryTime = (Long) item.getValue();
 			if(expiryTime <= currentTime) {
 				try {
-					invokeIngest(item.getKey());
+			    	InvokeTask invokeTask = new InvokeTask();//applicationContext.getBean(TapeTask.class); 
+					invokeTask.setPath(item.getKey());
+					executor.execute(invokeTask);
 				}
 				catch (Exception e) {
 					System.err.println("Ingest failed for " + item.getKey());
@@ -232,30 +259,43 @@ public class DirectoryWatcherForMovedFiles {
 		}
 	}
     
-    private void invokeIngest(Path child) throws Exception {
-
-    	if(child.getNameCount() > 6) { // Expecting child = /data/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1
-    		throw new Exception("File Path with more than 6 elements is not supported. Expected something like /data/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1 but actual is " + child);
-    	}
-    	String path = child.getParent().toString();
-    	String artifactName = child.getFileName().toString();
-    	String artifactclass = child.getName(child.getNameCount() - 2).toString();
-
-    	
-    	String payload = "{\"artifactclass\":\"<<Artifactclass>>\",\"stagedFiles\":[{\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\"}]}";
-    	payload = payload.replace("<<Artifactclass>>", artifactclass);
-    	payload = payload.replace("<<Path>>", path);
-    	payload = payload.replace("<<ArtifactName>>", artifactName);
-    	System.out.println("payload "+ payload);
-
-		String response = null;
-		try {
-			response = HttpClientUtil.postIt(ingestEndpointUrl, null, payload);
-			System.out.println("resp " + response);
-		}catch (Exception e) {
-			System.out.println("Error on invoking ingest endpoint - " + e.getMessage());
+	
+    
+	public class InvokeTask implements Runnable{
+		
+		private Path path;
+		
+		public void setPath(Path path) {
+			this.path = path;
 		}
-    }
+
+		@Override
+		public void run() {
+	    	if(path.getNameCount() > 7) { // Expecting path = /data/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1
+	    		System.err.println("File Path with more than 7 elements is not supported. Expected something like /data/dwara/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1 but actual is " + path);
+	    	}
+	    	else {
+		    	String artifactBasePath = path.getParent().toString();
+		    	String artifactName = path.getFileName().toString();
+		    	String artifactclass = path.getName(path.getNameCount() - 2).toString();
+	
+		    	
+		    	String payload = "{\"artifactclass\":\"<<Artifactclass>>\",\"stagedFiles\":[{\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\"}]}";
+		    	payload = payload.replace("<<Artifactclass>>", artifactclass);
+		    	payload = payload.replace("<<Path>>", artifactBasePath);
+		    	payload = payload.replace("<<ArtifactName>>", artifactName);
+		    	logger.debug("payload "+ payload);
+	
+				String response = null;
+				try {
+					response = HttpClientUtil.postIt(ingestEndpointUrl, null, payload);
+					logger.debug("resp " + response);
+				}catch (Exception e) {
+					logger.error("Error on invoking ingest endpoint - " + e.getMessage());
+				}
+	    	}			
+		}
+	}
     
 	static void usage() {
 		System.err.println("usage: java DirectoryWatcher [waitTimeInSecs] <dirToBeWatched(\"/data/user/pgurumurthy/ingest\")> <ingestEndpointUrl(\"http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest\")>");
@@ -279,6 +319,9 @@ public class DirectoryWatcherForMovedFiles {
 		
 		ingestEndpointUrl = args[dirArg + 1]; // "http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest";
 
+		int noOfThreads = 1;
+		executor = new ThreadPoolExecutor(noOfThreads, noOfThreads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+		
 		new DirectoryWatcherForMovedFiles(dir, waitTimes).processEvents();
 	}
 }

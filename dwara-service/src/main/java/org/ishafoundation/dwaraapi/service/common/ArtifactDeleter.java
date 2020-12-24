@@ -94,8 +94,8 @@ public class ArtifactDeleter {
 		jobDao.saveAll(jobList);
 	}
     
-	public void cleanUp(Request request, Domain domain, ArtifactRepository artifactRepository) throws Exception{	
-		int requestId = request.getId();
+	public void cleanUp(Request userRequest, Request requestToBeActioned, Domain domain, ArtifactRepository artifactRepository) throws Exception{	
+		int requestId = requestToBeActioned.getId();
 		HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>> artifactId_ArtifactFileList = new HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>>();
 		HashMap<Integer, Artifact> artifactId_Artifact = new HashMap<Integer, Artifact>();
 		
@@ -120,7 +120,7 @@ public class ArtifactDeleter {
 			logger.info("Files flagged Deleted");
 			
 	    	// Step 5 - Flag the artifact as softdeleted
-			nthArtifact.setqLatestRequest(request);
+			nthArtifact.setqLatestRequest(userRequest);
 			nthArtifact.setDeleted(true);
 	    	artifactRepository.save(nthArtifact);
 	    	logger.info("Artifact flagged Deleted");
@@ -147,7 +147,7 @@ public class ArtifactDeleter {
 	    		}
 	    	}
     		else {
-				String destRootLocation = request.getDetails().getStagedFilepath();
+				String destRootLocation = requestToBeActioned.getDetails().getStagedFilepath();
 				if(destRootLocation != null) {
 					try {
 						java.io.File srcFile = FileUtils.getFile(nthArtifact.getArtifactclass().getPath(), nthArtifact.getName());

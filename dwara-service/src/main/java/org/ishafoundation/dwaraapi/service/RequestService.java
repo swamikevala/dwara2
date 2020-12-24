@@ -165,12 +165,13 @@ public class RequestService extends DwaraService{
 			Domain domain = artifactclass.getDomain();
 			ArtifactRepository artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 			
-			artifactDeleter.cleanUp(requestToBeCancelled, domain, artifactRepository);
+			artifactDeleter.cleanUp(userRequest, requestToBeCancelled, domain, artifactRepository);
 
 			requestToBeCancelled.setStatus(Status.cancelled);
 	    	requestDao.save(requestToBeCancelled);
 	    	logger.info(requestToBeCancelled.getId() + " - Cancelled");
 			
+	    	userRequest.setRequestRef(requestToBeCancelled);
 	    	userRequest.setStatus(Status.completed);
 	        requestDao.save(userRequest);
 	        logger.info(userRequest.getId() + " - Completed");

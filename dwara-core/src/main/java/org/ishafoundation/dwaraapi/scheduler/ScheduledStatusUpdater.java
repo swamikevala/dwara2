@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -31,6 +32,7 @@ import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
+import org.ishafoundation.dwaraapi.staged.StagedFileOperations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +71,9 @@ public class ScheduledStatusUpdater {
 	
 	@Autowired
 	private ApplicationContext applicationContext;
+	
+	@Autowired
+    private StagedFileOperations stagedFileOperations;
 	
 	@Value("${scheduler.statusUpdater.enabled:true}")
 	private boolean isEnabled;
@@ -158,14 +163,24 @@ public class ScheduledStatusUpdater {
 						logger.info("tFileJob cleaned up files of Job " + job.getId());
 
 						jobCreator.createDependentJobs(job);
-						
+
+						Request request = job.getRequest();
+						RequestDetails requestDetails = request.getDetails();
+						org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
+
+						if(requestedAction == Action.ingest) {
+							Integer outputArtifactId = job.getOutputArtifactId();
+							if(outputArtifactId != null) {
+								org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact = domainUtil.getDomainSpecificArtifact(outputArtifactId);
+								String pathPrefix = artifact.getArtifactclass().getPath();
+								if(pathPrefix.contains("/staged/"))
+									stagedFileOperations.setPermissions(StringUtils.substringBefore(pathPrefix, "/staged/"), false, artifact.getName());
+							}
+						}
 						// if the processing job has a dependency on restore - then delete the restored file from the tmp directory
 						ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
 						String inputPath = processingJobManager.getInputPath(job);
 						if(inputPath != null) {
-							Request request = job.getRequest();
-							RequestDetails requestDetails = request.getDetails();
-							org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 							if(requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId())){
 								// what need to be restored
 								int fileIdRestored = requestDetails.getFileId();
@@ -205,7 +220,12 @@ public class ScheduledStatusUpdater {
 							else if(requestedAction == Action.ingest || requestedAction == Action.restore_process) {
 								// inputPath = something like - /data/tmp/job-1234
 								File restoreTmpFolder = new File(inputPath);
-								restoreTmpFolder.delete();
+								try {
+									FileUtils.deleteDirectory(restoreTmpFolder);
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
 							}
 						}
 					}

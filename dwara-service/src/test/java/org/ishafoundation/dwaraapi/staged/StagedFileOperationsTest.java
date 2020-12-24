@@ -15,7 +15,7 @@ public class StagedFileOperationsTest {
 	
 	@Test
 	public void updateStatus() {
-		stagedFileOperations.setPermissions("/data/user/pgurumurthy/ingest/video-pub", "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_91589095983567");
+		stagedFileOperations.setPermissions("/data/user/pgurumurthy/ingest/video-pub", true, "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_91589095983567");
 	}
 
 }

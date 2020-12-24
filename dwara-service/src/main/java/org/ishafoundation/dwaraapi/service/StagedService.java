@@ -155,7 +155,7 @@ public class StagedService extends DwaraService{
     		stagedRenameFileResponse.setNewName(newFileName);
   
         	try {
-        		Error error = stagedFileOperations.rename(sourcePath, oldFileName, newFileName);
+        		Error error = stagedFileOperations.rename(sourcePath, true, oldFileName, newFileName);
         		if(error != null)
         			throw new Exception(error.getMessage());
     			stagedRenameFileResponse.setStatus(Status.completed.name());
@@ -328,7 +328,7 @@ public class StagedService extends DwaraService{
 		    		
 					String artifactName = stagedFile.getName();
 					String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
-					Error error = stagedFileOperations.setPermissions(path, artifactName);
+					Error error = stagedFileOperations.setPermissions(path, true, artifactName);
 					if(error != null) {
 						isLevel2Pass = false;
 						StagedFileDetails sfd = null;

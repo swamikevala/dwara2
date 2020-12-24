@@ -36,26 +36,26 @@ public class StagedFileOperations {
 		staged_rename
 	}
 
-	public Error setPermissions(String sourcePath, String artifactName) {
+	public Error setPermissions(String sourcePath, boolean isUserDirectory, String artifactName) {
 		Error error = null;
 		if(configuration.isSetArtifactFileSystemPermissions()) {
-			error = callStagingOpsScript(StagingOpsAction.set_permissions, sourcePath, artifactName, null);
+			error = callStagingOpsScript(StagingOpsAction.set_permissions, sourcePath, isUserDirectory, artifactName, null);
 		}
 		return error;
 	}
 
-	public Error rename(String sourcePath, String artifactName, String newArtifactName) {
-		return callStagingOpsScript(StagingOpsAction.staged_rename, sourcePath, artifactName, newArtifactName);
+	public Error rename(String sourcePath, boolean isUserDirectory, String artifactName, String newArtifactName) {
+		return callStagingOpsScript(StagingOpsAction.staged_rename, sourcePath, isUserDirectory, artifactName, newArtifactName);
 	}
 	
-	private Error callStagingOpsScript(StagingOpsAction action, String sourcePath, String artifactName, String newArtifactName) { 			
+	private Error callStagingOpsScript(StagingOpsAction action, String sourcePath, boolean isUserDirectory, String artifactName, String newArtifactName) { 			
 		Error error = null;
 		String script = configuration.getStagingOpsScriptPath();
 		File toBeActionedFile = FileUtils.getFile(sourcePath, artifactName);
 		
 		CommandLineExecutionResponse commandLineExecutionResponse = null;
 		try {
-			commandLineExecutionResponse = callStagingOpsScript(script, action, sourcePath, artifactName, newArtifactName);
+			commandLineExecutionResponse = callStagingOpsScript(script, action, sourcePath, isUserDirectory, artifactName, newArtifactName);
 			
 			if(!commandLineExecutionResponse.isComplete()) {					
 				String message = "Unable to " + action.name() + " " + toBeActionedFile + ". " + commandLineExecutionResponse.getFailureReason() + ". Please contact Admin";
@@ -80,12 +80,7 @@ public class StagedFileOperations {
 	
 	
 	// Returns something like /opt/dwara/bin/setperms -b /data/user -u pgurumurthy -c pub-video -a Shots-Of-Sadhanapada-Particpants-Volunteering-In-BSP_SPH-IYC_24-Oct-2019_Z280V_9 -g dwara -d 0775 -f 0664 -r
-    private CommandLineExecutionResponse callStagingOpsScript(String script, StagingOpsAction action, String sourcePath, String artifactName, String newArtifactName) throws Exception {
-    	
-    	String suffixPath = sourcePath.replace(configuration.getReadyToIngestSrcDirRoot(), "");
-		String parts[] = suffixPath.split("/");
-		String user = parts[1];
-		String artifactclassName = parts[3];
+    private CommandLineExecutionResponse callStagingOpsScript(String script, StagingOpsAction action, String sourcePath, boolean isUserDirectory, String artifactName, String newArtifactName) throws Exception {
 
 		List<String> setFilePermissionsCommandParamsList = new ArrayList<String>();
 		setFilePermissionsCommandParamsList.add("sudo");
@@ -93,11 +88,22 @@ public class StagedFileOperations {
 		setFilePermissionsCommandParamsList.add("-t");
 		setFilePermissionsCommandParamsList.add(action.name());
 		setFilePermissionsCommandParamsList.add("-b");
-		setFilePermissionsCommandParamsList.add(StringUtils.substringBefore(sourcePath, user));
-		setFilePermissionsCommandParamsList.add("-u");
-		setFilePermissionsCommandParamsList.add(user);
-		setFilePermissionsCommandParamsList.add("-c");
-		setFilePermissionsCommandParamsList.add(artifactclassName);
+		setFilePermissionsCommandParamsList.add(isUserDirectory ? StringUtils.substringBefore(sourcePath, "/user/") : sourcePath);
+		String systemSubdirectory = "system";
+		if(isUserDirectory) {
+			systemSubdirectory = "user";
+	    	String suffixPath = sourcePath.replace(configuration.getReadyToIngestSrcDirRoot(), "");
+			String parts[] = suffixPath.split("/");
+			String user = parts[1];
+			String artifactclassName = parts[3];
+			
+			setFilePermissionsCommandParamsList.add("-u");
+			setFilePermissionsCommandParamsList.add(user);
+			setFilePermissionsCommandParamsList.add("-c");
+			setFilePermissionsCommandParamsList.add(artifactclassName);
+		}			
+		setFilePermissionsCommandParamsList.add("-s");
+		setFilePermissionsCommandParamsList.add(systemSubdirectory);
 		setFilePermissionsCommandParamsList.add("-a");
 		setFilePermissionsCommandParamsList.add(artifactName);
 		
