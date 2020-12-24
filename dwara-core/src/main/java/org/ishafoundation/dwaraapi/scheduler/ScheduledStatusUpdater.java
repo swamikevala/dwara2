@@ -173,8 +173,9 @@ public class ScheduledStatusUpdater {
 							if(outputArtifactId != null) {
 								org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact = domainUtil.getDomainSpecificArtifact(outputArtifactId);
 								String pathPrefix = artifact.getArtifactclass().getPath();
-								if(pathPrefix.contains("/staged"))
-									stagedFileOperations.setPermissions(StringUtils.substringBefore(pathPrefix, "/staged/"), false, artifact.getName());
+								String staged = "/staged";
+								if(pathPrefix.contains(staged))
+									stagedFileOperations.setPermissions(StringUtils.substringBefore(pathPrefix, staged), false, artifact.getName());
 							}
 						}
 						// if the processing job has a dependency on restore - then delete the restored file from the tmp directory
