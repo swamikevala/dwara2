@@ -221,9 +221,10 @@ public class StagedService extends DwaraService{
 	    	
 	    	List<StagedFile> stagedFileList = ingestUserRequest.getStagedFiles();
 	    	for (StagedFile stagedFile : stagedFileList) {
-				String artifactName = stagedFile.getName();
-				if(artifactName.startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX)) {
-					String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
+	    		String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
+	    		
+	    		if(FilenameUtils.getBaseName(path).startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX)) {
+	    			String artifactName = stagedFile.getName();
 					Path mxfFilePath = Paths.get(path, artifactName, "mxf");
 					if(!mxfFilePath.toFile().exists()) {
 			        	isLevel0Pass = false;
