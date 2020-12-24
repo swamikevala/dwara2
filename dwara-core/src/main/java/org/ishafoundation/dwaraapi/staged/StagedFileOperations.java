@@ -89,7 +89,7 @@ public class StagedFileOperations {
 		setFilePermissionsCommandParamsList.add(action.name());
 		setFilePermissionsCommandParamsList.add("-b");
 		setFilePermissionsCommandParamsList.add(isUserDirectory ? StringUtils.substringBefore(sourcePath, "/user/") : sourcePath);
-		String systemSubdirectory = "system";
+		String systemSubdirectory = "staged";
 		if(isUserDirectory) {
 			systemSubdirectory = "user";
 	    	String suffixPath = sourcePath.replace(configuration.getReadyToIngestSrcDirRoot(), "");
