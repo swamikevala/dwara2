@@ -16,6 +16,9 @@
 > threadpoolexecutor.processingtask.corePoolSize=5
 > threadpoolexecutor.processingtask.maxPoolSize=5
 
+> threadpoolexecutor.video-mam-update.corePoolSize=1
+> threadpoolexecutor.video-mam-update.maxPoolSize=1
+
 # Dwara App Version - 2.0.06
 # Dwara DB Version - 2.0.2
 ### New features 

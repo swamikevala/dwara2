@@ -39,7 +39,6 @@ import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
-import org.ishafoundation.dwaraapi.thread.executor.ProcessingtaskThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,9 +87,6 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	
 	@Autowired
 	private FileEntityToFileForProcessConverter fileEntityToFileForProcessConverter;
-	
-	@Autowired
-	private ProcessingtaskThreadPoolExecutor processingtaskThreadPoolExecutor;
 
 	private Job job;
 
@@ -173,8 +169,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			if(processingtaskImpl == null)
 				throw new Exception(processingtaskId + " class is still not impl. Please refer IProcessingTask doc...");
 			
-			//Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
-			Executor executor = processingtaskThreadPoolExecutor.getExecutor();
+			Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
+			if(executor == null)
+				executor = IProcessingTask.taskName_executor_map.get(IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER);
 			// TODO Any check needed on the configured executor? 
 			
 			Processingtask processingtask = getProcessingtask(processingtaskId);

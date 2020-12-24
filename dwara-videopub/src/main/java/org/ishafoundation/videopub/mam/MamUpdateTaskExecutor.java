@@ -268,7 +268,9 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 
 			if("OK".equals(status))
 				jsessionId = JsonPathUtil.getValue(authJsonResp, "data.jsessionid");
-
+			else
+				throw new Exception("Problem with session creation " + authJsonResp);
+			
 			logger.debug("jsessionId :: " + jsessionId);
 		} catch (Exception e) {
 			logger.error("Unable to generate a session " + e.getMessage());
