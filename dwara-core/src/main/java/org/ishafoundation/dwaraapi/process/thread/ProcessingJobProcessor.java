@@ -284,16 +284,24 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 									throw e;
 						    	
 							}
-						    
+						}
+						
+						if(job.getOutputArtifactId() == null) { // if not already updated
+							Integer outputArtifactId = null;
+							
+							if(outputArtifactName.equals(inputArtifact.getName())){
+								outputArtifactId = inputArtifact.getId();
+							}
+							else {
+								outputArtifactId = outputArtifact.getId();
+							}
 						    // setting the current jobs output artifactid
-							String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - OutputArtifactId " + outputArtifact.getId();
+							String logMsgPrefix = "DB Job - " + "(" + job.getId() + ") - Updation - OutputArtifactId " + outputArtifactId;
 							logger.debug(logMsgPrefix);	
-						    job.setOutputArtifactId(outputArtifact.getId());
+						    job.setOutputArtifactId(outputArtifactId);
 						    jobDao.save(job);
 						    logger.debug(logMsgPrefix + " - Success");	
-						    
-						    // Now setting all the dependentjobs with the tasktype generated output artifactid
-						    //setInputArtifactForDependentJobs(job, outputArtifact);
+							
 						}
 						
 						// Output Artifact as a file record
