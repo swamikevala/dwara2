@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
@@ -119,6 +120,7 @@ public class ArtifactDeleter {
 			logger.info("Files flagged Deleted");
 			
 	    	// Step 5 - Flag the artifact as softdeleted
+			nthArtifact.setqLatestRequest(request);
 			nthArtifact.setDeleted(true);
 	    	artifactRepository.save(nthArtifact);
 	    	logger.info("Artifact flagged Deleted");
@@ -129,7 +131,7 @@ public class ArtifactDeleter {
 	    	// Step 7 - Move/Delete the file system files
 	    	// TODO - should we delete or move the file system files???
 	    	boolean shouldWeDelete = false;
-	    	if(nthArtifact.getArtifactclass().getId().startsWith("video-digi-2020"))
+	    	if(nthArtifact.getArtifactclass().getId().startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX))
 	    		shouldWeDelete = true;
 	    	if(shouldWeDelete) {
 		    	String artifactFilepathName = nthArtifact.getArtifactclass().getPath() + java.io.File.separator + nthArtifact.getName(); 

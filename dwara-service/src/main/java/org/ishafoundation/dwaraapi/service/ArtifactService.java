@@ -73,6 +73,7 @@ public class ArtifactService extends DwaraService{
 
     	artifactDeleter.cleanUp(request,  domain, artifactRepository);
     	
+    	userRequest.setRequestRef(request);
         userRequest.setStatus(Status.completed);
         requestDao.save(userRequest);
         logger.info(userRequest.getId() + " - Completed");

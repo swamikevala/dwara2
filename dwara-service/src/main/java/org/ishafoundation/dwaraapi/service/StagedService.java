@@ -1,6 +1,8 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -214,72 +216,105 @@ public class StagedService extends DwaraService{
 	    	int userRequestId = userRequest.getId();
 	    	
 	    	// TODO Move it to validation class
-	    	// Validation Level 1 - For empty folders
-	    	boolean isLevel1Pass = true;
+	    	boolean isLevel0Pass = true;
 	    	List<StagedFileDetails> stagedFileDetailsList = new ArrayList<StagedFileDetails>();
 	    	
 	    	List<StagedFile> stagedFileList = ingestUserRequest.getStagedFiles();
 	    	for (StagedFile stagedFile : stagedFileList) {
 				String artifactName = stagedFile.getName();
-				String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
-				
-				java.io.File nthIngestableFile = new java.io.File(path, artifactName);
-				
-		        long size = 0;
-		        int fileCount = 0;
-
-		        org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails fd = stagedFileEvaluator.getDetails(nthIngestableFile);
-		        size = fd.getTotalSize();
-		        fileCount = fd.getCount();
-		        
-//		        if(nthIngestableFile.isDirectory()) {
-//			        ArtifactFileDetails fd = junkFilesDealer.getJunkFilesExcludedFileDetails(nthIngestableFile.getAbsolutePath());
-//			        // added to try catch for the test api not to throw an error when looking for a non-existing folder
-//			        try {
-//			        	size = fd.getTotalSize();
-//			        }catch (Exception e) {
-//						// swallowing it...
-//			        	logger.trace("Unable to calculate size for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
-//					}
-//		        
-//		            try {
-//		            	fileCount = fd.getCount();
-//		            }catch (Exception e) {
-//						// swallowing it...
-//		            	logger.trace("Unable to list files for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
-//					}
-//		        }else {
-//		        	size = FileUtils.sizeOf(nthIngestableFile);
-//		        	fileCount = 1;
-//		        }
-		        
-		        if(fileCount == 0 || size == 0) {
-		        	isLevel1Pass = false;
-					StagedFileDetails sfd = new StagedFileDetails();
-					
-					sfd.setPath(path);
-					sfd.setName(artifactName);
-
-		        	List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
-		        
-		        	if(size == 0) {
+				if(artifactName.startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX)) {
+					String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
+					Path mxfFilePath = Paths.get(path, artifactName, "mxf");
+					if(!mxfFilePath.toFile().exists()) {
+			        	isLevel0Pass = false;
+						StagedFileDetails sfd = new StagedFileDetails();
+						
+						sfd.setPath(path);
+						sfd.setName(artifactName);
+	
+			        	List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
+	
 						Error error = new Error();
 						error.setType(Errortype.Error);
-						error.setMessage(artifactName + " size is 0");
+						error.setMessage(artifactName + " doesnt have a mxf subfolder in it");
 						errorList.add(error);
-		        	}
-		        	
-		        	if(fileCount == 0) {
-						Error error = new Error();
-						error.setType(Errortype.Error);
-						error.setMessage(artifactName + " has no files inside");
-						errorList.add(error);
+						
+			        	sfd.setErrors(errorList);
+						
+						stagedFileDetailsList.add(sfd);
 			        }
+				}
+	    	}
+	    	
+	    	// Validation Level 1 - For empty folders
+	    	boolean isLevel1Pass = true;
+	    	if(!isLevel0Pass) {
+	    		ingestResponse.setStagedFiles(stagedFileDetailsList);
+	    		isLevel1Pass = false;
+	    	}
+	    	else { // Validation Level 2 - Set permissions - Only when level 1 is success we continue...
+		    	for (StagedFile stagedFile : stagedFileList) {
+					String artifactName = stagedFile.getName();
+					String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
 					
-		        	sfd.setErrors(errorList);
+					java.io.File nthIngestableFile = new java.io.File(path, artifactName);
 					
-					stagedFileDetailsList.add(sfd);
-		        }
+			        long size = 0;
+			        int fileCount = 0;
+	
+			        org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails fd = stagedFileEvaluator.getDetails(nthIngestableFile);
+			        size = fd.getTotalSize();
+			        fileCount = fd.getCount();
+			        
+	//		        if(nthIngestableFile.isDirectory()) {
+	//			        ArtifactFileDetails fd = junkFilesDealer.getJunkFilesExcludedFileDetails(nthIngestableFile.getAbsolutePath());
+	//			        // added to try catch for the test api not to throw an error when looking for a non-existing folder
+	//			        try {
+	//			        	size = fd.getTotalSize();
+	//			        }catch (Exception e) {
+	//						// swallowing it...
+	//			        	logger.trace("Unable to calculate size for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
+	//					}
+	//		        
+	//		            try {
+	//		            	fileCount = fd.getCount();
+	//		            }catch (Exception e) {
+	//						// swallowing it...
+	//		            	logger.trace("Unable to list files for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
+	//					}
+	//		        }else {
+	//		        	size = FileUtils.sizeOf(nthIngestableFile);
+	//		        	fileCount = 1;
+	//		        }
+			        
+			        if(fileCount == 0 || size == 0) {
+			        	isLevel1Pass = false;
+						StagedFileDetails sfd = new StagedFileDetails();
+						
+						sfd.setPath(path);
+						sfd.setName(artifactName);
+	
+			        	List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
+			        
+			        	if(size == 0) {
+							Error error = new Error();
+							error.setType(Errortype.Error);
+							error.setMessage(artifactName + " size is 0");
+							errorList.add(error);
+			        	}
+			        	
+			        	if(fileCount == 0) {
+							Error error = new Error();
+							error.setType(Errortype.Error);
+							error.setMessage(artifactName + " has no files inside");
+							errorList.add(error);
+				        }
+						
+			        	sfd.setErrors(errorList);
+						
+						stagedFileDetailsList.add(sfd);
+			        }
+		    	}
 	    	}
 	    	
 	    	boolean isLevel2Pass = true;
