@@ -173,7 +173,7 @@ public class ScheduledStatusUpdater {
 							if(outputArtifactId != null) {
 								org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact = domainUtil.getDomainSpecificArtifact(outputArtifactId);
 								String pathPrefix = artifact.getArtifactclass().getPath();
-								if(pathPrefix.contains("/staged/"))
+								if(pathPrefix.contains("/staged"))
 									stagedFileOperations.setPermissions(StringUtils.substringBefore(pathPrefix, "/staged/"), false, artifact.getName());
 							}
 						}
