@@ -102,7 +102,8 @@ public class ArtifactService extends DwaraService{
 	}
 
 	// Artifact rename function to rename artifacts - 1) Soft rename 2) hard rename for held jobs (renames the folder also)
-	public ArtifactResponse hardSoftrenameArtifact(int artifactId,String artifactNewName) throws Exception {
+	public ArtifactResponse hardSoftrenameArtifact(int artifactId,String artifactNewName) throws Exception {	
+		
 		if (!validateArtifactName(artifactNewName)) {
 			throw new Exception("Validation failed!");
 		};
@@ -129,12 +130,13 @@ public class ArtifactService extends DwaraService{
 		// Check if the folder belongs to a held job  
 		String artifactName = artifactToRenameActualRow.getName();
 		String sequenceId = artifactToRenameActualRow.getSequenceCode();
-		artifactNewName = sequenceId + "_" + artifactNewName;
-		// Check if the folder already has sequence ID
-		//Pattern p = Pattern.compile("^"+sequenceId);
-		//Matcher m = p.matcher(artifactNewName);
-		//boolean b = m.find();
-		//if (!b) { artifactNewName = sequenceId + "_" + artifactNewName; } // Add sequence iD if it does not exist on the new foldername
+		artifactNewName = sequenceId + "_" + artifactNewName; 
+		// Step 1 - Create User Request
+		HashMap<String, Object> data = new HashMap<String, Object>();
+		data.put("artifactId", artifactId);
+		data.put("artifactName",artifactName);
+		data.put("artifactNewName",artifactNewName);
+		Request userRequest = createUserRequest(Action.rename, Status.in_progress, data); 
 		Request writeRequestRowForTheArtifactToRename = artifactToRenameActualRow.getWriteRequest();
 		// Get  the held path from artifactClass path_prefix
 		String heldArtifactPath = artifactToRenameActualRow.getArtifactclass().getPath();
@@ -167,9 +169,12 @@ public class ArtifactService extends DwaraService{
 			artifactRepository.save(artifactToRenameActualRow);
 		}
 		catch (Exception e) {
+			userRequest.setStatus(Status.failed);
+			requestDao.save(userRequest);
 			throw new Exception("Artifact Table rename failed "+e.getMessage());
 		}
 		FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+		
 		// Update the file table
 		try {
 			domainSpecificFileRepository.saveAll(artifactFileList);
@@ -178,6 +183,8 @@ public class ArtifactService extends DwaraService{
 			// Roll-back the artifact table update change
 			artifactToRenameActualRow.setName(artifactName);
 			artifactRepository.save(artifactToRenameActualRow);
+			userRequest.setStatus(Status.failed);
+			requestDao.save(userRequest);
 			throw new Exception("File Table rename failed "+e.getMessage());
 		}
 		//Change the filename
@@ -187,10 +194,14 @@ public class ArtifactService extends DwaraService{
 			artifactToRenameActualRow.setName(artifactName);
 			artifactRepository.save(artifactToRenameActualRow);
 			domainSpecificFileRepository.saveAll(artifactFileListForRollback);
+			userRequest.setStatus(Status.failed);
+			requestDao.save(userRequest);
 			throw new Exception("Rename failed on folder level!");
 			// EXIT With Errors
 		} // If Rename has error in it completes here 	 
 
+		userRequest.setStatus(Status.completed);
+		requestDao.save(userRequest);
 		// Return response
 		ArtifactResponse dr = new ArtifactResponse();
 		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForDeleteArtifactResponse(artifactToRenameActualRow);
