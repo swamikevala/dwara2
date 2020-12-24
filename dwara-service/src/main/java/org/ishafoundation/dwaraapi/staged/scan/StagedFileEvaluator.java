@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -16,6 +17,7 @@ import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
@@ -98,6 +100,14 @@ public class StagedFileEvaluator {
 				unSupportedExtns.add(fileExtn);
 		}
 
+		// 0- For digi artifactclass there should be a mxf subfolder
+		if(FilenameUtils.getBaseName(sourcePath).endsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX) && !Paths.get(nthIngestableFile.getPath().toString(), "mxf").toFile().exists()) {
+			Error error = new Error();
+			error.setType(Errortype.Error);
+			error.setMessage("Artifact Folder has no mxf subfolder");
+			errorList.add(error);
+		}	
+		
 		// 1- validateName
 		errorList.addAll(validateName(fileName));
 		
