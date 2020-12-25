@@ -2,30 +2,38 @@
 # Dwara DB Version - 2.0.3
 ### New features 
 1 Digitization support 
- * Header and Footer extraction for binary reversal
- * Header and cues file extraction for future PFR support
+  
+  * Header and Footer extraction for binary reversal
+  
+  * Header and cues file extraction for future PFR support
  
 2 Framework changes
- * Job Creation
+  
+  * Job Creation
     * Core Flow and flowelements out of DB into app code
     * Dont create jobs for dependent jobs upfront
     * Dont create jobs if we know that job is definitely bound to fail
     * placeholderJob endpoint Linking the dependencies for UI to show the hierarchy 
- * Job Management
+  
+  * Job Management
     * create dependent jobs if any after a job is complete
- * Processing layer changes
+  
+  * Processing layer changes
     * Support Output Artifactclass same as Input artifactclass
     * Outputfiletype support
     * artifactclass to processingtask specific configurable derived files destination 
     * Processingtask specific overwritable Global thread pool 
     * Set permissions on derived files
- * Restore
+  
+  * Restore
     * New Restore/Verify action replacing verify embedded with restore as a storage task
     * job-id subfolders taken off from the restored destination 
- * User/System request Status updation logic refined 
- * Delete Artifact API
- * Hold and Release Requests
-
+  
+  * User/System request Status updation logic refined 
+  
+  * Delete Artifact API
+  
+  * Hold and Release Requests
 ### Bug fixes
 1 Subsequent Writes on a volume is blocked until all previous Write Job and all its dependencies are completed
 
@@ -63,6 +71,7 @@
 
 ### Bug fixes
 1 Volume end block calculation for tar now is using tell rather than the existing way of summing up the consumed header block, blocks used based on file size and end of archive blocks involved.
+
 2 Fixed mam insertclip media.dwara2id pointing to proxy's file id in place of the source fileId.
 
 ### Upgrade steps
