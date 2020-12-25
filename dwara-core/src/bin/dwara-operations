@@ -1,0 +1,185 @@
+#!/bin/bash
+
+# dwara operations script
+# This script performs operations that need to be run by root, including: 
+# - changing the ownership and permissions on an artifact and its contents
+# - renaming and moving directories
+# - running stinit (tape drive initialization command)
+
+if [ $# -eq 0 ]; then
+  printf "Usage\n"
+  printf "%s\n" "-t action ( set_permissions | staged_rename | stinit )"
+  printf "%s\n" "-b base ingest directory"
+  printf "%s\n" "-s system subdirectory ( user | staged )"
+  printf "%s\n" "-u ingest user"
+  printf "%s\n" "-c artifactclass name"
+  printf "%s\n" "-a artifact name"
+  printf "%s\n" "-n new artifact name"
+  printf "%s\n" "-o new owner"
+  printf "%s\n" "-g new group"
+  printf "%s\n" "-d directory permissions mode (octal)"
+  printf "%s\n" "-f file permissions mode (octal)"
+  printf "%s\n" "-r apply ownership and permissions recursively (no argument)"
+  printf "%s\n" "-w device wwn path (stinit)"
+  exit 0
+fi
+
+# Declare global variables
+ACTION=
+BASE_DIR=
+SUB_DIR=
+USER=
+ARTIFACTCLASS=
+ARTIFACT=
+NEW_NAME=
+OWNER=
+GROUP=
+FILE_PERMS=
+DIR_PERMS=
+RECURSIVE=0
+DEVICE_WWN=
+
+while getopts t:b:s:u:c:a:n:o:g:f:d:rw: OPTION
+do
+   case $OPTION in
+      t) ACTION="$OPTARG";;
+      b) BASE_DIR="$OPTARG";;
+      s) SUB_DIR="$OPTARG";;
+      u) USER="$OPTARG";;
+      c) ARTIFACTCLASS="$OPTARG";;
+      a) ARTIFACT="$OPTARG";;
+      n) NEW_NAME="$OPTARG";;
+      o) OWNER="$OPTARG";;
+      g) GROUP="$OPTARG";;
+      d) DIR_MODE_OCTAL="$OPTARG";;
+      f) FILE_MODE_OCTAL="$OPTARG";;
+      r) RECURSIVE=1;;
+      w) DEVICE_WWN="$OPTARG"
+   esac
+done
+
+
+## STINIT ACTION
+if [ $ACTION == "stinit" ]; then
+   if [ -z $DEVICE_WWN ]; then printf "option -w (device wwn) must be specified\n" >&2; exit 1; fi
+   if ! [ -c "$DEVICE_WWN" ]; then printf "$DEVICE_WWN is not a tape device\n" >&2; exit 1; fi
+   /usr/sbin/stinit -vv -f /etc/stinit.def "$DEVICE_WWN"
+   if [ $? -eq 0 ]; then printf "stinit successful\n"; exit 0
+   else printf "stinit failed\n" >&2; exit 1;
+   fi
+fi
+
+
+## STAGED_RENAME and SET_PERMISSIONS common checks
+if [ $ACTION == "staged_rename" ] || [ $ACTION == "set_permissions" ]; then
+
+   # ACTION validations
+   if ! [ $ACTION == "set_permissions" ] && ! [ $ACTION == "staged_rename" ] && ! [ $ACTION == "stinit" ]; then 
+      printf "action must be specified as the first argument ( set_permissions | staged_rename | stinit )\n" >&2; exit 1
+   fi
+
+   # BASE_DIR validations
+   if [ -z $BASE_DIR ]; then printf "option -b (base directory path) must be specified\n" >&2; exit 1; fi
+
+   # SUB_DIR validations
+   if ! [ $SUB_DIR == "user" ] && ! [ $SUB_DIR == "staged" ]; then 
+      printf "option -s system subdirectory must be specified ( user | staged )\n" >&2; exit 1 
+   fi
+
+   # USER validations
+   if [ -z $USER ] && [ $SUB_DIR == "user" ]; then printf "option -u (user) must be specified\n" >&2; exit 1; fi
+   if ! [ -z $USER ]; then
+      USER_EXISTS=$(id -u "$USER" &> /dev/null; echo $?)
+      if [ $USER_EXISTS -ne 0 ]; then printf "$USER is not a valid user\n" >&2; exit 1; fi
+   fi
+
+   # ARTIFACTCLASS validations
+   if [ -z $ARTIFACTCLASS ] && [ $SUB_DIR == "user" ]; then printf "option -c (artifactclass) must be specified\n" >&2; exit 1; fi
+
+   if [ $SUB_DIR == "user" ]; then 
+      ARTIFACT_BASE_PATH="$(realpath $BASE_DIR)/user/$USER/ingest/$ARTIFACTCLASS"
+   elif [ $SUB_DIR == "staged" ]; then
+      ARTIFACT_BASE_PATH="$(realpath $BASE_DIR)/staged"
+   fi
+   if ! [ -d $ARTIFACT_BASE_PATH ]; then 
+      printf "$ARTIFACT_BASE_PATH is not a directory\n" >&2; exit 1
+   fi
+
+   # ARTIFACT validations
+   if [ -z $ARTIFACT ]; then printf "option -a (artifact) must be specified\n" >&2; exit 1; fi
+   ARTIFACT_PATH="$ARTIFACT_BASE_PATH/$ARTIFACT"
+   if ! [ -f $ARTIFACT_PATH ] && ! [ -d $ARTIFACT_PATH ]; then printf "$ARTIFACT_PATH is not a file or directory\n" >&2; exit 1; fi  
+fi
+
+
+## STAGED_RENAME ACTION
+
+if [ $ACTION == "staged_rename" ]; then
+   
+   # NEW_NAME validations and mv execution
+   FILENAME_REGEX='[a-zA-Z0-9._\-]+'
+   if ! [ -z $NEW_NAME ]; then
+      if [[ "$NEW_NAME" =~ $FILENAME_REGEX ]]; then
+         mv "$ARTIFACT_PATH" "$ARTIFACT_BASE_PATH/$NEW_NAME"
+      else printf "New name may only contain the characters a-z A-Z 0-9 . _ -\n" >&2; exit 1; fi 
+   else printf "option -n (new name) must be specified\n" >&2; exit 1; fi 
+   printf "rename successful\n"; exit 0
+fi
+
+
+## SET_PERMISSIONS ACTION
+
+if [ $ACTION == "set_permissions" ]; then
+   
+   COUNT=0
+ 
+   # OWNER validations and chown execution
+   if ! [ -z $OWNER ]; then 
+      OWNER_EXISTS=$(id -u "$OWNER" &> /dev/null; echo $?)
+      if [ $OWNER_EXISTS -eq 0 ]; then 
+         if [ $RECURSIVE -eq 0 ]; then
+            chown $OWNER $ARTIFACT_PATH
+         else chown -R $OWNER $ARTIFACT_PATH; fi 
+         printf "owner      : changed\n"
+         ((COUNT++))
+      else printf "$OWNER is not a valid user\n" >&2; exit 1; fi
+   fi
+
+   # GROUP validations and chgrp execution
+   if ! [ -z $GROUP ]; then
+      GROUP_EXISTS=$(grep -q "$GROUP" /etc/group; echo $?)
+      if [ $GROUP_EXISTS -eq 0 ]; then 
+         if [ $RECURSIVE -eq 0 ]; then
+            chgrp $GROUP $ARTIFACT_PATH
+         else chgrp -R $GROUP $ARTIFACT_PATH; fi
+         printf "group      : changed\n"
+         ((COUNT++))
+      else printf "$GROUP is not a valid group\n" >&2; exit 1; fi
+   fi
+
+   # DIR_MODE_OCTAL validations and directory chmod execution 
+   MODE_REGEX='[0-7]{1,4}'
+   if ! [ -z $DIR_MODE_OCTAL ]; then 
+      if [[ "$DIR_MODE_OCTAL" =~ $MODE_REGEX ]]; then
+         if [ $RECURSIVE -eq 0 ]; then
+            chmod $DIR_MODE_OCTAL $ARTIFACT_PATH
+         else find $ARTIFACT_PATH -type d -exec chmod $DIR_MODE_OCTAL {} \;; fi
+         printf "dir perms  : changed\n"
+         ((COUNT++))
+      else printf "$DIR_MODE_OCTAL is not a valid chmod mode\n" >&2; exit 1; fi
+   fi
+
+   # FILE_MODE_OCTAL validations and file chmod execution
+   if ! [ -z $FILE_MODE_OCTAL ]; then
+      ARTIFACT_IS_FILE=$([ -f $ARTIFACT_PATH ]; echo $?)
+      if [[ "$FILE_MODE_OCTAL" =~ $MODE_REGEX ]]; then
+         if [ $RECURSIVE -eq 0 ] && [ $ARTIFACT_IS_FILE -eq 0 ]; then
+            chmod $FILE_MODE_OCTAL $ARTIFACT_PATH
+         else find $ARTIFACT_PATH -type f -exec chmod $FILE_MODE_OCTAL {} \;; fi 
+         printf "file perms : changed\n"
+         ((COUNT++))
+      else printf "$FILE_MODE_OCTAL is not a valid chmod mode\n" >&2; exit 1; fi
+   fi
+
+   if [ $COUNT -eq 0 ]; then printf "nothing changed\n"; fi
+fi

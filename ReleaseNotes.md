@@ -1,8 +1,37 @@
-# Dwara App Version - 2.0.06
-# Dwara DB Version - 2.0.2
+# Dwara App Version - 2.0.07
+# Dwara DB Version - 2.0.3
 ### New features 
+1 Digitization support 
+ * Header and Footer extraction for binary reversal
+ * Header and cues file extraction for future PFR support
+ 
+2 Framework changes
+ * Job Creation
+    * Core Flow and flowelements out of DB into app code
+    * Dont create jobs for dependent jobs upfront
+    * Dont create jobs if we know that job is definitely bound to fail
+    * placeholderJob endpoint Linking the dependencies for UI to show the hierarchy 
+ * Job Management
+    * create dependent jobs if any after a job is complete
+ * Processing layer changes
+    * Support Output Artifactclass same as Input artifactclass
+    * Outputfiletype support
+    * artifactclass to processingtask specific configurable derived files destination 
+    * Processingtask specific overwritable Global thread pool 
+    * Set permissions on derived files
+ * Restore
+    * New Restore/Verify action replacing verify embedded with restore as a storage task
+    * job-id subfolders taken off from the restored destination 
+ * User/System request Status updation logic refined 
+ * Delete Artifact API
+ * Hold and Release Requests
 
 ### Bug fixes
+1 Subsequent Writes on a volume is blocked until all previous Write Job and all its dependencies are completed
+
+2 Multiple files getting restored
+
+3 Show reason for write jobs queued
 
 ### Upgrade steps
   * Stop the app(For instructions please refer TODO confluence link here)
@@ -19,7 +48,12 @@
 > threadpoolexecutor.video-mam-update.corePoolSize=1
 > threadpoolexecutor.video-mam-update.maxPoolSize=1
 
-  * Deploy setpermissions script
+> catdv.groupId.*digi*
+
+  * Deploy new setpermissions script
+  
+*******************************************************************************************************************************************************************************************
+  
 # Dwara App Version - 2.0.06
 # Dwara DB Version - 2.0.2
 ### New features 

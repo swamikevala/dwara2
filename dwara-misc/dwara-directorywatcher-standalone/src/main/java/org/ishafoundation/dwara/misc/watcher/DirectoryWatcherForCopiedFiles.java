@@ -407,8 +407,7 @@ public class DirectoryWatcherForCopiedFiles {
 //					
 //				}
 
-				CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
-				clei.executeCommand("chmod -R 777 " + srcPath.toString(), false);
+
 				String artifactName = getArtifactName(srcPath);
 				final Path dest = Paths.get(opsDirLoc.toString(), artifactName, "mxf");
 				Files.createDirectories(dest);
@@ -419,7 +418,10 @@ public class DirectoryWatcherForCopiedFiles {
 						return FileVisitResult.CONTINUE;
 					}
 				});
-				Files.delete(srcPath);
+				CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
+				clei.executeCommand("chmod -R 777 " + dest.getParent().toString(), false);
+				
+				FileUtils.deleteDirectory(srcPath.toFile());
 			} catch (IOException e) {
 				e.printStackTrace();
 				updateStatus(srcPath, Status.move_failed);

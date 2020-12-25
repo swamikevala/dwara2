@@ -152,6 +152,7 @@ public class DirectoryWatcherForMovedFiles {
 						// if directory is created, and watching recursively, then
 						// register it and its sub-directories
 						if (kind == ENTRY_CREATE) {
+							logger.info("Now will be ingesting " + child);
 							Path artifactPath = getArtifactPath(child);
 							if (trace)
 								System.out.println("artifactPath " + artifactPath);
@@ -168,7 +169,7 @@ public class DirectoryWatcherForMovedFiles {
 							FileTime lastModified = attrs.lastModifiedTime();
 							if (trace)
 								System.out.println("lastModified " + lastModified);
-							expirationTimes.put(artifactPath, lastModified.toMillis()+newFileWait);
+							expirationTimes.put(child, lastModified.toMillis()+newFileWait);
 						}
 						else if (kind == ENTRY_MODIFY) {
 							System.out.println("No modification expected as its a move, check out this" + child);

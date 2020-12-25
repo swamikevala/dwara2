@@ -151,9 +151,9 @@ truncate processingtask;
 ALTER TABLE `processingtask` ADD COLUMN `output_filetype_id` VARCHAR(255) NULL DEFAULT NULL;
 
 INSERT into processingtask (id, `description`, max_errors, filetype_id, output_filetype_id, output_artifactclass_suffix) VALUES ('video-proxy-low-gen', 'generate low resolution video proxies (with thumbnail and metadata xml)', 10, 'video', 'video-proxy', '-proxy-low');
-INSERT into processingtask (id, `description`, max_errors, filetype_id, output_filetype_id, output_artifactclass_suffix) VALUES ('video-mam-update', 'move proxy files to mam server and add xml metadata to mam', 0, 'video-proxy', null, null);
-INSERT into processingtask (id, `description`, max_errors, filetype_id, output_filetype_id, output_artifactclass_suffix) VALUES ('video-digi-2020-header-extract', 'extracts header and footer from uncompressed mxf', 0, 'video-digi-2020-mxf-v210', 'video-digi-2020-mxf-v210', '');
-INSERT into processingtask (id, `description`, max_errors, filetype_id, output_filetype_id, output_artifactclass_suffix) VALUES ('video-digi-2020-preservation-gen', 'generates lossless mkv/ffv1 video preservation format inc PFR header and index files', 0, 'video-digi-2020-mxf-v210', 'video-digi-2020-mkv-ffv1', '');
+INSERT into processingtask (id, `description`, max_errors, filetype_id, output_filetype_id, output_artifactclass_suffix) VALUES ('video-mam-update', 'move proxy files to mam server and add xml metadata to mam', 1, 'video-proxy', null, null);
+INSERT into processingtask (id, `description`, max_errors, filetype_id, output_filetype_id, output_artifactclass_suffix) VALUES ('video-digi-2020-header-extract', 'extracts header and footer from uncompressed mxf', 1, 'video-digi-2020-mxf-v210', 'video-digi-2020-mxf-v210', '');
+INSERT into processingtask (id, `description`, max_errors, filetype_id, output_filetype_id, output_artifactclass_suffix) VALUES ('video-digi-2020-preservation-gen', 'generates lossless mkv/ffv1 video preservation format inc PFR header and index files', 1, 'video-digi-2020-mxf-v210', 'video-digi-2020-mkv-ffv1', '');
 
 
 -- FLOW --
