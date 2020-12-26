@@ -76,7 +76,7 @@ public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask imple
 		// TODO - Not able to put 5 frames in one cluster...
 		// TODO - handle ntsc vs pal on cluster-length 
 		logger.info("Now aligning the tracks in cluster");
-		String mkvmergeCommand = "mkvmerge -o " + compressedFileTargetLocation + " " + compressedFileTmpTargetLocation + " --cluster-length 200ms";
+		String mkvmergeCommand = "mkvmerge -o " + compressedFileTargetLocation + " " + compressedFileTmpTargetLocation + " --cluster-length 5";
 		CommandLineExecutionResponse mkvmergeCommandLineExecutionResponse = commandLineExecuter.executeCommand(mkvmergeCommand);
 		if(mkvmergeCommandLineExecutionResponse.isComplete()) {
 			logger.info("Alignment successful - " + compressedFileTargetLocation);
