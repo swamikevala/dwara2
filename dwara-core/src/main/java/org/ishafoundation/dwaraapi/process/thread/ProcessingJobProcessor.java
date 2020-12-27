@@ -236,7 +236,10 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 
 						//Validating if all files needed are generated
 						String outputFiletypeId = processingtask != null ? processingtask.getOutputFiletypeId() : null;
-						if(outputFiletypeId != null) {
+						// TODO we will be using same artifactclass from 2 different processing tasks and so not all extns for the filetypes are available. so commenting this to out until we design it well 
+						boolean isCommentedOut = false;
+						if(isCommentedOut) {
+						// if(outputFiletypeId != null) { // commenting out this validation to accomodate the last minute idx file extraction change
 							Filetype filetype = getFiletype(outputFiletypeId);
 							List<ExtensionFiletype> extn_Filetype_List = filetype.getExtensions(); //extensionFiletypeDao.findAllByFiletypeId(filetype.getId());
 							for (ExtensionFiletype extensionFiletype : extn_Filetype_List) {

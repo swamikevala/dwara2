@@ -28,6 +28,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
@@ -94,7 +95,9 @@ public class JobCreator {
 //				actionArtifactclassFlowList.add(actionArtifactclassFlowDao.findByActionIdAndFlowIdAndActiveTrue(requestedBusinessAction.name(), DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME)); //
 			}
 			
-			if(actionArtifactclassFlowList != null) {
+			if(actionArtifactclassFlowList == null || actionArtifactclassFlowList.size() == 0)
+				throw new DwaraException("No flow configured for " + sourceArtifactclassId + " in action_artifactclass_flow");
+			else {
 				for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
 					String nthFlowId = actionArtifactclassFlow.getId().getFlowId();
 					logger.trace("flow " + nthFlowId);

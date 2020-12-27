@@ -107,8 +107,8 @@ public class ForSolutionSameerService {
 				volume.setBarcode(volumeId);
 				ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 				ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
-	
-				volume.setStartBlock(artifactVolume.getDetails().getStartVolumeBlock());
+				if(artifactVolume != null)
+					volume.setStartBlock(artifactVolume.getDetails().getStartVolumeBlock());
 				
 				artifact.setVolume(volume);
 			}
