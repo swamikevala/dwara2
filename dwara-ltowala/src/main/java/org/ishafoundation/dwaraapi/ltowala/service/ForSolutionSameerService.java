@@ -43,7 +43,7 @@ public class ForSolutionSameerService {
 	private FileRepositoryUtil fileRepositoryUtil;
 	
 	// To narrow down the job to a specific copy
-	private int copyNumber = 1; // Could be any copy...
+	private int copyNumber = 2; // Could be any copy...
 	
 	public LtoWalaResponse dataForLtoWala(LocalDateTime startDateTime, LocalDateTime endDateTime, boolean listFiles, boolean needVolumeDetails) throws Exception {
 		
