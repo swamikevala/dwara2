@@ -1,6 +1,7 @@
 SET foreign_key_checks = 0; 
 
 INSERT INTO `filetype` (`id`, `description`) VALUES ('mkv', 'Matroska video file');
+INSERT INTO `from_prd`.`extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (0, 'mkv', 'mkv');
 INSERT INTO `processingtask` (`id`, `description`, `filetype_id`, `max_errors`, `output_artifactclass_suffix`, `output_filetype_id`) VALUES ('video-mkv-pfr-metadata-extract', 'extract PFR header and index from mkv video', 'mkv', 1, '-proxy-low', 'video-proxy');
 
 DROP TABLE IF EXISTS `flowelement`;

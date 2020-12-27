@@ -1,3 +1,17 @@
+# Dwara App Version - 2.0.07-hotfix1
+1 Preservation Job split
+
+2 Cues File format correction
+
+3 if flow missing fail the request
+
+4 comment out the output filetype validation 
+
+5 LTOwala defaulted to copy2
+
+### Upgrade steps
+  * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_0_3_hotfix2.sql)
+
 # Dwara App Version - 2.0.07
 # Dwara DB Version - 2.0.3
 ### New features 

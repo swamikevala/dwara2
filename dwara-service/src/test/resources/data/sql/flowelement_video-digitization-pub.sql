@@ -37,12 +37,6 @@ CREATE TABLE `flowelement` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `flowelement`
---
-
-LOCK TABLES `flowelement` WRITE;
-/*!40000 ALTER TABLE `flowelement` DISABLE KEYS */;
 INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('4', 'video-proxy-flow', null, 'video-proxy-low-gen', null, null, 4, 1, 1);
 INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('5', 'video-proxy-flow', null, 'video-mam-update', null, '[4]', 5, 1, 1);
 INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('6', 'video-proxy-flow', null, null, 'archive-flow', '[4]', 6, 1, 1);
@@ -54,22 +48,9 @@ INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, 
 INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U6', 'video-digi-2020-flow', null, 'checksum-gen', null, '["U4","U5"]', 3, 1, 0);
 INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U7', 'video-digi-2020-flow', null, 'file-delete', null, '["U6"]', 4, 1, 0);
 INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U8', 'video-digi-2020-flow', null, null, 'video-digi-2020-archive-flow', '["U7"]', 5, 1, 0);
-INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U9', 'video-digi-2020-flow', null, null, 'video-proxy-flow', '["U7"]', 6, 1, 0);
+INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U9', 'video-digi-2020-flow', null, 'video-mkv-pfr-metadata-extract', null, '["U7"]', 6, 1, 0);
+INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U10', 'video-digi-2020-flow', null, null, 'video-proxy-flow', '["U7"]', 7, 1, 0);
 -- Need a custom video-digi-2020-archive-flow, since the core archive-flow starts with checksum-gen task which we do not need at this step
-INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U10', 'video-digi-2020-archive-flow', 'write', null, null, null, 1, 1, 0);
-INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U11', 'video-digi-2020-archive-flow', 'restore', null, null, '["U10"]', 2, 1, 0);
-INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U12', 'video-digi-2020-archive-flow', null, 'checksum-verify', null, '["U11"]', 3, 1, 0);
-
-/*!40000 ALTER TABLE `flowelement` ENABLE KEYS */;
-UNLOCK TABLES;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2020-12-06 23:09:15
+INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U11', 'video-digi-2020-archive-flow', 'write', null, null, null, 1, 1, 0);
+INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U12', 'video-digi-2020-archive-flow', 'restore', null, null, '["U11"]', 2, 1, 0);
+INSERT INTO flowelement (id, flow_id, storagetask_action_id, processingtask_id, flow_ref_id, dependencies, display_order, active, deprecated) VALUES ('U13', 'video-digi-2020-archive-flow', null, 'checksum-verify', null, '["U12"]', 3, 1, 0);
