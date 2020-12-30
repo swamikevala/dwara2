@@ -34,9 +34,18 @@ public class Artifact {
     private Integer rerunNo;
     @JsonProperty("prevSequenceCode")
     private String prevSequenceCode;
-
+    @JsonProperty("sequenceCode")
+    private String sequenceCode;
     public Integer getId() {
 		return id;
+	}
+
+	public String getSequenceCode() {
+		return sequenceCode;
+	}
+
+	public void setSequenceCode(String sequenceCode) {
+		this.sequenceCode = sequenceCode;
 	}
 
 	public void setId(Integer id) {

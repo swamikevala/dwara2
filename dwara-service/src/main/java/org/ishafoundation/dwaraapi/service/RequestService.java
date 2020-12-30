@@ -294,7 +294,6 @@ public class RequestService extends DwaraService{
 				String artifactclassId = request.getDetails().getArtifactclassId();
 				Domain domain = domainUtil.getDomain(artifactclassId);
 				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-
 				Artifact systemArtifact = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(requestId); 
 				if(systemArtifact != null) {
 					org.ishafoundation.dwaraapi.api.resp.request.Artifact artifactForResponse = new org.ishafoundation.dwaraapi.api.resp.request.Artifact();
@@ -307,7 +306,7 @@ public class RequestService extends DwaraService{
 					artifactForResponse.setSkipActionElements(request.getDetails().getSkipActionelements());
 					artifactForResponse.setStagedFilename(request.getDetails().getStagedFilename());
 					artifactForResponse.setStagedFilepath(request.getDetails().getStagedFilepath());
-					
+					artifactForResponse.setSequenceCode(systemArtifact.getSequenceCode());
 					requestResponse.setArtifact(artifactForResponse);
 				}
 			} 
