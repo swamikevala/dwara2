@@ -1,6 +1,6 @@
 package org.ishafoundation.dwaraapi.api.resp.artifact;
 
-public class DeleteArtifactResponse {
+public class ArtifactResponse {
 	
 	private int userRequestId;
 	private String action;
