@@ -20,7 +20,15 @@ public class FileRepositoryUtil {
 	@Autowired
 	private DomainUtil domainUtil;
 	
+    public List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getAllArtifactFileList(Artifact artifact, Domain domain) throws Exception {
+		return getArtifactFileList(artifact, domain, true);
+    }
+    
     public List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getArtifactFileList(Artifact artifact, Domain domain) throws Exception {
+    	return getArtifactFileList(artifact, domain, false);
+    }
+    
+    private List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getArtifactFileList(Artifact artifact, Domain domain, boolean includeDeleted) throws Exception {
 		String domainSpecificArtifactTableName = artifact.getClass().getSimpleName();
 		String separator = "$";
 		if(domainSpecificArtifactTableName.contains(separator)) {
@@ -28,8 +36,14 @@ public class FileRepositoryUtil {
 			domainSpecificArtifactTableName = StringUtils.substringBefore(domainSpecificArtifactTableName, separator);
 		}
 		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-		Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_ARTIFACT_ID_AND_DELETED_FALSE.replace("<<DOMAIN_SPECIFIC_ARTIFACT>>", domainSpecificArtifactTableName), int.class);
+		Method fileDaoFindAllBy = null;
+		if(includeDeleted)
+			domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_ARTIFACT_ID.replace("<<DOMAIN_SPECIFIC_ARTIFACT>>", domainSpecificArtifactTableName), int.class);
+		else
+			domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_ARTIFACT_ID_AND_DELETED_FALSE.replace("<<DOMAIN_SPECIFIC_ARTIFACT>>", domainSpecificArtifactTableName), int.class);
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = (List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>) fileDaoFindAllBy.invoke(domainSpecificFileRepository, artifact.getId());
 		return fileList;
     }
+    
+    
 }

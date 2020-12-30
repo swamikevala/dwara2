@@ -8,4 +8,5 @@ public interface File2Dao extends FileRepository<File2> {
 	
 	List<File2> findAllByArtifact2IdAndDeletedFalse(int artifact2Id);
 
+	List<File2> findAllByArtifact2Id(int artifact2Id);
 }

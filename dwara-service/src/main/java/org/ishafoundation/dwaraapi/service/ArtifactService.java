@@ -159,10 +159,11 @@ public class ArtifactService extends DwaraService{
 
 		// 2 (a) (i) Change the artifact name entry in artifact table
 		artifactToRenameActualRow.setName(artifactNewName);
+		
 		// 2 (a) (ii) Change the File Table entries and the file names 
 		// Step 4 - Flag all the file entries as soft-deleted
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactToRenameActualRow, domain);			
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileListForRollback = fileRepositoryUtil.getArtifactFileList(artifactToRenameActualRow, domain);			
+		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifactToRenameActualRow, domain);			
+		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileListForRollback = fileRepositoryUtil.getAllArtifactFileList(artifactToRenameActualRow, domain);			
 		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File eachfile : artifactFileList) { 
 			// Each file will now be renamed and the DB entry changed subsequently like butter through knife...
 			String eachFilePath = eachfile.getPathname();
@@ -198,11 +199,13 @@ public class ArtifactService extends DwaraService{
 			throw new Exception("File Table rename failed "+e.getMessage());
 		}
 		//Change the filename
-		boolean fileSuccess = fileRename(heldArtifactPath, artifactName, artifactNewName );
-		if(!fileSuccess) {
+		try {
+			fileRename(heldArtifactPath, artifactName, artifactNewName );
+		}catch (Exception e) {
 			// Roll-back the artifact table update change and the file table update change
 			artifactToRenameActualRow.setName(artifactName);
 			artifactRepository.save(artifactToRenameActualRow);
+			
 			domainSpecificFileRepository.saveAll(artifactFileListForRollback);
 			userRequest.setStatus(Status.failed);
 			requestDao.save(userRequest);
@@ -230,15 +233,16 @@ public class ArtifactService extends DwaraService{
 		if (b) { return false;} else { return true;}    	
 	}
 
-	boolean fileRename(String source, String fileName,String newFileName) throws Exception {
+	private void fileRename(String source, String fileName,String newFileName) throws Exception {
 
-		String filePath = source + "\\" + fileName;
-		String newFilePath = source + "\\" + newFileName;
+		String filePath = source + java.io.File.separator + fileName;
+		String newFilePath = source + java.io.File.separator + newFileName;
 		java.io.File file= new java.io.File(filePath);
 		if (!file.exists()) {
 			throw new Exception("File doesnt exist: "+filePath);
 		}
 		boolean renameResult = file.renameTo(new java.io.File(newFilePath));
-		return renameResult;
+		if(!renameResult)
+			throw new Exception("Rename failed on FS");
 	}
 }
