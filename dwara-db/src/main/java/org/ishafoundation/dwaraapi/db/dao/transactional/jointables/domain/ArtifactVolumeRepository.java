@@ -13,5 +13,7 @@ public interface ArtifactVolumeRepository<T extends ArtifactVolume> extends Crud
 	
 	List<ArtifactVolume> findAllByIdVolumeId(String volumeId);
 	
+	List<ArtifactVolume> findAllByIdArtifactId(int artifactId);
+	
 	int countByIdVolumeId(String volumeId);
 }

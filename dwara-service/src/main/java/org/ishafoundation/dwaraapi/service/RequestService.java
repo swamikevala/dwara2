@@ -304,6 +304,7 @@ public class RequestService extends DwaraService{
 					artifactForResponse.setDeleted(systemArtifact.isDeleted());
 					artifactForResponse.setArtifactclass(systemArtifact.getArtifactclass().getId());
 					artifactForResponse.setPrevSequenceCode(systemArtifact.getPrevSequenceCode());
+					artifactForResponse.setSequenceCode(systemArtifact.getSequenceCode());
 					artifactForResponse.setRerunNo(request.getDetails().getRerunNo());
 					artifactForResponse.setSkipActionElements(request.getDetails().getSkipActionelements());
 					artifactForResponse.setStagedFilename(request.getDetails().getStagedFilename());

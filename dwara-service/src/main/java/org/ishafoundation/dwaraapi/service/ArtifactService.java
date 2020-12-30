@@ -11,9 +11,11 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -22,7 +24,6 @@ import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.resource.mapper.MiscObjectMapper;
 import org.ishafoundation.dwaraapi.service.common.ArtifactDeleter;
 import org.ishafoundation.dwaraapi.staged.StagedFileOperations;
-import org.ishafoundation.dwaraapi.staged.scan.Error;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,11 +103,13 @@ public class ArtifactService extends DwaraService{
 	}
 
 	// Artifact rename function to rename artifacts - 1) Soft rename 2) hard rename for held jobs (renames the folder also)
-	public ArtifactResponse hardSoftrenameArtifact(int artifactId,String artifactNewName) throws Exception {	
+	public ArtifactResponse hardSoftrenameArtifact(int artifactId, String artifactNewName) throws Exception {	
 		
 		if (!validateArtifactName(artifactNewName)) {
 			throw new Exception("Validation failed!");
 		};
+		
+		
 		// 2. Change the artifact name in the artifact folder and artifact table/ file table entry for the artifact
 		ArtifactRepository<Artifact> artifactRepository = null;
 		Artifact artifactToRenameActualRow = null; // get the artifact details from DB
@@ -121,6 +124,13 @@ public class ArtifactService extends DwaraService{
 				break;
 			}
 		}
+		
+		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(artifactId);
+		
+		if(artifactVolumeList.size() > 0)
+			throw new Exception("Artifact already written to tape. Cant be renamed");
+		
 		// 2 (a) ------ Artifact level change
 		// Check if the artifact id exists 
 		// If artifact ID is null return error and escape into the unknown
