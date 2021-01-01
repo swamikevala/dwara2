@@ -14,7 +14,10 @@ public class ArtifactclassTaskConfig {
 
 	@JsonProperty("output_path")
 	private String outputPath;
-
+	
+	@JsonProperty("destination_id")
+	private String destinationId;
+	
 	public String getPathnameRegex() {
 		return pathnameRegex;
 	}
@@ -37,5 +40,13 @@ public class ArtifactclassTaskConfig {
 
 	public void setOutputPath(String outputPath) {
 		this.outputPath = outputPath;
+	}
+
+	public String getDestinationId() {
+		return destinationId;
+	}
+
+	public void setDestinationId(String destinationId) {
+		this.destinationId = destinationId;
 	}
 }

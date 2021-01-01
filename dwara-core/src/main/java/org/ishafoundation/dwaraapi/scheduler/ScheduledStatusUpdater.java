@@ -153,9 +153,10 @@ public class ScheduledStatusUpdater {
 						else
 							status = Status.failed;
 					}
+					job = jobDao.findById(job.getId()).get(); // getting the job again so if processing job processor has updated the outputartifactid, it picks it up too...
 					job.setCompletedAt(LocalDateTime.now()); // Just can only give some rough completed times... 
 					job.setStatus(status);
-					jobDao.save(job);
+					job = jobDao.save(job);
 					logger.info("Job " + job.getId() + " - " + status);
 					
 					if(status == Status.completed) {

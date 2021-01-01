@@ -257,6 +257,11 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				String outputPathSuffix = null;
 				ArtifactclassTask artifactclassTask = artifactclassTaskDao.findByArtifactclassIdAndProcessingtaskId(inputArtifactclassId, processingtaskId);
 				String configuredOutputPath = artifactclassTask != null ? artifactclassTask.getConfig().getOutputPath() : null;
+				String configuredDestinationId = artifactclassTask != null ? artifactclassTask.getConfig().getDestinationId()  : null;
+				String configuredDestinationPath = null;
+				if(configuredDestinationId != null)
+					configuredDestinationPath = configurationTablesUtil.getDestination(configuredDestinationId).getPath();
+				
 				if(configuredOutputPath != null) {
 					String normalizedOutputPath = FilenameUtils.normalizeNoEndSeparator(configuredOutputPath);
 					if(normalizedOutputPath == null)
@@ -295,6 +300,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 								else
 									outputFilePath = outputArtifactPathname + File.separator + FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
 							}
+						}
+						else if(configuredDestinationPath != null) {
+							outputFilePath = configuredDestinationPath + java.io.File.separator + FilenameUtils.getFullPathNoEndSeparator(artifactNamePrefixedFilePathname);
 						}
 					}
 					logger.trace("outputFilePath - " + outputFilePath);
