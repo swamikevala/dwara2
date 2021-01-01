@@ -99,7 +99,20 @@ public class DirectoryWatcherForCopiedFiles {
 			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
 					throws IOException
 			{
+				if(!dir.toString().equals(watchedDir.toString())) {
+					expirationTimes.put(dir, System.currentTimeMillis()+newFileWait);
+				}
 				register(dir);
+				
+				if(!dir.toString().equals(watchedDir.toString())) {
+					CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
+					try {
+						clei.executeCommand("chmod -R 777 " + dir.toString(), false);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
 				return FileVisitResult.CONTINUE;
 			}
 		});
@@ -110,6 +123,7 @@ public class DirectoryWatcherForCopiedFiles {
 	 */
 	private void register(Path dir) throws IOException {
 		WatchKey key = dir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+		
 		if (trace) {
 			Path prev = keys.get(key);
 			if (prev == null) {
@@ -166,36 +180,36 @@ public class DirectoryWatcherForCopiedFiles {
 
 						// if directory is created, and watching recursively, then
 						// register it and its sub-directories
-						if (kind == ENTRY_CREATE) {
-							try {
-//								createCSVEntry(child);
-								updateStatus(child, Status.copying);
-//								Path prev = keys.get(key);
-//								if (prev != null && !dir.equals(prev)) {
-//									updateStatus(child, Status.done);
-//									deleteCSVEntry(prev);
-//									System.out.format("update: %s -> %s\n", prev, dir);
-//								}
-
-								if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
-									registerAll(child);
+						if (kind == ENTRY_CREATE || kind == ENTRY_MODIFY) {
+							if (kind == ENTRY_CREATE) {
+								try {
+	//								createCSVEntry(child);
+									updateStatus(child, Status.copying);
+	//								Path prev = keys.get(key);
+	//								if (prev != null && !dir.equals(prev)) {
+	//									updateStatus(child, Status.done);
+	//									deleteCSVEntry(prev);
+	//									System.out.format("update: %s -> %s\n", prev, dir);
+	//								}
+	
+									if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
+										registerAll(child);
+									}
+									
+	//								Path newDir = keys.get(key);
+	//								//System.out.format("test :: %s -> %s\n", newDir, child);
+	//								if (newDir != null && !dir.equals(newDir)) { // if its renamed
+	//									renameEntry(newDir, child);
+	//									System.out.format("update: %s -> %s\n", newDir, child);
+	//								}
+	//								else {
+	//									createCSVEntry(child);
+	//								}
+	
+								} catch (IOException x) {
+									// ignore to keep sample readbale
 								}
-								
-//								Path newDir = keys.get(key);
-//								//System.out.format("test :: %s -> %s\n", newDir, child);
-//								if (newDir != null && !dir.equals(newDir)) { // if its renamed
-//									renameEntry(newDir, child);
-//									System.out.format("update: %s -> %s\n", newDir, child);
-//								}
-//								else {
-//									createCSVEntry(child);
-//								}
-
-							} catch (IOException x) {
-								// ignore to keep sample readbale
 							}
-						}
-						else if (kind == ENTRY_MODIFY) {
 //							Path artifactPath = getArtifactPath(child);
 //							if (trace)
 //								System.out.println("artifactPath " + artifactPath);
@@ -321,17 +335,21 @@ public class DirectoryWatcherForCopiedFiles {
 			this.watchKey = watchKey;
 		}
 		
+		private String extns[] = {"qc","log", "md5", "mxf"};
+		
 		@Override
 		public void run() {
 			String expectedMd5 = null;
 			String actualMd5 = null;
 			Path artifactPath = mxfFilePathname.getParent();
 			File artifactFileObj = artifactPath.toFile();
-			while(true) {
+			
+			for (int i = 0; i < 60; i++) {
 				//logger.debug(mxfFilePathname + ":" + artifactPath);
 				if(!artifactFileObj.isDirectory())
 					return;
-				Collection<File> files = FileUtils.listFiles(artifactFileObj, null, false);
+				Collection<File> files = FileUtils.listFiles(artifactFileObj, extns, false);
+
 				if(files.size() == 4) {
 					try {
 						updateStatus(artifactPath, Status.copy_complete);
@@ -358,7 +376,7 @@ public class DirectoryWatcherForCopiedFiles {
 							logger.error(artifactPath + "MD5 expected != actual, Now what??? ");
 							updateStatus(artifactPath, Status.md5_mismatch);
 						}
-						break;
+						return;
 					}catch (Exception e) {
 						e.printStackTrace();
 						try {
@@ -371,14 +389,16 @@ public class DirectoryWatcherForCopiedFiles {
 				}
 				else {
 					try {
-						//System.out.println("waiting for all files");
+						logger.debug(artifactPath + " waiting for mxf sidecar files. Retry count " + i);
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
+						return;
 					}
 				}
 			}
+			logger.debug("Giving up on " + artifactPath + ". pls do it manually");
 		}
 		
 		private void moveFolderToOpsAreaAndOrganise(WatchKey watchKey, Path srcPath) throws Exception {

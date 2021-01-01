@@ -1,4 +1,17 @@
-# Dwara App Version - 2.0.07-hotfix1
+# Dwara App Version - 2.1.02
+1 Rename on hold
+
+2 Generic Configurable File copier
+
+3 Directory watcher changes
+
+Bug fix
+
+Fix for Race condition on update job between scheduledStatusUpdater and processing layer.
+
+Digi Artifact File count and size
+ 
+# Dwara App Version - 2.1.01-hotfix1
 1 Preservation Job split
 
 2 Cues File format correction
@@ -12,8 +25,8 @@
 ### Upgrade steps
   * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_0_3_hotfix2.sql)
 
-# Dwara App Version - 2.0.07
-# Dwara DB Version - 2.0.3
+# Dwara App Version - 2.1
+# Dwara DB Version - 2.1
 ### New features 
 1 Digitization support 
   
