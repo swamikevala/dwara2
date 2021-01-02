@@ -6,7 +6,7 @@
 
 3 Directory watcher changes
 
-4 Support for Multi requeue
+4 Support for bulk requeue of failed jobs
 
 ### Bug fixes
 

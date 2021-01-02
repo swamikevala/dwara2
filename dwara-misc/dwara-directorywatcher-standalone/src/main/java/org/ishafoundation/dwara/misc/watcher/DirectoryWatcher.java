@@ -107,6 +107,8 @@ public class DirectoryWatcher {
 				if(!dir.toString().equals(watchedDir.toString())) {// if there were folders already copied to the watch folder trigger a modify event so that we handleexpiredtimes 
 					CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
 					try {
+						if(!dir.toString().endsWith("mxf"))
+							updateStatus(dir, Status.copying);
 						clei.executeCommand("chmod -R 777 " + dir.toString(), false);
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -182,7 +184,7 @@ public class DirectoryWatcher {
 						if (kind == ENTRY_CREATE || kind == ENTRY_MODIFY) {
 							if (kind == ENTRY_CREATE) {
 								try {
-									updateStatus(child, Status.copying);
+									//updateStatus(child, Status.copying);
 	
 									if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
 										registerAll(child);
@@ -265,8 +267,10 @@ public class DirectoryWatcher {
 			Path filePath = item.getKey();
 			
 			if(expiryTime <= currentTime) {
-				if(filePath.getFileName().toString().endsWith(".mxf"))
+				if(filePath.getFileName().toString().endsWith(".mxf")) {
+					updateStatus(filePath, Status.copy_complete);
 					verifyChecksumAndMoveToOpsArea(watchKey, filePath);
+				}
 				it.remove();
 			}
 		}
@@ -311,7 +315,7 @@ public class DirectoryWatcher {
 
 				if(files.size() == 4) {
 					try {
-						updateStatus(artifactPath, Status.copy_complete);
+						//updateStatus(artifactPath, Status.copy_complete);
 						for (File file : files) {
 							String fileName = file.getName();
 							if(fileName.endsWith(".md5")) {
@@ -398,7 +402,7 @@ public class DirectoryWatcher {
 //				CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
 //				clei.executeCommand("chmod -R 777 " + dest.getParent().toString(), false);
 				
-				FileUtils.deleteDirectory(srcPath.toFile());
+				FileUtils.deleteDirectory(srcPath.getParent().toFile());
 			} catch (IOException e) {
 				e.printStackTrace();
 				updateStatus(srcPath, Status.move_failed);

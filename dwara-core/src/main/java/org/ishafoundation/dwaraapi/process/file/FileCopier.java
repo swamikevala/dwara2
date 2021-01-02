@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
@@ -30,20 +31,34 @@ public class FileCopier implements IProcessingTask {
 		
 		String destPath = processContext.getOutputDestinationDirPath();
 		Path newDir = Paths.get(destPath);
-		Files.createDirectories(newDir);
-
 		Path target = newDir.resolve(source.getFileName());
+		
+		String tmpDestPath = destPath + File.separator + ".copying";
+		Path tmpNewDir = Paths.get(tmpDestPath);
+		Path tmpTarget = tmpNewDir.resolve(source.getFileName());
+
+		File tmpTargetFile = tmpTarget.toFile();
+		if(tmpTargetFile.exists()) {
+			logger.trace(tmpTarget + " file already exists. Deleting it.");
+			tmpTargetFile.delete();
+		}
+		
+		logger.trace("Now copying " + source + " to " + tmpTarget);
+		Files.createDirectories(tmpNewDir);
+		try {
+			Files.copy(source, tmpTarget);
+		}catch (Exception e) {
+			throw new DwaraException("Unable to copy " + source + " to " + tmpTarget + " " + e.getMessage());
+		}
+
 		File targetFile = target.toFile();
-		if(target.toFile().exists()) {
-			logger.trace(target + " File already exists. Deleting it.");
+		if(targetFile.exists()) {
+			logger.trace(target + " file already exists. Deleting it.");
 			targetFile.delete();
 		}
-		logger.trace("Now copying " + source + " to " + target);
-		try {
-			Files.copy(source, target);
-		}catch (Exception e) {
-			throw new DwaraException("Unable to copy " + source + " to " + target + " " + e.getMessage());
-		}
+		Files.move(tmpTarget, target, StandardCopyOption.ATOMIC_MOVE);
+		
+		Files.delete(tmpNewDir);
 		
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 		processingtaskResponse.setIsComplete(true);

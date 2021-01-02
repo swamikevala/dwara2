@@ -20,6 +20,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
@@ -259,9 +260,12 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				String configuredOutputPath = artifactclassTask != null ? artifactclassTask.getConfig().getOutputPath() : null;
 				String configuredDestinationId = artifactclassTask != null ? artifactclassTask.getConfig().getDestinationId()  : null;
 				String configuredDestinationPath = null;
-				if(configuredDestinationId != null)
-					configuredDestinationPath = configurationTablesUtil.getDestination(configuredDestinationId).getPath();
-				
+				if(configuredDestinationId != null) {
+					Destination destination = configurationTablesUtil.getDestination(configuredDestinationId);
+					if(destination == null)
+						throw new DwaraException("Destination " + configuredDestinationId + " is not configured in DB");
+					configuredDestinationPath = destination.getPath();
+				}
 				if(configuredOutputPath != null) {
 					String normalizedOutputPath = FilenameUtils.normalizeNoEndSeparator(configuredOutputPath);
 					if(normalizedOutputPath == null)

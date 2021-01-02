@@ -313,8 +313,23 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 						FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 //						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
 						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = filePathToFileObj.get(outputArtifactName);
+						String artifactFileAbsolutePathName = outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName;
 						if(artifactFile == null) { // only if not already created... 
-							artifactFile = createFile(outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName, outputArtifact, domainSpecificFileRepository, domain);	
+							artifactFile = createFile(artifactFileAbsolutePathName, outputArtifact, domainSpecificFileRepository, domain);	
+						}else {
+							// if artifactFile already exists - need to recalculate the size for i/p = o/p artifact class scenarios which will change the dynamics of the folder completely
+							if(outputArtifactName.equals(inputArtifact.getName())){
+								File file = new File(artifactFileAbsolutePathName);
+	
+								if(file.exists()) {
+									try {
+										artifactFile.setSize(FileUtils.sizeOf(file));
+									}catch (Exception e) {
+										logger.warn("Weird. File exists but fileutils unable to calculate size. Skipping setting size");
+									}
+								}
+								artifactFile = domainSpecificFileRepository.save(artifactFile);
+							}
 						}
 						
 //						String proxyFilePathName = processingtaskResponse.getDestinationPathname(); 
@@ -337,7 +352,19 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 						}
 						
 						outputArtifact.setTotalSize(artifactFile.getSize());
-					    outputArtifact.setFileCount(processedFileNames.length);
+						File file = new File(artifactFileAbsolutePathName);
+						
+						if(file.exists()) {
+							try {
+								artifactFile.setSize(FileUtils.sizeOf(file));
+							}catch (Exception e) {
+								logger.warn("Weird. File exists but fileutils unable to calculate size. Skipping setting size");
+							}
+						}
+						int artifactFileCnt = new File(artifactFileAbsolutePathName).list(fileNameFilter).length;
+						//outputArtifact.setFileCount(processedFileNames.length);
+						logger.trace(processingtaskName + ":" + artifactFileCnt + ":" +  processedFileNames.length);
+						outputArtifact.setFileCount(artifactFileCnt);
 					    outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
 					}
 				//}
@@ -393,12 +420,13 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		
 		// TODO need to be done and set after proxy file is generated
 		//nthFileRowToBeInserted.setChecksum(ChecksumUtil.getChecksum(new File(processingtaskResponse.getDestinationPathname()), Checksumtype.sha256)); 
-		logger.trace("Calc size of " + filePathname);
 		File file = new File(fileAbsolutePathName);
 		if(file.isDirectory())
 			nthFileRowToBeInserted.setDirectory(true);
+		
 		if(file.exists()) {
 			try {
+				logger.trace("Calc size of " + filePathname);
 				nthFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
 			}catch (Exception e) {
 				logger.warn("Weird. File exists but fileutils unable to calculate size. Skipping setting size");
