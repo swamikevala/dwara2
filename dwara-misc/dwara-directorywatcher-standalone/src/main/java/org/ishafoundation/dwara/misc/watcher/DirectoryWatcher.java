@@ -32,6 +32,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -61,6 +63,12 @@ public class DirectoryWatcher {
 	private static Path rootIngestLoc = null;
 	private static Executor executor = null;
 	private static String ingestEndpointUrl = null;
+
+	private static Pattern categoryNamePrefixPattern = Pattern.compile("^([A-Z]{1,2})\\d+");
+	
+//	{"A","B","D","E","F","M","P","Q","R","AD","AG","AH","AK","AN","AZ","BD"}
+//	{"W","X","Y"}
+//	{"C","G","H","I","J","K","L","N","S","T","U","V","AA","AB","AC","AE","AF","AI","AJ","AL","AM","AR","AS","AW","AX","AY","BB","BC","BE","BG","BJ","TV","Z"}
 
 	@SuppressWarnings("unchecked")
 	static <T> WatchEvent<T> cast(WatchEvent<?> event) {
@@ -291,8 +299,9 @@ public class DirectoryWatcher {
 		public void run() {
 			String expectedMd5 = null;
 			String actualMd5 = null;
-			Path artifactPath = mxfFilePathname.getParent();
-			File artifactFileObj = artifactPath.toFile();
+			Path artifactMxfSubfolderPath = mxfFilePathname.getParent();
+			Path artifactPath = artifactMxfSubfolderPath.getParent();
+			File artifactFileObj = artifactMxfSubfolderPath.toFile();
 			
 			for (int i = 0; i < 60; i++) {
 				//logger.debug(mxfFilePathname + ":" + artifactPath);
@@ -318,9 +327,8 @@ public class DirectoryWatcher {
 						logger.info(artifactPath + " expectedMd5 " + expectedMd5 + " actualMd5 " + actualMd5);
 						if(expectedMd5.equals(actualMd5)) {
 							updateStatus(artifactPath, Status.verified);
-							Path destArtifactPath = moveFolderToOpsAreaAndOrganise(watchKey, artifactPath);
+							Path destArtifactPath = moveFolderToOpsAreaAndOrganise(watchKey, artifactMxfSubfolderPath);
 							ingest(destArtifactPath);
-							updateStatus(artifactPath, Status.moved);
 						}else {
 							logger.error(artifactPath + "MD5 expected != actual, Now what??? ");
 							updateStatus(artifactPath, Status.md5_mismatch);
@@ -345,7 +353,7 @@ public class DirectoryWatcher {
 					}
 				}
 			}
-			logger.info("Giving up on " + artifactPath + ". Could be a networking issue... Please do it manually"); // Could be a networking issue...
+			logger.info("Giving up on " + artifactMxfSubfolderPath + ". Could be a networking issue... Please do it manually"); // Could be a networking issue...
 		}
 		
 		private Path moveFolderToOpsAreaAndOrganise(WatchKey watchKey, Path srcPath) throws Exception {
@@ -355,12 +363,24 @@ public class DirectoryWatcher {
 					watchKey.cancel();
 
 				String artifactName = getArtifactName(srcPath);
-				String artifactClassFolderName = "video-digi-2020-pub";
-				if(artifactName.startsWith("priv1")) {
+				
+				String artifactNamePrefix = null;
+				Matcher m = categoryNamePrefixPattern.matcher(artifactName);  		
+				if(m.find())
+					artifactNamePrefix = m.group(1);
+
+				Categoryelement category = Categoryelement.valueOf(artifactNamePrefix);
+				
+				String artifactClassFolderName = null;
+				if(category.getCategory().equals("Public"))
+					artifactClassFolderName = "video-digi-2020-pub";
+				else if(category.getCategory().equals("Private1"))
 					artifactClassFolderName = "video-digi-2020-priv1";
-				}else if(artifactName.startsWith("priv2")) {
+				else if(category.getCategory().equals("Private2"))
 					artifactClassFolderName = "video-digi-2020-priv2";
-				}
+				
+				if(artifactClassFolderName == null)
+					throw new Exception("Not able to categorize " + artifactNamePrefix + ":" + artifactName);
 				
 				destArtifactPath = Paths.get(rootIngestLoc.toString(), artifactClassFolderName, artifactName);
 				final Path dest = Paths.get(destArtifactPath.toString(), "mxf");
@@ -372,6 +392,8 @@ public class DirectoryWatcher {
 						return FileVisitResult.CONTINUE;
 					}
 				});
+				
+				logger.info(srcPath.getParent() + " moved succesfully to " + destArtifactPath);
 				
 //				CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
 //				clei.executeCommand("chmod -R 777 " + dest.getParent().toString(), false);
@@ -404,7 +426,8 @@ public class DirectoryWatcher {
 			String response = null;
 			try {
 				response = HttpClientUtil.postIt(ingestEndpointUrl, null, payload);
-				logger.debug("resp " + response);
+				updateStatus(path, Status.ingested);
+				logger.info(path + " Ingest response from dwara : " + response);
 			}catch (Exception e) {
 				logger.error("Error on invoking ingest endpoint - " + e.getMessage());
 			}
@@ -419,6 +442,7 @@ public class DirectoryWatcher {
     	md5_mismatch,
     	moved,
     	move_failed,
+    	ingested,
     	failed;
     }
     
@@ -427,7 +451,7 @@ public class DirectoryWatcher {
 	}
 
 	static void usage() {
-		System.err.println("usage: java DirectoryWatcher [waitTimeInSecs] <dirToBeWatched(\"/data/user/pgurumurthy/ingest\")> <rootIngestLocation(\"/data/dwara/user/prasadcorp/ingest\")> noOfThreadsForChecksumVerification <ingestEndpointUrl(\"http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest\")>");
+		System.err.println("usage: java DirectoryWatcher [waitTimeInSecs] <dirToBeWatched(\"/data/prasad-staging\")> <rootIngestLocation(\"/data/dwara/user/prasadcorp/ingest\")> noOfThreadsForChecksumVerification <ingestEndpointUrl(\"http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest\")>");
 		System.exit(-1);
 	}
 	

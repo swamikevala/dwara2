@@ -1,4 +1,5 @@
 # Dwara App Version - 2.1.02
+### New features 
 1 Rename on hold
 
 2 Generic Configurable File copier
@@ -7,17 +8,17 @@
 
 4 Support for Multi requeue
 
-Bug fix
+### Bug fixes
 
-Fix for Race condition on update job between scheduledStatusUpdater and processing layer.
+1 Fix for Race condition on update job between scheduledStatusUpdater and processing layer.
 
-Digi Artifact File count and size
+2 Digi Artifact File count and size
 
-Multi release
+3 Multi release???
 
 
 ### Upgrade steps
-  * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_2.sql)
+  * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_0_3_hotfix3.sql)
    
 # Dwara App Version - 2.1.01-hotfix1
 1 Preservation Job split
@@ -34,7 +35,7 @@ Multi release
   * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_0_3_hotfix2.sql)
 
 # Dwara App Version - 2.1
-# Dwara DB Version - 2.1
+# Dwara DB Version - 2.0.3
 ### New features 
 1 Digitization support 
   
@@ -69,6 +70,7 @@ Multi release
   * Delete Artifact API
   
   * Hold and Release Requests
+
 ### Bug fixes
 1 Subsequent Writes on a volume is blocked until all previous Write Job and all its dependencies are completed
 

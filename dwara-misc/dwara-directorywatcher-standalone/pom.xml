@@ -24,7 +24,7 @@
 			<version>2.10.3</version>
 		</dependency>
 	</dependencies>
-		<profiles>
+	<profiles>
 		<profile>
 			<id>tools</id>
 			<properties>
