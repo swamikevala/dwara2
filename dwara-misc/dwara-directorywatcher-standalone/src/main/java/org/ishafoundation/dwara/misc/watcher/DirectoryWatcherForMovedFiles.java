@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Example to watch a directory (or tree) for changes to files.
+ * This class moves an artifact from loc A to loc B and ingest.
  */
 
 public class DirectoryWatcherForMovedFiles {

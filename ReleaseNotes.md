@@ -5,12 +5,20 @@
 
 3 Directory watcher changes
 
+4 Support for Multi requeue
+
 Bug fix
 
 Fix for Race condition on update job between scheduledStatusUpdater and processing layer.
 
 Digi Artifact File count and size
- 
+
+Multi release
+
+
+### Upgrade steps
+  * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_2.sql)
+   
 # Dwara App Version - 2.1.01-hotfix1
 1 Preservation Job split
 

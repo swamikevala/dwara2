@@ -22,13 +22,10 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Executor;
@@ -43,23 +40,27 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
+import org.ishafoundation.dwaraapi.utils.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DirectoryWatcherForCopiedFiles {
 
-	private static Logger logger = LoggerFactory.getLogger(DirectoryWatcherForCopiedFiles.class);
+/**
+ * This class is responsible for watching for files copied in prasadcorp workspace and when completed moves the file to dwara's user specific artifactclass location and calls the ingest 
+ */
+
+public class DirectoryWatcher {
+
+	private static Logger logger = LoggerFactory.getLogger(DirectoryWatcher.class);
 	
 	private final WatchService watchService;
 	private final Path watchedDir;
 	private final Map<WatchKey,Path> keys;
-	private boolean trace = true;
 	private final Map<Path, Long> expirationTimes = new HashMap<Path, Long>();
 	private Long newFileWait = 10000L;
-	private static Path opsDirLoc = null;
-	private static List<String> csvEntries = null;
+	private static Path rootIngestLoc = null;
 	private static Executor executor = null;
-	private static File csvFile = null;
+	private static String ingestEndpointUrl = null;
 
 	@SuppressWarnings("unchecked")
 	static <T> WatchEvent<T> cast(WatchEvent<?> event) {
@@ -69,18 +70,14 @@ public class DirectoryWatcherForCopiedFiles {
 	/**
 	 * Creates a WatchService and registers the given directory
 	 */
-	DirectoryWatcherForCopiedFiles(Path dir, Long waitTime) throws IOException {
+	DirectoryWatcher(Path dir, Long waitTime) throws IOException {
 		this.watchService = FileSystems.getDefault().newWatchService();
 		this.watchedDir = dir;
 		this.newFileWait = waitTime;
 		this.keys = new HashMap<WatchKey,Path>();
 
-		System.out.format("Scanning %s ...\n", dir);
+		logger.info(String.format("Scanning %s ...\n", dir));
 		registerAll(dir);
-		System.out.println("Done.");
-
-		// enable trace after initial registration
-		this.trace = false;
 	}
 
 	/**
@@ -99,12 +96,11 @@ public class DirectoryWatcherForCopiedFiles {
 				}
 				register(dir);
 				
-				if(!dir.toString().equals(watchedDir.toString())) {
+				if(!dir.toString().equals(watchedDir.toString())) {// if there were folders already copied to the watch folder trigger a modify event so that we handleexpiredtimes 
 					CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
 					try {
 						clei.executeCommand("chmod -R 777 " + dir.toString(), false);
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
@@ -119,13 +115,13 @@ public class DirectoryWatcherForCopiedFiles {
 	private void register(Path dir) throws IOException {
 		WatchKey key = dir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
 		
-		if (trace) {
+		if (logger.isTraceEnabled()) {
 			Path prev = keys.get(key);
 			if (prev == null) {
-				System.out.format("register: %s\n", dir);
+				logger.info(String.format("register: %s\n", dir));
 			} else {
 				if (!dir.equals(prev)) {
-					System.out.format("update: %s -> %s\n", prev, dir);
+					logger.info(String.format("update: %s -> %s\n", prev, dir));
 				}
 			}
 		}
@@ -153,7 +149,7 @@ public class DirectoryWatcherForCopiedFiles {
 
 					Path dir = keys.get(key);
 					if (dir == null) {
-						System.err.println("WatchKey not recognized!!");
+						logger.error("WatchKey not recognized!!");
 						continue;
 					}
 
@@ -170,70 +166,45 @@ public class DirectoryWatcherForCopiedFiles {
 						Path child = dir.resolve(name);
 
 						// print out event
-						if (trace)
-							System.out.format("%s: %s\n", event.kind().name(), child);
+						if (logger.isTraceEnabled())
+							logger.trace(String.format("%s: %s\n", event.kind().name(), child));
 
 						// if directory is created, and watching recursively, then
 						// register it and its sub-directories
 						if (kind == ENTRY_CREATE || kind == ENTRY_MODIFY) {
 							if (kind == ENTRY_CREATE) {
 								try {
-	//								createCSVEntry(child);
 									updateStatus(child, Status.copying);
-	//								Path prev = keys.get(key);
-	//								if (prev != null && !dir.equals(prev)) {
-	//									updateStatus(child, Status.done);
-	//									deleteCSVEntry(prev);
-	//									System.out.format("update: %s -> %s\n", prev, dir);
-	//								}
 	
 									if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
 										registerAll(child);
 									}
-									
-	//								Path newDir = keys.get(key);
-	//								//System.out.format("test :: %s -> %s\n", newDir, child);
-	//								if (newDir != null && !dir.equals(newDir)) { // if its renamed
-	//									renameEntry(newDir, child);
-	//									System.out.format("update: %s -> %s\n", newDir, child);
-	//								}
-	//								else {
-	//									createCSVEntry(child);
-	//								}
 	
 								} catch (IOException x) {
 									// ignore to keep sample readbale
 								}
 							}
-//							Path artifactPath = getArtifactPath(child);
-//							if (trace)
-//								System.out.println("artifactPath " + artifactPath);
-							
+
 							// Update modified time
 							BasicFileAttributes attrs = null;
 							try {
 								attrs = Files.readAttributes(child, BasicFileAttributes.class, NOFOLLOW_LINKS);
 							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								// e.printStackTrace();
 								continue; // Happens when copy complete, but permissions set by stagedservice triggered this event but by then the stagedservice thread moved this file to /data/staged...
 							}
 							FileTime lastModified = attrs.lastModifiedTime();
-							if (trace)
+							if (logger.isTraceEnabled())
 								System.out.println(child + " lastModified " + lastModified);
 							expirationTimes.put(child, lastModified.toMillis()+newFileWait);
 						}
-//						else if (kind == ENTRY_DELETE) {
-//							updateStatus(child, Status.moved);
-//						}
 					}
 
 					// reset key and remove from set if directory no longer accessible
 					boolean valid = key.reset();
 					if (!valid) {
-						if (trace) {
-							System.out.println(key + " not valid");
-							System.out.println("Will be removing " + keys.get(key) + " from key list");
+						if (logger.isTraceEnabled()) {
+							logger.trace(key + " not valid");
+							logger.trace("Will be removing " + keys.get(key) + " from key list");
 						}
 						keys.remove(key);
 
@@ -244,8 +215,8 @@ public class DirectoryWatcherForCopiedFiles {
 					}
 				}
 				else {
-					if (trace)
-						System.out.println("No pending events");
+					if (logger.isTraceEnabled())
+						logger.trace("No pending events");
 				}
 
 				handleExpiredWaitTimes(key, currentTime);
@@ -256,8 +227,8 @@ public class DirectoryWatcherForCopiedFiles {
 
 				long minExpiration = Collections.min(expirationTimes.values());
 				long timeout = minExpiration - currentTime;
-				if (trace)
-					System.out.println("timeout: "+timeout);
+				if (logger.isTraceEnabled())
+					logger.trace("timeout: "+timeout);
 				key = watchService.poll(timeout, TimeUnit.MILLISECONDS);
 			}
 		}
@@ -265,8 +236,8 @@ public class DirectoryWatcherForCopiedFiles {
 
 	private Path getArtifactPath(Path child){
 		String artifactName = getArtifactName(child);
-		if (trace)
-			System.out.println("artifactName " + artifactName);
+		if (logger.isTraceEnabled())
+			logger.trace("artifactName " + artifactName);
 		return Paths.get(watchedDir.toString(), artifactName); 
 	}
 
@@ -288,22 +259,6 @@ public class DirectoryWatcherForCopiedFiles {
 			if(expiryTime <= currentTime) {
 				if(filePath.getFileName().toString().endsWith(".mxf"))
 					verifyChecksumAndMoveToOpsArea(watchKey, filePath);
-				
-//				Integer copiedFileCountOfArtifact = artifactPath_CopiedFileCount.get(artifactPath);
-//				//System.out.println(key + ":" + copiedFileCountOfArtifact);
-//				if(copiedFileCountOfArtifact != null)
-//					copiedFileCountOfArtifact = copiedFileCountOfArtifact + 1;
-//				else 
-//					copiedFileCountOfArtifact = 1;
-//				
-//				artifactPath_CopiedFileCount.put(artifactPath, copiedFileCountOfArtifact);
-//				System.out.println(artifactPath + ":" + copiedFileCountOfArtifact);
-//				if(copiedFileCountOfArtifact == 1) {
-//					System.out.println(artifactPath + " copy completed");
-//					verifyChecksumAndMoveToOpsArea(artifactPath);
-//				}
-				// System.out.println("expired " + item.getKey());
-
 				it.remove();
 			}
 		}
@@ -350,9 +305,7 @@ public class DirectoryWatcherForCopiedFiles {
 						updateStatus(artifactPath, Status.copy_complete);
 						for (File file : files) {
 							String fileName = file.getName();
-							//System.out.println(fileName);
 							if(fileName.endsWith(".md5")) {
-								// TODO : What will be the md5 file content sample looking like ? // d44f11c6df36d8be680db44e969e7ff0  sample-ntsc.mxf
 								expectedMd5 = StringUtils.substringBefore(FileUtils.readFileToString(file), "  ").trim().toUpperCase();
 							}
 							else if(fileName.endsWith(".mxf")) {
@@ -362,10 +315,11 @@ public class DirectoryWatcherForCopiedFiles {
 							    actualMd5 = DatatypeConverter.printHexBinary(digest).toUpperCase();
 							}
 						}
-						logger.debug(artifactPath + " expectedMd5 " + expectedMd5 + " actualMd5 " + actualMd5);
+						logger.info(artifactPath + " expectedMd5 " + expectedMd5 + " actualMd5 " + actualMd5);
 						if(expectedMd5.equals(actualMd5)) {
 							updateStatus(artifactPath, Status.verified);
-							moveFolderToOpsAreaAndOrganise(watchKey, artifactPath);
+							Path destArtifactPath = moveFolderToOpsAreaAndOrganise(watchKey, artifactPath);
+							ingest(destArtifactPath);
 							updateStatus(artifactPath, Status.moved);
 						}else {
 							logger.error(artifactPath + "MD5 expected != actual, Now what??? ");
@@ -377,7 +331,6 @@ public class DirectoryWatcherForCopiedFiles {
 						try {
 							updateStatus(artifactPath, Status.move_failed);
 						} catch (Exception e1) {
-							// TODO Auto-generated catch block
 							e1.printStackTrace();
 						}
 					}
@@ -387,44 +340,30 @@ public class DirectoryWatcherForCopiedFiles {
 						logger.debug(artifactPath + " waiting for mxf sidecar files. Retry count " + i);
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 						return;
 					}
 				}
 			}
-			logger.debug("Giving up on " + artifactPath + ". pls do it manually");
+			logger.info("Giving up on " + artifactPath + ". Could be a networking issue... Please do it manually"); // Could be a networking issue...
 		}
 		
-		private void moveFolderToOpsAreaAndOrganise(WatchKey watchKey, Path srcPath) throws Exception {
+		private Path moveFolderToOpsAreaAndOrganise(WatchKey watchKey, Path srcPath) throws Exception {
+			Path destArtifactPath = null;
 			try {
 				if(watchKey!=null)
 					watchKey.cancel();
-//				// reset key and remove from set if directory no longer accessible
-//				boolean valid = key.reset();
-//				if (!valid) {
-//					if (trace) {
-//						System.out.println(key + " not valid");
-//						System.out.println("Will be removing " + keys.get(key) + " from key list");
-//					}
-//					keys.remove(key);
-	//
-//					// all directories are inaccessible
-//					if (keys.isEmpty()) {
-//						break;
-//					}
-//				}
-	//
-//				Collection<File> files = FileUtils.listFiles(artifactPath.toFile(), null, false);
-//				System.out.println(key + ":" + files.size());
-//				if(files.size() == 4) {
-//					System.out.println(artifactPath + " copy completed");
-//					
-//				}
-
 
 				String artifactName = getArtifactName(srcPath);
-				final Path dest = Paths.get(opsDirLoc.toString(), artifactName, "mxf");
+				String artifactClassFolderName = "video-digi-2020-pub";
+				if(artifactName.startsWith("priv1")) {
+					artifactClassFolderName = "video-digi-2020-priv1";
+				}else if(artifactName.startsWith("priv2")) {
+					artifactClassFolderName = "video-digi-2020-priv2";
+				}
+				
+				destArtifactPath = Paths.get(rootIngestLoc.toString(), artifactClassFolderName, artifactName);
+				final Path dest = Paths.get(destArtifactPath.toString(), "mxf");
 				Files.createDirectories(dest);
 				Files.walkFileTree(srcPath, new SimpleFileVisitor<Path>() {
 					@Override
@@ -433,67 +372,45 @@ public class DirectoryWatcherForCopiedFiles {
 						return FileVisitResult.CONTINUE;
 					}
 				});
-				CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
-				clei.executeCommand("chmod -R 777 " + dest.getParent().toString(), false);
+				
+//				CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
+//				clei.executeCommand("chmod -R 777 " + dest.getParent().toString(), false);
 				
 				FileUtils.deleteDirectory(srcPath.toFile());
 			} catch (IOException e) {
 				e.printStackTrace();
 				updateStatus(srcPath, Status.move_failed);
 			}
+			return destArtifactPath;
 		}
 	}
 
-    
-	
-	private void createCSVEntry(Path child) throws Exception {
-		String artifactName = getArtifactName(child);
+	public void ingest(Path path) {
+    	if(path.getNameCount() > 7) { // Expecting path = /data/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1
+    		System.err.println("File Path with more than 7 elements is not supported. Expected something like /data/dwara/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1 but actual is " + path);
+    	}
+    	else {
+	    	String artifactBasePath = path.getParent().toString();
+	    	String artifactName = path.getFileName().toString();
+	    	String artifactclass = path.getName(path.getNameCount() - 2).toString();
 
-		List<String> csvEntriesToBeRemoved = findEntries(artifactName);
-		csvEntries.removeAll(csvEntriesToBeRemoved);
+	    	
+	    	String payload = "{\"artifactclass\":\"<<Artifactclass>>\",\"stagedFiles\":[{\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\"}]}";
+	    	payload = payload.replace("<<Artifactclass>>", artifactclass);
+	    	payload = payload.replace("<<Path>>", artifactBasePath);
+	    	payload = payload.replace("<<ArtifactName>>", artifactName);
+	    	logger.debug("payload "+ payload);
 
-		csvEntries.add(artifactName + ", " + LocalDateTime.now() + ", " + Status.copying);//.contains(o)
-		FileUtils.writeLines(csvFile, csvEntries);
-	}
-	
-
-	private void deleteCSVEntry(Path prev) throws Exception {
-		String artifactName = getArtifactName(prev);
-		List<String> csvEntriesToBeRemoved = findEntries(artifactName);
-		csvEntries.removeAll(csvEntriesToBeRemoved);
-		FileUtils.writeLines(csvFile, csvEntries);
-	}
-	
-	private List<String> findEntries(String artifactName) {
-		// Add only when artifact not there. For QC failure scenarios the file would come again...
-		List<String> csvEntriesInvolved = new ArrayList<String>();
-		for (String nthCSVEntry : csvEntries) {
-			if(nthCSVEntry.startsWith(artifactName + ", ")) {
-				csvEntriesInvolved.add(nthCSVEntry);
-				//break; // Dont break so even if there are dupe entries they can be updated...
+			String response = null;
+			try {
+				response = HttpClientUtil.postIt(ingestEndpointUrl, null, payload);
+				logger.debug("resp " + response);
+			}catch (Exception e) {
+				logger.error("Error on invoking ingest endpoint - " + e.getMessage());
 			}
-		}
-		return csvEntriesInvolved;
+    	}			
 	}
 	
-	private void renameEntry(Path prev, Path child) {
-		String oldArtifactName = getArtifactName(prev);
-		String newArtifactName = getArtifactName(child);
-		for (String nthCSVEntry : csvEntries) {
-			String searchString = oldArtifactName + ", ";
-			String replaceString = newArtifactName + ", ";
-			if(nthCSVEntry.startsWith(searchString)) {
-		        int index = csvEntries.indexOf(nthCSVEntry);
-
-				nthCSVEntry = nthCSVEntry.replaceAll(searchString, replaceString);
-				System.out.println(oldArtifactName + " --> " + newArtifactName);
-				csvEntries.set(index, nthCSVEntry);
-
-				//break; // Dont break so even if there are dupe entries they are updated...
-			}
-		}
-	}
-    
     private enum Status {
     	copying,
     	copy_complete,
@@ -506,38 +423,22 @@ public class DirectoryWatcherForCopiedFiles {
     }
     
 	private void updateStatus(Path child, Status status) throws Exception {
-		logger.debug(String.format("%s %s", child, status.name()));
-		//updateLog(child + ":" + status.name());
-		
-//
-//		String artifactName = getArtifactName(child);
-//		// Add only when artifact not there. For QC failure scenarios the file would come again...
-//		for (String nthCSVEntry : csvEntries) {
-//			if(nthCSVEntry.startsWith(artifactName + ", ")) {
-//		        int index = csvEntries.indexOf(nthCSVEntry);
-//
-//				nthCSVEntry = nthCSVEntry.replaceAll(", [^,]*$", ", " + status.name());
-//				//System.out.println(artifactName + " status " + status.name());
-//				csvEntries.set(index, nthCSVEntry);
-//				// break; // Dont break so even if there are dupe entries they are updated
-//			}
-//		}
-//		FileUtils.writeLines(csvFile, csvEntries);
+		logger.info(String.format("%s %s", child, status.name()));
 	}
 
 	static void usage() {
-		System.err.println("usage: java DirectoryWatcher [waitTimeInSecs] <dirToBeWatched(\"/data/user/pgurumurthy/ingest\")> <opsDirLocation(\"/data/preprod/ops\")> noOfThreadsForChecksumVerification");
+		System.err.println("usage: java DirectoryWatcher [waitTimeInSecs] <dirToBeWatched(\"/data/user/pgurumurthy/ingest\")> <rootIngestLocation(\"/data/dwara/user/prasadcorp/ingest\")> noOfThreadsForChecksumVerification <ingestEndpointUrl(\"http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest\")>");
 		System.exit(-1);
 	}
 	
 	public static void main(String[] args) throws Exception {
 		// parse arguments
-		if (args.length == 0 || args.length > 4)
+		if (args.length == 0 || args.length > 5)
 			usage();
 
 		int dirArg = 0;
 		long waitTimes = 0L;
-		if (args.length == 4) {
+		if (args.length == 5) {
 			waitTimes = Long.parseLong(args[0]) * 1000;
 			dirArg++;
 		}
@@ -545,17 +446,13 @@ public class DirectoryWatcherForCopiedFiles {
 		// register directory and process its events
 		Path dir = Paths.get(args[dirArg]);
 
-		opsDirLoc = Paths.get(args[dirArg + 1]);
-		String csvFilepathname = opsDirLoc + File.separator + "prasad-transfer.csv";
-		csvFile = new File(csvFilepathname);  
-		if(!csvFile.exists())
-			FileUtils.write(csvFile, "artifact name, datetime copied, status", false);
-		
-		csvEntries = FileUtils.readLines(csvFile);
+		rootIngestLoc = Paths.get(args[dirArg + 1]);
 		
 		int noOfThreads = Integer.parseInt(args[dirArg + 2]);
 		executor = new ThreadPoolExecutor(noOfThreads, noOfThreads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 
-		new DirectoryWatcherForCopiedFiles(dir, waitTimes).processEvents();
+		ingestEndpointUrl = args[dirArg + 3]; // "http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest";
+		
+		new DirectoryWatcher(dir, waitTimes).processEvents();
 	}
 }
