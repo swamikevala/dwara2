@@ -282,18 +282,13 @@ public class ScheduledStatusUpdater {
 		// TODO - Digi hack - clean this up -Long term - iterate through files that are directories and calc their size and update them...
 		if("file-delete".equals(job.getProcessingtaskId()) && artifact.getArtifactclass().getId().startsWith("video-digi-2020-")) {
 			Path artifactMxfSubfolderPath = Paths.get(artifact.getName(), "mxf");
-			
 			File artifactMxfSubfolderObj = artifactMxfSubfolderPath.toFile();
 		
-		    if(artifactMxfSubfolderObj.isDirectory()) {
-		    	long artifactMxfSubfolderSize = FileUtils.sizeOfDirectory(artifactMxfSubfolderObj);
-				org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactMxfSubfolderFileFromDB = domainSpecificFileRepository.findByPathname(artifactMxfSubfolderPath.toString());
-				artifactMxfSubfolderFileFromDB.setSize(artifactMxfSubfolderSize);
-				domainSpecificFileRepository.save(artifactMxfSubfolderFileFromDB);
-		    }
+	    	long artifactMxfSubfolderSize = FileUtils.sizeOfDirectory(artifactMxfSubfolderObj);
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactMxfSubfolderFileFromDB = domainSpecificFileRepository.findByPathname(artifactMxfSubfolderPath.toString());
+			artifactMxfSubfolderFileFromDB.setSize(artifactMxfSubfolderSize);
+			domainSpecificFileRepository.save(artifactMxfSubfolderFileFromDB);
 		}
-			
-		
 	}
 	
 	private void updateSystemRequestStatus(List<Request> requestList) {
