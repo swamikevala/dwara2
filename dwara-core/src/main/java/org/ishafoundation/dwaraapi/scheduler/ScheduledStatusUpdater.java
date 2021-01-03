@@ -281,7 +281,7 @@ public class ScheduledStatusUpdater {
 		
 		// TODO - Digi hack - clean this up -Long term - iterate through files that are directories and calc their size and update them...
 		if("file-delete".equals(job.getProcessingtaskId()) && artifact.getArtifactclass().getId().startsWith("video-digi-2020-")) {
-			Path artifactMxfSubfolderPath = Paths.get(artifactPath.toString(), "mxf");
+			Path artifactMxfSubfolderPath = Paths.get(artifact.getName(), "mxf");
 			
 			File artifactMxfSubfolderObj = artifactMxfSubfolderPath.toFile();
 		
