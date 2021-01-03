@@ -285,12 +285,12 @@ public class DirectoryWatcher {
     
 	public class VerifyChecksumAndMoveToOpsAreaTask implements Runnable{
 		
-		private Path mxfFilePathname;
+		private Path mxfFilePathname; // will have something like /data/prasad-staging/H122/H122.mxf
 		
 		private WatchKey watchKey;
 		
 		public void setMxfFilePath(Path mxfFilePathname) {
-			this.mxfFilePathname = mxfFilePathname;
+			this.mxfFilePathname = mxfFilePathname; 
 		}
 		
 		public void setWatchKey(WatchKey watchKey) {
@@ -303,9 +303,8 @@ public class DirectoryWatcher {
 		public void run() {
 			String expectedMd5 = null;
 			String actualMd5 = null;
-			Path artifactMxfSubfolderPath = mxfFilePathname.getParent();
-			Path artifactPath = artifactMxfSubfolderPath.getParent();
-			File artifactFileObj = artifactMxfSubfolderPath.toFile();
+			Path artifactPath = mxfFilePathname.getParent(); 
+			File artifactFileObj = artifactPath.toFile();
 			
 			for (int i = 0; i < 60; i++) {
 				//logger.debug(mxfFilePathname + ":" + artifactPath);
@@ -331,7 +330,7 @@ public class DirectoryWatcher {
 						logger.info(artifactPath + " expectedMd5 " + expectedMd5 + " actualMd5 " + actualMd5);
 						if(expectedMd5.equals(actualMd5)) {
 							updateStatus(artifactPath, Status.verified);
-							Path destArtifactPath = moveFolderToOpsAreaAndOrganise(watchKey, artifactMxfSubfolderPath);
+							Path destArtifactPath = moveFolderToOpsAreaAndOrganise(watchKey, artifactPath);
 							ingest(destArtifactPath);
 						}else {
 							logger.error(artifactPath + "MD5 expected != actual, Now what??? ");
@@ -357,7 +356,7 @@ public class DirectoryWatcher {
 					}
 				}
 			}
-			logger.info("Giving up on " + artifactMxfSubfolderPath + ". Could be a networking issue... Please do it manually"); // Could be a networking issue...
+			logger.info("Giving up on " + artifactPath + ". Could be a networking issue... Please do it manually"); // Could be a networking issue...
 		}
 		
 		private Path moveFolderToOpsAreaAndOrganise(WatchKey watchKey, Path srcPath) throws Exception {
@@ -397,12 +396,12 @@ public class DirectoryWatcher {
 					}
 				});
 				
-				logger.info(srcPath.getParent() + " moved succesfully to " + destArtifactPath);
+				logger.info(srcPath + " moved succesfully to " + destArtifactPath);
 				
 //				CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
 //				clei.executeCommand("chmod -R 777 " + dest.getParent().toString(), false);
 				
-				FileUtils.deleteDirectory(srcPath.getParent().toFile());
+				FileUtils.deleteDirectory(srcPath.toFile());
 			} catch (IOException e) {
 				e.printStackTrace();
 				updateStatus(srcPath, Status.move_failed);

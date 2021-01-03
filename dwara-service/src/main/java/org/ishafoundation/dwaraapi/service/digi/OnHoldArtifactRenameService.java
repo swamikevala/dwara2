@@ -45,10 +45,10 @@ public class OnHoldArtifactRenameService extends DwaraService{
 	private FileRepositoryUtil fileRepositoryUtil;
 
 	// Artifact rename function to rename artifacts - 1) Soft rename 2) hard rename for held jobs (renames the folder also)
-	public ArtifactResponse hardSoftrenameArtifact(int artifactId, String artifactNewName) throws Exception {	
+	public ArtifactResponse hardSoftrenameArtifact(int artifactId, String newName) throws Exception {	
 		
-		if (!validateArtifactName(artifactNewName)) {
-			throw new Exception("Validation failed!");
+		if (!validateArtifactName(newName)) {
+			throw new Exception("Name validation failed!");
 		};
 		
 		
@@ -66,38 +66,42 @@ public class OnHoldArtifactRenameService extends DwaraService{
 				break;
 			}
 		}
-		
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(artifactId);
-		
-		if(artifactVolumeList.size() > 0)
-			throw new Exception("Artifact already written to tape. Cant be renamed");
-		
+
 		// 2 (a) ------ Artifact level change
 		// Check if the artifact id exists 
 		// If artifact ID is null return error and escape into the unknown
 		if (artifactToRenameActualRow == null) { 
 			throw new Exception("Artifact doesnt exist!");
-		}	
+		}
+		
 		// Check if the folder belongs to a held job  
+		Request writeRequestRowForTheArtifactToRename = artifactToRenameActualRow.getWriteRequest();
+		Status statusOfTheWriteRequestPertainingToTheRenamedFolder =  writeRequestRowForTheArtifactToRename.getStatus();
+		if (statusOfTheWriteRequestPertainingToTheRenamedFolder != Status.on_hold) {
+			// The request is not held Quit.. later only allow soft rename for non held status
+			// EXIT
+			throw new Exception("Request/Artifact not on hold");
+		}
+		
+		// Check if any write has already happened... 
+		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(artifactId);
+		
+		if(artifactVolumeList.size() > 0)
+			throw new Exception("Artifact already written to tape. Rename on hold not supported for already written artifacts...");
+		
+		// Get  the held path from artifactClass path_prefix
+		String heldArtifactPath = artifactToRenameActualRow.getArtifactclass().getPath();
+		
 		String artifactName = artifactToRenameActualRow.getName();
 		String sequenceId = artifactToRenameActualRow.getSequenceCode();
-		artifactNewName = sequenceId + "_" + artifactNewName; 
+		String artifactNewName = sequenceId + "_" + newName; 
 		// Step 1 - Create User Request
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		data.put("artifactId", artifactId);
 		data.put("artifactName",artifactName);
 		data.put("artifactNewName",artifactNewName);
-		Request userRequest = createUserRequest(Action.rename, Status.in_progress, data); 
-		Request writeRequestRowForTheArtifactToRename = artifactToRenameActualRow.getWriteRequest();
-		// Get  the held path from artifactClass path_prefix
-		String heldArtifactPath = artifactToRenameActualRow.getArtifactclass().getPath();
-		Status statusOfTheWriteRequestPertainingToTheRenamedFolder =  writeRequestRowForTheArtifactToRename.getStatus() ;
-		if (statusOfTheWriteRequestPertainingToTheRenamedFolder != Status.on_hold) {
-			// The request is not held Quit.. later only allow soft rename for non held status
-			// EXIT
-			//throw new Exception("Not a held job");
-		} 
+		Request userRequest = createUserRequest(Action.rename, Status.in_progress, data);
 
 		// 2 (a) (i) Change the artifact name entry in artifact table
 		artifactToRenameActualRow.setName(artifactNewName);

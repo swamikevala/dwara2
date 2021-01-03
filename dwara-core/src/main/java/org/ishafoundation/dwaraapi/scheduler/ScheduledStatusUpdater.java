@@ -174,13 +174,14 @@ public class ScheduledStatusUpdater {
 						RequestDetails requestDetails = request.getDetails();
 						org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 
-						Integer inputArtifactId = job.getInputArtifactId(); // For processing tasks like file-deleter and file-mover
+						Integer inputArtifactId = job.getInputArtifactId(); // For processing tasks like file-deleter and file-mover we need to update the count and size
+						
 						Integer outputArtifactId = job.getOutputArtifactId();
 						if(outputArtifactId != null && !outputArtifactId.equals(inputArtifactId)) {
-							updateArtifactSizeAndCount(outputArtifactId);
+							updateArtifactSizeAndCount(job, outputArtifactId);
 						}
 
-						updateArtifactSizeAndCount(inputArtifactId);
+						updateArtifactSizeAndCount(job, inputArtifactId);
 						
 						// TODO : hack for digitization need to improve
 						if(requestedAction == Action.ingest) {
@@ -249,7 +250,7 @@ public class ScheduledStatusUpdater {
 		}
 	}
 	
-	private void updateArtifactSizeAndCount(int artifactId) {
+	private void updateArtifactSizeAndCount(Job job, int artifactId) {
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact = domainUtil.getDomainSpecificArtifact(artifactId);
 		
 		Path artifactPath = Paths.get(artifact.getArtifactclass().getPath(), artifact.getName());
@@ -277,6 +278,22 @@ public class ScheduledStatusUpdater {
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFileFromDB = domainSpecificFileRepository.findByPathname(artifact.getName());
 		artifactFileFromDB.setSize(artifactSize);
 		domainSpecificFileRepository.save(artifactFileFromDB);
+		
+		// TODO - Digi hack - clean this up -Long term - iterate through files that are directories and calc their size and update them...
+		if("file-delete".equals(job.getProcessingtaskId()) && artifact.getArtifactclass().getId().startsWith("video-digi-2020-")) {
+			Path artifactMxfSubfolderPath = Paths.get(artifactPath.toString(), "mxf");
+			
+			File artifactMxfSubfolderObj = artifactMxfSubfolderPath.toFile();
+		
+		    if(artifactMxfSubfolderObj.isDirectory()) {
+		    	long artifactMxfSubfolderSize = FileUtils.sizeOfDirectory(artifactMxfSubfolderObj);
+				org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactMxfSubfolderFileFromDB = domainSpecificFileRepository.findByPathname(artifactMxfSubfolderPath.toString());
+				artifactMxfSubfolderFileFromDB.setSize(artifactMxfSubfolderSize);
+				domainSpecificFileRepository.save(artifactMxfSubfolderFileFromDB);
+		    }
+		}
+			
+		
 	}
 	
 	private void updateSystemRequestStatus(List<Request> requestList) {
