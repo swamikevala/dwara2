@@ -111,7 +111,7 @@ public class DirectoryWatcher {
 							updateStatus(dir, Status.copying);
 						clei.executeCommand("chmod -R 777 " + dir.toString(), false);
 					} catch (Exception e) {
-						e.printStackTrace();
+						logger.error(e.getMessage(), e);
 					}
 				}
 				return FileVisitResult.CONTINUE;
@@ -338,11 +338,12 @@ public class DirectoryWatcher {
 						}
 						return;
 					}catch (Exception e) {
-						e.printStackTrace();
+						logger.error("Unable to process " + artifactPath, e);
 						try {
 							updateStatus(artifactPath, Status.move_failed);
+							return;
 						} catch (Exception e1) {
-							e1.printStackTrace();
+							logger.error(e1.getMessage(), e1);
 						}
 					}
 				}
@@ -351,7 +352,7 @@ public class DirectoryWatcher {
 						logger.debug(artifactPath + " waiting for mxf sidecar files. Retry count " + i);
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						logger.error(e.getMessage(), e);
 						return;
 					}
 				}
@@ -372,7 +373,16 @@ public class DirectoryWatcher {
 				if(m.find())
 					artifactNamePrefix = m.group(1);
 
-				Categoryelement category = Categoryelement.valueOf(artifactNamePrefix);
+				Categoryelement category = null;
+				
+				try {
+					category = Categoryelement.valueOf(artifactNamePrefix);
+				}
+				catch (Exception e) {
+					String msg = "Not able to categorize " + artifactNamePrefix + ":" + artifactName;
+					logger.error(msg);
+					throw new Exception(msg);
+				}
 				
 				String artifactClassFolderName = null;
 				if(category.getCategory().equals("Public"))
@@ -382,9 +392,11 @@ public class DirectoryWatcher {
 				else if(category.getCategory().equals("Private2"))
 					artifactClassFolderName = "video-digi-2020-priv2";
 				
-				if(artifactClassFolderName == null)
-					throw new Exception("Not able to categorize " + artifactNamePrefix + ":" + artifactName);
-				
+				if(artifactClassFolderName == null) {
+					String msg = "Not able to categorize " + artifactNamePrefix + ":" + artifactName;
+					logger.error(msg);
+					throw new Exception(msg);
+				}
 				destArtifactPath = Paths.get(rootIngestLoc.toString(), artifactClassFolderName, artifactName);
 				final Path dest = Paths.get(destArtifactPath.toString(), "mxf");
 				Files.createDirectories(dest);
@@ -403,7 +415,7 @@ public class DirectoryWatcher {
 				
 				FileUtils.deleteDirectory(srcPath.toFile());
 			} catch (IOException e) {
-				e.printStackTrace();
+				logger.error(e.getMessage(), e);
 				updateStatus(srcPath, Status.move_failed);
 			}
 			return destArtifactPath;
