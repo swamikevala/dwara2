@@ -9,6 +9,8 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
@@ -221,12 +223,12 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 
 						// get all the processed files and check if all the filetype extensions are returned...
 						//String processedFilePathName = processingtaskResponse.getDestinationPathname(); 
-						String processedFileBaseName = FilenameUtils.getBaseName(logicalFile.getAbsolutePath());
+						String srcFileBaseName = FilenameUtils.getBaseName(logicalFile.getAbsolutePath());
 						
 				        FilenameFilter fileNameFilter = new FilenameFilter() {
 				            @Override
 				            public boolean accept(File dir, String name) {
-				            	if(FilenameUtils.getBaseName(name).equals(processedFileBaseName))
+				            	if(FilenameUtils.getBaseName(name).equals(srcFileBaseName))
 				            		return true;
 				               
 				               return false;
@@ -253,7 +255,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 									}
 								}
 								if(!isExtensionFileAvailable) {
-									throw new DwaraException("Missing expected " + processedFileBaseName + "." + extensionName + " to be generated as output by the processing task");
+									throw new DwaraException("Missing expected " + srcFileBaseName + "." + extensionName + " to be generated as output by the processing task");
 								}
 							}
 						}					
@@ -316,20 +318,20 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 						String artifactFileAbsolutePathName = outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName;
 						if(artifactFile == null) { // only if not already created... 
 							artifactFile = createFile(artifactFileAbsolutePathName, outputArtifact, domainSpecificFileRepository, domain);	
-						}else {
-							// if artifactFile already exists - need to recalculate the size for i/p = o/p artifact class scenarios which will change the dynamics of the folder completely
-							if(outputArtifactName.equals(inputArtifact.getName())){
-								File file = new File(artifactFileAbsolutePathName);
-	
-								if(file.exists()) {
-									try {
-										artifactFile.setSize(FileUtils.sizeOf(file));
-									}catch (Exception e) {
-										logger.warn("Weird. File exists but fileutils unable to calculate size. Skipping setting size");
-									}
-								}
-								artifactFile = domainSpecificFileRepository.save(artifactFile);
-							}
+//						}else {
+//							// if artifactFile already exists - need to recalculate the size for i/p = o/p artifact class scenarios which will change the dynamics of the folder completely
+//							if(outputArtifactName.equals(inputArtifact.getName())){
+//								File file = new File(artifactFileAbsolutePathName);
+//	
+//								if(file.exists()) {
+//									try {
+//										artifactFile.setSize(FileUtils.sizeOf(file));
+//									}catch (Exception e) {
+//										logger.warn("Weird. File exists but fileutils unable to calculate size. Skipping setting size");
+//									}
+//								}
+//								artifactFile = domainSpecificFileRepository.save(artifactFile);
+//							}
 						}
 						
 //						String proxyFilePathName = processingtaskResponse.getDestinationPathname(); 
@@ -351,21 +353,20 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 							}
 						}
 						
-						outputArtifact.setTotalSize(artifactFile.getSize());
-						File file = new File(artifactFileAbsolutePathName);
-						
-						if(file.exists()) {
-							try {
-								artifactFile.setSize(FileUtils.sizeOf(file));
-							}catch (Exception e) {
-								logger.warn("Weird. File exists but fileutils unable to calculate size. Skipping setting size");
-							}
-						}
-						int artifactFileCnt = new File(artifactFileAbsolutePathName).list(fileNameFilter).length;
-						//outputArtifact.setFileCount(processedFileNames.length);
-						logger.trace(processingtaskName + ":" + artifactFileCnt + ":" +  processedFileNames.length);
-						outputArtifact.setFileCount(artifactFileCnt);
-					    outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
+//						File file = new File(artifactFileAbsolutePathName);
+//						if(file.exists()) {
+//							try {
+//								outputArtifact.setTotalSize(artifactFile.getSize());
+//								int artifactFileCnt = FileUtils.listFiles(new File(artifactFileAbsolutePathName), FileFilterUtils.nameFileFilter(srcFileBaseName, null), TrueFileFilter.INSTANCE).size();
+//								//outputArtifact.setFileCount(processedFileNames.length);
+//								logger.trace("Hereee" + processingtaskName + ":" + artifactFileAbsolutePathName + ":" + fileNameFilter + ":" + artifactFileCnt + ":" +  processedFileNames.length);
+//								outputArtifact.setFileCount(artifactFileCnt);
+//							    outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
+//								
+//							}catch (Exception e) {
+//								logger.warn("Weird. File exists but fileutils unable to calculate size. Skipping setting size");
+//							}
+//						}
 					}
 				//}
 				staus = Status.completed;

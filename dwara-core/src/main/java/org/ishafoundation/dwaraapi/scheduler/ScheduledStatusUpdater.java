@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.scheduler;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
@@ -12,11 +13,15 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
@@ -169,8 +174,16 @@ public class ScheduledStatusUpdater {
 						RequestDetails requestDetails = request.getDetails();
 						org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 
+						Integer inputArtifactId = job.getInputArtifactId(); // For processing tasks like file-deleter and file-mover
+						Integer outputArtifactId = job.getOutputArtifactId();
+						if(outputArtifactId != null && !outputArtifactId.equals(inputArtifactId)) {
+							updateArtifactSizeAndCount(outputArtifactId);
+						}
+
+						updateArtifactSizeAndCount(inputArtifactId);
+						
+						// TODO : hack for digitization need to improve
 						if(requestedAction == Action.ingest) {
-							Integer outputArtifactId = job.getOutputArtifactId();
 							if(outputArtifactId != null) {
 								org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact = domainUtil.getDomainSpecificArtifact(outputArtifactId);
 								String pathPrefix = artifact.getArtifactclass().getPath();
@@ -234,6 +247,36 @@ public class ScheduledStatusUpdater {
 				}
 			}
 		}
+	}
+	
+	private void updateArtifactSizeAndCount(int artifactId) {
+		org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact = domainUtil.getDomainSpecificArtifact(artifactId);
+		
+		Path artifactPath = Paths.get(artifact.getArtifactclass().getPath(), artifact.getName());
+		File artifactFileObj = artifactPath.toFile();
+		long artifactSize = 0;
+		int artifactFileCount = 0;
+		
+	    if(artifactFileObj.isDirectory()) {
+			artifactSize = FileUtils.sizeOfDirectory(artifactFileObj);
+			
+	    	String junkFilesStagedDirName = configuration.getJunkFilesStagedDirName();
+	    	IOFileFilter dirFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(junkFilesStagedDirName, null));
+	    	artifactFileCount = FileUtils.listFilesAndDirs(artifactFileObj, TrueFileFilter.INSTANCE, dirFilter).size();
+	    }
+	    else {
+	    	// TODO for single file artifacts...
+	    }
+	    artifact.setTotalSize(artifactSize);
+		artifact.setFileCount(artifactFileCount);
+		
+		ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(artifact.getArtifactclass().getDomain());
+		artifact = (Artifact) artifactRepository.save(artifact);
+		
+		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(artifact.getArtifactclass().getDomain());
+		org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFileFromDB = domainSpecificFileRepository.findByPathname(artifact.getName());
+		artifactFileFromDB.setSize(artifactSize);
+		domainSpecificFileRepository.save(artifactFileFromDB);
 	}
 	
 	private void updateSystemRequestStatus(List<Request> requestList) {
