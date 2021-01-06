@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import org.ishafoundation.dwaraapi.ApplicationStatus;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -24,6 +25,9 @@ public class JobManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(JobManager.class);
 
+	// Should the default be configurable so during dev we dont have to start the app and then run the api to have jobs dequeued?
+	public static ApplicationStatus MODE = ApplicationStatus.maintenance;
+	
 	@Autowired
 	private JobDao jobDao;	
 	
@@ -39,6 +43,9 @@ public class JobManager {
 
 	public void manageJobs() {
 		logger.info("***** Managing jobs now *****");
+		if(MODE == ApplicationStatus.maintenance) {
+			logger.info("Application is in maintenance mode. No jobs will be taken up for action");
+		}
 		List<Job> storageJobsList = new ArrayList<Job>();
 		
 		List<Job> jobList = jobDao.findAllByStatusOrderById(Status.queued); // Irrespective of the tapedrivemapping or format request non storage jobs can still be dequeued, hence we are querying it all... 
