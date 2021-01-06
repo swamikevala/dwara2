@@ -193,6 +193,7 @@ public class StagedService extends DwaraService{
 			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 			String readyToIngestPath =  artifactclass.getPathPrefix();
 			Domain domain = artifactclass.getDomain();
+			Sequence sequence = artifactclass.getSequence();
 			
 			List<Integer> actionelementsToBeSkipped = ingestUserRequest.getSkipActionelements();
 			
@@ -223,6 +224,7 @@ public class StagedService extends DwaraService{
 	    	for (StagedFile stagedFile : stagedFileList) {
 	    		String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
 	    		
+	    		// Hack for Digi per Swami...
 	    		if(FilenameUtils.getBaseName(path).startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX)) {
 	    			String artifactName = stagedFile.getName();
 					Path mxfFilePath = Paths.get(path, artifactName, "mxf");
@@ -253,19 +255,21 @@ public class StagedService extends DwaraService{
 	    		ingestResponse.setStagedFiles(stagedFileDetailsList);
 	    		isLevel1Pass = false;
 	    	}
-	    	else { // Validation Level 2 - Set permissions - Only when level 1 is success we continue...
+	    	else {
 		    	for (StagedFile stagedFile : stagedFileList) {
 					String artifactName = stagedFile.getName();
 					String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
 					
 					java.io.File nthIngestableFile = new java.io.File(path, artifactName);
 					
-			        long size = 0;
-			        int fileCount = 0;
-	
-			        org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails fd = stagedFileEvaluator.getDetails(nthIngestableFile);
-			        size = fd.getTotalSize();
-			        fileCount = fd.getCount();
+					stagedFileDetailsList.add(stagedFileEvaluator.evaluateAndGetDetails(domain, sequence, path, nthIngestableFile));
+					
+//			        long size = 0;
+//			        int fileCount = 0;
+//	
+//			        org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails fd = stagedFileEvaluator.getDetails(nthIngestableFile);
+//			        size = fd.getTotalSize();
+//			        fileCount = fd.getCount();
 			        
 	//		        if(nthIngestableFile.isDirectory()) {
 	//			        ArtifactFileDetails fd = junkFilesDealer.getJunkFilesExcludedFileDetails(nthIngestableFile.getAbsolutePath());
@@ -288,33 +292,33 @@ public class StagedService extends DwaraService{
 	//		        	fileCount = 1;
 	//		        }
 			        
-			        if(fileCount == 0 || size == 0) {
-			        	isLevel1Pass = false;
-						StagedFileDetails sfd = new StagedFileDetails();
-						
-						sfd.setPath(path);
-						sfd.setName(artifactName);
-	
-			        	List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
-			        
-			        	if(size == 0) {
-							Error error = new Error();
-							error.setType(Errortype.Error);
-							error.setMessage(artifactName + " size is 0");
-							errorList.add(error);
-			        	}
-			        	
-			        	if(fileCount == 0) {
-							Error error = new Error();
-							error.setType(Errortype.Error);
-							error.setMessage(artifactName + " has no files inside");
-							errorList.add(error);
-				        }
-						
-			        	sfd.setErrors(errorList);
-						
-						stagedFileDetailsList.add(sfd);
-			        }
+//			        if(fileCount == 0 || size == 0) {
+//			        	isLevel1Pass = false;
+//						StagedFileDetails sfd = new StagedFileDetails();
+//						
+//						sfd.setPath(path);
+//						sfd.setName(artifactName);
+//	
+//			        	
+//			        
+//			        	if(size == 0) {
+//							Error error = new Error();
+//							error.setType(Errortype.Error);
+//							error.setMessage(artifactName + " size is 0");
+//							errorList.add(error);
+//			        	}
+//			        	
+//			        	if(fileCount == 0) {
+//							Error error = new Error();
+//							error.setType(Errortype.Error);
+//							error.setMessage(artifactName + " has no files inside");
+//							errorList.add(error);
+//				        }
+//						
+//			        	sfd.setErrors(errorList);
+//						
+//						stagedFileDetailsList.add(sfd);
+//			        }
 		    	}
 	    	}
 	    	
@@ -425,7 +429,6 @@ public class StagedService extends DwaraService{
 	
 		        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, stagedFileName);
 		        	
-					Sequence sequence = artifactclass.getSequence();
 					String extractedCode = sequenceUtil.getExtractedCode(sequence, stagedFileName);
 					
 					String sequenceCode = null;

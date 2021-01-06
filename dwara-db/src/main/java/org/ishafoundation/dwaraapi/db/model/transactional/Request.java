@@ -69,6 +69,9 @@ public class Request {
 	
 	@Column(name="requested_at")
 	private LocalDateTime requestedAt;
+	
+	@Column(name="completed_at")
+	private LocalDateTime completedAt;
 
 	@ManyToOne(fetch = FetchType.LAZY)
     private Request requestRef;
@@ -123,6 +126,14 @@ public class Request {
 
 	public void setRequestedAt(LocalDateTime requestedAt) {
 		this.requestedAt = requestedAt;
+	}
+	
+	public LocalDateTime getCompletedAt() {
+		return completedAt;
+	}
+
+	public void setCompletedAt(LocalDateTime completedAt) {
+		this.completedAt = completedAt;
 	}
 
 	public Request getRequestRef() {

@@ -209,10 +209,10 @@ public class StagedFileEvaluator {
 
 	private List<Error> validateName(String fileName) {
 		List<Error> errorList = new ArrayList<Error>();
-		if(fileName.length() > 255) {
+		if(fileName.length() > 245) { // 245 because we need to add sequence number
 			Error error = new Error();
 			error.setType(Errortype.Error);
-			error.setMessage("Artifact Name gt 255 characters");
+			error.setMessage("Artifact Name gt 245 characters");
 			errorList.add(error);
 		}
 

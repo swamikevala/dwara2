@@ -285,12 +285,13 @@ public class RequestService extends DwaraService{
 		if(requestType == RequestType.system)
 			requestResponse.setUserRequestId(request.getRequestRef().getId());
 		requestResponse.setRequestedAt(getDateForUI(request.getRequestedAt()));
+		requestResponse.setCompletedAt(getDateForUI(request.getCompletedAt()));
 		requestResponse.setRequestedBy(request.getRequestedBy().getName());
-		
+				
 		requestResponse.setStatus(request.getStatus().name());
 		Action requestAction = request.getActionId();
 		requestResponse.setAction(requestAction.name());
-		if(requestType == RequestType.system) {
+		if(requestType == RequestType.system) {		
 			if(requestAction == Action.ingest) {
 				String artifactclassId = request.getDetails().getArtifactclassId();
 				Domain domain = domainUtil.getDomain(artifactclassId);

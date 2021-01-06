@@ -30,6 +30,7 @@ public class RequestResponse {
     private String type;
     private Integer userRequestId;
     private String requestedAt;
+    private String completedAt;
     private String requestedBy;
     private String action;
     private String status;
@@ -79,6 +80,14 @@ public class RequestResponse {
 
 	public void setRequestedAt(String requestedAt) {
 		this.requestedAt = requestedAt;
+	}
+
+	public String getCompletedAt() {
+		return completedAt;
+	}
+
+	public void setCompletedAt(String completedAt) {
+		this.completedAt = completedAt;
 	}
 
 	public String getRequestedBy() {

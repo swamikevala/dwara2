@@ -298,6 +298,10 @@ public class ScheduledStatusUpdater {
 	private void updateSystemRequestStatus(List<Request> requestList) {
 		for (Request nthRequest : requestList) {
 			List<Job> nthRequestJobs = jobDao.findAllByRequestId(nthRequest.getId());
+			// Fix for no job created usecase
+			if(nthRequestJobs.size() == 0)
+				return;
+				
 			List<Status> jobStatusList = new ArrayList<Status>();
 			for (Job nthJob : nthRequestJobs) {
 				Status nthJobStatus = nthJob.getStatus();
@@ -306,8 +310,11 @@ public class ScheduledStatusUpdater {
 			
 			Status status = getStatus(jobStatusList);
 			logger.trace("System request status - " + nthRequest.getId() + " ::: " + status);
+			nthRequest.setStatus(status);
 			
-			nthRequest.setStatus(status); 
+			if(status != Status.queued && status != Status.in_progress && status != Status.on_hold)
+				nthRequest.setCompletedAt(LocalDateTime.now());
+ 
 			requestDao.save(nthRequest);
 			
 			if(nthRequest.getActionId() == Action.ingest && status == Status.completed) {
@@ -371,6 +378,10 @@ public class ScheduledStatusUpdater {
 				
 			}
 			nthUserRequest.setStatus(status); 
+			
+			if(status != Status.queued && status != Status.in_progress && status != Status.on_hold)
+				nthUserRequest.setCompletedAt(LocalDateTime.now());
+
 			requestDao.save(nthUserRequest);
 		}
 	}
