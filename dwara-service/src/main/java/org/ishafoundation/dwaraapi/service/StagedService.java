@@ -261,8 +261,22 @@ public class StagedService extends DwaraService{
 					String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
 					
 					java.io.File nthIngestableFile = new java.io.File(path, artifactName);
+					StagedFileDetails sfd = stagedFileEvaluator.evaluateAndGetDetails(domain, sequence, path, nthIngestableFile);
+					List<Error> errorList = sfd.getErrors();
+					boolean error = false;
+					boolean warning = false;
+					for (Error nthError : errorList) {
+						if(nthError.getType() == Errortype.Error)
+							error = true;
+						else if(nthError.getType() == Errortype.Warning)
+							warning = true;
+					}
 					
-					stagedFileDetailsList.add(stagedFileEvaluator.evaluateAndGetDetails(domain, sequence, path, nthIngestableFile));
+					// TODO : Digi hack - For Digi even warnings should not be let ingested
+					if(error || (warning && artifactclass.getId().startsWith("video-digi-2020-"))) {
+						isLevel1Pass = false;
+						stagedFileDetailsList.add(sfd);
+					}
 					
 //			        long size = 0;
 //			        int fileCount = 0;

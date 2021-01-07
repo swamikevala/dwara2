@@ -20,7 +20,7 @@ public class AdminController {
 	@Autowired
 	private DBMasterTablesCacheManager dBMasterTablesCacheManager;
 	
-	@RequestMapping(value = "/clearAndReload", method = RequestMethod.POST) 
+	@RequestMapping(value = "/admin/clearAndReloadDBCache", method = RequestMethod.POST) 
 	public ResponseEntity<String> clearAndReload() {
 		dBMasterTablesCacheManager.clearAll();
 		dBMasterTablesCacheManager.loadAll();
@@ -28,13 +28,13 @@ public class AdminController {
 	}
 	
 	// Application - MODE/Status
-	@RequestMapping(value = "/application/mode/{mode}", method = RequestMethod.POST)
+	@RequestMapping(value = "/admin/application/mode/{mode}", method = RequestMethod.POST)
 	public ResponseEntity<String> setMode(@PathVariable("mode") String mode) {
 		JobManager.MODE = ApplicationStatus.valueOf(mode);
 		return ResponseEntity.status(HttpStatus.OK).body(JobManager.MODE.name());
 	}
 	
-	@RequestMapping(value = "/application/status", method = RequestMethod.GET)
+	@RequestMapping(value = "/admin/application/mode", method = RequestMethod.GET)
 	public ResponseEntity<String> getMode() {
 		return ResponseEntity.status(HttpStatus.OK).body(JobManager.MODE.name());
 	}

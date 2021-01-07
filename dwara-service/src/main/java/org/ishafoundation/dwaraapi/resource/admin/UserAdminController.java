@@ -47,7 +47,7 @@ public class UserAdminController {
 	@Autowired
 	private Configuration configuration;
 		
-	@RequestMapping(value = "/createUserAndAddUserToArtifactclassAndCreateDir", method = RequestMethod.POST)
+	@RequestMapping(value = "/user/createUserAndAddUserToArtifactclassAndCreateDir", method = RequestMethod.POST)
 	public ResponseEntity<String> createUserAndAddUserToArtifactclassAndCreateDir(@RequestParam String username, @RequestParam String password, @RequestParam String artifactclassId, @RequestParam String action) {
 		try {
 			register(username, password);
@@ -58,7 +58,7 @@ public class UserAdminController {
 		return ResponseEntity.status(HttpStatus.OK).body("Done");
 	}
 	
-	@RequestMapping(value = "/addUserToArtifactclassAndCreateDir", method = RequestMethod.POST)
+	@RequestMapping(value = "/user/addUserToArtifactclassAndCreateDir", method = RequestMethod.POST)
 	public ResponseEntity<String> addUserToArtifactclassAndCreateDir(@RequestParam String username, @RequestParam String artifactclassId, @RequestParam String action) {
 		try {
 			addUserToArtifactclass(username, artifactclassId, action);
@@ -75,7 +75,7 @@ public class UserAdminController {
 		return ResponseEntity.status(HttpStatus.OK).body("Done");
 	}
 
-	@RequestMapping(value = "/addUserToArtifactclass", method = RequestMethod.POST)
+	@RequestMapping(value = "/user/addUserToArtifactclass", method = RequestMethod.POST)
 	public ResponseEntity<String> addUserToArtifactclass(@RequestParam String username, @RequestParam String artifactclassId, @RequestParam String action) {
 		try {
 			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
@@ -90,7 +90,7 @@ public class UserAdminController {
 		return ResponseEntity.status(HttpStatus.OK).body("Done");
 	}
 
-	@RequestMapping(value = "/register", method = RequestMethod.POST)
+	@RequestMapping(value = "/user/register", method = RequestMethod.POST)
 	public ResponseEntity<String> register(@RequestParam String username, @RequestParam String password) {
 		password = new BCryptPasswordEncoder().encode(password);
 		
@@ -110,7 +110,7 @@ public class UserAdminController {
 		return ResponseEntity.status(HttpStatus.OK).body("Done");
 	}
 	
-	@RequestMapping(value = "/setpassword", method = RequestMethod.POST)
+	@RequestMapping(value = "/user/setpassword", method = RequestMethod.POST)
 	public ResponseEntity<String> setpassword(@RequestParam String username, @RequestParam String password) {
 		password = new BCryptPasswordEncoder().encode(password);
 		

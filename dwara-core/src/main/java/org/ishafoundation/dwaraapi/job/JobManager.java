@@ -45,6 +45,7 @@ public class JobManager {
 		logger.info("***** Managing jobs now *****");
 		if(MODE == ApplicationStatus.maintenance) {
 			logger.info("Application is in maintenance mode. No jobs will be taken up for action");
+			return;
 		}
 		List<Job> storageJobsList = new ArrayList<Job>();
 		

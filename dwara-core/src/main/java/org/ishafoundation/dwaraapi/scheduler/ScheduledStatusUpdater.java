@@ -183,7 +183,7 @@ public class ScheduledStatusUpdater {
 
 						updateArtifactSizeAndCount(job, inputArtifactId);
 						
-						// TODO : hack for digitization need to improve
+						// TODO : Digi hack - the permissions script assumes the input artifact folder is "staged" and hence only supports Digitization A/Cs
 						if(requestedAction == Action.ingest) {
 							if(outputArtifactId != null) {
 								org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact = domainUtil.getDomainSpecificArtifact(outputArtifactId);
@@ -279,7 +279,7 @@ public class ScheduledStatusUpdater {
 		artifactFileFromDB.setSize(artifactSize);
 		domainSpecificFileRepository.save(artifactFileFromDB);
 		
-		// TODO - Digi hack - clean this up -Long term - iterate through files that are directories and calc their size and update them...
+		// TODO : Digi hack - clean this up -Long term - iterate through files that are directories and calc their size and update them...
 		if("file-delete".equals(job.getProcessingtaskId()) && artifact.getArtifactclass().getId().startsWith("video-digi-2020-")) {
 			Path artifactMxfSubfolderPath = Paths.get(artifactPath.toString(), "mxf");
 			File artifactMxfSubfolderObj = artifactMxfSubfolderPath.toFile();

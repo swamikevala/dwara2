@@ -1,3 +1,11 @@
+# Dwara App Version - 2.1.03
+### New features
+1 Extend validating to be ingested file during ingest too and not just during scan times
+
+2 Request completion date
+
+3 Server maintenance/administration
+
 # Dwara App Version - 2.1.02
 ### New features 
 1 Rename on hold
