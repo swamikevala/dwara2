@@ -1,11 +1,35 @@
 # Dwara App Version - 2.1.03
 ### New features
 1 Extend validating to be ingested file during ingest too and not just during scan times
+	Talk to Swami about the digi hack 
+	
+2 Request completion date. Need reconcilation for already completed requests. 
+	Take Swami's help on the sql update Script
 
-2 Request completion date
+3 Server maintenance/administration capability added 
 
-3 Server maintenance/administration
+4 DU-343 Increased Job manager Scheduler frequency
 
+> scheduler.jobManager.fixedDelay=30000/45000
+
+5 DU-345 ArtifactAutoDeleter hourly than daily
+
+> scheduler.ingestedArtifactAutoDeleter.fixedDelay=3600000
+
+6 DU-342 TapeJobselector sort by seqId as integer and not string
+
+7 DU-344 Dont wait for verify to complete for subsequent writes
+ 
+
+
+### Deployment Note
+1 application.properties seems to have log enabled. We need to ensure its disabled.
+2 check why job 26224 got stuck by restore the same file again and move the folder when restore is happening and see what happens. Ensure we turn ON the storage layer logs
+3 watcher changed for artifact validation - need to be redeployed afresh 
+
+### Upgrade steps
+  * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_03.sql)
+  
 # Dwara App Version - 2.1.02
 ### New features 
 1 Rename on hold

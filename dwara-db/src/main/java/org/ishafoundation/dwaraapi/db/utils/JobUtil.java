@@ -65,6 +65,10 @@ public class JobUtil {
 				for (Flowelement dependentFlowElement : dependentFlowElementsList) {
 					logger.trace("dependentFlowElement " + dependentFlowElement.getId());
 					
+					// DU-344 change - Dont wait for a processing(verify) job to write subsequent writes
+					if(dependentFlowElement.getProcessingtaskId() != null) 
+						continue;
+					
 					Job dependentJob = flowelementId_dependentJob_Map.get(dependentFlowElement.getId());
 					if(dependentJob != null) { // Job already created - check status
 						logger.trace(dependentJob.getId() + " Job already created");

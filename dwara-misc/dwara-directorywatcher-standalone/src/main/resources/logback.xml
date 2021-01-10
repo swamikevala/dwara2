@@ -29,4 +29,6 @@
 		<appender-ref ref="RollingFile" />
 	</root>
 
+	<logger name="org.ishafoundation.dwaraapi.utils.HttpClientUtil" level="OFF"/>
+
 </configuration>

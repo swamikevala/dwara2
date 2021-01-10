@@ -18,6 +18,7 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
@@ -26,6 +27,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
@@ -61,6 +63,9 @@ public class ScheduledStatusUpdater {
 	
 	@Autowired
 	private JobDao jobDao;
+	
+	@Autowired
+	private VolumeDao volumeDao;
 	
 	@Autowired
 	private RequestDao requestDao;
@@ -164,7 +169,16 @@ public class ScheduledStatusUpdater {
 					job = jobDao.save(job);
 					logger.info("Job " + job.getId() + " - " + status);
 					
-					if(status == Status.completed) {
+					if(status == Status.failed) { // When a processing task involving a volume failed mark the tape suspsect. For e.g checksum-veriy processing task fails then we do below...
+						Volume volume = job.getVolume();
+						if(volume != null) {
+							volume.setSuspect(true);
+							volumeDao.save(volume);
+							logger.info("Marked the volume " + volume.getId() + " as suspect");
+						}
+							
+					}
+					else if(status == Status.completed) {
 						tFileJobDao.deleteAll(jobFileList);
 						logger.info("tFileJob cleaned up files of Job " + job.getId());
 

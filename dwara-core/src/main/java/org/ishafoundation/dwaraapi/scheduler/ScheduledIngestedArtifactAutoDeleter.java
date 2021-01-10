@@ -32,8 +32,7 @@ public class ScheduledIngestedArtifactAutoDeleter {
 	@Autowired
 	private Configuration configuration;
 	
-	// once in a day schedule
-	@Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
+	@Scheduled(fixedDelayString = "${scheduler.ingestedArtifactAutoDeleter.fixedDelay}")
     public void autoDeleteIngestedArtifacts() {
 		logger.trace("invoking autoDeleteIngestedArtifacts");
 		File[] ingestableFiles = new File(configuration.getIngestCompleteDirRoot()).listFiles(); // get the list of ingested artifacts

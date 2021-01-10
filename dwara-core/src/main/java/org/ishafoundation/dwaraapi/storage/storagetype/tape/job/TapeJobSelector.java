@@ -7,7 +7,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TActivedeviceDao;
@@ -31,6 +34,8 @@ import org.springframework.stereotype.Component;
 public class TapeJobSelector {
 	
 	private static final Logger logger = LoggerFactory.getLogger(TapeJobSelector.class);
+	
+	private static final Pattern SEQUENCE_NUMBER_PATTERN = Pattern.compile("[A-Z]+(\\d+)");
 	
 	@Autowired
 	private TActivedeviceDao tActivedeviceDao;
@@ -552,22 +557,35 @@ public class TapeJobSelector {
 		}
 		return key;
 	}
+
 	private void orderOnArtifactSeqId(List<StorageJob> jobs, List<StorageJob> orderedJobsList) {
 		
-		Set<String> artifactNameOrderedSortedSet = new TreeSet<String>();
-		Map<String, StorageJob> artifactName_TapeJob = new HashMap<String, StorageJob>();
+		SortedSet<Integer> artifactSequenceNumberOrderedSortedSet = new TreeSet<Integer>();
+		Map<Integer, StorageJob> artifactSequenceNumber_TapeJob = new HashMap<Integer, StorageJob>();
 
 		for (Iterator<StorageJob> iterator2 = jobs.iterator(); iterator2.hasNext();) {
 			StorageJob tapeJob = (StorageJob) iterator2.next();
 			Artifact artifact = tapeJob.getArtifact();
-			String artifactName = artifact.getName();
-			artifactNameOrderedSortedSet.add(artifactName);
-			artifactName_TapeJob.put(artifactName, tapeJob);
+			String sequenceCode = artifact.getSequenceCode();
+
+			Integer sequenceNumber = null;
+			// String seqPrefix = artifact.getArtifactclass().getSequence().getPrefix();
+			// String extractedSequenceNumber = sequenceCode.replace(seqPrefix, "");
+			// sequenceNumber = Integer.parseInt(extractedSequenceNumber);
+			
+			Matcher sequenceNumberRegExMatcher = SEQUENCE_NUMBER_PATTERN.matcher(sequenceCode);		
+			if(sequenceNumberRegExMatcher.find()) {
+				String extractedSequenceNumber = sequenceNumberRegExMatcher.group(1);
+				sequenceNumber = Integer.parseInt(extractedSequenceNumber);
+			}
+					
+			artifactSequenceNumberOrderedSortedSet.add(sequenceNumber);
+			artifactSequenceNumber_TapeJob.put(sequenceNumber, tapeJob);
 		}
 		// now running through each artifact Name in the order and adding their respective jobs to the orderedJob collection
-		for (Iterator<String> iterator2 = artifactNameOrderedSortedSet.iterator(); iterator2.hasNext();) {
-			String artifactName = (String) iterator2.next();
-			StorageJob tapeJob = artifactName_TapeJob.get(artifactName);
+		for (Iterator<Integer> iterator2 = artifactSequenceNumberOrderedSortedSet.iterator(); iterator2.hasNext();) {
+			Integer artifactSequenceNumber = (Integer) iterator2.next();
+			StorageJob tapeJob = artifactSequenceNumber_TapeJob.get(artifactSequenceNumber);
 			orderedJobsList.add(tapeJob);
 		}				
 	}
