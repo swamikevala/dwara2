@@ -25,16 +25,16 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	
 	// volume_id only for storagetasks, so storagetasks as a filter not needed - applicable for any storagetask like write/verify/restore
 	// completed at gets updated only when status=completed, but is Null and gets picked up by the query...
-	Job findTopByVolumeIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(String volumeId);
+	Job findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(String volumeId);
 	
 	Job findTopByStoragetaskActionIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(Action action);
 	
-	Job findByVolumeIdAndStatus(String volumeId, Status status); // we need to pass only inprogress status here...
+	Job findByStoragetaskActionIdIsNotNullAndVolumeIdAndStatus(String volumeId, Status status); // we need to pass only inprogress status here...
 	
 	// Used in determining tapeusageStatus
-	long countByVolumeIdAndStatus(String volumeId, Status status);
+	long countByStoragetaskActionIdIsNotNullAndVolumeIdAndStatus(String volumeId, Status status);
 	
-	long countByGroupVolumeIdAndStatus(String groupVolumeId, Status status);
+	long countByStoragetaskActionIdIsNotNullAndGroupVolumeIdAndStatus(String groupVolumeId, Status status);
 	
 //	List<Job> findAllBySubrequestIdOrderById(int subrequestId);
 //	

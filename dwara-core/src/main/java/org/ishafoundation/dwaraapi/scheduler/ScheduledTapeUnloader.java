@@ -50,7 +50,7 @@ public class ScheduledTapeUnloader {
 				String tapeBarcode = nthAvailableDriveDetails.getDte().getVolumeTag();
 				if(tapeBarcode != null) { // means tape loaded in the drive
 					logger.trace(tapeBarcode + " is loaded in " + nthAvailableDriveDetails.getDriveId());
-					Job lastJobOnTape = jobDao.findTopByVolumeIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(tapeBarcode);
+					Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(tapeBarcode);
 					
 					LocalDateTime lastJobCompletionTime = LocalDateTime.now();
 					boolean idleSittingTimePastThreshold = false;

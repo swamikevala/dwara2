@@ -137,7 +137,7 @@ public class VolumeUtil {
 	
 	public TapeUsageStatus getTapeUsageStatus(String volumeId) {
 		TapeUsageStatus tapeUsageStatus = null;
-		long jobInProgressCount = jobDao.countByVolumeIdAndStatus(volumeId, Status.in_progress);
+		long jobInProgressCount = jobDao.countByStoragetaskActionIdIsNotNullAndVolumeIdAndStatus(volumeId, Status.in_progress);
 		
 		if(jobInProgressCount > 0) {
 			tapeUsageStatus = TapeUsageStatus.job_in_progress;
@@ -155,7 +155,7 @@ public class VolumeUtil {
 	
 	private boolean getQueuedJobOnVolume(String volumeId){
 		boolean queuedJob = false;
-		long jobInQueueCount = jobDao.countByGroupVolumeIdAndStatus(volumeId, Status.queued);
+		long jobInQueueCount = jobDao.countByStoragetaskActionIdIsNotNullAndGroupVolumeIdAndStatus(volumeId, Status.queued);
 		if(jobInQueueCount > 0)
 			queuedJob = true;
 		return queuedJob; 

@@ -121,7 +121,7 @@ public class StoragetypeJobDelegator {
 				}else {
 					Job inProgressJobOnVolume = volume_InProgressJob_Map.get(volume); // Filtering already inprogress same volume jobs
 					if(inProgressJobOnVolume == null) {
-						inProgressJobOnVolume = jobDao.findByVolumeIdAndStatus(volume.getId(), Status.in_progress);
+						inProgressJobOnVolume = jobDao.findByStoragetaskActionIdIsNotNullAndVolumeIdAndStatus(volume.getId(), Status.in_progress);
 						
 						if(inProgressJobOnVolume != null) {
 							volume_InProgressJob_Map.put(volume, inProgressJobOnVolume);
