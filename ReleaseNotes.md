@@ -1,10 +1,8 @@
 # Dwara App Version - 2.1.03
 ### New features
 1 Extend validating to be ingested file during ingest too and not just during scan times
-	Talk to Swami about the digi hack 
 	
 2 Request completion date. Need reconcilation for already completed requests. 
-	Take Swami's help on the sql update Script
 
 3 Server maintenance/administration capability added
 	NOTE: After every restart of the app, we need to manually turn the system online for jobmanager to start dequeuing 
@@ -22,13 +20,15 @@
 7 DU-344 Dont wait for verify to complete for subsequent writes
  
 
+### Upgrade steps
 
-### Deployment Note
+##### Deployment Note
 1 application.properties seems to have log enabled. We need to ensure its disabled.
+
 2 check why job 26224 got stuck by restoring the same file again and move the folder when restore is happening and see what happens. Ensure we turn ON the storage layer logs
+
 3 watcher changed for artifact validation - need to be redeployed afresh 
 
-### Upgrade steps
   * Stop Watcher
   * Stop any ltowala cron polling on Dwara
   * Stop the app
@@ -36,9 +36,9 @@
   * Deploy the latest watcher from dev server
   * Deploy the latest war from dev/test server
   * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_03.sql)
-  * ensure application.properties has entries for the global thread pool with appropriate values. The other threadpoolexecutor.*.* can all be cleaned up... 
+  * ensure application.properties has entries highlighted in #4 and #5 in New features section above  
   * Restart the app
-  * Enable it online by calling the maintanence API
+  * Enable the app by calling the maintanence API with mode = "online"
     
 # Dwara App Version - 2.1.02
 ### New features 
