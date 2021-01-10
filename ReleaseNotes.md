@@ -6,7 +6,8 @@
 2 Request completion date. Need reconcilation for already completed requests. 
 	Take Swami's help on the sql update Script
 
-3 Server maintenance/administration capability added 
+3 Server maintenance/administration capability added
+	NOTE: After every restart of the app, we need to manually turn the system online for jobmanager to start dequeuing 
 
 4 DU-343 Increased Job manager Scheduler frequency
 
@@ -24,12 +25,21 @@
 
 ### Deployment Note
 1 application.properties seems to have log enabled. We need to ensure its disabled.
-2 check why job 26224 got stuck by restore the same file again and move the folder when restore is happening and see what happens. Ensure we turn ON the storage layer logs
+2 check why job 26224 got stuck by restoring the same file again and move the folder when restore is happening and see what happens. Ensure we turn ON the storage layer logs
 3 watcher changed for artifact validation - need to be redeployed afresh 
 
 ### Upgrade steps
+  * Stop Watcher
+  * Stop any ltowala cron polling on Dwara
+  * Stop the app
+  * Take backups
+  * Deploy the latest watcher from dev server
+  * Deploy the latest war from dev/test server
   * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_03.sql)
-  
+  * ensure application.properties has entries for the global thread pool with appropriate values. The other threadpoolexecutor.*.* can all be cleaned up... 
+  * Restart the app
+  * Enable it online by calling the maintanence API
+    
 # Dwara App Version - 2.1.02
 ### New features 
 1 Rename on hold
