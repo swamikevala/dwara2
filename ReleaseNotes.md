@@ -35,7 +35,7 @@
   * Take backups
   * Deploy the latest watcher from dev server
   * Deploy the latest war from dev/test server
-  * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_03.sql)
+  * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_0_3_hotfix4.sql)
   * ensure application.properties has entries highlighted in #4 and #5 in New features section above  
   * Restart the app
   * Enable the app by calling the maintanence API with mode = "online"
