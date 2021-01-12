@@ -20,6 +20,28 @@ public class TagService extends DwaraService{
         if(t == null) {
             t = new Tag(tag);
         }
+
+        Request r = t.getRequestById(requestId);
+        if(r == null) {
+            r = new Request(requestId);
+            t.addRequest(r);
+        }
+
+        //save
+        addTag(t);
+    }
+
+    public void deleteTagRequest(String tag, int requestId) {
+        Tag t = getTag(tag);
+        if(t == null) {
+            t = new Tag(tag);
+        }
+        Request r = t.getRequestById(requestId);
+        if(r != null) {
+            t.deleteRequest(r);
+        }
+        //save or add tag
+        addTag(t);
     }
 
     public List<Request> getAllRequestsByTag(String tag) {

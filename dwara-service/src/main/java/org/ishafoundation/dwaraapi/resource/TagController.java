@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -38,20 +39,10 @@ public class TagController {
 
     private static final Logger logger = LoggerFactory.getLogger(TagController.class);
 
-    @PostMapping(value="/tags/{tag}/request/{requestId}") 
-    public ResponseEntity<String> tagRequest(@PathVariable String tag, @PathVariable int requestId) {
+    @PostMapping(value="/tags/{tag}/request/{requestId}", produces = "application/json") 
+    public ResponseEntity tagRequest(@PathVariable String tag, @PathVariable int requestId) {
         try {
-            Tag t = tagService.getTag(tag);
-            if(t == null) {
-                t = new Tag(tag);
-            }
-            Request r = t.getRequestById(requestId);
-            if(r == null) {
-                r = new Request(requestId);
-                t.addRequest(r);
-            }
-            //save or add tag
-            tagService.addTag(t);
+            tagService.tagRequest(tag, requestId);
         } catch (Exception e) {
 			String errorMsg = "Unable to tag request - " + e.getMessage();
 			logger.error(errorMsg, e);
@@ -61,22 +52,13 @@ public class TagController {
 			else
 				throw new DwaraException(errorMsg, null);
 		}
-        return ResponseEntity.status(HttpStatus.OK).body("OK");
+        return new ResponseEntity(HttpStatus.OK);
     }
 
-    @DeleteMapping(value="/tags/{tag}/request/{requestId}")
-    public ResponseEntity<String> deleteTagRequest(@PathVariable String tag, @PathVariable int requestId) {
+    @DeleteMapping(value="/tags/{tag}/request/{requestId}", produces = "application/json")
+    public ResponseEntity deleteTagRequest(@PathVariable String tag, @PathVariable int requestId) {
         try {
-            Tag t = tagService.getTag(tag);
-            if(t == null) {
-                t = new Tag(tag);
-            }
-            Request r = t.getRequestById(requestId);
-            if(r != null) {
-                t.deleteRequest(r);
-            }
-            //save or add tag
-            tagService.addTag(t);
+            tagService.deleteTagRequest(tag, requestId);
         } catch (Exception e) {
 			String errorMsg = "Unable to delete tag request - " + e.getMessage();
 			logger.error(errorMsg, e);
@@ -86,24 +68,27 @@ public class TagController {
 			else
 				throw new DwaraException(errorMsg, null);
 		}
-        return ResponseEntity.status(HttpStatus.OK).body("OK");
+        return new ResponseEntity(HttpStatus.OK);
     }
 
-    @GetMapping(value="/tags/{tag}")
-    public ResponseEntity<List<RequestResponse>> getRequestsByTag(@PathVariable String tag) {
-        List<RequestResponse> l;
+    @GetMapping(value="/tags/requests", produces = "application/json")
+    public ResponseEntity<List<RequestResponse>> getRequestsByTag(@RequestParam("tags") String tags) {
+        List<RequestResponse> l = new ArrayList<RequestResponse>();
         try {
-            Tag t = tagService.getTag(tag);
-            if(t != null && t.getRequests() != null) {
-                l = new ArrayList<RequestResponse>();
-
-                for (Request request : t.getRequests()) {
-                    RequestResponse requestResponse = requestService.frameRequestResponse(request, request.getType());
-                    l.add(requestResponse);
+            String[] arrTags = tags.split(",");
+            List<Request> listRequest = new ArrayList<Request>();
+            for (String tag : arrTags) {
+                Tag t = tagService.getTag(tag);
+                if(t != null && t.getRequests() != null) {
+                    for (Request request : t.getRequests()) {
+                        if(!listRequest.contains(request))
+                            listRequest.add(request);
+                    }
                 }
             }
-            else {
-                l =  new ArrayList<RequestResponse>();
+            for (Request request: listRequest) {
+                RequestResponse requestResponse = requestService.frameRequestResponse(request, request.getType());
+                l.add(requestResponse);
             }
         } catch (Exception e) {
 			String errorMsg = "Unable to get requests by tag - " + e.getMessage();
@@ -117,7 +102,7 @@ public class TagController {
         return ResponseEntity.status(HttpStatus.OK).body(l);
     }
 
-    @GetMapping(value = "/tags/request/{requestId}")
+    @GetMapping(value = "/tags/request/{requestId}", produces = "application/json")
     public ResponseEntity<List<String>> getTagsByRequestId(@PathVariable int requestId) {
         List<String> listTags = new ArrayList<String>();
         try {
@@ -159,8 +144,8 @@ public class TagController {
 		return ResponseEntity.status(HttpStatus.OK).body(tags);
     }
     
-    @PostMapping(value="/tags")
-    public ResponseEntity<String> addTag(@RequestBody String tag) {
+    @PostMapping(value="/tags", produces = "application/json")
+    public ResponseEntity addTag(@RequestBody String tag) {
         try {
             Tag t = new Tag(tag);
 			tagService.addTag(t);
@@ -174,11 +159,11 @@ public class TagController {
 				throw new DwaraException(errorMsg, null);
 		}
 		
-		return ResponseEntity.status(HttpStatus.OK).body("OK");
+		return new ResponseEntity(HttpStatus.OK);
     }
 
-    @DeleteMapping(value="/tags/{tag}")
-    public ResponseEntity<String> deleteTag(@PathVariable String tag) {
+    @DeleteMapping(value="/tags/{tag}", produces = "application/json")
+    public ResponseEntity deleteTag(@PathVariable String tag) {
         try {
             tagService.deleteTag(tag);    
         } catch (Exception e) {
@@ -191,7 +176,7 @@ public class TagController {
 				throw new DwaraException(errorMsg, null);
 		}
 		
-		return ResponseEntity.status(HttpStatus.OK).body("OK");
+		return new ResponseEntity(HttpStatus.OK);
         
     }
 }
