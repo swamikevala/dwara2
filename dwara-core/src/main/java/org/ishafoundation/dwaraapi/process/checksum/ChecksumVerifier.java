@@ -14,7 +14,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
-import org.ishafoundation.dwaraapi.process.request.File;
+import org.ishafoundation.dwaraapi.process.request.TFile;
 import org.ishafoundation.dwaraapi.process.request.Job;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
@@ -42,11 +42,11 @@ public class ChecksumVerifier implements IProcessingTask {
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 		
 		LogicalFile logicalFile = processContext.getLogicalFile();
-		
-		File file = processContext.getFile();
+		Integer fileId = processContext.getFile().getId();
+		TFile tFile = processContext.getTFile();
 		if(logicalFile.isFile()) {
-			logger.info("Verifying checksum for - " + file.getId() + ":" + logicalFile.getAbsolutePath());
-			byte[] originalChecksum = file.getChecksum();
+			logger.info("Verifying checksum for - " + tFile.getId() + ":" + logicalFile.getAbsolutePath());
+			byte[] originalChecksum = tFile.getChecksum();
 			logger.trace("originalChecksum " + Hex.encodeHexString(originalChecksum));
 //			String filePathname = file.getPathname();
 //			String fileAbsolutePath = logicalFile.getAbsolutePath();
@@ -66,22 +66,22 @@ public class ChecksumVerifier implements IProcessingTask {
 						volumeId = nthJobDependency.getVolume().getId();
 				}
 				 
-
-		    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-		    	FileVolume fileVolume = domainSpecificFileVolumeRepository.findByIdFileIdAndIdVolumeId(file.getId(), volumeId);
-		    	fileVolume.setVerifiedAt(LocalDateTime.now());
-		    	
-		    	domainSpecificFileVolumeRepository.save(fileVolume);
+				if(fileId != null) {
+			    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
+			    	FileVolume fileVolume = domainSpecificFileVolumeRepository.findByIdFileIdAndIdVolumeId(fileId, volumeId);
+			    	fileVolume.setVerifiedAt(LocalDateTime.now());
+			    	domainSpecificFileVolumeRepository.save(fileVolume);
+		    	}
 			}
 			else {
-				String msg = "Checksum mismatch for file " + file.getId();
+				String msg = "Checksum mismatch for file " + tFile.getId();
 				logger.error(msg);
 				throw new Exception(msg);
 			}
 			
 		}
 		else {
-			logger.info(file.getId() + " not a file but a folder. Skipping it");
+			logger.info(tFile.getId() + " not a file but a folder. Skipping it");
 		}
 		processingtaskResponse.setIsComplete(true);
 		return processingtaskResponse;

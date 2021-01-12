@@ -9,8 +9,6 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
@@ -28,6 +26,7 @@ import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
@@ -92,6 +91,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	private Job job;
 	private Artifact inputArtifact;
 	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File file;
+	private TFile tFile;
 	
 	private Artifactclass outputArtifactclass;
 
@@ -129,6 +129,14 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		this.file = file;
 	}
 
+	public TFile getTFile() {
+		return tFile;
+	}
+
+	public void setTFile(TFile tFile) {
+		this.tFile = tFile;
+	}
+
 	public Artifactclass getOutputArtifactclass() {
 		return outputArtifactclass;
 	}
@@ -158,7 +166,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		String outputArtifactName = processContext.getJob().getOutputArtifact().getName();
 		
 		ThreadNameHelper threadNameHelper = new ThreadNameHelper();
-		threadNameHelper.setThreadName(job.getRequest().getId(), job.getId(), file.getId());
+		threadNameHelper.setThreadName(job.getRequest().getId(), job.getId(), tFile.getId());
 		logger.debug("Will be processing - " + logicalFile.getAbsolutePath());
 		Status staus = Status.in_progress;
 		String failureReason = null;
@@ -172,7 +180,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		String processingtaskName = null;
 		Processingtask processingtask = null;
 		try {
-			logger.trace("fileId - " + file.getId());
+			logger.trace("fileId - " + tFile.getId());
 			// if the current status of the job is queued - update it to inprogress and do so with the artifact status and request status...
 			Request systemGeneratedRequest = job.getRequest();
 			//Request request = systemGeneratedRequest.getRequest();
@@ -191,10 +199,10 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			
 			processingtask = getProcessingtask(processingtaskName);
 			
-			tFileJob = tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId())).get();
+			tFileJob = tFileJobDao.findById(new TFileJobKey(tFile.getId(), job.getId())).get();
 			tFileJob.setStatus(Status.in_progress);
 			tFileJob.setStartedAt(LocalDateTime.now());
-			logger.debug("DB TFileJob Updation for file " + file.getId());
+			logger.debug("DB TFileJob Updation for file " + tFile.getId());
 			tFileJobDao.save(tFileJob);
 			logger.debug("DB TFileJob Updation - Success");
 			
@@ -375,7 +383,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			}
 		} catch (Exception e) {
 			staus = Status.failed;
-			failureReason = "Unable to complete " + processingtaskName + " for " + file.getId() + " :: " + e.getMessage();
+			failureReason = "Unable to complete " + processingtaskName + " for " + tFile.getId() + " :: " + e.getMessage();
 			logger.error(failureReason, e);
 			
 			int maxErrorsAllowed = processingtask != null ? processingtask.getMaxErrors() : 1;
@@ -385,7 +393,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			if(noOfFailuresLogged < maxErrorsAllowed) {
 				// TODO how to ensure the failures logged in are Only unique???
 				logger.debug("DB Failure Creation");
-				ProcessingFailure failure = new ProcessingFailure(file.getId(), job, e.getMessage());
+				ProcessingFailure failure = new ProcessingFailure(tFile.getId(), job, e.getMessage());
 				failure = failureDao.save(failure);	
 				logger.debug("DB Failure Creation - " + failure.getId());
 			}

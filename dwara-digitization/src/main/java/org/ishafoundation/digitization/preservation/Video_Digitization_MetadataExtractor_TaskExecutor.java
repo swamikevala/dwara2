@@ -35,14 +35,14 @@ public class Video_Digitization_MetadataExtractor_TaskExecutor extends MediaTask
 	
 		String taskName = processContext.getJob().getProcessingtaskId();
 		LogicalFile logicalFile = processContext.getLogicalFile();
-		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
+		Integer fileId = processContext.getFile().getId();
 		String destinationDirPath = processContext.getOutputDestinationDirPath();
 
 		if(logger.isTraceEnabled()) {
 			logger.trace("taskName " + taskName);
 //			logger.trace("inputArtifactName " + inputArtifactName); // V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
 //			logger.trace("outputArtifactName " + outputArtifactName); // VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
-			logger.trace("fileId " + file.getId());
+			logger.trace("fileId " + fileId);
 //			logger.trace("domain " + domain.name()); 
 			logger.trace("logicalFile " + logicalFile.getAbsolutePath()); // /data/ingested/V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12/DCIM/100EOS5D/MVI_5594.MOV
 //			logger.trace("category " + category); // public

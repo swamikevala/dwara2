@@ -23,7 +23,6 @@ public class MockVideo_LowResolution_Transcoding_TaskExecutor extends MediaTask 
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
 		
 		LogicalFile logicalFile = processContext.getLogicalFile();
-		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
 		String destinationDirPath = processContext.getOutputDestinationDirPath();
 		
 		String sourceFilePathname = logicalFile.getAbsolutePath();

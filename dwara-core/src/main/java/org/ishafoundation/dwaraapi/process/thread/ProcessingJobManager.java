@@ -26,6 +26,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassTask;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
@@ -236,6 +237,8 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 																				// /data/transcoded/public/VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
 			
 			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, inputArtifact);
+			
+			HashMap<String, TFile> filePathToTFileObj = getFilePathToTFileObj(inputArtifactId);
 	
 			Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPathname, inputArtifactclass);
 			int filesToBeProcessedCount = selectedFileList.size();
@@ -311,21 +314,25 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					}
 					logger.trace("outputFilePath - " + outputFilePath);
 					//logger.info("Now processing - " + path);
+					TFile tFile = null;
 					org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
-					if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
-						file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
+					if(filePathToTFileObj.containsKey(artifactNamePrefixedFilePathname))
+						tFile = filePathToTFileObj.get(artifactNamePrefixedFilePathname);
 					
-					if(file == null) {
+					if(tFile == null) {
 						logger.warn(artifactNamePrefixedFilePathname + " not in DB. Skipping it");
 						continue;
 					}
 					
-					logger.debug("Delegating for processing -job-" + job.getId() + "-file-" + file.getId());
+					if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
+						file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
+
+					logger.debug("Delegating for processing -job-" + job.getId() + "-file-" + tFile.getId());
 	
 					// Requeue scenario - Only failed files are to be continued...
-					Optional<TFileJob> tFileJobDB = tFileJobDao.findById(new TFileJobKey(file.getId(), job.getId()));
+					Optional<TFileJob> tFileJobDB = tFileJobDao.findById(new TFileJobKey(tFile.getId(), job.getId()));
 					if(tFileJobDB.isPresent() && (tFileJobDB.get().getStatus() == Status.in_progress || tFileJobDB.get().getStatus() == Status.completed)) {
-						logger.info("job-" + job.getId() + "-file-" + file.getId() + " already Inprogress/completed. Skipping it...");
+						logger.info("job-" + job.getId() + "-file-" + tFile.getId() + " already Inprogress/completed. Skipping it...");
 						continue;
 					}
 					
@@ -337,8 +344,8 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					boolean alreadyQueued = false;
 					for (Runnable runnable : runnableQueueList) {
 						ProcessingJobProcessor pjp = (ProcessingJobProcessor) runnable;
-						if(job.getId() == pjp.getJob().getId() && file.getId() == pjp.getFile().getId()) {
-							logger.info("job-" + job.getId() + "-file-" + file.getId() + " already in ProcessingJobProcessor queue. Skipping it...");
+						if(job.getId() == pjp.getJob().getId() && tFile.getId() == pjp.getTFile().getId()) {
+							logger.info("job-" + job.getId() + "-file-" + tFile.getId() + " already in ProcessingJobProcessor queue. Skipping it...");
 							alreadyQueued = true;
 							break;
 						}
@@ -347,11 +354,11 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
 						if(!tFileJobDB.isPresent()) {
 							TFileJob tFileJob = new TFileJob();
-							tFileJob.setId(new TFileJobKey(file.getId(), job.getId()));
+							tFileJob.setId(new TFileJobKey(tFile.getId(), job.getId()));
 							tFileJob.setJob(job);
 							tFileJob.setArtifactId(inputArtifactId);
 							tFileJob.setStatus(Status.queued);
-							logger.debug("DB TFileJob Creation for file " + file.getId());
+							logger.debug("DB TFileJob Creation for file " + tFile.getId());
 							tFileJobDao.save(tFileJob);
 							logger.debug("DB TFileJob Creation - Success");
 						}
@@ -362,6 +369,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 						processContext.setInputDirPath(inputArtifactPathname);
 						processContext.setJob(jobForProcess);
 						processContext.setFile(fileEntityToFileForProcessConverter.getFileForProcess(file, domain));
+						processContext.setTFile(fileEntityToFileForProcessConverter.getTFileForProcess(tFile));
 						processContext.setLogicalFile(logicalFile);
 						processContext.setOutputDestinationDirPath(outputFilePath);
 						processingJobProcessor.setProcessContext(processContext);
@@ -369,6 +377,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 						processingJobProcessor.setJob(job);
 						processingJobProcessor.setInputArtifact(inputArtifact);
 						processingJobProcessor.setFile(file);
+						processingJobProcessor.setTFile(tFile);
 						processingJobProcessor.setOutputArtifactclass(outputArtifactclass);
 						logger.info("Now kicking off - " + job.getId() + " " + logicalFilePath + " task " + processingtaskId);
 						executor.execute(processingJobProcessor);

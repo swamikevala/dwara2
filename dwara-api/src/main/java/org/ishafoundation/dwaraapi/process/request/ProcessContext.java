@@ -10,6 +10,8 @@ public class ProcessContext {
 	
 	private File file;
 	
+	private TFile tFile;
+	
 	private Job job;
 	
 	private String outputDestinationDirPath;
@@ -36,6 +38,14 @@ public class ProcessContext {
 
 	public void setFile(File file) {
 		this.file = file;
+	}
+
+	public TFile getTFile() {
+		return tFile;
+	}
+
+	public void setTFile(TFile file) {
+		this.tFile = file;
 	}
 
 	public Job getJob() {

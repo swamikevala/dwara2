@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Optional;
 
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -37,17 +38,16 @@ public class FileIgnorer implements IProcessingTask {
 		Artifact inputArtifact = processContext.getJob().getInputArtifact();
 		String inputArtifactName = inputArtifact.getName();
 		
-		String taskName = processContext.getJob().getProcessingtaskId();
 		LogicalFile logicalFile = processContext.getLogicalFile();
-		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
-		String destinationDirPath = processContext.getOutputDestinationDirPath();
 
-		// TODO - Have to call this as API
     	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(Domain.ONE);
-    	org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainSpecificFileRepository.findById(file.getId()).get();
-    	fileFromDB.setDeleted(true);
-    	domainSpecificFileRepository.save(fileFromDB);
-		
+    	Optional<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileOptional = domainSpecificFileRepository.findById(processContext.getFile().getId());
+    	if(fileOptional.isPresent()) {
+	    	org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = fileOptional.get();
+	    	fileFromDB.setDeleted(true);
+	    	domainSpecificFileRepository.save(fileFromDB);
+    	}
+    	
     	// move the File to junk
     	String path = logicalFile.getAbsolutePath();
     	

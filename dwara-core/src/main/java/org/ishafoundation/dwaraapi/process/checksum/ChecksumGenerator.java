@@ -41,48 +41,48 @@ public class ChecksumGenerator implements IProcessingTask {
 		
 		Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
 		LogicalFile logicalFile = processContext.getLogicalFile();
-
-		int fileId = processContext.getFile().getId();
+		org.ishafoundation.dwaraapi.process.request.TFile tFile = processContext.getTFile();
+		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
 		if(logicalFile.isFile()) {
 			boolean generateChecksum = false;
-			
-			TFile tFile = null;
-			Optional<TFile> tFileOptional = tFileDao.findById(fileId);
-			if(tFileOptional.isPresent()) { // For later checksum generation scenario TFile records could have been deleted.
-				tFile = tFileOptional.get();
-				if(tFile.getChecksum() == null) { // If there is a checksum already dont overwrite it...
-					generateChecksum = true;
-				}
+
+			if(tFile.getChecksum() == null) { // If there is a checksum already dont overwrite it...
+				generateChecksum = true;
 			}
-			
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
-			FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-			Optional<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileOptional = domainSpecificFileRepository.findById(fileId);
-			if(fileOptional.isPresent()) { // Not all files are persisted anymore. For e.g., edited videos has only configured files...
-				file = fileOptional.get();
-				if(file.getChecksum() == null) { // If there is a checksum already dont overwrite it...
+
+			if(file != null) {
+				if(file.getChecksum() == null) {
 					generateChecksum = true;
 				}
 				else {
-					logger.info(fileId + " already has checksum. Not overwriting it");
+					logger.info(file.getId() + " already has checksum. Not overwriting it");
 				}
 			}
 			
 			if(generateChecksum) {
 				byte[] checksum = ChecksumUtil.getChecksum(logicalFile, Checksumtype.valueOf(configuration.getChecksumType()));
-			
-				if(tFile != null) {
-					tFile.setChecksum(checksum);
-					tFileDao.save(tFile);
+
+				TFile tFileDbObj = null;
+				Optional<TFile> tFileOptional = tFileDao.findById(tFile.getId());
+				if(tFileOptional.isPresent()) { // For later checksum generation scenario TFile records could have been deleted.
+					tFileDbObj = tFileOptional.get();
+					tFileDbObj.setChecksum(checksum);
+					tFileDao.save(tFileDbObj);
 				}
+			
 				if(file != null) {
-					file.setChecksum(checksum);
-			    	domainSpecificFileRepository.save(file);
+					FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+					Optional<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileOptional = domainSpecificFileRepository.findById(file.getId());
+					if(fileOptional.isPresent()) { // Not all files are persisted anymore. For e.g., edited videos has only configured files...
+						org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileDBObj = fileOptional.get();
+						fileDBObj.setChecksum(checksum);
+				    	domainSpecificFileRepository.save(fileDBObj);
+					}
 				}
 			}
 		}
 		else {
-			logger.info(fileId + " not a file but a folder. Skipping it");
+			logger.info(tFile.getId() + " not a file but a folder. Skipping it");
 		}
 		processingtaskResponse.setIsComplete(true);
 		return processingtaskResponse;
