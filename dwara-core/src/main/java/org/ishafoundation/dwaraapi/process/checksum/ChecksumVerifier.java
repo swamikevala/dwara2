@@ -42,7 +42,7 @@ public class ChecksumVerifier implements IProcessingTask {
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 		
 		LogicalFile logicalFile = processContext.getLogicalFile();
-		Integer fileId = processContext.getFile().getId();
+		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
 		TFile tFile = processContext.getTFile();
 		if(logicalFile.isFile()) {
 			logger.info("Verifying checksum for - " + tFile.getId() + ":" + logicalFile.getAbsolutePath());
@@ -66,9 +66,9 @@ public class ChecksumVerifier implements IProcessingTask {
 						volumeId = nthJobDependency.getVolume().getId();
 				}
 				 
-				if(fileId != null) {
+				if(file != null) {
 			    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-			    	FileVolume fileVolume = domainSpecificFileVolumeRepository.findByIdFileIdAndIdVolumeId(fileId, volumeId);
+			    	FileVolume fileVolume = domainSpecificFileVolumeRepository.findByIdFileIdAndIdVolumeId(file.getId(), volumeId);
 			    	fileVolume.setVerifiedAt(LocalDateTime.now());
 			    	domainSpecificFileVolumeRepository.save(fileVolume);
 		    	}
