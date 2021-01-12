@@ -13,6 +13,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Type;
 import org.ishafoundation.dwaraapi.db.model.cache.Cacheable;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassUser;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassDestination;
@@ -59,6 +60,10 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 	
 	@Column(name="display_order")
 	private Integer displayOrder;
+	
+	@Type(type = "json")
+	@Column(name="config", columnDefinition = "json")
+	private ArtifactclassConfig config;
 	
     @OneToMany(mappedBy = "artifactclass",
             cascade = CascadeType.MERGE,
@@ -174,6 +179,14 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 
 	public void setDisplayOrder(Integer displayOrder) {
 		this.displayOrder = displayOrder;
+	}
+
+	public ArtifactclassConfig getConfig() {
+		return config;
+	}
+
+	public void setConfig(ArtifactclassConfig config) {
+		this.config = config;
 	}
 
 	@JsonIgnore

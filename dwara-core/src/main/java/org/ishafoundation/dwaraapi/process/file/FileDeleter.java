@@ -1,16 +1,10 @@
 package org.ishafoundation.dwaraapi.process.file;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Set;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;

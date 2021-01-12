@@ -28,7 +28,7 @@ public class FileVolume {
 	public static final String TABLE_NAME = File.TABLE_NAME_PREFIX +"<<DOMAIN>>_volume";
 	
 	@EmbeddedId
-	private FileVolumeKey id;
+	protected FileVolumeKey id;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("volumeId")

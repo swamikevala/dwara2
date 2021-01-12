@@ -17,17 +17,21 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
@@ -60,6 +64,12 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private DestinationDao destinationDao;
+	
+	@Autowired
+	private TFileDao tFileDao;
+	
+	@Autowired
+	private TFileVolumeDao tFileVolumeDao;
 	
 	@Autowired
 	private Map<String, IStoragelevel> storagelevelMap;
@@ -159,6 +169,28 @@ public abstract class AbstractStoragetypeJobProcessor {
 			}
 		}
 		
+		List<TFile> artifactTFileList = tFileDao.findAllByArtifactId(artifact.getId());
+		List<TFileVolume> toBeAddedTFileVolumeTableEntries = new ArrayList<TFileVolume>();
+		for (Iterator<TFile> iterator = artifactTFileList.iterator(); iterator.hasNext();) {
+			TFile nthFile = iterator.next();
+			String filePathname = FilenameUtils.separatorsToUnix(nthFile.getPathname());
+			
+			TFileVolume tfileVolume = new TFileVolume(nthFile.getId(), volume);
+			
+			ArchivedFile archivedFile = filePathNameToArchivedFileObj.get(filePathname);
+			if(archivedFile != null) { // if(volume.getStoragelevel() == Storagelevel.block) { - need to check if the file is archived anyway even if its block, so going with the archivedFile check alone
+				Integer volumeBlock = archivedFile.getVolumeBlock();
+				tfileVolume.setVolumeBlock(volumeBlock);
+				tfileVolume.setArchiveBlock(archivedFile.getArchiveBlock());
+			}
+			toBeAddedTFileVolumeTableEntries.add(tfileVolume); // Should we add null entries...
+		}
+		
+	    if(toBeAddedTFileVolumeTableEntries.size() > 0) {
+	    	tFileVolumeDao.saveAll(toBeAddedTFileVolumeTableEntries);
+	    	logger.info("FileVolume records created successfully");
+	    }
+		
 		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
 
 		// NOTE: We need filevolume entries even when response from storage layer is null(Only archiveformats return the file breakup storage details... Other non archive writes dont...)
@@ -202,7 +234,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    	domainSpecificFileVolumeRepository.saveAll(toBeAddedFileVolumeTableEntries);
 	    	logger.info("FileVolume records created successfully");
 	    }
-
+	    
 	    ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolumeInstance(artifact.getId(), volume, domain); // lets just let users use the util consistently
 	    artifactVolume.setName(artifact.getName());
 	    artifactVolume.setJob(storagejob.getJob());
@@ -360,6 +392,24 @@ public abstract class AbstractStoragetypeJobProcessor {
 		volume.setFinalized(true);
 		volumeDao.save(volume);
 		logger.trace("Volume " + volume.getId() + " finalized succesfully");
+		
+		List<TFileVolume> toBeDeletedTFileVolumeTableEntries = tFileVolumeDao.findAllByIdVolumeId(volume.getId());
+		List<Integer> tFileIdList = new ArrayList<Integer>();
+		for (TFileVolume tFileVolume : toBeDeletedTFileVolumeTableEntries) {
+			int tFileId = tFileVolume.getId().getFileId();
+			tFileIdList.add(tFileId);
+		}
+		tFileVolumeDao.deleteAll(toBeDeletedTFileVolumeTableEntries);
+		logger.trace("TFileVolume entries for " + volume.getId() + " deleted succesfully");
+		
+		// Delete TFile entries only when no file entries are there for any of the volume
+		List<TFileVolume> tFileVolumeTableEntries = tFileVolumeDao.findAllByIdFileId(tFileIdList.get(0));
+		if(tFileVolumeTableEntries == null || tFileVolumeTableEntries.size() == 0) {
+			for (Integer nthTFileId : tFileIdList) {
+				tFileDao.deleteById(nthTFileId);	
+			}
+			logger.trace("All TFile entries deleted succesfully");
+		}
 	}
 
 

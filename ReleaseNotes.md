@@ -1,3 +1,10 @@
+# Dwara App Version - 2.1.04
+### New features
+1 Support for edited videos ingest
+
+### Upgrade steps
+* Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_0_3_hotfix5.sql)
+
 # Dwara App Version - 2.1.03
 ### New features
 1 Extend validating to be ingested file during ingest too and not just during scan times
@@ -14,6 +21,7 @@
 5 DU-345 ArtifactAutoDeleter hourly than daily
 
 > scheduler.ingestedArtifactAutoDeleter.fixedDelay=3600000
+> retentionPeriod.video-pub=0 ???
 
 6 DU-342 TapeJobselector sort by seqId as integer and not string
 

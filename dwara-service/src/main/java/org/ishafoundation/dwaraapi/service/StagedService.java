@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,13 +32,16 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassUserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.ArtifactclassConfig;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Extension;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassUser;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
@@ -53,6 +57,7 @@ import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.resource.mapper.MiscObjectMapper;
 import org.ishafoundation.dwaraapi.resource.mapper.RequestToEntityObjectMapper;
 import org.ishafoundation.dwaraapi.staged.StagedFileOperations;
+import org.ishafoundation.dwaraapi.staged.ingest.PathnameReqexVisitor;
 import org.ishafoundation.dwaraapi.staged.scan.Error;
 import org.ishafoundation.dwaraapi.staged.scan.Errortype;
 import org.ishafoundation.dwaraapi.staged.scan.SourceDirScanner;
@@ -79,6 +84,9 @@ public class StagedService extends DwaraService{
 	
 	@Autowired
 	private ActionArtifactclassUserDao artifactclassActionUserDao;
+	
+	@Autowired
+	private TFileDao tFileDao;
 	
 	@Autowired
 	protected SequenceUtil sequenceUtil;
@@ -499,8 +507,6 @@ public class StagedService extends DwaraService{
 					systemrequest = requestDao.save(systemrequest);
 					logger.info(DwaraConstants.SYSTEM_REQUEST + systemrequest.getId());
 	
-			    	Collection<java.io.File> libraryFileAndDirsList = getFileList(stagedFileInAppReadyToIngest, junkFilesStagedDirName);
-	
 					Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
 					artifact.setWriteRequest(systemrequest);
 					artifact.setqLatestRequest(systemrequest);
@@ -514,7 +520,7 @@ public class StagedService extends DwaraService{
 					
 					logger.info(artifact.getClass().getSimpleName() + " - " + artifact.getId());
 					
-			        createFilesAndExtensions(readyToIngestPath, domain, artifact, size, libraryFileAndDirsList);
+			        createFilesAndExtensions(readyToIngestPath, domain, artifact, size, stagedFileInAppReadyToIngest, junkFilesStagedDirName);
 					
 					jobCreator.createJobs(systemrequest, artifact);
 					
@@ -567,9 +573,41 @@ public class StagedService extends DwaraService{
 	}
     
     // made public so tests can access it...
-	public void createFilesAndExtensions(String pathPrefix, Domain domain, Artifact artifact, long artifactSize, Collection<java.io.File> libraryFileAndDirsList) throws Exception {
+	public void createFilesAndExtensions(String pathPrefix, Domain domain, Artifact artifact, long artifactSize, java.io.File stagedFileInAppReadyToIngest, String junkFilesStagedDirName) throws Exception {
+		
+    	Collection<java.io.File> libraryFileAndDirsList = getTFileTableEntries(stagedFileInAppReadyToIngest, junkFilesStagedDirName);
+	    List<TFile> toBeAddedTFileTableEntries = new ArrayList<TFile>(); 
+
+	    for (Iterator<java.io.File> iterator = libraryFileAndDirsList.iterator(); iterator.hasNext();) {
+			
+			java.io.File file = (java.io.File) iterator.next();
+			String fileName = file.getName();
+			String filePath = file.getAbsolutePath();
+			filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); // just holding the file path from the artifact folder and not the absolute path.
+			logger.trace("filePath - " + filePath);
+			TFile nthFileRowToBeInserted = new TFile();
+			if(file.isDirectory())
+				nthFileRowToBeInserted.setDirectory(true);
+			nthFileRowToBeInserted.setPathname(filePath);
+			nthFileRowToBeInserted.setArtifactId(artifact.getId());
+
+			if(fileName.equals(artifact.getName())) // if file is the artifact file itself, set the artifact size calculated upfront...
+				nthFileRowToBeInserted.setSize(artifactSize);
+			else
+				nthFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
+			
+			toBeAddedTFileTableEntries.add(nthFileRowToBeInserted);			
+		}
+		
+	    if(toBeAddedTFileTableEntries.size() > 0) {
+	    	tFileDao.saveAll(toBeAddedTFileTableEntries);
+	    	logger.info("TFile records created successfully");
+	    }
+    	
+    	libraryFileAndDirsList = getFileTableEntries(pathPrefix, artifact, stagedFileInAppReadyToIngest, junkFilesStagedDirName);
+    	
 		Set<String> extnsOnArtifactFolder =  new TreeSet<String>();
-	    List<File> toBeAddedFileTableEntries = new ArrayList<File>(); 
+		List<File> toBeAddedFileTableEntries = new ArrayList<File>(); 
 	    for (Iterator<java.io.File> iterator = libraryFileAndDirsList.iterator(); iterator.hasNext();) {
 			
 			java.io.File file = (java.io.File) iterator.next();
@@ -620,7 +658,34 @@ public class StagedService extends DwaraService{
 	    
 	}
 	
-    private Collection<java.io.File> getFileList(java.io.File libraryFileInStagingDir, String junkFilesStagedDirName) {
+    private Collection<java.io.File> getFileTableEntries(String pathPrefix, Artifact artifact, java.io.File stagedFileInAppReadyToIngest,
+			String junkFilesStagedDirName) {
+    	Collection<java.io.File> libraryFileAndDirsList = null;
+    	ArtifactclassConfig artifactclassConfig = artifact.getArtifactclass().getConfig();
+    	
+		String pathnameRegex = null;
+		if(artifactclassConfig != null)
+			pathnameRegex = artifactclassConfig.getPathnameRegex();
+		
+		if(pathnameRegex != null) { // if artifactclass_processingtask has a pathregex we need to only get the processable files from that folder path and not from the entire archives directory... e.g., video-pub-edit will have .mov files under output folder
+			PathnameReqexVisitor pathnameReqexVisitor = new PathnameReqexVisitor(pathPrefix, pathnameRegex, junkFilesStagedDirName);
+			try {
+				Files.walkFileTree(stagedFileInAppReadyToIngest.toPath(), pathnameReqexVisitor);
+			} catch (IOException e) {
+				// swallow for now
+			}
+			if(pathnameReqexVisitor != null) {
+				libraryFileAndDirsList = pathnameReqexVisitor.getFileList();
+			}
+		}
+		else {
+			libraryFileAndDirsList = getTFileTableEntries(stagedFileInAppReadyToIngest, junkFilesStagedDirName);
+		}
+		
+		return libraryFileAndDirsList;
+	}
+
+	private Collection<java.io.File> getTFileTableEntries(java.io.File libraryFileInStagingDir, String junkFilesStagedDirName) {
         IOFileFilter dirFilter = null;
         Collection<java.io.File> libraryFileAndDirsList = null;
 	    if(libraryFileInStagingDir.isDirectory()) {

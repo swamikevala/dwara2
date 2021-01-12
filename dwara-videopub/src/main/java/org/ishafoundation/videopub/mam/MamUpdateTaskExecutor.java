@@ -39,7 +39,7 @@ import com.jcraft.jsch.Session;
 
 @Component("video-mam-update")
 @Primary
-@Profile({ "!dev & !stage" })
+//@Profile({ "!dev & !stage" })
 public class MamUpdateTaskExecutor implements IProcessingTask {
     
     private static final Logger logger = LoggerFactory.getLogger(MamUpdateTaskExecutor.class);

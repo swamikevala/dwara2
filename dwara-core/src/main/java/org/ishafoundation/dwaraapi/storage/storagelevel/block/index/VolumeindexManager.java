@@ -16,17 +16,20 @@ import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.commandline.local.RetriableCommandLineExecutorImpl;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.storagetype.tape.DeviceLockFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,17 +46,20 @@ public class VolumeindexManager {
 	Logger logger = LoggerFactory.getLogger(VolumeindexManager.class);
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private TFileDao tFileDao;
 
+	@Autowired
+	private TFileVolumeDao tFileVolumeDao;
+	
+	@Autowired
+	private DomainUtil domainUtil;
+	
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
 
 	@Autowired
 	private RetriableCommandLineExecutorImpl retriableCommandLineExecutorImpl;
-	
-	@Autowired
-	private DeviceLockFactory deviceLockFactory;
-	
+
 	@Value("${filesystem.temporarylocation}")
 	private String filesystemTemporarylocation;
 	
@@ -127,20 +133,39 @@ public class VolumeindexManager {
 			artifact.setSequencecode(artifactDbObj.getSequenceCode());
 			
 			List<File> fileList = new ArrayList<File>();
-			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactDbObj, domain);
-			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
-				File file = new File();
-				file.setName(nthFile.getPathname());
-				file.setSize(nthFile.getSize());
-				byte[] checksum = nthFile.getChecksum();
-				if(checksum != null)
-					file.setChecksum(Hex.encodeHexString(checksum));
-				
-				FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());// lets just let users use the util consistently
-				file.setVolumeblock(fileVolume.getVolumeBlock());
-				file.setArchiveblock(fileVolume.getArchiveBlock());
-				file.setEncrypted(fileVolume.isEncrypted() ? true : null);
-				fileList.add(file);
+			List<TFile> artifactTFileList = tFileDao.findAllByArtifactId(artifactId);
+			if(artifactTFileList != null && artifactTFileList.size() > 0) {
+				for (TFile nthFile : artifactTFileList) {
+					File file = new File();
+					file.setName(nthFile.getPathname());
+					file.setSize(nthFile.getSize());
+					byte[] checksum = nthFile.getChecksum();
+					if(checksum != null)
+						file.setChecksum(Hex.encodeHexString(checksum));
+					
+					TFileVolume fileVolume = tFileVolumeDao.findByIdFileIdAndIdVolumeId(nthFile.getId(), volume.getId());// lets just let users use the util consistently
+					file.setVolumeblock(fileVolume.getVolumeBlock());
+					file.setArchiveblock(fileVolume.getArchiveBlock());
+					file.setEncrypted(fileVolume.isEncrypted() ? true : null);
+					fileList.add(file);
+				}
+			}
+			else { // For derived files use file table as we dont add tfile table entries
+				List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactDbObj, domain);
+				for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
+					File file = new File();
+					file.setName(nthFile.getPathname());
+					file.setSize(nthFile.getSize());
+					byte[] checksum = nthFile.getChecksum();
+					if(checksum != null)
+						file.setChecksum(Hex.encodeHexString(checksum));
+					
+					FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());// lets just let users use the util consistently
+					file.setVolumeblock(fileVolume.getVolumeBlock());
+					file.setArchiveblock(fileVolume.getArchiveBlock());
+					file.setEncrypted(fileVolume.isEncrypted() ? true : null);
+					fileList.add(file);
+				}
 			}
 			artifact.setFile(fileList);
 			artifactList.add(artifact);

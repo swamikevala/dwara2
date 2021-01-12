@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Component("video-mam-update")
-@Profile({ "dev | stage" })
+//@Component("video-mam-update")
+//@Profile({ "dev | stage" })
 public class MockMamUpdateTaskExecutor implements IProcessingTask {
     
     private static final Logger logger = LoggerFactory.getLogger(MockMamUpdateTaskExecutor.class);
