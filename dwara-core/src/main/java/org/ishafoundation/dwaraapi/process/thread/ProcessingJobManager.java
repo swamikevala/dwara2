@@ -17,8 +17,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
-import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
+import org.ishafoundation.dwaraapi.db.keys.TTFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
@@ -28,7 +28,7 @@ import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassTask;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
@@ -64,7 +64,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	private ArtifactclassTaskDao artifactclassTaskDao;
 	
 	@Autowired
-	private TFileJobDao tFileJobDao;
+	private TTFileJobDao tFileJobDao;
 		
 	@Autowired
 	private DomainUtil domainUtil;
@@ -330,7 +330,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					logger.debug("Delegating for processing -job-" + job.getId() + "-file-" + tFile.getId());
 	
 					// Requeue scenario - Only failed files are to be continued...
-					Optional<TFileJob> tFileJobDB = tFileJobDao.findById(new TFileJobKey(tFile.getId(), job.getId()));
+					Optional<TTFileJob> tFileJobDB = tFileJobDao.findById(new TTFileJobKey(tFile.getId(), job.getId()));
 					if(tFileJobDB.isPresent() && (tFileJobDB.get().getStatus() == Status.in_progress || tFileJobDB.get().getStatus() == Status.completed)) {
 						logger.info("job-" + job.getId() + "-file-" + tFile.getId() + " already Inprogress/completed. Skipping it...");
 						continue;
@@ -353,8 +353,8 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					
 					if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
 						if(!tFileJobDB.isPresent()) {
-							TFileJob tFileJob = new TFileJob();
-							tFileJob.setId(new TFileJobKey(tFile.getId(), job.getId()));
+							TTFileJob tFileJob = new TTFileJob();
+							tFileJob.setId(new TTFileJobKey(tFile.getId(), job.getId()));
 							tFileJob.setJob(job);
 							tFileJob.setArtifactId(inputArtifactId);
 							tFileJob.setStatus(Status.queued);

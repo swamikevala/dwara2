@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.db.dao.transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -25,4 +26,6 @@ public interface RequestDao extends CrudRepository<Request,Integer>, RequestCust
 	List<Request> findAllByTypeAndStatusIn(RequestType type, Collection<Status> queuedOrInprogress);
 	
 	List<Request> findAllByActionIdAndStatusInAndType(Action action, Collection<Status> queuedOrInprogress, RequestType type);
+	
+	List<Request> findAllByCompletedAtBetweenAndActionIdAndStatusInAndType(LocalDateTime startDateTime, LocalDateTime endDateTime, Action action, Collection<Status> completedVariants, RequestType type);
 }

@@ -169,7 +169,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 			}
 		}
 		
-		List<TFile> artifactTFileList = tFileDao.findAllByArtifactId(artifact.getId());
+		List<TFile> artifactTFileList = tFileDao.findAllByArtifactIdAndDeletedIsFalse(artifact.getId());
 		List<TFileVolume> toBeAddedTFileVolumeTableEntries = new ArrayList<TFileVolume>();
 		for (Iterator<TFile> iterator = artifactTFileList.iterator(); iterator.hasNext();) {
 			TFile nthFile = iterator.next();

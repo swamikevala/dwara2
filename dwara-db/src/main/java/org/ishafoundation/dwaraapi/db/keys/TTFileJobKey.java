@@ -7,7 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 @Embeddable
-public class TFileJobKey implements Serializable {
+public class TTFileJobKey implements Serializable {
 
 	private static final long serialVersionUID = 8367155075402352731L;
 
@@ -17,9 +17,9 @@ public class TFileJobKey implements Serializable {
     @Column(name = "job_id")
     private int jobId;
  
-    public TFileJobKey() {}
+    public TTFileJobKey() {}
     
-    public TFileJobKey(
+    public TTFileJobKey(
         int fileId,
         int jobId) {
         this.fileId = fileId;
@@ -49,7 +49,7 @@ public class TFileJobKey implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        TFileJobKey that = (TFileJobKey) o;
+        TTFileJobKey that = (TTFileJobKey) o;
         return Objects.equals(fileId, that.fileId) &&
                Objects.equals(jobId, that.jobId);
     }

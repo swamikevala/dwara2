@@ -133,7 +133,7 @@ public class VolumeindexManager {
 			artifact.setSequencecode(artifactDbObj.getSequenceCode());
 			
 			List<File> fileList = new ArrayList<File>();
-			List<TFile> artifactTFileList = tFileDao.findAllByArtifactId(artifactId);
+			List<TFile> artifactTFileList = tFileDao.findAllByArtifactIdAndDeletedIsFalse(artifactId);
 			if(artifactTFileList != null && artifactTFileList.size() > 0) {
 				for (TFile nthFile : artifactTFileList) {
 					File file = new File();

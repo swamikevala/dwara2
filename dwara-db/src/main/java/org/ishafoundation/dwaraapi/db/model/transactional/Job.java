@@ -24,7 +24,7 @@ import javax.persistence.Transient;
 
 import org.hibernate.annotations.Type;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 
@@ -107,7 +107,7 @@ public class Job {
     @OneToMany(mappedBy = "job",
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
-    private List<TFileJob> tFileJob = new ArrayList<>();
+    private List<TTFileJob> tFileJob = new ArrayList<>();
 
 
     public int getId() {
@@ -273,12 +273,12 @@ public class Job {
 	}
 
 	@JsonIgnore
-	public List<TFileJob> gettFileJob() {
+	public List<TTFileJob> gettFileJob() {
 		return tFileJob;
 	}
 	
 	@JsonIgnore
-	public void settFileJob(List<TFileJob> tFileJob) {
+	public void settFileJob(List<TTFileJob> tFileJob) {
 		this.tFileJob = tFileJob;
 	}
 	

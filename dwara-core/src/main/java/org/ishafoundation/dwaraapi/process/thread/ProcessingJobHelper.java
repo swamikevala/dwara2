@@ -57,7 +57,7 @@ public class ProcessingJobHelper {
 	
 	protected HashMap<String, TFile> getFilePathToTFileObj(int artifactId) throws Exception{
 		HashMap<String, TFile> filePathToTFileObj = new HashMap<String, TFile>();
-		List<TFile> artifactTFileList = tFileDao.findAllByArtifactId(artifactId);
+		List<TFile> artifactTFileList = tFileDao.findAllByArtifactIdAndDeletedIsFalse(artifactId);
 		for (TFile tFile : artifactTFileList) {
 			filePathToTFileObj.put(tFile.getPathname(), tFile);
 		}

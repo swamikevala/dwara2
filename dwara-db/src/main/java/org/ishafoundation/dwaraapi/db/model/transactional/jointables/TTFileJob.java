@@ -13,16 +13,16 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
+import org.ishafoundation.dwaraapi.db.keys.TTFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 
-@Entity(name = "TFileJob")
-@Table(name="t_file_job")
-public class TFileJob {
+@Entity(name = "TTFileJob")
+@Table(name="t_t_file_job")
+public class TTFileJob {
 
 	@EmbeddedId
-	private TFileJobKey id;
+	private TTFileJobKey id;
 
 	// FK removed to support multi domains
 //	@Column(name="file_id")
@@ -53,20 +53,20 @@ public class TFileJob {
 	@Column(name="started_at")
 	private LocalDateTime startedAt;
 	
-	public TFileJob() {
+	public TTFileJob() {
 		
 	}
 
-	public TFileJob(int fileId, Job job) {
+	public TTFileJob(int fileId, Job job) {
 		this.job = job;
-		this.id = new TFileJobKey(fileId, job.getId());
+		this.id = new TTFileJobKey(fileId, job.getId());
 	}
 	
-    public TFileJobKey getId() {
+    public TTFileJobKey getId() {
 		return id;
 	}
 
-	public void setId(TFileJobKey id) {
+	public void setId(TTFileJobKey id) {
 		this.id = id;
 	}
 
@@ -121,7 +121,7 @@ public class TFileJob {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        TFileJob that = (TFileJob) o;
+        TTFileJob that = (TTFileJob) o;
         return Objects.equals(id, that.id);
     }
  

@@ -21,15 +21,17 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -71,7 +73,10 @@ public class ScheduledStatusUpdater {
 	private RequestDao requestDao;
 
 	@Autowired
-	private TFileJobDao tFileJobDao;
+	private TTFileJobDao tFileJobDao;
+	
+	@Autowired
+	private TFileDao tFileDao;
 	
 	@Autowired
 	private DomainUtil domainUtil;
@@ -127,9 +132,9 @@ public class ScheduledStatusUpdater {
 				boolean hasFailures = false;
 				boolean hasAnyCompleted = false;
 				boolean isAllComplete = true;
-				List<TFileJob> jobFileList = tFileJobDao.findAllByJobId(job.getId()); 
-				for (Iterator<TFileJob> iterator2 = jobFileList.iterator(); iterator2.hasNext();) {
-					TFileJob jobFile = (TFileJob) iterator2.next();
+				List<TTFileJob> jobFileList = tFileJobDao.findAllByJobId(job.getId()); 
+				for (Iterator<TTFileJob> iterator2 = jobFileList.iterator(); iterator2.hasNext();) {
+					TTFileJob jobFile = (TTFileJob) iterator2.next();
 					Status status = jobFile.getStatus();
 					if(status == Status.queued) {
 						queued = true;
@@ -292,6 +297,12 @@ public class ScheduledStatusUpdater {
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFileFromDB = domainSpecificFileRepository.findByPathname(artifact.getName());
 		artifactFileFromDB.setSize(artifactSize);
 		domainSpecificFileRepository.save(artifactFileFromDB);
+		
+		TFile artifactTFileFromDB = tFileDao.findByPathname(artifact.getName());
+		if(artifactTFileFromDB != null) {
+			artifactTFileFromDB.setSize(artifactSize);
+			tFileDao.save(artifactTFileFromDB);
+		}
 		
 		// TODO : Digi hack - clean this up -Long term - iterate through files that are directories and calc their size and update them...
 		if("file-delete".equals(job.getProcessingtaskId()) && artifact.getArtifactclass().getId().startsWith("video-digi-2020-")) {

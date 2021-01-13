@@ -8,11 +8,13 @@ import java.util.regex.Pattern;
 
 import org.ishafoundation.dwaraapi.api.resp.artifact.ArtifactResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
@@ -34,6 +36,9 @@ public class OnHoldArtifactRenameService extends DwaraService{
 
 	@Autowired
 	private RequestDao requestDao;
+	
+	@Autowired
+	private TFileDao tFileDao;
 
 	@Autowired
 	private DomainUtil domainUtil;
@@ -108,6 +113,7 @@ public class OnHoldArtifactRenameService extends DwaraService{
 		
 		// 2 (a) (ii) Change the File Table entries and the file names 
 		// Step 4 - Flag all the file entries as soft-deleted
+		String parentFolderReplaceRegex = "^"+artifactName; 
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifactToRenameActualRow, domain);			
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileListForRollback = fileRepositoryUtil.getAllArtifactFileList(artifactToRenameActualRow, domain);			
 		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File eachfile : artifactFileList) { 
@@ -115,13 +121,21 @@ public class OnHoldArtifactRenameService extends DwaraService{
 			String eachFilePath = eachfile.getPathname();
 			// Getting the filename
 			String filepath = eachfile.getPathname() ;
-			String parentFolderReplaceRegex = "^"+artifactName; 
 			// Change the parent folder name by replacing the older artifact name by newer name
 			String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, artifactNewName); 
 			eachfile.setPathname(correctedFilePathForArtifactFile);
 
-		} // File entry manipulation and renaming ends here  
-		// SAve Artifact first
+		} // File entry manipulation and renaming ends here 
+		
+		List<TFile> artifactTFileList  = tFileDao.findAllByArtifactId(artifactId); // Including the Deleted Ones
+		for (TFile nthTFile : artifactTFileList) {
+			String filepath = nthTFile.getPathname() ;
+			// Change the parent folder name by replacing the older artifact name by newer name
+			String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, artifactNewName); 
+			nthTFile.setPathname(correctedFilePathForArtifactFile);			
+		}
+		
+		// Save Artifact first
 		try {
 			artifactRepository.save(artifactToRenameActualRow);
 		}
@@ -130,11 +144,12 @@ public class OnHoldArtifactRenameService extends DwaraService{
 			requestDao.save(userRequest);
 			throw new Exception("Artifact Table rename failed "+e.getMessage());
 		}
-		FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 		
+		FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 		// Update the file table
 		try {
 			domainSpecificFileRepository.saveAll(artifactFileList);
+			tFileDao.saveAll(artifactTFileList);
 		}
 		catch (Exception e) {
 			// Roll-back the artifact table update change
@@ -144,6 +159,8 @@ public class OnHoldArtifactRenameService extends DwaraService{
 			requestDao.save(userRequest);
 			throw new Exception("File Table rename failed "+e.getMessage());
 		}
+		
+		
 		//Change the filename
 		try {
 			fileRename(heldArtifactPath, artifactName, artifactNewName );

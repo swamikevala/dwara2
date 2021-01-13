@@ -18,8 +18,8 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactEntityUti
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileJobDao;
-import org.ishafoundation.dwaraapi.db.keys.TFileJobKey;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
+import org.ishafoundation.dwaraapi.db.keys.TTFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
@@ -29,7 +29,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileJob;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -72,7 +72,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	private TFileDao tFileDao;
 	
 	@Autowired
-	private TFileJobDao tFileJobDao;
+	private TTFileJobDao tFileJobDao;
 	
 	@Autowired
 	private Map<String, IProcessingTask> processingtaskActionMap;
@@ -180,7 +180,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 
 		// For every file tasktype call we had to make a DB call just to ensure the job is not cancelled...
 		// Its pretty expensive to make a DB call for every tasktype to be run, but its worth to cancel a job than run an expensive tasktype say like transcoding
-		TFileJob tFileJob = null;
+		TTFileJob tFileJob = null;
 		String processingtaskName = null;
 		Processingtask processingtask = null;
 		try {
@@ -203,7 +203,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			
 			processingtask = getProcessingtask(processingtaskName);
 			
-			tFileJob = tFileJobDao.findById(new TFileJobKey(tFile.getId(), job.getId())).get();
+			tFileJob = tFileJobDao.findById(new TTFileJobKey(tFile.getId(), job.getId())).get();
 			tFileJob.setStatus(Status.in_progress);
 			tFileJob.setStartedAt(LocalDateTime.now());
 			logger.debug("DB TFileJob Updation for file " + tFile.getId());

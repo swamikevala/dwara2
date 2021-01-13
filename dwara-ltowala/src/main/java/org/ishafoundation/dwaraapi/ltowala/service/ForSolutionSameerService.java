@@ -7,16 +7,19 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
-import org.ishafoundation.dwaraapi.db.dao.master.DomainDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.ltowala.api.resp.Artifact;
 import org.ishafoundation.dwaraapi.ltowala.api.resp.File;
 import org.ishafoundation.dwaraapi.ltowala.api.resp.LtoWalaResponse;
@@ -29,12 +32,9 @@ public class ForSolutionSameerService {
 
 	@Autowired
 	private JobDao jobDao;
-	
-	@Autowired
-	private DomainDao domainDao;
 
 	@Autowired
-	private DomainAttributeConverter domainAttributeConverter;
+	private RequestDao requestDao;
 	
 	@Autowired
 	private DomainUtil domainUtil;
@@ -51,35 +51,26 @@ public class ForSolutionSameerService {
 		LtoWalaResponse ltoWalaResponse = new LtoWalaResponse();
 		ltoWalaResponse.setStartDate(getDateForUI(startDateTime));
 		ltoWalaResponse.setEndDate(getDateForUI(endDateTime));
-		
-		Domain[] domains = Domain.values();
+				
+		List<Status> statusList = new ArrayList<Status>();
+		statusList.add(Status.completed);
+		statusList.add(Status.completed_failures);
 		
 		List<Artifact> artifactList = new ArrayList<Artifact>();
-		List<Job> jobList = jobDao.findAllByCompletedAtBetweenAndStoragetaskActionIdAndGroupVolumeCopyId(startDateTime, endDateTime, Action.write, copyNumber);
-		for (Job job : jobList) {
-			Artifact artifact = new Artifact();
-			int artifactId = job.getInputArtifactId();
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactFromDB = null;
-			Domain domain = null;
-    		for (Domain nthDomain : domains) {
-    			artifactFromDB = domainUtil.getDomainSpecificArtifact(nthDomain, artifactId);
-    			if(artifactFromDB != null) {
-    				domain = nthDomain;
-    				break;
-    			}
-			}
-    		
-    		if(artifactFromDB == null) {
-    			// TODO What then? Can it be? No way artifact has to be in one of the domain specific tables..
-//    			logger.error();
-    			continue;
-    		}
-    			
+		List<Request> requestList = requestDao.findAllByCompletedAtBetweenAndActionIdAndStatusInAndType(startDateTime, endDateTime, Action.ingest, statusList, RequestType.system);
+		for (Request request : requestList) {
+			String artifactclassId = request.getDetails().getArtifactclassId();
+			Domain domain = domainUtil.getDomain(artifactclassId);
+			ArtifactRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactFromDB = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(request.getId());
+			int artifactId = artifactFromDB.getId();
 			String artifactName = artifactFromDB.getName();
+			
+			Artifact artifact = new Artifact();
 			artifact.setName(artifactName);
 			artifact.setArtifactclass(artifactFromDB.getArtifactclass().getId());
 			artifact.setTotalSize(artifactFromDB.getTotalSize());
-			artifact.setCompletedAt(getDateForUI(job.getCompletedAt())); // TODO Change the field name
+			artifact.setCompletedAt(getDateForUI(request.getCompletedAt()));
 			artifact.setFileCount(artifactFromDB.getFileCount());
 			
 			List<File> fileList = new ArrayList<File>();
@@ -103,6 +94,7 @@ public class ForSolutionSameerService {
 			
 			if(needVolumeDetails) {
 				Volume volume = new Volume();
+				Job job = jobDao.findByRequestIdAndStoragetaskActionIdAndGroupVolumeCopyId(request.getId(), Action.write, copyNumber);
 				String volumeId = job.getVolume().getId();
 				volume.setBarcode(volumeId);
 				ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);

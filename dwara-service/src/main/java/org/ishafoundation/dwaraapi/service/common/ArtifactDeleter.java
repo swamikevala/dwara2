@@ -12,14 +12,18 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -39,6 +43,12 @@ public class ArtifactDeleter {
 
 	@Autowired
 	private JobDao jobDao;
+	
+	@Autowired
+	private TFileDao tFileDao;
+	
+	@Autowired
+	private TFileVolumeDao tFileVolumeDao;
 	
 	@Autowired
 	private DomainUtil domainUtil;
@@ -97,6 +107,7 @@ public class ArtifactDeleter {
 	public void cleanUp(Request userRequest, Request requestToBeActioned, Domain domain, ArtifactRepository artifactRepository) throws Exception{	
 		int requestId = requestToBeActioned.getId();
 		HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>> artifactId_ArtifactFileList = new HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>>();
+		HashMap<Integer, List<TFile>> artifactId_ArtifactTFileList = new HashMap<Integer, List<TFile>>();
 		HashMap<Integer, Artifact> artifactId_Artifact = new HashMap<Integer, Artifact>();
 		
     	// Step 3 - Find all artifacts involved
@@ -118,6 +129,17 @@ public class ArtifactDeleter {
 	    	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 	    	domainSpecificFileRepository.saveAll(artifactFileList);
 			logger.info("Files flagged Deleted");
+			
+			// Step 4.5 - Flag all the tFile entries as softdeleted
+			List<TFile> artifactTFileList  = tFileDao.findAllByArtifactId(nthArtifact.getId()); 
+			if(artifactTFileList != null) { // An artifact can be deleted even after the tape is finalized at that point no TFile entries will be there
+				artifactId_ArtifactTFileList.put(nthArtifact.getId(), artifactTFileList);
+				for (TFile nthTFile : artifactTFileList) {
+					nthTFile.setDeleted(true);
+				}
+				tFileDao.saveAll(artifactTFileList);
+				logger.info("TFiles flagged Deleted");
+			}
 			
 	    	// Step 5 - Flag the artifact as softdeleted
 			nthArtifact.setqLatestRequest(userRequest);
@@ -172,6 +194,7 @@ public class ArtifactDeleter {
 		for (Job nthJob : jobList) {
 			if(nthJob.getStatus() != Status.cancelled) {
 				List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = artifactId_ArtifactFileList.get(nthJob.getInputArtifactId());
+				List<TFile> artifactTFileList = artifactId_ArtifactTFileList.get(nthJob.getInputArtifactId());
 				
 				Action storagetaskAction = nthJob.getStoragetaskActionId();
 				String processingtaskId = nthJob.getProcessingtaskId();
@@ -180,19 +203,35 @@ public class ArtifactDeleter {
 				
 				if(storagetaskAction != null && storagetaskAction == Action.write) {
 					// softDelete Filevolume entries
-					List<FileVolume> toBeAddedFileVolumeTableEntries = new ArrayList<FileVolume>();
+					List<FileVolume> toBeUpdatedFileVolumeTableEntries = new ArrayList<FileVolume>();
 					for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
 						FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), nthJob.getVolume().getId());
 						if(fileVolume != null) {
 							fileVolume.setDeleted(true);
-							toBeAddedFileVolumeTableEntries.add(fileVolume);
+							toBeUpdatedFileVolumeTableEntries.add(fileVolume);
 						}
 					}
-				    if(toBeAddedFileVolumeTableEntries.size() > 0) {
+				    if(toBeUpdatedFileVolumeTableEntries.size() > 0) {
 				    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-				    	domainSpecificFileVolumeRepository.saveAll(toBeAddedFileVolumeTableEntries);
+				    	domainSpecificFileVolumeRepository.saveAll(toBeUpdatedFileVolumeTableEntries);
 				    	logger.info("All FileVolume records for " + artifact.getName() + " [" + artifactId + "] in volume " + nthJob.getVolume().getId() + " flagged deleted successfully");
 				    }
+				    
+				    // softDelete TFileVolume entries
+					if(artifactTFileList != null) { // An artifact can be deleted even after the tape is finalized at that point no TFile entries will be there
+					    List<TFileVolume> toBeUpdatedTFileVolumeTableEntries = new ArrayList<TFileVolume>();
+					    for (TFile nthTFile : artifactTFileList) {
+					    	TFileVolume tFileVolume = tFileVolumeDao.findByIdFileIdAndIdVolumeId(nthTFile.getId(), nthJob.getVolume().getId());
+							if(tFileVolume != null) {
+								tFileVolume.setDeleted(true);
+								toBeUpdatedTFileVolumeTableEntries.add(tFileVolume);
+							}
+					    }
+					    if(toBeUpdatedTFileVolumeTableEntries.size() > 0) {
+					    	tFileVolumeDao.saveAll(toBeUpdatedTFileVolumeTableEntries);
+					    	logger.info("All TFileVolume records for " + artifact.getName() + " [" + artifactId + "] in volume " + nthJob.getVolume().getId() + " flagged deleted successfully");
+					    }
+					}
 				}
 				else if(processingtaskId != null) {
 					// TODO - Need to call processingTask specific delete method here 

@@ -88,6 +88,10 @@ public class JobCreator {
 				sourceArtifactclassId = sourceArtifact.getArtifactclass().getId();
 				// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
 				actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByIdArtifactclassIdAndActionIdAndActiveTrue(sourceArtifactclassId, requestedBusinessAction.name()); //
+				
+				if(actionArtifactclassFlowList == null || actionArtifactclassFlowList.size() == 0)
+					throw new DwaraException("No flow configured for " + sourceArtifactclassId + " in action_artifactclass_flow");
+
 			}else if(requestedBusinessAction == Action.restore_process) {
 				if(request.getDetails().getFlowId().equals(CoreFlow.core_restore_checksumverify_flow.getFlowName()))
 					jobList.addAll(iterateFlow(request, sourceArtifactclassId, sourceArtifact, CoreFlow.core_restore_checksumverify_flow.getFlowName()));
@@ -95,9 +99,7 @@ public class JobCreator {
 //				actionArtifactclassFlowList.add(actionArtifactclassFlowDao.findByActionIdAndFlowIdAndActiveTrue(requestedBusinessAction.name(), DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME)); //
 			}
 			
-			if(actionArtifactclassFlowList == null || actionArtifactclassFlowList.size() == 0)
-				throw new DwaraException("No flow configured for " + sourceArtifactclassId + " in action_artifactclass_flow");
-			else {
+			if(actionArtifactclassFlowList != null) {
 				for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
 					String nthFlowId = actionArtifactclassFlow.getId().getFlowId();
 					logger.trace("flow " + nthFlowId);
