@@ -393,6 +393,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		volumeDao.save(volume);
 		logger.trace("Volume " + volume.getId() + " finalized succesfully");
 		
+		/* commenting as we have to capture the archive/volume_end_block for easier restores...
 		List<TFileVolume> toBeDeletedTFileVolumeTableEntries = tFileVolumeDao.findAllByIdVolumeId(volume.getId());
 		List<Integer> tFileIdList = new ArrayList<Integer>();
 		for (TFileVolume tFileVolume : toBeDeletedTFileVolumeTableEntries) {
@@ -410,6 +411,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 			}
 			logger.trace("All TFile entries deleted succesfully");
 		}
+		*/
 	}
 
 

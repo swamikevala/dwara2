@@ -591,11 +591,15 @@ public class StagedService extends DwaraService{
 			nthFileRowToBeInserted.setPathname(filePath);
 			nthFileRowToBeInserted.setArtifactId(artifact.getId());
 
-			if(fileName.equals(artifact.getName())) // if file is the artifact file itself, set the artifact size calculated upfront...
+			if(fileName.equals(artifact.getName())) { // if file is the artifact file itself, set the artifact size calculated upfront...
 				nthFileRowToBeInserted.setSize(artifactSize);
-			else
-				nthFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
-			
+				logger.trace(filePath + ":" + artifactSize);
+			}
+			else {
+				long size = FileUtils.sizeOf(file);
+				nthFileRowToBeInserted.setSize(size);
+				logger.trace(filePath + ":" + size);
+			}
 			toBeAddedTFileTableEntries.add(nthFileRowToBeInserted);			
 		}
 		
@@ -624,10 +628,15 @@ public class StagedService extends DwaraService{
 			nthFileRowToBeInserted.setPathname(filePath);
 			fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, artifact);
 
-			if(fileName.equals(artifact.getName())) // if file is the artifact file itself, set the artifact size calculated upfront...
+			if(fileName.equals(artifact.getName())) { // if file is the artifact file itself, set the artifact size calculated upfront...
 				nthFileRowToBeInserted.setSize(artifactSize);
-			else
-				nthFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
+				logger.trace(filePath + ":" + artifactSize);
+			}
+			else {
+				long size = FileUtils.sizeOf(file);
+				nthFileRowToBeInserted.setSize(size);
+				logger.trace(filePath + ":" + size);
+			}
 			
 			toBeAddedFileTableEntries.add(nthFileRowToBeInserted);			
 		}

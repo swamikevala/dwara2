@@ -1,4 +1,4 @@
-use dwara2_test;
+-- use dwara2_test;
 SET FOREIGN_KEY_CHECKS=0;
 DROP TABLE 
 `artifact1`, 
@@ -17,6 +17,9 @@ DROP TABLE
 `jobrun`, 
 `processingfailure`, 
 `request`, 
+`t_file`, 
+`t_file_volume`, 
 `t_activedevice`,
 `t_file_job`;
+
 SET FOREIGN_KEY_CHECKS=1;

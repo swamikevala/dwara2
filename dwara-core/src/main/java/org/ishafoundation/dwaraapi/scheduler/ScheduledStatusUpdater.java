@@ -13,9 +13,6 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
@@ -42,6 +39,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.staged.StagedFileOperations;
+import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,6 +87,9 @@ public class ScheduledStatusUpdater {
 	
 	@Autowired
     private StagedFileOperations stagedFileOperations;
+	
+	@Autowired
+    private StagedFileEvaluator stagedFileEvaluator;
 	
 	@Value("${scheduler.statusUpdater.enabled:true}")
 	private boolean isEnabled;
@@ -278,15 +279,14 @@ public class ScheduledStatusUpdater {
 		int artifactFileCount = 0;
 		
 	    if(artifactFileObj.isDirectory()) {
-			artifactSize = FileUtils.sizeOfDirectory(artifactFileObj);
-			
-	    	String junkFilesStagedDirName = configuration.getJunkFilesStagedDirName();
-	    	IOFileFilter dirFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(junkFilesStagedDirName, null));
-	    	artifactFileCount = FileUtils.listFilesAndDirs(artifactFileObj, TrueFileFilter.INSTANCE, dirFilter).size();
+	        org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails afd = stagedFileEvaluator.getDetails(artifactFileObj);
+	        artifactFileCount = afd.getCount();
+	        artifactSize = afd.getTotalSize();
 	    }
 	    else {
 	    	// TODO for single file artifacts...
 	    }
+	    logger.debug("artifactSize old " + artifact.getTotalSize() + " artifactSize new " + artifactSize);
 	    artifact.setTotalSize(artifactSize);
 		artifact.setFileCount(artifactFileCount);
 		
