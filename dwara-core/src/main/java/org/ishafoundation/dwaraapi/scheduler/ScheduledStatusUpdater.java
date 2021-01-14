@@ -194,17 +194,17 @@ public class ScheduledStatusUpdater {
 						RequestDetails requestDetails = request.getDetails();
 						org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 
-						Integer inputArtifactId = job.getInputArtifactId(); // For processing tasks like file-deleter and file-mover we need to update the count and size
-						
-						Integer outputArtifactId = job.getOutputArtifactId();
-						if(outputArtifactId != null && !outputArtifactId.equals(inputArtifactId)) {
-							updateArtifactSizeAndCount(job, outputArtifactId);
-						}
-
-						updateArtifactSizeAndCount(job, inputArtifactId);
-						
-						// TODO : Digi hack - the permissions script assumes the input artifact folder is "staged" and hence only supports Digitization A/Cs
 						if(requestedAction == Action.ingest) {
+							Integer inputArtifactId = job.getInputArtifactId(); // For processing tasks like file-deleter and file-mover we need to update the count and size
+							
+							Integer outputArtifactId = job.getOutputArtifactId();
+							if(outputArtifactId != null && !outputArtifactId.equals(inputArtifactId)) {
+								updateArtifactSizeAndCount(job, outputArtifactId);
+							}
+	
+							updateArtifactSizeAndCount(job, inputArtifactId);
+						
+							// TODO : Digi hack - the permissions script assumes the input artifact folder is "staged" and hence only supports Digitization A/Cs
 							if(outputArtifactId != null) {
 								org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact = domainUtil.getDomainSpecificArtifact(outputArtifactId);
 								String pathPrefix = artifact.getArtifactclass().getPath();

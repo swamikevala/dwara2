@@ -94,7 +94,7 @@ public class ForSolutionSameerService {
 			
 			if(needVolumeDetails) {
 				Volume volume = new Volume();
-				Job job = jobDao.findByRequestIdAndStoragetaskActionIdAndGroupVolumeCopyId(request.getId(), Action.write, copyNumber);
+				Job job = jobDao.findByRequestIdAndInputArtifactIdAndStoragetaskActionIdAndGroupVolumeCopyId(request.getId(), artifactId, Action.write, copyNumber);
 				String volumeId = job.getVolume().getId();
 				volume.setBarcode(volumeId);
 				ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
