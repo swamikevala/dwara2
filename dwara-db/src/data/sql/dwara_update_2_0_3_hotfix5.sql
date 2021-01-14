@@ -1,5 +1,11 @@
 SET foreign_key_checks = 0;
 
+UPDATE `request` SET `type`='system' WHERE `action_id`='finalize' and `type` is null;
+
+-- TODO File size reconcilation
+
+
+
 -- sequence
 delete from `sequence` where `id` like 'dept-backup-%';
 delete from `sequence` where `id` = 'video-edit-global';

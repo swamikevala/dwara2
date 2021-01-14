@@ -325,7 +325,7 @@ public class ScheduledStatusUpdater {
 			List<Job> nthRequestJobs = jobDao.findAllByRequestId(nthRequest.getId());
 			// Fix for no job created usecase
 			if(nthRequestJobs.size() == 0)
-				return;
+				continue;
 				
 			List<Status> jobStatusList = new ArrayList<Status>();
 			for (Job nthJob : nthRequestJobs) {

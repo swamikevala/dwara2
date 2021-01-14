@@ -67,6 +67,7 @@ public class VolumeFinalizer {
 
 
 			Request systemrequest = new Request();
+			systemrequest.setType(RequestType.system);
 			systemrequest.setRequestRef(request);
 			systemrequest.setActionId(request.getActionId());
 			systemrequest.setRequestedBy(request.getRequestedBy());
