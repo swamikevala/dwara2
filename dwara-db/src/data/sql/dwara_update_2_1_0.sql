@@ -68,9 +68,10 @@ update `artifactclass` set `concurrent_volume_copies` = 1, `display_order` = 5, 
 update `artifactclass` set `concurrent_volume_copies` = 1, `display_order` = 6, `config` = '{\"pathname_regex\": \"^([^/]+/?){1,2}$|^[^/]+/Outputs?/[^/]+\\\\.mov$\"}' where `id` = 'video-edit-priv2';
 update `artifactclass` set `display_order` = 7 where `id` = 'video-digi-2020-pub';
 update `artifactclass` set `display_order` = 8 where `id` = 'video-digi-2020-priv1';
-update `artifactclass` set `display_order` = 8 where `id` = 'video-digi-2020-priv2';
+update `artifactclass` set `display_order` = 9 where `id` = 'video-digi-2020-priv2';
 update `artifactclass` set `display_order` = 0 where `id` like '%-proxy-low';
 update `artifactclass` set `concurrent_volume_copies` = 1, `display_order` = 100 where `id` = 'video-priv3';
+update `artifactclass` set `concurrent_volume_copies` = 1, `display_order` = 101 where `id` = 'audio-priv3';
 
 -- artifactclass_task
 delete from `artifactclass_task` where (`id` = 1);
