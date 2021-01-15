@@ -104,6 +104,7 @@ insert into `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `
 -- nothing to add/modify as already needed records are added...
 
 -- volume
+delete from `volume` where `id` in ('B1', 'B2', 'B3');
 insert into `volume` (`id`, `checksumtype`, `defective`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `suspect`, `type`, `archiveformat_id`, `copy_id`, `sequence_id`) values ('E1', 'sha256', 0, '{\"blocksize\": 262144}', 0, 0, 'block', 'tape', 0, 'group', 'tar', 1, 'edited-1');
 insert into `volume` (`id`, `checksumtype`, `defective`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `suspect`, `type`, `archiveformat_id`, `copy_id`, `sequence_id`) values ('E2', 'sha256', 0, '{\"blocksize\": 262144}', 0, 0, 'block', 'tape', 0, 'group', 'bru', 2, 'edited-2');
 insert into `volume` (`id`, `checksumtype`, `defective`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `suspect`, `type`, `archiveformat_id`, `copy_id`, `sequence_id`) values ('E3', 'sha256', 0, '{\"blocksize\": 262144}', 0, 0, 'block', 'tape', 0, 'group', 'tar', 3, 'edited-3');
