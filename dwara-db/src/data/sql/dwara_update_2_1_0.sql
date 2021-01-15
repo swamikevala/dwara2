@@ -48,7 +48,7 @@ ALTER TABLE `file2` CHANGE COLUMN `checksum` `checksum` VARBINARY(32) NULL DEFAU
 update file1 set pathname_checksum = sha1(pathname);
 
 -- sequence
-delete from `sequence` where `id` like 'dept-backup-%';
+delete from `sequence` where `id` like 'dept-backup%';
 delete from `sequence` where `id` = 'video-edit-global';
 insert into `sequence` (`id`, `code_regex`, `current_number`, `ending_number`, `force_match`, `group`, `keep_code`, `number_regex`, `prefix`, `starting_number`, `type`, `sequence_ref_id`, `replace_code`) values ('edited-1', null, 10000, 19999, 0, 0, 0, null, 'E', 10001, 'volume', null, null);
 insert into `sequence` (`id`, `code_regex`, `current_number`, `ending_number`, `force_match`, `group`, `keep_code`, `number_regex`, `prefix`, `starting_number`, `type`, `sequence_ref_id`, `replace_code`) values ('edited-2', null, 20000, 29999, 0, 0, 0, null, 'E', 20001, 'volume', null, null);
