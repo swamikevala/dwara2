@@ -216,13 +216,13 @@ alter table `extension_filetype` modify `filetype_id` varbinary(255);
 alter table `extension_filetype` modify `filetype_id` varchar(255) character set utf8mb4 collate utf8mb4_unicode_520_ci;
 
 alter table `file1` modify `pathname` varbinary(3072);
-alter table `file1` modify `pathname` varchar(16384) character set utf8mb4 collate utf8mb4_unicode_520_ci;
+alter table `file1` modify `pathname` varchar(4096) character set utf8mb4 collate utf8mb4_unicode_520_ci;
 
 alter table `file1_volume` modify `volume_id` varbinary(255);
 alter table `file1_volume` modify `volume_id` varchar(255) character set utf8mb4 collate utf8mb4_unicode_520_ci;
 
 alter table `file2` modify `pathname` varbinary(3072);
-alter table `file2` modify `pathname` varchar(16384) character set utf8mb4 collate utf8mb4_unicode_520_ci;
+alter table `file2` modify `pathname` varchar(4096) character set utf8mb4 collate utf8mb4_unicode_520_ci;
 
 alter table `file2_volume` modify `volume_id` varbinary(255);
 alter table `file2_volume` modify `volume_id` varchar(255) character set utf8mb4 collate utf8mb4_unicode_520_ci;
