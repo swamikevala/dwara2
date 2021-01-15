@@ -10,7 +10,7 @@ import org.hibernate.annotations.Type;
 @MappedSuperclass
 public class FileColumns {
 
-	@Column(length=16384, name="pathname")
+	@Column(length=4096, name="pathname")
 	private String pathname;
 	
 	@Type(type="org.hibernate.type.BinaryType") 
