@@ -7,8 +7,6 @@
 
 In DB version 2.1.0 we are moving from latin1 to unicode charset and to achieve this 
 
-* Apply the charset conv script(/dwara-db/src/data/sql/dwara_update_2_1_0_charset-conv.sql)
-
 * Following lines to be added to /etc/my.conf
 
 > innodb_file_format = Barracuda
@@ -19,9 +17,11 @@ In DB version 2.1.0 we are moving from latin1 to unicode charset and to achieve 
 
 > character-set-server = utf8mb4
 
-> collation-server = utf8mb4_bin
+> collation-server = utf8mb4_unicode_520_ci
 
-* Please ensure we restart mysqld 
+* Restart mysqld 
+
+* Apply the charset conv script(/dwara-db/src/data/sql/dwara_update_2_1_0_charset-conv.sql)
 
 * Finally
 
