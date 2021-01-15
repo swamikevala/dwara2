@@ -5,16 +5,20 @@ import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 
+import org.hibernate.annotations.Type;
+
 @MappedSuperclass
 public class FileColumns {
 
 	@Column(length=16384, name="pathname")
 	private String pathname;
 	
+	@Type(type="org.hibernate.type.BinaryType") 
 	@Column(length=20, name="pathname_checksum", unique=true)
 	private byte[] pathnameChecksum;
 
-	@Column(name="checksum")
+	@Type(type="org.hibernate.type.BinaryType") 
+	@Column(length=20, name="checksum")
 	private byte[] checksum;
 
 	@Column(name="size")

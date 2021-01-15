@@ -1,16 +1,44 @@
 SET foreign_key_checks = 0;
 
-UPDATE `version` SET `version`='2.0.3' WHERE `version`='2.1.0';
+UPDATE `version` SET `version`='2.1.0' WHERE `version`='2.0.3';
 
 -- Finalization requests missing type for the system generated thus missing out on the scheduled status updation
 UPDATE `request` SET `type`='system' WHERE `action_id`='finalize' and `type` is null;
 
 -- TODO File size reconcilation script goes here
+UPDATE
+   artifact1 as a
+SET
+   a.total_size = (
+       SELECT sum(f.size)
+       FROM file1 as f
+       WHERE a.id = f.artifact_id and f.directory = 0
+       GROUP BY f.artifact_id
+   );
+   
+update file1 as f join artifact1 a on f.artifact_id = a.id
+set f.size = a.total_size
+where f.pathname = a.name;
 
 -- TODO Drop the uniqueness constraint on File1/2.pathname
-ALTER TABLE `file1` DROP INDEX `???`;
-ALTER TABLE `file2` DROP INDEX `???`;
+-- ALTER TABLE `file1` DROP INDEX `???`;
+-- ALTER TABLE `file2` DROP INDEX `???`;
 
+ALTER TABLE `file1` ADD COLUMN `pathname_checksum` VARBINARY(20) NULL DEFAULT NULL AFTER `pathname`,
+ADD UNIQUE INDEX `pathname_checksum_UNIQUE` (`pathname_checksum` ASC);
+ALTER TABLE `file2` ADD COLUMN `pathname_checksum` VARBINARY(20) NULL DEFAULT NULL AFTER `pathname`,
+ADD UNIQUE INDEX `pathname_checksum_UNIQUE` (`pathname_checksum` ASC);
+
+
+ALTER TABLE `t_file` ADD COLUMN `pathname_checksum` VARBINARY(20) NULL DEFAULT NULL AFTER `pathname`,
+ADD UNIQUE INDEX `pathname_checksum_UNIQUE` (`pathname_checksum` ASC);
+
+ALTER TABLE `file1` CHANGE COLUMN `checksum` `checksum` VARBINARY(20) NULL DEFAULT NULL ;
+ALTER TABLE `file2` CHANGE COLUMN `checksum` `checksum` VARBINARY(20) NULL DEFAULT NULL ;
+
+
+-- TODO file*.pathname_checksum for the existing records script goes here
+update file1 set pathname_checksum = sha1(pathname);
 
 -- sequence
 delete from `sequence` where `id` like 'dept-backup-%';
