@@ -5,7 +5,9 @@ UPDATE `version` SET `version`='2.1.0' WHERE `version`='2.0.3';
 -- Finalization requests missing type for the system generated thus missing out on the scheduled status updation
 UPDATE `request` SET `type`='system' WHERE `action_id`='finalize' and `type` is null;
 
--- TODO File size reconcilation script goes here
+-- TODO update completed at for finalization request
+
+-- File size reconcilation script goes here
 UPDATE
    artifact1 as a
 SET
@@ -19,10 +21,6 @@ SET
 update file1 as f join artifact1 a on f.artifact_id = a.id
 set f.size = a.total_size
 where f.pathname = a.name;
-
--- TODO Drop the uniqueness constraint on File1/2.pathname
--- ALTER TABLE `file1` DROP INDEX `???`;
--- ALTER TABLE `file2` DROP INDEX `???`;
 
 ALTER TABLE `file1` ADD COLUMN `pathname_checksum` VARBINARY(20) NULL DEFAULT NULL AFTER `pathname`,
 ADD UNIQUE INDEX `pathname_checksum_UNIQUE` (`pathname_checksum` ASC);
@@ -46,7 +44,7 @@ ALTER TABLE `file1` CHANGE COLUMN `checksum` `checksum` VARBINARY(32) NULL DEFAU
 ALTER TABLE `file2` CHANGE COLUMN `checksum` `checksum` VARBINARY(32) NULL DEFAULT NULL ;
 
 
--- TODO file*.pathname_checksum for the existing records script goes here
+-- file*.pathname_checksum for the existing records script goes here
 update file1 set pathname_checksum = sha1(pathname);
 
 -- sequence

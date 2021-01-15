@@ -1,6 +1,6 @@
 set foreign_key_checks = 0; 
 
-alter database `dwara2_test` character set utf8mb4 collate utf8mb4_unicode_520_ci;
+alter database `dwara` character set utf8mb4 collate utf8mb4_unicode_520_ci;
 
 alter table `action` character set utf8mb4 collate utf8mb4_unicode_520_ci;
 alter table `action_artifactclass_flow` character set utf8mb4 collate utf8mb4_unicode_520_ci;
@@ -83,8 +83,6 @@ alter table `volume` drop foreign key `FK8teoqqr29pkmx2kde364jhwms`;
 alter table `location` drop index `UK_bvtps7leip9hi2pjp928b64bo`;
 
 -- not possible to have 3072 byte index for pathname - use separate sha1 col instead
-alter table `artifact1` drop index `UK_97fwtvys0xoje0vs83reoqcx8`;
-alter table `artifact2` drop index `UK_2qeb4ufe0xqq4xbvvynsheork`;
 alter table `file1` drop index `UK_q47hfd5q1dwgsnr1bwhfsjagl`;
 alter table `file2` drop index `UK_j3chk4j82n4f1fis7rtfxpuhn`;
 
