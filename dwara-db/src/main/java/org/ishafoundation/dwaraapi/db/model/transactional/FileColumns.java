@@ -18,7 +18,7 @@ public class FileColumns {
 	private byte[] pathnameChecksum;
 
 	@Type(type="org.hibernate.type.BinaryType") 
-	@Column(length=20, name="checksum")
+	@Column(length=32, name="checksum")
 	private byte[] checksum;
 
 	@Column(name="size")
