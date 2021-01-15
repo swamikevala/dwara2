@@ -2,6 +2,10 @@ package org.ishafoundation.dwaraapi.staged.scan;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -173,12 +177,21 @@ public class StagedFileEvaluator {
 				errorList.add(error);
 			}
 			
-			// 8- FilePathNameLength > 3072 
-			if(sfv.getFilePathNamesGt3072Chrs().size() > 0) {
+			// 8- FilePathNameLength > 4096 
+			if(sfv.getFilePathNamesGt4096Chrs().size() > 0) {
 				Error error = new Error();
 				error.setType(Errortype.Error);
-				error.setMessage("Has file path name(s) length > 3072 chrs " + sfv.getFilePathNamesGt3072Chrs());
+				error.setMessage("Has file path name(s) length > 4096 chrs " + sfv.getFilePathNamesGt4096Chrs());
 				errorList.add(error);
+			}
+			
+			// 9- File/Directory Name contains a non-unicode char
+			if(sfv.getFileNamesWithNonUnicodeChrs().size() > 0) {
+				Error error = new Error();
+				error.setType(Errortype.Error);
+				error.setMessage("Has file name(s) with non-unicode chrs " + sfv.getFileNamesWithNonUnicodeChrs());
+				errorList.add(error);
+				
 			}
 		}
 
@@ -223,6 +236,17 @@ public class StagedFileEvaluator {
 			error.setMessage("Artifact Name contains special characters");
 			errorList.add(error);
 		}
+		
+		CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+		try {
+			decoder.decode(ByteBuffer.wrap(fileName.getBytes()));		           
+		} catch (CharacterCodingException ex) {		        
+			Error error = new Error();
+			error.setType(Errortype.Error);
+			error.setMessage("Artifact Name contains non-unicode characters");
+			errorList.add(error);
+		} 
+
 		return errorList;
 	}
 

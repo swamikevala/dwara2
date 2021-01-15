@@ -6,6 +6,10 @@ import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemLoopException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -45,7 +49,8 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	private Set<String> unresolvedSymLinks = new TreeSet<String>();
 	private Set<String> symLinkLoops = new TreeSet<String>();
 	private Set<String> unSupportedExtns = new TreeSet<String>();
-	private Set<String> filePathNamesGt3072Chrs = new TreeSet<String>();
+	private Set<String> filePathNamesGt4096Chrs = new TreeSet<String>();
+	private Set<String> fileNamesWithNonUnicodeChrs = new TreeSet<String>();
 	
 
 	StagedFileVisitor(String stagedFileName, String junkFilesStagedDirName, List<Pattern> excludedFileNamesRegexList, Set<String> supportedExtns) {
@@ -85,9 +90,14 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 		return unSupportedExtns;
 	}
 
-	public Set<String> getFilePathNamesGt3072Chrs() {
-		return filePathNamesGt3072Chrs;
+	public Set<String> getFilePathNamesGt4096Chrs() {
+		return filePathNamesGt4096Chrs;
 	}
+
+	public Set<String> getFileNamesWithNonUnicodeChrs() {
+		return fileNamesWithNonUnicodeChrs;
+	}	
+
 
 	@Override
 	public FileVisitResult preVisitDirectory(Path dir,
@@ -107,9 +117,13 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 			return SKIP_SUBTREE;
 		}
 		
+		if(hasFileNameContainsNonUnicodeChrs(dir.getFileName().toString())) {
+			fileNamesWithNonUnicodeChrs.add(dir.getFileName().toString());
+		}
+			
 		return CONTINUE;
 	}
-
+	
 	@Override
 	public FileVisitResult visitFile(Path file,
 			BasicFileAttributes attrs) {
@@ -149,9 +163,9 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 //			hasAnyFileNameGt100Chrs = true;
 
 		String stagedFilePathName = stagedFileName + StringUtils.substringAfter(filePathName,stagedFileName);
-		if(stagedFilePathName.length() > 3072) {
-			logger.warn("FilePathname > 3072 " + stagedFilePathName);
-			filePathNamesGt3072Chrs.add(filePathName);
+		if(stagedFilePathName.length() > 4096) {
+			logger.warn("FilePathname > 4096 " + stagedFilePathName);
+			filePathNamesGt4096Chrs.add(filePathName);
 			return CONTINUE;
 		}
 		
@@ -163,6 +177,10 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 		// validate against the supported list of extensions in the system we have
 		if(!supportedExtns.contains(fileExtn.toLowerCase()))
 			unSupportedExtns.add(fileExtn);
+		
+		if(hasFileNameContainsNonUnicodeChrs(fileName)) {
+			fileNamesWithNonUnicodeChrs.add(fileName);
+		}
 
 		return CONTINUE;
 	}
@@ -249,5 +267,16 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 			//return TERMINATE; // TODO TERMINATE??? throw exception?
 		}
 		return CONTINUE;
+	}
+	
+
+	private boolean hasFileNameContainsNonUnicodeChrs(String fileName) {
+		CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+		try {
+			decoder.decode(ByteBuffer.wrap(fileName.getBytes()));		           
+		} catch (CharacterCodingException ex) {		        
+			return true;
+		} 
+		return false;
 	}
 }
