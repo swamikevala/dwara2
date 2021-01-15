@@ -20,6 +20,6 @@ DROP TABLE
 `t_file`, 
 `t_file_volume`, 
 `t_activedevice`,
-`t_file_job`;
+`t_t_file_job`;
 
 SET FOREIGN_KEY_CHECKS=1;

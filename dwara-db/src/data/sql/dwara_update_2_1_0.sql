@@ -31,7 +31,7 @@ CREATE TABLE `t_file` (
   `checksum` varbinary(32) DEFAULT NULL,
   `deleted` bit(1) DEFAULT NULL,
   `directory` bit(1) DEFAULT NULL,
-  `pathname` varchar(3072) DEFAULT NULL,
+  `pathname` varchar(4096) DEFAULT NULL,
   `size` bigint(20) DEFAULT NULL,
   `artifact_id` int(11) DEFAULT NULL,
   `file_ref_id` int(11) DEFAULT NULL,

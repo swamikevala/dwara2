@@ -1,7 +1,16 @@
 # Dwara App Version - 2.1.04
 # Dwara DB Version - 2.1.0
 ### New features
-1 Support for ingesting edited videos 
+1 Support for ingesting edited videos
+
+2 LTOwala feed is on completed request and not on copy complete jobs
+
+### Bug fixes
+1 Artifact.total_size and File.size record where artifact.name = file.pathname fixed with proper size updates
+
+2 Restore process throws no flow configured error
+
+3 Fix for sequence.keepcode usecase missing artifact.sequence
 
 ### Upgrade steps
 
@@ -95,7 +104,7 @@ In DB version 2.1.0 we are moving from latin1 to unicode charset and to achieve 
 ### Upgrade steps
   * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_0_3_hotfix3.sql)
    
-# Dwara App Version - 2.1.01-hotfix1
+# Dwara App Version - 2.1.01
 1 Preservation Job split
 
 2 Cues File format correction
