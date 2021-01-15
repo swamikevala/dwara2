@@ -461,6 +461,7 @@ public class StagedService extends DwaraService{
 					if(sequence.isKeepCode() && extractedCode != null) {
 						// retaining the same name
 						toBeArtifactName = stagedFileName;
+						sequenceCode = extractedCode;
 					}
 					else {
 						prevSeqCode = extractedCode;
