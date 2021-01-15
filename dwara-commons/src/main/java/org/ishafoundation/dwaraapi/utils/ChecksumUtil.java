@@ -20,6 +20,12 @@ public class ChecksumUtil {
 	static Logger logger = LoggerFactory.getLogger(ChecksumUtil.class);
 
 	
+	public static byte[] getChecksum(String filepathname) throws Exception{
+		MessageDigest md = MessageDigest.getInstance("MD5");
+	    md.update(filepathname.getBytes());
+	    return md.digest();
+	}
+	
 	public static byte[] getChecksum(java.io.File file, Checksumtype checksumtype) throws Exception{
 		//TODO : Hardcoded bufferSize - Configure it... What is the optimum buffersize???
 		int bufferSize = 524288; // 512k

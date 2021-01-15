@@ -1,9 +1,15 @@
 SET foreign_key_checks = 0;
 
+UPDATE `version` SET `version`='2.0.3' WHERE `version`='2.1.0';
+
+-- Finalization requests missing type for the system generated thus missing out on the scheduled status updation
 UPDATE `request` SET `type`='system' WHERE `action_id`='finalize' and `type` is null;
 
--- TODO File size reconcilation
+-- TODO File size reconcilation script goes here
 
+-- TODO Drop the uniqueness constraint on File1/2.pathname
+ALTER TABLE `file1` DROP INDEX `???`;
+ALTER TABLE `file2` DROP INDEX `???`;
 
 
 -- sequence
@@ -43,23 +49,24 @@ delete from `action_artifactclass_user` where `artifactclass_id` = 'dept-backup'
 delete from `action_artifactclass_user` where `artifactclass_id` = 'video-edit-global';
 
 -- artifactclass_volume
-UPDATE `artifactclass_volume` SET `volume_id`='??' WHERE `artifactclass_id`='video-edit-pub' and `volume_id`='G1';
-UPDATE `artifactclass_volume` SET `volume_id`='??' WHERE `artifactclass_id`='video-edit-pub' and `volume_id`='G2';
-UPDATE `artifactclass_volume` SET `volume_id`='??' WHERE `artifactclass_id`='video-edit-pub' and `volume_id`='G3';
-UPDATE `artifactclass_volume` SET `volume_id`='??' WHERE `artifactclass_id`='video-edit-priv1' and `volume_id`='G1';
-UPDATE `artifactclass_volume` SET `volume_id`='??' WHERE `artifactclass_id`='video-edit-priv1' and `volume_id`='G2';
-UPDATE `artifactclass_volume` SET `volume_id`='??' WHERE `artifactclass_id`='video-edit-priv1' and `volume_id`='G3';
-INSERT INTO `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) VALUES (1, 0, 'video-edit-pub-proxy-low', '??');
-INSERT INTO `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) VALUES (1, 0, 'video-edit-pub-proxy-low', '??');
-INSERT INTO `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) VALUES (1, 0, 'video-edit-priv1-proxy-low', '??');
-INSERT INTO `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) VALUES (1, 0, 'video-edit-priv1-proxy-low', '??');
-INSERT INTO `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) VALUES (1, 0, 'video-edit-priv2-proxy-low', '??');
-INSERT INTO `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) VALUES (1, 0, 'video-edit-priv2-proxy-low', '??');
+delete from `artifactclass_volume` where `artifactclass_id` = 'dept-backup';
+update `artifactclass_volume` set `volume_id` = 'E1' where `artifactclass_id` = 'video-edit-pub' and `volume_id` = 'G1';
+update `artifactclass_volume` set `volume_id` = 'E2' where `artifactclass_id` = 'video-edit-pub' and `volume_id` = 'G2';
+update `artifactclass_volume` set `volume_id` = 'E3' where `artifactclass_id` = 'video-edit-pub' and `volume_id` = 'G3';
+update `artifactclass_volume` set `volume_id` = 'E1' where `artifactclass_id` = 'video-edit-priv1' and `volume_id` = 'G1';
+update `artifactclass_volume` set `volume_id` = 'E2' where `artifactclass_id` = 'video-edit-priv1' and `volume_id` = 'G2';
+update `artifactclass_volume` set `volume_id` = 'E3' where `artifactclass_id` = 'video-edit-priv1' and `volume_id` = 'G3';
+insert into `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) values (1, 0, 'video-edit-pub-proxy-low', 'G1');
+insert into `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) values (1, 0, 'video-edit-pub-proxy-low', 'G2');
+insert into `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) values (1, 0, 'video-edit-priv1-proxy-low', 'G1');
+insert into `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) values (1, 0, 'video-edit-priv1-proxy-low', 'G2');
+insert into `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) values (1, 0, 'video-edit-priv2-proxy-low', 'X1');
+insert into `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) values (1, 0, 'video-edit-priv2-proxy-low', 'X2');
 
 
 
 -- action_artifactclass_flow
--- nothing to add/modify as already things are ok... 
+-- nothing to add/modify as already needed records are added...
 
 -- volume
 insert into `volume` (`id`, `checksumtype`, `defective`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `suspect`, `type`, `archiveformat_id`, `copy_id`, `sequence_id`) values ('E1', 'sha256', 0, '{\"blocksize\": 262144}', 0, 0, 'block', 'tape', 0, 'group', 'tar', 1, 'edited-1');

@@ -8,9 +8,11 @@ import javax.persistence.MappedSuperclass;
 @MappedSuperclass
 public class FileColumns {
 
-	// TODO - Anything > 3072 - throws Specified key was too long; max key length is 3072 bytes and doesnt set the unique constraint
-	@Column(length=3072, name="pathname", unique=true)
+	@Column(length=16384, name="pathname")
 	private String pathname;
+	
+	@Column(length=20, name="pathname_checksum", unique=true)
+	private byte[] pathnameChecksum;
 
 	@Column(name="checksum")
 	private byte[] checksum;
@@ -30,6 +32,14 @@ public class FileColumns {
 
 	public void setPathname(String pathname) {
 		this.pathname = pathname;
+	}
+	
+	public byte[] getPathnameChecksum() {
+		return pathnameChecksum;
+	}
+
+	public void setPathnameChecksum(byte[] pathnameChecksum) {
+		this.pathnameChecksum = pathnameChecksum;
 	}
 
 	public byte[] getChecksum() {

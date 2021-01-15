@@ -40,6 +40,7 @@ import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
+import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -426,13 +427,16 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		}
 	}
 
-	private TFile createTFile(String fileAbsolutePathName, Artifact outputArtifact) {
+	private TFile createTFile(String fileAbsolutePathName, Artifact outputArtifact) throws Exception {
 		org.ishafoundation.dwaraapi.db.model.transactional.TFile nthTFileRowToBeInserted = new org.ishafoundation.dwaraapi.db.model.transactional.TFile();
 		nthTFileRowToBeInserted.setArtifactId(outputArtifact.getId());
 		nthTFileRowToBeInserted.setFileRefId(tFile.getId());
 		
 	    String filePathname = fileAbsolutePathName.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "");
 	    nthTFileRowToBeInserted.setPathname(filePathname);
+	    
+	    byte[] filePathChecksum = ChecksumUtil.getChecksum(filePathname);
+	    nthTFileRowToBeInserted.setPathnameChecksum(filePathChecksum);
 		
 		// TODO need to be done and set after proxy file is generated
 		//nthFileRowToBeInserted.setChecksum(ChecksumUtil.getChecksum(new File(processingtaskResponse.getDestinationPathname()), Checksumtype.sha256)); 
@@ -462,6 +466,8 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	    
 	    String filePathname = tFileDBObj.getPathname();
 	    nthFileRowToBeInserted.setPathname(filePathname);
+	    byte[] filePathChecksum = ChecksumUtil.getChecksum(filePathname);
+	    nthFileRowToBeInserted.setPathnameChecksum(filePathChecksum);
 
 	    nthFileRowToBeInserted.setDirectory(tFileDBObj.isDirectory());
 	    nthFileRowToBeInserted.setSize(tFileDBObj.getSize());

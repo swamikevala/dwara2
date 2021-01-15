@@ -62,6 +62,7 @@ import org.ishafoundation.dwaraapi.staged.scan.Error;
 import org.ishafoundation.dwaraapi.staged.scan.Errortype;
 import org.ishafoundation.dwaraapi.staged.scan.SourceDirScanner;
 import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
+import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.ishafoundation.dwaraapi.utils.ExtensionsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -585,10 +586,12 @@ public class StagedService extends DwaraService{
 			String filePath = file.getAbsolutePath();
 			filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); // just holding the file path from the artifact folder and not the absolute path.
 			logger.trace("filePath - " + filePath);
+			byte[] filePathChecksum = ChecksumUtil.getChecksum(filePath);
 			TFile nthFileRowToBeInserted = new TFile();
 			if(file.isDirectory())
 				nthFileRowToBeInserted.setDirectory(true);
 			nthFileRowToBeInserted.setPathname(filePath);
+			nthFileRowToBeInserted.setPathnameChecksum(filePathChecksum);
 			nthFileRowToBeInserted.setArtifactId(artifact.getId());
 
 			if(fileName.equals(artifact.getName())) { // if file is the artifact file itself, set the artifact size calculated upfront...
@@ -619,6 +622,7 @@ public class StagedService extends DwaraService{
 			String filePath = file.getAbsolutePath();
 			filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); // just holding the file path from the artifact folder and not the absolute path.
 			logger.trace("filePath - " + filePath);
+			byte[] filePathChecksum = ChecksumUtil.getChecksum(filePath);
 			File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
 			if(file.isDirectory())
 				nthFileRowToBeInserted.setDirectory(true);
@@ -626,6 +630,7 @@ public class StagedService extends DwaraService{
 				extnsOnArtifactFolder.add(FilenameUtils.getExtension(fileName)); // assumes there arent any file without extension - Checking and excluding it is the role of junkFilesMover...
 			
 			nthFileRowToBeInserted.setPathname(filePath);
+			nthFileRowToBeInserted.setPathnameChecksum(filePathChecksum);
 			fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, artifact);
 
 			if(fileName.equals(artifact.getName())) { // if file is the artifact file itself, set the artifact size calculated upfront...

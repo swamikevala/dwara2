@@ -24,6 +24,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.resource.mapper.MiscObjectMapper;
 import org.ishafoundation.dwaraapi.service.DwaraService;
+import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -124,6 +125,8 @@ public class OnHoldArtifactRenameService extends DwaraService{
 			// Change the parent folder name by replacing the older artifact name by newer name
 			String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, artifactNewName); 
 			eachfile.setPathname(correctedFilePathForArtifactFile);
+			byte[] filePathChecksum = ChecksumUtil.getChecksum(correctedFilePathForArtifactFile);
+			eachfile.setPathnameChecksum(filePathChecksum);
 
 		} // File entry manipulation and renaming ends here 
 		
@@ -132,7 +135,9 @@ public class OnHoldArtifactRenameService extends DwaraService{
 			String filepath = nthTFile.getPathname() ;
 			// Change the parent folder name by replacing the older artifact name by newer name
 			String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, artifactNewName); 
-			nthTFile.setPathname(correctedFilePathForArtifactFile);			
+			nthTFile.setPathname(correctedFilePathForArtifactFile);	
+			byte[] filePathChecksum = ChecksumUtil.getChecksum(correctedFilePathForArtifactFile);
+			nthTFile.setPathnameChecksum(filePathChecksum);
 		}
 		
 		// Save Artifact first

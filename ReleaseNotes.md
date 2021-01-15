@@ -1,9 +1,34 @@
 # Dwara App Version - 2.1.04
+# Dwara DB Version - 2.1.0
 ### New features
-1 Support for edited videos ingest
+1 Support for ingesting edited videos 
 
 ### Upgrade steps
-* Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_0_3_hotfix5.sql)
+
+In DB version 2.1.0 we are moving from latin1 to unicode charset and to achieve this 
+
+* Apply the charset conv script(/dwara-db/src/data/sql/dwara_update_2_1_0_charset-conv.sql)
+
+* Following lines to be added to /etc/my.conf
+
+> innodb_file_format = Barracuda
+
+> innodb_large_prefix = 1
+
+> innodb_file_per_table = ON
+
+> character-set-server = utf8mb4
+
+> collation-server = utf8mb4_bin
+
+* Please ensure we restart mysqld 
+
+* Finally
+
+> mysqlcheck -u root -p --auto-repair --optimize --all-databases
+
+* Now apply the edited videos feature specific upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_0.sql)
+
 
 # Dwara App Version - 2.1.03
 ### New features

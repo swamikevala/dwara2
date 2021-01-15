@@ -133,7 +133,7 @@ public class VolumeindexManager {
 			artifact.setSequencecode(artifactDbObj.getSequenceCode());
 			
 			List<File> fileList = new ArrayList<File>();
-			List<TFile> artifactTFileList = tFileDao.findAllByArtifactIdAndDeletedIsFalse(artifactId);
+			List<TFile> artifactTFileList = tFileDao.findAllByArtifactId(artifactId);
 			if(artifactTFileList != null && artifactTFileList.size() > 0) {
 				for (TFile nthFile : artifactTFileList) {
 					File file = new File();
@@ -150,23 +150,23 @@ public class VolumeindexManager {
 					fileList.add(file);
 				}
 			}
-			else { // For derived files use file table as we dont add tfile table entries
-				List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactDbObj, domain);
-				for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
-					File file = new File();
-					file.setName(nthFile.getPathname());
-					file.setSize(nthFile.getSize());
-					byte[] checksum = nthFile.getChecksum();
-					if(checksum != null)
-						file.setChecksum(Hex.encodeHexString(checksum));
-					
-					FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());// lets just let users use the util consistently
-					file.setVolumeblock(fileVolume.getVolumeBlock());
-					file.setArchiveblock(fileVolume.getArchiveBlock());
-					file.setEncrypted(fileVolume.isEncrypted() ? true : null);
-					fileList.add(file);
-				}
-			}
+//			else { // For derived files use file table as we dont add tfile table entries
+//				List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifactDbObj, domain);
+//				for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
+//					File file = new File();
+//					file.setName(nthFile.getPathname());
+//					file.setSize(nthFile.getSize());
+//					byte[] checksum = nthFile.getChecksum();
+//					if(checksum != null)
+//						file.setChecksum(Hex.encodeHexString(checksum));
+//					
+//					FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());// lets just let users use the util consistently
+//					file.setVolumeblock(fileVolume.getVolumeBlock());
+//					file.setArchiveblock(fileVolume.getArchiveBlock());
+//					file.setEncrypted(fileVolume.isEncrypted() ? true : null);
+//					fileList.add(file);
+//				}
+//			}
 			artifact.setFile(fileList);
 			artifactList.add(artifact);
 		}
