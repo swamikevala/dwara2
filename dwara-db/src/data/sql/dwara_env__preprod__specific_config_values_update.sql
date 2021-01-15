@@ -24,22 +24,26 @@ truncate t_activedevice;
 
 update artifactclass set path_prefix = replace(path_prefix, '/dwara/', '/dwara-preprod/'); 
 
--- change volume barcode sequences R -> S, G -> H, X -> W
+-- change volume barcode sequences R -> S, G -> H, X -> W, E -> F
 update volume set id = replace(id, 'R', 'S');
 update volume set id = replace(id, 'G', 'H');
 update volume set id = replace(id, 'X', 'W');
+update volume set id = replace(id, 'E', 'F');
 
 update volume set group_ref_id = replace(group_ref_id, 'R', 'S');
 update volume set group_ref_id = replace(group_ref_id, 'G', 'H');
 update volume set group_ref_id = replace(group_ref_id, 'X', 'W');
+update volume set group_ref_id = replace(group_ref_id, 'E', 'F');
 
 update artifactclass_volume set volume_id = replace(volume_id, 'R', 'S');
 update artifactclass_volume set volume_id = replace(volume_id, 'G', 'H');
 update artifactclass_volume set volume_id = replace(volume_id, 'X', 'W');
+update artifactclass_volume set volume_id = replace(volume_id, 'E', 'F');
 
 update sequence set prefix = replace(prefix, 'R', 'S') where type="volume";
 update sequence set prefix = replace(prefix, 'G', 'H') where type="volume";
 update sequence set prefix = replace(prefix, 'X', 'W') where type="volume";
+update sequence set prefix = replace(prefix, 'E', 'F') where type="volume";
 
 -- repoint to Test SAN mount
 update destination set path = replace(path, '/dwara/', '/dwara-preprod/'); 

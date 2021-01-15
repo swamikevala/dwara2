@@ -48,7 +48,7 @@ ALTER TABLE `file2` CHANGE COLUMN `checksum` `checksum` VARBINARY(32) NULL DEFAU
 update file1 set pathname_checksum = sha1(pathname);
 
 -- sequence
-delete from `sequence` where `id` like 'dept-backup-%';
+delete from `sequence` where `id` like 'dept-backup%';
 delete from `sequence` where `id` = 'video-edit-global';
 insert into `sequence` (`id`, `code_regex`, `current_number`, `ending_number`, `force_match`, `group`, `keep_code`, `number_regex`, `prefix`, `starting_number`, `type`, `sequence_ref_id`, `replace_code`) values ('edited-1', null, 10000, 19999, 0, 0, 0, null, 'E', 10001, 'volume', null, null);
 insert into `sequence` (`id`, `code_regex`, `current_number`, `ending_number`, `force_match`, `group`, `keep_code`, `number_regex`, `prefix`, `starting_number`, `type`, `sequence_ref_id`, `replace_code`) values ('edited-2', null, 20000, 29999, 0, 0, 0, null, 'E', 20001, 'volume', null, null);
@@ -68,9 +68,10 @@ update `artifactclass` set `concurrent_volume_copies` = 1, `display_order` = 5, 
 update `artifactclass` set `concurrent_volume_copies` = 1, `display_order` = 6, `config` = '{\"pathname_regex\": \"^([^/]+/?){1,2}$|^[^/]+/Outputs?/[^/]+\\\\.mov$\"}' where `id` = 'video-edit-priv2';
 update `artifactclass` set `display_order` = 7 where `id` = 'video-digi-2020-pub';
 update `artifactclass` set `display_order` = 8 where `id` = 'video-digi-2020-priv1';
-update `artifactclass` set `display_order` = 8 where `id` = 'video-digi-2020-priv2';
+update `artifactclass` set `display_order` = 9 where `id` = 'video-digi-2020-priv2';
 update `artifactclass` set `display_order` = 0 where `id` like '%-proxy-low';
 update `artifactclass` set `concurrent_volume_copies` = 1, `display_order` = 100 where `id` = 'video-priv3';
+update `artifactclass` set `concurrent_volume_copies` = 1, `display_order` = 101 where `id` = 'audio-priv3';
 
 -- artifactclass_task
 delete from `artifactclass_task` where (`id` = 1);
@@ -104,6 +105,7 @@ insert into `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `
 -- nothing to add/modify as already needed records are added...
 
 -- volume
+delete from `volume` where `id` in ('B1', 'B2', 'B3');
 insert into `volume` (`id`, `checksumtype`, `defective`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `suspect`, `type`, `archiveformat_id`, `copy_id`, `sequence_id`) values ('E1', 'sha256', 0, '{\"blocksize\": 262144}', 0, 0, 'block', 'tape', 0, 'group', 'tar', 1, 'edited-1');
 insert into `volume` (`id`, `checksumtype`, `defective`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `suspect`, `type`, `archiveformat_id`, `copy_id`, `sequence_id`) values ('E2', 'sha256', 0, '{\"blocksize\": 262144}', 0, 0, 'block', 'tape', 0, 'group', 'bru', 2, 'edited-2');
 insert into `volume` (`id`, `checksumtype`, `defective`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `suspect`, `type`, `archiveformat_id`, `copy_id`, `sequence_id`) values ('E3', 'sha256', 0, '{\"blocksize\": 262144}', 0, 0, 'block', 'tape', 0, 'group', 'tar', 3, 'edited-3');
