@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
@@ -24,6 +26,8 @@ public class FileDeleter implements IProcessingTask {
     
     private static final Logger logger = LoggerFactory.getLogger(FileDeleter.class);
 
+	@Autowired
+	private TFileDao tFileDao;
 	
 	@Autowired
 	private DomainUtil domainUtil;
@@ -66,6 +70,10 @@ public class FileDeleter implements IProcessingTask {
     	org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainSpecificFileRepository.findByPathname(pathname);
     	fileFromDB.setDeleted(true);
     	domainSpecificFileRepository.save(fileFromDB);
+    	
+    	TFile tfileFromDB = tFileDao.findByPathname(pathname);
+    	tfileFromDB.setDeleted(true);
+    	tFileDao.save(tfileFromDB);
     	
     	// delete it in the filesystem
     	fileToBeDeleted.delete();

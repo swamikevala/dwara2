@@ -45,7 +45,7 @@ ALTER TABLE `file2` CHANGE COLUMN `checksum` `checksum` VARBINARY(32) NULL DEFAU
 
 
 -- file*.pathname_checksum for the existing records script goes here
-update file1 set pathname_checksum = sha1(pathname);
+update file1 set pathname_checksum = unhex(sha1(pathname));
 
 -- sequence
 delete from `sequence` where `id` like 'dept-backup%';

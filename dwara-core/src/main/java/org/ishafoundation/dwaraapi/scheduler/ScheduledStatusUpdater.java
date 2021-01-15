@@ -314,6 +314,10 @@ public class ScheduledStatusUpdater {
 				org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactMxfSubfolderFileFromDB = domainSpecificFileRepository.findByPathname(artifactMxfSubfolderFilePath.toString());
 				artifactMxfSubfolderFileFromDB.setSize(artifactMxfSubfolderSize);
 				domainSpecificFileRepository.save(artifactMxfSubfolderFileFromDB);
+				
+		    	TFile tfileFromDB = tFileDao.findByPathname(artifactMxfSubfolderFilePath.toString());
+		    	tfileFromDB.setSize(artifactMxfSubfolderSize);
+		    	tFileDao.save(tfileFromDB);
 		    }
 		}
 			
