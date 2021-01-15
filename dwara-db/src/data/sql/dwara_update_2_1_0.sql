@@ -28,13 +28,22 @@ ALTER TABLE `file1` ADD COLUMN `pathname_checksum` VARBINARY(20) NULL DEFAULT NU
 ADD UNIQUE INDEX `pathname_checksum_UNIQUE` (`pathname_checksum` ASC);
 ALTER TABLE `file2` ADD COLUMN `pathname_checksum` VARBINARY(20) NULL DEFAULT NULL AFTER `pathname`,
 ADD UNIQUE INDEX `pathname_checksum_UNIQUE` (`pathname_checksum` ASC);
+CREATE TABLE `t_file` (
+  `id` int(11) NOT NULL,
+  `checksum` varbinary(32) DEFAULT NULL,
+  `deleted` bit(1) DEFAULT NULL,
+  `directory` bit(1) DEFAULT NULL,
+  `pathname` varchar(3072) DEFAULT NULL,
+  `size` bigint(20) DEFAULT NULL,
+  `artifact_id` int(11) DEFAULT NULL,
+  `file_ref_id` int(11) DEFAULT NULL,
+  `pathname_checksum` varbinary(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pathname_checksum_UNIQUE` (`pathname_checksum`)
+)
 
-
-ALTER TABLE `t_file` ADD COLUMN `pathname_checksum` VARBINARY(20) NULL DEFAULT NULL AFTER `pathname`,
-ADD UNIQUE INDEX `pathname_checksum_UNIQUE` (`pathname_checksum` ASC);
-
-ALTER TABLE `file1` CHANGE COLUMN `checksum` `checksum` VARBINARY(20) NULL DEFAULT NULL ;
-ALTER TABLE `file2` CHANGE COLUMN `checksum` `checksum` VARBINARY(20) NULL DEFAULT NULL ;
+ALTER TABLE `file1` CHANGE COLUMN `checksum` `checksum` VARBINARY(32) NULL DEFAULT NULL ;
+ALTER TABLE `file2` CHANGE COLUMN `checksum` `checksum` VARBINARY(32) NULL DEFAULT NULL ;
 
 
 -- TODO file*.pathname_checksum for the existing records script goes here
