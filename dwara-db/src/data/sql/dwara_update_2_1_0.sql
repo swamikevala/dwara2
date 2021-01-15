@@ -38,7 +38,7 @@ CREATE TABLE `t_file` (
   `pathname_checksum` varbinary(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `pathname_checksum_UNIQUE` (`pathname_checksum`)
-)
+);
 
 ALTER TABLE `file1` CHANGE COLUMN `checksum` `checksum` VARBINARY(32) NULL DEFAULT NULL ;
 ALTER TABLE `file2` CHANGE COLUMN `checksum` `checksum` VARBINARY(32) NULL DEFAULT NULL ;
