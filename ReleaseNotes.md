@@ -1,3 +1,14 @@
+# Dwara App Version - 2.1.05 (Bug fix and data porting - 17th Jan 2021)
+
+### Bug fixes
+
+1 Fix for nullable TFile.FileRefId using primitive datatype
+
+2 self referencing and unresolved sym link occurences are a warning and not error anymore
+
+### Upgrade steps
+Now apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_1.sql)
+
 # Dwara App Version - 2.1.04 (Edited videos focus - 16th Jan 2021)
 # Dwara DB Version - 2.1.0
 ### New features
