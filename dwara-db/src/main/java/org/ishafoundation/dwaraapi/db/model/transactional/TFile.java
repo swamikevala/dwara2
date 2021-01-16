@@ -22,7 +22,7 @@ public class TFile extends FileColumns{
 	private int artifactId;
 
 	@Column(name="file_ref_id")
-	private int fileRefId;
+	private Integer fileRefId;
 	
 	public int getId() {
 		return id;
@@ -40,11 +40,11 @@ public class TFile extends FileColumns{
 		this.artifactId = artifactId;
 	}
 
-	public int getFileRefId() {
+	public Integer getFileRefId() {
 		return fileRefId;
 	}
 
-	public void setFileRefId(int fileRefId) {
+	public void setFileRefId(Integer fileRefId) {
 		this.fileRefId = fileRefId;
 	}
 }

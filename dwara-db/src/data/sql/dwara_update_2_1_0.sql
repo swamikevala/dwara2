@@ -110,5 +110,9 @@ insert into `volume` (`id`, `checksumtype`, `defective`, `details`, `finalized`,
 insert into `volume` (`id`, `checksumtype`, `defective`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `suspect`, `type`, `archiveformat_id`, `copy_id`, `sequence_id`) values ('E2', 'sha256', 0, '{\"blocksize\": 262144}', 0, 0, 'block', 'tape', 0, 'group', 'bru', 2, 'edited-2');
 insert into `volume` (`id`, `checksumtype`, `defective`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `suspect`, `type`, `archiveformat_id`, `copy_id`, `sequence_id`) values ('E3', 'sha256', 0, '{\"blocksize\": 262144}', 0, 0, 'block', 'tape', 0, 'group', 'tar', 3, 'edited-3');
 
+-- File name with namaskar emoji with latin1 charset 
+UPDATE `file1` SET `size`=800505802 WHERE `id`=93378;
+UPDATE `file1` SET `directory`=0 WHERE `id`=93379;
 
+UPDATE `artifact1` SET `total_size`=800505802 WHERE `id`=1114;
 SET foreign_key_checks = 1;

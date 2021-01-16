@@ -1,4 +1,4 @@
-# Dwara App Version - 2.1.04
+# Dwara App Version - 2.1.04 (Edited videos focus - 16th Jan 2021)
 # Dwara DB Version - 2.1.0
 ### New features
 1 Support for ingesting edited videos
@@ -39,7 +39,7 @@ In DB version 2.1.0 we are moving from latin1 to unicode charset and to achieve 
 * Now apply the edited videos feature specific upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_0.sql)
 
 
-# Dwara App Version - 2.1.03
+# Dwara App Version - 2.1.03 (Storage optimisation focus - 10th Jan 2021)
 ### New features
 1 Extend validating to be ingested file during ingest too and not just during scan times
 	
@@ -82,7 +82,7 @@ In DB version 2.1.0 we are moving from latin1 to unicode charset and to achieve 
   * Restart the app
   * Enable the app by calling the maintanence API with mode = "online"
     
-# Dwara App Version - 2.1.02
+# Dwara App Version - 2.1.02 (Minor Digi support items - 4th Jan 2021)
 ### New features 
 1 Rename on hold
 
@@ -104,7 +104,7 @@ In DB version 2.1.0 we are moving from latin1 to unicode charset and to achieve 
 ### Upgrade steps
   * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_0_3_hotfix3.sql)
    
-# Dwara App Version - 2.1.01
+# Dwara App Version - 2.1.01 (Follow up Digitisation support items - 4th Jan 2021)
 1 Preservation Job split
 
 2 Cues File format correction
@@ -118,7 +118,7 @@ In DB version 2.1.0 we are moving from latin1 to unicode charset and to achieve 
 ### Upgrade steps
   * Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_0_3_hotfix2.sql)
 
-# Dwara App Version - 2.1
+# Dwara App Version - 2.1 (Digitisation focus - )
 # Dwara DB Version - 2.0.3
 ### New features 
 1 Digitization support 

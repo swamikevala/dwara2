@@ -164,7 +164,7 @@ public class StagedFileEvaluator {
 			// 6- SymLink Loop
 			if(sfv.getSymLinkLoops().size() > 0) {
 				Error error = new Error();
-				error.setType(Errortype.Error);
+				error.setType(Errortype.Warning);
 				error.setMessage("Self referencing symbolic link loop(s) detected " + sfv.getSymLinkLoops());
 				errorList.add(error);
 			}
@@ -172,7 +172,7 @@ public class StagedFileEvaluator {
 			// 7- Unresolved SymLink
 			if(sfv.getUnresolvedSymLinks().size() > 0) {
 				Error error = new Error();
-				error.setType(Errortype.Error);
+				error.setType(Errortype.Warning);
 				error.setMessage("Unresolved sym link(s) found " + sfv.getUnresolvedSymLinks());
 				errorList.add(error);
 			}
