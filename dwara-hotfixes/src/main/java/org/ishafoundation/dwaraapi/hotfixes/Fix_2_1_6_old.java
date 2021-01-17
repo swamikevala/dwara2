@@ -68,7 +68,7 @@ public class Fix_2_1_6_old extends ProcessingJobHelper {
 	private boolean dryRun = true;
 	
 	@PostMapping(value="/fix_2_1_06_old", produces = "application/json")
-    public ResponseEntity<String> executeFix_2_1_06(@RequestParam(defaultValue="true") boolean dryRun){
+    public ResponseEntity<String> executeFix_2_1_06_Old(@RequestParam(defaultValue="true") boolean dryRun){
 		
 		String response = null;
 		try {
