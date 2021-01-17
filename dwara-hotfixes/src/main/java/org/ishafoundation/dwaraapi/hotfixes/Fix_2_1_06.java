@@ -13,7 +13,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
@@ -24,7 +23,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -99,7 +97,7 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 				String inputArtifactPathname =  inputArtifactclass.getPath() + File.separator + inputArtifactName;
 				
 				logger.info("Now updating Output Artifact as tfile and file records");
-				String artifactFileAbsolutePathName = outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName;
+				String outputArtifactPathname = outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName;
 				
 				HashMap<String, TFile> inputFilePathToTFileObj = getFilePathToTFileObj(inputArtifactId);
 				HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> inputFilePathToFileObj = getFilePathToFileObj(domain, inputArtifact);
@@ -108,22 +106,26 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 				HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> outputFilePathToFileObj = getFilePathToFileObj(domain, outputArtifact);
 				
 				org.ishafoundation.dwaraapi.db.model.transactional.TFile artifactTFile = outputFilePathToTFileObj.get(outputArtifactName);
-				tFileRef = inputFilePathToTFileObj.get(inputArtifactName);
+				
+				String[] extns = {"mkv"};
+				File[] mkvFileArray = (File[]) FileUtils.listFiles(new File(inputArtifactPathname), extns, false).toArray();
+				File mkvFile = mkvFileArray[0];
+				tFileRef = inputFilePathToTFileObj.get(inputArtifactName + File.separator + mkvFile.getName());
 				if(artifactTFile == null) // only if not already created... 
-					artifactTFile = createTFile(artifactFileAbsolutePathName, outputArtifact);	
+					artifactTFile = createTFile(outputArtifactPathname, outputArtifact);	
 					
 				FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 //				org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
 				
 				org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = outputFilePathToFileObj.get(outputArtifactName);
 				
-				fileRef = inputFilePathToFileObj.get(inputArtifactName);
+				fileRef = inputFilePathToFileObj.get(inputArtifactName + File.separator + mkvFile.getName());
 				if(artifactFile == null) { // only if not already created... 
-					artifactFile = createFile(artifactFileAbsolutePathName, outputArtifact, domainSpecificFileRepository, domain, artifactTFile);	
+					artifactFile = createFile(outputArtifactPathname, outputArtifact, domainSpecificFileRepository, domain, artifactTFile);	
 				}
 				
 				
-		        Collection<File> fileList = FileUtils.listFiles(new File(artifactFileAbsolutePathName), TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
+		        Collection<File> fileList = FileUtils.listFiles(new File(outputArtifactPathname), TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
 				for (File nthProcessedFile : fileList) {
 					String fileAbsolutePathName = nthProcessedFile.getAbsolutePath();
 					String filepathName = fileAbsolutePathName.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "");
