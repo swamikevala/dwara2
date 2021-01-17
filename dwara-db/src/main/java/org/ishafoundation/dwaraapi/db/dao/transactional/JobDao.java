@@ -55,9 +55,12 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	List<Job> findAllByRequestIdAndInputArtifactId(int requestId, Integer inputArtifactId);
 	
 	// Used for LtoWala
-	List<Job> findAllByCompletedAtBetweenAndStoragetaskActionIdAndGroupVolumeCopyId(LocalDateTime startDateTime, LocalDateTime endDataTime, Action action, Integer copyNumber);
+	List<Job> findAllByCompletedAtBetweenAndStoragetaskActionIdAndGroupVolumeCopyId(LocalDateTime startDateTime, LocalDateTime endDateTime, Action action, Integer copyNumber);
 	
 	Job findByFlowelementIdAndStatus(int id, Status status); // RequestId could be different if we are rerunning...
 	
 	Job findByRequestIdAndFlowelementId(int requestId, String flowelementId);
+	
+	// SELECT * FROM dwara.job where started_at > '2021-01-17 01:00:00.000000' and status = 'failed' and processingtask_id in('video-mkv-pfr-metadata-extract', 'video-proxy-low-gen');
+	List<Job> findAllByStartedAtBetweenAndStatusAndProcessingtaskIdInOrderById(LocalDateTime startDateTime, LocalDateTime endDateTime, Status status, Collection<String> processingTaskList);
 }

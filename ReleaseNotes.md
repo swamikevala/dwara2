@@ -1,3 +1,41 @@
+# Dwara App Version - 2.1.06 (data porting hot fixer - 17th Jan 2021)
+
+### LIVE Incident - 
+
+1 With 2.1.05 we ported the tfile and tfilevolume records from file and filevolume respectively, but missed out updating tfilesequence. 
+
+2 All Processing jobs failed. App moved to management mode. 
+
+3 Video pub bulk ingest happened - Ingest failed - 
+
+4 Digi rename and auto release video-mkv-pfr-metadata-extract and video-proxy-low-gen
+
+To immediately unblock ingests, min impacted Videopub remediation happened as follows
+0 Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_2.sql)
+
+1 soft Delete artifact 4616
+
+2 move back all folders from staged to ramkumarj
+
+3 move S*
+
+4 move P*
+
+5 remove the seq code from pancha butha artifact
+
+6 ingest "panch bhuta" see if all goes well
+
+7 ingest all the green ones
+
+8 residue
+	deleted artifact
+	jumping sequence
+	
+	
+### NOTE
+Digi had greater Impact with 63 artifacts failing on video-mkv-pfr-metadata-extract and video-proxy-low-gen. The processingtask got over but while updating TFile records the jobs failed so to clean this up Fix_2_1_06 controller was introduced.
+ 
+
 # Dwara App Version - 2.1.05 (Bug fix and data porting - 17th Jan 2021)
 
 ### Bug fixes

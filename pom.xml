@@ -18,5 +18,6 @@
 		<module>dwara-ltowala</module>
 		<module>dwara-digitization</module>
     <module>dwara-api</module>
+    <module>dwara-hotfixes</module>
   </modules>
 </project>
