@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.hotfixes;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -10,24 +11,25 @@ import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
+import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobHelper;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
@@ -42,8 +44,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @CrossOrigin
 @RestController
-public class Fix_2_1_06 extends ProcessingJobHelper {
-	private static final Logger logger = LoggerFactory.getLogger(Fix_2_1_06.class);
+public class Fix_2_1_6_old extends ProcessingJobHelper {
+	private static final Logger logger = LoggerFactory.getLogger(Fix_2_1_6_old.class);
 	
 	@Autowired
 	private JobDao jobDao; 
@@ -55,14 +57,15 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 	private DomainUtil domainUtil;
 	
 	@Autowired
-	private TTFileJobDao tFileJobDao;
+	private JobUtil jobUtil;	
+
+	@Autowired
+	private ArtifactEntityUtil artifactEntityUtil;
 	
 	@Autowired
 	private FileEntityUtil fileEntityUtil;
 	
 	private boolean dryRun = true;
-	TFile tFileRef = null;
-	org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileRef = null;
 	
 	@PostMapping(value="/fix_2_1_06", produces = "application/json")
     public ResponseEntity<String> executeFix_2_1_06(@RequestParam(defaultValue="true") boolean dryRun){
@@ -108,62 +111,60 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 				HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> outputFilePathToFileObj = getFilePathToFileObj(domain, outputArtifact);
 				
 				org.ishafoundation.dwaraapi.db.model.transactional.TFile artifactTFile = outputFilePathToTFileObj.get(outputArtifactName);
-				tFileRef = inputFilePathToTFileObj.get(inputArtifactName);
+				
 				if(artifactTFile == null) // only if not already created... 
-					artifactTFile = createTFile(artifactFileAbsolutePathName, outputArtifact);	
+					artifactTFile = createTFile(inputFilePathToTFileObj.get(inputArtifactName), artifactFileAbsolutePathName, outputArtifact);	
 					
 				FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 //				org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
 				
 				org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = outputFilePathToFileObj.get(outputArtifactName);
 				
-				fileRef = inputFilePathToFileObj.get(inputArtifactName);
 				if(artifactFile == null) { // only if not already created... 
-					artifactFile = createFile(artifactFileAbsolutePathName, outputArtifact, domainSpecificFileRepository, domain, artifactTFile);	
+					artifactFile = createFile(inputFilePathToFileObj.get(inputArtifactName), artifactFileAbsolutePathName, outputArtifact, domainSpecificFileRepository, domain, artifactTFile);	
 				}
 				
 				
-		        Collection<File> fileList = FileUtils.listFiles(new File(artifactFileAbsolutePathName), TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
-				for (File nthProcessedFile : fileList) {
-					String fileAbsolutePathName = nthProcessedFile.getAbsolutePath();
-					String filepathName = fileAbsolutePathName.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "");
-					logger.trace("filepathName - " + filepathName);
-//					logger.info("filepathName using destinationDirPath " + filepathName);
-//					filepathName = proxyFilePath.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "") + File.separator + nthFileName;
-//					logger.info("filepathName using proxyFilePath " + filepathName);
-
-					org.ishafoundation.dwaraapi.db.model.transactional.TFile nthTFile = outputFilePathToTFileObj.get(filepathName);
-					if(nthTFile == null) { // only if not already created... 
-						logger.trace("Now creating T file record for - " + filepathName);
-						nthTFile = createTFile(fileAbsolutePathName, outputArtifact);	
-					}							
-					org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = outputFilePathToFileObj.get(filepathName);
-					//org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = domainSpecificFileRepository.findByPathname(filepathName);
-					if(nthFile == null) { // only if not already created... 
-						logger.trace("Now creating file record for - " + filepathName);
-						createFile(fileAbsolutePathName, outputArtifact, domainSpecificFileRepository, domain, nthTFile);	
-					}
-				}
+				String destinationDirPath = artifactFileAbsolutePathName;
+				Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(nthJob.getProcessingtaskId(), inputArtifactPathname, inputArtifactclass);
 				
-				if(!dryRun) {
-//					logger.info("Now marking all the t_t_filejob entries as completed for tfileid " + tFileRef.getId());
-//					List<TTFileJob> ttFileJobList = tFileJobDao.findAllByIdFileId(tFileRef.getId());
-//					for (TTFileJob nthTTFileJob : ttFileJobList) {
-//						nthTTFileJob.setStatus(Status.completed);
-//					}
-//					tFileJobDao.saveAll(ttFileJobList);
+				logger.info("Now looping the logical file set");
+				for (LogicalFile logicalFile : selectedFileList) {
 					
-					logger.info("Now marking all the t_t_filejob entries for job " + nthJob.getId() + " as completed");
-					List<TTFileJob> ttFileJobList = tFileJobDao.findAllByJobId(nthJob.getId());
-					for (TTFileJob nthTTFileJob : ttFileJobList) {
-						nthTTFileJob.setStatus(Status.completed);
+					final String srcFileBaseName = FilenameUtils.getBaseName(logicalFile.getAbsolutePath());
+					logger.info("logical File - " + srcFileBaseName);
+			        FilenameFilter fileNameFilter = new FilenameFilter() {
+			            public boolean accept(File dir, String name) {
+			            	if(FilenameUtils.getBaseName(name).equals(srcFileBaseName))
+			            		return true;
+			               
+			               return false;
+			            }
+			         };
+			         
+					String[] processedFileNames = new File(destinationDirPath).list(fileNameFilter);
+					logger.info("processedFileNames " + processedFileNames.toString());
+					
+					// creating File records for the process generated files
+					for (String nthFileName : processedFileNames) {
+						String filepathName = destinationDirPath.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "") + File.separator + nthFileName;
+						logger.trace("filepathName - " + filepathName);
+	//					logger.info("filepathName using destinationDirPath " + filepathName);
+	//					filepathName = proxyFilePath.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "") + File.separator + nthFileName;
+	//					logger.info("filepathName using proxyFilePath " + filepathName);
+	
+						org.ishafoundation.dwaraapi.db.model.transactional.TFile nthTFile = outputFilePathToTFileObj.get(filepathName);
+						if(nthTFile == null) { // only if not already created... 
+							logger.trace("Now creating T file record for - " + filepathName);
+							nthTFile = createTFile(inputFilePathToTFileObj.get(filepathName), outputArtifact.getArtifactclass().getPath() + File.separator + filepathName, outputArtifact);	
+						}							
+						org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = outputFilePathToFileObj.get(filepathName);
+						//org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = domainSpecificFileRepository.findByPathname(filepathName);
+						if(nthFile == null) { // only if not already created... 
+							logger.trace("Now creating file record for - " + filepathName);
+							createFile(inputFilePathToFileObj.get(filepathName), outputArtifact.getArtifactclass().getPath() + File.separator + filepathName, outputArtifact, domainSpecificFileRepository, domain, nthTFile);	
+						}
 					}
-					tFileJobDao.saveAll(ttFileJobList);
-					
-					// now marking the job status as in_progress
-					logger.info("Now marking job " + nthJob.getId() + " as in_progress");
-					nthJob.setStatus(Status.in_progress);
-					jobDao.save(nthJob);
 				}
 			}
 
@@ -180,7 +181,7 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 		return ResponseEntity.status(HttpStatus.OK).body("Check logs");
 	}
 	
-	private TFile createTFile(String fileAbsolutePathName, Artifact outputArtifact) throws Exception {
+	private TFile createTFile(TFile tFileRef, String fileAbsolutePathName, Artifact outputArtifact) throws Exception {
 		org.ishafoundation.dwaraapi.db.model.transactional.TFile nthTFileRowToBeInserted = new org.ishafoundation.dwaraapi.db.model.transactional.TFile();
 		nthTFileRowToBeInserted.setArtifactId(outputArtifact.getId());
 		nthTFileRowToBeInserted.setFileRefId(tFileRef.getId());
@@ -204,15 +205,23 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 			}
 		}
 
-		logger.info("TFile Pathname " + nthTFileRowToBeInserted.getPathname() + " Size " + nthTFileRowToBeInserted.getSize() + " tfileRef " + tFileRef.getId() + " outputArtifact " + outputArtifact.getId() 
-	    + " PathnameChecksum " + Hex.encodeHexString(nthTFileRowToBeInserted.getPathnameChecksum()) + " Deleted " +nthTFileRowToBeInserted.isDeleted() + " Directory " +nthTFileRowToBeInserted.isDirectory());
+	    logger.info("Pathname " +nthTFileRowToBeInserted.getPathname());
+	    logger.info("Size " +nthTFileRowToBeInserted.getSize());
+	    logger.info("tfileRef " + tFileRef.getId());
+	    logger.info("outputArtifact " + outputArtifact.getId());
+	    logger.info("PathnameChecksum " + Hex.encodeHexString(nthTFileRowToBeInserted.getPathnameChecksum()));
+	    
+	    //logger.info("Checksum " + Hex.encodeHexString(nthTFileRowToBeInserted.getChecksum()));
+	    logger.info("Deleted " +nthTFileRowToBeInserted.isDeleted());
+	    logger.info("Directory " +nthTFileRowToBeInserted.isDirectory());
+
 	    
 		if(!dryRun)
 			tFileDao.save(nthTFileRowToBeInserted);
 		return nthTFileRowToBeInserted;
 	}
 
-	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository, Domain domain, org.ishafoundation.dwaraapi.db.model.transactional.TFile tFileDBObj) throws Exception {
+	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File createFile(org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileRef, String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository, Domain domain, org.ishafoundation.dwaraapi.db.model.transactional.TFile tFileDBObj) throws Exception {
 	    org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
 		
 	    fileEntityUtil.setDomainSpecificFileRef(nthFileRowToBeInserted, fileRef);
@@ -230,8 +239,14 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 	    org.ishafoundation.dwaraapi.db.model.transactional.domain.File savedFile = null;
 	    
 
-	    logger.info("File Pathname " + nthFileRowToBeInserted.getPathname() + " Size " + nthFileRowToBeInserted.getSize() + " fileRef " + fileRef.getId() + " outputArtifact " + outputArtifact.getId() 
-	    + " PathnameChecksum " + Hex.encodeHexString(nthFileRowToBeInserted.getPathnameChecksum()) + " Deleted " +nthFileRowToBeInserted.isDeleted() + " Directory " +nthFileRowToBeInserted.isDirectory());
+	    logger.info("Pathname " +nthFileRowToBeInserted.getPathname());
+	    logger.info("Size " +nthFileRowToBeInserted.getSize());
+	    logger.info("fileRef " + fileRef.getId());
+	    logger.info("outputArtifact " + outputArtifact.getId());
+	    logger.info("PathnameChecksum " + Hex.encodeHexString(nthFileRowToBeInserted.getPathnameChecksum()));
+	    //logger.info("Checksum " + Hex.encodeHexString(nthFileRowToBeInserted.getChecksum()));
+	    logger.info("Deleted " +nthFileRowToBeInserted.isDeleted());
+	    logger.info("Directory " +nthFileRowToBeInserted.isDirectory());
 	    
 	    if(!dryRun) {
 			logger.debug("DB File Creation");
@@ -254,5 +269,13 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 	    }
 	    
 		return savedFile;
+	}
+
+	private Collection<LogicalFile> getFilesToBeProcessed(String processingtaskId, String inputArtifactPath, Artifactclass inputArtifactclass){
+		Processingtask processingtask = getProcessingtask(processingtaskId);
+		
+		Filetype ft = getInputFiletype(processingtask);
+			
+		return  getLogicalFileList(ft, inputArtifactPath, inputArtifactclass.getId(), processingtaskId);
 	}
 }
