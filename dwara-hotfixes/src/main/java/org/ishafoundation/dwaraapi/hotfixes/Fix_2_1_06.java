@@ -108,8 +108,11 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 				org.ishafoundation.dwaraapi.db.model.transactional.TFile artifactTFile = outputFilePathToTFileObj.get(outputArtifactName);
 				
 				String[] extns = {"mkv"};
-				File[] mkvFileArray = (File[]) FileUtils.listFiles(new File(inputArtifactPathname), extns, false).toArray();
-				File mkvFile = mkvFileArray[0];
+				Collection<File> mkvFileList = FileUtils.listFiles(new File(inputArtifactPathname), extns, false);
+				File mkvFile = null;
+				for (File nthFile : mkvFileList) {
+					mkvFile = nthFile;
+				}
 				tFileRef = inputFilePathToTFileObj.get(inputArtifactName + File.separator + mkvFile.getName());
 				if(artifactTFile == null) // only if not already created... 
 					artifactTFile = createTFile(outputArtifactPathname, outputArtifact);	
