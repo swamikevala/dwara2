@@ -116,10 +116,9 @@ public class LabelManagerImpl implements LabelManager{
 //		String encryptionalgorithm = requestDetails.getEncryption_algorithm();
 		String encryptionalgorithm = configuration.getEncryptionAlgorithm();
 		
-		String label = createVolumeLabel(volume.getUuid(), volumeId, blocksize, archiveformat, checksumalgorithm, encryptionalgorithm);
+		Volumelabel volumelabel = createVolumeLabel(volume.getUuid(), volumeId, blocksize, archiveformat, checksumalgorithm, encryptionalgorithm);
+		String label = labelXmlAsString(volumelabel, true);
 		logger.trace(label);
-		
-
 		return writeLabel(label, volumeId + "_label", deviceName, blocksize);
 	}
 	
@@ -137,7 +136,7 @@ public class LabelManagerImpl implements LabelManager{
 		tar (GNU tar) 1.26
 	 * 
 	 */
-	private String createVolumeLabel(String volumeUuid, String barcode, int blocksize, String archiveformat, String checksumalgorithm, String encryptionalgorithm) throws Exception {
+	private Volumelabel createVolumeLabel(String volumeUuid, String barcode, int blocksize, String archiveformat, String checksumalgorithm, String encryptionalgorithm) throws Exception {
 		
 		Volumelabel volumelabel = new Volumelabel();
 		volumelabel.setVersion(volumeLabelVersion);
@@ -203,12 +202,7 @@ public class LabelManagerImpl implements LabelManager{
 		os.setText(text);
 		volumelabel.setOperatingSystem(os);
 		
-		XmlMapper xmlMapper = new XmlMapper();
-		String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;
-		xmlMapper.getFactory().getXMLOutputFactory().setProperty(propName, true);
-		xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true);
-		xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
-		return xmlMapper.writeValueAsString(volumelabel);
+		return volumelabel;
 	}
 
 	// volume uuid - save it - use it across - 
@@ -219,6 +213,19 @@ public class LabelManagerImpl implements LabelManager{
 		
 		Artifact artifact = storageJob.getArtifact();
 
+		Volume volume = storageJob.getVolume();
+		Integer svb = selectedStorageJob.getArtifactStartVolumeBlock();
+		Integer evb = selectedStorageJob.getArtifactEndVolumeBlock();
+		
+
+		InterArtifactlabel artifactlabel = generateArtifactLabel(artifact, volume, svb, evb);
+		String label = labelXmlAsString(artifactlabel); // TODO Find out why not indent???
+		logger.trace("artifactLabel" + label);
+		return writeLabel(label, storageJob.getJob().getId() + "_label", deviceName, artifactlabel.getBlocksize());
+	}
+	
+	public InterArtifactlabel generateArtifactLabel(Artifact artifact, Volume volume, Integer svb, Integer evb) throws Exception {
+
 		InterArtifactlabel artifactlabel = new InterArtifactlabel();
 		artifactlabel.setVersion(artifactLabelVersion);
 		
@@ -226,9 +233,7 @@ public class LabelManagerImpl implements LabelManager{
 		artifactlabel.setArtifact(artifactName);
 		
 		artifactlabel.setSequenceCode(artifact.getSequenceCode());
-		Volume volume = storageJob.getVolume();
 		VolumeDetails volumeDetails = volume.getDetails();
-		
 		
 		String volumeId = volume.getId();
 		int blocksize = volumeDetails.getBlocksize();
@@ -243,26 +248,29 @@ public class LabelManagerImpl implements LabelManager{
 		artifactlabel.setBlocksize(blocksize);
 		
 		Blocks blocks = new Blocks();
-		Integer svb = selectedStorageJob.getArtifactStartVolumeBlock();
-		Integer evb = selectedStorageJob.getArtifactEndVolumeBlock();
 		
 		blocks.setStart(svb);
 		blocks.setEnd(evb);
 		blocks.setText((evb - svb) + "");
 		artifactlabel.setBlocks(blocks);
 		
+		return artifactlabel;
+	}
+	
+	public String labelXmlAsString(Object label) throws Exception {
+		return labelXmlAsString(label, false);
+	}
+
+	public String labelXmlAsString(Object label, boolean withIndent) throws Exception {
 		XmlMapper xmlMapper = new XmlMapper();
 		String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;
 		xmlMapper.getFactory().getXMLOutputFactory().setProperty(propName, true);
 		xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true);
-		String label = xmlMapper.writeValueAsString(artifactlabel);
-		logger.trace("artifactLabel" + label);
-
-		return writeLabel(label, artifactName + volumeId + "_label", deviceName, blocksize);
+		if(withIndent)
+			xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
+		return xmlMapper.writeValueAsString(label);
 	}
 	
-	
-
 	/*
 	 	Writing a label to the tape has multiple options..
 			Option 1 - issue multiple commands
