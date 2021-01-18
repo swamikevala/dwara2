@@ -72,10 +72,17 @@ public class JobService extends DwaraService{
 		return jobResponseList;
 	}
 	
-	public JobResponse createDependentJobs(int jobId) throws Exception{
+	public List<JobResponse> createDependentJobs(int jobId) throws Exception{
+		
+		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
 		Job job = jobDao.findById(jobId).get();
-		jobCreator.createDependentJobs(job);
-		return frameJobResponse(job);
+		List<Job> jobList = jobCreator.createDependentJobs(job);
+		
+		for (Job nthJob : jobList) {
+			JobResponse jobResponse = frameJobResponse(nthJob);
+			jobResponseList.add(jobResponse);
+		}
+		return jobResponseList;
 	}	
 	
 	public JobResponse requeueJob(int jobId) throws Exception{

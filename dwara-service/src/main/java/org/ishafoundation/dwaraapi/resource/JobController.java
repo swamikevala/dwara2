@@ -80,11 +80,11 @@ public class JobController {
 	}
 	
 	@PostMapping("/job/{jobId}/createDependentJobs")
-	public ResponseEntity<JobResponse> createDependentJobs(@PathVariable("jobId") int jobId) {
+	public ResponseEntity<List<JobResponse>> createDependentJobs(@PathVariable("jobId") int jobId) {
     	logger.info("/job/" + jobId + "/createDependentJobs");
-    	JobResponse jobResponse = null;
+    	List<JobResponse> jobResponseList = null;
     	try {
-    		jobResponse = jobService.createDependentJobs(jobId);
+    		jobResponseList = jobService.createDependentJobs(jobId);
 		}catch (Exception e) {
 			String errorMsg = "Unable to create dependent Jobs - " + e.getMessage();
 			logger.error(errorMsg, e);
@@ -94,7 +94,7 @@ public class JobController {
 			else
 				throw new DwaraException(errorMsg, null);
 		}
-    	return ResponseEntity.status(HttpStatus.OK).body(jobResponse);
+    	return ResponseEntity.status(HttpStatus.OK).body(jobResponseList);
     }
 	
 	
