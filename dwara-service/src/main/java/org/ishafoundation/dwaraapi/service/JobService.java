@@ -15,6 +15,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
+import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.job.JobManipulator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,9 @@ public class JobService extends DwaraService{
 
 	@Autowired
 	private JobManipulator jobManipulator;
+	
+	@Autowired
+	private JobCreator jobCreator;
 
 	public List<JobResponse> getJobs(Integer systemRequestId, List<Status> statusList) {
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
@@ -67,6 +71,12 @@ public class JobService extends DwaraService{
 		}
 		return jobResponseList;
 	}
+	
+	public JobResponse createDependentJobs(int jobId) throws Exception{
+		Job job = jobDao.findById(jobId).get();
+		jobCreator.createDependentJobs(job);
+		return frameJobResponse(job);
+	}	
 	
 	public JobResponse requeueJob(int jobId) throws Exception{
 		return frameJobResponse(jobServiceRequeueHelper.requeueJob(jobId, getUserFromContext()));
