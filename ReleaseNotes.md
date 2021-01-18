@@ -1,3 +1,27 @@
+# Dwara App Version - 2.1.07 (storage blocker fix - 19th Jan 2021)
+
+### LIVE Incident
+
+1 Files renamed and released from Digitisation project had length set close to 245.
+
+2 Dwara wrote the content to tape with no problems but couldnt write the artifact label as the tmp filename we used is artifactName + someextrasuffix and thus exceeding the char limit on filenames in linux. The write job failed even after retries and marked the tape suspect.
+
+3 Subsequent writes are held up forcing a hotfix release
+
+### NOTE to apply patch
+
+1 Run the hotfix_2.1.07 endpoint - This will dump the artifactlabel in a preconfigured location
+
+2 Manually write the label outside dwara
+
+3 Manually Mark the failed job as completed
+
+4 Run the job.createdependents endpoint to create dependent jobs for the failed writes
+
+5 Unflag suspect on the volume
+
+4  
+
 # Dwara App Version - 2.1.06 (data porting hot fixer - 17th Jan 2021)
 
 ### LIVE Incident - 
