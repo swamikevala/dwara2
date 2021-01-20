@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.resource;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.api.req.tag.TagRequest;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
@@ -38,6 +39,29 @@ public class TagController {
     RequestService requestService;
 
     private static final Logger logger = LoggerFactory.getLogger(TagController.class);
+
+    @PostMapping(value="/tags/requests", produces = "application/json")
+    public ResponseEntity tagMultipleRequest(@RequestBody TagRequest tagRequest) {
+        try {
+            /* String[] listTags = tags.split(",");
+            String[] listIds = requestIds.split(","); */
+            for (String tag : tagRequest.getTags()) {
+                for (int requestId : tagRequest.getRequestIds()) {
+                    // int requestId = Integer.parseInt(id);
+                    tagService.tagRequest(tag, requestId);
+                }
+            }
+        } catch (Exception e) {
+			String errorMsg = "Unable to tag request - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+        return new ResponseEntity(HttpStatus.OK);
+    }
 
     @PostMapping(value="/tags/{tag}/request/{requestId}", produces = "application/json") 
     public ResponseEntity tagRequest(@PathVariable String tag, @PathVariable int requestId) {
