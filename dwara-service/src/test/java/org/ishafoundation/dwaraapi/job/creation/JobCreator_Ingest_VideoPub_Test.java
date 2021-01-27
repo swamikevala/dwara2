@@ -3,11 +3,9 @@ package org.ishafoundation.dwaraapi.job.creation;
 import java.io.File;
 import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.ingest.UserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
@@ -133,7 +131,7 @@ public class JobCreator_Ingest_VideoPub_Test extends DwaraService {
 			logger.info(DwaraConstants.SYSTEM_REQUEST + systemrequest.getId());
 	
 			File libraryFileInStagingDir = new File(readyToIngestPath + File.separator + stagedFile.getName());
-	    	Collection<java.io.File> libraryFileAndDirsList = FileUtils.listFilesAndDirs(libraryFileInStagingDir, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
+	    	//Collection<java.io.File> libraryFileAndDirsList = FileUtils.listFilesAndDirs(libraryFileInStagingDir, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
 	
 			Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
 			artifact.setWriteRequest(systemrequest);
@@ -149,7 +147,7 @@ public class JobCreator_Ingest_VideoPub_Test extends DwaraService {
 			artifactId = artifact.getId();
 			logger.info(artifact.getClass().getSimpleName() + " - " + artifact.getId());
 			
-	        stagedService.createFilesAndExtensions(readyToIngestPath, domain, artifact, 12345, libraryFileAndDirsList);
+	        stagedService.createFilesAndExtensions(readyToIngestPath, domain, artifact, 12345, libraryFileInStagingDir, ".junk");
 			
 	        List<Job> jobList = jobCreator.createJobs(systemrequest, artifact);
 	        
