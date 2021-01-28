@@ -18,6 +18,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -276,7 +277,7 @@ public class RequestService extends DwaraService{
 		requestDao.save(requestToBeReleased);
 	}
 	
-	private RequestResponse frameRequestResponse(Request request, RequestType requestType){
+	public RequestResponse frameRequestResponse(Request request, RequestType requestType){
 		RequestResponse requestResponse = new RequestResponse();
 		int requestId = request.getId();
 		
@@ -287,6 +288,14 @@ public class RequestService extends DwaraService{
 		requestResponse.setRequestedAt(getDateForUI(request.getRequestedAt()));
 		requestResponse.setCompletedAt(getDateForUI(request.getCompletedAt()));
 		requestResponse.setRequestedBy(request.getRequestedBy().getName());
+
+		//tag
+		List<Tag> tags = new ArrayList<Tag>(request.getTags());
+		List<String> listTags = new ArrayList<String>();
+		for (Tag tag : tags) {
+			listTags.add(tag.getTag());
+		}
+		requestResponse.setTags(listTags);
 				
 		requestResponse.setStatus(request.getStatus().name());
 		Action requestAction = request.getActionId();

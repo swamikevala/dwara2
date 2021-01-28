@@ -123,7 +123,10 @@ public class StagedService extends DwaraService{
 	private SourceDirScanner sourceDirScanner;
 
 	@Autowired
-    private StagedFileOperations stagedFileOperations;
+	private StagedFileOperations stagedFileOperations;
+	
+	@Autowired
+	private TagService tagService;
 	
     public List<StagedFileDetails> getAllIngestableFiles(String artifactclassId){
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
@@ -540,6 +543,14 @@ public class StagedService extends DwaraService{
 					
 					ingestSystemRequest.setArtifact(artifactForResponse);
 					ingestSystemRequests.add(ingestSystemRequest);
+
+					//Tag
+					List<String> tags = stagedFile.getTags();
+					if(tags != null && tags.size() > 0) {
+						for (String tag : tags) {
+							tagService.tagRequest(tag, systemrequest.getId());
+						}
+					}
 				}
 		    	ingestResponse.setSystemRequests(ingestSystemRequests);
 	    	}	

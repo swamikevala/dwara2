@@ -5,6 +5,7 @@ import java.util.List;
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,7 +23,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "artifact",
     "file",
     "volume",
-    "jobList"
+	"jobList",
+	"tags"
 })
 public class RequestResponse {
 
@@ -48,7 +50,9 @@ public class RequestResponse {
     private List<JobResponse> jobList;
     // For volume relate actions like initialize, map_drives etc.
     @JsonProperty("volume")
-    private VolumeResponse volume;
+	private VolumeResponse volume;
+	
+	private List<String> tags;
 
 	public Integer getId() {
 		return id;
@@ -168,6 +172,14 @@ public class RequestResponse {
 
 	public void setJobList(List<JobResponse> jobList) {
 		this.jobList = jobList;
+	}
+
+	public List<String> getTags() {
+		return tags;
+	}
+
+	public void setTags(List<String> tags) {
+		this.tags = tags;
 	}
 	 
 }
