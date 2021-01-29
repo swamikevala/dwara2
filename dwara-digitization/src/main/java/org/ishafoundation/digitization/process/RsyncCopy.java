@@ -17,28 +17,24 @@ import org.springframework.stereotype.Component;
 import com.github.fracpete.processoutput4j.output.CollectingProcessOutput;
 import com.github.fracpete.rsync4j.RSync;
 
-@Component("bru-copier")
-public class BruCopier implements IProcessingTask {
+@Component("rsync-copy")
+public class RsyncCopy implements IProcessingTask {
 
-	private static final Logger logger = LoggerFactory.getLogger(BruCopier.class);
-		
-	@Autowired
-	private Configuration configuration;
+	private static final Logger logger = LoggerFactory.getLogger(RsyncCopy.class);
 
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
-        //logger.info("processing bru copier: " +  inputArtifactName + ", output: " + outputArtifactName + ", destination: " + destinationDirPath);
+        logger.info("processing rsync copy: " +  processContext.getInputDirPath() + ", destination: " + processContext.getOutputDestinationDirPath());
         
-		String destinationDirPath = "/Users/administrator/Desktop";
-//		String destinationDirPath = processContext.getOutputDestinationDirPath();
-//		String destinationDirPath = TODO - Get this from config...
+		String destinationDirPath = processContext.getOutputDestinationDirPath();
         LogicalFile logicalFile = processContext.getLogicalFile();
         
         RSync rsync = new RSync()
         .source(logicalFile.getAbsolutePath())
         .destination(destinationDirPath)
         .recursive(true)
-        .checksum(false);
+        .checksum(false)
+        .removeSourceFiles(true);
 
         CollectingProcessOutput output = rsync.execute();
         logger.info(output.getStdOut());
