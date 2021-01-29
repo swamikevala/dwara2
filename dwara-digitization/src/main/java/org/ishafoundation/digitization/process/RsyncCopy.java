@@ -40,12 +40,14 @@ public class RsyncCopy implements IProcessingTask {
         logger.info(output.getStdOut());
         logger.info("Exit code: " + output.getExitCode());
         ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
+        processingtaskResponse.setIsComplete(output.getExitCode() == 0);
+        /*
         if(output.getExitCode() < 0) {
             processingtaskResponse.setIsComplete(false);
         }
         else {
             //verify checksum
-            /* rsync.dryRun(true);
+            rsync.dryRun(true);
             ProcessBuilder builder = rsync.builder();
             builder.redirectErrorStream(true);
             Process process = builder.start();
@@ -70,8 +72,8 @@ public class RsyncCopy implements IProcessingTask {
             }
             else {
                 processingtaskResponse.setIsComplete(false);
-            } */
-        }
+            } 
+        }*/
 		return processingtaskResponse;
 	}
 
