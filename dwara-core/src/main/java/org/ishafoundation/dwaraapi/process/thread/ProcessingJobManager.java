@@ -15,7 +15,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TTFileJobKey;
@@ -24,13 +23,15 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassTask;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -61,9 +62,6 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	private JobDao jobDao;
 	
 	@Autowired
-	private ArtifactclassTaskDao artifactclassTaskDao;
-	
-	@Autowired
 	private TTFileJobDao tFileJobDao;
 		
 	@Autowired
@@ -77,6 +75,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	
 	@Autowired
 	private SequenceUtil sequenceUtil;
+	
+	@Autowired
+	private FlowelementUtil flowelementUtil;
 	
 	@Autowired
 	private Configuration configuration;
@@ -100,9 +101,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 		this.job = job;
 	}
 
-	public boolean isJobToBeCreated(String processingtaskId, String inputArtifactPath, Artifactclass inputArtifactclass) {
+	public boolean isJobToBeCreated(String processingtaskId, String inputArtifactPath, String pathnameRegex) {
 		
-		Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPath, inputArtifactclass);
+		Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPath, pathnameRegex);
 		int filesToBeProcessedCount = selectedFileList.size();
 		logger.trace("filesToBeProcessedCount " + filesToBeProcessedCount);
 		
@@ -119,12 +120,13 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 		return true;
 	}
 	
-	private Collection<LogicalFile> getFilesToBeProcessed(String processingtaskId, String inputArtifactPath, Artifactclass inputArtifactclass){
+	private Collection<LogicalFile> getFilesToBeProcessed(String processingtaskId, String inputArtifactPath, String pathnameRegex){
 		Processingtask processingtask = getProcessingtask(processingtaskId);
 		
 		Filetype ft = getInputFiletype(processingtask);
 			
-		return  getLogicalFileList(ft, inputArtifactPath, inputArtifactclass.getId(), processingtaskId);
+		return  getLogicalFileList(ft, inputArtifactPath, pathnameRegex);
+				
 	}
 
 	public String getInputPath(Job job) {
@@ -239,8 +241,12 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, inputArtifact);
 			
 			HashMap<String, TFile> filePathToTFileObj = getFilePathToTFileObj(inputArtifactId);
-	
-			Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPathname, inputArtifactclass);
+			
+			Flowelement flowelement = flowelementUtil.findById(job.getFlowelementId());
+			Taskconfig taskconfig = flowelement.getTaskconfig();
+			String pathnameRegex = taskconfig != null ? taskconfig.getPathnameRegex() : null;
+			
+			Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPathname, pathnameRegex);
 			int filesToBeProcessedCount = selectedFileList.size();
 			logger.trace("filesToBeProcessedCount " + filesToBeProcessedCount);
 			
@@ -259,9 +265,11 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					jobForProcess.getOutputArtifact().setName(outputArtifactName);
 
 				String outputPathSuffix = null;
-				ArtifactclassTask artifactclassTask = artifactclassTaskDao.findByArtifactclassIdAndProcessingtaskId(inputArtifactclassId, processingtaskId);
-				String configuredOutputPath = artifactclassTask != null ? artifactclassTask.getConfig().getOutputPath() : null;
-				String configuredDestinationId = artifactclassTask != null ? artifactclassTask.getConfig().getDestinationId()  : null;
+
+				
+					
+				String configuredOutputPath = taskconfig != null ? taskconfig.getOutputPath() : null;
+				String configuredDestinationId = taskconfig != null ? taskconfig.getDestinationId()  : null;
 				String configuredDestinationPath = null;
 				if(configuredDestinationId != null) {
 					Destination destination = configurationTablesUtil.getDestination(configuredDestinationId);

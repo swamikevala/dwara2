@@ -28,9 +28,15 @@ public class ChecksumUtil {
 	
 	public static byte[] getChecksum(java.io.File file, Checksumtype checksumtype) throws Exception{
 		//TODO : Hardcoded bufferSize - Configure it... What is the optimum buffersize???
-		int bufferSize = 524288; // 512k
-		BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file), bufferSize);
-		return getChecksum(bis, checksumtype, bufferSize);
+		BufferedInputStream bis = null;
+		try {
+			int bufferSize = 524288; // 512k
+			bis = new BufferedInputStream(new FileInputStream(file), bufferSize);
+			return getChecksum(bis, checksumtype, bufferSize);
+		}
+		finally {
+			bis.close();
+		}
 	}
 	
 	public static byte[] getChecksum(InputStream is, Checksumtype checksumtype, int bufferSize) throws Exception {

@@ -18,9 +18,7 @@
 
 4 Run the job.createdependents endpoint to create dependent jobs for the failed writes
 
-5 Unflag suspect on the volume
-
-4  
+5 Unflag suspect on the volume  
 
 # Dwara App Version - 2.1.06 (data porting hot fixer - 17th Jan 2021)
 

@@ -122,9 +122,11 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 			} else {
 				isComplete = false;
 				String stdErrResp = stdErrRespBuffer.toString();
-				String message = null;
+				String message = "Failed - no error message received";
 				if(extractLastLineAsFailureReason) {
 					message = getLastLine(stdErrResp);
+					if(message == null)
+						message = stdErrResp;
 				}else {
 					message = stdErrResp;
 				}

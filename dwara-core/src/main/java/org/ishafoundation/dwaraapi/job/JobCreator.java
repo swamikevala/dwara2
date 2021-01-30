@@ -9,14 +9,13 @@ import java.util.Map;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassFlow;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassTask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
@@ -52,9 +51,6 @@ public class JobCreator {
 	@Autowired
 	private ArtifactclassVolumeDao artifactclassVolumeDao;
 	
-	@Autowired
-	private ArtifactclassTaskDao artifactclassTaskDao;
-
 	@Autowired
 	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
 	
@@ -303,7 +299,11 @@ public class JobCreator {
 			}
 			// TODO : What if the first parent job is a processing that has no files to process and hence no job created. So DependentJobs wont be created. Fine. So there is no Job in the request. Is it ok to create a request with no Jobs
 			ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
-			if(!processingJobManager.isJobToBeCreated(processingtaskId, inputArtifactPath, inputArtifactclass)) { // Dont create jobs for something we know would eventually fail...
+			Taskconfig taskconfig =	flowelement.getTaskconfig();
+			String pathnameRegex = null;
+			if(taskconfig != null)
+				pathnameRegex = taskconfig.getPathnameRegex();
+			if(!processingJobManager.isJobToBeCreated(processingtaskId, inputArtifactPath, pathnameRegex)) { // Dont create jobs for something we know would eventually fail...
 				logger.trace("Job not to be created - " + flowelement.getId());
 				return jobsCreated;
 			}
@@ -376,13 +376,8 @@ public class JobCreator {
 		
 		Status status = Status.queued;
 		if(artifactclassId != null) {
-			ArtifactclassTask artifactclassTask = null;
-			if(nthFlowelement.getProcessingtaskId() != null)
-				artifactclassTask = artifactclassTaskDao.findByArtifactclassIdAndProcessingtaskId(artifactclassId, nthFlowelement.getProcessingtaskId());
-			else if(nthFlowelement.getStoragetaskActionId() != null)
-				artifactclassTask = artifactclassTaskDao.findByArtifactclassIdAndStoragetaskActionId(artifactclassId, nthFlowelement.getStoragetaskActionId());
-
-			if(artifactclassTask != null && artifactclassTask.getConfig().isCreateHeldJobs())
+			Taskconfig taskconfig =	nthFlowelement.getTaskconfig();
+			if(taskconfig != null && taskconfig.isCreateHeldJobs())
 				status = Status.on_hold;
 		}
 		job.setStatus(status);

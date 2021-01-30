@@ -43,6 +43,7 @@ public class ScheduledTapeUnloader {
 	@Scheduled(cron = "${scheduler.tapeUnloader.cronExpression}")
 	@PostMapping("/unloadIdleTapesFromDrive")
 	public void unloadIdleTapesFromDrive(){
+		logger.info("***** Unloading idle tapes from Drive now *****");
 		List<DriveDetails> availableDrivesDetails;
 		try {
 			availableDrivesDetails = tapeDeviceUtil.getAllAvailableDrivesDetails();
@@ -69,7 +70,7 @@ public class ScheduledTapeUnloader {
 						 TapeUsageStatus tapeUsageStatus = volumeUtil.getTapeUsageStatus(tapeBarcode);
 						 if(tapeUsageStatus == TapeUsageStatus.no_job_queued) { // only when no queued or in progress job on the volume
 							// TODO : check mtstatus and tactive device table one last time before pulling the plug...
-							 logger.trace("No jobs lined up for " + tapeBarcode + ". Will be unloading it");
+							 logger.info("No jobs lined up for " + tapeBarcode + ". Will be unloading it");
 							 tapeLibraryManager.unload(nthAvailableDriveDetails.getTapelibraryName(), nthAvailableDriveDetails.getDte().getsNo());
 						 }
 					}

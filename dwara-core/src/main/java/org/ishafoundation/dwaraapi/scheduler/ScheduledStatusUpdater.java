@@ -98,6 +98,7 @@ public class ScheduledStatusUpdater {
     @PostMapping("/updateStatus")
     public ResponseEntity<String> updateStatus(){
     	if(isEnabled) {
+    		logger.info("***** Updating Status now *****");
     		updateTransactionalTablesStatus();
 	    	return ResponseEntity.status(HttpStatus.OK).body("Done");
     	}
@@ -350,26 +351,47 @@ public class ScheduledStatusUpdater {
 				
 				Domain domain = domainUtil.getDomain(nthRequest);
 				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+				
+		    	List<Artifact> artifactList = artifactRepository.findAllByWriteRequestId(nthRequest.getId());
+		    	for (Artifact artifact : artifactList) {
+					Artifactclass artifactclass = artifact.getArtifactclass();
+					String srcRootLocation = artifactclass.getPathPrefix();
 
-				Artifact artifact = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(nthRequest.getId()); 
-				Artifactclass artifactclass = artifact.getArtifactclass();
-				String srcRootLocation = artifactclass.getPathPrefix();
+					if(artifactclass.isSource()){ // source artifacts need to be moved to configured ingest completed location something like "/data/ingested" 
+						if(srcRootLocation != null) {
+							try {
+								java.io.File srcFile = FileUtils.getFile(srcRootLocation, artifact.getName());
+								java.io.File destFile = FileUtils.getFile(configuration.getIngestCompleteDirRoot(), artifact.getName());
 
-				if(srcRootLocation != null) {
-					try {
-						java.io.File srcFile = FileUtils.getFile(srcRootLocation, artifact.getName());
-						java.io.File destFile = FileUtils.getFile(configuration.getIngestCompleteDirRoot(), artifact.getName());
-
-						if(srcFile.isFile())
-							//Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destFile.getAbsolutePath())));		
-							Files.createDirectories(Paths.get(configuration.getIngestCompleteDirRoot()));
-						else
-							Files.createDirectories(destFile.toPath());
-		
-						Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE); // what will be the timestamp of this moved file?
+								if(srcFile.isFile())
+									//Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destFile.getAbsolutePath())));		
+									Files.createDirectories(Paths.get(configuration.getIngestCompleteDirRoot()));
+								else
+									Files.createDirectories(destFile.toPath());
+				
+								Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE); // what will be the timestamp of this moved file?
+							}
+							catch (Exception e) {
+								logger.error("Unable to move file "  + e.getMessage());
+							}
+						}
+						
 					}
-					catch (Exception e) {
-						logger.error("Unable to move file "  + e.getMessage());
+					else { // derived artifacts can be deleted
+						 // source artifacts need to be moved to configured ingest completed location something like "/data/ingested" 
+						if(srcRootLocation != null) {
+							try {
+								java.io.File srcFile = FileUtils.getFile(srcRootLocation, artifact.getName());
+
+								if(srcFile.isFile())
+									srcFile.delete();
+								else
+									FileUtils.deleteDirectory(srcFile);
+							}
+							catch (Exception e) {
+								logger.error("Unable to delete file "  + e.getMessage());
+							}
+						}
 					}
 				}
 			}

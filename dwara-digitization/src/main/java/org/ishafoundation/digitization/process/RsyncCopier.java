@@ -1,26 +1,20 @@
 package org.ishafoundation.digitization.process;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
-import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.github.fracpete.processoutput4j.output.CollectingProcessOutput;
 import com.github.fracpete.rsync4j.RSync;
 
-@Component("rsync-copy")
-public class RsyncCopy implements IProcessingTask {
+@Component("file-copy")
+public class RsyncCopier implements IProcessingTask {
 
-	private static final Logger logger = LoggerFactory.getLogger(RsyncCopy.class);
+	private static final Logger logger = LoggerFactory.getLogger(RsyncCopier.class);
 
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {

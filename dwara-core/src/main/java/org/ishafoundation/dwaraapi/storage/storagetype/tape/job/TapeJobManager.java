@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
@@ -14,6 +15,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TActivedevice;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.service.JobServiceRequeueHelper;
@@ -65,6 +67,9 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 
 	@Autowired
 	private TapeDeviceUtil tapeDeviceUtil;
+	
+	@Autowired
+	private JobUtil	jobUtil;
 
 	@Autowired
 	private TapeLibraryManager tapeLibraryManager;
@@ -209,6 +214,32 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				// STEP 1
 				for (DriveDetails nthAvailableDriveDetails : availableDrivesDetails) {
 					logger.info("Now selecting job for drive - " + nthAvailableDriveDetails.getDriveId());//+ nthAvailableDriveDetails.getDriveName() + "(" + nthAvailableDriveDetails.getDte().getsNo() + ")");
+
+					String volumeTag = nthAvailableDriveDetails.getDte().getVolumeTag();
+					if(StringUtils.isNotBlank(volumeTag)) { // if drive is available and drive already loaded with tape
+						// ensure that last job on tape has not completed and spawned a dependent storage job "after" the scheduler prepared the storageJobs list.
+						Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(volumeTag);
+						
+						if(lastJobOnTape.getStoragetaskActionId() == Action.write) {
+							List<Job> dependentJobList = jobUtil.getDependentJobs(lastJobOnTape);
+							
+							int writeDependentJobId = dependentJobList.get(0).getId();
+							boolean isDependentJobInTheStorageList = false;
+							for (StorageJob nthStorageJob : storageJobsList) {
+								if(nthStorageJob.getJob().getId() == writeDependentJobId) {
+									isDependentJobInTheStorageList = true;
+									break;
+								}
+							}
+							// check if the last completed tape job' dependency is in the storageJobsList - 
+							// when a write job completes and creates its dependent restore job after the storageJobsList is prepared by the scheduled JobManager 
+							// we should skip the cycle so that the restore job gets in the list in the next cycle.
+							if(!isDependentJobInTheStorageList) {
+								logger.info("No job selected. Last job on tape " + lastJobOnTape.getId() + " just got completed and its dependent job in the list for job selection. So skipping this drive and tape this cycle");
+								continue;
+							}
+						}
+					}
 					
 					// STEP 2a
 					StorageJob selectedStorageJob = null;
@@ -294,10 +325,9 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			}
 		}
 	
-		if(onlyTapeOnLibraryStorageJobsList.size() > 0) {
-			storageJobsList = onlyTapeOnLibraryStorageJobsList;
-		}
+		storageJobsList = onlyTapeOnLibraryStorageJobsList;
 	}
+	
 	private void prepareTapeJobAndContinueNextSteps(StorageJob storageJob, DriveDetails driveDetails, boolean nextStepsInSeparateThread) {
 		Job job = null;
 		TapeJob tapeJob = null;

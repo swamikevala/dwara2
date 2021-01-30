@@ -3,18 +3,20 @@ package org.ishafoundation.dwaraapi.enumreferences;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig;
+
 public enum CoreFlowelement {
-	dep_archive_flow_checksum_gen("1", "archive-flow", null, "checksum-gen", null, null, 1, false, true),
-	dep_archive_flow_write("2", "archive-flow", "write", null, null, null, 2, false, true),
-	dep_archive_flow_checksum_verify("3", "archive-flow", "verify", null, new String[] {"1","2"}, null, 3, false, true),
+	dep_archive_flow_checksum_gen("1", "archive-flow", null, "checksum-gen", null, null, 1, false, true, null),
+	dep_archive_flow_write("2", "archive-flow", "write", null, null, null, 2, false, true, null),
+	dep_archive_flow_checksum_verify("3", "archive-flow", "verify", null, new String[] {"1","2"}, null, 3, false, true, null),
 	
-	core_archive_flow_checksum_gen("C1", "archive-flow", null, "checksum-gen", null, null, 1, true, false),
-	core_archive_flow_write("C2", "archive-flow", "write", null, null, null, 2, true, false),
-	core_archive_flow_restore("C3", "archive-flow", "restore", null, new String[] {"C2"}, null, 3, true, false),
-	core_archive_flow_checksum_verify("C4", "archive-flow", null, "checksum-verify", new String[] {"C1","C3"}, null, 4, true, false),
+	core_archive_flow_checksum_gen("C1", "archive-flow", null, "checksum-gen", null, null, 1, true, false, null),
+	core_archive_flow_write("C2", "archive-flow", "write", null, null, null, 2, true, false, null),
+	core_archive_flow_restore("C3", "archive-flow", "restore", null, new String[] {"C2"}, null, 3, true, false, null),
+	core_archive_flow_checksum_verify("C4", "archive-flow", null, "checksum-verify", new String[] {"C1","C3"}, null, 4, true, false, null),
 	
-	core_restore_verify_flow_restore("C11", "restore-verify-flow", "restore", null, null, null, 11, true, false),
-	core_restore_verify_flow_checksum_verify("C12", "restore-verify-flow", null, "checksum-verify", new String[] {"C11"}, null, 12, true, false);
+	core_restore_verify_flow_restore("C11", "restore-verify-flow", "restore", null, null, null, 11, true, false, null),
+	core_restore_verify_flow_checksum_verify("C12", "restore-verify-flow", null, "checksum-verify", new String[] {"C11"}, null, 12, true, false, null);
 
 	private String id;
 	private String flowId;
@@ -25,8 +27,9 @@ public enum CoreFlowelement {
 	private int displayOrder;
 	private boolean active;
 	private boolean deprecated;
+	private Taskconfig taskconfig;
 
-	CoreFlowelement(String id, String flowId, String storagetaskActionId, String processingtaskId, String[] dependencies, String flowRefId, int displayOrder, boolean active, boolean deprecated){
+	CoreFlowelement(String id, String flowId, String storagetaskActionId, String processingtaskId, String[] dependencies, String flowRefId, int displayOrder, boolean active, boolean deprecated, Taskconfig taskconfig){
 		this.id = id; 
 		this.flowId = flowId;
 		this.storagetaskActionId = storagetaskActionId;
@@ -36,6 +39,7 @@ public enum CoreFlowelement {
 		this.displayOrder = displayOrder;
 		this.active = active;
 		this.deprecated = deprecated;
+		this.taskconfig = taskconfig;
 	}
 
 	public String getId() {
@@ -74,6 +78,10 @@ public enum CoreFlowelement {
 		return deprecated;
 	}
 	
+	public Taskconfig getTaskconfig() {
+		return taskconfig;
+	}
+
 	public static List<CoreFlowelement> findAllByFlowId(String flowId){
 		List<CoreFlowelement> coreFlowelementList = new ArrayList<CoreFlowelement>();
 	    for (CoreFlowelement nthCoreFlowelement : CoreFlowelement.values()) {

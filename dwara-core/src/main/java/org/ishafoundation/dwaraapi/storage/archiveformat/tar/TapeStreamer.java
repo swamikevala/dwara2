@@ -135,6 +135,8 @@ public class TapeStreamer {
 			logger.error("Unable to read tar stream " + e.getMessage(), e);
 			throw e;
 		} finally {
+			if(is != null)
+				is.close();
 			if (tin != null)
 				tin.close();
 			logger.trace("is proc alive : " + proc.isAlive());

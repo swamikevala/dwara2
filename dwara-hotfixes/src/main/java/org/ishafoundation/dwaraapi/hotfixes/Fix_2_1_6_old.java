@@ -276,6 +276,6 @@ public class Fix_2_1_6_old extends ProcessingJobHelper {
 		
 		Filetype ft = getInputFiletype(processingtask);
 			
-		return  getLogicalFileList(ft, inputArtifactPath, inputArtifactclass.getId(), processingtaskId);
+		return null;// getLogicalFileList(ft, inputArtifactPath, inputArtifactclass.getId(), processingtaskId);
 	}
 }

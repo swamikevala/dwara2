@@ -14,12 +14,10 @@ import java.util.TreeSet;
 import org.apache.commons.lang3.ArrayUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassTask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -42,10 +40,7 @@ public class ProcessingJobHelper {
 	
 	@Autowired
 	private FiletypeDao filetypeDao;
-	
-	@Autowired
-	private ArtifactclassTaskDao artifactclassTaskDao;
-	
+		
 	@Autowired
 	private TFileDao tFileDao;
 	
@@ -75,7 +70,7 @@ public class ProcessingJobHelper {
 		return filePathTofileObj;
 	}
 	
-	protected Collection<LogicalFile> getLogicalFileList(Filetype filetype, String inputArtifactPath, String artifactclassId, String processingtaskId){	
+	protected Collection<LogicalFile> getLogicalFileList(Filetype filetype, String inputArtifactPath, String pathnameRegex){	
 		Collection<LogicalFile> logicalFileCollection =  new ArrayList<LogicalFile>(); 
 		
 		List<String> extensions = null;
@@ -85,11 +80,6 @@ public class ProcessingJobHelper {
 		boolean includeSidecarFiles = false;
 		
 		Set<String> pathsToBeUsed = new TreeSet<String>();
-		String pathnameRegex = null;
-		if(artifactclassId != null && processingtaskId != null) {
-			ArtifactclassTask artifactclassTask = artifactclassTaskDao.findByArtifactclassIdAndProcessingtaskId(artifactclassId, processingtaskId);
-			pathnameRegex = artifactclassTask != null ? artifactclassTask.getConfig().getPathnameRegex() : null;
-		}
 		Set<String> extnsToBeUsed = null; 
 		if(pathnameRegex != null) { // if artifactclass_processingtask has a pathregex we need to only get the processable files from that folder path and not from the entire archives directory... e.g., video-pub-edit will have .mov files under output folder
 			FiletypePathnameReqexVisitor filetypePathnameReqexVisitor = new FiletypePathnameReqexVisitor(pathnameRegex);
