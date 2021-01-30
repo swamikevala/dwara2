@@ -1,4 +1,4 @@
-package org.ishafoundation.digitization.process;
+package org.ishafoundation.dwaraapi.process.file;
 
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
@@ -30,11 +30,16 @@ public class RsyncCopier implements IProcessingTask {
         .checksum(false)
         .removeSourceFiles(true);
 
+        // TODO - .copying
+        // TODO - No need for the folder as when job fails leaves the empty folder causing confusion
+        
         CollectingProcessOutput output = rsync.execute();
         logger.info(output.getStdOut());
         logger.info("Exit code: " + output.getExitCode());
         ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
         processingtaskResponse.setIsComplete(output.getExitCode() == 0);
+        
+        
         /*
         if(output.getExitCode() < 0) {
             processingtaskResponse.setIsComplete(false);

@@ -1,3 +1,19 @@
+# Dwara App Version - 2.1.08 (storage blocker fix - 31st Jan 2021)
+### New features
+1 DB schema changes replacing ArtifactclassTask 
+
+2 10g converter
+
+3 Existing File copier replaces New RsyncCopier
+
+### Bug fixes
+
+1 Fix for hung File Descriptors 
+ 
+2 Avoid drive yielding for write jobs completing after scheduler prepares storagejoblist 
+
+3 Delete transcoded files after request completion
+
 # Dwara App Version - 2.1.07 (storage blocker fix - 19th Jan 2021)
 
 ### LIVE Incident
