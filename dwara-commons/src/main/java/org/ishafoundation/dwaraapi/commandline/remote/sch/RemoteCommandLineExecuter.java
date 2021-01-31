@@ -77,9 +77,11 @@ public class RemoteCommandLineExecuter {
 				commandLineExecutionResponse.setStdOutResponse(stdOutRespBuffer.toString());	
 			} else {
 				isComplete = false;
-				List<String> nLInes = FileUtils.readLines(new File(commandOutputFilePathName));
+				File tmpErrorFile = new File(commandOutputFilePathName);
+				List<String> nLInes = FileUtils.readLines(tmpErrorFile);
 				failureReason = nLInes.get(nLInes.size() - 1);
 				commandLineExecutionResponse.setFailureReason(failureReason);
+				tmpErrorFile.delete();
 			}
 			commandLineExecutionResponse.setIsComplete(isComplete);
 			channel.disconnect();
