@@ -1,8 +1,10 @@
 package org.ishafoundation.dwaraapi.process.file;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
+import org.ishafoundation.dwaraapi.process.request.Artifact;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,20 +20,25 @@ public class RsyncCopier implements IProcessingTask {
 
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
-        logger.info("processing rsync copy: " +  processContext.getInputDirPath() + ", destination: " + processContext.getOutputDestinationDirPath());
-        
+		Artifact inputArtifact = processContext.getJob().getInputArtifact();
+		String inputArtifactName = inputArtifact.getName();
+		
 		String destinationDirPath = processContext.getOutputDestinationDirPath();
-        LogicalFile logicalFile = processContext.getLogicalFile();
+		destinationDirPath = StringUtils.substringBefore(destinationDirPath, inputArtifactName); // Reqmt - No need for the filepathname structur as when job fails, leaves the empty folder structure causing confusion
+		
+		LogicalFile logicalFile = processContext.getLogicalFile();
+		
+        logger.info("processing rsync copy: " +  logicalFile.getAbsolutePath() + ", destination: " + destinationDirPath);
         
         RSync rsync = new RSync()
         .source(logicalFile.getAbsolutePath())
         .destination(destinationDirPath)
         .recursive(true)
-        .checksum(false)
-        .removeSourceFiles(true);
+        .checksum(false);
+        //.removeSourceFiles(true); // Reqmt - File gets deleted in downstream job
 
         // TODO - .copying
-        // TODO - No need for the folder as when job fails leaves the empty folder causing confusion
+
         
         CollectingProcessOutput output = rsync.execute();
         logger.info(output.getStdOut());
