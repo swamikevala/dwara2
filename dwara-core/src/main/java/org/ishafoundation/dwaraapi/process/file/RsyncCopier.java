@@ -38,7 +38,9 @@ public class RsyncCopier implements IProcessingTask {
         logger.info("Exit code: " + output.getExitCode());
         ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
         processingtaskResponse.setIsComplete(output.getExitCode() == 0);
-        
+        processingtaskResponse.setFailureReason(output.getExitCode() + ":" + output.getStdErr());
+        processingtaskResponse.setStdOutResponse(output.getStdOut());
+
         
         /*
         if(output.getExitCode() < 0) {
