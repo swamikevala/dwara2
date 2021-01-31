@@ -51,19 +51,24 @@ public class JobManager {
 		logger.info("***** Managing jobs now *****");
 		ThreadPoolExecutor tpe = (ThreadPoolExecutor) processingtaskSingleThreadExecutor.getExecutor();
 		if(MODE == ApplicationStatus.maintenance) {
-			logger.info("Application is in maintenance mode. No jobs will be taken up for action. Also clearing already lined up cached jobs as well");
+			logger.info("Application is in maintenance mode. No jobs will be taken up for action");
 			BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
-			runnableQueueList.clear();
-			
+			if(runnableQueueList.size() > 0) {
+				runnableQueueList.clear();
+				logger.info("Cleared Processing tasks from ThreadPoolExecutor queue");
+			}
 			Set<String> storageTypeTPESet = storagetypeThreadPoolExecutorMap.keySet();
 			for (String nthStorageTypeTPEName : storageTypeTPESet) {
 				IStoragetypeThreadPoolExecutor storagetypeThreadPoolExecutor = storagetypeThreadPoolExecutorMap.get(nthStorageTypeTPEName);
 				
 				ThreadPoolExecutor storageTypeTPE = storagetypeThreadPoolExecutor.getExecutor();
 				BlockingQueue<Runnable> runnableStorageQueueList = storageTypeTPE.getQueue();
-				// Ideally the Storagetype specific JobManager just need to delegate the job to the processor thread. So by the time the next schedule gets here the queue should be empty. 
-				// But just in case if it has items clear them and feed it with the fresh job list...
-				runnableStorageQueueList.clear();
+				if(runnableStorageQueueList.size() > 0) {
+					// Ideally the Storagetype specific JobManager just need to delegate the job to the processor thread. So by the time the next schedule gets here the queue should be empty. 
+					// But just in case if it has items clear them and feed it with the fresh job list...
+					runnableStorageQueueList.clear();
+					logger.info("Cleared Storage tasks from ThreadPoolExecutor queue");
+				}
 			}
 			return;
 		}
