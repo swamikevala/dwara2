@@ -12,6 +12,6 @@ UPDATE `volume` SET `finalized` = 1 WHERE `type` = 'physical';
 
 -- Query to get volume ids of next tapes in all groups (to generate VTL tapes)
 /*
-SELECT 1, group_concat(concat(substring(x.`id`, 1, 1), substring(x.`id`, 2, 5) + 1, substring(x.`id`, 7, 2)) separator ', ') 
+SELECT 1, group_concat(concat(substring(x.`id`, 1, 1), substring(x.`id`, 2, 5) + 1, substring(x.`id`, 7, 2)) separator ' ') 
 FROM (select max(`id`) as id from `volume` where `type` = 'physical' group by `group_ref_id`) x;
 */
