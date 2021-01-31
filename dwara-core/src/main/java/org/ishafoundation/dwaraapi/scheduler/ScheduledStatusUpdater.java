@@ -99,7 +99,12 @@ public class ScheduledStatusUpdater {
     public ResponseEntity<String> updateStatus(){
     	if(isEnabled) {
     		logger.info("***** Updating Status now *****");
-    		updateTransactionalTablesStatus();
+    		try {
+    			updateTransactionalTablesStatus();
+    		}
+    		catch (Exception e) {
+    			logger.error("Unable to update status " + e.getMessage());
+			}
 	    	return ResponseEntity.status(HttpStatus.OK).body("Done");
     	}
     	else
