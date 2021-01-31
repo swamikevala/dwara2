@@ -51,7 +51,7 @@ public class Flowelement {
 	private boolean deprecated;
 	
 	@Type(type = "json")
-	@Column(name="taskconfig", columnDefinition = "json")
+	@Column(name="task_config", columnDefinition = "json")
 	private Taskconfig taskconfig;
 
 	@Transient
