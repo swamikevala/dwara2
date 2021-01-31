@@ -173,7 +173,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		ThreadNameHelper threadNameHelper = new ThreadNameHelper();
 		threadNameHelper.setThreadName(job.getRequest().getId(), job.getId(), tFile.getId());
 		logger.debug("Will be processing - " + logicalFile.getAbsolutePath());
-		Status staus = Status.in_progress;
+		Status status = Status.in_progress;
 		String failureReason = null;
 		long startms = 0;
 		long endms = 0;
@@ -395,12 +395,15 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 //						}
 					}
 				//}
-				staus = Status.completed;
+				status = Status.completed;
 				//logger.info("Proxy for " + containerName + " created successfully in " + ((proxyEndTime - proxyStartTime)/1000) + " seconds - " +  generatedProxyFilePathname);
 				logger.debug("Processing Completed in " + ((endms - startms)/1000) + " seconds");
+			}else {
+				status = Status.failed;
+				throw new Exception(processingtaskResponse.getFailureReason());
 			}
 		} catch (Exception e) {
-			staus = Status.failed;
+			status = Status.failed;
 			failureReason = "Unable to complete " + processingtaskName + " for " + tFile.getId() + " :: " + e.getMessage();
 			logger.error(failureReason, e);
 			
@@ -418,8 +421,8 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		}
 		finally {
 			if(tFileJob != null) {
-				tFileJob.setStatus(staus);
-				logger.debug("DB TFileJob Updation - status to " + staus.toString());
+				tFileJob.setStatus(status);
+				logger.debug("DB TFileJob Updation - status to " + status.toString());
 				tFileJobDao.save(tFileJob);
 				logger.debug("DB TFileJob Updation - Success");
 			}
