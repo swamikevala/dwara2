@@ -15,7 +15,7 @@ INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `displa
 
 -- move all task configs to flowelement.task_config
 UPDATE `flowelement` SET `task_config` = '{\"create_held_jobs\": true}' where `id` = 'U11';
-UPDATE `flowelement` SET `task_config` = '{\"create_held_jobs\": true}' where `id` = 'U10';
+UPDATE `flowelement` SET `task_config` = '{\"create_held_jobs\": true}' where `id` = 'U1';
 UPDATE `flowelement` SET `task_config` = '{\"create_held_jobs\": true}' where `id` = 'U9';
 UPDATE `flowelement` SET `task_config` = '{\"pathname_regex\": \".*\\\\.mxf$\"}' where `id` = 'U7';
 UPDATE `flowelement` SET `task_config` = '{\"output_path\": \"/\"}' where `id` = 'U5';
