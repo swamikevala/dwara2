@@ -3,16 +3,20 @@ package org.ishafoundation.dwaraapi.job;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.ishafoundation.dwaraapi.ApplicationStatus;
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator;
+import org.ishafoundation.dwaraapi.storage.storagetype.thread.IStoragetypeThreadPoolExecutor;
 import org.ishafoundation.dwaraapi.thread.executor.ProcessingtaskSingleThreadExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,11 +44,27 @@ public class JobManager {
 	@Autowired
 	private ProcessingtaskSingleThreadExecutor processingtaskSingleThreadExecutor;
 	
-
+	@Autowired
+	private  Map<String, IStoragetypeThreadPoolExecutor> storagetypeThreadPoolExecutorMap;
+	
 	public void manageJobs() {
 		logger.info("***** Managing jobs now *****");
+		ThreadPoolExecutor tpe = (ThreadPoolExecutor) processingtaskSingleThreadExecutor.getExecutor();
 		if(MODE == ApplicationStatus.maintenance) {
-			logger.info("Application is in maintenance mode. No jobs will be taken up for action");
+			logger.info("Application is in maintenance mode. No jobs will be taken up for action. Also clearing already lined up cached jobs as well");
+			BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
+			runnableQueueList.clear();
+			
+			Set<String> storageTypeTPESet = storagetypeThreadPoolExecutorMap.keySet();
+			for (String nthStorageTypeTPEName : storageTypeTPESet) {
+				IStoragetypeThreadPoolExecutor storagetypeThreadPoolExecutor = storagetypeThreadPoolExecutorMap.get(nthStorageTypeTPEName);
+				
+				ThreadPoolExecutor storageTypeTPE = storagetypeThreadPoolExecutor.getExecutor();
+				BlockingQueue<Runnable> runnableStorageQueueList = storageTypeTPE.getQueue();
+				// Ideally the Storagetype specific JobManager just need to delegate the job to the processor thread. So by the time the next schedule gets here the queue should be empty. 
+				// But just in case if it has items clear them and feed it with the fresh job list...
+				runnableStorageQueueList.clear();
+			}
 			return;
 		}
 		List<Job> storageJobsList = new ArrayList<Job>();
@@ -69,7 +89,7 @@ public class JobManager {
 					// This check is because of the same file getting queued up for processing again...
 					// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
 					// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
-					ThreadPoolExecutor tpe = (ThreadPoolExecutor) processingtaskSingleThreadExecutor.getExecutor();
+					
 					BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
 					boolean alreadyQueued = false;
 					for (Runnable runnable : runnableQueueList) {

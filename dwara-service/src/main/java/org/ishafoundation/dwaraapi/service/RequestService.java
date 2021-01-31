@@ -290,7 +290,9 @@ public class RequestService extends DwaraService{
 		requestResponse.setRequestedBy(request.getRequestedBy().getName());
 
 		//tag
-		List<Tag> tags = new ArrayList<Tag>(request.getTags());
+		List<Tag> tags = new ArrayList<Tag>();
+		if(request.getTags() != null)
+			tags = new ArrayList<Tag>(request.getTags());
 		List<String> listTags = new ArrayList<String>();
 		for (Tag tag : tags) {
 			listTags.add(tag.getTag());
