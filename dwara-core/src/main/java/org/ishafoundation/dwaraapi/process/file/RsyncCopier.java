@@ -32,7 +32,7 @@ public class RsyncCopier implements IProcessingTask {
         
         RSync rsync = new RSync()
         .source(logicalFile.getAbsolutePath())
-        .destination(destinationDirPath)
+        .destination("dwara@" + destinationDirPath)
         .recursive(true)
         .checksum(false);
         //.removeSourceFiles(true); // Reqmt - File gets deleted in downstream job

@@ -8,7 +8,9 @@
 
 4 Tagging
 
-5 Clear already lined up jobs in Threadpoolexecuter queue when app enters maintenance mode. 
+5 Clear already lined up jobs in Threadpoolexecuter queue when app enters maintenance mode.
+
+6 Maintenance mode quick clear 
 
 ### Bug fixes
 

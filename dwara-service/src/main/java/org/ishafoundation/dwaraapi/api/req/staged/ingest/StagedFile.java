@@ -2,6 +2,9 @@ package org.ishafoundation.dwaraapi.api.req.staged.ingest;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class StagedFile {
 	private String path;
 	private String name;
