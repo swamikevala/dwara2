@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import org.ishafoundation.dwaraap.storage.utils.StorageJobUtil;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
@@ -19,7 +20,6 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetask.ImportStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetype.thread.AbstractStoragetypeJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.thread.IStoragetypeThreadPoolExecutor;
@@ -53,7 +53,7 @@ public class StoragetypeJobDelegator {
 	private JobUtil jobUtil;
 
 	@Autowired
-	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
+	private StorageJobUtil storageJobUtil;
 	
 	@Autowired
 	private Map<String, AbstractStoragetypeJobManager> storageTypeJobManagerMap;
@@ -88,7 +88,7 @@ public class StoragetypeJobDelegator {
 				importStoragetaskSingleThreadExecutor.getExecutor().execute(importStoragetaskAction);
 			}
 			
-			StorageJob storageJob = wrapJobWithStorageInfo(job);
+			StorageJob storageJob = storageJobUtil.wrapJobWithStorageInfo(job);
 			if(storageJob == null)
 				continue;
 			
@@ -171,21 +171,6 @@ public class StoragetypeJobDelegator {
 		}else {
 			logger.trace("No storage job to be processed");
 		}
-	}
-
-	private StorageJob wrapJobWithStorageInfo(Job job) {
-		AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(job.getStoragetaskActionId().name());
-		logger.trace("building storage job - " + job.getId() + ":" + storagetaskActionImpl.getClass().getSimpleName());
-		StorageJob storageJob = null;
-		try {
-			storageJob = storagetaskActionImpl.buildStorageJob(job);
-		} catch (Exception e) {
-			logger.error("Unable to gather necessary details for executing the job " + job.getId() + " - " + Status.failed, e);
-			job.setMessage(e.getMessage());
-			job.setStatus(Status.failed); // fail the job so it doesnt keep looping...
-			job = jobDao.save(job);
-		}
-		return storageJob;
 	}
 
 	/**
