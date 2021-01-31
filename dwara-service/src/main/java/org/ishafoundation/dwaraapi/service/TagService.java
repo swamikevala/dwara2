@@ -84,7 +84,7 @@ public class TagService extends DwaraService{
 
     public Tag getTag(String tag) {
         Optional<Tag> t = tagDao.findById(tag);
-        if(t != null)
+        if(t != null && t.isPresent())
             return t.get();
         return null;
     }
