@@ -337,11 +337,15 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		for (int i = 0; i < storageJobsList.size(); i++) {
 			StorageJob nthStorageJob = storageJobsList.get(i);
 			String volumeTag = nthStorageJob.getVolume().getId();
-			if(tapeOnLibraryList.contains(volumeTag)) {// Tape not on library - don't pick it up
+			if(tapeOnLibraryList.contains(volumeTag)) {// Only Tapes on library - else don't pick the job - let it be queued
 				onlyTapeOnLibraryStorageJobsList.add(nthStorageJob);
 			}
 			else {
-				logger.info(volumeTag + " not inside the library " + tapeLibraryName +" . Skipping job - " + nthStorageJob.getJob().getId()); 
+				String message = volumeTag + " not inside the library ";
+				logger.info(message + tapeLibraryName +" . Skipping job - " + nthStorageJob.getJob().getId()); 
+				Job nthJob = nthStorageJob.getJob();
+				nthJob.setMessage(message);
+				jobDao.save(nthJob);
 			}
 		}
 	
