@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.AutoloaderResponse;
@@ -273,6 +274,14 @@ public class AutoloaderController {
 				volumeId_VolumeObj_Map.put(volume.getId(), volume);
 			}
 			
+			List<Volume> volumeGroupList = volumeDao.findAllByType(Volumetype.group);
+			Set<String> volumeGroupIdSet = new TreeSet<String>();
+			for (Volume volume : volumeGroupList) {
+				volumeGroupIdSet.add(volume.getId());
+			}
+
+			
+				
 			logger.trace("Getting all loaded tapes in the physcial Tape library " + autoloaderId);
 			List<TapeOnLibrary> tapeOnLibraryList = tapeLibraryManager.getAllLoadedTapesInTheLibrary(autoloaderDevice.getWwnId());
 			for (TapeOnLibrary tapeOnLibrary : tapeOnLibraryList) {
@@ -286,7 +295,17 @@ public class AutoloaderController {
 				
 				String barcode = tapeOnLibrary.getVolumeTag();
 				tape.setBarcode(barcode);
-				tape.setVolumeGroup(StringUtils.substring(barcode, 0, 2));
+			
+				String volumeGroup = StringUtils.substring(barcode, 0, 2);
+				int volumeGroupIdLength = 0;
+				for (String volumeGroupId : volumeGroupIdSet) {
+					if(barcode.contains(volumeGroupId) && volumeGroupId.length() > volumeGroupIdLength) {
+						volumeGroupIdLength = volumeGroupId.length();
+						volumeGroup = volumeGroupId;
+					}
+				}
+				
+				tape.setVolumeGroup(volumeGroup);
 				String storagesubtypeSuffix = StringUtils.substring(barcode, barcode.length()-2, barcode.length());
 				Set<String> storagesubtypeSet = storagesubtypeMap.keySet();
 				for (String nthStoragesubtypeImpl : storagesubtypeSet) {
@@ -318,12 +337,8 @@ public class AutoloaderController {
 					*/
 					usageStatus = TapeUsageStatus.no_job_queued;
 					
-					List<Volume> volumeGroupList = volumeDao.findAllByType(Volumetype.group);
-					for (Volume nthGroupvolume : volumeGroupList) {
-						if(barcode.startsWith(nthGroupvolume.getId())) {
-							tapeStatus = TapeStatus.blank;
-							break;
-						}
+					if(barcode.startsWith(volumeGroup)) {
+						tapeStatus = TapeStatus.blank;
 					}
 					
 					if(tapeStatus == TapeStatus.blank) {

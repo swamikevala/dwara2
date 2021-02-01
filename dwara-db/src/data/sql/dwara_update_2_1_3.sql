@@ -51,7 +51,7 @@ UPDATE `flowelement` SET `display_order` = 4, `dependencies` = '["U4", "U5", "U1
 INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `processingtask_id`, `task_config`) VALUES 
 ('U18', 1, null, 0, 3, 'video-digi-2020-flow', 'video-digi-2020-qc-gen', '{\"output_path\": \"/qc\"}'),
 ('U19', 1, '["U18"]', 0, 5, 'video-digi-2020-flow', 'file-copy', '{\"destination_id\": \"test-qc\", \"pathname_regex\": \".*/qc/.*\\\\.mkv$\"}'),
-('U20', 1, '["U6"]', 0, 6, 'video-digi-2020-flow', 'file-delete', '{\"pathname_regex\": \".*/qc/.*\\\\.mkv$\"}');
+('U20', 1, '["U6", "U19"]', 0, 6, 'video-digi-2020-flow', 'file-delete', '{\"pathname_regex\": \".*/qc/.*\\\\.mkv$\"}');
 
 -- create new flow elements for digi proxy generation (since it requires a non-default configuration)
 INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `flow_ref_id`, `processingtask_id`, `task_config`) VALUES 
