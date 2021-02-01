@@ -273,23 +273,29 @@ public class StagedService extends DwaraService{
 					String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
 					
 					java.io.File nthIngestableFile = new java.io.File(path, artifactName);
-					StagedFileDetails sfd = stagedFileEvaluator.evaluateAndGetDetails(domain, sequence, path, nthIngestableFile);
-					List<Error> errorList = sfd.getErrors();
 					boolean error = false;
 					boolean warning = false;
-					for (Error nthError : errorList) {
-						if(nthError.getType() == Errortype.Error)
-							error = true;
-						else if(nthError.getType() == Errortype.Warning)
-							warning = true;
-					}
-					
-					// TODO : Digi hack - For Digi even warnings should not be let ingested
-					if(error || (warning && artifactclass.getId().startsWith("video-digi-2020-"))) {
+
+					if(!nthIngestableFile.exists()) {
 						isLevel1Pass = false;
-						stagedFileDetailsList.add(sfd);
+						logger.error(nthIngestableFile.getAbsolutePath() + "does not exist");
 					}
-					
+					else {
+						StagedFileDetails sfd = stagedFileEvaluator.evaluateAndGetDetails(domain, sequence, path, nthIngestableFile);
+						List<Error> errorList = sfd.getErrors();
+						for (Error nthError : errorList) {
+							if(nthError.getType() == Errortype.Error)
+								error = true;
+							else if(nthError.getType() == Errortype.Warning)
+								warning = true;
+						}
+			    	
+						// TODO : Digi hack - For Digi even warnings should not be let ingested
+						if(error || (warning && artifactclass.getId().startsWith("video-digi-2020-"))) {
+							isLevel1Pass = false;
+							stagedFileDetailsList.add(sfd);
+						}
+					}
 //			        long size = 0;
 //			        int fileCount = 0;
 //	
@@ -599,23 +605,25 @@ public class StagedService extends DwaraService{
 			filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); // just holding the file path from the artifact folder and not the absolute path.
 			logger.trace("filePath - " + filePath);
 			byte[] filePathChecksum = ChecksumUtil.getChecksum(filePath);
-			TFile nthFileRowToBeInserted = new TFile();
+			TFile nthTFileRowToBeInserted = new TFile();
 			if(file.isDirectory())
-				nthFileRowToBeInserted.setDirectory(true);
-			nthFileRowToBeInserted.setPathname(filePath);
-			nthFileRowToBeInserted.setPathnameChecksum(filePathChecksum);
-			nthFileRowToBeInserted.setArtifactId(artifact.getId());
+				nthTFileRowToBeInserted.setDirectory(true);
+			nthTFileRowToBeInserted.setPathname(filePath);
+			nthTFileRowToBeInserted.setPathnameChecksum(filePathChecksum);
+			nthTFileRowToBeInserted.setArtifactId(artifact.getId());
 
 			if(fileName.equals(artifact.getName())) { // if file is the artifact file itself, set the artifact size calculated upfront...
-				nthFileRowToBeInserted.setSize(artifactSize);
+				nthTFileRowToBeInserted.setSize(artifactSize);
 				logger.trace(filePath + ":" + artifactSize);
 			}
 			else {
-				long size = FileUtils.sizeOf(file);
-				nthFileRowToBeInserted.setSize(size);
+				long size = 0L;
+				if(!Files.isSymbolicLink(file.toPath()))
+					size = FileUtils.sizeOf(file);
+				nthTFileRowToBeInserted.setSize(size);
 				logger.trace(filePath + ":" + size);
 			}
-			toBeAddedTFileTableEntries.add(nthFileRowToBeInserted);			
+			toBeAddedTFileTableEntries.add(nthTFileRowToBeInserted);			
 		}
 		
 	    if(toBeAddedTFileTableEntries.size() > 0) {
@@ -650,7 +658,12 @@ public class StagedService extends DwaraService{
 				logger.trace(filePath + ":" + artifactSize);
 			}
 			else {
-				long size = FileUtils.sizeOf(file);
+				long size = 0L;
+				if(!Files.isSymbolicLink(file.toPath()))
+					size = FileUtils.sizeOf(file);
+				else {
+					logger.warn("A symbolic link - " + file.getAbsolutePath());// TODO : can file entry have non-existing files 
+				}
 				nthFileRowToBeInserted.setSize(size);
 				logger.trace(filePath + ":" + size);
 			}

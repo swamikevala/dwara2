@@ -414,7 +414,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 
 
 			job.setDevice(tapedriveDevice);
-			
+			jobDao.save(job);//saving the device details - Dont be tempted to update this info. We want to ensure we set activedevice table and then update this. Worth the db call again.			
 			if(nextStepsInSeparateThread) {
 				logger.debug("Launching separate tape task thread -----------");
 				TapeTask tapeTask = new TapeTask();//applicationContext.getBean(TapeTask.class); 

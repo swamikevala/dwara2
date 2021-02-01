@@ -360,7 +360,7 @@ public class ScheduledStatusUpdater {
 		    	List<Artifact> artifactList = artifactRepository.findAllByWriteRequestId(nthRequest.getId());
 		    	for (Artifact artifact : artifactList) {
 					Artifactclass artifactclass = artifact.getArtifactclass();
-					String srcRootLocation = artifactclass.getPathPrefix();
+					String srcRootLocation = artifactclass.getPath();
 
 					if(artifactclass.isSource()){ // source artifacts need to be moved to configured ingest completed location something like "/data/ingested" 
 						if(srcRootLocation != null) {
