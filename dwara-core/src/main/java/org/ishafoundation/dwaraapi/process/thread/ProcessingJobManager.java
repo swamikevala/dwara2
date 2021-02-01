@@ -353,7 +353,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					for (Runnable runnable : runnableQueueList) {
 						ProcessingJobProcessor pjp = (ProcessingJobProcessor) runnable;
 						if(job.getId() == pjp.getJob().getId() && tFile.getId() == pjp.getTFile().getId()) {
-							logger.info("job-" + job.getId() + "-file-" + tFile.getId() + " already in ProcessingJobProcessor queue. Skipping it...");
+							logger.debug("job-" + job.getId() + "-file-" + tFile.getId() + " already in ProcessingJobProcessor queue. Skipping it...");
 							alreadyQueued = true;
 							break;
 						}

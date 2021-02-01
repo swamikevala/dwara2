@@ -11,8 +11,8 @@ INSERT INTO `flow` (`id`, `description`) VALUES
 -- add flowelement entries for video-edit-proxy-flow
 INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `flow_ref_id`, `processingtask_id`, `task_config`) VALUES 
 ('U15', 1, null, 0, 1, 'video-edit-proxy-flow', null, 'video-proxy-low-gen', '{\"pathname_regex\": \".*/Outputs?/[^/]+\\\\.mov$\"}'),
-('U16', 1, null, 0, 2, 'video-edit-proxy-flow', null, 'video-mam-update', null),
-('U17', 1, null, 0, 3, 'video-edit-proxy-flow', 'archive-flow', null, null);
+('U16', 1, '["U15"]', 0, 2, 'video-edit-proxy-flow', null, 'video-mam-update', null),
+('U17', 1, '["U15"]', 0, 3, 'video-edit-proxy-flow', 'archive-flow', null, null);
 
 -- point digi proxy flow_ref_id to new digi proxy flow
 UPDATE `flowelement` SET `flow_ref_id` = 'video-digi-2020-proxy-flow' where `id` = 'U10';
