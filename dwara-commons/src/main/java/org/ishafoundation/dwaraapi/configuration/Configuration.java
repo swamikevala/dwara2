@@ -39,6 +39,8 @@ public class Configuration {
 	
 	private int allowedAutoRequeueAttemptsOnFailedStorageJobs;
 	
+	private boolean checksumRsync;
+	
 	public String getRegexAllowedChrsInFileName() {
 		return regexAllowedChrsInFileName;
 	}
@@ -167,4 +169,11 @@ public class Configuration {
 		this.allowedAutoRequeueAttemptsOnFailedStorageJobs = allowedAutoRequeueAttemptsOnFailedStorageJobs;
 	}
 
+	public boolean isChecksumRsync() {
+		return checksumRsync;
+	}
+
+	public void setChecksumRsync(boolean checksumRsync) {
+		this.checksumRsync = checksumRsync;
+	}
 }

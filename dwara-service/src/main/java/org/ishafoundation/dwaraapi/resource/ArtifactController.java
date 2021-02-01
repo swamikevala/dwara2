@@ -1,16 +1,29 @@
 package org.ishafoundation.dwaraapi.resource;
 
+import java.io.File;
+
+import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.api.resp.artifact.ArtifactResponse;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.ArtifactService;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.label.InterArtifactlabel;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.label.LabelManagerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.ApiOperation;
@@ -21,13 +34,19 @@ import io.swagger.annotations.ApiResponses;
 @RestController
 public class ArtifactController {
 
-
+	private static final Logger logger = LoggerFactory.getLogger(ArtifactController.class);
+	
 	@Autowired
 	private ArtifactService artifactservice;
-
-
-	private static final Logger logger = LoggerFactory.getLogger(ArtifactController.class);
-
+	
+	@Autowired
+	private LabelManagerImpl labelManager;
+	
+	@Autowired
+	private DomainUtil domainUtil;
+	
+	@Value("${filesystem.temporarylocation}")
+	private String filesystemTemporarylocation;
 
 	@ApiOperation(value = "Soft deletes the artifact")
 	@ApiResponses(value = { 
@@ -50,5 +69,31 @@ public class ArtifactController {
 		}
 
 		return ResponseEntity.status(HttpStatus.OK).body(deleteArtifactResponse);
+	}
+
+	@ApiOperation(value = "Generates a specific Artifact' Label and saves it in the configured temp location. Useful for dd-ing the artifact label manually if something goes wrong with label writing after content is written to tape")
+	@ApiResponses(value = { 
+			@ApiResponse(code = 200, message = "Ok")
+	})
+	@PostMapping(value="/generateArtifactLabel", produces = "application/json")
+    public ResponseEntity<String> generateArtifactLabel(@RequestParam int artifactId, @RequestParam String volumeId, @RequestParam String fileName) throws Exception{
+		// TODO - Hardcoded Domain - To support all domains
+		ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(Domain.ONE);
+		Artifact artifact = artifactRepository.findById(artifactId).get();
+		
+	    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(Domain.ONE);
+	    ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
+
+		
+	    InterArtifactlabel artifactlabel = labelManager.generateArtifactLabel(artifact, artifactVolume.getVolume(), artifactVolume.getDetails().getStartVolumeBlock(), artifactVolume.getDetails().getEndVolumeBlock());
+	    String label = labelManager.labelXmlAsString(artifactlabel);
+		
+		File file = new File(filesystemTemporarylocation + File.separator + fileName + ".xml");
+		FileUtils.writeStringToFile(file, label);
+		String response = file.getAbsolutePath() + " created"; 
+		logger.trace(response);
+
+		return ResponseEntity.status(HttpStatus.OK).body(response);
+		
 	}
 }	

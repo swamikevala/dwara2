@@ -1,10 +1,12 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
@@ -29,11 +31,13 @@ import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.resource.mapper.RequestToEntityObjectMapper;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.VolumeindexManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeFinalizer;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -63,7 +67,13 @@ public class VolumeService extends DwaraService {
 	private VolumeFinalizer volumeFinalizer;
 	
 	@Autowired
+	private VolumeindexManager volumeindexManager;
+	
+	@Autowired
 	private RequestToEntityObjectMapper requestToEntityObjectMapper; 
+
+	@Value("${filesystem.temporarylocation}")
+	private String filesystemTemporarylocation;
 
 	public List<VolumeResponse> getVolumeByVolumetype(String volumetype){
 		List<VolumeResponse> volumeResponseList = null;
@@ -250,5 +260,21 @@ public class VolumeService extends DwaraService {
 	public String finalize(String volumeId) throws Exception{
 		return volumeFinalizer.finalize(volumeId, getUserFromContext());
 	}
+
+	public String generateVolumeindex(String volumeId) throws Exception {
+		Volume volume = volumeDao.findById(volumeId).get();
+		
+		String label = volumeindexManager.createVolumeindex(volume, Domain.ONE);
+		
+		File file = new File(filesystemTemporarylocation + File.separator + volumeId + "_index.xml");
+		FileUtils.writeStringToFile(file, label);
+		String response = file.getAbsolutePath() + " created"; 
+		logger.trace(response);
+		
+		return response;
+	}
+	
+	
+	
 }
 

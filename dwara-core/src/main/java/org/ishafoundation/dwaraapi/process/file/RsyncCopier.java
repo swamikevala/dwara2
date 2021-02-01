@@ -5,6 +5,7 @@ import java.io.File;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.commandline.remote.sch.RemoteCommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.remote.sch.SshSessionHelper;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
@@ -28,8 +29,12 @@ public class RsyncCopier implements IProcessingTask {
 	private SshSessionHelper sshSessionHelper;
 	
 	@Autowired
+	private Configuration configuration;
+	
+	@Autowired
     private RemoteCommandLineExecuter remoteCommandLineExecuter;
 
+	// TODO- Make this as a generic copier with local vs remote and scp vs rsync options - rsync with checksum and other options configurable as well
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
 		Artifact inputArtifact = processContext.getJob().getInputArtifact();
@@ -50,7 +55,7 @@ public class RsyncCopier implements IProcessingTask {
         .source(logicalFile.getAbsolutePath())
         .destination(sshUser + "@" + destinationDirPath)
         .recursive(true)
-        .checksum(false);
+        .checksum(configuration.isChecksumRsync());
         //.removeSourceFiles(true); // Reqmt - File gets deleted in downstream job
         
         // now moving back the file from the .copying to the original destination...

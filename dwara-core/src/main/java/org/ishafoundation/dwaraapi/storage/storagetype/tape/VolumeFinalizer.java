@@ -15,6 +15,7 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,7 @@ public class VolumeFinalizer {
 			Request request = new Request();
 			request.setType(RequestType.user);
 			request.setActionId(Action.finalize);
+			request.setStatus(Status.queued);
 			User user = userDao.findByName(userName);
 			request.setRequestedBy(user);
 			request.setRequestedAt(LocalDateTime.now());

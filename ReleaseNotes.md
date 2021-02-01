@@ -1,4 +1,7 @@
 # Dwara App Version - 2.1.08 (10G conversion - 31st Jan 2021)
+Restart ingest server
+Rsync
+Start directorywatcher with GC options
 ### New features
 1 DB schema changes replacing ArtifactclassTask 
 
@@ -23,6 +26,12 @@
 4 fix for ltowala
 
 5 restore request - when tape not loaded shouldnt fail
+
+6 Finalize failure
+
+application.properties
+
+> checksumRsync=true/false - used in configuring rsync with or without checksum verify
 
 # Dwara App Version - 2.1.07 (storage blocker fix - 19th Jan 2021)
 

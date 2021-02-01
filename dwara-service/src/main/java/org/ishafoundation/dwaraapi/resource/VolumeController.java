@@ -21,6 +21,7 @@ import org.ishafoundation.dwaraapi.enumreferences.TapeStoragesubtype;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.VolumeService;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.VolumeindexManager;
 import org.ishafoundation.dwaraapi.storage.storagesubtype.AbstractStoragesubtype;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,13 +50,15 @@ public class VolumeController {
 	private VolumeDao volumeDao;
 	
 	@Autowired
-	VolumeService volumeService;
+	private VolumeService volumeService;
 	
 	@Autowired
-	Configuration configuration;
+	private Configuration configuration;
+	
 	
 	@Autowired
 	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
+	
 	
 	@ApiOperation(value = "Initialization comment goes here")
 	@ApiResponses(value = { 
@@ -272,5 +275,29 @@ public class VolumeController {
 		}
 
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body(finalizeResponse);
+	}
+	
+	@ApiOperation(value = "Generates the volume index and saves it in the configured temp location. Useful in checking ???")
+	@ApiResponses(value = { 
+		    @ApiResponse(code = 200, message = "Saves the generated volume index in the configured temp location"),
+		    @ApiResponse(code = 400, message = "Error")
+	})
+	@PostMapping(value = "/volume/generateVolumeindex", produces = "application/json")
+	public ResponseEntity<String> generateVolumeindex(@RequestParam String volume){
+		
+		String response = null;
+		try {
+			response = volumeService.generateVolumeindex(volume);
+		}catch (Exception e) {
+			String errorMsg = "Unable to generate volume index - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
 	}
 }
