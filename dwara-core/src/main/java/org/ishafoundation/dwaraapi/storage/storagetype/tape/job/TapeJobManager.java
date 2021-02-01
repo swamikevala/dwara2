@@ -78,7 +78,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	
 	@Autowired
 	private VolumeUtil volumeUtil;
-	
+		
 	@Autowired
 	private TapeLibraryManager tapeLibraryManager;
 	
@@ -249,11 +249,23 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 							}
 						}
 						else { // if restore
-							// check if any job on same volumegroup id is queued
 							Volume volume = volumeDao.findById(volumeTag).get();
-							String groupVolumeId = volume.getGroupRef().getId();
+							String driveLoadedTape_GroupVolumeId = volume.getGroupRef().getId();
 							
-							if(volumeUtil.isQueuedJobOnGroupVolume(groupVolumeId)) {
+							// check if any job on same volumegroup id is queued
+							boolean isQueuedJobOnGroupVolume = volumeUtil.isQueuedJobOnGroupVolume(driveLoadedTape_GroupVolumeId);
+							
+							
+							boolean isSameGroupVolumeJobInTheStorageList = false;
+							for (StorageJob nthStorageJob : storageJobsList) { // check if any job on same group volume is there in the list
+								String toBeUsedGroupVolumeId = nthStorageJob.getVolume().getGroupRef().getId();
+								if(toBeUsedGroupVolumeId.equals(driveLoadedTape_GroupVolumeId)) {
+									isSameGroupVolumeJobInTheStorageList = true;
+									break;
+								}
+							}
+							
+							if(!isSameGroupVolumeJobInTheStorageList && isQueuedJobOnGroupVolume) {// if no same groupVolume job in the list, but samegroupvolume jobs are queued then select one or skip this cycle
 								logger.info("No job selected. Last job on tape " + lastJobOnTape.getId() + " just got completed and same volume job is queued but not in the list for job selection. So skipping this drive and tape this cycle");
 								continue;
 							}
