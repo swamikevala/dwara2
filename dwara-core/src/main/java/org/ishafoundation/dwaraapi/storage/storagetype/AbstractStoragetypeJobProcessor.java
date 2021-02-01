@@ -188,7 +188,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 	    if(toBeAddedTFileVolumeTableEntries.size() > 0) {
 	    	tFileVolumeDao.saveAll(toBeAddedTFileVolumeTableEntries);
-	    	logger.info("FileVolume records created successfully");
+	    	logger.info("TFileVolume records created successfully");
 	    }
 		
 		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);

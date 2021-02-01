@@ -231,11 +231,16 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 						
 						if(lastJobOnTape.getStoragetaskActionId() == Action.write) {
 							List<Job> dependentJobList = jobUtil.getDependentJobs(lastJobOnTape);
-							
-							int writeDependentJobId = dependentJobList.get(0).getId();
+							Job writeDependentJob = null;
+							for (Job nthDependentJob : dependentJobList) {
+								if(nthDependentJob.getStoragetaskActionId() != null) {
+									writeDependentJob = nthDependentJob;
+									break;
+								}
+							}
 							boolean isDependentJobInTheStorageList = false;
 							for (StorageJob nthStorageJob : storageJobsList) {
-								if(nthStorageJob.getJob().getId() == writeDependentJobId) {
+								if(nthStorageJob.getJob().getId() == writeDependentJob.getId()) {
 									isDependentJobInTheStorageList = true;
 									break;
 								}
@@ -244,7 +249,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 							// when a write job completes and creates its dependent restore job after the storageJobsList is prepared by the scheduled JobManager 
 							// we should skip the cycle so that the restore job gets in the list in the next cycle.
 							if(!isDependentJobInTheStorageList) {
-								selectedStorageJob = storageJobUtil.wrapJobWithStorageInfo(lastJobOnTape);
+								selectedStorageJob = storageJobUtil.wrapJobWithStorageInfo(writeDependentJob);
 								logger.info("Last job on tape " + lastJobOnTape.getId() + " just got completed and its dependent job is not in the list for job selection. So had to wrap it here");
 							}
 						}
