@@ -1,4 +1,4 @@
-package org.ishafoundation.dwarapi.storage.utils;
+package org.ishafoundation.dwaraapi.storage.utils;
 
 import java.util.Map;
 
