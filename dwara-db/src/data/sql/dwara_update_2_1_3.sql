@@ -1,7 +1,7 @@
 SET foreign_key_checks = 0;
 
 -- move task configuration to flowelement table
--- ALTER TABLE `flowelement` ADD `task_config` json;
+ALTER TABLE `flowelement` ADD `task_config` json;
 
 -- add new flow for video-edit-pub proxy gen (since it has a different config)
 INSERT INTO `flow` (`id`, `description`) VALUES
@@ -23,7 +23,6 @@ UPDATE `flowelement` SET `task_config` = '{\"create_held_jobs\": true}' where `i
 UPDATE `flowelement` SET `task_config` = '{\"create_held_jobs\": true}' where `id` = 'U9';
 UPDATE `flowelement` SET `task_config` = '{\"pathname_regex\": \".*\\\\.mxf$\"}' where `id` = 'U7';
 UPDATE `flowelement` SET `task_config` = '{\"output_path\": \"/\"}' where `id` = 'U5';
---UPDATE `flowelement` SET `task_config` = '{\"destination_id\": \"test-ffv1\", \"pathname_regex\": \"/qc/.*.mkv$\"}' where `id` = 'U14';
 UPDATE `flowelement` SET `deprecated` = 1 where `id` = 'U14';
 
 -- update action_artifactclass_flow table 
@@ -46,13 +45,13 @@ INSERT INTO `processingtask` (`id`, `description`, `filetype_id`, `max_errors`, 
 
 -- renumber display order for video-digi-2020-flow
 UPDATE `flowelement` SET `display_order` = `display_order` + 2 WHERE `display_order` > 4 and `flow_id` = 'video-digi-2020-flow';
-UPDATE `flowelement` SET `display_order` = 4, `dependencies` = '["U4", "U5", "U20"]' WHERE `id` = 'U6' and `flow_id` = 'video-digi-2020-flow';
+UPDATE `flowelement` SET `display_order` = 4, `dependencies` = '["U4", "U5", "U18"]' WHERE `id` = 'U6' and `flow_id` = 'video-digi-2020-flow';
 
 -- create new flow elements for QC video generation, copying, and deletion
 INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `processingtask_id`, `task_config`) VALUES 
 ('U18', 1, null, 0, 3, 'video-digi-2020-flow', 'video-digi-2020-qc-gen', '{\"output_path\": \"/qc\"}'),
 ('U19', 1, '["U18"]', 0, 5, 'video-digi-2020-flow', 'file-copy', '{\"destination_id\": \"test-qc\", \"pathname_regex\": \".*/qc/.*\\\\.mkv$\"}');
-('U20', 1, '["U19"]', 0, 6, 'video-digi-2020-flow', 'file-delete', '{\"pathname_regex\": \".*/qc/.*\\\\.mkv$\"}');
+('U20', 1, '["U6"]', 0, 6, 'video-digi-2020-flow', 'file-delete', '{\"pathname_regex\": \".*/qc/.*\\\\.mkv$\"}');
 
 -- create new flow elements for digi proxy generation (since it requires a non-default configuration)
 INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `flow_ref_id`, `processingtask_id`, `task_config`) VALUES 
