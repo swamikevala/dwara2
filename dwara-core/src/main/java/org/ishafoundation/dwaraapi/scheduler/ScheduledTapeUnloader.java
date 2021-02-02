@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDeviceUtil;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
@@ -51,7 +52,7 @@ public class ScheduledTapeUnloader {
 				String tapeBarcode = nthAvailableDriveDetails.getDte().getVolumeTag();
 				if(tapeBarcode != null) { // means tape loaded in the drive
 					logger.trace(tapeBarcode + " is loaded in " + nthAvailableDriveDetails.getDriveId());
-					Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(tapeBarcode);
+					Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndStatusAndCompletedAtIsNotNullOrderByCompletedAtDesc(tapeBarcode, Status.completed);
 					
 					LocalDateTime lastJobCompletionTime = LocalDateTime.now();
 					boolean idleSittingTimePastThreshold = false;

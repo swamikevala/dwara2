@@ -222,110 +222,115 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				// STEP 1
 				for (DriveDetails nthAvailableDriveDetails : availableDrivesDetails) {
 					logger.info("Now selecting job for drive - " + nthAvailableDriveDetails.getDriveId());//+ nthAvailableDriveDetails.getDriveName() + "(" + nthAvailableDriveDetails.getDte().getsNo() + ")");
-					
-					StorageJob selectedStorageJob = null;
-					String volumeTag = nthAvailableDriveDetails.getDte().getVolumeTag();
-					if(StringUtils.isNotBlank(volumeTag)) { // if drive is available and drive already loaded with tape
-						// ensure that last job on tape has not completed and spawned a dependent storage job "after" the scheduler prepared the storageJobs list.
-						Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(volumeTag);
-						
-						if(lastJobOnTape.getStoragetaskActionId() == Action.write) {
-							List<Job> dependentJobList = jobUtil.getDependentJobs(lastJobOnTape);
-							Job writeDependentJob = null;
-							for (Job nthDependentJob : dependentJobList) {
-								if(nthDependentJob.getStoragetaskActionId() != null) {
-									writeDependentJob = nthDependentJob;
-									break;
+					try {
+						StorageJob selectedStorageJob = null;
+						String volumeTag = nthAvailableDriveDetails.getDte().getVolumeTag();
+						if(StringUtils.isNotBlank(volumeTag)) { // if drive is available and drive already loaded with tape
+							// ensure that last job on tape has not completed and spawned a dependent storage job "after" the scheduler prepared the storageJobs list.
+							// TODO better take it from the artifact_volume table... 
+							Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndStatusAndCompletedAtIsNotNullOrderByCompletedAtDesc(volumeTag, Status.completed);
+							
+							if(lastJobOnTape.getStoragetaskActionId() == Action.write) {
+								List<Job> dependentJobList = jobUtil.getDependentJobs(lastJobOnTape);
+								Job writeDependentJob = null;
+								for (Job nthDependentJob : dependentJobList) {
+									if(nthDependentJob.getStoragetaskActionId() != null) {
+										writeDependentJob = nthDependentJob;
+										break;
+									}
+								}
+								
+								boolean isDependentJobInTheStorageList = false;
+								for (StorageJob nthStorageJob : storageJobsList) {
+									if(nthStorageJob.getJob().getId() == writeDependentJob.getId()) {
+										isDependentJobInTheStorageList = true;
+										break;
+									}
+								}
+								// check if the last completed tape job' dependency is in the storageJobsList - 
+								// when a write job completes and creates its dependent restore job after the storageJobsList is prepared by the scheduled JobManager 
+								// we should skip the cycle so that the restore job gets in the list in the next cycle.
+								if(writeDependentJob != null && !isDependentJobInTheStorageList) {
+									selectedStorageJob = storageJobUtil.wrapJobWithStorageInfo(writeDependentJob);
+									logger.info("Last job on tape " + lastJobOnTape.getId() + " just got completed and its dependent job is not in the list for job selection. So had to wrap it here");
 								}
 							}
-							boolean isDependentJobInTheStorageList = false;
-							for (StorageJob nthStorageJob : storageJobsList) {
-								if(nthStorageJob.getJob().getId() == writeDependentJob.getId()) {
-									isDependentJobInTheStorageList = true;
-									break;
+							else { // if restore
+								Volume volume = volumeDao.findById(volumeTag).get();
+								String driveLoadedTape_GroupVolumeId = volume.getGroupRef().getId();
+								
+								// check if any job on same volumegroup id is queued
+								boolean isQueuedJobOnGroupVolume = volumeUtil.isQueuedJobOnGroupVolume(driveLoadedTape_GroupVolumeId);
+								
+								
+								boolean isSameGroupVolumeJobInTheStorageList = false;
+								for (StorageJob nthStorageJob : storageJobsList) { // check if any job on same group volume is there in the list
+									String toBeUsedGroupVolumeId = nthStorageJob.getVolume().getGroupRef().getId();
+									if(toBeUsedGroupVolumeId.equals(driveLoadedTape_GroupVolumeId)) {
+										isSameGroupVolumeJobInTheStorageList = true;
+										break;
+									}
 								}
-							}
-							// check if the last completed tape job' dependency is in the storageJobsList - 
-							// when a write job completes and creates its dependent restore job after the storageJobsList is prepared by the scheduled JobManager 
-							// we should skip the cycle so that the restore job gets in the list in the next cycle.
-							if(!isDependentJobInTheStorageList) {
-								selectedStorageJob = storageJobUtil.wrapJobWithStorageInfo(writeDependentJob);
-								logger.info("Last job on tape " + lastJobOnTape.getId() + " just got completed and its dependent job is not in the list for job selection. So had to wrap it here");
+								
+								if(!isSameGroupVolumeJobInTheStorageList && isQueuedJobOnGroupVolume) {// if no same groupVolume job in the list, but samegroupvolume jobs are queued then select one or skip this cycle
+									logger.info("No job selected. Last job on tape " + lastJobOnTape.getId() + " just got completed and same volume job is queued but not in the list for job selection. So skipping this drive and tape this cycle");
+									continue;
+								}
+								
 							}
 						}
-						else { // if restore
-							Volume volume = volumeDao.findById(volumeTag).get();
-							String driveLoadedTape_GroupVolumeId = volume.getGroupRef().getId();
-							
-							// check if any job on same volumegroup id is queued
-							boolean isQueuedJobOnGroupVolume = volumeUtil.isQueuedJobOnGroupVolume(driveLoadedTape_GroupVolumeId);
-							
-							
-							boolean isSameGroupVolumeJobInTheStorageList = false;
-							for (StorageJob nthStorageJob : storageJobsList) { // check if any job on same group volume is there in the list
-								String toBeUsedGroupVolumeId = nthStorageJob.getVolume().getGroupRef().getId();
-								if(toBeUsedGroupVolumeId.equals(driveLoadedTape_GroupVolumeId)) {
-									isSameGroupVolumeJobInTheStorageList = true;
-									break;
+						
+						// STEP 2a
+						if(selectedStorageJob == null) {
+							try {
+								// Just double ensuring that pickedup job still is queued and not taken up for processing in the earlier schedule...
+								// If status of the selected job is queued we break the loop and move on to next steps
+								// If the selected job' status is not queued, then remove it from the list 
+								
+								for (int i = 0; i < storageJobsList.size(); i++) {
+									selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, nthAvailableDriveDetails);
+									if(selectedStorageJob != null) { // If any job is selected for the drive...
+										Job selectedJob = jobDao.findById(selectedStorageJob.getJob().getId()).get();
+										
+										if(selectedJob.getStatus() == Status.queued) {
+											logger.debug("Job " + selectedJob.getId() + " is good for next steps");
+											break; 
+										} else {
+											logger.debug("Job " + selectedJob.getId() + " was potentially picked up by one of the previous scheduled executor' joblist, after the current list is picked up from DB");
+											storageJobsList.remove(selectedStorageJob); // remove the already selected job from the list and do the tapejobselection again for the drive...
+										}
+									} else {
+										break; // Just to ensure that the tapejobselection is not looped again for the drive...
+									}
 								}
-							}
-							
-							if(!isSameGroupVolumeJobInTheStorageList && isQueuedJobOnGroupVolume) {// if no same groupVolume job in the list, but samegroupvolume jobs are queued then select one or skip this cycle
-								logger.info("No job selected. Last job on tape " + lastJobOnTape.getId() + " just got completed and same volume job is queued but not in the list for job selection. So skipping this drive and tape this cycle");
+								
+							} catch (Exception e) {
+								logger.error("Unable to select a job for drive - " + nthAvailableDriveDetails.getDriveId(), e);
 								continue;
 							}
+						}
+						// STEP 2b
+						if(selectedStorageJob == null) {
+							logger.info("No tape jobs in queue are eligible to be processed for the drive");
+							//break;
+						}
+						else if(selectedStorageJob != null) {
+							logger.info("Job " + selectedStorageJob.getJob().getId() + " selected");
 							
+							prepareTapeJobAndContinueNextSteps(selectedStorageJob, nthAvailableDriveDetails, true);
+							
+							// STEP 3 filter the job from the next iteration
+							storageJobsList.remove(selectedStorageJob);
+						}
+		
+						if(storageJobsList.size() <= 0) {
+							logger.debug("No tape jobs in queue anymore. So skipping the loop");
+							break;
 						}
 					}
-					
-					// STEP 2a
-					if(selectedStorageJob == null) {
-						try {
-							// Just double ensuring that pickedup job still is queued and not taken up for processing in the earlier schedule...
-							// If status of the selected job is queued we break the loop and move on to next steps
-							// If the selected job' status is not queued, then remove it from the list 
-							
-							for (int i = 0; i < storageJobsList.size(); i++) {
-								selectedStorageJob = tapeJobSelector.selectJob(storageJobsList, nthAvailableDriveDetails);
-								if(selectedStorageJob != null) { // If any job is selected for the drive...
-									Job selectedJob = jobDao.findById(selectedStorageJob.getJob().getId()).get();
-									
-									if(selectedJob.getStatus() == Status.queued) {
-										logger.debug("Job " + selectedJob.getId() + " is good for next steps");
-										break; 
-									} else {
-										logger.debug("Job " + selectedJob.getId() + " was potentially picked up by one of the previous scheduled executor' joblist, after the current list is picked up from DB");
-										storageJobsList.remove(selectedStorageJob); // remove the already selected job from the list and do the tapejobselection again for the drive...
-									}
-								} else {
-									break; // Just to ensure that the tapejobselection is not looped again for the drive...
-								}
-							}
-							
-						} catch (Exception e) {
-							logger.error("Unable to select a job for drive - " + nthAvailableDriveDetails.getDriveId(), e);
-							continue;
-						}
+					catch (Exception e) {
+						logger.error("Unable to select a job for drive - " + nthAvailableDriveDetails.getDriveId(), e);
 					}
-					// STEP 2b
-					if(selectedStorageJob == null) {
-						logger.info("No tape jobs in queue are eligible to be processed for the drive");
-						//break;
-					}
-					else if(selectedStorageJob != null) {
-						logger.info("Job " + selectedStorageJob.getJob().getId() + " selected");
-						
-						prepareTapeJobAndContinueNextSteps(selectedStorageJob, nthAvailableDriveDetails, true);
-						
-						// STEP 3 filter the job from the next iteration
-						storageJobsList.remove(selectedStorageJob);
-					}
-	
-					if(storageJobsList.size() <= 0) {
-						logger.debug("No tape jobs in queue anymore. So skipping the loop");
-						break;
-					}
-	
 				}
 			}
 			else {
