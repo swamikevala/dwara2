@@ -52,7 +52,7 @@ public class RsyncCopier implements IProcessingTask {
 		
 		
 		
-		String sshUser = "dwara"; // TODO Configure this...
+		String sshUser = configuration.getSshSystemUser(); // TODO Configure this...
 		String host = StringUtils.substringBefore(destinationDirPath, ":");
         logger.info("processing rsync copy: " +  logicalFile.getAbsolutePath() + ", destination: " + destinationFilePathname);
         

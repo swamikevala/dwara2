@@ -39,6 +39,8 @@ public class Configuration {
 	
 	private int allowedAutoRequeueAttemptsOnFailedStorageJobs;
 	
+	private String sshSystemUser;
+	
 	private boolean checksumRsync;
 	
 	public String getRegexAllowedChrsInFileName() {
@@ -169,6 +171,14 @@ public class Configuration {
 		this.allowedAutoRequeueAttemptsOnFailedStorageJobs = allowedAutoRequeueAttemptsOnFailedStorageJobs;
 	}
 
+	public String getSshSystemUser() {
+		return sshSystemUser;
+	}
+
+	public void setSshSystemUser(String sshSystemUser) {
+		this.sshSystemUser = sshSystemUser;
+	}
+	
 	public boolean isChecksumRsync() {
 		return checksumRsync;
 	}
