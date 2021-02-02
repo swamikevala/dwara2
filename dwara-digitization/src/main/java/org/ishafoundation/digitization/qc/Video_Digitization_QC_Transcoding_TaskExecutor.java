@@ -79,6 +79,8 @@ public class Video_Digitization_QC_Transcoding_TaskExecutor extends MediaTask im
 		compressionCommandParamsList.add("ffmpeg");
 		compressionCommandParamsList.add("-i");
 		compressionCommandParamsList.add(sourceFilePathname);
+		compressionCommandParamsList.add("-threads");
+		compressionCommandParamsList.add("1");
 		compressionCommandParamsList.add("-loglevel");
 		compressionCommandParamsList.add("error");
 		compressionCommandParamsList.add("-c:v");

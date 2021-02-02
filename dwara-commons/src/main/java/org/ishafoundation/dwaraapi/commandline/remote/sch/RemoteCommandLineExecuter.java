@@ -79,6 +79,7 @@ public class RemoteCommandLineExecuter {
 				isComplete = false;
 				File tmpErrorFile = new File(commandOutputFilePathName);
 				List<String> nLInes = FileUtils.readLines(tmpErrorFile);
+				logger.trace(FileUtils.readFileToString(tmpErrorFile));
 				failureReason = nLInes.get(nLInes.size() - 1);
 				commandLineExecutionResponse.setFailureReason(failureReason);
 				tmpErrorFile.delete();
