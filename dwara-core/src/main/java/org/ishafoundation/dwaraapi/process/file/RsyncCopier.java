@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.process.file;
 import java.io.File;
 
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.commandline.remote.sch.RemoteCommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.remote.sch.SshSessionHelper;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -62,32 +63,38 @@ public class RsyncCopier implements IProcessingTask {
         .checksum(configuration.isChecksumRsync());
         //.removeSourceFiles(true); // Reqmt - File gets deleted in downstream job
         
-        // now moving back the file from the .copying to the original destination...
-        Session jSchSession = null;
-        try {
-        	jSchSession = sshSessionHelper.getSession(host, sshUser);
-        	
-			String command1 = "mv " + StringUtils.substringAfter(destinationFilePathname, ":") + " " + StringUtils.substringAfter(destination, ":");
-			logger.trace("executing remotely " + command1);
-			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, inputArtifactName + ".out_mv_qcErr");
-        }finally {
-			if (jSchSession != null) 
-				sshSessionHelper.disconnectSession(jSchSession);
-		}
-        
-
-
-        // TODO - .copying
-
-        
         CollectingProcessOutput output = rsync.execute();
+        
         logger.info(output.getStdOut());
         logger.info("Exit code: " + output.getExitCode());
+ 
         ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
-        processingtaskResponse.setIsComplete(output.getExitCode() == 0);
-        processingtaskResponse.setFailureReason(output.getExitCode() + ":" + output.getStdErr());
-        processingtaskResponse.setStdOutResponse(output.getStdOut());
+		if(output.getExitCode() == 0){
+	        // now moving back the file from the .copying to the original destination...
+	        Session jSchSession = null;
+	        CommandLineExecutionResponse response = null;
+	        String command1 = "mv " + StringUtils.substringAfter(destinationFilePathname, ":") + " " + StringUtils.substringAfter(destination, ":");
+	        try {
+	        	jSchSession = sshSessionHelper.getSession(host, sshUser);
+				logger.trace("executing remotely " + command1);
+				remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, inputArtifactName + ".out_mv_qcErr");
+				
+		        processingtaskResponse.setIsComplete(true);
+		        processingtaskResponse.setStdOutResponse(response.getStdOutResponse());
 
+	        }catch (Exception e) {
+	        	processingtaskResponse.setIsComplete(false);
+	        	processingtaskResponse.setFailureReason(response.getFailureReason());
+	        	logger.error("Unable to execute " + command1 + " remotely" + e.getMessage(), e);
+			}finally {
+				if (jSchSession != null) 
+					sshSessionHelper.disconnectSession(jSchSession);
+			}
+		}else {
+	        processingtaskResponse.setIsComplete(output.getExitCode() == 0);
+	        processingtaskResponse.setFailureReason(output.getExitCode() + ":" + output.getStdErr());
+	        processingtaskResponse.setStdOutResponse(output.getStdOut());
+		}
         
         /*
         if(output.getExitCode() < 0) {
