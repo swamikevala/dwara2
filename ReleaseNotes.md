@@ -1,7 +1,6 @@
 # Dwara App Version - 2.1.08 (10G conversion - 31st Jan 2021)
-Restart ingest server
-Rsync
-Start directorywatcher with GC options
+# Dwara DB Version - 2.1.1
+
 ### New features
 1 DB schema changes replacing ArtifactclassTask 
 
@@ -9,11 +8,7 @@ Start directorywatcher with GC options
 
 3 Existing File copier replaces New RsyncCopier
 
-4 Tagging
-
-5 Clear already lined up jobs in Threadpoolexecuter queue when app enters maintenance mode.
-
-6 Maintenance mode quick clear 
+4 Maintenance mode quick clear - clears already lined up jobs in Threadpoolexecuter queue when app enters maintenance mode.
 
 ### Bug fixes
 
@@ -29,7 +24,21 @@ Start directorywatcher with GC options
 
 6 Finalize failure
 
-application.properties
+### checklist
+
+1 Restart ingest server
+
+2 Use different http port for pre-prod 
+
+3 Start directorywatcher with GC options
+
+### Upgrade steps
+
+0 Follow the step by step instruction guide
+
+1 Set up Rsync in remote server where 10G need to go. Create the configured destination directory and also a .copying directory under the destination directory 
+
+2 Ensure application.properties has the following entry
 
 > checksumRsync=true/false - used in configuring rsync with or without checksum verify
 
