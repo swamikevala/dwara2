@@ -1,3 +1,13 @@
+
+>ffmpeg.video-proxy-low-gen.threads=2
+
+>ffmpeg.video-digi-2020-preservation-gen.threads=2
+
+>ffmpeg.video-digi-2020-qc-gen.threads=2
+
+>scheduler.statusUpdater.fixedDelay=30000
+
+
 # Dwara App Version - 2.1.08 (10G conversion - 31st Jan 2021)
 # Dwara DB Version - 2.1.1
 

@@ -15,6 +15,7 @@ import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.videopub.transcoding.ffmpeg.MediaTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,9 @@ import org.springframework.stereotype.Component;
 public class Video_Digitization_QC_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
     private static final Logger logger = LoggerFactory.getLogger(Video_Digitization_QC_Transcoding_TaskExecutor.class);
     
+	@Value("${ffmpeg.video-digi-2020-qc-gen.threads}")
+	private String ffmpegThreads;
+	
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
 	
@@ -81,7 +85,7 @@ public class Video_Digitization_QC_Transcoding_TaskExecutor extends MediaTask im
 		compressionCommandParamsList.add("-i");
 		compressionCommandParamsList.add(sourceFilePathname);
 		compressionCommandParamsList.add("-threads");
-		compressionCommandParamsList.add("1");
+		compressionCommandParamsList.add(ffmpegThreads);
 		compressionCommandParamsList.add("-loglevel");
 		compressionCommandParamsList.add("error");
 		compressionCommandParamsList.add("-c:v");

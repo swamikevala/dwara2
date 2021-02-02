@@ -94,7 +94,7 @@ public class ScheduledStatusUpdater {
 	@Value("${scheduler.statusUpdater.enabled:true}")
 	private boolean isEnabled;
 	
-	@Scheduled(fixedDelay = 60000)
+	@Scheduled(fixedDelayString = "${scheduler.statusUpdater.fixedDelay}")
     @PostMapping("/updateStatus")
     public ResponseEntity<String> updateStatus(){
     	if(isEnabled) {

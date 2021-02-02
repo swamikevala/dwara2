@@ -16,6 +16,7 @@ import org.ishafoundation.videopub.transcoding.ffmpeg.MediaTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -28,6 +29,9 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
     
 	@Autowired
 	private M01XmlFileHandler m01xfh;	
+	
+	@Value("${ffmpeg.video-proxy-low-gen.threads}")
+	private String ffmpegThreads;
 
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -178,7 +182,7 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		proxyGenerationCommandParamsList.add("-i");
 		proxyGenerationCommandParamsList.add(sourceFilePathname);
 		proxyGenerationCommandParamsList.add("-threads");
-		proxyGenerationCommandParamsList.add("1");
+		proxyGenerationCommandParamsList.add(ffmpegThreads);
 		proxyGenerationCommandParamsList.add("-preset");
 		proxyGenerationCommandParamsList.add("slow");
 		proxyGenerationCommandParamsList.add("-strict");
