@@ -63,23 +63,23 @@ public class JobManager {
 				logger.info("Cleared Processing tasks from ThreadPoolExecutor queue");
 			}
 			
-			Set<String> processingtaskSet = processingtaskActionMap.keySet();
-			for (String nthProcessingtask : processingtaskSet) {
-				IProcessingTask processingtaskImpl = processingtaskActionMap.get(nthProcessingtask);
-				if(processingtaskImpl == null)
-					continue;
-				
-				ThreadPoolExecutor executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(nthProcessingtask.toLowerCase());
-				if(executor == null)
-					executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER);
-				
-				BlockingQueue<Runnable> processingtaskSpecificQueueList = executor.getQueue();
-				int queueSize = processingtaskSpecificQueueList.size();
-				if(queueSize > 0) {
-					processingtaskSpecificQueueList.clear();
-					logger.info("Flushed " + queueSize + " " + nthProcessingtask + "'s queued jobs from ThreadPoolExecutor queue");
-				}
-			}
+//			Set<String> processingtaskSet = processingtaskActionMap.keySet();
+//			for (String nthProcessingtask : processingtaskSet) {
+//				IProcessingTask processingtaskImpl = processingtaskActionMap.get(nthProcessingtask);
+//				if(processingtaskImpl == null)
+//					continue;
+//				
+//				ThreadPoolExecutor executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(nthProcessingtask.toLowerCase());
+//				if(executor == null)
+//					executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER);
+//				
+//				BlockingQueue<Runnable> processingtaskSpecificQueueList = executor.getQueue();
+//				int queueSize = processingtaskSpecificQueueList.size();
+//				if(queueSize > 0) {
+//					processingtaskSpecificQueueList.clear();
+//					logger.info("Flushed " + queueSize + " " + nthProcessingtask + "'s queued jobs from ThreadPoolExecutor queue");
+//				}
+//			}
 			
 			Set<String> storageTypeTPESet = storagetypeThreadPoolExecutorMap.keySet();
 			for (String nthStorageTypeTPEName : storageTypeTPESet) {
