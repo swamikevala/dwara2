@@ -257,26 +257,30 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 							}
 							else { // if restore
 								Volume volume = volumeDao.findById(volumeTag).get();
-								String driveLoadedTape_GroupVolumeId = volume.getGroupRef().getId();
-								
-								// check if any job on same volumegroup id is queued
-								boolean isQueuedJobOnGroupVolume = volumeUtil.isQueuedJobOnGroupVolume(driveLoadedTape_GroupVolumeId);
-								
-								
-								boolean isSameGroupVolumeJobInTheStorageList = false;
-								for (StorageJob nthStorageJob : storageJobsList) { // check if any job on same group volume is there in the list
-									String toBeUsedGroupVolumeId = nthStorageJob.getVolume().getGroupRef().getId();
-									if(toBeUsedGroupVolumeId.equals(driveLoadedTape_GroupVolumeId)) {
-										isSameGroupVolumeJobInTheStorageList = true;
-										break;
+								if(volume.getSuspect()) {
+									logger.info("Will be yielding the tape " + volumeTag + " as it is flagged suspect");
+								}
+								else {
+									String driveLoadedTape_GroupVolumeId = volume.getGroupRef().getId();
+									
+									// check if any job on same volumegroup id is queued
+									boolean isQueuedJobOnGroupVolume = volumeUtil.isQueuedJobOnGroupVolume(driveLoadedTape_GroupVolumeId);
+									
+									
+									boolean isSameGroupVolumeJobInTheStorageList = false;
+									for (StorageJob nthStorageJob : storageJobsList) { // check if any job on same group volume is there in the list
+										String toBeUsedGroupVolumeId = nthStorageJob.getVolume().getGroupRef().getId();
+										if(toBeUsedGroupVolumeId.equals(driveLoadedTape_GroupVolumeId)) {
+											isSameGroupVolumeJobInTheStorageList = true;
+											break;
+										}
+									}
+									
+									if(!isSameGroupVolumeJobInTheStorageList && isQueuedJobOnGroupVolume) {// if no same groupVolume job in the list, but samegroupvolume jobs are queued then select one or skip this cycle
+										logger.info("No job selected. Last job on tape " + lastJobOnTape.getId() + " just got completed and same volume job is queued but not in the list for job selection. So skipping this drive and tape this cycle");
+										continue;
 									}
 								}
-								
-								if(!isSameGroupVolumeJobInTheStorageList && isQueuedJobOnGroupVolume) {// if no same groupVolume job in the list, but samegroupvolume jobs are queued then select one or skip this cycle
-									logger.info("No job selected. Last job on tape " + lastJobOnTape.getId() + " just got completed and same volume job is queued but not in the list for job selection. So skipping this drive and tape this cycle");
-									continue;
-								}
-								
 							}
 						}
 						
