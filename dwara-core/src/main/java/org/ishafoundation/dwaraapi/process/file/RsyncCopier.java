@@ -37,23 +37,27 @@ public class RsyncCopier implements IProcessingTask {
 	// TODO- Make this as a generic copier with local vs remote and scp vs rsync options - rsync with checksum and other options configurable as well
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
+		LogicalFile logicalFile = processContext.getLogicalFile();
+		
 		Artifact inputArtifact = processContext.getJob().getInputArtifact();
 		String inputArtifactName = inputArtifact.getName();
 		
 		String destinationDirPath = processContext.getOutputDestinationDirPath(); // This includes the host ip
+		// TODO - Validate the pattern here
 		String destination = StringUtils.substringBefore(destinationDirPath, inputArtifactName);
+		logger.trace("destinationDirPath " + destinationDirPath);
+		logger.trace("destination " + destination);
+		String destinationFilePathname = destination + ".copying" + File.separator + logicalFile.getName(); // Reqmt - No need for the filepathname structur as when job fails, leaves the empty folder structure causing confusion
 		
-		destinationDirPath = destination + ".copying"; // Reqmt - No need for the filepathname structur as when job fails, leaves the empty folder structure causing confusion
 		
-		LogicalFile logicalFile = processContext.getLogicalFile();
 		
 		String sshUser = "dwara"; // TODO Configure this...
 		String host = StringUtils.substringBefore(destinationDirPath, ":");
-        logger.info("processing rsync copy: " +  logicalFile.getAbsolutePath() + ", destination: " + destinationDirPath);
+        logger.info("processing rsync copy: " +  logicalFile.getAbsolutePath() + ", destination: " + destinationFilePathname);
         
         RSync rsync = new RSync()
         .source(logicalFile.getAbsolutePath())
-        .destination(sshUser + "@" + destinationDirPath)
+        .destination(sshUser + "@" + destinationFilePathname)
         .recursive(true)
         .checksum(configuration.isChecksumRsync());
         //.removeSourceFiles(true); // Reqmt - File gets deleted in downstream job
@@ -63,7 +67,7 @@ public class RsyncCopier implements IProcessingTask {
         try {
         	jSchSession = sshSessionHelper.getSession(host, sshUser);
         	
-			String command1 = "mv " + StringUtils.substringAfter(destinationDirPath, ":") + File.separator + logicalFile.getName() + " " + StringUtils.substringAfter(destination, ":");
+			String command1 = "mv " + StringUtils.substringAfter(destinationFilePathname, ":") + " " + StringUtils.substringAfter(destination, ":");
 			logger.trace("executing remotely " + command1);
 			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, inputArtifactName + ".out_mv_qcErr");
         }finally {

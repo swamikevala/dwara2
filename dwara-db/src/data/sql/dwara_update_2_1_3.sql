@@ -1,5 +1,7 @@
 SET foreign_key_checks = 0;
 
+UPDATE `version` SET `version`='2.1.1' WHERE `version`='2.1.0';
+
 -- move task configuration to flowelement table
 ALTER TABLE `flowelement` ADD `task_config` json;
 
