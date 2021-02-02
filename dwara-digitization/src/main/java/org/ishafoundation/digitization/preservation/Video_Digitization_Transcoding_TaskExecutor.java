@@ -94,8 +94,11 @@ public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask imple
 	private List<String> getCompressionCommand(String sourceFilePathname, String compressedFileTargetLocation) {
 		List<String> compressionCommandParamsList = new ArrayList<String>();
 		compressionCommandParamsList.add("ffmpeg");
+		compressionCommandParamsList.add("-y");
 		compressionCommandParamsList.add("-i");
 		compressionCommandParamsList.add(sourceFilePathname);
+		compressionCommandParamsList.add("-threads");
+		compressionCommandParamsList.add("1");
 		compressionCommandParamsList.add("-acodec");
 		compressionCommandParamsList.add("copy");
 		compressionCommandParamsList.add("-vcodec");

@@ -177,6 +177,8 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		proxyGenerationCommandParamsList.add("-y");
 		proxyGenerationCommandParamsList.add("-i");
 		proxyGenerationCommandParamsList.add(sourceFilePathname);
+		proxyGenerationCommandParamsList.add("-threads");
+		proxyGenerationCommandParamsList.add("1");
 		proxyGenerationCommandParamsList.add("-preset");
 		proxyGenerationCommandParamsList.add("slow");
 		proxyGenerationCommandParamsList.add("-strict");

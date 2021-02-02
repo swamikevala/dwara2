@@ -77,6 +77,7 @@ public class Video_Digitization_QC_Transcoding_TaskExecutor extends MediaTask im
 	private List<String> getCompressionCommand(String sourceFilePathname, String compressedFileTargetLocation) {
 		List<String> compressionCommandParamsList = new ArrayList<String>();
 		compressionCommandParamsList.add("ffmpeg");
+		compressionCommandParamsList.add("-y");
 		compressionCommandParamsList.add("-i");
 		compressionCommandParamsList.add(sourceFilePathname);
 		compressionCommandParamsList.add("-threads");

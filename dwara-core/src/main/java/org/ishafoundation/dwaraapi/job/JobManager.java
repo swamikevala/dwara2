@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.ishafoundation.dwaraapi.ApplicationStatus;
@@ -14,6 +15,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator;
 import org.ishafoundation.dwaraapi.storage.storagetype.thread.IStoragetypeThreadPoolExecutor;
@@ -47,6 +49,9 @@ public class JobManager {
 	@Autowired
 	private  Map<String, IStoragetypeThreadPoolExecutor> storagetypeThreadPoolExecutorMap;
 	
+	@Autowired
+	private Map<String, IProcessingTask> processingtaskActionMap;
+	
 	public void manageJobs() {
 		logger.info("***** Managing jobs now *****");
 		ThreadPoolExecutor tpe = (ThreadPoolExecutor) processingtaskSingleThreadExecutor.getExecutor();
@@ -57,6 +62,25 @@ public class JobManager {
 				runnableQueueList.clear();
 				logger.info("Cleared Processing tasks from ThreadPoolExecutor queue");
 			}
+			
+			Set<String> processingtaskSet = processingtaskActionMap.keySet();
+			for (String nthProcessingtask : processingtaskSet) {
+				IProcessingTask processingtaskImpl = processingtaskActionMap.get(nthProcessingtask);
+				if(processingtaskImpl == null)
+					continue;
+				
+				ThreadPoolExecutor executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(nthProcessingtask.toLowerCase());
+				if(executor == null)
+					executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER);
+				
+				BlockingQueue<Runnable> processingtaskSpecificQueueList = executor.getQueue();
+				int queueSize = processingtaskSpecificQueueList.size();
+				if(queueSize > 0) {
+					processingtaskSpecificQueueList.clear();
+					logger.info("Flushed " + queueSize + " " + nthProcessingtask + "'s queued jobs from ThreadPoolExecutor queue");
+				}
+			}
+			
 			Set<String> storageTypeTPESet = storagetypeThreadPoolExecutorMap.keySet();
 			for (String nthStorageTypeTPEName : storageTypeTPESet) {
 				IStoragetypeThreadPoolExecutor storagetypeThreadPoolExecutor = storagetypeThreadPoolExecutorMap.get(nthStorageTypeTPEName);
