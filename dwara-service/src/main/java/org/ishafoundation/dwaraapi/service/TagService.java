@@ -5,8 +5,10 @@ import java.util.List;
 import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.db.dao.master.TagDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.Artifact1Dao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
-import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,43 +17,43 @@ public class TagService extends DwaraService{
     @Autowired
     private TagDao tagDao;
 
-    public void tagRequest(String tag, int requestId) {
+    public void tagArtifact(String tag, int artifactId) {
         Tag t = getTag(tag);
         if(t == null) {
             t = new Tag(tag);
         }
 
-        Request r = t.getRequestById(requestId);
+        Artifact1 r = t.getArtifactById(artifactId);
         if(r == null) {
-            r = new Request(requestId);
-            t.addRequest(r);
+            r = new Artifact1(artifactId);
+            t.addArtifact(r);
         }
 
         //save
         addTag(t);
     }
 
-    public void deleteTagRequest(String tag, int requestId) {
+    public void deleteTagArtifact(String tag, int artifactId) {
         Tag t = getTag(tag);
         if(t == null) {
             t = new Tag(tag);
         }
-        Request r = t.getRequestById(requestId);
+        Artifact1 r = t.getArtifactById(artifactId);
         if(r != null) {
-            t.deleteRequest(r);
+            t.deleteArtifact(r);
         }
         //save or add tag
         addTag(t);
     }
 
-    public List<Request> getAllRequestsByTag(String tag) {
+    public List<Artifact1> getAllArtifactsByTag(String tag) {
         Tag t = tagDao.findById(tag).get();
-        return new ArrayList<Request>(t.getRequests());
+        return new ArrayList<Artifact1>(t.getArtifacts());
     }
 
-    public List<String> getAllTagsByRequestId(int requestId) {
+    public List<String> getAllTagsByArtifactId(int artifactId) {
         List<Tag> tags = new ArrayList<Tag>();
-        tagDao.findByRequests_Id(requestId).forEach(tags::add);
+        tagDao.findByArtifacts_Id(artifactId).forEach(tags::add);
 
         List<String> values = new ArrayList<String>();
         for (Tag tag : tags) {

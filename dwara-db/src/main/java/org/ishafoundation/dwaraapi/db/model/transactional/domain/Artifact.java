@@ -1,16 +1,20 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.domain;
 		
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToOne;
 
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -58,6 +62,14 @@ public class Artifact {
 	@OneToOne
 	@JoinColumn(name="q_latest_request_id") 
 	private Request qLatestRequest;
+
+	public Artifact() {
+
+	}
+
+	public Artifact(int _id) {
+		id = _id;
+	}
 
 	public int getId() {
 		return id;
@@ -153,7 +165,7 @@ public class Artifact {
 		this.qLatestRequest = qLatestRequest;
 	}
 
-	@Override
+	/* @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -164,5 +176,5 @@ public class Artifact {
     @Override
     public int hashCode() {
         return Objects.hash(fileStructureMd5);
-    }
+	} */
 }

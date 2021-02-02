@@ -51,8 +51,6 @@ public class RequestResponse {
     // For volume relate actions like initialize, map_drives etc.
     @JsonProperty("volume")
 	private VolumeResponse volume;
-	
-	private List<String> tags;
 
 	public Integer getId() {
 		return id;
@@ -172,15 +170,6 @@ public class RequestResponse {
 
 	public void setJobList(List<JobResponse> jobList) {
 		this.jobList = jobList;
-	}
-
-	public List<String> getTags() {
-		return tags;
-	}
-
-	public void setTags(List<String> tags) {
-		this.tags = tags;
-	}
-	 
+	}	 
 }
 

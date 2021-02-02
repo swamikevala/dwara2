@@ -1,8 +1,8 @@
 package org.ishafoundation.dwaraapi.api.req.tag;
 
-public class TagRequest {
+public class TagArtifact {
     private String[] tags;
-    private int[] requestIds;
+    private int[] artifactIds;
 
     public String[] getTags() {
         return tags;
@@ -12,11 +12,11 @@ public class TagRequest {
         this.tags = tags;
     }
 
-    public int[] getRequestIds() {
-        return requestIds;
+    public int[] getArtifactIds() {
+        return artifactIds;
     }
 
-    public void setRequestIds(int[] requestIds) {
-        this.requestIds = requestIds;
+    public void setArtifactIds(int[] artifactIds) {
+        this.artifactIds = artifactIds;
     }
 }
