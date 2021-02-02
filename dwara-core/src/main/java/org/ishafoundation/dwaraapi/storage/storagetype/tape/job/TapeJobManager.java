@@ -257,8 +257,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 							}
 							else { // if restore
 								Volume volume = volumeDao.findById(volumeTag).get();
-								if(volume.getSuspect()) {
-									logger.info("Will be yielding the tape " + volumeTag + " as it is flagged suspect");
+								if(volume.getSuspect() || volume.getDefective() || volume.isFinalized()) {
+									logger.info("Will be potentially yielding the tape " + volumeTag + " as it is flagged suspect/defective/finalized");
 								}
 								else {
 									String driveLoadedTape_GroupVolumeId = volume.getGroupRef().getId();
