@@ -87,7 +87,7 @@ public class RemoteCommandLineExecuter {
 			commandLineExecutionResponse.setIsComplete(isComplete);
 			channel.disconnect();
 		} catch (Exception ee) {
-			logger.debug("Unable to execute command " + command + " : " + ee.getMessage(), ee);
+			logger.error("Unable to execute command " + command + " : " + ee.getMessage(), ee);
 			commandLineExecutionResponse.setFailureReason(ee.getMessage());
 		}
 		

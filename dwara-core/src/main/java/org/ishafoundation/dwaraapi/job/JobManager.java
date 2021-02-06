@@ -11,6 +11,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.ishafoundation.dwaraapi.ApplicationStatus;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -30,9 +31,6 @@ import org.springframework.stereotype.Component;
 public class JobManager {
 	
 	private static final Logger logger = LoggerFactory.getLogger(JobManager.class);
-
-	// Should the default be configurable so during dev we dont have to start the app and then run the api to have jobs dequeued?
-	public static ApplicationStatus MODE = ApplicationStatus.maintenance;
 	
 	@Autowired
 	private JobDao jobDao;	
@@ -47,15 +45,16 @@ public class JobManager {
 	private ProcessingtaskSingleThreadExecutor processingtaskSingleThreadExecutor;
 	
 	@Autowired
-	private  Map<String, IStoragetypeThreadPoolExecutor> storagetypeThreadPoolExecutorMap;
-	
+	private Map<String, IStoragetypeThreadPoolExecutor> storagetypeThreadPoolExecutorMap;
+		
 	@Autowired
-	private Map<String, IProcessingTask> processingtaskActionMap;
+	private Configuration configuration;
+	
 	
 	public void manageJobs() {
 		logger.info("***** Managing jobs now *****");
 		ThreadPoolExecutor tpe = (ThreadPoolExecutor) processingtaskSingleThreadExecutor.getExecutor();
-		if(MODE == ApplicationStatus.maintenance) {
+		if(ApplicationStatus.valueOf(configuration.getAppMode()) == ApplicationStatus.maintenance) {
 			logger.info("Application is in maintenance mode. No jobs will be taken up for action");
 			BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
 			if(runnableQueueList.size() > 0) {

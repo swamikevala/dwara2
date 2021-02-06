@@ -7,6 +7,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.configuration.FfmpegThreadConfiguration;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
@@ -30,8 +31,8 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	@Autowired
 	private M01XmlFileHandler m01xfh;	
 	
-	@Value("${ffmpeg.video-proxy-low-gen.threads}")
-	private String ffmpegThreads;
+	@Autowired
+	private FfmpegThreadConfiguration ffmpegThreadConfiguration;
 
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -181,8 +182,11 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		proxyGenerationCommandParamsList.add("-y");
 		proxyGenerationCommandParamsList.add("-i");
 		proxyGenerationCommandParamsList.add(sourceFilePathname);
-		proxyGenerationCommandParamsList.add("-threads");
-		proxyGenerationCommandParamsList.add(ffmpegThreads);
+		if(ffmpegThreadConfiguration.getVideoProxyLowGen().getThreads() > 0) {
+			proxyGenerationCommandParamsList.add("-threads");
+			String ffmpegThreads = ffmpegThreadConfiguration.getVideoProxyLowGen().getThreads() + "";
+			proxyGenerationCommandParamsList.add(ffmpegThreads);
+		}
 		proxyGenerationCommandParamsList.add("-preset");
 		proxyGenerationCommandParamsList.add("slow");
 		proxyGenerationCommandParamsList.add("-strict");

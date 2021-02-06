@@ -10,6 +10,8 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.ApplicationStatus;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -89,6 +91,9 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	
 	@Autowired
 	private FileEntityUtil fileEntityUtil;
+	
+	@Autowired
+	private Configuration configuration;
 	
 	private ProcessContext processContext;
 
@@ -192,6 +197,10 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			job = jobDao.findById(job.getId()).get();
 			if(job.getStatus() == Status.on_hold || job.getStatus() == Status.cancelled) {
 				logger.warn("Job " + job.getStatus() + " - not processing it now");
+				return;
+			}
+			if(job.getStatus() == Status.queued && ApplicationStatus.valueOf(configuration.getAppMode()) == ApplicationStatus.maintenance) {
+				logger.warn("App in maintenance - Job " + job.getId() + " is in " + job.getStatus() + " - so not processing it now");
 				return;
 			}
 			job = checkAndUpdateStatusToInProgress(job, systemGeneratedRequest); // synchronous method so only one thread can access this at a time

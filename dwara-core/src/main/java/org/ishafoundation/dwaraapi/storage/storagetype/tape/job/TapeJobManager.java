@@ -225,7 +225,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 					try {
 						StorageJob selectedStorageJob = null;
 						String volumeTag = nthAvailableDriveDetails.getDte().getVolumeTag();
-						if(StringUtils.isNotBlank(volumeTag)) { // if drive is available and drive already loaded with tape
+						if(StringUtils.isNotBlank(volumeTag)) { // if drive is available and drive already loaded with tape - we need to see if we have to hold the tape or not...
 							// ensure that last job on tape has not completed and spawned a dependent storage job "after" the scheduler prepared the storageJobs list.
 							// TODO better take it from the artifact_volume table... 
 							Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndStatusAndCompletedAtIsNotNullOrderByCompletedAtDesc(volumeTag, Status.completed);

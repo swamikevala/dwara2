@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties
 public class Configuration {
 	
+	private String appMode;
+	
 	private String regexAllowedChrsInFileName;
 	
 	private boolean setArtifactFileSystemPermissions;
@@ -43,6 +45,14 @@ public class Configuration {
 	
 	private boolean checksumRsync;
 	
+	public String getAppMode() {
+		return appMode;
+	}
+
+	public void setAppMode(String appMode) {
+		this.appMode = appMode;
+	}
+
 	public String getRegexAllowedChrsInFileName() {
 		return regexAllowedChrsInFileName;
 	}
