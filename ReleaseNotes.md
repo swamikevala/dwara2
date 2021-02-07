@@ -1,4 +1,31 @@
+# Dwara App Version - 2.1.10 (Space [Control] - 7th Feb 2021)
 
+### New features
+
+1) Ability to control both Dwara and ffmpeg thread at runtime to facilitate optimising thread allocation. Runtime properties update using swagger.
+
+### Bug fix
+
+1) Maintenance mode - Ability to gracefully let already in_progress jobs to completion, but stop processing any further[Dont process queued jobs] - Fixed processing layer draining all jobs inspite of maintenance mode. Now app goes maintenance quickly 
+
+### Upgrade steps
+
+1) application.properties to have the below entry
+
+> appMode=online
+
+
+# Dwara App Version - 2.1.09 (Space - 31st Jan 2021 - Evening)
+### Live Incident 
+Introduced QC gen with a global pool backfired us with more qc gen jobs taken up parallely and with uncontrolled ffmpeg core threads increased the job completion of every process. So we want to control the ffmpeg threads and want it configurable. Hence the change   
+
+### Upgrade steps
+
+0 Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_4.sql)
+
+1 Follow the step by step instruction guide
+
+2 application.properties to have the following entries
 >ffmpeg.video-proxy-low-gen.threads=2
 
 >ffmpeg.video-digi-2020-preservation-gen.threads=2
@@ -8,7 +35,7 @@
 >scheduler.statusUpdater.fixedDelay=30000
 
 
-# Dwara App Version - 2.1.08 (10G conversion - 31st Jan 2021)
+# Dwara App Version - 2.1.08 (Space - 31st Jan 2021)
 # Dwara DB Version - 2.1.1
 
 ### New features
@@ -44,11 +71,13 @@
 
 ### Upgrade steps
 
-0 Follow the step by step instruction guide
+0 Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_3.sql)
 
-1 Set up Rsync in remote server where 10G need to go. Create the configured destination directory and also a .copying directory under the destination directory 
+1 Follow the step by step instruction guide
 
-2 Ensure application.properties has the following entry
+2 Set up Rsync in remote server where 10G need to go. Create the configured destination directory and also a .copying directory under the destination directory 
+
+3 Ensure application.properties has the following entry
 
 > checksumRsync=true/false - used in configuring rsync with or without checksum verify
 
