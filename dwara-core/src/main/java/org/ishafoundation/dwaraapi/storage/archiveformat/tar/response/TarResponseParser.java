@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,8 @@ public class TarResponseParser {
 
 	static Logger logger = LoggerFactory.getLogger(TarResponseParser.class);
 	
+	private String tarLinkSeparator = " link to ";
+	
 	public TarResponse parseTarResponse(String tarCommandResponse){
 		TarResponse tarResponse = new TarResponse();
 		Scanner scanner = new Scanner(tarCommandResponse);
@@ -43,6 +46,9 @@ public class TarResponseParser {
 
 			// block 25160: -rwxrwxrwx root/root  24063587 2019-07-25 13:51 Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074810.mp4
 			// block <<archive start block>>: <<file permissions>> <<user/group>  <<file size>> <<date n time>> <<file path name>>
+			// NOTE : HardLink entries are shown like below... 
+			// block 11253700: hrw-rw-r-- dwara/dwara         0 2021-01-01 14:35 Z9009_Poem-Sadhguru-Poem-For-New-Year-2021-Timespace_English_01Min-07Secs_Unconsolidated/PROJECT/TIMESPACE.fcpbundle/TIMESPACE/Original Media/shooting_stars_in_the_night_sky_timelapse_by_Arthur_Cauty_Artgrid-HD_H264-HD.mp4 link to Z9009_Poem-Sadhguru-Poem-For-New-Year-2021-Timespace_English_01Min-07Secs_Unconsolidated/FOOTAGE/shooting_stars_in_the_night_sky_timelapse_by_Arthur_Cauty_Artgrid-HD_H264-HD.mp4
+			// block 11253703: hrw-rw-r-- dwara/dwara         0 2021-01-01 14:56 Z9009_Poem-Sadhguru-Poem-For-New-Year-2021-Timespace_English_01Min-07Secs_Unconsolidated/PROJECT/TIMESPACE.fcpbundle/TIMESPACE/Original Media/northern_lights_over_a_flowing_river_in_winter_by_Alexander_Kuznetsov_Artgrid-HD_H264-HD.mp4 link to Z9009_Poem-Sadhguru-Poem-For-New-Year-2021-Timespace_English_01Min-07Secs_Unconsolidated/FOOTAGE/northern_lights_over_a_flowing_river_in_winter_by_Alexander_Kuznetsov_Artgrid-HD_H264-HD.mp4
 
 			// 25160 - archive start block
 			// -rwxrwxrwx - file permissions
@@ -54,6 +60,7 @@ public class TarResponseParser {
 			// OR
 			//String fileAndAttributesRegEx = "block (.[0-9]*): (.[a-z-]*) (.[a-z/]*)([ ]*)(.[0-9]*) (.[0-9- :]*) (.*)"; 
 
+			
 			Pattern fileAndAttributesRegExPattern = Pattern.compile(fileAndAttributesRegEx);
 
 			Matcher fileAndAttributesRegExMatcher = fileAndAttributesRegExPattern.matcher(line);
@@ -64,8 +71,11 @@ public class TarResponseParser {
 				
 				String archiveBlockOffset = fileAndAttributesRegExMatcher.group(1);
 				String fileSizeAsString = fileAndAttributesRegExMatcher.group(5);
-				String filePathName = fileAndAttributesRegExMatcher.group(7);
 				
+				String filePathName = fileAndAttributesRegExMatcher.group(7);
+				if(filePathName.contains(tarLinkSeparator))
+					filePathName = StringUtils.substringBefore(filePathName, tarLinkSeparator);
+				logger.trace("filePathName - " + filePathName);
 				file.setFilePathName(filePathName);
 				file.setFileSize(Long.parseLong(fileSizeAsString));
 				file.setArchiveBlock(Integer.parseInt(archiveBlockOffset));

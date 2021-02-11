@@ -5,6 +5,9 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -93,6 +96,23 @@ public class TapeStreamer {
 						else {
 							IOUtils.copy(tin, bos, bufferSize);
 							logger.info(entryPathName + " restored to " + destinationPath);
+							
+							String linkName = entry.getLinkName();
+							if(linkName != null) {
+								logger.trace("linkName - " + linkName);
+								Path linkPath = Paths.get(destinationPath, linkName);
+								logger.trace("linkPath - " + linkPath);
+								if(entry.isSymbolicLink()) {
+									// create a symlink
+									Files.createSymbolicLink(curfile.toPath(), linkPath);
+									logger.trace(curfile.toPath() + " sym linked to --> " + linkPath);
+								}
+								else if(entry.isLink()) {
+									// creat a hardlink
+									Files.createLink(curfile.toPath(), linkPath);
+									logger.trace(curfile.toPath() + " linked to --> " + linkPath);
+								}
+							}
 						}
 						if (bos != null)
 							bos.close();
