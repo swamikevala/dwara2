@@ -167,6 +167,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			if(filePathName.endsWith("/"))
 				filePathName = FilenameUtils.getFullPathNoEndSeparator(filePathName);
 			archivedFile.setFilePathName(filePathName);
+			archivedFile.setLinkName(taredFile.getLinkName());
 			
 			int archiveBlock = taredFile.getArchiveBlock();
 			archivedFile.setArchiveBlock(archiveBlock);

@@ -93,6 +93,7 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 		
 			String filePathname = bruedFile.getFilePathName();
 			af.setFilePathName(filePathname);
+			af.setLinkName(bruedFile.getLinkName());
 			
 			// volumeBlockOffset starts with 0 and not -1
 			int volumeBlockOffset = bruedFile.getVolumeBlockOffset() + 1; // +1, because bru "copy" responds with -1 block for BOT, while bru "t - table of contents"/"x - extraction" shows the block as 0 for same. Also while seek +1 followed by t/x returns faster results...

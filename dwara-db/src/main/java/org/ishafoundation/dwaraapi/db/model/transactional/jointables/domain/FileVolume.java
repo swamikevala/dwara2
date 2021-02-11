@@ -52,6 +52,8 @@ public class FileVolume {
 	@Column(name="deleted")
 	private boolean deleted;
 	
+	@Column(name="link_file_id")
+	private Integer linkFileId;
 	
 	public FileVolume() {
 		
@@ -112,5 +114,13 @@ public class FileVolume {
 
 	public void setDeleted(boolean deleted) {
 		this.deleted = deleted;
+	}
+
+	public Integer getLinkFileId() {
+		return linkFileId;
+	}
+
+	public void setLinkFileId(Integer linkFileId) {
+		this.linkFileId = linkFileId;
 	}
 }

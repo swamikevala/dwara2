@@ -170,6 +170,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 		}
 		
 		List<TFile> artifactTFileList = tFileDao.findAllByArtifactIdAndDeletedIsFalse(artifact.getId());
+		HashMap<String, TFile> filePathNameToTFileObj = new LinkedHashMap<String, TFile>();
+		for (TFile tFile : artifactTFileList) {
+			filePathNameToTFileObj.put(tFile.getPathname(), tFile);
+		}
 		List<TFileVolume> toBeAddedTFileVolumeTableEntries = new ArrayList<TFileVolume>();
 		for (Iterator<TFile> iterator = artifactTFileList.iterator(); iterator.hasNext();) {
 			TFile nthFile = iterator.next();
@@ -182,6 +186,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 				Integer volumeBlock = archivedFile.getVolumeBlock();
 				tfileVolume.setVolumeBlock(volumeBlock);
 				tfileVolume.setArchiveBlock(archivedFile.getArchiveBlock());
+				if(archivedFile.getLinkName() != null) {
+					TFile tFile = filePathNameToTFileObj.get(archivedFile.getLinkName());
+					tfileVolume.setLinkFileId(tFile.getId());
+				}
 			}
 			toBeAddedTFileVolumeTableEntries.add(tfileVolume); // Should we add null entries...
 		}
@@ -192,7 +200,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    }
 		
 		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
-
+		HashMap<String, File> filePathNameToFileObj = new LinkedHashMap<String, File>();
+		for (File file : artifactFileList) {
+			filePathNameToFileObj.put(file.getPathname(), file);
+		}
 		// NOTE: We need filevolume entries even when response from storage layer is null(Only archiveformats return the file breakup storage details... Other non archive writes dont...)
 		// So we need to iterate on the files than on the archived file response...
 		// OBSERVATION: The written file order on volume and the listed file varies...
@@ -224,6 +235,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 				}
 				fileVolume.setVolumeBlock(volumeBlock);
 				fileVolume.setArchiveBlock(archivedFile.getArchiveBlock());
+				if(archivedFile.getLinkName() != null) {
+					File file = filePathNameToFileObj.get(archivedFile.getLinkName());
+					fileVolume.setLinkFileId(file.getId());
+				}
 			}
 			toBeAddedFileVolumeTableEntries.add(fileVolume); // Should we add null entries...
 			// TODO Should we report if archivedFile == null, file not archived...

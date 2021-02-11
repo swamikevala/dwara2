@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.component
 public class File {
 
 	private String filePathName;
+	private String linkName;
 	private Long archiveRunningTotalDataInKB; //running total of the amount of space used in kilobytes thus far - excludes the current file size - start of the 
 	private int volumeBlockOffset;
 
@@ -12,6 +13,12 @@ public class File {
 	}
 	public void setFilePathName(String filePathName) {
 		this.filePathName = filePathName;
+	}
+	public String getLinkName() {
+		return linkName;
+	}
+	public void setLinkName(String linkName) {
+		this.linkName = linkName;
 	}
 	public Long getArchiveRunningTotalDataInKB() {
 		return archiveRunningTotalDataInKB;

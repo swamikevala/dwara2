@@ -217,9 +217,14 @@ public class BruResponseParser {
 				org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components.File file = new org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components.File();
 
 				String filePathName = fileAndAttributesRegExMatcher.group(6);
-				if(filePathName.contains(bruLinkSeparator))
+				// TODO deal with symlinks???
+				String linkName = null;
+				if(filePathName.contains(bruLinkSeparator)) {
 					filePathName = StringUtils.substringBefore(filePathName, bruLinkSeparator);
+					linkName = StringUtils.substringAfter(filePathName, bruLinkSeparator);
+				}
 				file.setFilePathName(filePathName);
+				file.setLinkName(linkName);
 				file.setArchiveRunningTotalDataInKB(Long.parseLong(fileAndAttributesRegExMatcher.group(2)));
 				file.setVolumeBlockOffset(Integer.parseInt(fileAndAttributesRegExMatcher.group(5)));
 				bruResponse.getFileList().add(file);

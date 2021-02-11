@@ -73,10 +73,15 @@ public class TarResponseParser {
 				String fileSizeAsString = fileAndAttributesRegExMatcher.group(5);
 				
 				String filePathName = fileAndAttributesRegExMatcher.group(7);
-				if(filePathName.contains(tarLinkSeparator))
+				// TODO deal with symlinks???
+				String linkName = null;
+				if(filePathName.contains(tarLinkSeparator)) {
 					filePathName = StringUtils.substringBefore(filePathName, tarLinkSeparator);
+					linkName = StringUtils.substringAfter(filePathName, tarLinkSeparator);
+				}
 				logger.trace("filePathName - " + filePathName);
 				file.setFilePathName(filePathName);
+				file.setLinkName(linkName);
 				file.setFileSize(Long.parseLong(fileSizeAsString));
 				file.setArchiveBlock(Integer.parseInt(archiveBlockOffset));
 

@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.storage.archiveformat;
 
 public class ArchivedFile {
 	private String filePathName;
+	private String linkName;
 	private int archiveBlock; // running total start Archive block of a file
 	private Integer volumeBlock; // running total start Volume block of a file (entire volume level)
 	
@@ -10,6 +11,12 @@ public class ArchivedFile {
 	}
 	public void setFilePathName(String filePathName) {
 		this.filePathName = filePathName;
+	}
+	public String getLinkName() {
+		return linkName;
+	}
+	public void setLinkName(String linkName) {
+		this.linkName = linkName;
 	}
 	public int getArchiveBlock() {
 		return archiveBlock;
@@ -25,6 +32,6 @@ public class ArchivedFile {
 	}
 	@Override
 	public String toString() {
-		return "filePathName : " + filePathName + " archiveBlock : " + archiveBlock + " volumeBlock : " + volumeBlock;
+		return "filePathName : " + filePathName + " linkName : " + linkName + " archiveBlock : " + archiveBlock + " volumeBlock : " + volumeBlock;
 	}
 }
