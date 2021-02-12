@@ -18,6 +18,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
@@ -75,10 +76,13 @@ public class TapeStreamer {
 						if (!parent.exists()) {
 							parent.mkdirs();
 						}
-						FileOutputStream fos = new FileOutputStream(curfile);
-						BufferedOutputStream bos = new BufferedOutputStream(fos, bufferSize);
+						FileOutputStream fos = null;
+						BufferedOutputStream bos = null;
 
 						if (toBeVerified) { // Restore with checksum validation
+							fos = new FileOutputStream(curfile);
+							bos = new BufferedOutputStream(fos, bufferSize);
+							
 							byte[] originalChecksum = filePathNameToChecksumObj.get(entryPathName);
 							logger.trace("originalChecksum " + Hex.encodeHexString(originalChecksum));
 		
@@ -94,24 +98,36 @@ public class TapeStreamer {
 							}
 						}
 						else {
-							IOUtils.copy(tin, bos, bufferSize);
-							logger.info(entryPathName + " restored to " + destinationPath);
-							
 							String linkName = entry.getLinkName();
-							if(linkName != null) {
+							if(StringUtils.isNotBlank(linkName)) {
 								logger.trace("linkName - " + linkName);
 								Path linkPath = Paths.get(destinationPath, linkName);
 								logger.trace("linkPath - " + linkPath);
 								if(entry.isSymbolicLink()) {
 									// create a symlink
 									Files.createSymbolicLink(curfile.toPath(), linkPath);
-									logger.trace(curfile.toPath() + " sym linked to --> " + linkPath);
+									logger.info(curfile.toPath() + " sym linked to --> " + linkPath);
 								}
 								else if(entry.isLink()) {
 									// creat a hardlink
 									Files.createLink(curfile.toPath(), linkPath);
-									logger.trace(curfile.toPath() + " linked to --> " + linkPath);
+									logger.info(curfile.toPath() + " linked to --> " + linkPath);
 								}
+						        
+								final byte[] buffer = new byte[bufferSize];
+						        int n = 0;
+						        long count=0;
+						        while (-1 != (n = tin.read(buffer))) {
+						        	count += n;
+						        }
+								logger.debug("Read " + count + " from tar input stream");
+							}
+							else {
+								fos = new FileOutputStream(curfile);
+								bos = new BufferedOutputStream(fos, bufferSize);
+								
+								IOUtils.copy(tin, bos, bufferSize);
+								logger.info(entryPathName + " restored to " + destinationPath);
 							}
 						}
 						if (bos != null)
