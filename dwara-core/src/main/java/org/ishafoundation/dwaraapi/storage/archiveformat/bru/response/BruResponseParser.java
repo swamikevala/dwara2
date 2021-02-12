@@ -220,8 +220,11 @@ public class BruResponseParser {
 				// TODO deal with symlinks???
 				String linkName = null;
 				if(filePathName.contains(bruLinkSeparator)) {
-					filePathName = StringUtils.substringBefore(filePathName, bruLinkSeparator);
 					linkName = StringUtils.substringAfter(filePathName, bruLinkSeparator);
+					filePathName = StringUtils.substringBefore(filePathName, bruLinkSeparator);
+					
+					logger.trace("filePathName "+ filePathName);
+					logger.trace("linkName "+ linkName);
 				}
 				file.setFilePathName(filePathName);
 				file.setLinkName(linkName);

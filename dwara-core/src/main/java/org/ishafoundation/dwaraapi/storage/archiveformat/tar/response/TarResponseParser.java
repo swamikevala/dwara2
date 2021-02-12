@@ -76,8 +76,10 @@ public class TarResponseParser {
 				// TODO deal with symlinks???
 				String linkName = null;
 				if(filePathName.contains(tarLinkSeparator)) {
-					filePathName = StringUtils.substringBefore(filePathName, tarLinkSeparator);
 					linkName = StringUtils.substringAfter(filePathName, tarLinkSeparator);
+					filePathName = StringUtils.substringBefore(filePathName, tarLinkSeparator);
+					logger.trace("filePathName "+ filePathName);
+					logger.trace("linkName "+ linkName);
 				}
 				logger.trace("filePathName - " + filePathName);
 				file.setFilePathName(filePathName);
