@@ -1,3 +1,11 @@
+# Dwara App Version - 2.1.11 (14th Feb 2021)
+### Hot fix
+LIVE Incident
+
+Artifact sized > 1TB failed Tar writes because of archive block datatype was int and hence not able to hold the long value
+
+Fixed table and fixed code
+
 # Dwara App Version - 2.1.10 (Space [Control] - 7th Feb 2021)
 
 ### New features

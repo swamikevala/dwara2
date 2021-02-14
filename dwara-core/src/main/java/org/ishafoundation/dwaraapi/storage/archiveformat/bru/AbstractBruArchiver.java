@@ -105,7 +105,7 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 			//int archiveBlockOffset = archiveRunningTotalDataInKB/2;
 			
 			Long archiveRunningTotalDataInBytes = archiveRunningTotalDataInKB * 1024; // KB to bytes...
-			int archiveBlockOffset = (int) Math.ceil(archiveRunningTotalDataInBytes/archiveformatBlocksize);
+			Long archiveBlockOffset = (long) Math.ceil(archiveRunningTotalDataInBytes/archiveformatBlocksize);
 			if(archiveBlockOffset > 0)
 				archiveBlockOffset = archiveBlockOffset - 1; // - 1 because the first block starts with 0...
 			

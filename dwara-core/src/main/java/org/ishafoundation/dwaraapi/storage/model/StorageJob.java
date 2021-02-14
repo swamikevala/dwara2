@@ -37,7 +37,7 @@ public class StorageJob {
 	private String outputFolder;
 	private String targetLocationPath;
 	private Integer volumeBlock;
-	private Integer archiveBlock;
+	private Long archiveBlock;
 	private boolean restoreVerify;
 	
 	private int priority = 0;
@@ -178,11 +178,11 @@ public class StorageJob {
 		this.volumeBlock = volumeBlock;
 	}
 
-	public Integer getArchiveBlock() {
+	public Long getArchiveBlock() {
 		return archiveBlock;
 	}
 
-	public void setArchiveBlock(Integer archiveBlock) {
+	public void setArchiveBlock(Long archiveBlock) {
 		this.archiveBlock = archiveBlock;
 	}
 	

@@ -4,7 +4,7 @@ public class File {
 
 	private String filePathName;
 	private Long fileSize;
-	private int archiveBlock;
+	private Long archiveBlock;
 //	private int volumeBlock;
 
 
@@ -20,10 +20,10 @@ public class File {
 	public void setFileSize(Long fileSize) {
 		this.fileSize = fileSize;
 	}
-	public int getArchiveBlock() {
+	public Long getArchiveBlock() {
 		return archiveBlock;
 	}
-	public void setArchiveBlock(int archiveBlock) {
+	public void setArchiveBlock(Long archiveBlock) {
 		this.archiveBlock = archiveBlock;
 	}
 //	public int getVolumeBlock() {
