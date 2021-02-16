@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.ishafoundation.dwara.misc.common.Constants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,16 +26,14 @@ import com.jcraft.jsch.Session;
 public class RemoteCommandLineExecuter {
 
 	private static Logger logger = LoggerFactory.getLogger(RemoteCommandLineExecuter.class);
-	
-	private String commandlineExecutorErrorResponseTemporaryLocation = "/data/tmp";
-	
+		
 	public CommandLineExecutionResponse executeCommandRemotelyOnServer(Session session, String command, String commandOutputFilePathName) {
 		logger.debug("executing command remotely - " + command);
 		boolean isComplete = false;
 		String failureReason = null;
 		StringBuffer stdOutRespBuffer = new StringBuffer();
 		if(!commandOutputFilePathName.contains(File.separator))
-			commandOutputFilePathName = commandlineExecutorErrorResponseTemporaryLocation + File.separator + commandOutputFilePathName;
+			commandOutputFilePathName = Constants.commandlineExecutorErrorResponseTemporaryLocation + File.separator + commandOutputFilePathName;
 		CommandLineExecutionResponse commandLineExecutionResponse = new CommandLineExecutionResponse();
 		
 		try {

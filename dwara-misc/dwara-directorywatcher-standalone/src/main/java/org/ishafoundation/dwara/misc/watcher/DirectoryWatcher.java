@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwara.misc.common.Constants;
 import org.ishafoundation.dwara.misc.common.MoveUtil;
 import org.ishafoundation.dwara.misc.common.Status;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl;
@@ -56,11 +57,9 @@ public class DirectoryWatcher implements Runnable{
 	private Long newFileWait = 10000L;
 	private static Executor executor = null;
 	
-	private String miscDirName = "MISC";
+
 	private Path miscDirPath = null; // Hardcoded - will be watchedDir + failedDirName;
-	private String completedDirName = "Validated";
 	private Path completedDirPath = null; // Hardcoded - will be watchedDir + completedDirName;
-	private String failedDirName = "ValFailed";
 	private Path failedDirPath = null; // Hardcoded - will be watchedDir + failedDirName;
 
 	private Map<Path, Integer> artifact_Retrycount_Map = new HashMap<Path, Integer>();
@@ -78,9 +77,9 @@ public class DirectoryWatcher implements Runnable{
 		this.watchedDir = dir;
 		this.newFileWait = waitTime;
 		this.keys = new HashMap<WatchKey,Path>();
-		this.miscDirPath = Paths.get(watchedDir.toString(), miscDirName);
-		this.failedDirPath = Paths.get(watchedDir.toString(), failedDirName);
-		this.completedDirPath = Paths.get(watchedDir.toString(), completedDirName);
+		this.miscDirPath = Paths.get(watchedDir.toString(), Constants.miscDirName);
+		this.failedDirPath = Paths.get(watchedDir.toString(), Constants.failedDirName);
+		this.completedDirPath = Paths.get(watchedDir.toString(), Constants.completedDirName);
 	}
 
 	/**
@@ -309,14 +308,14 @@ public class DirectoryWatcher implements Runnable{
 	
 	private void move(Path artifactPath, boolean completed, String failureReason) throws Exception{
 		String artifactName = getArtifactName(artifactPath);
-		String csvFileName = failedDirName + ".csv";
+		String csvFileName = Constants.failedCsvName;
 		String destRootPath = failedDirPath.toString();
 		Status status = Status.moved_to_failed_dir;
 		// move it to completed folder
 		if(completed) {
 			destRootPath = completedDirPath.toString();
 			status = Status.moved_to_validated_dir;
-			csvFileName = completedDirName + ".csv";
+			csvFileName = Constants.completedCsvName;
 		}
 		Path destPath = Paths.get(destRootPath, artifactName);
 		Path csvFilePath = Paths.get(watchedDir.toString(), csvFileName);
