@@ -18,6 +18,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwara.misc.ingest.Categoryelement;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.ishafoundation.dwaraapi.utils.HttpClientUtil;
@@ -29,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * This class is responsible for watching for files copied in prasadcorp workspace and when completed moves the file to dwara's user specific artifactclass location and calls the ingest 
  */
 
-public class DirectoryWatcherAndIngester extends DirectoryWatcher{
+public class DirectoryWatcherAndIngester extends DirectoryWatcher_Old{
 
 	private static Logger logger = LoggerFactory.getLogger(DirectoryWatcherAndIngester.class);
 

@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
  * This class is responsible for watching for files copied in prasadcorp workspace and when completed moves the file to dwara's user specific artifactclass location and calls the ingest 
  */
 
-public class DirectoryWatcherAndCompletedArtifactMover extends DirectoryWatcher {
+public class DirectoryWatcherAndCompletedArtifactMover extends DirectoryWatcher_Old {
 
 	private static Logger logger = LoggerFactory.getLogger(DirectoryWatcherAndCompletedArtifactMover.class);
 
@@ -34,7 +34,7 @@ public class DirectoryWatcherAndCompletedArtifactMover extends DirectoryWatcher 
 		
 		String artifactName = getArtifactName(artifactPath);
 		// move it to failed folder
-		Path destPath = Paths.get(watchedDir.toString(), "COMPLETED" , artifactName);
+		Path destPath = Paths.get(completedDirPath.toString() , artifactName);
 		try {
 			move(artifactPath, destPath);
 			updateStatus(artifactPath, Status.moved);
