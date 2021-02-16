@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.commandline.remote.sch;
+package org.ishafoundation.dwara.misc.commandline.remote.sch;
 
 import java.io.File;
 import java.io.FileOutputStream;
