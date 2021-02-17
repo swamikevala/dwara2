@@ -69,7 +69,10 @@ public class RemoteSpaceCheckerAndFileMover {
 			        	logger.info("Deleting copied files ready for deletion");
 				        try {	
 				        	for (File artifactDirectory : copiedFiles) {
+				        		if(artifactDirectory.getAbsolutePath().equals(copiedDirLocation))
+				        			continue;
 				        		String artifactName = artifactDirectory.getName();
+				        		
 				        		ChecksumStatus chkSumStatus = isChecksumValidatedInIngest(remoteCommandLineExecuter, jSchSession, artifactName);
 				        		switch (chkSumStatus) {
 									case valid:
@@ -93,6 +96,9 @@ public class RemoteSpaceCheckerAndFileMover {
 			        	logger.info("Checking space and scp-ing the validated files now");
 			        	try {
 				        	for (File artifactDirectory : validatedFiles) {
+				        		if(artifactDirectory.getAbsolutePath().equals(copiedDirLocation))
+				        			continue;
+				        		
 				        		logger.info("Space check");
 					        	int availableSpaceInRemoteServerInGB = checkSpaceInIngest(remoteCommandLineExecuter, jSchSession);
 								

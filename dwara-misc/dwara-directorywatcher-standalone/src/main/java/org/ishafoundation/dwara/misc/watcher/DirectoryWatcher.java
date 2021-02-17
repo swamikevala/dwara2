@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -57,11 +59,13 @@ public class DirectoryWatcher implements Runnable{
 	private Long newFileWait = 10000L;
 	private static Executor executor = null;
 	
-
+	private Set<Path> copyingArtifacts = new TreeSet<Path>();
+	private Set<Path> verifyPendingArtifacts = new TreeSet<Path>();
 	private Path miscDirPath = null; // Hardcoded - will be watchedDir + failedDirName;
 	private Path completedDirPath = null; // Hardcoded - will be watchedDir + completedDirName;
 	private Path failedDirPath = null; // Hardcoded - will be watchedDir + failedDirName;
-
+	private Path copiedDirPath = null;
+	private Path copyFailedDirPath = null;
 	private Map<Path, Integer> artifact_Retrycount_Map = new HashMap<Path, Integer>();
 	
 	@SuppressWarnings("unchecked")
@@ -72,42 +76,45 @@ public class DirectoryWatcher implements Runnable{
 	/**
 	 * Creates a WatchService and registers the given directory
 	 */
-	DirectoryWatcher(Path dir, Long waitTime) throws IOException {
+	DirectoryWatcher(Path watchedDirPath, Long waitTime) throws IOException {
 		this.watchService = FileSystems.getDefault().newWatchService();
-		this.watchedDir = dir;
+		this.watchedDir = watchedDirPath;
 		this.newFileWait = waitTime;
 		this.keys = new HashMap<WatchKey,Path>();
 		this.miscDirPath = Paths.get(watchedDir.toString(), Constants.miscDirName);
 		this.failedDirPath = Paths.get(watchedDir.toString(), Constants.failedDirName);
 		this.completedDirPath = Paths.get(watchedDir.toString(), Constants.completedDirName);
+		this.copiedDirPath = Paths.get(watchedDir.toString(), Constants.copiedDirName);
+		this.copyFailedDirPath = Paths.get(watchedDir.toString(), Constants.copyFailedDirName);
 	}
 
 	/**
 	 * Register the given directory with the WatchService
 	 */
-	private void register(Path dir) throws IOException {
-		expirationTimes.put(dir, System.currentTimeMillis()+newFileWait);
+	private void register(Path artifactDirPath) throws IOException {
+		copyingArtifacts.add(artifactDirPath);
+		expirationTimes.put(artifactDirPath, System.currentTimeMillis()+newFileWait);
 		
-		WatchKey key = dir.register(watchService, ENTRY_MODIFY);
+		WatchKey key = artifactDirPath.register(watchService, ENTRY_MODIFY);
 
 		if (logger.isTraceEnabled()) {
 			Path prev = keys.get(key);
 			if (prev == null) {
-				logger.info(String.format("register: %s\n", dir));
+				logger.info(String.format("register: %s\n", artifactDirPath));
 			} else {
-				if (!dir.equals(prev)) {
-					logger.info(String.format("update: %s -> %s\n", prev, dir));
+				if (!artifactDirPath.equals(prev)) {
+					logger.info(String.format("update: %s -> %s\n", prev, artifactDirPath));
 				}
 			}
 		}
-		keys.put(key, dir);
+		keys.put(key, artifactDirPath);
 		
 		// if there are folders with no events pending, trigger a modify event so that we handleExpiredTimes 
 		CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
 		try {
-			if(!dir.toString().endsWith("mxf"))
-				updateStatus(dir, Status.copying);
-			clei.executeCommand("chmod -R 777 " + dir, false);
+			if(!artifactDirPath.toString().endsWith("mxf"))
+				updateStatus(artifactDirPath, Status.copying);
+			clei.executeCommand("chmod -R 777 " + artifactDirPath, false);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 		}
@@ -133,8 +140,8 @@ public class DirectoryWatcher implements Runnable{
 	
 					if(key != null) { // if events are still pending...
 	
-						Path dir = keys.get(key);
-						if (dir == null) {
+						Path registeredDirPath = keys.get(key);
+						if (registeredDirPath == null) {
 							logger.error("WatchKey not recognized!!");
 							continue;
 						}
@@ -149,7 +156,7 @@ public class DirectoryWatcher implements Runnable{
 							// Context for directory entry event is the file name of entry
 							WatchEvent<Path> ev = cast(event);
 							Path name = ev.context();
-							Path child = dir.resolve(name);
+							Path child = registeredDirPath.resolve(name);
 	
 							// print out event
 							if (logger.isTraceEnabled())
@@ -231,9 +238,11 @@ public class DirectoryWatcher implements Runnable{
 		}
 	}
 
-	private void createTaskAndExecute(Path path) throws Exception{
+	private void createTaskAndExecute(Path mxfFilePath) throws Exception{
 		Task task = new Task();
-		task.setMxfFilePath(path);
+		task.setMxfFilePath(mxfFilePath);
+		copyingArtifacts.remove(mxfFilePath.getParent());
+		verifyPendingArtifacts.add(mxfFilePath.getParent());
 		executor.execute(task);
 	}
 
@@ -292,9 +301,9 @@ public class DirectoryWatcher implements Runnable{
 					}else {// inspite of retries if side car files missing means source folder missing the mandatory files or if checksum fails, move it to "FAILED" folder
 						String failureReason = !isChecksumValid ? "MD5 mismatch" : avr.getFailureReason();
 						move(artifactPath, false, failureReason);
-						return;
 					}
 				}
+				verifyPendingArtifacts.remove(artifactPath);
 			}
 			catch (Exception e) {
 				logger.error(e.getMessage(), e);
@@ -361,7 +370,7 @@ public class DirectoryWatcher implements Runnable{
 	}
 
 	static void usage() {
-		System.err.println("usage: java -cp dwara-watcher-2.0.jar org.ishafoundation.dwara.misc.watcher.DirectoryWatcher <dirToBeWatched(\"/data/prasad-staging\")> folderAgeInHr folderAgePollingIntervalInMts noOfThreadsForChksumValidation watchEventExpiryWaitTimeInSecs");
+		System.err.println("usage: java -cp dwara-watcher-2.0.jar org.ishafoundation.dwara.misc.watcher.DirectoryWatcher <dirToBeWatched(\"/data/prasad-staging\")> folderAgeInMts folderAgePollingIntervalInMts noOfThreadsForChksumValidation watchEventExpiryWaitTimeInSecs");
 		System.exit(-1);
 	}
 	
@@ -371,13 +380,13 @@ public class DirectoryWatcher implements Runnable{
 			usage();
 
 		// register directory and process its events
-		final Path dir = Paths.get(args[0]);
-		final double folderAgeInHr = Double.parseDouble(args[1]);
+		final Path dirToBeWatched = Paths.get(args[0]);
+		final int folderAgeInMts = Integer.parseInt(args[1]);
 		int folderAgePollingIntervalInMts = Integer.parseInt(args[2]);
 		int noOfThreadsForChksumValidation = Integer.parseInt(args[3]);
 		long waitTimes = Long.parseLong(args[4]) * 1000;
 
-		final DirectoryWatcher dirwatcher = new DirectoryWatcher(dir, waitTimes);
+		final DirectoryWatcher dirwatcher = new DirectoryWatcher(dirToBeWatched, waitTimes);
 		Thread thread = new Thread(dirwatcher);
 		thread.setDaemon(true);
 		thread.start();
@@ -386,16 +395,27 @@ public class DirectoryWatcher implements Runnable{
 
 		for(;;) {
 			try {
-				Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+				Files.walkFileTree(dirToBeWatched, new SimpleFileVisitor<Path>() {
 					@Override
 					public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs)
 							throws IOException
 					{
 						String dirPath = path.toString();
-						if(!dirPath.equals(dir.toString()) && !dirPath.startsWith(dirwatcher.miscDirPath.toString()) && !dirPath.startsWith(dirwatcher.failedDirPath.toString()) && !dirPath.startsWith(dirwatcher.completedDirPath.toString())) { // Dont register the failed and completed dir...
+						/* We shouldnt register for the following
+						 * 1) configured main watched dir itself
+						 * 2) predefined subfolders like MISC,Validated,ValFailed,Copied,CopyFailed
+						 * 3) already registered artifacts in the previous poll which are either getting copied or verified segments 
+						 * 
+						 * In other words we should only register artifact directories that are aged than configured folderAgeInMts and that too only once
+						*/ 
+						if(!dirPath.equals(dirToBeWatched.toString()) && 
+								!dirPath.startsWith(dirwatcher.miscDirPath.toString()) && !dirPath.startsWith(dirwatcher.failedDirPath.toString()) && 
+								!dirPath.startsWith(dirwatcher.completedDirPath.toString()) && !dirPath.startsWith(dirwatcher.copiedDirPath.toString()) && 
+								!dirPath.startsWith(dirwatcher.copyFailedDirPath.toString()) && 
+								!dirwatcher.verifyPendingArtifacts.contains(path) && !dirwatcher.copyingArtifacts.contains(path)) { // Dont register the failed and completed dir...
 							FileTime lastModified = attrs.lastModifiedTime();
-							long hourInMillis = (long) Math.ceil(folderAgeInHr * 60 * 60 * 1000);
-							if(System.currentTimeMillis() > lastModified.toMillis() + hourInMillis) {
+							long mtsInMillis = folderAgeInMts * 60 * 1000;
+							if(System.currentTimeMillis() > lastModified.toMillis() + mtsInMillis) {
 								dirwatcher.register(path);
 							}
 						}
