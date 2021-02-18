@@ -1,7 +1,6 @@
 package org.ishafoundation.dwara.misc.watcher;
 
 
-import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
@@ -21,10 +20,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -53,7 +54,8 @@ public class DirectoryWatcher implements Runnable{
 	private static Logger logger = LoggerFactory.getLogger(DirectoryWatcher.class);
 
 	private final WatchService watchService;
-	private final Path watchedDir;
+	private final Path watchedDirPath;
+	private final Path csvDirPath;
 	private final Map<WatchKey,Path> keys;
 	private final Map<Path, Long> expirationTimes = new HashMap<Path, Long>();
 	private Long newFileWait = 10000L;
@@ -61,9 +63,9 @@ public class DirectoryWatcher implements Runnable{
 	
 	private Set<Path> copyingArtifacts = new TreeSet<Path>();
 	private Set<Path> verifyPendingArtifacts = new TreeSet<Path>();
-	private Path miscDirPath = null; // Hardcoded - will be watchedDir + failedDirName;
-	private Path completedDirPath = null; // Hardcoded - will be watchedDir + completedDirName;
-	private Path failedDirPath = null; // Hardcoded - will be watchedDir + failedDirName;
+	private Path miscDirPath = null;
+	private Path validatedDirPath = null;
+	private Path failedDirPath = null;
 	private Path copiedDirPath = null;
 	private Path copyFailedDirPath = null;
 	private Map<Path, Integer> artifact_Retrycount_Map = new HashMap<Path, Integer>();
@@ -76,16 +78,19 @@ public class DirectoryWatcher implements Runnable{
 	/**
 	 * Creates a WatchService and registers the given directory
 	 */
-	DirectoryWatcher(Path watchedDirPath, Long waitTime) throws IOException {
+	DirectoryWatcher(Path watchedDir, Path systemDir, Path csvDir, Long waitTime) throws IOException {
 		this.watchService = FileSystems.getDefault().newWatchService();
-		this.watchedDir = watchedDirPath;
+		this.watchedDirPath = watchedDir;
+		
+		this.csvDirPath = csvDir;
 		this.newFileWait = waitTime;
 		this.keys = new HashMap<WatchKey,Path>();
 		this.miscDirPath = Paths.get(watchedDir.toString(), Constants.miscDirName);
 		this.failedDirPath = Paths.get(watchedDir.toString(), Constants.failedDirName);
-		this.completedDirPath = Paths.get(watchedDir.toString(), Constants.completedDirName);
-		this.copiedDirPath = Paths.get(watchedDir.toString(), Constants.copiedDirName);
-		this.copyFailedDirPath = Paths.get(watchedDir.toString(), Constants.copyFailedDirName);
+		
+		this.validatedDirPath = Paths.get(systemDir.toString(), Constants.validatedDirName);
+		this.copiedDirPath = Paths.get(systemDir.toString(), Constants.copiedDirName);
+		this.copyFailedDirPath = Paths.get(systemDir.toString(), Constants.copyFailedDirName);
 	}
 
 	/**
@@ -114,7 +119,13 @@ public class DirectoryWatcher implements Runnable{
 		try {
 			if(!artifactDirPath.toString().endsWith("mxf"))
 				updateStatus(artifactDirPath, Status.copying);
-			clei.executeCommand("chmod -R 777 " + artifactDirPath, false);
+
+			List<String> setFilePermissionsCommandParamsList = new ArrayList<String>();
+			setFilePermissionsCommandParamsList.add("chmod");
+			setFilePermissionsCommandParamsList.add("-R");
+			setFilePermissionsCommandParamsList.add("777");
+			setFilePermissionsCommandParamsList.add(artifactDirPath.toString());
+			clei.executeCommand(setFilePermissionsCommandParamsList, false);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 		}
@@ -162,17 +173,8 @@ public class DirectoryWatcher implements Runnable{
 							if (logger.isTraceEnabled())
 								logger.trace(String.format("%s: %s\n", event.kind().name(), child));
 	
-							// Update modified time
-							BasicFileAttributes attrs = null;
-							try {
-								attrs = Files.readAttributes(child, BasicFileAttributes.class, NOFOLLOW_LINKS);
-							} catch (IOException e) {
-								continue; // Happens when copy complete, but permissions set by stagedservice triggered this event but by then the stagedservice thread moved this file to /data/staged...
-							}
-							FileTime lastModified = attrs.lastModifiedTime();
-							if (logger.isTraceEnabled())
-								System.out.println(child + " lastModified " + lastModified);
-							expirationTimes.put(child, lastModified.toMillis()+newFileWait);
+							if(expirationTimes.get(child.getParent()) != null)
+								expirationTimes.put(child.getParent(), System.currentTimeMillis()+newFileWait);
 						}
 	
 						// reset key and remove from set if directory no longer accessible
@@ -214,7 +216,7 @@ public class DirectoryWatcher implements Runnable{
 	}
 
 	private String getArtifactName(Path child){
-		String filePathMinusWatchDirPrefix = child.toString().replace(watchedDir.toString() + File.separator, "");
+		String filePathMinusWatchDirPrefix = child.toString().replace(watchedDirPath.toString() + File.separator, "");
 		String artifactName = StringUtils.substringBefore(filePathMinusWatchDirPrefix, File.separator);
 		return artifactName;
 	}
@@ -226,37 +228,35 @@ public class DirectoryWatcher implements Runnable{
 		{
 			Entry<Path, Long> item = (Entry<Path, Long>) it.next();
 			Long expiryTime = (Long) item.getValue();
-			Path filePath = item.getKey();
-
+			Path artifactPath = item.getKey();
+			
 			if(expiryTime <= currentTime) {
-				if(filePath.getFileName().toString().endsWith(".mxf")) {
-					updateStatus(filePath, Status.copy_complete);
-					createTaskAndExecute(filePath);
-				}
+				updateStatus(artifactPath, Status.copy_complete);
+				createTaskAndExecute(artifactPath);
 				it.remove();
 			}
 		}
 	}
 
-	private void createTaskAndExecute(Path mxfFilePath) throws Exception{
+	private void createTaskAndExecute(Path artifactPath) throws Exception{
 		Task task = new Task();
-		task.setMxfFilePath(mxfFilePath);
-		copyingArtifacts.remove(mxfFilePath.getParent());
-		verifyPendingArtifacts.add(mxfFilePath.getParent());
+		task.setArtifactPath(artifactPath);
+		copyingArtifacts.remove(artifactPath);
+		verifyPendingArtifacts.add(artifactPath);
 		executor.execute(task);
 	}
 
 	public class Task implements Runnable{
 
-		private Path mxfFilePathname; // will have something like /data/prasad-staging/H122/H122.mxf
+		private Path artifactPath; // will have something like /data/prasad-staging/H122/H122.mxf
 
-		public void setMxfFilePath(Path mxfFilePathname) {
-			this.mxfFilePathname = mxfFilePathname; 
+		public void setArtifactPath(Path artifactPath) {
+			this.artifactPath = artifactPath; 
 		}
 		
 		@Override
 		public void run() {
-			Path artifactPath = mxfFilePathname.getParent(); 
+			//Path artifactPath = mxfFilePathname.getParent(); 
 			File artifactFileObj = artifactPath.toFile();
 
 			if(!artifactFileObj.isDirectory())
@@ -322,12 +322,12 @@ public class DirectoryWatcher implements Runnable{
 		Status status = Status.moved_to_failed_dir;
 		// move it to completed folder
 		if(completed) {
-			destRootPath = completedDirPath.toString();
+			destRootPath = validatedDirPath.toString();
 			status = Status.moved_to_validated_dir;
-			csvFileName = Constants.completedCsvName;
+			csvFileName = Constants.validatedCsvName;
 		}
 		Path destPath = Paths.get(destRootPath, artifactName);
-		Path csvFilePath = Paths.get(watchedDir.toString(), csvFileName);
+		Path csvFilePath = Paths.get(csvDirPath.toString(), csvFileName);
 		try {
 			MoveUtil.move(artifactPath, destPath);
 			updateStatus(artifactPath, status);
@@ -370,23 +370,45 @@ public class DirectoryWatcher implements Runnable{
 	}
 
 	static void usage() {
-		System.err.println("usage: java -cp dwara-watcher-2.0.jar org.ishafoundation.dwara.misc.watcher.DirectoryWatcher <dirToBeWatched(\"/data/prasad-staging\")> folderAgeInMts folderAgePollingIntervalInMts noOfThreadsForChksumValidation watchEventExpiryWaitTimeInSecs");
+		System.err.println("usage: java -cp dwara-watcher-2.0.jar org.ishafoundation.dwara.misc.watcher.DirectoryWatcher "
+				+ "<dirToBeWatched(\"/data/prasad-staging\")> "
+				+ "folderAgeInSecs "
+				+ "folderAgePollingIntervalInSecs "
+				+ "watchEventExpiryWaitTimeInSecs "
+				+ "systemDirPath "
+				+ "csvsDirPath "
+				+ "noOfThreadsForChksumValidation");
+		System.err.println("where,");
+		System.err.println("args[0] - dirToBeWatched - The directory where this service needs to watched for modify events on files");
+		System.err.println("args[1] - folderAgeInSecs - The wait period only after which the files are watched for events");
+		System.err.println("args[2] - folderAgePollingIntervalInSecs - The polling interval to check if there are directories in <dirToBeWatched> that are past <folderAgeInSecs>");
+		System.err.println("args[3] - watchEventExpiryWaitTimeInSecs - Timeout Interval for waiting on watching with no events");
+		System.err.println("args[4] - systemDirPath - The directory where sub directories needed by system like \"Validated\", \"Copied\", \"CopyFailed\" need to be");
+		System.err.println("args[5] - csvsDirPath - The directory in which csv files need to be created");
+		System.err.println("args[6] - noOfThreadsForChksumValidation - no of parallel processing threads after copy is complete");
 		System.exit(-1);
 	}
 	
+	/**
+	 * 
+
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
 		// parse arguments
-		if (args.length != 5)
+		if (args.length != 7)
 			usage();
 
 		// register directory and process its events
 		final Path dirToBeWatched = Paths.get(args[0]);
-		final int folderAgeInMts = Integer.parseInt(args[1]);
-		int folderAgePollingIntervalInMts = Integer.parseInt(args[2]);
-		int noOfThreadsForChksumValidation = Integer.parseInt(args[3]);
-		long waitTimes = Long.parseLong(args[4]) * 1000;
-
-		final DirectoryWatcher dirwatcher = new DirectoryWatcher(dirToBeWatched, waitTimes);
+		final long folderAgeInSecs = Long.parseLong(args[1]) * 1000;
+		long folderAgePollingIntervalInSecs = Long.parseLong(args[2]) * 1000;
+		long waitTimes = Long.parseLong(args[3]) * 1000;
+		final Path systemDirLocation = Paths.get(args[4]);
+		final Path csvLocation = Paths.get(args[5]); 
+		int noOfThreadsForChksumValidation = Integer.parseInt(args[6]);
+		
+		final DirectoryWatcher dirwatcher = new DirectoryWatcher(dirToBeWatched, systemDirLocation, csvLocation, waitTimes);
 		Thread thread = new Thread(dirwatcher);
 		thread.setDaemon(true);
 		thread.start();
@@ -410,12 +432,11 @@ public class DirectoryWatcher implements Runnable{
 						*/ 
 						if(!dirPath.equals(dirToBeWatched.toString()) && 
 								!dirPath.startsWith(dirwatcher.miscDirPath.toString()) && !dirPath.startsWith(dirwatcher.failedDirPath.toString()) && 
-								!dirPath.startsWith(dirwatcher.completedDirPath.toString()) && !dirPath.startsWith(dirwatcher.copiedDirPath.toString()) && 
+								!dirPath.startsWith(dirwatcher.validatedDirPath.toString()) && !dirPath.startsWith(dirwatcher.copiedDirPath.toString()) && 
 								!dirPath.startsWith(dirwatcher.copyFailedDirPath.toString()) && 
 								!dirwatcher.verifyPendingArtifacts.contains(path) && !dirwatcher.copyingArtifacts.contains(path)) { // Dont register the failed and completed dir...
 							FileTime lastModified = attrs.lastModifiedTime();
-							long mtsInMillis = folderAgeInMts * 60 * 1000;
-							if(System.currentTimeMillis() > lastModified.toMillis() + mtsInMillis) {
+							if(System.currentTimeMillis() > lastModified.toMillis() + folderAgeInSecs) {
 								dirwatcher.register(path);
 							}
 						}
@@ -423,7 +444,7 @@ public class DirectoryWatcher implements Runnable{
 					}
 				});
 				
-				Thread.sleep(folderAgePollingIntervalInMts * 60 * 1000);
+				Thread.sleep(folderAgePollingIntervalInSecs);
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}

@@ -33,8 +33,10 @@ public class ArtifactValidator {
 		ArtifactValidationResponse avr = new ArtifactValidationResponse();
 		
 		if(artifactName.contains(" ")) { // For now just space
+			String failureReason = "Artifact Name contains space";
+			logger.error(failureReason);
 			avr.setValid(false);
-			avr.setFailureReason("Artifact Name contains space");
+			avr.setFailureReason(failureReason);
 			return avr;
 		}
 		
@@ -43,8 +45,10 @@ public class ArtifactValidator {
 			String sequencePart = dvFullTapeName.group(2);
 			Matcher sequence = sequenceLeadingZeroRegEx.matcher(sequencePart);
 			if(sequence.matches()) {
+				String failureReason = "Artifact Name contains leading zeroes";
+				logger.error(failureReason);
 				avr.setValid(false);
-				avr.setFailureReason("Artifact Name contains leading zeroes");
+				avr.setFailureReason(failureReason);
 				return avr;
 			}
 		}
@@ -55,13 +59,17 @@ public class ArtifactValidator {
 				String sequencePart = dvMultiPartTapeName.group(3);
 				Matcher sequence = sequenceLeadingZeroRegEx.matcher(sequencePart);
 				if(sequence.matches()) {
+					String failureReason = "Artifact Part Name contains leading zeroes";
+					logger.error(failureReason);
 					avr.setValid(false);
-					avr.setFailureReason("Artifact Part Name contains leading zeroes");
+					avr.setFailureReason(failureReason);
 					return avr;
 				}
 			}else {
+				String failureReason = "Artifact with Parts should be something like \"AB123_PART_1\"";
+				logger.error(failureReason);
 				avr.setValid(false);
-				avr.setFailureReason("Artifact with Parts should be something like \"AB123_PART_1\"");
+				avr.setFailureReason(failureReason);
 				return avr;
 			}
 		}

@@ -118,28 +118,29 @@ public class Ingester {
 
 		for(;;) {
 			try {
-				Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
-					@Override
-					public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs)
-							throws IOException
-					{
-						String dirPath = path.toString();
-						if(!dirPath.equals(dir.toString())) {
-							// Move the folder from prasad area to ingest user area
-							Path destArtifactPath;
-							try {
-								destArtifactPath = moveFolderToIngestUserArea(path);
-								// now trigger ingest
-								ingest(destArtifactPath);
-							} catch (Exception e) {
-								logger.error("Unable to move " + path + ". Skipping ingesting it");
-								return FileVisitResult.CONTINUE;
+				if(dir.toFile().exists()) {
+					Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+						@Override
+						public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs)
+								throws IOException
+						{
+							String dirPath = path.toString();
+							if(!dirPath.equals(dir.toString())) {
+								// Move the folder from prasad area to ingest user area
+								Path destArtifactPath;
+								try {
+									destArtifactPath = moveFolderToIngestUserArea(path);
+									// now trigger ingest
+									ingest(destArtifactPath);
+								} catch (Exception e) {
+									logger.error("Unable to move " + path + ". Skipping ingesting it");
+									return FileVisitResult.CONTINUE;
+								}
 							}
+							return FileVisitResult.CONTINUE;
 						}
-						return FileVisitResult.CONTINUE;
-					}
-				});
-				
+					});
+				}
 				Thread.sleep(validatedFolderPollingIntervalInMts * 60 * 1000);
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);

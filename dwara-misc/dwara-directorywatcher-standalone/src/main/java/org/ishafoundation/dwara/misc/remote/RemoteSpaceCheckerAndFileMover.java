@@ -21,7 +21,23 @@ public class RemoteSpaceCheckerAndFileMover {
 	
 	// java org.ishafoundation.dwara.misc.RemoteSpaceCheckerAndFileMover "172.18.1.200" "dwara" "/opt/dwara/.ssh/id_rsa" 1 3000 "/data/prasad-staging/completed" "/data/prasad-staging-test-213"
 	private static void usage() {
-		System.err.println("usage: java org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover remoteServerIP remoteServerSshUserName localServerPubKeyLocation thresholdSizeInGB localWatchedDirLocation remoteWatchedDirLocation");
+		System.err.println("usage: java org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover "
+				+ "remoteServerIP "
+				+ "remoteServerSshUserName "
+				+ "localServerPubKeyLocation "
+				+ "thresholdSizeInGB "
+				+ "localWatchedDirLocation "
+				+ "remoteWatchedDirLocation");
+		
+		System.err.println("where,");
+		System.err.println("args[0] - remoteServerIP - The host IP to which files are to be copied");
+		System.err.println("args[1] - remoteServerSshUserName - The ssh username to be used to connect the remote host");
+		System.err.println("args[2] - localServerPubKeyLocation - The key to connect to remote host");
+		System.err.println("args[3] - thresholdSizeInGB - Free space threshold. If remote server has < this value we should not copy");
+		System.err.println("args[4] - localSystemDirLocation - The directory where sub directories like \"Validated\", \"Copied\", \"CopyFailed\" will be");
+		System.err.println("args[5] - remoteWatchedDirLocation - The directory watched by the remote servers watcher");
+		
+		System.err.println("e.g.,");
 		System.err.println("cd /opt/dwara/bin; nohup java -cp dwara-watcher-2.0.jar -Dlogback.configurationFile=logback-filemover.xml org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover \"172.18.1.213\" \"dwara\" \"/opt/dwara/.ssh/id_rsa\" 1 3000 \"/data/prasad-staging\" \"/data/prasad-staging\"&");
 		System.exit(-1);
 	}
@@ -38,14 +54,14 @@ public class RemoteSpaceCheckerAndFileMover {
         String prvKeyFileLocation = args[2]; // local server' pub key location in local
 		long waitTimesInMilliSec = Integer.parseInt(args[3]) * 60 * 1000; // loop interval in minutes
         int configuredThresholdInGB = Integer.parseInt(args[4]); //Threshold size in GB- eg., 6144 for 6TB
-        String localDirLocation = args[5]; // local server root dir location /data/prasad-staging
+        String localSystemDirLocation = args[5]; // local server root dir location /data/prasad-staging
         String remoteServerDirLocation = args[6]; // Remote server watcher location /data/prasad-staging
 
         
         
-        String copiedDirLocation = Paths.get(localDirLocation, Constants.copiedDirName).toString();
-        String validatedDirLocation = Paths.get(localDirLocation, Constants.completedDirName).toString();
-        String copyFailedDirLocation = Paths.get(localDirLocation, Constants.copyFailedDirName).toString();
+        String copiedDirLocation = Paths.get(localSystemDirLocation, Constants.copiedDirName).toString();
+        String validatedDirLocation = Paths.get(localSystemDirLocation, Constants.validatedDirName).toString();
+        String copyFailedDirLocation = Paths.get(localSystemDirLocation, Constants.copyFailedDirName).toString();
         
 		for (;;) { //infinite loop
 			File copiedDirObj = new File(copiedDirLocation);
@@ -74,18 +90,20 @@ public class RemoteSpaceCheckerAndFileMover {
 				        		String artifactName = artifactDirectory.getName();
 				        		
 				        		ChecksumStatus chkSumStatus = isChecksumValidatedInIngest(remoteCommandLineExecuter, jSchSession, artifactName);
-				        		switch (chkSumStatus) {
-									case valid:
-										FileUtils.deleteDirectory(artifactDirectory);
-										logger.info("Deleted succesfully " + artifactName);
-										break;
-									case invalid:
-										logger.warn("Copy and validate chksum failed " + artifactName + ". Moving " + artifactName + " to copyfailed dir");
-										MoveUtil.move(artifactDirectory.toPath(), Paths.get(artifactDirectory.getAbsolutePath().replace(copiedDirLocation, copyFailedDirLocation)));
-										break;
-									case pending:
-										break;
-								}
+				        		if(chkSumStatus != null) {
+					        		switch (chkSumStatus) {
+										case valid:
+											FileUtils.deleteDirectory(artifactDirectory);
+											logger.info("Deleted succesfully " + artifactName);
+											break;
+										case invalid:
+											logger.warn("Copy and validate chksum failed " + artifactName + ". Moving " + artifactName + " to copyfailed dir");
+											MoveUtil.move(artifactDirectory.toPath(), Paths.get(artifactDirectory.getAbsolutePath().replace(copiedDirLocation, copyFailedDirLocation)));
+											break;
+										case pending:
+											break;
+									}
+				        		}
 				        	}
 				        }catch (Exception e) {
 				        	logger.error("Unable to check if chksum validated on ingest " + e.getMessage(), e);
@@ -153,7 +171,12 @@ public class RemoteSpaceCheckerAndFileMover {
 			CommandLineExecutionResponse commandLineExecutionResponse = remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, "ingestServerChkSumCompletion.out_mv_qcErr");
 			
 			String stdOutResponseAsString = commandLineExecutionResponse.getStdOutResponse().trim();
-			return ChecksumStatus.valueOf(stdOutResponseAsString);
+			try {
+				return ChecksumStatus.valueOf(stdOutResponseAsString);	
+			}catch (Exception e) {
+				logger.warn("Not expected response " + stdOutResponseAsString);
+				return null;
+			}
         }catch (Exception e) {
         	logger.error("Unable to execute " + command1 + " remotely" + e.getMessage(), e);
         	throw e;
