@@ -19,45 +19,43 @@ public class RemoteSpaceCheckerAndFileMover {
 	
 	private static Logger logger = LoggerFactory.getLogger(RemoteSpaceCheckerAndFileMover.class);
 	
-	// java org.ishafoundation.dwara.misc.RemoteSpaceCheckerAndFileMover "172.18.1.200" "dwara" "/opt/dwara/.ssh/id_rsa" 1 3000 "/data/prasad-staging/completed" "/data/prasad-staging-test-213"
 	private static void usage() {
 		System.err.println("usage: java org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover "
+				+ "localSystemDirLocation "
+				+ "pollingIntervalInSecs "
 				+ "remoteServerIP "
 				+ "remoteServerSshUserName "
-				+ "localServerPubKeyLocation "
+				+ "remoteServerPubKeyLocationInLocal "
 				+ "thresholdSizeInGB "
-				+ "localWatchedDirLocation "
 				+ "remoteWatchedDirLocation");
 		
 		System.err.println("where,");
-		System.err.println("args[0] - remoteServerIP - The host IP to which files are to be copied");
-		System.err.println("args[1] - remoteServerSshUserName - The ssh username to be used to connect the remote host");
-		System.err.println("args[2] - localServerPubKeyLocation - The key to connect to remote host");
-		System.err.println("args[3] - thresholdSizeInGB - Free space threshold. If remote server has < this value we should not copy");
-		System.err.println("args[4] - localSystemDirLocation - The directory where sub directories like \"Validated\", \"Copied\", \"CopyFailed\" will be");
-		System.err.println("args[5] - remoteWatchedDirLocation - The directory watched by the remote servers watcher");
+		System.err.println("args[0] - localSystemDirLocation - The directory where sub directories like \"Validated\", \"Copied\", \"CopyFailed\" will be");
+		System.err.println("args[1] - pollingIntervalInSecs - The polling interval to check if there are artifacts ready for scp-ing or deleting");
+		System.err.println("args[2] - remoteServerIP - The host IP to which files are to be copied");
+		System.err.println("args[3] - remoteServerSshUserName - The ssh username to be used to connect the remote host");
+		System.err.println("args[4] - remoteServerPubKeyLocationInLocal - The key to connect to remote host");
+		System.err.println("args[5] - thresholdSizeInGB - Free space threshold. If remote server has < this value we should not copy");
+		System.err.println("args[6] - remoteWatchedDirLocation - The directory watched by the remote servers watcher");
 		
 		System.err.println("e.g.,");
-		System.err.println("cd /opt/dwara/bin; nohup java -cp dwara-watcher-2.0.jar -Dlogback.configurationFile=logback-filemover.xml org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover \"172.18.1.213\" \"dwara\" \"/opt/dwara/.ssh/id_rsa\" 1 3000 \"/data/prasad-staging\" \"/data/prasad-staging\"&");
+		System.err.println("cd /opt/dwara/bin; nohup java -cp dwara-watcher-2.0.jar -Dlogback.configurationFile=logback-filemover.xml org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover \"/data/prasad-staging\" 60 \"172.18.1.213\" \"dwara\" \"/opt/dwara/.ssh/id_rsa\" 3000  \"/data/prasad-staging\"&");
 		System.exit(-1);
 	}
 
 	
 	public static void main(String[] args) {
-		
 		// parse arguments
 		if (args.length != 7)
 			usage();
 
-		String host = args[0]; // remote server ip
-        String sshUser = args[1]; // remote server sshUsername
-        String prvKeyFileLocation = args[2]; // local server' pub key location in local
-		long waitTimesInMilliSec = Integer.parseInt(args[3]) * 60 * 1000; // loop interval in minutes
-        int configuredThresholdInGB = Integer.parseInt(args[4]); //Threshold size in GB- eg., 6144 for 6TB
-        String localSystemDirLocation = args[5]; // local server root dir location /data/prasad-staging
+		String localSystemDirLocation = args[0]; // local server root dir location /data/prasad-staging
+		long waitTimesInMilliSec = Long.parseLong(args[1]) * 1000; // loop interval in secs
+		String host = args[2]; // remote server ip
+        String sshUser = args[3]; // remote server sshUsername
+        String prvKeyFileLocation = args[4]; // local server' pub key location in local
+        int configuredThresholdInGB = Integer.parseInt(args[5]); //Threshold size in GB- eg., 6144 for 6TB
         String remoteServerDirLocation = args[6]; // Remote server watcher location /data/prasad-staging
-
-        
         
         String copiedDirLocation = Paths.get(localSystemDirLocation, Constants.copiedDirName).toString();
         String validatedDirLocation = Paths.get(localSystemDirLocation, Constants.validatedDirName).toString();
