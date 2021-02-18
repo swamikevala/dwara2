@@ -101,7 +101,16 @@ public class Ingester {
 	}
 	
 	private static void usage() {
-		System.err.println("usage: java Ingester <dirToBePolled(\"/data/prasad-staging/validated\")> <rootIngestLocation(\"/data/dwara/user/prasadcorp/ingest\")> <ingestEndpointUrl(\"http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest\")> validatedFolderPollingIntervalInMts");
+		System.err.println("usage: java Ingester <dirToBePolled(\"/data/prasad-staging/validated\")> "
+				+ "validatedFolderPollingIntervalInMts "
+				+ "<rootIngestLocation(\"/data/dwara/user/prasadcorp/ingest\")> "
+				+ "<ingestEndpointUrl(\"http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest\")>");
+		
+		System.err.println("args[0] - dirToBePolled - The directory where this service needs to look for files");
+		System.err.println("args[1] - validatedFolderPollingIntervalInMts - The polling interval to check if there are directories ready");
+		System.err.println("args[2] - rootIngestLocation - Dwara's user specific ingest directory from where ingests are launched. Note Artifactclass gets appended dynamically to the path");
+		System.err.println("args[3] - ingestEndpointUrl - Ingest api url");
+		
 		System.exit(-1);
 	}
 	
@@ -112,9 +121,10 @@ public class Ingester {
 			usage();
 
 		final Path dir = Paths.get(args[0]);
-		rootIngestLoc = Paths.get(args[1]);
-		ingestEndpointUrl = args[2]; // "http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest";
-		int validatedFolderPollingIntervalInMts = Integer.parseInt(args[3]);
+		int validatedFolderPollingIntervalInMts = Integer.parseInt(args[1]);
+		rootIngestLoc = Paths.get(args[2]);
+		ingestEndpointUrl = args[3]; // "http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest";
+		
 
 		for(;;) {
 			try {
@@ -140,6 +150,8 @@ public class Ingester {
 							return FileVisitResult.CONTINUE;
 						}
 					});
+				}else {
+					logger.warn(dir.toString() + " doesnt exist");
 				}
 				Thread.sleep(validatedFolderPollingIntervalInMts * 60 * 1000);
 			} catch (Exception e) {

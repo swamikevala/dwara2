@@ -408,6 +408,11 @@ public class DirectoryWatcher implements Runnable{
 		final Path csvLocation = Paths.get(args[5]); 
 		int noOfThreadsForChksumValidation = Integer.parseInt(args[6]);
 		
+		Path validatedCSVFilePath = Paths.get(csvLocation.toString(), Constants.validatedCsvName);
+		validatedCSVFilePath.toFile().createNewFile();
+		Path failedCSVFilePath = Paths.get(csvLocation.toString(), Constants.failedCsvName);
+		failedCSVFilePath.toFile().createNewFile();
+		
 		final DirectoryWatcher dirwatcher = new DirectoryWatcher(dirToBeWatched, systemDirLocation, csvLocation, waitTimes);
 		Thread thread = new Thread(dirwatcher);
 		thread.setDaemon(true);
@@ -417,32 +422,36 @@ public class DirectoryWatcher implements Runnable{
 
 		for(;;) {
 			try {
-				Files.walkFileTree(dirToBeWatched, new SimpleFileVisitor<Path>() {
-					@Override
-					public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs)
-							throws IOException
-					{
-						String dirPath = path.toString();
-						/* We shouldnt register for the following
-						 * 1) configured main watched dir itself
-						 * 2) predefined subfolders like MISC,Validated,ValFailed,Copied,CopyFailed
-						 * 3) already registered artifacts in the previous poll which are either getting copied or verified segments 
-						 * 
-						 * In other words we should only register artifact directories that are aged than configured folderAgeInMts and that too only once
-						*/ 
-						if(!dirPath.equals(dirToBeWatched.toString()) && 
-								!dirPath.startsWith(dirwatcher.miscDirPath.toString()) && !dirPath.startsWith(dirwatcher.failedDirPath.toString()) && 
-								!dirPath.startsWith(dirwatcher.validatedDirPath.toString()) && !dirPath.startsWith(dirwatcher.copiedDirPath.toString()) && 
-								!dirPath.startsWith(dirwatcher.copyFailedDirPath.toString()) && 
-								!dirwatcher.verifyPendingArtifacts.contains(path) && !dirwatcher.copyingArtifacts.contains(path)) { // Dont register the failed and completed dir...
-							FileTime lastModified = attrs.lastModifiedTime();
-							if(System.currentTimeMillis() > lastModified.toMillis() + folderAgeInSecs) {
-								dirwatcher.register(path);
+				if(dirToBeWatched.toFile().exists()) {
+					Files.walkFileTree(dirToBeWatched, new SimpleFileVisitor<Path>() {
+						@Override
+						public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs)
+								throws IOException
+						{
+							String dirPath = path.toString();
+							/* We shouldnt register for the following
+							 * 1) configured main watched dir itself
+							 * 2) predefined subfolders like MISC,Validated,ValFailed,Copied,CopyFailed
+							 * 3) already registered artifacts in the previous poll which are either getting copied or verified segments 
+							 * 
+							 * In other words we should only register artifact directories that are aged than configured folderAgeInMts and that too only once
+							*/ 
+							if(!dirPath.equals(dirToBeWatched.toString()) && 
+									!dirPath.startsWith(dirwatcher.miscDirPath.toString()) && !dirPath.startsWith(dirwatcher.failedDirPath.toString()) && 
+									!dirPath.startsWith(dirwatcher.validatedDirPath.toString()) && !dirPath.startsWith(dirwatcher.copiedDirPath.toString()) && 
+									!dirPath.startsWith(dirwatcher.copyFailedDirPath.toString()) && 
+									!dirwatcher.verifyPendingArtifacts.contains(path) && !dirwatcher.copyingArtifacts.contains(path)) { // Dont register the failed and completed dir...
+								FileTime lastModified = attrs.lastModifiedTime();
+								if(System.currentTimeMillis() > lastModified.toMillis() + folderAgeInSecs) {
+									dirwatcher.register(path);
+								}
 							}
+							return FileVisitResult.CONTINUE;
 						}
-						return FileVisitResult.CONTINUE;
-					}
-				});
+					});
+				}else {
+					logger.warn(dirToBeWatched.toString() + " doesnt exist");
+				}
 				
 				Thread.sleep(folderAgePollingIntervalInSecs);
 			} catch (Exception e) {

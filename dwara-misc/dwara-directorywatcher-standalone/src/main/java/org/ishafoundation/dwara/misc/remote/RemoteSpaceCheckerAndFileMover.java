@@ -170,13 +170,19 @@ public class RemoteSpaceCheckerAndFileMover {
 			logger.trace("executing remotely " + command1);
 			CommandLineExecutionResponse commandLineExecutionResponse = remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, "ingestServerChkSumCompletion.out_mv_qcErr");
 			
-			String stdOutResponseAsString = commandLineExecutionResponse.getStdOutResponse().trim();
-			try {
-				return ChecksumStatus.valueOf(stdOutResponseAsString);	
-			}catch (Exception e) {
-				logger.warn("Not expected response " + stdOutResponseAsString);
-				return null;
+			if(commandLineExecutionResponse.isComplete()) {
+				String stdOutResponseAsString = commandLineExecutionResponse.getStdOutResponse().trim();
+				
+				try {
+					return ChecksumStatus.valueOf(stdOutResponseAsString);	
+				}catch (Exception e) {
+					logger.warn("Not expected response " + stdOutResponseAsString);
+					return null;
+				}
+			}else {
+				throw new Exception(commandLineExecutionResponse.getFailureReason());
 			}
+
         }catch (Exception e) {
         	logger.error("Unable to execute " + command1 + " remotely" + e.getMessage(), e);
         	throw e;
@@ -188,9 +194,13 @@ public class RemoteSpaceCheckerAndFileMover {
 		try {
 			logger.trace("executing remotely " + command1);
 			CommandLineExecutionResponse commandLineExecutionResponse = remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, "ingestServerSpace.out_mv_qcErr");
-			
-			String spaceAsString = commandLineExecutionResponse.getStdOutResponse().trim();
-			return Integer.parseInt(spaceAsString);
+			if(commandLineExecutionResponse.isComplete()) {
+				String spaceAsString = commandLineExecutionResponse.getStdOutResponse().trim();
+				return Integer.parseInt(spaceAsString);
+			}else {
+				throw new Exception(commandLineExecutionResponse.getFailureReason());
+			}
+
         }catch (Exception e) {
         	logger.error("Unable to execute " + command1 + " remotely" + e.getMessage(), e);
         	throw e;
