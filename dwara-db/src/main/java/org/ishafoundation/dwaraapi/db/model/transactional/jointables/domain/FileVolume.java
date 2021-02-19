@@ -38,7 +38,7 @@ public class FileVolume {
 	private Integer volumeBlock; // volumeBlockStart
 
 	@Column(name="archive_block")
-	private Integer archiveBlock; // archiveBlockStart
+	private Long archiveBlock; // archiveBlockStart
 
 	@Column(name="header_blocks")
 	private Integer headerBlocks; // no. of HeaderBlocks consumed by the file...
@@ -76,11 +76,11 @@ public class FileVolume {
 		this.volumeBlock = volumeBlock;
 	}
 
-	public Integer getArchiveBlock() {
+	public Long getArchiveBlock() {
 		return archiveBlock;
 	}
 
-	public void setArchiveBlock(Integer archiveBlock) {
+	public void setArchiveBlock(Long archiveBlock) {
 		this.archiveBlock = archiveBlock;
 	}
 

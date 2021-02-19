@@ -169,7 +169,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			archivedFile.setFilePathName(filePathName);
 			archivedFile.setLinkName(taredFile.getLinkName());
 			
-			int archiveBlock = taredFile.getArchiveBlock();
+			Long archiveBlock = taredFile.getArchiveBlock();
 			archivedFile.setArchiveBlock(archiveBlock);
 			
 			// running total of volume block start
@@ -531,7 +531,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 				skipByteCount = 0; // bang on artifact
 			}else {
 				int firstFileVolumeBlock = 0;
-				int lastFileArchiveBlock = 0;
+				long lastFileArchiveBlock = 0;
 				int lastFileEndVolumeBlock = 0;
 				List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = selectedStorageJob.getArtifactFileList();
 				for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : fileList) {
@@ -539,7 +539,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 					if(nthArtifactFilePathname.startsWith(filePathname)) {
 						FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());// lets just let users use the util consistently
 						Integer filevolumeBlock = fileVolume.getVolumeBlock();
-						Integer filearchiveBlock = fileVolume.getArchiveBlock();
+						Long filearchiveBlock = fileVolume.getArchiveBlock();
 						Integer headerBlocks = fileVolume.getHeaderBlocks();
 						if(nthArtifactFilePathname.equals(filePathname)) { // first file
 							firstFileVolumeBlock = filevolumeBlock;
@@ -560,7 +560,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 //			noOfBlocksToBeRead = TarBlockCalculatorUtil.getFileVolumeBlocksCount(fileEndArchiveBlock, blockingFactor);
 
 			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, fileIdToBeRestored, volume.getId());// lets just let users use the util consistently
-			Integer filearchiveBlock = fileVolume.getArchiveBlock();
+			Long filearchiveBlock = fileVolume.getArchiveBlock();
 			Integer headerBlocks = fileVolume.getHeaderBlocks();
 			noOfBlocksToBeRead = artifactVolume.getDetails().getStartVolumeBlock() + TarBlockCalculatorUtil.getFileVolumeEndBlock(filePathname, filearchiveBlock, headerBlocks, fileSize, archiveformatBlocksize, blockingFactor) - seekedVolumeBlock;
 			skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filePathname, filearchiveBlock, archiveformatBlocksize, blockingFactor); 		
