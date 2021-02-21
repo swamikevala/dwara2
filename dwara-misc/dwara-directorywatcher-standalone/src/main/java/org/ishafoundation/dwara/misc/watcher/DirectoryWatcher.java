@@ -301,10 +301,7 @@ public class DirectoryWatcher implements Runnable{
 			catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}
-			
-			
 		}
-	
 
 		private void retryOrMove(String failureReason) throws Exception
 		{
@@ -380,7 +377,6 @@ public class DirectoryWatcher implements Runnable{
 		} catch (IOException e) {
 			logger.error("Unable to write csv " + csvFilePath +  " : " + e.getMessage(), e);
 		}
-		
 	}
 
 	private void updateStatus(Path child, Status status) throws Exception {
@@ -405,7 +401,7 @@ public class DirectoryWatcher implements Runnable{
 		System.err.println("args[4] - isChecksumVerificationNeeded - Boolean - Do we need to verify the checksum of the Mxf?");
 		System.err.println("args[5] - systemDirPath - The directory where sub directories needed by system like \"Validated\", \"Copied\", \"CopyFailed\" need to be");
 		System.err.println("args[6] - csvsDirPath - The directory in which csv files need to be created");
-		System.err.println("args[7] - noOfThreadsForChksumValidation - no of parallel processing threads after copy is complete");
+		System.err.println("args[7] - noOfThreadsForParallelProcessing - no of parallel processing threads after copy is complete");
 		System.exit(-1);
 	}
 	
@@ -416,7 +412,7 @@ public class DirectoryWatcher implements Runnable{
 	 */
 	public static void main(String[] args) throws Exception {
 		// parse arguments
-		if (args.length != 7)
+		if (args.length != 8)
 			usage();
 
 		// register directory and process its events
@@ -427,7 +423,7 @@ public class DirectoryWatcher implements Runnable{
 		Boolean isChecksumVerificationNeeded = Boolean.parseBoolean(args[4]);
 		final Path systemDirLocation = Paths.get(args[5]);
 		final Path csvLocation = Paths.get(args[6]); 
-		int noOfThreadsForChksumValidation = Integer.parseInt(args[7]);
+		int noOfThreadsForParallelProcessing = Integer.parseInt(args[7]);
 		
 		Path validatedCSVFilePath = Paths.get(csvLocation.toString(), Constants.validatedCsvName);
 		validatedCSVFilePath.toFile().createNewFile();
@@ -439,7 +435,7 @@ public class DirectoryWatcher implements Runnable{
 		thread.setDaemon(true);
 		thread.start();
 		
-		executor = new ThreadPoolExecutor(noOfThreadsForChksumValidation, noOfThreadsForChksumValidation, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+		executor = new ThreadPoolExecutor(noOfThreadsForParallelProcessing, noOfThreadsForParallelProcessing, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 
 		for(;;) {
 			try {
