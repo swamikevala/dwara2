@@ -282,13 +282,11 @@ public class DirectoryWatcher implements Runnable{
 				Collection<File> neededFiles = FileUtils.listFiles(artifactFileObj, ArtifactValidator.justNeededExtns, false);
 				avr = ArtifactValidator.neededFiles(artifactFileObj, neededFiles);
 				
-				if(avr.isValid() && !isChecksumVerificationNeeded){
-					move(artifactPath, true);	// if checksum verify is not needed move it to valid folder from here...
-				}else {
+				if(!avr.isValid())
 					retryOrMove(avr.getFailureReason());
-				}
-				
-				if(isChecksumVerificationNeeded) {
+				else if(avr.isValid() && !isChecksumVerificationNeeded){
+					move(artifactPath, true);	// if checksum verify is not needed move it to valid folder from here...
+				}else if(isChecksumVerificationNeeded) {
 					boolean isChecksumValid = ArtifactValidator.validateChecksum(artifactPath, neededFiles);
 					if(isChecksumValid){
 						move(artifactPath, true);		
@@ -296,6 +294,7 @@ public class DirectoryWatcher implements Runnable{
 						retryOrMove("md5 mismatch");
 					}
 				}
+			
 				verifyPendingArtifacts.remove(artifactPath);
 			}
 			catch (Exception e) {
@@ -315,7 +314,7 @@ public class DirectoryWatcher implements Runnable{
 		
 			if(retrycount <= 3) {
 				try {
-					logger.info("Could be because mxf is still not copied in full, but wait times expired[network latency etc.,]. Re-registering " + artifactPath + " - " + retrycount);
+					logger.info("Could be because artifact is still not copied in full, but wait times expired[network latency etc.,]. Re-registering " + artifactPath + " - " + retrycount);
 					register(artifactPath);
 				}catch (Exception e) {
 					logger.error("Unable to re-register - " + e.getMessage(), e);
