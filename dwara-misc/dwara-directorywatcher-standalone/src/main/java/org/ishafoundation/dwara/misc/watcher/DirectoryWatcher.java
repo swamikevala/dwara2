@@ -59,6 +59,7 @@ public class DirectoryWatcher implements Runnable{
 	private final Map<WatchKey,Path> keys;
 	private final Map<Path, Long> expirationTimes = new HashMap<Path, Long>();
 	private Long newFileWait = 10000L;
+	private boolean isChecksumVerificationNeeded = false;
 	private static Executor executor = null;
 	
 	private Set<Path> copyingArtifacts = new TreeSet<Path>();
@@ -78,13 +79,14 @@ public class DirectoryWatcher implements Runnable{
 	/**
 	 * Creates a WatchService and registers the given directory
 	 */
-	DirectoryWatcher(Path watchedDir, Path systemDir, Path csvDir, Long waitTime) throws IOException {
+	DirectoryWatcher(Path watchedDir,  Long waitTime, boolean isChecksumVerificationNeeded, Path systemDir, Path csvDir) throws IOException {
 		this.watchService = FileSystems.getDefault().newWatchService();
 		this.watchedDirPath = watchedDir;
 		
 		this.csvDirPath = csvDir;
 		this.newFileWait = waitTime;
 		this.keys = new HashMap<WatchKey,Path>();
+		this.isChecksumVerificationNeeded = isChecksumVerificationNeeded;
 		this.miscDirPath = Paths.get(watchedDir.toString(), Constants.miscDirName);
 		this.failedDirPath = Paths.get(watchedDir.toString(), Constants.failedDirName);
 		
@@ -156,7 +158,7 @@ public class DirectoryWatcher implements Runnable{
 							logger.error("WatchKey not recognized!!");
 							continue;
 						}
-	
+						
 						for (WatchEvent<?> event: key.pollEvents()) {
 							Kind<?> kind = event.kind();
 	
@@ -176,7 +178,7 @@ public class DirectoryWatcher implements Runnable{
 							if(expirationTimes.get(child.getParent()) != null)
 								expirationTimes.put(child.getParent(), System.currentTimeMillis()+newFileWait);
 						}
-	
+
 						// reset key and remove from set if directory no longer accessible
 						boolean valid = key.reset();
 						if (!valid) {
@@ -279,28 +281,19 @@ public class DirectoryWatcher implements Runnable{
 
 				Collection<File> neededFiles = FileUtils.listFiles(artifactFileObj, ArtifactValidator.justNeededExtns, false);
 				avr = ArtifactValidator.neededFiles(artifactFileObj, neededFiles);
-				boolean isChecksumValid = ArtifactValidator.validateChecksum(artifactPath, neededFiles);
-				if(avr.isValid() && isChecksumValid){
-					move(artifactPath, true);	
+				
+				if(avr.isValid() && !isChecksumVerificationNeeded){
+					move(artifactPath, true);	// if checksum verify is not needed move it to valid folder from here...
 				}else {
-					Integer retrycount = artifact_Retrycount_Map.get(artifactPath);
-					if(retrycount == null) {
-						retrycount = 1;
-						artifact_Retrycount_Map.put(artifactPath, retrycount);
-					}
-					else
-						artifact_Retrycount_Map.put(artifactPath, retrycount = retrycount + 1);
-	
-					if(retrycount <= 3) {
-						try {
-							logger.info("Could be because mxf is still not copied in full, but wait times expired[network latency etc.,]. Re-registering " + artifactPath + " - " + retrycount);
-							register(artifactPath);
-						}catch (Exception e) {
-							logger.error("Unable to re-register - " + e.getMessage(), e);
-						}
-					}else {// inspite of retries if side car files missing means source folder missing the mandatory files or if checksum fails, move it to "FAILED" folder
-						String failureReason = !isChecksumValid ? "MD5 mismatch" : avr.getFailureReason();
-						move(artifactPath, false, failureReason);
+					retryOrMove(avr.getFailureReason());
+				}
+				
+				if(isChecksumVerificationNeeded) {
+					boolean isChecksumValid = ArtifactValidator.validateChecksum(artifactPath, neededFiles);
+					if(isChecksumValid){
+						move(artifactPath, true);		
+					}else {
+						retryOrMove("md5 mismatch");
 					}
 				}
 				verifyPendingArtifacts.remove(artifactPath);
@@ -308,9 +301,34 @@ public class DirectoryWatcher implements Runnable{
 			catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}
+			
+			
+		}
+	
+
+		private void retryOrMove(String failureReason) throws Exception
+		{
+			Integer retrycount = artifact_Retrycount_Map.get(artifactPath);
+			if(retrycount == null) {
+				retrycount = 1;
+				artifact_Retrycount_Map.put(artifactPath, retrycount);
+			}
+			else
+				artifact_Retrycount_Map.put(artifactPath, retrycount = retrycount + 1);
+		
+			if(retrycount <= 3) {
+				try {
+					logger.info("Could be because mxf is still not copied in full, but wait times expired[network latency etc.,]. Re-registering " + artifactPath + " - " + retrycount);
+					register(artifactPath);
+				}catch (Exception e) {
+					logger.error("Unable to re-register - " + e.getMessage(), e);
+				}
+			}else {// inspite of retries if side car files missing means source folder missing the mandatory files or if checksum fails, move it to "FAILED" folder
+				move(artifactPath, false, failureReason);
+			}
 		}
 	}
-
+	
 	private void move(Path artifactPath, boolean completed) throws Exception{
 		move(artifactPath, completed, null);
 	}
@@ -375,6 +393,7 @@ public class DirectoryWatcher implements Runnable{
 				+ "folderAgeInSecs "
 				+ "folderAgePollingIntervalInSecs "
 				+ "watchEventExpiryWaitTimeInSecs "
+				+ "isChecksumVerificationNeeded "
 				+ "systemDirPath "
 				+ "csvsDirPath "
 				+ "noOfThreadsForChksumValidation");
@@ -383,9 +402,10 @@ public class DirectoryWatcher implements Runnable{
 		System.err.println("args[1] - folderAgeInSecs - The wait period only after which the files are watched for events");
 		System.err.println("args[2] - folderAgePollingIntervalInSecs - The polling interval to check if there are directories in <dirToBeWatched> that are past <folderAgeInSecs>");
 		System.err.println("args[3] - watchEventExpiryWaitTimeInSecs - Timeout Interval for waiting on watching with no events");
-		System.err.println("args[4] - systemDirPath - The directory where sub directories needed by system like \"Validated\", \"Copied\", \"CopyFailed\" need to be");
-		System.err.println("args[5] - csvsDirPath - The directory in which csv files need to be created");
-		System.err.println("args[6] - noOfThreadsForChksumValidation - no of parallel processing threads after copy is complete");
+		System.err.println("args[4] - isChecksumVerificationNeeded - Boolean - Do we need to verify the checksum of the Mxf?");
+		System.err.println("args[5] - systemDirPath - The directory where sub directories needed by system like \"Validated\", \"Copied\", \"CopyFailed\" need to be");
+		System.err.println("args[6] - csvsDirPath - The directory in which csv files need to be created");
+		System.err.println("args[7] - noOfThreadsForChksumValidation - no of parallel processing threads after copy is complete");
 		System.exit(-1);
 	}
 	
@@ -404,16 +424,17 @@ public class DirectoryWatcher implements Runnable{
 		final long folderAgeInSecs = Long.parseLong(args[1]) * 1000;
 		long folderAgePollingIntervalInSecs = Long.parseLong(args[2]) * 1000;
 		long waitTimes = Long.parseLong(args[3]) * 1000;
-		final Path systemDirLocation = Paths.get(args[4]);
-		final Path csvLocation = Paths.get(args[5]); 
-		int noOfThreadsForChksumValidation = Integer.parseInt(args[6]);
+		Boolean isChecksumVerificationNeeded = Boolean.parseBoolean(args[4]);
+		final Path systemDirLocation = Paths.get(args[5]);
+		final Path csvLocation = Paths.get(args[6]); 
+		int noOfThreadsForChksumValidation = Integer.parseInt(args[7]);
 		
 		Path validatedCSVFilePath = Paths.get(csvLocation.toString(), Constants.validatedCsvName);
 		validatedCSVFilePath.toFile().createNewFile();
 		Path failedCSVFilePath = Paths.get(csvLocation.toString(), Constants.failedCsvName);
 		failedCSVFilePath.toFile().createNewFile();
 		
-		final DirectoryWatcher dirwatcher = new DirectoryWatcher(dirToBeWatched, systemDirLocation, csvLocation, waitTimes);
+		final DirectoryWatcher dirwatcher = new DirectoryWatcher(dirToBeWatched, waitTimes, isChecksumVerificationNeeded, systemDirLocation, csvLocation);
 		Thread thread = new Thread(dirwatcher);
 		thread.setDaemon(true);
 		thread.start();
