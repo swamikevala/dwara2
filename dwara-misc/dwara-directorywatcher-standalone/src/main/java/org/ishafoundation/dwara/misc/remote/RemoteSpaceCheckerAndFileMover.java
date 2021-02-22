@@ -5,11 +5,11 @@ import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwara.misc.commandline.remote.sch.RemoteCommandLineExecuter;
+import org.ishafoundation.dwara.misc.commandline.remote.sch.SecuredCopier;
 import org.ishafoundation.dwara.misc.commandline.remote.sch.SshSessionHelper;
 import org.ishafoundation.dwara.misc.common.Constants;
 import org.ishafoundation.dwara.misc.common.MoveUtil;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
-import org.ishafoundation.dwaraapi.commandline.remote.scp.SecuredCopier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,34 +19,38 @@ public class RemoteSpaceCheckerAndFileMover {
 	
 	private static Logger logger = LoggerFactory.getLogger(RemoteSpaceCheckerAndFileMover.class);
 	
+	private static int scpBufferSize = 1024;
+	
 	private static void usage() {
 		System.err.println("usage: java org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover "
 				+ "localSystemDirLocation "
 				+ "pollingIntervalInSecs "
 				+ "remoteServerIP "
 				+ "remoteServerSshUserName "
-				+ "remoteServerPubKeyLocationInLocal "
+				+ "localServerPrivKeyLocation "
 				+ "thresholdSizeInGB "
-				+ "remoteWatchedDirLocation");
+				+ "remoteWatchedDirLocation "
+				+ "scpBufferSize");
 		
 		System.err.println("where,");
 		System.err.println("args[0] - localSystemDirLocation - The directory where sub directories like \"Validated\", \"Copied\", \"CopyFailed\" will be");
 		System.err.println("args[1] - pollingIntervalInSecs - The polling interval to check if there are artifacts ready for scp-ing or deleting");
 		System.err.println("args[2] - remoteServerIP - The host IP to which files are to be copied");
 		System.err.println("args[3] - remoteServerSshUserName - The ssh username to be used to connect the remote host");
-		System.err.println("args[4] - remoteServerPubKeyLocationInLocal - The key to connect to remote host");
+		System.err.println("args[4] - localServerPrivKeyLocation - The key to connect to remote host");
 		System.err.println("args[5] - thresholdSizeInGB - Free space threshold. If remote server has < this value we should not copy");
 		System.err.println("args[6] - remoteWatchedDirLocation - The directory watched by the remote servers watcher");
+		System.err.println("args[7] - scpBufferSize - Buffer size in bytes needed for reading stream for scp-ing");
+		
 		
 		System.err.println("e.g.,");
-		System.err.println("cd /opt/dwara/bin; nohup java -cp dwara-watcher-2.0.jar -Dlogback.configurationFile=logback-filemover.xml org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover \"/data/prasad-staging\" 60 \"172.18.1.213\" \"dwara\" \"/opt/dwara/.ssh/id_rsa\" 3000  \"/data/prasad-staging\"&");
+		System.err.println("cd /opt/dwara/bin; nohup java -cp dwara-watcher-2.0.jar -Dlogback.configurationFile=logback-filemover.xml org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover \"/data/prasad-staging\" 60 \"172.18.1.213\" \"dwara\" \"/opt/dwara/.ssh/id_rsa\" 3000  \"/data/prasad-staging\" 1024&");
 		System.exit(-1);
 	}
-
 	
 	public static void main(String[] args) {
 		// parse arguments
-		if (args.length != 7)
+		if (args.length != 8)
 			usage();
 
 		String localSystemDirLocation = args[0]; // local server root dir location /data/prasad-staging
@@ -56,6 +60,7 @@ public class RemoteSpaceCheckerAndFileMover {
         String prvKeyFileLocation = args[4]; // local server' pub key location in local
         int configuredThresholdInGB = Integer.parseInt(args[5]); //Threshold size in GB- eg., 6144 for 6TB
         String remoteServerDirLocation = args[6]; // Remote server watcher location /data/prasad-staging
+        scpBufferSize = Integer.parseInt(args[7]); // bufferSize
         
         String copiedDirLocation = Paths.get(localSystemDirLocation, Constants.copiedDirName).toString();
         String validatedDirLocation = Paths.get(localSystemDirLocation, Constants.validatedDirName).toString();
@@ -208,7 +213,7 @@ public class RemoteSpaceCheckerAndFileMover {
 	private static void copyFileToIngest(Session session, String localFilePath, String remoteFilePath) throws Exception {
 		SecuredCopier securedCopier = new SecuredCopier();
 		try {
-			securedCopier.copyTo(session, localFilePath, remoteFilePath);
+			securedCopier.copyTo(session, localFilePath, remoteFilePath, scpBufferSize);
 		}catch (Exception e) {
 			logger.error("Unable to remote copy " + localFilePath + " to " + remoteFilePath + " " +  e.getMessage(), e);
 			throw e;
