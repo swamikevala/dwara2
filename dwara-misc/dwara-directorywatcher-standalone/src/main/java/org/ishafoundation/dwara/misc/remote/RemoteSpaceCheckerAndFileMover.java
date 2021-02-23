@@ -150,7 +150,7 @@ public class RemoteSpaceCheckerAndFileMover {
 				        				try {
 							        		logger.info("Scp-ing " + artifactDirectory.getName());
 							        		
-							        		if(overSshSession) {
+							        		if(!overSshSession) {
 								        		CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
 								        		try {
 								        			List<String> setFilePermissionsCommandParamsList = new ArrayList<String>();
