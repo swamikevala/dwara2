@@ -11,7 +11,6 @@ import org.ishafoundation.dwara.misc.commandline.remote.sch.SecuredCopier;
 import org.ishafoundation.dwara.misc.commandline.remote.sch.SshSessionHelper;
 import org.ishafoundation.dwara.misc.common.Constants;
 import org.ishafoundation.dwara.misc.common.MoveUtil;
-import org.ishafoundation.dwara.misc.common.Status;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.slf4j.Logger;
@@ -25,6 +24,7 @@ public class RemoteSpaceCheckerAndFileMover {
 	
 	private static boolean overSshSession = false;
 	private static int scpBufferSize = 1024;
+	private static boolean encryptSsh = false;
 	
 	private static void usage() {
 		System.err.println("usage: java org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover "
@@ -36,6 +36,7 @@ public class RemoteSpaceCheckerAndFileMover {
 				+ "thresholdSizeInGB "
 				+ "remoteWatchedDirLocation "
 				+ "overSshSession "
+				+ "encryptSsh "
 				+ "scpBufferSize");
 		
 		System.err.println("where,");
@@ -47,28 +48,32 @@ public class RemoteSpaceCheckerAndFileMover {
 		System.err.println("args[5] - thresholdSizeInGB - Free space threshold. If remote server has < this value we should not copy");
 		System.err.println("args[6] - remoteWatchedDirLocation - The directory watched by the remote servers watcher");
 		System.err.println("args[7] - overSshSession - Boolean - Scp over a ssh session created? Else will use native passwordless ssh");
-		System.err.println("args[8] - scpBufferSize - Buffer size in bytes needed for reading stream for scp-ing, if above is false not effective");
+		System.err.println("args[8] - encryptSsh - Boolean - Should the ssh connection be encrypted");
+		System.err.println("args[9] - scpBufferSize - Buffer size in bytes needed for reading stream for scp-ing, if above is false not effective");
+		
 		
 		
 		System.err.println("e.g.,");
-		System.err.println("cd /opt/dwara/bin; nohup java -cp dwara-watcher-2.0.jar -Dlogback.configurationFile=logback-filemover.xml org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover \"/data/prasad-staging\" 60 \"172.18.1.213\" \"dwara\" \"/opt/dwara/.ssh/id_rsa\" 3000  \"/data/prasad-staging\" true 1024&");
+		System.err.println("cd /opt/dwara/bin; nohup java -cp dwara-watcher-2.0.jar -Dlogback.configurationFile=logback-filemover.xml org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover \"/data/prasad-staging\" 60 \"172.18.1.213\" \"dwara\" \"/opt/dwara/.ssh/id_rsa\" 3000  \"/data/prasad-staging\" true false 1024&");
 		System.exit(-1);
 	}
 	
 	public static void main(String[] args) {
 		// parse arguments
-		if (args.length != 9)
+		if (args.length != 10)
 			usage();
 
 		String localSystemDirLocation = args[0]; // local server root dir location /data/prasad-staging
 		long waitTimesInMilliSec = Long.parseLong(args[1]) * 1000; // loop interval in secs
 		String host = args[2]; // remote server ip
         String sshUser = args[3]; // remote server sshUsername
-        String prvKeyFileLocation = args[4]; // local server' pub key location in local
+        String prvKeyFileLocation = args[4]; // local server' priv key location
         int configuredThresholdInGB = Integer.parseInt(args[5]); //Threshold size in GB- eg., 6144 for 6TB
         String remoteServerDirLocation = args[6]; // Remote server watcher location /data/prasad-staging
         overSshSession = Boolean.parseBoolean(args[7]); // Is scp to be done over a ssh session created or using passwordless ssh
-        scpBufferSize = Integer.parseInt(args[8]); // bufferSize
+        encryptSsh = Boolean.parseBoolean(args[8]); // should the ssh connection be encrypted
+        scpBufferSize = Integer.parseInt(args[9]); // bufferSize
+        
         
         String copiedDirLocation = Paths.get(localSystemDirLocation, Constants.copiedDirName).toString();
         String validatedDirLocation = Paths.get(localSystemDirLocation, Constants.validatedDirName).toString();
@@ -91,6 +96,11 @@ public class RemoteSpaceCheckerAndFileMover {
 		        
 		        try {
 		        	jSchSession = sshSessionHelper.getSession(host, sshUser, prvKeyFileLocation);
+		        	
+		        	if(!encryptSsh) {
+			        	jSchSession.setConfig("cipher.s2c", "none,aes128-cbc,3des-cbc,blowfish-cbc");
+			        	jSchSession.setConfig("cipher.c2s", "none,aes128-cbc,3des-cbc,blowfish-cbc");
+		        	}
 		        	
 		        	if(copiedFiles.length > 0) {
 			        	logger.info("Deleting copied files ready for deletion");
@@ -145,6 +155,8 @@ public class RemoteSpaceCheckerAndFileMover {
 								        		try {
 								        			List<String> setFilePermissionsCommandParamsList = new ArrayList<String>();
 								        			setFilePermissionsCommandParamsList.add("scp");
+								        			setFilePermissionsCommandParamsList.add("-i");
+								        			setFilePermissionsCommandParamsList.add(prvKeyFileLocation);
 								        			setFilePermissionsCommandParamsList.add("-pr");
 								        			setFilePermissionsCommandParamsList.add(artifactDirectory.getAbsolutePath());
 								        			setFilePermissionsCommandParamsList.add(sshUser + "@" + host + ":" + remoteLocation);

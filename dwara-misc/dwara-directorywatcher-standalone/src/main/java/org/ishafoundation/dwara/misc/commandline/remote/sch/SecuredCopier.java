@@ -20,7 +20,7 @@ public class SecuredCopier {
 		FileInputStream fis = null;
 		try {
 			// exec 'scp -t rfile' remotely
-			String command = "scp " + "-pr \"" + remoteFilePath + "\"";
+			String command = "scp " + "-prt \"" + remoteFilePath + "\"";
 			Channel channel = session.openChannel("exec");
 			((ChannelExec) channel).setCommand(command);
 	
