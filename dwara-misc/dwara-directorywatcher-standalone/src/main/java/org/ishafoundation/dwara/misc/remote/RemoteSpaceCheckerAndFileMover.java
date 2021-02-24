@@ -22,6 +22,7 @@ public class RemoteSpaceCheckerAndFileMover {
 	
 	private static Logger logger = LoggerFactory.getLogger(RemoteSpaceCheckerAndFileMover.class);
 	
+	private static boolean isScp = false;
 	private static boolean overSshSession = false;
 	private static int scpBufferSize = 1024;
 	private static boolean encryptSsh = false;
@@ -35,6 +36,7 @@ public class RemoteSpaceCheckerAndFileMover {
 				+ "localServerPrivKeyLocation "
 				+ "thresholdSizeInGB "
 				+ "remoteWatchedDirLocation "
+				+ "isScp "
 				+ "overSshSession "
 				+ "encryptSsh "
 				+ "scpBufferSize");
@@ -47,20 +49,21 @@ public class RemoteSpaceCheckerAndFileMover {
 		System.err.println("args[4] - localServerPrivKeyLocation - The key to connect to remote host");
 		System.err.println("args[5] - thresholdSizeInGB - Free space threshold. If remote server has < this value we should not copy");
 		System.err.println("args[6] - remoteWatchedDirLocation - The directory watched by the remote servers watcher");
-		System.err.println("args[7] - overSshSession - Boolean - Scp over a ssh session created? Else will use native passwordless ssh");
-		System.err.println("args[8] - encryptSsh - Boolean - Should the ssh connection be encrypted");
-		System.err.println("args[9] - scpBufferSize - Buffer size in bytes needed for reading stream for scp-ing, if above is false not effective");
+		System.err.println("args[7] - isScp - Boolean - Is file transfer using Scp or using nc");
+		System.err.println("args[8] - overSshSession - Boolean - Scp over a ssh session created? Else will use native passwordless ssh");
+		System.err.println("args[9] - encryptSsh - Boolean - Should the ssh connection be encrypted");
+		System.err.println("args[10] - scpBufferSize - Buffer size in bytes needed for reading stream for scp-ing, if above is false not effective");
 		
 		
 		
 		System.err.println("e.g.,");
-		System.err.println("cd /opt/dwara/bin; nohup java -cp dwara-watcher-2.0.jar -Dlogback.configurationFile=logback-filemover.xml org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover \"/data/prasad-staging\" 60 \"172.18.1.213\" \"dwara\" \"/opt/dwara/.ssh/id_rsa\" 3000  \"/data/prasad-staging\" true false 1024&");
+		System.err.println("cd /opt/dwara/bin; nohup java -cp dwara-watcher-2.0.jar -Dlogback.configurationFile=logback-filemover.xml org.ishafoundation.dwara.misc.remote.RemoteSpaceCheckerAndFileMover \"/data/prasad-staging\" 60 \"172.18.1.213\" \"dwara\" \"/opt/dwara/.ssh/id_rsa\" 3000  \"/data/prasad-staging\" true true false 1024&");
 		System.exit(-1);
 	}
 	
 	public static void main(String[] args) {
 		// parse arguments
-		if (args.length != 10)
+		if (args.length != 11)
 			usage();
 
 		String localSystemDirLocation = args[0]; // local server root dir location /data/prasad-staging
@@ -70,9 +73,10 @@ public class RemoteSpaceCheckerAndFileMover {
         String prvKeyFileLocation = args[4]; // local server' priv key location
         int configuredThresholdInGB = Integer.parseInt(args[5]); //Threshold size in GB- eg., 6144 for 6TB
         String remoteServerDirLocation = args[6]; // Remote server watcher location /data/prasad-staging
-        overSshSession = Boolean.parseBoolean(args[7]); // Is scp to be done over a ssh session created or using passwordless ssh
-        encryptSsh = Boolean.parseBoolean(args[8]); // should the ssh connection be encrypted
-        scpBufferSize = Integer.parseInt(args[9]); // bufferSize
+        isScp = Boolean.parseBoolean(args[7]);
+        overSshSession = Boolean.parseBoolean(args[8]); // Is scp to be done over a ssh session created or using passwordless ssh
+        encryptSsh = Boolean.parseBoolean(args[9]); // should the ssh connection be encrypted
+        scpBufferSize = Integer.parseInt(args[10]); // bufferSize
         
         
         String copiedDirLocation = Paths.get(localSystemDirLocation, Constants.copiedDirName).toString();
@@ -145,32 +149,62 @@ public class RemoteSpaceCheckerAndFileMover {
 					        		logger.info("Space ok");
 				        			if(artifactDirectory.isDirectory()) {
 				        				String remoteLocation = remoteServerDirLocation + File.separator + artifactDirectory.getName();
+				        				/*
 				        				String command1 = "mkdir -p \"" + remoteLocation + "\"";
 				        				remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, artifactDirectory.getName() + ".out_mkdir");
+				        				*/
 				        				try {
-							        		logger.info("Scp-ing " + artifactDirectory.getName());
-							        		
-							        		if(!overSshSession) {
-								        		CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
+				        					if(isScp) {
+								        		logger.info("Scp-ing " + artifactDirectory.getName());
+								        		if(!overSshSession) {
+									        		CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
+									        		try {
+									        			List<String> scpCommandParamsList = new ArrayList<String>();
+									        			scpCommandParamsList.add("scp");
+									        			scpCommandParamsList.add("-i");
+									        			scpCommandParamsList.add(prvKeyFileLocation);
+									        			scpCommandParamsList.add("-pr");
+									        			scpCommandParamsList.add(artifactDirectory.getAbsolutePath());
+									        			scpCommandParamsList.add(sshUser + "@" + host + ":" + remoteLocation);
+									        			clei.executeCommand(scpCommandParamsList, false);
+									        		} catch (Exception e) {
+									        			logger.error(e.getMessage(), e);
+									        		}
+								        		}
+								        		else {
+							        				for (File file : artifactDirectory.listFiles()) {
+						        						copyFileToIngest(jSchSession, file.getAbsolutePath(), remoteLocation + File.separator + file.getName());
+							        				}
+								        		}
+						        				logger.info("Scp complete " + artifactDirectory.getName());
+					        				}
+				        					else {
+				        						CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
 								        		try {
-								        			List<String> setFilePermissionsCommandParamsList = new ArrayList<String>();
-								        			setFilePermissionsCommandParamsList.add("scp");
-								        			setFilePermissionsCommandParamsList.add("-i");
-								        			setFilePermissionsCommandParamsList.add(prvKeyFileLocation);
-								        			setFilePermissionsCommandParamsList.add("-pr");
-								        			setFilePermissionsCommandParamsList.add(artifactDirectory.getAbsolutePath());
-								        			setFilePermissionsCommandParamsList.add(sshUser + "@" + host + ":" + remoteLocation);
-								        			clei.executeCommand(setFilePermissionsCommandParamsList, false);
+								        			List<String> ncCommandParamsList = new ArrayList<String>();
+								        			ncCommandParamsList.add("sh");
+								        			ncCommandParamsList.add("-c");
+								        			ncCommandParamsList.add("cd");
+								        			ncCommandParamsList.add(validatedDirLocation);
+								        			ncCommandParamsList.add(";");
+								        			ncCommandParamsList.add("tar");
+								        			ncCommandParamsList.add("-cf");
+								        			ncCommandParamsList.add(artifactDirectory.getName());
+								        			ncCommandParamsList.add("|");
+								        			ncCommandParamsList.add("nc");
+								        			ncCommandParamsList.add("-v");
+								        			ncCommandParamsList.add(host);
+								        			ncCommandParamsList.add("7000");
+								        			CommandLineExecutionResponse cer = clei.executeCommand(ncCommandParamsList, false);
+								        			if(cer.isComplete())
+								        				logger.info("Copy complete " + artifactDirectory.getName());
+								        			else
+								        				throw new Exception("Copy failed " + ncCommandParamsList);
+								        			
 								        		} catch (Exception e) {
 								        			logger.error(e.getMessage(), e);
 								        		}
-							        		}
-							        		else {
-						        				for (File file : artifactDirectory.listFiles()) {
-					        						copyFileToIngest(jSchSession, file.getAbsolutePath(), remoteLocation + File.separator + file.getName());
-						        				}
-							        		}
-					        				logger.info("Scp complete " + artifactDirectory.getName());
+				        					}
 					        				MoveUtil.move(artifactDirectory.toPath(), Paths.get(artifactDirectory.getAbsolutePath().replace(validatedDirLocation, copiedDirLocation)));
 				        				}catch (Exception e) {
 											logger.error("Unable to scp " + artifactDirectory.getName() + ":" +  e.getMessage() , e);
