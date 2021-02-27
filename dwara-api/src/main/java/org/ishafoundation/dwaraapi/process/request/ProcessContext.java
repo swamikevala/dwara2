@@ -15,6 +15,8 @@ public class ProcessContext {
 	private Job job;
 	
 	private String outputDestinationDirPath;
+	
+//	private Integer priority;
 
 	public String getInputDirPath() {
 		return inputDirPath;
@@ -63,4 +65,14 @@ public class ProcessContext {
 	public void setOutputDestinationDirPath(String outputDestinationDirPath) {
 		this.outputDestinationDirPath = outputDestinationDirPath;
 	}
+
+	/*
+	 * Wont be effective for the ProcessingJobProcessor object already created is sent to the executor queue and the threadpoolexecutor.*.priority updated dynamically
+	public Integer getPriority() {
+		return priority;
+	}
+
+	public void setPriority(Integer priority) {
+		this.priority = priority;
+	}*/
 }

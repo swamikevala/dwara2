@@ -380,6 +380,10 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 						processContext.setTFile(fileEntityToFileForProcessConverter.getTFileForProcess(tFile));
 						processContext.setLogicalFile(logicalFile);
 						processContext.setOutputDestinationDirPath(outputFilePath);
+						/* Wont be effective once the ProcessingJobProcessor object is sent to the executor queue
+						BasicThreadFactory threadFactory =  (BasicThreadFactory) tpe.getThreadFactory();
+						processContext.setPriority(threadFactory.getPriority());
+						*/
 						processingJobProcessor.setProcessContext(processContext);
 						
 						processingJobProcessor.setJob(job);

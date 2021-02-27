@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.ishafoundation.dwaraapi.ApplicationStatus;
 import org.ishafoundation.dwaraapi.api.req.admin.FfmpegPropertyElements;
 import org.ishafoundation.dwaraapi.api.req.admin.ThreadpoolexecutorPropertyElements;
@@ -98,17 +99,27 @@ public class AdminController {
 	// [{"task": "processingtask", "corePoolSize" : 5, "maxPoolSize" : 5},{"task": "video-digi-2020-preservation-gen", "corePoolSize" : 3, "maxPoolSize" : 3}]
 	@RequestMapping(value = "/admin/application/updateThreadpoolexecutorProps", method = RequestMethod.POST)
 	public ResponseEntity<String> updateThreadpoolexecutorProps(@RequestBody List<ThreadpoolexecutorPropertyElements> threadpoolexecutorConfig) {
-		String key = null;
+		String processingtaskName = null;
 		try {
 			for (ThreadpoolexecutorPropertyElements nthThreadpoolexecutorConfigObj : threadpoolexecutorConfig) {
-				key = nthThreadpoolexecutorConfigObj.getTask();
+				processingtaskName = nthThreadpoolexecutorConfigObj.getTask();
 				
-				ThreadPoolExecutor executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(key);
+				ThreadPoolExecutor executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(processingtaskName);
+				if(executor == null)
+					continue;
 				executor.setCorePoolSize(nthThreadpoolexecutorConfigObj.getCorePoolSize());
 				executor.setMaximumPoolSize(nthThreadpoolexecutorConfigObj.getMaxPoolSize());
+				
+				 BasicThreadFactory factory = new BasicThreadFactory.Builder()
+					     .namingPattern(processingtaskName + "-%d")
+					     .daemon(false)
+					     .priority(Thread.NORM_PRIORITY + nthThreadpoolexecutorConfigObj.getPriority())
+					     .build();
+				
+				executor.setThreadFactory(factory);
 			}
 		}catch (Exception e) {
-			String errorMsg = key + " - not supported";
+			String errorMsg = processingtaskName + " - not supported";
 			logger.error(errorMsg, e);
 			
 			if(e instanceof DwaraException)
@@ -148,6 +159,8 @@ public class AdminController {
 		String key = null;
 		int threads = 0;
 		try {
+			// TODO : Create user request - 
+			
 			for (FfmpegPropertyElements ffmpegPropertyElementsObj : ffmpegPropertyElements) {
 				key = ffmpegPropertyElementsObj.getTask();
 				threads = ffmpegPropertyElementsObj.getThreads();

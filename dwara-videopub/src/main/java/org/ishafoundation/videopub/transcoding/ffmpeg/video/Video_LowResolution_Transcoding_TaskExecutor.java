@@ -3,9 +3,11 @@ package org.ishafoundation.videopub.transcoding.ffmpeg.video;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.configuration.FfmpegThreadConfiguration;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
@@ -17,7 +19,6 @@ import org.ishafoundation.videopub.transcoding.ffmpeg.MediaTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -33,6 +34,8 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	
 	@Autowired
 	private FfmpegThreadConfiguration ffmpegThreadConfiguration;
+	
+	private String processingtaskName = "video-proxy-low-gen";
 
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -178,6 +181,14 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	
 	private List<String> getProxyGenCommand(String sourceFilePathname, String reversedTimeCode, String proxyTargetLocation) {
 		List<String> proxyGenerationCommandParamsList = new ArrayList<String>();
+		
+		// HACK - processcontext.getpriority will not reflect for already queued processing jobs if the priority is changed dynamically... hence taking this route
+		ThreadPoolExecutor executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(processingtaskName);
+		BasicThreadFactory factory = (BasicThreadFactory) executor.getThreadFactory();
+
+		proxyGenerationCommandParamsList.add("nice");
+		proxyGenerationCommandParamsList.add("-n");
+		proxyGenerationCommandParamsList.add(factory.getPriority()+"");
 		proxyGenerationCommandParamsList.add("ffmpeg");
 		proxyGenerationCommandParamsList.add("-y");
 		proxyGenerationCommandParamsList.add("-i");

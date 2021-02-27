@@ -3,9 +3,11 @@ package org.ishafoundation.digitization.preservation;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.configuration.FfmpegThreadConfiguration;
@@ -30,6 +32,11 @@ public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask imple
     
 	@Autowired
 	private FfmpegThreadConfiguration ffmpegThreadConfiguration;
+	
+	@Value("${scheduler.statusUpdater.enabled:true}")
+	private boolean isEnabled;
+	
+	private String processingtaskName = "video-digi-2020-preservation-gen";
 	
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -99,6 +106,14 @@ public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask imple
 	//ffmpeg -i N0023_CHENNAI_PROGRAM_INTRO_2.mxf -acodec copy -vcodec ffv1 -level 3 -coder 1 -context 1 -g 1 -slicecrc 1 -map 0:a -map 0:v N0023.mkv
 	private List<String> getCompressionCommand(String sourceFilePathname, String compressedFileTargetLocation) {
 		List<String> compressionCommandParamsList = new ArrayList<String>();
+		
+		// HACK - processcontext.getpriority will not reflect for already queued processing jobs if the priority is changed dynamically... hence taking this route
+		ThreadPoolExecutor executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(processingtaskName);
+		BasicThreadFactory factory = (BasicThreadFactory) executor.getThreadFactory();
+
+		compressionCommandParamsList.add("nice");
+		compressionCommandParamsList.add("-n");
+		compressionCommandParamsList.add(factory.getPriority()+"");
 		compressionCommandParamsList.add("ffmpeg");
 		compressionCommandParamsList.add("-y");
 		compressionCommandParamsList.add("-i");

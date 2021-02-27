@@ -8,6 +8,7 @@ public class ThreadpoolexecutorPropertyElements {
 
 	private int maxPoolSize;
 	
+	private int priority;
 
 	public String getTask() {
 		return task;
@@ -31,5 +32,13 @@ public class ThreadpoolexecutorPropertyElements {
 
 	public void setMaxPoolSize(int maxPoolSize) {
 		this.maxPoolSize = maxPoolSize;
+	}
+
+	public int getPriority() {
+		return priority;
+	}
+
+	public void setPriority(int priority) {
+		this.priority = priority;
 	}
 }

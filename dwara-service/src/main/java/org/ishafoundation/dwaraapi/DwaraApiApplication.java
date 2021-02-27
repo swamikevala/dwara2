@@ -8,6 +8,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.ishafoundation.dwaraapi.db.dao.master.VersionDao;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Version;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
@@ -69,6 +70,7 @@ public class DwaraApiApplication {
 		String propertyNamePrefix = "threadpoolexecutor."+processingtaskName;	
 		String corePoolSizePropName = propertyNamePrefix + ".corePoolSize";
 		String maxPoolSizePropName = propertyNamePrefix + ".maxPoolSize";
+		String priorityPropName = propertyNamePrefix + ".priority";
 		
 		String configuredCorePoolSize = env.getProperty(corePoolSizePropName);
 		if(StringUtils.isBlank(configuredCorePoolSize)) {
@@ -84,8 +86,19 @@ public class DwaraApiApplication {
 		if(StringUtils.isBlank(configuredMaxPoolSize))
 			configuredMaxPoolSize = configuredCorePoolSize;
 		int maxPoolSize = Integer.parseInt(configuredMaxPoolSize);
+
 		
-		return new ThreadPoolExecutor(corePoolSize, maxPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+		String configuredPriority = env.getProperty(priorityPropName);
+		if(StringUtils.isBlank(configuredPriority))
+			configuredPriority = "0";
+		int priority = Integer.parseInt(configuredPriority);
+		
+		 BasicThreadFactory factory = new BasicThreadFactory.Builder()
+			     .namingPattern(processingtaskName + "-%d")
+			     .daemon(false)
+			     .priority(Thread.NORM_PRIORITY + priority)
+			     .build();
+		return new ThreadPoolExecutor(corePoolSize, maxPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(), factory);
 	}
 
 }
