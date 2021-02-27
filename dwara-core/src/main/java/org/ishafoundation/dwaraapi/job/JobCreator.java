@@ -290,11 +290,13 @@ public class JobCreator {
 			Artifactclass inputArtifactclass = artifact.getArtifactclass();
 			String inputArtifactPath = inputArtifactclass.getPath() + File.separator + inputArtifactName;
 			Volume groupVolume = null;
+			Volume volume = null;
 			String groupVolumeId = null;
 			// If sourceJob of this processing flowelement is restore then the processing f/w should pick up the file from the restored tmp location instead of the artifactclass.pathprefix 
 			if(sourceJob != null && sourceJob.getStoragetaskActionId() == Action.restore) {
 				inputArtifactPath = restoreStorageTask.getRestoreLocation(sourceJob) + File.separator + inputArtifactName;
 				groupVolume = sourceJob.getGroupVolume();
+				volume = sourceJob.getVolume();
 				//groupVolumeId = groupVolume != null ? groupVolume.getId() : null;
 			}
 			// TODO : What if the first parent job is a processing that has no files to process and hence no job created. So DependentJobs wont be created. Fine. So there is no Job in the request. Is it ok to create a request with no Jobs
@@ -327,6 +329,8 @@ public class JobCreator {
 				job.setProcessingtaskId(processingtaskId);
 				if(groupVolume != null)
 					job.setGroupVolume(groupVolume);
+				if(volume != null)
+					job.setVolume(volume);
 				job = saveJob(job);
 				jobsCreated.add(job);
 			}
