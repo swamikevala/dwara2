@@ -1,5 +1,19 @@
+# Dwara App Version - 2.1.12 (28th Feb 2021)
+### New features
+
+1) Priority for processing tasks
+
+### Bug fix
+
+1) Hard link fix
+
+2) Setting Volume used for dependent processing tasks
+
+3) Failed User request not reflecting status
+
 # Dwara App Version - 2.1.11 (14th Feb 2021)
 ### Hot fix
+
 LIVE Incident
 
 Artifact sized > 1TB failed Tar writes because of archive block datatype was int and hence not able to hold the long value
