@@ -11,6 +11,14 @@
 
 3) Failed User request not reflecting status
 
+### Upgrade steps
+
+1) application.properties to have the below entry
+
+> threadpoolexecutor.*.priority=5
+
+2) AdminController to use payload like [{"task": "video-proxy-low-gen", "corePoolSize" : 5, "maxPoolSize" : 5, "priority" :3}]
+
 # Dwara App Version - 2.1.11 (14th Feb 2021)
 ### Hot fix
 
