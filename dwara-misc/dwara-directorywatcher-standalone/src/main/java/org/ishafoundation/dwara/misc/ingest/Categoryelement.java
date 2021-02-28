@@ -26,7 +26,7 @@ public enum Categoryelement {
 	V(21, "V - Construction", "V", "Public"),
 	W(22, "W - Teachers Training", "W", "Private2"),
 	X(23, "X - Private Meetings", "X", "Private2"),
-	Z(24, "Z - Edited Material", "Z", "Public/Private"),
+	Z(24, "Z - Edited Material", "Z", "Z-Public/Private"),
 	AA(25, "AA - Vanashree Eco Center", "AA", "Public"),
 	AB(26, "AB - Sharing", "AB", "Public"),
 	AC(27, "AC - ARR", "AC", "Public"),
@@ -54,7 +54,9 @@ public enum Categoryelement {
 	BG(49, "BG-Sadhguru Darshan", "BG", "Public"),
 	BJ(50, "BJ - Radhe", "BJ", "Public"),
 	TV(51, "TV - Television Programs", "TV", "Public"),
-	Y(52, "Y - Brahmacharies", "Y", "Private2");
+	Y(52, "Y - Brahmacharies", "Y", "Private2"),
+	ZY(53, "ZY - Edited Private2", "ZY", "Z-Private2"),
+	ZP(54, "ZP - Edited Private1", "ZP", "Z-Private1");
 	
 	private int sNo;
 	private String categoryName;

@@ -7,9 +7,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwara.misc.common.MoveUtil;
 import org.ishafoundation.dwara.misc.common.Status;
 import org.ishafoundation.dwaraapi.utils.HttpClientUtil;
@@ -21,6 +24,7 @@ public class Ingester {
 	private static Logger logger = LoggerFactory.getLogger(Ingester.class);
 	
 	private static Path rootIngestLoc = null;
+	private static Path zCategoryFileLoc = null;
 	private static String ingestEndpointUrl = null;
 	private static Pattern categoryNamePrefixPattern = Pattern.compile("^([A-Z]{1,2})\\d+");
 	
@@ -34,10 +38,10 @@ public class Ingester {
 			if(m.find())
 				artifactNamePrefix = m.group(1);
 
-			Categoryelement category = null;
+			Categoryelement categoryElement = null;
 
 			try {
-				category = Categoryelement.valueOf(artifactNamePrefix);
+				categoryElement = Categoryelement.valueOf(artifactNamePrefix);
 			}
 			catch (Exception e) {
 				String msg = "Not able to categorize " + artifactNamePrefix + ":" + artifactName;
@@ -46,13 +50,50 @@ public class Ingester {
 			}
 
 			String artifactClassFolderName = null;
-			if(category.getCategory().equals("Public"))
-				artifactClassFolderName = "video-digi-2020-pub";
-			else if(category.getCategory().equals("Private1"))
-				artifactClassFolderName = "video-digi-2020-priv1";
-			else if(category.getCategory().equals("Private2"))
-				artifactClassFolderName = "video-digi-2020-priv2";
+			String category = categoryElement.getCategory();
+			if(category.equals("Z-Public/Private")) {
+				
+				List<String> zCategoryEntries = FileUtils.readLines(zCategoryFileLoc.toFile());
+				String zcategory = null;
+				for (String nthZCategoryEntry : zCategoryEntries) {
+					if(nthZCategoryEntry.startsWith(artifactName + ",")) {
+						zcategory = StringUtils.substringAfterLast(nthZCategoryEntry, ",").trim();
+						break;
+					}
+				}
 
+				if(StringUtils.isBlank(zcategory)){
+					String msg = "Not able to categorize " + artifactName;
+					logger.error(msg);
+					throw new Exception(msg);
+				}
+
+				if(zcategory.equals("Public"))
+					artifactClassFolderName = "video-digi-2020-edit-pub";
+				else if(zcategory.equals("Private1"))
+					artifactClassFolderName = "video-digi-2020-edit-priv1";
+				else {
+					String msg = "Not able to categorize " + artifactName;
+					logger.error(msg);
+					throw new Exception(msg);
+				}
+					
+			}
+			else if(category.equals("Z-Private1")) {
+				artifactClassFolderName = "video-digi-2020-edit-priv1";
+			}
+			else if(category.equals("Z-Private2")) {
+				artifactClassFolderName = "video-digi-2020-edit-priv2";
+			}
+			else {
+				if(category.equals("Public"))
+					artifactClassFolderName = "video-digi-2020-pub";
+				else if(category.equals("Private1"))
+					artifactClassFolderName = "video-digi-2020-priv1";
+				else if(category.equals("Private2"))
+					artifactClassFolderName = "video-digi-2020-priv2";
+			}
+			
 			if(artifactClassFolderName == null) {
 				String msg = "Not able to categorize " + artifactNamePrefix + ":" + artifactName;
 				logger.error(msg);
@@ -105,12 +146,14 @@ public class Ingester {
 				+ "<dirToBePolled(\"/data/prasad-staging/validated\")> "
 				+ "validatedFolderPollingIntervalInSecs "
 				+ "<rootIngestLocation(\"/data/dwara/user/prasadcorp/ingest\")> "
+				+ "<zCategoryFileLocation(\"/opt/dwara/bin/z-category.csv\")> "
 				+ "<ingestEndpointUrl(\"http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest\")>");
 		
 		System.err.println("args[0] - dirToBePolled - The directory where this service needs to look for files");
 		System.err.println("args[1] - validatedFolderPollingIntervalInSecs - The polling interval to check if there are directories ready");
 		System.err.println("args[2] - rootIngestLocation - Dwara's user specific ingest directory from where ingests are launched. Note Artifactclass gets appended dynamically to the path");
-		System.err.println("args[3] - ingestEndpointUrl - Ingest api url");
+		System.err.println("args[3] - zCategoryFileLocation - The Z set of tapes pub/private category mapping file location");
+		System.err.println("args[4] - ingestEndpointUrl - Ingest api url");
 		
 		System.exit(-1);
 	}
@@ -118,13 +161,19 @@ public class Ingester {
 	public static void main(String[] args) {
 
 		// parse arguments
-		if (args.length != 4)
+		if (args.length != 5)
 			usage();
 
 		final Path dir = Paths.get(args[0]);
 		int validatedFolderPollingIntervalInSecs = Integer.parseInt(args[1]);
 		rootIngestLoc = Paths.get(args[2]);
-		ingestEndpointUrl = args[3]; // "http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest";
+		zCategoryFileLoc = Paths.get(args[3]);
+		if(!zCategoryFileLoc.toFile().exists()) {
+			System.err.println(zCategoryFileLoc.toString() + " doesnt exist");
+			
+			System.exit(-1);
+		}
+		ingestEndpointUrl = args[4]; // "http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest";
 		
 
 		for(;;) {
