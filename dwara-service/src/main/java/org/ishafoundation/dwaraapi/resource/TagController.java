@@ -46,7 +46,7 @@ public class TagController {
 
     private static final Logger logger = LoggerFactory.getLogger(TagController.class);
 
-    @PostMapping(value="/tags/requests", produces = "application/json")
+    @PostMapping(value="/tags/artifacts", produces = "application/json")
     public ResponseEntity tagMultipleRequest(@RequestBody TagArtifact tagArtifact) {
         try {
             for (String tag : tagArtifact.getTags()) {
