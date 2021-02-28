@@ -132,7 +132,7 @@ public class BruResponseParser {
 	
 	static Logger logger = LoggerFactory.getLogger(BruResponseParser.class);
 	
-	private String bruLinkSeparator = "^@";
+	private String bruLinkSeparator = Character.toString(Character.MIN_VALUE);
 	
 	public BruResponse parseBruResponse(String bruCommandResponse){
 		BruResponse bruResponse = new BruResponse();
