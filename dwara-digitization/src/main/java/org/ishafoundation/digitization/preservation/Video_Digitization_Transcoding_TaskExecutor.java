@@ -119,12 +119,12 @@ public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask imple
 		List<String> compressionCommandParamsList = new ArrayList<String>();
 		
 		// HACK - processcontext.getpriority will not reflect for already queued processing jobs if the priority is changed dynamically... hence taking this route
-		ThreadPoolExecutor executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(processingtaskName);
-		BasicThreadFactory factory = (BasicThreadFactory) executor.getThreadFactory();
-
-		compressionCommandParamsList.add("nice");
-		compressionCommandParamsList.add("-n");
-		compressionCommandParamsList.add(factory.getPriority()+"");
+//		ThreadPoolExecutor executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(processingtaskName);
+//		BasicThreadFactory factory = (BasicThreadFactory) executor.getThreadFactory();
+//
+//		compressionCommandParamsList.add("nice");
+//		compressionCommandParamsList.add("-n");
+//		compressionCommandParamsList.add(factory.getPriority()+"");
 		compressionCommandParamsList.add("ffmpeg");
 		compressionCommandParamsList.add("-y");
 		compressionCommandParamsList.add("-i");

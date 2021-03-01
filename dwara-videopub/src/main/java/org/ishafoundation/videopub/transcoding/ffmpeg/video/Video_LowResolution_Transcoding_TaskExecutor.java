@@ -183,12 +183,12 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		List<String> proxyGenerationCommandParamsList = new ArrayList<String>();
 		
 		// HACK - processcontext.getpriority will not reflect for already queued processing jobs if the priority is changed dynamically... hence taking this route
-		ThreadPoolExecutor executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(processingtaskName);
-		BasicThreadFactory factory = (BasicThreadFactory) executor.getThreadFactory();
-
-		proxyGenerationCommandParamsList.add("nice");
-		proxyGenerationCommandParamsList.add("-n");
-		proxyGenerationCommandParamsList.add(factory.getPriority()+"");
+//		ThreadPoolExecutor executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(processingtaskName);
+//		BasicThreadFactory factory = (BasicThreadFactory) executor.getThreadFactory();
+//
+//		proxyGenerationCommandParamsList.add("nice");
+//		proxyGenerationCommandParamsList.add("-n");
+//		proxyGenerationCommandParamsList.add(factory.getPriority()+"");
 		proxyGenerationCommandParamsList.add("ffmpeg");
 		proxyGenerationCommandParamsList.add("-y");
 		proxyGenerationCommandParamsList.add("-i");
