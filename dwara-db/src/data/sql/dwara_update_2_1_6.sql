@@ -4,7 +4,7 @@ SET foreign_key_checks = 0;
 INSERT INTO sequence (id, `type`, prefix, code_regex, number_regex, `group`, starting_number, ending_number, current_number, sequence_ref_id, force_match, keep_code, replace_code) VALUES 
 ('video-digi-2020-edit-grp','artifact',null,null,null,1,1,-1,0,null,0,0,null),
 ('video-digi-2020-edit-pub','artifact','ZD','^ZP?\\d+',null,0,null,null,null,'video-digi-2020-edit-grp',1,0,0),
-('video-digi-2020-edit-priv2','artifact','ZDX','^Z[PY]?\\d+',null,0,null,null,null,'video-digi-2020-edit-grp',1,0,0),
+('video-digi-2020-edit-priv2','artifact','ZDX','^ZY?\\d+',null,0,null,null,null,'video-digi-2020-edit-grp',1,0,0),
 ('video-digi-2020-edit-pub-proxy-low','artifact','ZDL','^ZD\\d+(?=_)','(?<=^ZD)\\d+(?=_)',0,null,null,null,null,1,0,1),
 ('video-digi-2020-edit-priv2-proxy-low','artifact','ZDXL','^ZDX\\d+(?=_)','(?<=^ZDX)\\d+(?=_)',0,null,null,null,null,1,0,1);
 
