@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.tape.job;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +35,7 @@ import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -85,6 +88,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 	@Autowired
 	private Configuration configuration;
 	
+	@Value("${scheduler.jobManager.fixedDelay}")
+	private String fixedDelayAsString;
 
 
 	/**
@@ -225,24 +230,25 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 					try {
 						StorageJob selectedStorageJob = null;
 						String volumeTag = nthAvailableDriveDetails.getDte().getVolumeTag();
-						if(StringUtils.isNotBlank(volumeTag)) { // if drive is available and drive already loaded with tape - we need to see if we have to hold the tape or not...
+						// if an available drive is already loaded with tape - we need to see if we have to hold the tape or not...
+						if(StringUtils.isNotBlank(volumeTag)) { 
 							// ensure that last job on tape has not completed and spawned a dependent storage job "after" the scheduler prepared the storageJobs list.
 							// TODO better take it from the artifact_volume table... 
 							Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndStatusAndCompletedAtIsNotNullOrderByCompletedAtDesc(volumeTag, Status.completed);
 							
-							if(lastJobOnTape.getStoragetaskActionId() == Action.write) {
-								List<Job> dependentJobList = jobUtil.getDependentJobs(lastJobOnTape);
-								Job writeDependentJob = null;
-								for (Job nthDependentJob : dependentJobList) {
-									if(nthDependentJob.getStoragetaskActionId() != null) {
-										writeDependentJob = nthDependentJob;
-										break;
-									}
+							List<Job> dependentJobList = jobUtil.getDependentJobs(lastJobOnTape);
+							Job dependentJob = null;
+							for (Job nthDependentJob : dependentJobList) {
+								if(nthDependentJob.getStoragetaskActionId() != null) {
+									dependentJob = nthDependentJob;
+									break;
 								}
-								
+							}
+							
+							if(lastJobOnTape.getStoragetaskActionId() == Action.write) {
 								boolean isDependentJobInTheStorageList = false;
 								for (StorageJob nthStorageJob : storageJobsList) {
-									if(nthStorageJob.getJob().getId() == writeDependentJob.getId()) {
+									if(nthStorageJob.getJob().getId() == dependentJob.getId()) {
 										isDependentJobInTheStorageList = true;
 										break;
 									}
@@ -250,8 +256,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 								// check if the last completed tape job' dependency is in the storageJobsList - 
 								// when a write job completes and creates its dependent restore job after the storageJobsList is prepared by the scheduled JobManager 
 								// we should skip the cycle so that the restore job gets in the list in the next cycle.
-								if(writeDependentJob != null && !isDependentJobInTheStorageList) {
-									selectedStorageJob = storageJobUtil.wrapJobWithStorageInfo(writeDependentJob);
+								if(dependentJob != null && !isDependentJobInTheStorageList) {
+									selectedStorageJob = storageJobUtil.wrapJobWithStorageInfo(dependentJob);
 									logger.info("Last job on tape " + lastJobOnTape.getId() + " just got completed and its dependent job is not in the list for job selection. So had to wrap it here");
 								}
 							}
@@ -276,7 +282,10 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 										}
 									}
 									
-									if(!isSameGroupVolumeJobInTheStorageList && isQueuedJobOnGroupVolume) {// if no same groupVolume job in the list, but samegroupvolume jobs are queued then select one or skip this cycle
+									int delayInSecs = (int) (Long.parseLong(fixedDelayAsString)/1000);
+									
+									long elapsedMtsSinceLastTapeOnJob = ChronoUnit.SECONDS.between(LocalDateTime.now(), lastJobOnTape.getCompletedAt());
+									if(!isSameGroupVolumeJobInTheStorageList && isQueuedJobOnGroupVolume &&  elapsedMtsSinceLastTapeOnJob > (delayInSecs + 60)) {// if no same groupVolume job in the list, but samegroupvolume jobs are queued then select one or skip this cycle
 										logger.info("No job selected. Last job on tape " + lastJobOnTape.getId() + " just got completed and same volume job is queued but not in the list for job selection. So skipping this drive and tape this cycle");
 										continue;
 									}
