@@ -531,6 +531,14 @@ public class StagedService extends DwaraService{
 					artifact.setSequenceCode(sequenceCode);
 					artifact.setPrevSequenceCode(prevSeqCode);
 					artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
+
+					//Tag
+					List<String> tags = stagedFile.getTags();
+					if(tags != null && tags.size() > 0) {
+						for (String tag : tags) {
+							tagService.tagArtifact(tag, artifact.getId());
+						}
+					}
 					
 					logger.info(artifact.getClass().getSimpleName() + " - " + artifact.getId());
 					
@@ -552,14 +560,6 @@ public class StagedService extends DwaraService{
 					
 					ingestSystemRequest.setArtifact(artifactForResponse);
 					ingestSystemRequests.add(ingestSystemRequest);
-
-					//Tag
-					List<String> tags = stagedFile.getTags();
-					if(tags != null && tags.size() > 0) {
-						for (String tag : tags) {
-							tagService.tagRequest(tag, systemrequest.getId());
-						}
-					}
 				}
 		    	ingestResponse.setSystemRequests(ingestSystemRequests);
 	    	}	

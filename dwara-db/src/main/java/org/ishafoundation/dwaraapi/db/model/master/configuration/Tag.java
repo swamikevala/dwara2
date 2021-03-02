@@ -1,6 +1,5 @@
 package org.ishafoundation.dwaraapi.db.model.master.configuration;
 
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -12,7 +11,8 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 
 @Entity
 @Table(name="tag")
@@ -23,11 +23,11 @@ public class Tag {
 
 	@ManyToMany
 	@JoinTable(
-		name = "request_tag",
+		name = "artifact1_tag",
 		joinColumns = @JoinColumn(name = "tag"),
-		inverseJoinColumns = @JoinColumn(name = "request_id")
+		inverseJoinColumns = @JoinColumn(name = "artifact1_id")
 	)
-	Set<Request> requests;
+	Set<Artifact1> artifacts;
 
 	public Tag(){
 
@@ -37,26 +37,26 @@ public class Tag {
 		tag = value;
 	}
 
-	public Request getRequestById(int requestId) {
-		if(requests != null) {
-			for (Request request : requests) {
-				if(request.getId() == requestId)
-					return request;
+	public Artifact1 getArtifactById(int artifactId) {
+		if(artifacts != null) {
+			for (Artifact1 artifact : artifacts) {
+				if(artifact.getId() == artifactId)
+					return artifact;
 			}
 		}
 		return null;
 	}
 
-	public Request addRequest(Request r) {
-		if(requests == null)
-			requests = new LinkedHashSet<Request>();
-		requests.add(r);
+	public Artifact1 addArtifact(Artifact1 r) {
+		if(artifacts == null)
+			artifacts = new LinkedHashSet<Artifact1>();
+		artifacts.add(r);
 		return r;
 	}
 
-	public void deleteRequest(Request r) {
+	public void deleteArtifact(Artifact1 r) {
 		if(r != null) {
-			requests.remove(r);
+			artifacts.remove(r);
 		}
 	}
 
@@ -68,11 +68,11 @@ public class Tag {
 		this.tag = tag;
 	}
 
-	public Set<Request> getRequests() {
-		return requests;
+	public Set<Artifact1> getArtifacts() {
+		return artifacts;
 	}
 
-	public void setRequests(Set<Request> requests) {
-		this.requests = requests;
+	public void setArtifacts(Set<Artifact1> artifacts) {
+		this.artifacts = artifacts;
 	}
 }

@@ -3,11 +3,14 @@ package org.ishafoundation.dwaraapi.resource;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.api.req.tag.TagRequest;
+import org.ishafoundation.dwaraapi.api.req.tag.TagArtifact;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.Artifact1Dao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.RequestService;
 import org.ishafoundation.dwaraapi.service.TagService;
@@ -36,23 +39,23 @@ public class TagController {
     RequestDao requestDao;
 
     @Autowired
+    Artifact1Dao artifact1Dao;
+
+    @Autowired
     RequestService requestService;
 
     private static final Logger logger = LoggerFactory.getLogger(TagController.class);
 
-    @PostMapping(value="/tags/requests", produces = "application/json")
-    public ResponseEntity tagMultipleRequest(@RequestBody TagRequest tagRequest) {
+    @PostMapping(value="/tags/artifacts", produces = "application/json")
+    public ResponseEntity tagMultipleRequest(@RequestBody TagArtifact tagArtifact) {
         try {
-            /* String[] listTags = tags.split(",");
-            String[] listIds = requestIds.split(","); */
-            for (String tag : tagRequest.getTags()) {
-                for (int requestId : tagRequest.getRequestIds()) {
-                    // int requestId = Integer.parseInt(id);
-                    tagService.tagRequest(tag, requestId);
+            for (String tag : tagArtifact.getTags()) {
+                for (int artifactId : tagArtifact.getArtifactIds()) {
+                    tagService.tagArtifact(tag, artifactId);
                 }
             }
         } catch (Exception e) {
-			String errorMsg = "Unable to tag request - " + e.getMessage();
+			String errorMsg = "Unable to tag artifact - " + e.getMessage();
 			logger.error(errorMsg, e);
 			
 			if(e instanceof DwaraException)
@@ -63,12 +66,12 @@ public class TagController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
-    @PostMapping(value="/tags/{tag}/request/{requestId}", produces = "application/json") 
-    public ResponseEntity tagRequest(@PathVariable String tag, @PathVariable int requestId) {
+    @PostMapping(value="/tags/{tag}/artifact/{artifactId}", produces = "application/json") 
+    public ResponseEntity tagArtifact(@PathVariable String tag, @PathVariable int artifactId) {
         try {
-            tagService.tagRequest(tag, requestId);
+            tagService.tagArtifact(tag, artifactId);
         } catch (Exception e) {
-			String errorMsg = "Unable to tag request - " + e.getMessage();
+			String errorMsg = "Unable to tag artifact - " + e.getMessage();
 			logger.error(errorMsg, e);
 			
 			if(e instanceof DwaraException)
@@ -79,10 +82,10 @@ public class TagController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
-    @DeleteMapping(value="/tags/{tag}/request/{requestId}", produces = "application/json")
-    public ResponseEntity deleteTagRequest(@PathVariable String tag, @PathVariable int requestId) {
+    @DeleteMapping(value="/tags/{tag}/artifact/{artifactId}", produces = "application/json")
+    public ResponseEntity deleteTagArtifact(@PathVariable String tag, @PathVariable int artifactId) {
         try {
-            tagService.deleteTagRequest(tag, requestId);
+            tagService.deleteTagArtifact(tag, artifactId);
         } catch (Exception e) {
 			String errorMsg = "Unable to delete tag request - " + e.getMessage();
 			logger.error(errorMsg, e);
@@ -95,22 +98,23 @@ public class TagController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
-    @GetMapping(value="/tags/requests", produces = "application/json")
+    @GetMapping(value="/tags/artifacts", produces = "application/json")
     public ResponseEntity<List<RequestResponse>> getRequestsByTag(@RequestParam("tags") String tags) {
         List<RequestResponse> l = new ArrayList<RequestResponse>();
         try {
             String[] arrTags = tags.split(",");
-            List<Request> listRequest = new ArrayList<Request>();
+            List<Artifact> listArtifact = new ArrayList<Artifact>();
             for (String tag : arrTags) {
                 Tag t = tagService.getTag(tag);
-                if(t != null && t.getRequests() != null) {
-                    for (Request request : t.getRequests()) {
-                        if(!listRequest.contains(request))
-                            listRequest.add(request);
+                if(t != null && t.getArtifacts() != null) {
+                    for (Artifact artifact : t.getArtifacts()) {
+                        if(!listArtifact.contains(artifact))
+                            listArtifact.add(artifact);
                     }
                 }
             }
-            for (Request request: listRequest) {
+            for (Artifact artifact: listArtifact) {
+                Request request = artifact.getqLatestRequest();
                 RequestResponse requestResponse = requestService.frameRequestResponse(request, request.getType());
                 l.add(requestResponse);
             }
@@ -126,11 +130,11 @@ public class TagController {
         return ResponseEntity.status(HttpStatus.OK).body(l);
     }
 
-    @GetMapping(value = "/tags/request/{requestId}", produces = "application/json")
-    public ResponseEntity<List<String>> getTagsByRequestId(@PathVariable int requestId) {
+    @GetMapping(value = "/tags/artifact/{artifactId}", produces = "application/json")
+    public ResponseEntity<List<String>> getTagsByRequestId(@PathVariable int artifactId) {
         List<String> listTags = new ArrayList<String>();
         try {
-            Request r = requestDao.findById(requestId).get();
+            Artifact1 r = artifact1Dao.findById(artifactId).get();
             if(r != null) {
                 List<Tag> l = new ArrayList<Tag>(r.getTags());
                 for (Tag tag : l) {
@@ -138,7 +142,7 @@ public class TagController {
                 }
             }
         } catch (Exception e) {
-			String errorMsg = "Unable to get tags by request id - " + e.getMessage();
+			String errorMsg = "Unable to get tags by artifact id - " + e.getMessage();
 			logger.error(errorMsg, e);
 			
 			if(e instanceof DwaraException)

@@ -22,6 +22,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -288,16 +289,6 @@ public class RequestService extends DwaraService{
 		requestResponse.setRequestedAt(getDateForUI(request.getRequestedAt()));
 		requestResponse.setCompletedAt(getDateForUI(request.getCompletedAt()));
 		requestResponse.setRequestedBy(request.getRequestedBy().getName());
-
-		//tag
-		List<Tag> tags = new ArrayList<Tag>();
-		if(request.getTags() != null)
-			tags = new ArrayList<Tag>(request.getTags());
-		List<String> listTags = new ArrayList<String>();
-		for (Tag tag : tags) {
-			listTags.add(tag.getTag());
-		}
-		requestResponse.setTags(listTags);
 				
 		requestResponse.setStatus(request.getStatus().name());
 		Action requestAction = request.getActionId();
@@ -321,7 +312,20 @@ public class RequestService extends DwaraService{
 					artifactForResponse.setSkipActionElements(request.getDetails().getSkipActionelements());
 					artifactForResponse.setStagedFilename(request.getDetails().getStagedFilename());
 					artifactForResponse.setStagedFilepath(request.getDetails().getStagedFilepath());
-					
+
+					//tag
+					if(systemArtifact instanceof Artifact1) {
+						Artifact1 a1 = (Artifact1) systemArtifact;
+						List<Tag> tags = new ArrayList<Tag>();
+						if(a1.getTags() != null)
+							tags = new ArrayList<Tag>(a1.getTags());
+						List<String> listTags = new ArrayList<String>();
+						for (Tag tag : tags) {
+							listTags.add(tag.getTag());
+						}
+						artifactForResponse.setTags(listTags);
+					}
+
 					requestResponse.setArtifact(artifactForResponse);
 				}
 			} 
