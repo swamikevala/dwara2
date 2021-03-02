@@ -72,6 +72,8 @@ public class Ingester {
 					artifactClassFolderName = "video-digi-2020-edit-pub";
 				else if(zcategory.equals("Private1"))
 					artifactClassFolderName = "video-digi-2020-edit-priv1";
+				else if(zcategory.equals("Private2"))
+					artifactClassFolderName = "video-digi-2020-edit-priv2";
 				else {
 					String msg = "Not able to categorize " + artifactName;
 					logger.error(msg);
