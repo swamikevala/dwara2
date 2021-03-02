@@ -4,7 +4,6 @@ package org.ishafoundation.dwaraapi.storage.storagetask;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
@@ -98,8 +97,8 @@ public class Write extends AbstractStoragetaskAction{
 
 			volumegroupId = job.getGroupVolume().getId(); 
 			
-			String artifactpathToBeCopied = pathPrefix + java.io.File.separator + artifactName;
-			artifactSize = FileUtils.sizeOf(new java.io.File(artifactpathToBeCopied)); 
+			//String artifactpathToBeCopied = pathPrefix + java.io.File.separator + artifactName;
+			artifactSize = artifact.getTotalSize();//FileUtils.sizeOf(new java.io.File(artifactpathToBeCopied)); 
 			volume = volumeUtil.getToBeUsedPhysicalVolume(domain, volumegroupId, artifactSize);
 		}else if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.rewrite || requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.migrate) {
 			artifactName = request.getDetails().getStagedFilename();

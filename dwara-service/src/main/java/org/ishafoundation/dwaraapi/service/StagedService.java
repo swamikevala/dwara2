@@ -621,8 +621,8 @@ public class StagedService extends DwaraService{
 			}
 			else {
 				long size = 0L;
-				if(!Files.isSymbolicLink(file.toPath()) && file.exists())
-					size = FileUtils.sizeOf(file);
+		        org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails afd = stagedFileEvaluator.getDetails(file);
+		        size = afd.getTotalSize();
 				nthTFileRowToBeInserted.setSize(size);
 				logger.trace(filePath + ":" + size);
 			}
@@ -661,12 +661,7 @@ public class StagedService extends DwaraService{
 				logger.trace(filePath + ":" + artifactSize);
 			}
 			else {
-				long size = 0L;
-				if(!Files.isSymbolicLink(file.toPath()) && file.exists())
-					size = FileUtils.sizeOf(file);
-				else {
-					logger.warn("A symbolic link - " + file.getAbsolutePath());// TODO : can file entry have non-existing files 
-				}
+				long size = stagedFileEvaluator.getDetails(file).getTotalSize();
 				nthFileRowToBeInserted.setSize(size);
 				logger.trace(filePath + ":" + size);
 			}

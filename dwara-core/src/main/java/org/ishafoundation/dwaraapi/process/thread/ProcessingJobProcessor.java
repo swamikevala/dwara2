@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.ApplicationStatus;
@@ -42,6 +41,7 @@ import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
+import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +76,9 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	
 	@Autowired
 	private TTFileJobDao tFileJobDao;
+	
+	@Autowired
+    private StagedFileEvaluator stagedFileEvaluator;
 	
 	@Autowired
 	private Map<String, IProcessingTask> processingtaskActionMap;
@@ -457,12 +460,8 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			nthTFileRowToBeInserted.setDirectory(true);
 		
 		if(file.exists()) {
-			try {
-				logger.trace("Calc size of " + filePathname);
-				nthTFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
-			}catch (Exception e) {
-				logger.warn("Weird. File exists but fileutils unable to calculate size. Skipping setting size");
-			}
+			org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails afd = stagedFileEvaluator.getDetails(file);
+			nthTFileRowToBeInserted.setSize(afd.getTotalSize());
 		}
 		
 		tFileDao.save(nthTFileRowToBeInserted);
