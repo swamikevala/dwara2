@@ -1,8 +1,6 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 		
 import java.time.LocalDateTime;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -12,7 +10,6 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -20,7 +17,6 @@ import javax.persistence.TableGenerator;
 
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -90,9 +86,6 @@ public class Request {
 	@Type(type = "json")
 	@Column(name="details", columnDefinition = "json")
 	private RequestDetails details;
-
-	@ManyToMany(mappedBy = "requests")
-	Set<Tag> tags;
 	
 	public Request() {
 
@@ -180,26 +173,5 @@ public class Request {
 
 	public void setDetails(RequestDetails details) {
 		this.details = details;
-	}
-
-	public Set<Tag> getTags() {
-		return tags;
-	}
-
-	public void setTags(Set<Tag> tags) {
-		this.tags = tags;
-	}
-
-	public void addTag(Tag t){
-		if(this.tags == null) {
-			this.tags = new LinkedHashSet<Tag>();
-		}
-		this.tags.add(t);
-	}
-
-	public void deleteTag(Tag t) {
-		if(this.tags != null) {
-			this.tags.remove(t);
-		}
 	}
 }
