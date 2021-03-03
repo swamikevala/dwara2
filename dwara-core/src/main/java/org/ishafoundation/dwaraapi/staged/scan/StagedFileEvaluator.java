@@ -260,7 +260,7 @@ public class StagedFileEvaluator {
 		return invokeVisitor(nthIngestableFile, true);
 	}
 	
-	public ArtifactFileDetails invokeVisitor(File nthIngestableFile, boolean move){		
+	private ArtifactFileDetails invokeVisitor(File nthIngestableFile, boolean move){		
 		long size = 0;
 		int fileCount = 0;
 		StagedFileVisitor sfv = null;
@@ -276,8 +276,12 @@ public class StagedFileEvaluator {
 		
 			sfv = new StagedFileVisitor(nthIngestableFile.getAbsolutePath(), nthIngestableFile.getName(), config.getJunkFilesStagedDirName(), excludedFileNamesRegexList, supportedExtns, move);
 			try {
-				//Files.walkFileTree(nthIngestableFile.toPath(), opts, Integer.MAX_VALUE, sfv);
-				Files.walkFileTree(nthIngestableFile.toPath(), sfv); // Dont follow the links when moving...
+				if(move)
+					Files.walkFileTree(nthIngestableFile.toPath(), sfv); // Dont follow the links when moving...
+				else {
+					EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+					Files.walkFileTree(nthIngestableFile.toPath(), opts, Integer.MAX_VALUE, sfv);
+				}
 			} catch (IOException e) {
 				// swallow for now
 			}
