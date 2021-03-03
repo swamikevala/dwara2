@@ -81,7 +81,9 @@ public class StagedFileEvaluator {
 		
 		String fileName = nthIngestableFile.getName();
 		StagedFileVisitor sfv = null;
-		if(nthIngestableFile.isDirectory()) {
+		
+		
+		if(nthIngestableFile.isDirectory()) { // if artifact is a directory
 			EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
 
 			sfv = new StagedFileVisitor(nthIngestableFile.getName(), config.getJunkFilesStagedDirName(), excludedFileNamesRegexList, supportedExtns);
@@ -95,7 +97,7 @@ public class StagedFileEvaluator {
 				fileCount = sfv.getFileCount();
 				unSupportedExtns = sfv.getUnSupportedExtns();
 			}
-		}else {
+		}else { // if artifact is a file
 			size = FileUtils.sizeOf(nthIngestableFile);
 			fileCount = 1;
 			String fileExtn = FilenameUtils.getExtension(fileName);
@@ -290,7 +292,8 @@ public class StagedFileEvaluator {
 				fileCount = sfv.getFileCount();
 			}
 		}else {
-			size = FileUtils.sizeOf(nthIngestableFile);
+			if(!Files.isSymbolicLink(nthIngestableFile.toPath()) && nthIngestableFile.exists())
+				size = FileUtils.sizeOf(nthIngestableFile);
 			fileCount = 1;
 		}
 		
