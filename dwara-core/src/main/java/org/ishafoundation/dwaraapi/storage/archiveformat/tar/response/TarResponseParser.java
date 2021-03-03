@@ -36,7 +36,8 @@ public class TarResponseParser {
 
 	static Logger logger = LoggerFactory.getLogger(TarResponseParser.class);
 	
-	private String tarLinkSeparator = " link to ";
+	private String tarHardLinkSeparator = " link to ";
+	private String tarSoftLinkSeparator = " -> ";
 	
 	public TarResponse parseTarResponse(String tarCommandResponse){
 		TarResponse tarResponse = new TarResponse();
@@ -73,9 +74,15 @@ public class TarResponseParser {
 				String fileSizeAsString = fileAndAttributesRegExMatcher.group(5);
 				
 				String filePathName = fileAndAttributesRegExMatcher.group(7);
-				// TODO deal with symlinks???
 				String linkName = null;
-				if(filePathName.contains(tarLinkSeparator)) {
+				
+				String tarLinkSeparator = null;
+				if(filePathName.contains(tarHardLinkSeparator))
+					tarLinkSeparator = tarHardLinkSeparator;
+				else if(filePathName.contains(tarSoftLinkSeparator)) 
+					tarLinkSeparator = tarSoftLinkSeparator;
+				
+				if(StringUtils.isNotBlank(tarLinkSeparator)) {
 					linkName = StringUtils.substringAfter(filePathName, tarLinkSeparator);
 					filePathName = StringUtils.substringBefore(filePathName, tarLinkSeparator);
 					logger.trace("filePathName "+ filePathName);

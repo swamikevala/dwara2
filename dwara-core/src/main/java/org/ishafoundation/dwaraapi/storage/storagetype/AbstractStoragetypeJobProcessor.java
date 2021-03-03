@@ -188,7 +188,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 				tfileVolume.setArchiveBlock(archivedFile.getArchiveBlock());
 				if(archivedFile.getLinkName() != null) {
 					TFile tFile = filePathNameToTFileObj.get(archivedFile.getLinkName());
-					tfileVolume.setLinkFileId(tFile.getId());
+					if(tFile != null) // if a link is internally referencing link
+						tfileVolume.setLinkFileId(tFile.getId());
 				}
 			}
 			toBeAddedTFileVolumeTableEntries.add(tfileVolume); // Should we add null entries...

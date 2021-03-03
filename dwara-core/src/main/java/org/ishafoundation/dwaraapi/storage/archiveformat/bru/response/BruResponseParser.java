@@ -217,7 +217,6 @@ public class BruResponseParser {
 				org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components.File file = new org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components.File();
 
 				String filePathName = fileAndAttributesRegExMatcher.group(6);
-				// TODO deal with symlinks???
 				String linkName = null;
 				if(filePathName.contains(bruLinkSeparator)) {
 					linkName = StringUtils.substringAfter(filePathName, bruLinkSeparator);
