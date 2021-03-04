@@ -176,20 +176,20 @@ public abstract class AbstractStoragetypeJobProcessor {
 		}
 		List<TFileVolume> toBeAddedTFileVolumeTableEntries = new ArrayList<TFileVolume>();
 		for (Iterator<TFile> iterator = artifactTFileList.iterator(); iterator.hasNext();) {
-			TFile nthFile = iterator.next();
-			String filePathname = FilenameUtils.separatorsToUnix(nthFile.getPathname());
+			TFile nthTFile = iterator.next();
+			String filePathname = FilenameUtils.separatorsToUnix(nthTFile.getPathname());
 			
-			TFileVolume tfileVolume = new TFileVolume(nthFile.getId(), volume);
+			TFileVolume tfileVolume = new TFileVolume(nthTFile.getId(), volume);
 			
 			ArchivedFile archivedFile = filePathNameToArchivedFileObj.get(filePathname);
 			if(archivedFile != null) { // if(volume.getStoragelevel() == Storagelevel.block) { - need to check if the file is archived anyway even if its block, so going with the archivedFile check alone
 				Integer volumeBlock = archivedFile.getVolumeBlock();
 				tfileVolume.setVolumeBlock(volumeBlock);
 				tfileVolume.setArchiveBlock(archivedFile.getArchiveBlock());
-				if(archivedFile.getLinkName() != null) {
+				if(archivedFile.getLinkName() != null && (nthTFile.getSymlinkPath() == null && nthTFile.getSymlinkFileId() == null)) { // only hard links and no soft links
 					TFile tFile = filePathNameToTFileObj.get(archivedFile.getLinkName());
 					if(tFile != null) // if a link is internally referencing link
-						tfileVolume.setLinkFileId(tFile.getId());
+						tfileVolume.setHardlinkFileId(tFile.getId());
 				}
 			}
 			toBeAddedTFileVolumeTableEntries.add(tfileVolume); // Should we add null entries...
@@ -236,9 +236,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 				}
 				fileVolume.setVolumeBlock(volumeBlock);
 				fileVolume.setArchiveBlock(archivedFile.getArchiveBlock());
-				if(archivedFile.getLinkName() != null) {
+				if(archivedFile.getLinkName() != null && (nthFile.getSymlinkPath() == null && nthFile.getSymlinkFileId() == null)) { // only hard links and no soft links
 					File file = filePathNameToFileObj.get(archivedFile.getLinkName());
-					fileVolume.setLinkFileId(file.getId());
+					if(file != null) // if a link is internally referencing link
+						fileVolume.setHardlinkFileId(file.getId());
 				}
 			}
 			toBeAddedFileVolumeTableEntries.add(fileVolume); // Should we add null entries...
