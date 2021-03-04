@@ -663,13 +663,13 @@ public class StagedService extends DwaraService{
 				Path nthTFilePath = nthTFile.toPath();
 	    		if(Files.isSymbolicLink(nthTFilePath)) {
 	    			TFile tFile = filePathNameToTFileObj.get(filePath);
-	    			Path linkedTargetPath = nthTFilePath.toRealPath();
-	    			String linkedTargetFilePath = linkedTargetPath.toString().replace(pathPrefix + java.io.File.separator, "");
+	    			String linkedTarget = Files.readSymbolicLink(nthTFilePath).toString();
+	    			String linkedTargetFilePath = linkedTarget.replace(pathPrefix + java.io.File.separator, "");
 	    			TFile linkedTargetTFile = filePathNameToTFileObj.get(linkedTargetFilePath);
 	    			if(linkedTargetTFile != null)
 	    				tFile.setSymlinkFileId(linkedTargetTFile.getId());
 	    			else
-	    				tFile.setSymlinkPath(nthTFilePath.toRealPath().toString());
+	    				tFile.setSymlinkPath(linkedTarget);
 	    			
 	    			toBeAddedTFileTableEntries.add(tFile);
 	    		}
@@ -748,13 +748,13 @@ public class StagedService extends DwaraService{
 				Path nthFilePath = nthFile.toPath();
 	    		if(Files.isSymbolicLink(nthFilePath)) {
 	    			File file = filePathNameToFileObj.get(filePath);
-	    			Path linkedTargetPath = nthFilePath.toRealPath();
-	    			String linkedTargetFilePath = linkedTargetPath.toString().replace(pathPrefix + java.io.File.separator, "");
+	    			String linkedTarget = Files.readSymbolicLink(nthFilePath).toString();
+	    			String linkedTargetFilePath = linkedTarget.replace(pathPrefix + java.io.File.separator, "");
 	    			File linkedTargetFile = filePathNameToFileObj.get(linkedTargetFilePath);
 	    			if(linkedTargetFile != null)
 	    				file.setSymlinkFileId(linkedTargetFile.getId());
 	    			else
-	    				file.setSymlinkPath(nthFilePath.toRealPath().toString());
+	    				file.setSymlinkPath(linkedTarget);
 	    			toBeAddedFileTableEntries.add(file);
 	    		}
 			}
