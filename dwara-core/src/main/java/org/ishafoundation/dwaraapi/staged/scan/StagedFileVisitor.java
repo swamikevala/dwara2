@@ -146,10 +146,11 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 			// swallow it
 		}
 
+		boolean isSymbolicLink = false;
 		// unresolved links
 		//if(Files.isSymbolicLink(file) && file.getCanonicalPath() == null)
 		if(Files.isSymbolicLink(file)) {
-			
+			isSymbolicLink = true;
 			logger.trace("SymLink " + filePathName);
 			logger.trace("FileRealPath " + fileRealPath);
 			if(fileRealPath == null) {
@@ -170,7 +171,7 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 		}
 		
 		fileCount++;
-		totalSize = totalSize + FileUtils.sizeOf(file.toFile());
+		totalSize = totalSize + (isSymbolicLink ? 0 : FileUtils.sizeOf(file.toFile()));
 
 		String fileName = file.getFileName().toString();
 		String fileExtn = FilenameUtils.getExtension(fileName);
