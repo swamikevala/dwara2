@@ -105,8 +105,8 @@ public class TapeStreamer {
 								logger.trace("linkPath - " + linkPath);
 								if(entry.isSymbolicLink()) {
 									// create a symlink
-									Files.createSymbolicLink(curfile.toPath(), linkPath);
-									logger.info(curfile.toPath() + " sym linked to --> " + linkPath);
+									Files.createSymbolicLink(curfile.toPath(), Paths.get(linkName));
+									logger.info(curfile.toPath() + " sym linked to --> " + linkName);
 								}
 								else if(entry.isLink() && linkPath.toFile().exists()) { // only if the file to be linked exists...
 									// creat a hardlink
