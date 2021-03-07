@@ -16,7 +16,6 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-
 @Entity
 @SequenceGenerator(initialValue = 1, name = "artifact_sequence", allocationSize = 1)
 @Table(name=Artifact.TABLE_NAME_PREFIX + "1", indexes = {@Index(columnList = "total_size")})
