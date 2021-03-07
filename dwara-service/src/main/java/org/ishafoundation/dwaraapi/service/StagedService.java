@@ -9,8 +9,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -35,6 +37,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.ArtifactclassConfig;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Extension;
@@ -115,6 +118,9 @@ public class StagedService extends DwaraService{
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
+	
+	@Autowired
+	private FileRepositoryUtil fileRepositoryUtil;
 	
 	@Autowired
 	private Configuration configuration;
@@ -597,20 +603,26 @@ public class StagedService extends DwaraService{
     // made public so tests can access it...
 	public void createFilesAndExtensions(String pathPrefix, Domain domain, Artifact artifact, long artifactSize, java.io.File stagedFileInAppReadyToIngest, String junkFilesStagedDirName) throws Exception {
 		
+		boolean hasSymbolicLink = false; // Has the artifactclass got any symlink to it
     	Collection<java.io.File> libraryFileAndDirsList = getTFileTableEntries(stagedFileInAppReadyToIngest, junkFilesStagedDirName);
 	    List<TFile> toBeAddedTFileTableEntries = new ArrayList<TFile>(); 
 
 	    for (Iterator<java.io.File> iterator = libraryFileAndDirsList.iterator(); iterator.hasNext();) {
 			
-			java.io.File file = (java.io.File) iterator.next();
-			String fileName = file.getName();
-			String filePath = file.getAbsolutePath();
+			java.io.File tfile = (java.io.File) iterator.next();
+			String fileName = tfile.getName();
+			String filePath = tfile.getAbsolutePath();
 			filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); // just holding the file path from the artifact folder and not the absolute path.
 			logger.trace("filePath - " + filePath);
 			byte[] filePathChecksum = ChecksumUtil.getChecksum(filePath);
 			TFile nthTFileRowToBeInserted = new TFile();
-			if(file.isDirectory())
+			if(tfile.isDirectory())
 				nthTFileRowToBeInserted.setDirectory(true);
+			else {
+				if(Files.isSymbolicLink(tfile.toPath())) 
+					hasSymbolicLink = true;
+			}
+				
 			nthTFileRowToBeInserted.setPathname(filePath);
 			nthTFileRowToBeInserted.setPathnameChecksum(filePathChecksum);
 			nthTFileRowToBeInserted.setArtifactId(artifact.getId());
@@ -621,7 +633,7 @@ public class StagedService extends DwaraService{
 			}
 			else {
 				long size = 0L;
-		        org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails afd = stagedFileEvaluator.getDetails(file);
+		        org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails afd = stagedFileEvaluator.getDetails(tfile);
 		        size = afd.getTotalSize();
 				nthTFileRowToBeInserted.setSize(size);
 				logger.trace(filePath + ":" + size);
@@ -633,8 +645,43 @@ public class StagedService extends DwaraService{
 	    	tFileDao.saveAll(toBeAddedTFileTableEntries);
 	    	logger.info("TFile records created successfully");
 	    }
+
+	    if(hasSymbolicLink) {
+			toBeAddedTFileTableEntries.clear();
+			
+		    /* Updating the symlink details here - we dont the DB file id to be referenced */
+			List<TFile> artifactTFileList = tFileDao.findAllByArtifactIdAndDeletedIsFalse(artifact.getId());
+			HashMap<String, TFile> filePathNameToTFileObj = new LinkedHashMap<String, TFile>();
+			for (TFile tFile : artifactTFileList) {
+				filePathNameToTFileObj.put(tFile.getPathname(), tFile);
+			}
+			
+			for (java.io.File nthTFile : libraryFileAndDirsList) {
+				String filePath = nthTFile.getAbsolutePath();
+				filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); // just holding the file path from the artifact folder and not the absolute path.
+	
+				Path nthTFilePath = nthTFile.toPath();
+	    		if(Files.isSymbolicLink(nthTFilePath)) {
+	    			TFile tFile = filePathNameToTFileObj.get(filePath);
+	    			String linkedTarget = Files.readSymbolicLink(nthTFilePath).toString();
+	    			String linkedTargetFilePath = linkedTarget.replace(pathPrefix + java.io.File.separator, "");
+	    			TFile linkedTargetTFile = filePathNameToTFileObj.get(linkedTargetFilePath);
+	    			if(linkedTargetTFile != null)
+	    				tFile.setSymlinkFileId(linkedTargetTFile.getId());
+	    			else
+	    				tFile.setSymlinkPath(linkedTarget);
+	    			
+	    			toBeAddedTFileTableEntries.add(tFile);
+	    		}
+			}
+			
+		    if(toBeAddedTFileTableEntries.size() > 0) {
+		    	tFileDao.saveAll(toBeAddedTFileTableEntries);
+		    	logger.info("TFile records updated with symlinks successfully");
+		    }			
+	    }
     	
-    	libraryFileAndDirsList = getFileTableEntries(pathPrefix, artifact, stagedFileInAppReadyToIngest, junkFilesStagedDirName);
+	    libraryFileAndDirsList = getFileTableEntries(pathPrefix, artifact, stagedFileInAppReadyToIngest, junkFilesStagedDirName);
     	
 		Set<String> extnsOnArtifactFolder =  new TreeSet<String>();
 		List<File> toBeAddedFileTableEntries = new ArrayList<File>(); 
@@ -649,9 +696,18 @@ public class StagedService extends DwaraService{
 			File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
 			if(file.isDirectory())
 				nthFileRowToBeInserted.setDirectory(true);
-			else
+			else {
+//				FileType fileType = null; 
+//				if(Files.isSymbolicLink(file.toPath())) 
+//					fileType = FileType.symlink;
+//				else if((Integer) Files.getAttribute(file.toPath(), "unix:nlink") > 1)
+//					fileType = FileType.hardlink;
+//				
+//				if(fileType != null)
+//					nthFileRowToBeInserted.setType(fileType);
 				extnsOnArtifactFolder.add(FilenameUtils.getExtension(fileName)); // assumes there arent any file without extension - Checking and excluding it is the role of junkFilesMover...
-			
+				
+			}
 			nthFileRowToBeInserted.setPathname(filePath);
 			nthFileRowToBeInserted.setPathnameChecksum(filePathChecksum);
 			fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, artifact);
@@ -674,7 +730,42 @@ public class StagedService extends DwaraService{
 	    	domainSpecificFileRepository.saveAll(toBeAddedFileTableEntries);
 	    	logger.info("File records created successfully");
 	    }
-	    
+		
+	    if(hasSymbolicLink) {
+	    	toBeAddedFileTableEntries.clear();
+	    	
+		    /* Updating the symlink details here - we dont the DB file id to be referenced */
+			List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
+			HashMap<String, File> filePathNameToFileObj = new LinkedHashMap<String, File>();
+			for (File file : artifactFileList) {
+				filePathNameToFileObj.put(file.getPathname(), file);
+			}
+
+			for (java.io.File nthFile : libraryFileAndDirsList) {
+				String filePath = nthFile.getAbsolutePath();
+				filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); // just holding the file path from the artifact folder and not the absolute path.
+	
+				Path nthFilePath = nthFile.toPath();
+	    		if(Files.isSymbolicLink(nthFilePath)) {
+	    			File file = filePathNameToFileObj.get(filePath);
+	    			String linkedTarget = Files.readSymbolicLink(nthFilePath).toString();
+	    			String linkedTargetFilePath = linkedTarget.replace(pathPrefix + java.io.File.separator, "");
+	    			File linkedTargetFile = filePathNameToFileObj.get(linkedTargetFilePath);
+	    			if(linkedTargetFile != null)
+	    				file.setSymlinkFileId(linkedTargetFile.getId());
+	    			else
+	    				file.setSymlinkPath(linkedTarget);
+	    			toBeAddedFileTableEntries.add(file);
+	    		}
+			}
+			
+		    if(toBeAddedFileTableEntries.size() > 0) {
+		    	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+		    	domainSpecificFileRepository.saveAll(toBeAddedFileTableEntries);
+		    	logger.info("File records updated with symlinks successfully");
+		    }
+	    }
+    	
 	    // Step 1 - get all supported extensions in the system
 	    Set<String> alreadySupportedExtensions = extensionsUtil.getAllSupportedExtensions();
 	    // getting the not supported extensions by removing already existing extensions
