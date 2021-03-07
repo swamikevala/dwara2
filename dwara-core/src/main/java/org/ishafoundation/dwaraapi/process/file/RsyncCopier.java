@@ -49,10 +49,8 @@ public class RsyncCopier implements IProcessingTask {
 		logger.trace("destinationDirPath " + destinationDirPath);
 		logger.trace("destination " + destination);
 		String destinationFilePathname = destination + ".copying" + File.separator + logicalFile.getName(); // Reqmt - No need for the filepathname structur as when job fails, leaves the empty folder structure causing confusion
-		
-		
-		
-		String sshUser = configuration.getSshSystemUser(); // TODO Configure this...
+			
+		String sshUser = configuration.getSshSystemUser();
 		String host = StringUtils.substringBefore(destinationDirPath, ":");
         logger.info("processing rsync copy: " +  logicalFile.getAbsolutePath() + ", destination: " + destinationFilePathname);
         
@@ -60,7 +58,9 @@ public class RsyncCopier implements IProcessingTask {
         .source(logicalFile.getAbsolutePath())
         .destination(sshUser + "@" + destinationFilePathname)
         .recursive(true)
-        .checksum(configuration.isChecksumRsync());
+        .checksum(configuration.isChecksumRsync())
+        .bwlimit(configuration.getBwLimitRsync());
+        
         //.removeSourceFiles(true); // Reqmt - File gets deleted in downstream job
         
         CollectingProcessOutput output = rsync.execute();

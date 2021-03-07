@@ -45,6 +45,9 @@ public class Configuration {
 	
 	private boolean checksumRsync;
 	
+	private String bwLimitRsync;
+	
+	
 	public String getAppMode() {
 		return appMode;
 	}
@@ -195,5 +198,13 @@ public class Configuration {
 
 	public void setChecksumRsync(boolean checksumRsync) {
 		this.checksumRsync = checksumRsync;
+	}
+
+	public String getBwLimitRsync() {
+		return bwLimitRsync;
+	}
+
+	public void setBwLimitRsync(String bwLimitRsync) {
+		this.bwLimitRsync = bwLimitRsync;
 	}
 }
