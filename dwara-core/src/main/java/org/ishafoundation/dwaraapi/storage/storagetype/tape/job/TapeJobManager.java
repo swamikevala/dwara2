@@ -205,7 +205,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				logger.trace("No. of drives available "+ availableDrivesDetails.size());
 
 				// Remove jobs that dont have tapes yet in the library
-				removeJobsThatDontHaveNeededTapeOnLibrary(storageJobsList, availableDrivesDetails);
+				storageJobsList = removeJobsThatDontHaveNeededTapeOnLibrary(storageJobsList, availableDrivesDetails);
 				
 				if(storageJobsList.size() == 0) {
 					logger.debug("No eligible tape jobs in queue.");
@@ -352,7 +352,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		}
 	}
 
-	private void removeJobsThatDontHaveNeededTapeOnLibrary(List<StorageJob> storageJobsList,
+	private List<StorageJob>  removeJobsThatDontHaveNeededTapeOnLibrary(List<StorageJob> storageJobsList,
 			List<DriveDetails> availableDrivesDetails) {
 		// TODO For now assuming just one tape libarary is supported
 		String tapeLibraryName = availableDrivesDetails.get(0).getTapelibraryName();
@@ -361,7 +361,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			tapeOnLibraryObjList = tapeLibraryManager.getAllLoadedTapesInTheLibrary(tapeLibraryName);
 		} catch (Exception e) {
 			logger.error("Unable to get list of tapes on library " + tapeLibraryName + ". So not able to removeJobsThatDontHaveNeededTapeOnLibrary");
-			return;
+			return storageJobsList;
 		}
 		List<String> tapeOnLibraryList =  new ArrayList<String>();
 		for (TapeOnLibrary tapeOnLibrary : tapeOnLibraryObjList) {
@@ -384,7 +384,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			}
 		}
 	
-		storageJobsList = onlyTapeOnLibraryStorageJobsList;
+		return onlyTapeOnLibraryStorageJobsList;
 	}
 	
 	private void prepareTapeJobAndContinueNextSteps(StorageJob storageJob, DriveDetails driveDetails, boolean nextStepsInSeparateThread) {
