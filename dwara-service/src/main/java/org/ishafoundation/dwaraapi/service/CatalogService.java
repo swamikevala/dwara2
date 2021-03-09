@@ -41,7 +41,7 @@ public class CatalogService extends DwaraService{
     // private CatalogDao catalogDao;
 
     public List<Catalog> loadCatalogs() {
-        Query q = entityManager.createNativeQuery("select a.id, a.artifactclass_id, a.name, a.total_size, b.volume_id, c.group_ref_id, d.completed_at, e.name as ingestedBy " 
+        Query q = entityManager.createNativeQuery("select a.id, a.artifactclass_id, a.name, a.total_size, b.volume_id, c.group_ref_id, d.completed_at, e.name as ingestedBy, c.archiveformat_id" 
             + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
             + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.deleted=0"
             + " order by completed_at desc");
@@ -58,6 +58,7 @@ public class CatalogService extends DwaraService{
             if(record[6] != null)
                 _ingestedDate = ((Timestamp) record[6]).toLocalDateTime().toString();
             String _ingestedBy = (String) record[7];
+            String _format = (String) record[8];
 
             /* Query q2 = entityManager.createNativeQuery("select tag from artifact1_tag where artifact1_id=" + _artifactId);
             List<Object[]> results2 = q2.getResultList();
@@ -68,7 +69,7 @@ public class CatalogService extends DwaraService{
             });
             String[] arr = new String[arrTags.size()];
             arr = arrTags.toArray(arr); */
-            list.add(new Catalog(_artifactId, _artifactClass, _artifactName, _size, _volumeId, _groupVolume, _ingestedDate, _ingestedBy));
+            list.add(new Catalog(_artifactId, _artifactClass, _artifactName, _size, _volumeId, _groupVolume, _ingestedDate, _ingestedBy, _format));
         });
         logger.info("list size: " + list.size());
         return list;

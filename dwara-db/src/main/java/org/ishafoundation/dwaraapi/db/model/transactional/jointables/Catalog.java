@@ -38,13 +38,14 @@ public class Catalog implements Serializable{
     public String volumeGroup;
     public String ingestedDate;
     public String ingestedBy;
+    public String format;
 
     public Catalog() {
 
     }
 
     public Catalog(int artifactId, String artifactClass, String artifactName, long size, String volumeId,
-            String volumeGroup, String ingestedDate, String ingestedBy) {
+            String volumeGroup, String ingestedDate, String ingestedBy, String format) {
         this.artifactId = artifactId;
         this.artifactClass = artifactClass;
         this.artifactName = artifactName;
@@ -53,5 +54,6 @@ public class Catalog implements Serializable{
         this.volumeGroup = volumeGroup;
         this.ingestedDate = ingestedDate;
         this.ingestedBy = ingestedBy;
+        this.format = format;
     }
 }
