@@ -15,7 +15,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 
 @Entity
-@Table(name="tag")
+@Table(name="label")
 public class Tag {
     @Id
 	@Column(name="tag")
@@ -23,7 +23,7 @@ public class Tag {
 
 	@ManyToMany
 	@JoinTable(
-		name = "artifact1_tag",
+		name = "artifact1_label",
 		joinColumns = @JoinColumn(name = "tag"),
 		inverseJoinColumns = @JoinColumn(name = "artifact1_id")
 	)
