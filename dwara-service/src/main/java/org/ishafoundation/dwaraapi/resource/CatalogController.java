@@ -27,10 +27,11 @@ public class CatalogController {
     CatalogService catalogService;
 
     @PostMapping(value="/catalog", produces = "application/json")
-    public ResponseEntity<List<Catalog>> findCatalogs(@RequestBody CatalogRequest catalogRequest) {
-        logger.info("request: " + catalogRequest.tapeNumber + catalogRequest.artifactClass + catalogRequest.volumeGroup);
-        List<Catalog> list = catalogService.searchCatalogs(catalogRequest.artifactClass, catalogRequest.volumeGroup, catalogRequest.copyNumber, catalogRequest.tapeNumber, 
-            catalogRequest.startDate, catalogRequest.endDate, catalogRequest.artifactName, catalogRequest.tags);
+    public ResponseEntity<List<Catalog>> findCatalogs(/* @RequestBody CatalogRequest catalogRequest */) {
+        // logger.info("request: " + catalogRequest.tapeNumber + catalogRequest.artifactClass + catalogRequest.volumeGroup);
+        List<Catalog> list = catalogService.loadCatalogs();
+        /* List<Catalog> list = catalogService.findCatalogs(catalogRequest.artifactClass, catalogRequest.volumeGroup, catalogRequest.copyNumber, catalogRequest.tapeNumber, 
+            catalogRequest.startDate, catalogRequest.endDate, catalogRequest.artifactName, catalogRequest.tags); */
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
 }
