@@ -24,7 +24,7 @@ import javax.persistence.SqlResultSetMapping;
         )
     }
 ) */
-public class Catalog implements Serializable{
+public class ArtifactCatalog implements Serializable{
 
     /**
      *
@@ -40,11 +40,11 @@ public class Catalog implements Serializable{
     public String ingestedBy;
     public String format;
 
-    public Catalog() {
+    public ArtifactCatalog() {
 
     }
 
-    public Catalog(int artifactId, String artifactClass, String artifactName, long size, String volumeId,
+    public ArtifactCatalog(int artifactId, String artifactClass, String artifactName, long size, String volumeId,
             String volumeGroup, String ingestedDate, String ingestedBy, String format) {
         this.artifactId = artifactId;
         this.artifactClass = artifactClass;

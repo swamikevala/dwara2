@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.db.dao.master;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.Catalog;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactCatalog;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 

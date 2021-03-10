@@ -23,7 +23,8 @@ import org.ishafoundation.dwaraapi.api.resp.catalog.CatalogRespond;
 import org.ishafoundation.dwaraapi.db.dao.master.CatalogDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.Catalog;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactCatalog;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TapeCatalog;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.Artifact1Volume;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,13 +41,13 @@ public class CatalogService extends DwaraService{
     // @Autowired
     // private CatalogDao catalogDao;
 
-    public List<Catalog> loadCatalogs() {
+    public List<ArtifactCatalog> loadArtifacts() {
         Query q = entityManager.createNativeQuery("select a.id, a.artifactclass_id, a.name, a.total_size, b.volume_id, c.group_ref_id, d.completed_at, e.name as ingestedBy, c.archiveformat_id" 
             + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
             + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.deleted=0"
             + " order by completed_at desc");
         List<Object[]> results = q.getResultList();
-        List<Catalog> list = new ArrayList<Catalog>();
+        List<ArtifactCatalog> list = new ArrayList<ArtifactCatalog>();
         results.stream().forEach((record) -> {
             int _artifactId = ((Integer) record[0]).intValue();
             String _artifactClass = (String) record[1];
@@ -69,10 +70,14 @@ public class CatalogService extends DwaraService{
             });
             String[] arr = new String[arrTags.size()];
             arr = arrTags.toArray(arr); */
-            list.add(new Catalog(_artifactId, _artifactClass, _artifactName, _size, _volumeId, _groupVolume, _ingestedDate, _ingestedBy, _format));
+            list.add(new ArtifactCatalog(_artifactId, _artifactClass, _artifactName, _size, _volumeId, _groupVolume, _ingestedDate, _ingestedBy, _format));
         });
         logger.info("list size: " + list.size());
         return list;
+    }
+
+    public List<TapeCatalog> loadTapes() {
+        return null;
     }
 
     /* public List<Artifact1> findCatalogs(String artifactClass, String volumeGroup, String copyNumber, String tapeNumber, String startDate, String endDate, String artifactName, String tags) {
