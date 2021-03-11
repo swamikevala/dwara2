@@ -284,8 +284,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 									
 									int delayInSecs = (int) (Long.parseLong(fixedDelayAsString)/1000);
 									
-									long elapsedMtsSinceLastTapeOnJob = ChronoUnit.SECONDS.between(LocalDateTime.now(), lastJobOnTape.getCompletedAt());
-									if(!isSameGroupVolumeJobInTheStorageList && isQueuedJobOnGroupVolume &&  elapsedMtsSinceLastTapeOnJob > (delayInSecs + 60)) {// if no same groupVolume job in the list, but samegroupvolume jobs are queued then select one or skip this cycle
+									long elapsedSecsSinceLastTapeOnJob = ChronoUnit.SECONDS.between(LocalDateTime.now(), lastJobOnTape.getCompletedAt());
+									if(!isSameGroupVolumeJobInTheStorageList && isQueuedJobOnGroupVolume &&  elapsedSecsSinceLastTapeOnJob < (delayInSecs + 60)) {// if no same groupVolume job in the list, but samegroupvolume jobs are queued then select one or skip this cycle
 										logger.info("No job selected. Last job on tape " + lastJobOnTape.getId() + " just got completed and same volume job is queued but not in the list for job selection. So skipping this drive and tape this cycle");
 										continue;
 									}
