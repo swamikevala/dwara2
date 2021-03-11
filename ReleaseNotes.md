@@ -1,4 +1,11 @@
-# Dwara App Version - 2.1.12 (9th Mar 2021)
+# Dwara App Version - 2.1.13 (11th Mar 2021)
+### Bug fix
+
+1) Artifact with Symbolic links not to be warned to the user as its of no consequence
+
+2) Fix for write restore holding on a tape indefinitely - corrected
+
+# Dwara App Version - 2.1.12 (10th Mar 2021)
 ### New features
 
 1) Tagging support for Artifacts for quick search
@@ -15,6 +22,11 @@
 	
 > Pending 2 - Volume index after finalization to have link details... Need to spec it out
 
+4) UI Enhancements
+
+> Show pools running out of space on top
+
+> Abilitiy to Sort Artifact by verified status(red/yellow/green thumbsup)
 
 ### Bug fix
 
