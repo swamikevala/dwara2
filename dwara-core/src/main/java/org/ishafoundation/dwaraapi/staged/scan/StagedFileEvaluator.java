@@ -166,18 +166,18 @@ public class StagedFileEvaluator {
 			// 6- SymLink Loop
 			if(sfv.getSymLinkLoops().size() > 0) {
 				Error error = new Error();
-				error.setType(Errortype.Warning);
+				error.setType(Errortype.Error);
 				error.setMessage("Self referencing symbolic link loop(s) detected " + sfv.getSymLinkLoops());
 				errorList.add(error);
 			}
 			
-			// 7- Unresolved SymLink
-			if(sfv.getUnresolvedSymLinks().size() > 0) {
-				Error error = new Error();
-				error.setType(Errortype.Warning);
-				error.setMessage("Unresolved sym link(s) found " + sfv.getUnresolvedSymLinks());
-				errorList.add(error);
-			}
+//			// 7- Unresolved SymLink
+//			if(sfv.getUnresolvedSymLinks().size() > 0) {
+//				Error error = new Error();
+//				error.setType(Errortype.Warning);
+//				error.setMessage("Unresolved sym link(s) found " + sfv.getUnresolvedSymLinks());
+//				errorList.add(error);
+//			}
 			
 			// 8- FilePathNameLength > 4096 
 			if(sfv.getFilePathNamesGt4096Chrs().size() > 0) {

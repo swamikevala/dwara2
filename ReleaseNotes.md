@@ -1,21 +1,60 @@
-# Dwara App Version - 2.1.12 (28th Feb 2021)
+# Dwara App Version - 2.1.13 (11th Mar 2021)
+### Bug fix
+
+1) Artifact with Symbolic links not to be warned to the user as its of no consequence
+
+2) Fix for write restore holding on a tape indefinitely - corrected
+
+# Dwara App Version - 2.1.12 (10th Mar 2021)
 ### New features
 
-1) Priority for processing tasks
+1) Tagging support for Artifacts for quick search
+
+2) Catalog changes - 
+	
+> Artifact View - Search on Artifact results in list of tapes Artifact has been written
+	
+> Tape View - Search on specific Tape number lists all artifacts written on it
+	
+3) Support for hard and soft links
+	
+> Pending 1 - Icon? folder under Poem-Sadhguru-Poem-For-New-Year-2021-Timespace_English_01Min-07Secs_Unconsolidated/FOOTAGE/Neue World - Free for Personal Use 2/Icon? still missing block details
+	
+> Pending 2 - Volume index after finalization to have link details... Need to spec it out
+
+4) UI Enhancements
+
+> Show pools running out of space on top
+
+> Abilitiy to Sort Artifact by verified status(red/yellow/green thumbsup)
 
 ### Bug fix
 
-1) Hard link fix
+1) Failed user request not reflecting status
 
-2) Setting Volume used for dependent processing tasks
+2) Set Job.Volume used for dependent processing tasks
 
-3) Failed User request not reflecting status
+3) File path with space on mkvtoolnix
+
+4) Rsync bwlimit configurable for Filecopier
+
+5) Fix for write restore holding on a tape indefinitely
+
+6) Keep jobs queued that dont have needed Tape on Library
+
 
 ### Upgrade steps
 
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_7.sql) to fix the file size discrepancies
+
 1) application.properties to have the below entry
 
-> threadpoolexecutor.*.priority=5
+> bwLimitRsync=25000/30000
+
+> threadpoolexecutor.processingtask.core/maxPoolSize=4
+
+> threadpoolexecutor.video-proxy-low-gen.core/maxPoolSize=2
+
 
 2) AdminController to use payload like [{"task": "video-proxy-low-gen", "corePoolSize" : 5, "maxPoolSize" : 5, "priority" :3}]
 
