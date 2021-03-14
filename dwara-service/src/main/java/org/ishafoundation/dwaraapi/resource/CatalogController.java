@@ -3,7 +3,8 @@ package org.ishafoundation.dwaraapi.resource;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.api.req.catalog.CatalogRequest;
+import org.ishafoundation.dwaraapi.api.req.catalog.ArtifactCatalogRequest;
+import org.ishafoundation.dwaraapi.api.req.catalog.TapeCatalogRequest;
 import org.ishafoundation.dwaraapi.api.resp.catalog.CatalogRespond;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactCatalog;
@@ -29,17 +30,24 @@ public class CatalogController {
     CatalogService catalogService;
 
     @PostMapping(value="/catalog/artifacts", produces = "application/json")
-    public ResponseEntity<List<ArtifactCatalog>> loadArtifactsCatalog(/* @RequestBody CatalogRequest catalogRequest */) {
-        // logger.info("request: " + catalogRequest.tapeNumber + catalogRequest.artifactClass + catalogRequest.volumeGroup);
-        List<ArtifactCatalog> list = catalogService.loadArtifacts();
-        /* List<Catalog> list = catalogService.findCatalogs(catalogRequest.artifactClass, catalogRequest.volumeGroup, catalogRequest.copyNumber, catalogRequest.tapeNumber, 
-            catalogRequest.startDate, catalogRequest.endDate, catalogRequest.artifactName, catalogRequest.tags); */
+    public ResponseEntity<List<ArtifactCatalog>> loadArtifactsCatalog(@RequestBody ArtifactCatalogRequest catalogRequest) {
+        List<ArtifactCatalog> list = catalogService.findArtifactsCatalog(catalogRequest.artifactClass, catalogRequest.volumeGroup, catalogRequest.copyNumber, catalogRequest.volumeId, 
+            catalogRequest.startDate, catalogRequest.endDate, catalogRequest.artifactName);
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
 
-    @GetMapping(value="/catalog/tapes", produces = "application/json")
-    public ResponseEntity<List<TapeCatalog>> loadTapesCatalog() {
-        List<TapeCatalog> list = catalogService.loadTapes();
+    @PostMapping(value="/catalog/artifactsbyvolumeid", produces = "application/json")
+    public ResponseEntity<List<ArtifactCatalog>> loadArtifactsCatalog(@RequestBody String[] volumeIds) {
+        // logger.info("request: " + catalogRequest.volumeId + catalogRequest.artifactClass + catalogRequest.volumeGroup);
+        // List<ArtifactCatalog> list = catalogService.loadArtifacts();
+        List<ArtifactCatalog> list = catalogService.findArtifactsCatalogByVolumeIds(volumeIds);
+        return ResponseEntity.status(HttpStatus.OK).body(list);
+    }
+
+    @PostMapping(value="/catalog/tapes", produces = "application/json")
+    public ResponseEntity<List<TapeCatalog>> loadTapesCatalog(@RequestBody TapeCatalogRequest tapeCatalogRequest) {
+        List<TapeCatalog> list = catalogService.findTapesCatalog(tapeCatalogRequest.volumeId, tapeCatalogRequest.volumeGroup, tapeCatalogRequest.copyNumber,
+            tapeCatalogRequest.format, tapeCatalogRequest.location, tapeCatalogRequest.startDate, tapeCatalogRequest.endDate);
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
 }

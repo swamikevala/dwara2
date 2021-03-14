@@ -9,18 +9,22 @@ public class TapeCatalog implements Serializable{
     private String format;
     private String location;
     private String status;
+    private String initializedDate;
     private String finalizedDate;
-    private String usedSpace;
+    private Long usedSpace;
+    private Long capacity;
     
     public TapeCatalog(String volumeId, String volumeGroup, String format, String location, String status,
-            String finalizedDate, String usedSpace) {
+            String initializedDate, String finalizedDate, Long usedSpace, Long capacity) {
         this.volumeId = volumeId;
         this.volumeGroup = volumeGroup;
         this.format = format;
         this.location = location;
         this.status = status;
+        this.initializedDate = initializedDate;
         this.finalizedDate = finalizedDate;
         this.usedSpace = usedSpace;
+        this.capacity = capacity;
     }
 
     public String getVolumeId() {
@@ -71,11 +75,27 @@ public class TapeCatalog implements Serializable{
         this.finalizedDate = finalizedDate;
     }
 
-    public String getUsedSpace() {
+    public Long getUsedSpace() {
         return usedSpace;
     }
 
-    public void setUsedSpace(String usedSpace) {
+    public void setUsedSpace(Long usedSpace) {
         this.usedSpace = usedSpace;
+    }
+
+    public Long getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(Long capacity) {
+        this.capacity = capacity;
+    }
+
+    public String getInitializedDate() {
+        return initializedDate;
+    }
+
+    public void setInitializedDate(String initializedDate) {
+        this.initializedDate = initializedDate;
     }
 }
