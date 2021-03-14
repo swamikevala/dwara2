@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.service;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -39,13 +40,23 @@ public class CatalogService extends DwaraService{
     @PersistenceContext
     private EntityManager entityManager;
 
-    // @Autowired
-    // private VolumeDao volumeDao;
-
-    // @Autowired
-    // private CatalogDao catalogDao;
-
     public List<TapeCatalog> findTapesCatalog(String volumeId, String[] volumeGroup, String[] copyNumber, String[] format, String[] location, String startDate, String endDate) {
+        Query q2 = entityManager.createNativeQuery("select artifactclass_id, volume_id from artifactclass_volume where active=1");
+        List<Object[]> results2 = q2.getResultList();
+        HashMap<String, List<String>> map = new HashMap<String, List<String>>();
+        results2.stream().forEach((record) -> {
+            String _artifactClassId = (String) record[0];
+            String _groupId = (String) record[1];
+            if(map.get(_groupId) == null) {
+                map.put(_groupId, new ArrayList<String>());
+            }
+            else {
+                List<String> l = map.get(_groupId);
+                l.add(_artifactClassId);
+                map.put(_groupId, l);
+            }
+        });
+
         String condition = "";
         if(volumeId != "") {
             String name = volumeId.replaceAll(" ", "%");
@@ -105,11 +116,14 @@ public class CatalogService extends DwaraService{
             if(record[4] != null)
                 _initializedAt = ((Timestamp) record[4]).toLocalDateTime().toString();
             long _capacity = ((BigInteger)record[5]).longValue();
+
+            List<String> _artifactClass = map.get(_volumeGroup);
+
             String status = "TODO";
             String _finalizedAt = "";
             Long _usedSpace = 0L;
             list.add(new TapeCatalog(_volumeId, _volumeGroup, _format, _location, status, _initializedAt,
-                _finalizedAt, _usedSpace, _capacity));
+                _finalizedAt, _usedSpace, _capacity, _artifactClass));
         });
         logger.info("list size: " + list.size());
         return list;

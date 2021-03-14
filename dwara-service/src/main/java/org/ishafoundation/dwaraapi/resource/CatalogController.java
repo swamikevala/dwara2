@@ -37,9 +37,7 @@ public class CatalogController {
     }
 
     @PostMapping(value="/catalog/artifactsbyvolumeid", produces = "application/json")
-    public ResponseEntity<List<ArtifactCatalog>> loadArtifactsCatalog(@RequestBody String[] volumeIds) {
-        // logger.info("request: " + catalogRequest.volumeId + catalogRequest.artifactClass + catalogRequest.volumeGroup);
-        // List<ArtifactCatalog> list = catalogService.loadArtifacts();
+    public ResponseEntity<List<ArtifactCatalog>> loadArtifactsCatalogByVolumeIds(@RequestBody String[] volumeIds) {
         List<ArtifactCatalog> list = catalogService.findArtifactsCatalogByVolumeIds(volumeIds);
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
