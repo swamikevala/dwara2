@@ -275,14 +275,17 @@ public abstract class AbstractStoragetypeJobProcessor {
 		selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStartVolumeBlock());
 		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEndVolumeBlock());
 		
-		labelManager.writeArtifactLabel(selectedStorageJob);
-
-    	logger.info("ArtifactVolume - " + artifactVolume.getId().getArtifactId() + " " + artifactVolume.getName() + " " + artifactVolume.getId().getVolumeId() + " " + artifactVolume.getDetails().getStartVolumeBlock() + " " + artifactVolume.getDetails().getEndVolumeBlock());
+		logger.info("ArtifactVolume - " + artifactVolume.getId().getArtifactId() + " " + artifactVolume.getName() + " " + artifactVolume.getId().getVolumeId() + " " + artifactVolume.getDetails().getStartVolumeBlock() + " " + artifactVolume.getDetails().getEndVolumeBlock());
     	int lastArtifactOnVolumeEndVolumeBlock = artifactVolume.getDetails().getEndVolumeBlock();
     	logger.trace("lastArtifactOnVolumeEndVolumeBlock " + lastArtifactOnVolumeEndVolumeBlock);
     	logger.trace("volume.getDetails().getBlocksize() - " + volume.getDetails().getBlocksize());
     	long usedCapacity = (long) volume.getDetails().getBlocksize() * lastArtifactOnVolumeEndVolumeBlock;
     	logger.trace("usedCapacity - " + usedCapacity);
+		volume.setUsedSpace(usedCapacity);
+		volumeDao.save(volume);
+		
+		labelManager.writeArtifactLabel(selectedStorageJob);
+
     	boolean isVolumeNeedToBeFinalized = volumeUtil.isVolumeNeedToBeFinalized(domain, volume, usedCapacity);
     	if(isVolumeNeedToBeFinalized) {
     		logger.info("Triggering a finalization request for volume - " + volume.getId());

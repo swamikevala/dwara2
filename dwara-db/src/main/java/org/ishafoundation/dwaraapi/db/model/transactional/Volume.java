@@ -93,6 +93,9 @@ public class Volume {
 	
 	@Column(name="capacity")
 	private Long capacity;
+
+	@Column(name="used_space")
+	private Long usedSpace;
 	
 	@OneToOne
 	private Location location;
@@ -273,6 +276,14 @@ public class Volume {
 
 	public void setFinalizedAt(LocalDateTime finalizedAt) {
 		this.finalizedAt = finalizedAt;
+	}
+
+	public Long getUsedSpace() {
+		return usedSpace;
+	}
+
+	public void setUsedSpace(Long usedSpace) {
+		this.usedSpace = usedSpace;
 	}
 
 }

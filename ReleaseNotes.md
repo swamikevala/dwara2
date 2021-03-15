@@ -1,3 +1,14 @@
+# Dwara App Version - 2.1.14 (21st Mar 2021)
+### New features
+
+1) Tape catalog searching
+
+2) Artifact catalog searching
+
+### Upgrade steps
+
+1) Call api end points from swagger: /catalog/updateFinalizedDate, /catalog/updateUsedSpace
+
 # Dwara App Version - 2.1.13 (11th Mar 2021)
 ### Bug fix
 

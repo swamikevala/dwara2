@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -52,6 +53,21 @@ public class CatalogService extends DwaraService{
     @Autowired
     private RequestDao requestDao;
 
+    public void updateUsedSpace() {
+        String query = "select b.volume_id, sum(a.total_size) from artifact1 a join artifact1_volume b join volume c where a.id=b.artifact_id and b.volume_id=c.id group by b.volume_id;";
+        Query q = entityManager.createNativeQuery(query);
+        List<Object[]> results = q.getResultList();
+        results.forEach((record) -> {
+            String volumeId = (String)record[0];
+            Long usedSpace = ((BigDecimal)record[1]).longValue();
+            Volume volume = volumeDao.findById(volumeId).get();
+            if(volume != null){
+                volume.setUsedSpace(usedSpace);
+                volumeDao.save(volume);
+            }
+        });
+    }
+    
     public void updateFinalizedDate() {
         List<Status> statusList = new ArrayList<Status>();
         statusList.add(Status.completed);
@@ -126,7 +142,7 @@ public class CatalogService extends DwaraService{
             condition += " and a.initialized_at >= '" + startDate + "'";
         if(endDate != "")
             condition += " and a.initialized_at <= '" + endDate + "'";
-        String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.suspect, a.finalized_at" 
+        String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.suspect, a.finalized_at, a.used_space" 
         + " from volume a"
         + " where a.initialized_at is not null"
         + condition
@@ -143,13 +159,18 @@ public class CatalogService extends DwaraService{
             String _initializedAt = "";
             if(record[4] != null)
                 _initializedAt = ((Timestamp) record[4]).toLocalDateTime().toString();
-            long _capacity = ((BigInteger)record[5]).longValue();
+            long _capacity = 0;
+            if(record[5] != null)
+                _capacity = ((BigInteger)record[5]).longValue();
             boolean _isImported = (boolean)record[6];
             boolean _isFinalized = (boolean)record[7];
             boolean _isSuspect = (boolean)record[8];
             String _finalizedAt = "";
             if(record[9] != null)
                 _finalizedAt = ((Timestamp) record[9]).toLocalDateTime().toString();
+            long _usedSpace = 0;
+            if(record[10] != null)
+                _usedSpace = ((BigInteger)record[10]).longValue();
             List<String> _artifactClass = map.get(_volumeGroup);
 
             String status = "";
@@ -160,7 +181,6 @@ public class CatalogService extends DwaraService{
             else if(_initializedAt != "")
                 status = "Initialized";
             
-            Long _usedSpace = 0L;
             list.add(new TapeCatalog(_volumeId, _volumeGroup, _format, _location, status, _initializedAt,
                 _finalizedAt, _usedSpace, _capacity, _artifactClass, _isSuspect));
         });

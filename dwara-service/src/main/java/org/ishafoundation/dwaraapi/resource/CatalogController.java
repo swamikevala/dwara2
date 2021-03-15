@@ -28,6 +28,12 @@ public class CatalogController {
     @Autowired
     CatalogService catalogService;
 
+    @PostMapping(value="/catalog/updateUsedSpace", produces = "application/json")
+    public ResponseEntity<String> updateUsedSpace() {
+        catalogService.updateUsedSpace();
+        return ResponseEntity.status(HttpStatus.OK).body("OK");
+    }
+
     @PostMapping(value="/catalog/updateFinalizedDate", produces = "application/json")
     public ResponseEntity<String> updateFinalizedDate() {
         catalogService.updateFinalizedDate();
