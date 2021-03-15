@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.service;
 
 import java.math.BigInteger;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,14 +22,18 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
-import org.ishafoundation.dwaraapi.api.resp.catalog.CatalogRespond;
 import org.ishafoundation.dwaraapi.db.dao.master.CatalogDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactCatalog;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TapeCatalog;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.Artifact1Volume;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +45,28 @@ public class CatalogService extends DwaraService{
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Autowired
+    private VolumeDao volumeDao;
+
+    @Autowired
+    private RequestDao requestDao;
+
+    public void updateFinalizedDate() {
+        List<Status> statusList = new ArrayList<Status>();
+        statusList.add(Status.completed);
+        
+        List<Request> finalizedList = requestDao.findAllByActionIdAndStatusInAndType(Action.finalize, statusList, RequestType.system);
+        finalizedList.forEach((r)-> {
+            LocalDateTime finalizedDate = r.getCompletedAt();
+            String volumeId = r.getDetails().getVolumeId();
+            Volume volume = volumeDao.findById(volumeId).get();
+            if(volume != null){
+                volume.setFinalizedAt(finalizedDate);
+                volumeDao.save(volume);
+            }
+        });
+    }
 
     public List<TapeCatalog> findTapesCatalog(String volumeId, String[] volumeGroup, String[] copyNumber, String[] format, String[] location, String startDate, String endDate) {
         Query q2 = entityManager.createNativeQuery("select artifactclass_id, volume_id from artifactclass_volume where active=1");
@@ -99,7 +126,7 @@ public class CatalogService extends DwaraService{
             condition += " and a.initialized_at >= '" + startDate + "'";
         if(endDate != "")
             condition += " and a.initialized_at <= '" + endDate + "'";
-        String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.suspect" 
+        String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.suspect, a.finalized_at" 
         + " from volume a"
         + " where a.initialized_at is not null"
         + condition
@@ -120,6 +147,9 @@ public class CatalogService extends DwaraService{
             boolean _isImported = (boolean)record[6];
             boolean _isFinalized = (boolean)record[7];
             boolean _isSuspect = (boolean)record[8];
+            String _finalizedAt = "";
+            if(record[9] != null)
+                _finalizedAt = ((Timestamp) record[9]).toLocalDateTime().toString();
             List<String> _artifactClass = map.get(_volumeGroup);
 
             String status = "";
@@ -130,7 +160,6 @@ public class CatalogService extends DwaraService{
             else if(_initializedAt != "")
                 status = "Initialized";
             
-            String _finalizedAt = "";
             Long _usedSpace = 0L;
             list.add(new TapeCatalog(_volumeId, _volumeGroup, _format, _location, status, _initializedAt,
                 _finalizedAt, _usedSpace, _capacity, _artifactClass, _isSuspect));

@@ -72,6 +72,9 @@ public class Volume {
 	
 	@Column(name="initialized_at")
 	private LocalDateTime initializedAt;
+
+	@Column(name="finalized_at")
+	private LocalDateTime finalizedAt;
 	
 	@Column(name="finalized")
 	private boolean finalized;
@@ -263,5 +266,13 @@ public class Volume {
     public int hashCode() {
         return Objects.hash(id);
     }
+
+	public LocalDateTime getFinalizedAt() {
+		return finalizedAt;
+	}
+
+	public void setFinalizedAt(LocalDateTime finalizedAt) {
+		this.finalizedAt = finalizedAt;
+	}
 
 }

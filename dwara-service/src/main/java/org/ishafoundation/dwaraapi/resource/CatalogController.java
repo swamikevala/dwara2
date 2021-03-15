@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.catalog.ArtifactCatalogRequest;
 import org.ishafoundation.dwaraapi.api.req.catalog.TapeCatalogRequest;
-import org.ishafoundation.dwaraapi.api.resp.catalog.CatalogRespond;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactCatalog;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TapeCatalog;
@@ -28,6 +27,12 @@ public class CatalogController {
 
     @Autowired
     CatalogService catalogService;
+
+    @PostMapping(value="/catalog/updateFinalizedDate", produces = "application/json")
+    public ResponseEntity<String> updateFinalizedDate() {
+        catalogService.updateFinalizedDate();
+        return ResponseEntity.status(HttpStatus.OK).body("OK");
+    }
 
     @PostMapping(value="/catalog/artifacts", produces = "application/json")
     public ResponseEntity<List<ArtifactCatalog>> loadArtifactsCatalog(@RequestBody ArtifactCatalogRequest catalogRequest) {

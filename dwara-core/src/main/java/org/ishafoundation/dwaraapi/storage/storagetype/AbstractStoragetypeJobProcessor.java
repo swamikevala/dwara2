@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -407,6 +408,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	protected void afterFinalize(SelectedStorageJob selectedStorageJob) {
 		Volume volume = selectedStorageJob.getStorageJob().getVolume();
 		volume.setFinalized(true);
+		volume.setFinalizedAt(LocalDateTime.now());
 		volumeDao.save(volume);
 		logger.trace("Volume " + volume.getId() + " finalized succesfully");
 		
