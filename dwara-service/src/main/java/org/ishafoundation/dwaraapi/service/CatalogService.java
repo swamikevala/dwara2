@@ -20,6 +20,7 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.api.resp.catalog.CatalogRespond;
 import org.ishafoundation.dwaraapi.db.dao.master.CatalogDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
@@ -98,13 +99,13 @@ public class CatalogService extends DwaraService{
             condition += " and a.initialized_at >= '" + startDate + "'";
         if(endDate != "")
             condition += " and a.initialized_at <= '" + endDate + "'";
-        String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity" 
+        String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.suspect" 
         + " from volume a"
         + " where a.initialized_at is not null"
         + condition
         + " order by a.initialized_at desc";
         Query q = entityManager.createNativeQuery(query);
-        logger.info("mysql query: " + query);
+        // logger.info("mysql query: " + query);
         List<Object[]> results = q.getResultList();
         List<TapeCatalog> list = new ArrayList<TapeCatalog>();
         results.stream().forEach((record) -> {
@@ -116,16 +117,25 @@ public class CatalogService extends DwaraService{
             if(record[4] != null)
                 _initializedAt = ((Timestamp) record[4]).toLocalDateTime().toString();
             long _capacity = ((BigInteger)record[5]).longValue();
-
+            boolean _isImported = (boolean)record[6];
+            boolean _isFinalized = (boolean)record[7];
+            boolean _isSuspect = (boolean)record[8];
             List<String> _artifactClass = map.get(_volumeGroup);
 
-            String status = "TODO";
+            String status = "";
+            if(_isImported)
+                status = "Imported";
+            else if(_isFinalized)
+                status = "Finalized";
+            else if(_initializedAt != "")
+                status = "Initialized";
+            
             String _finalizedAt = "";
             Long _usedSpace = 0L;
             list.add(new TapeCatalog(_volumeId, _volumeGroup, _format, _location, status, _initializedAt,
-                _finalizedAt, _usedSpace, _capacity, _artifactClass));
+                _finalizedAt, _usedSpace, _capacity, _artifactClass, _isSuspect));
         });
-        logger.info("list size: " + list.size());
+        // logger.info("list size: " + list.size());
         return list;
     }
 
@@ -145,7 +155,7 @@ public class CatalogService extends DwaraService{
         + condition
         + " order by completed_at desc";
         Query q = entityManager.createNativeQuery(query);
-        logger.info("mysql query: " + query);
+        // logger.info("mysql query: " + query);
         List<Object[]> results = q.getResultList();
         List<ArtifactCatalog> list = new ArrayList<ArtifactCatalog>();
         results.stream().forEach((record) -> {
@@ -209,7 +219,7 @@ public class CatalogService extends DwaraService{
         + condition
         + " order by completed_at desc";
         Query q = entityManager.createNativeQuery(query);
-        logger.info("mysql query: " + query);
+        // logger.info("mysql query: " + query);
         List<Object[]> results = q.getResultList();
         List<ArtifactCatalog> list = new ArrayList<ArtifactCatalog>();
         results.stream().forEach((record) -> {
