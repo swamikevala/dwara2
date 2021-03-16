@@ -139,14 +139,14 @@ public class CatalogService extends DwaraService{
             condition += ")";
         }
         if(startDate != "")
-            condition += " and a.initialized_at >= '" + startDate + "'";
+            condition += " and a.finalized_at >= '" + startDate + "'";
         if(endDate != "")
-            condition += " and a.initialized_at <= '" + endDate + "'";
+            condition += " and a.finalized_at <= '" + endDate + "'";
         String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.suspect, a.finalized_at, a.used_space" 
         + " from volume a"
         + " where a.initialized_at is not null"
         + condition
-        + " order by a.initialized_at desc";
+        + " order by a.finalized_at desc";
         Query q = entityManager.createNativeQuery(query);
         // logger.info("mysql query: " + query);
         List<Object[]> results = q.getResultList();
@@ -178,8 +178,13 @@ public class CatalogService extends DwaraService{
                 status = "Imported";
             else if(_isFinalized)
                 status = "Finalized";
-            else if(_initializedAt != "")
-                status = "Initialized";
+            else if(_initializedAt != "") {
+                if(_usedSpace > 1024*1024)
+                    status = "Partially Written";
+                else
+                    status = "Initialized";
+            }
+                
             
             list.add(new TapeCatalog(_volumeId, _volumeGroup, _format, _location, status, _initializedAt,
                 _finalizedAt, _usedSpace, _capacity, _artifactClass, _isSuspect));
