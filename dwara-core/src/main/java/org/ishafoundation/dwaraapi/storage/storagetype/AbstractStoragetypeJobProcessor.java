@@ -281,7 +281,7 @@ public abstract class AbstractStoragetypeJobProcessor {
     	logger.trace("volume.getDetails().getBlocksize() - " + volume.getDetails().getBlocksize());
     	long usedCapacity = (long) volume.getDetails().getBlocksize() * lastArtifactOnVolumeEndVolumeBlock;
     	logger.trace("usedCapacity - " + usedCapacity);
-		volume.setUsedSpace(usedCapacity);
+		volume.setUsedCapacity(usedCapacity);
 		volumeDao.save(volume);
 		
 		labelManager.writeArtifactLabel(selectedStorageJob);

@@ -26,6 +26,7 @@ import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.db.dao.master.CatalogDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
@@ -53,16 +54,28 @@ public class CatalogService extends DwaraService{
     @Autowired
     private RequestDao requestDao;
 
+    public Location changeTapeLocation(String volumeId, String newLocation) {
+        Volume volume = volumeDao.findById(volumeId).get();
+        if(volume != null){
+            Location l = new Location();
+            l.setId(newLocation);
+            volume.setLocation(l);
+            volumeDao.save(volume);
+            return l;
+        }
+        return null;
+    }
+
     public void updateUsedSpace() {
         String query = "select b.volume_id, sum(a.total_size) from artifact1 a join artifact1_volume b join volume c where a.id=b.artifact_id and b.volume_id=c.id group by b.volume_id;";
         Query q = entityManager.createNativeQuery(query);
         List<Object[]> results = q.getResultList();
         results.forEach((record) -> {
             String volumeId = (String)record[0];
-            Long usedSpace = ((BigDecimal)record[1]).longValue();
+            Long usedCapacity = ((BigDecimal)record[1]).longValue();
             Volume volume = volumeDao.findById(volumeId).get();
             if(volume != null){
-                volume.setUsedSpace(usedSpace);
+                volume.setUsedCapacity(usedCapacity);
                 volumeDao.save(volume);
             }
         });
@@ -142,7 +155,7 @@ public class CatalogService extends DwaraService{
             condition += " and a.finalized_at >= '" + startDate + "'";
         if(endDate != "")
             condition += " and a.finalized_at <= '" + endDate + "'";
-        String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.suspect, a.finalized_at, a.used_space" 
+        String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.suspect, a.finalized_at, a.used_capacity" 
         + " from volume a"
         + " where a.initialized_at is not null"
         + condition
@@ -168,9 +181,9 @@ public class CatalogService extends DwaraService{
             String _finalizedAt = "";
             if(record[9] != null)
                 _finalizedAt = ((Timestamp) record[9]).toLocalDateTime().toString();
-            long _usedSpace = 0;
+            long _usedCapacity = 0;
             if(record[10] != null)
-                _usedSpace = ((BigInteger)record[10]).longValue();
+                _usedCapacity = ((BigInteger)record[10]).longValue();
             List<String> _artifactClass = map.get(_volumeGroup);
 
             String status = "";
@@ -179,7 +192,7 @@ public class CatalogService extends DwaraService{
             else if(_isFinalized)
                 status = "Finalized";
             else if(_initializedAt != "") {
-                if(_usedSpace > 1024*1024)
+                if(_usedCapacity > 1024*1024)
                     status = "Partially Written";
                 else
                     status = "Initialized";
@@ -187,7 +200,7 @@ public class CatalogService extends DwaraService{
                 
             
             list.add(new TapeCatalog(_volumeId, _volumeGroup, _format, _location, status, _initializedAt,
-                _finalizedAt, _usedSpace, _capacity, _artifactClass, _isSuspect));
+                _finalizedAt, _usedCapacity, _capacity, _artifactClass, _isSuspect));
         });
         // logger.info("list size: " + list.size());
         return list;

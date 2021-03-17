@@ -94,8 +94,8 @@ public class Volume {
 	@Column(name="capacity")
 	private Long capacity;
 
-	@Column(name="used_space")
-	private Long usedSpace;
+	@Column(name="used_capacity")
+	private Long usedCapacity;
 	
 	@OneToOne
 	private Location location;
@@ -278,12 +278,12 @@ public class Volume {
 		this.finalizedAt = finalizedAt;
 	}
 
-	public Long getUsedSpace() {
-		return usedSpace;
+	public Long getUsedCapacity() {
+		return usedCapacity;
 	}
 
-	public void setUsedSpace(Long usedSpace) {
-		this.usedSpace = usedSpace;
+	public void setUsedCapacity(Long usedCapacity) {
+		this.usedCapacity = usedCapacity;
 	}
 
 }

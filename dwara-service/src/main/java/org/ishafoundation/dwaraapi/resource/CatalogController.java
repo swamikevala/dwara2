@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.catalog.ArtifactCatalogRequest;
 import org.ishafoundation.dwaraapi.api.req.catalog.TapeCatalogRequest;
+import org.ishafoundation.dwaraapi.api.req.catalog.TapeChangeLocationRequest;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactCatalog;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TapeCatalog;
@@ -27,6 +29,12 @@ public class CatalogController {
 
     @Autowired
     CatalogService catalogService;
+
+    @PostMapping(value="/catalog/changeTapeLocation", produces = "application/json")
+    public ResponseEntity<Location> changeTapeLocation(@RequestBody TapeChangeLocationRequest request) {
+        Location l = catalogService.changeTapeLocation(request.volumeId, request.newLocation);
+        return ResponseEntity.status(HttpStatus.OK).body(l);
+    }
 
     @PostMapping(value="/catalog/updateUsedSpace", produces = "application/json")
     public ResponseEntity<String> updateUsedSpace() {
