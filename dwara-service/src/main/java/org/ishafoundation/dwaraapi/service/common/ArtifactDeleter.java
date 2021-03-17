@@ -238,7 +238,7 @@ public class ArtifactDeleter {
 					// Tentatively calling hardcoded
 					//processingtaskActionMap.get(processingtaskName)
 					if(processingtaskId.equals("video-mam-update")) {
-						mamUpdateTaskExecutor.cleanUp(artifact.getName(), artifact.getArtifactclass().getCategory());
+						mamUpdateTaskExecutor.cleanUp(nthJob.getId(), artifact.getName(), artifact.getArtifactclass().getCategory());
 					}
 				}
 			}

@@ -18,3 +18,8 @@ UPDATE artifact1  SET total_size = 0 where total_size is null;
 update file1 as f join artifact1 a on f.artifact_id = a.id
 set f.size = a.total_size
 where f.pathname = a.name;
+
+
+UPDATE `file1` SET `size`='1221080907114' WHERE `id`='264782';
+
+UPDATE `artifact1` SET `total_size`='1221080907114' WHERE `id`=9983;

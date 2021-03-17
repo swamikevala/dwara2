@@ -77,7 +77,7 @@ public class RsyncCopier implements IProcessingTask {
 	        try {
 	        	jSchSession = sshSessionHelper.getSession(host, sshUser);
 				logger.trace("executing remotely " + command1);
-				response = remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, inputArtifactName + ".out_mv_qcErr");
+				response = remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, processContext.getJob().getId() + ".out_mv_qcErr");
 				if(response.isComplete()) {
 			        processingtaskResponse.setIsComplete(true);
 			        processingtaskResponse.setStdOutResponse(response.getStdOutResponse());
