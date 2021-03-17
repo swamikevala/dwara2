@@ -16,9 +16,10 @@ public class TapeCatalog implements Serializable{
     public Long capacity;
     public List<String> artifactClass;
     public boolean isSuspect;
+    public boolean isDefective;
     
     public TapeCatalog(String volumeId, String volumeGroup, String format, String location, String status,
-            String initializedDate, String finalizedDate, Long usedCapacity, Long capacity, List<String> artifactClass, boolean isSuspect) {
+            String initializedDate, String finalizedDate, Long usedCapacity, Long capacity, List<String> artifactClass, boolean isSuspect, boolean isDefective) {
         this.volumeId = volumeId;
         this.volumeGroup = volumeGroup;
         this.format = format;
@@ -30,5 +31,6 @@ public class TapeCatalog implements Serializable{
         this.capacity = capacity;
         this.artifactClass = artifactClass;
         this.isSuspect = isSuspect;
+        this.isDefective = isDefective;
     }
 }

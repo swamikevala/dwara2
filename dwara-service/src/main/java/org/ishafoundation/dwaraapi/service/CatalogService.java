@@ -155,7 +155,7 @@ public class CatalogService extends DwaraService{
             condition += " and a.finalized_at >= '" + startDate + "'";
         if(endDate != "")
             condition += " and a.finalized_at <= '" + endDate + "'";
-        String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.suspect, a.finalized_at, a.used_capacity" 
+        String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.suspect, a.finalized_at, a.used_capacity, a.defective" 
         + " from volume a"
         + " where a.initialized_at is not null"
         + condition
@@ -184,6 +184,7 @@ public class CatalogService extends DwaraService{
             long _usedCapacity = 0;
             if(record[10] != null)
                 _usedCapacity = ((BigInteger)record[10]).longValue();
+            boolean _isDefective = (boolean)record[11];
             List<String> _artifactClass = map.get(_volumeGroup);
 
             String status = "";
@@ -200,7 +201,7 @@ public class CatalogService extends DwaraService{
                 
             
             list.add(new TapeCatalog(_volumeId, _volumeGroup, _format, _location, status, _initializedAt,
-                _finalizedAt, _usedCapacity, _capacity, _artifactClass, _isSuspect));
+                _finalizedAt, _usedCapacity, _capacity, _artifactClass, _isSuspect, _isDefective));
         });
         // logger.info("list size: " + list.size());
         return list;
