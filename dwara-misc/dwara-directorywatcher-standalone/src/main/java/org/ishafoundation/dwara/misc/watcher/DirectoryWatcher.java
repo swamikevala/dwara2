@@ -344,7 +344,7 @@ public class DirectoryWatcher implements Runnable{
 		Path destPath = Paths.get(destRootPath, artifactName);
 		Path csvFilePath = Paths.get(csvDirPath.toString(), csvFileName);
 		try {
-			Files.move(artifactPath, Paths.get(destRootPath), StandardCopyOption.ATOMIC_MOVE);
+			Files.move(artifactPath, destPath, StandardCopyOption.ATOMIC_MOVE);
 			if(completed) {
 				CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
 				try {

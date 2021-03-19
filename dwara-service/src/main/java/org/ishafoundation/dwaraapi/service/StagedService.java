@@ -649,7 +649,7 @@ public class StagedService extends DwaraService{
 	    if(hasSymbolicLink) {
 			toBeAddedTFileTableEntries.clear();
 			
-		    /* Updating the symlink details here - we dont the DB file id to be referenced */
+			/* Updating the symlink details here - we dont know the DB file id to be referenced in above update hence had to do it here */
 			List<TFile> artifactTFileList = tFileDao.findAllByArtifactIdAndDeletedIsFalse(artifact.getId());
 			HashMap<String, TFile> filePathNameToTFileObj = new LinkedHashMap<String, TFile>();
 			for (TFile tFile : artifactTFileList) {
@@ -734,7 +734,7 @@ public class StagedService extends DwaraService{
 	    if(hasSymbolicLink) {
 	    	toBeAddedFileTableEntries.clear();
 	    	
-		    /* Updating the symlink details here - we dont the DB file id to be referenced */
+		    /* Updating the symlink details here - we dont know the DB file id to be referenced in above update hence had to do it here */
 			List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
 			HashMap<String, File> filePathNameToFileObj = new LinkedHashMap<String, File>();
 			for (File file : artifactFileList) {

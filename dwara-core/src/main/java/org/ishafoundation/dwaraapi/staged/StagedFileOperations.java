@@ -105,7 +105,7 @@ public class StagedFileOperations {
 		setFilePermissionsCommandParamsList.add("-s");
 		setFilePermissionsCommandParamsList.add(systemSubdirectory);
 		setFilePermissionsCommandParamsList.add("-a");
-		setFilePermissionsCommandParamsList.add(artifactName);
+		setFilePermissionsCommandParamsList.add("\"" + artifactName + "\"");
 		
 		if(action == StagingOpsAction.staged_rename) {
 			setFilePermissionsCommandParamsList.add("-n");

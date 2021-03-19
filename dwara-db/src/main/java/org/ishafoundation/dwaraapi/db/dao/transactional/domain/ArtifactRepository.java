@@ -16,4 +16,6 @@ public interface ArtifactRepository<T extends Artifact> extends CrudRepository<T
 	Artifact findByName(String artifactName);
 	
 	List<Artifact> findAllByTotalSize(long totalSize);
+	
+	List<Artifact> findAllByPrevSequenceCode(String prevSequenceCode);
 }
