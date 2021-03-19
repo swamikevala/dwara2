@@ -107,6 +107,10 @@ public class JobServiceRequeueHelper{
 			jobToBeRequeued = jobDao.save(jobToBeRequeued);
 			logger.info("Job queued successfully " + jobId);
 			
+			Request jobSystemRequest = jobToBeRequeued.getRequest();
+			jobSystemRequest.setStatus(Status.queued);
+			requestDao.save(jobSystemRequest);
+			
 			userRequest.setStatus(Status.completed);
 			userRequest = requestDao.save(userRequest);
 			
