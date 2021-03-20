@@ -32,6 +32,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -154,6 +155,27 @@ public class StagedFileEvaluator {
 			errorList.add(error);
 		}
 		
+		// 4b- For digi artifacts - dupe check on prev-seq-code against existing artifact
+		if(FilenameUtils.getBaseName(sourcePath).startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX)) {
+			String prevSequenceCode = sequenceUtil.getExtractedCode(sequence, fileName);
+			
+			List<Artifact> alreadyExistingArtifactList = domainSpecificArtifactRepository.findAllByPrevSequenceCode(prevSequenceCode);
+			if(alreadyExistingArtifactList.size() > 0) {
+				for (Artifact artifact : alreadyExistingArtifactList) {
+					if(!artifact.isDeleted() && artifact.getWriteRequest().getDetails().getStagedFilename().equals(fileName) && artifact.getWriteRequest().getStatus() != Status.cancelled){ 
+						Error error = new Error();
+						error.setType(Errortype.Warning);
+						StringBuffer sb = new StringBuffer();
+						sb.append(" Id:" + artifact.getId() + " ArtifactName:" + artifact.getName());
+						error.setMessage("Artifact probably already exists in dwara. Please double check. Matches" + sb.toString());
+						errorList.add(error);
+						break;
+					}
+				}
+			}
+
+		}
+				
 		// 5- Unsupported extns
 		if(unSupportedExtns.size() > 0) {
 			Error error = new Error();

@@ -38,7 +38,7 @@ public class FileColumns {
 	@Column(name="symlink_file_id")
 	private Integer symlinkFileId;
 	
-	@Column(name="symlink_path") 
+	@Column(length=4096, name="symlink_path") 
 	private String symlinkPath;
 	
 

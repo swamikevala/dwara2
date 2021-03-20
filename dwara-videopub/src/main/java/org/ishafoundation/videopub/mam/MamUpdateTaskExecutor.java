@@ -133,7 +133,7 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			jSchSession = catdvSshSessionHelper.getSession();
 			String parentDir = FilenameUtils.getFullPathNoEndSeparator(proxyFilePathOnMamServer);
 			String command1 = "mkdir -p \"" + parentDir + "\"";
-			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, inputArtifactName + ".out_mkdir_mamErr");
+			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, processContext.getJob().getId() + ".out_mkdir_mamErr");
 			
 			logger.info("Now Copying the Proxy file " + generatedProxyFilePath + " over to catdv server location " + proxyFilePathOnMamServer);
 			securedCopier.copyTo(jSchSession, generatedProxyFilePath, proxyFilePathOnMamServer);
@@ -215,7 +215,7 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 		return insertedClipID;
 	}
 	
-	public void cleanUp(String artifactName, String category) {
+	public void cleanUp(int jobId, String artifactName, String category) {
 		Session jSchSession = null;
 		try {
 			// STEP 2 - REMOVE THE CATALOG FROM CATDV DB...
@@ -226,7 +226,7 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			// delete the tar remotely
 			String removeCommand = "rm -rf " + copiedProxyFilePath;
 			jSchSession = catdvSshSessionHelper.getSession();
-			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, removeCommand, "rmProxyFolderErr.out");
+			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, removeCommand, jobId + ".rmProxyFolderErr");
 			catdvSshSessionHelper.disconnectSession(jSchSession);
 			logger.info("Deleted the proxy folder on MAM server");
 		} catch (Exception e) {

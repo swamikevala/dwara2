@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchKey;
@@ -343,7 +344,22 @@ public class DirectoryWatcher implements Runnable{
 		Path destPath = Paths.get(destRootPath, artifactName);
 		Path csvFilePath = Paths.get(csvDirPath.toString(), csvFileName);
 		try {
-			MoveUtil.move(artifactPath, destPath);
+			Files.move(artifactPath, destPath, StandardCopyOption.ATOMIC_MOVE);
+			if(completed) {
+				CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
+				try {
+					List<String> setFileOwnershipCommandParamsList = new ArrayList<String>();
+					setFileOwnershipCommandParamsList.add("chown");
+					setFileOwnershipCommandParamsList.add("-R");
+					setFileOwnershipCommandParamsList.add("dwara:dwara");
+					setFileOwnershipCommandParamsList.add(destPath.toString());
+					clei.executeCommand(setFileOwnershipCommandParamsList, false);
+				} catch (Exception e) {
+					logger.error("Unable to change ownership " + e.getMessage(), e);
+				}
+			}
+
+			//MoveUtil.move(artifactPath, destPath);
 			updateStatus(artifactPath, status);
 			updateCSV(csvFilePath, artifactName, failureReason);
 		}catch (Exception e) {
