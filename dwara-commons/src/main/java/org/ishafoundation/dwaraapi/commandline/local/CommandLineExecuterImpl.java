@@ -162,7 +162,7 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 	// Not sure how to get the last line string just by reading the stream without having to write it to a file...
 	private String getLastLine(String errorMessage){
 		String failureReason = null;
-		String filename = commandlineExecutorErrorResponseTemporaryLocation + File.separator + System.currentTimeMillis() + ".err";
+		String filename = commandlineExecutorErrorResponseTemporaryLocation + File.separator + Thread.currentThread().getName() + "_" + System.currentTimeMillis() + ".err";
 		try {
 			File tmpErrorFile = new File(filename);
 			FileUtils.write(tmpErrorFile, errorMessage);
