@@ -8,12 +8,12 @@ UPDATE `request` SET `details`='{\"staged_filename\": \"Z140\", \"staged_filepat
 UPDATE `artifact1` SET `artifactclass_id`='video-digi-2020-edit-priv2' WHERE `id`=@artifactId;
 
 -- update sequence count
-UPDATE `sequence` SET `current_number`=' check this out in the morning on the value 390' WHERE `id`='video-digi-2020-edit-grp';
+UPDATE `sequence` SET `current_number`='490' WHERE `id`='video-digi-2020-edit-grp';
 
 -- update sequence
-UPDATE `artifact1` SET `name`= replace(name, 'ZD183', 'ZDX390'), `sequence_code`='ZDX390' WHERE `id`=@artifactId;
-update file1 set pathname = replace(pathname, 'ZD183', 'ZDX390'), pathname_checksum = unhex(sha1(pathname)) where artifact_id=@artifactId;
-update t_file set pathname = replace(pathname, 'ZD183', 'ZDX390'), pathname_checksum = unhex(sha1(pathname)) where artifact_id=@artifactId;
+UPDATE `artifact1` SET `name`= replace(name, 'ZD183', 'ZDX490'), `sequence_code`='ZDX490' WHERE `id`=@artifactId;
+update file1 set pathname = replace(pathname, 'ZD183', 'ZDX490'), pathname_checksum = unhex(sha1(pathname)) where artifact_id=@artifactId;
+update t_file set pathname = replace(pathname, 'ZD183', 'ZDX490'), pathname_checksum = unhex(sha1(pathname)) where artifact_id=@artifactId;
 
 -- update job table
 UPDATE `job` SET `group_volume_id`='X1' WHERE `id`='157512';
@@ -24,4 +24,4 @@ UPDATE `job` SET `group_volume_id`='X3' WHERE `id`='157514';
 delete from job where id in (157515, 157516);
 
 -- mv the physical folder
--- cd /data/dwara/staged; mv ZD183_Z140 ZDX390_Z140
+-- cd /data/dwara/staged; mv ZD183_Z140 ZDX490_Z140

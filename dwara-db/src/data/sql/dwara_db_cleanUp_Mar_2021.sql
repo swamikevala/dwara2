@@ -9,5 +9,5 @@ UPDATE `request` SET `status`='failed' WHERE `id`='7586';
 UPDATE `request` SET `status`='failed' WHERE `id`='24023';
 UPDATE `request` SET `status`='failed' WHERE `id`='24024';
 
-UPDATE `request` SET `status`='cancelled' WHERE action_id='finalize' and status='failed';
+UPDATE `request` SET `status`='cancelled' WHERE action_id='finalize' and status='failed' and (json_extract(details, '$.volume_id') != 'E10003L7' && json_extract(details, '$.volume_id') != 'E30003L7');
 
