@@ -5,6 +5,22 @@
 
 2) Artifact catalog searching
 
+### Bug fix
+
+1) File name too long Mam update failures
+
+2) RemoteCmdLineExecuter tmp std channel file deletion
+
+3) Directory watcher changes on folder ownership
+
+4) Artifact dupe fix
+
+5) Resetting the system request status to queued on a job being requeued
+
+6) clean up Sql patches
+	dwara-db\src\data\sql\Z140.sql
+	dwara-db\src\data\sql\dwara_db_cleanUp_Mar_2021.sql
+	
 ### Upgrade steps
 
 1) Call api end points from swagger: /catalog/updateFinalizedDate, /catalog/updateUsedSpace
