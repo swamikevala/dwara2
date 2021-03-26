@@ -1,4 +1,4 @@
-package org.ishafoundation.videopub.transcoding.ffmpeg.photo;
+package org.ishafoundation.videopub.transcoding.image;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -18,11 +18,11 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Component("photo-proxy")
+@Component("image-proxy-gen")
 @Primary
 @Profile({ "!dev & !stage" })
-public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
-    private static final Logger logger = LoggerFactory.getLogger(Photo_LowResolution_Transcoding_TaskExecutor.class);
+public class Image_LowResolution_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
+    private static final Logger logger = LoggerFactory.getLogger(Image_LowResolution_Transcoding_TaskExecutor.class);
     
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -66,7 +66,12 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 			throw new Exception("Unable to convert " + thumbnailTargetLocation + " : because : " + proxyCommandLineExecutionResponse.getFailureReason());
 		}
 
-	
+		// Copy the xmp file from source to derived folder...
+		File xmpSidecarFile = logicalFile.getSidecarFile("xmp");
+		if(xmpSidecarFile != null) {
+			FileUtils.copyFile(xmpSidecarFile, new File(destinationDirPath + File.separator + fileName + ".xmp"));  
+		}
+		
 		// TODO : better this...
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 		processingtaskResponse.setDestinationPathname(proxyTargetLocation);
