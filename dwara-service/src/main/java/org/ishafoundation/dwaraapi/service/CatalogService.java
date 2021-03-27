@@ -54,6 +54,23 @@ public class CatalogService extends DwaraService{
     @Autowired
     private RequestDao requestDao;
 
+
+    public Location bulkChangeTapeLocation(String[] volumeIds, String newLocation) {
+        if(volumeIds != null) {
+            Location l = new Location();
+            l.setId(newLocation);
+            for(int i = 0; i < volumeIds.length; i++) {
+                Volume volume = volumeDao.findById(volumeIds[i]).get();
+                if(volume != null) {
+                    volume.setLocation(l);
+                    volumeDao.save(volume);
+                }
+            }
+            return l;
+        }
+        return null;
+    }
+
     public Location changeTapeLocation(String volumeId, String newLocation) {
         Volume volume = volumeDao.findById(volumeId).get();
         if(volume != null){

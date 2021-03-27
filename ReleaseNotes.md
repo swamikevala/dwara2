@@ -3,6 +3,8 @@
 
 1) Support for photo pub
 
+2) Bulk update locations
+
 ### Upgrade steps
 
 0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_8.sql)
