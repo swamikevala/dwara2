@@ -1,3 +1,14 @@
+# Dwara App Version - 2.1.15 (28th Mar 2021)
+### New features
+
+1) Support for photo pub
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_8.sql)
+
+1) Install ImageMagick ufraw exiv2
+
 # Dwara App Version - 2.1.14 (21st Mar 2021)
 ### New features
 

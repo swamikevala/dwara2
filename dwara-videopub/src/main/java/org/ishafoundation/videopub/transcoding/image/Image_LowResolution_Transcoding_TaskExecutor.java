@@ -51,7 +51,7 @@ public class Image_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		FileUtils.forceMkdir(new File(destinationDirPath));
 	
 		String fileName = FilenameUtils.getBaseName(sourceFilePathname);
-		String thumbnailTargetLocation = destinationDirPath + File.separator + fileName + "_t" + ".jpg";
+		String thumbnailTargetLocation = destinationDirPath + File.separator + fileName + ".thm";
 		String proxyTargetLocation = destinationDirPath + File.separator + fileName + "_p" + ".jpg";
 	
 		long conversionStartTime = System.currentTimeMillis();
@@ -70,7 +70,11 @@ public class Image_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		File xmpSidecarFile = logicalFile.getSidecarFile("xmp");
 		if(xmpSidecarFile != null) {
 			FileUtils.copyFile(xmpSidecarFile, new File(destinationDirPath + File.separator + fileName + ".xmp"));  
+		}else {
+			List<String> extractXmpCommandParamsList = extractXmpCommand(sourceFilePathname, destinationDirPath);
+			CommandLineExecutionResponse extractXmpCommandLineExecutionResponse = commandLineExecuter.executeCommand(extractXmpCommandParamsList);
 		}
+		
 		
 		// TODO : better this...
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
@@ -105,6 +109,22 @@ public class Image_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		thumbnailGenerationCommandParamsList.add(proxyTargetLocation);
 		
 		return thumbnailGenerationCommandParamsList;
+	}
+	
+	// exiv2 -eX ex 20190207_VVD_0101to0107-mp-e-ot1.tif
+	private List<String> extractXmpCommand(String sourceFilePathname, String destinationDirPath) {
+		List<String> xmpCommandParamsList = new ArrayList<String>();
+		xmpCommandParamsList.add("sh");
+		xmpCommandParamsList.add("-c");
+		xmpCommandParamsList.add("cd");
+		xmpCommandParamsList.add(destinationDirPath);
+		xmpCommandParamsList.add(";");
+		xmpCommandParamsList.add("exiv2");
+		xmpCommandParamsList.add("-eX");
+		xmpCommandParamsList.add("ex");
+		xmpCommandParamsList.add(sourceFilePathname);
+		
+		return xmpCommandParamsList;
 	}
 
 }
