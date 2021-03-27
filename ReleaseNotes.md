@@ -1,3 +1,19 @@
+# Dwara App Version - 2.1.15 (28th Mar 2021)
+### New features
+
+1) Bulk update locations
+
+### Bug fix
+
+1) Watcher fixes
+
+2) Handle processing tasks for file names with spaces
+
+### Upgrade steps
+
+1) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_8.sql) to change locations id and description.
+
+
 # Dwara App Version - 2.1.14 (21st Mar 2021)
 ### New features
 
