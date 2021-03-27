@@ -84,6 +84,7 @@ INSERT INTO `extension_filetype` (`filetype_id`, `extension_id`, `sidecar`, `suf
 ('photo-proxy', 'jpg', 0, '_p'),
 ('photo-proxy', 'thm', 1, null),
 ('photo-proxy', 'xmp', 1, null),
+('image', 'nef', 0, null),
 ('image', 'psd', 0, null),
 ('image', 'tif', 0, null),
 ('image', 'nrw', 0, null),

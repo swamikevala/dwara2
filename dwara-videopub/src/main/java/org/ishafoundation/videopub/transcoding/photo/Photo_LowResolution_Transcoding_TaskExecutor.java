@@ -99,7 +99,7 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		thumbnailGenerationCommandParamsList.add("-quality");
 		thumbnailGenerationCommandParamsList.add("50");
 		thumbnailGenerationCommandParamsList.add("-write");
-		thumbnailGenerationCommandParamsList.add(thumbnailTargetLocation);
+		thumbnailGenerationCommandParamsList.add("JPEG:" + thumbnailTargetLocation);
 		thumbnailGenerationCommandParamsList.add("+delete");
 		thumbnailGenerationCommandParamsList.add("\\)");
 		thumbnailGenerationCommandParamsList.add("-resize");
