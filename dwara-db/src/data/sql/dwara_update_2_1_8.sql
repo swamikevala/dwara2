@@ -20,11 +20,10 @@ INSERT INTO `artifactclass` (`id`, `description`, `domain_id`, `sequence_id`, `s
 ('photo-priv2', '', 1, 'photo-priv2', 1, 1, 21, '/data/dwara/staged', null, 0, null),
 ('photo-edit-pub', '', 1, 'photo-edit-pub', 1, 1, 22, '/data/dwara/staged', null, 0, null),
 ('photo-edit-priv2', '', 1, 'photo-edit-priv2', 1, 1, 23, '/data/dwara/staged', null, 0, null),
-('photo-pub-proxy', '', 1, 'photo-pub-proxy', 0, 1, 0, '/data/dwara/transcoded', 'photo-pub', 0, null),
-('photo-priv2-proxy', '', 1, 'photo-priv2-proxy', 0, 1, 0, '/data/dwara/transcoded', 'photo-priv2', 0, null),
-('photo-edit-pub-proxy', '', 1, 'photo-edit-pub-proxy', 0, 1, 0, '/data/dwara/transcoded', 'photo-edit-pub', 0, null),
-('photo-edit-priv2-proxy', '', 1, 'photo-edit-priv2-proxy', 0, 1, 0, '/data/dwara/transcoded', 'photo-edit-priv2', 0, null);
-
+('photo-pub-proxy', '', 1, 'photo-pub-proxy', 0, 1, 0, '/data/dwara/transcoded', 'photo-pub', 0, '{"pathname_regex": "(?!)"}'),
+('photo-priv2-proxy', '', 1, 'photo-priv2-proxy', 0, 1, 0, '/data/dwara/transcoded', 'photo-priv2', 0, '{"pathname_regex": "(?!)"}'),
+('photo-edit-pub-proxy', '', 1, 'photo-edit-pub-proxy', 0, 1, 0, '/data/dwara/transcoded', 'photo-edit-pub', 0, '{"pathname_regex": "(?!)"}'),
+('photo-edit-priv2-proxy', '', 1, 'photo-edit-priv2-proxy', 0, 1, 0, '/data/dwara/transcoded', 'photo-edit-priv2', 0, '{"pathname_regex": "(?!)"}');
 
 -- ARTIFACTCLASS_VOLUME --
 INSERT INTO `artifactclass_volume` (`artifactclass_id`, `volume_id`, `encrypted`, `active`) VALUES 

@@ -11,6 +11,8 @@
 
 1) Install ImageMagick ufraw exiv2
 
+2) create photo-proxy in MAM
+
 # Dwara App Version - 2.1.14 (21st Mar 2021)
 ### New features
 

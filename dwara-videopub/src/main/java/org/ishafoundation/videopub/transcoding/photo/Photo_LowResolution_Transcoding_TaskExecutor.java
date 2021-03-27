@@ -1,4 +1,4 @@
-package org.ishafoundation.videopub.transcoding.image;
+package org.ishafoundation.videopub.transcoding.photo;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -18,11 +18,11 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Component("image-proxy-gen")
+@Component("photo-proxy-gen")
 @Primary
 @Profile({ "!dev & !stage" })
-public class Image_LowResolution_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
-    private static final Logger logger = LoggerFactory.getLogger(Image_LowResolution_Transcoding_TaskExecutor.class);
+public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
+    private static final Logger logger = LoggerFactory.getLogger(Photo_LowResolution_Transcoding_TaskExecutor.class);
     
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
