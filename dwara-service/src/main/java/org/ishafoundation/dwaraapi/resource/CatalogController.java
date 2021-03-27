@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.catalog.ArtifactCatalogRequest;
+import org.ishafoundation.dwaraapi.api.req.catalog.TapeBulkChangeLocationRequest;
 import org.ishafoundation.dwaraapi.api.req.catalog.TapeCatalogRequest;
 import org.ishafoundation.dwaraapi.api.req.catalog.TapeChangeLocationRequest;
+import org.ishafoundation.dwaraapi.db.dao.master.LocationDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactCatalog;
@@ -29,6 +31,22 @@ public class CatalogController {
 
     @Autowired
     CatalogService catalogService;
+
+    @Autowired
+    LocationDao locationDao;
+
+    @GetMapping(value="/catalog/getLocations", produces = "application/json")
+    public ResponseEntity<List<Location>> getLocations() {
+        List<Location> list = new ArrayList<Location>();
+        locationDao.findAll().forEach(list::add);
+        return ResponseEntity.status(HttpStatus.OK).body(list);
+    }
+
+    @PostMapping(value="/catalog/bulkChangeTapeLocation", produces = "application/json")
+    public ResponseEntity<Location> bulkChangeTapeLocation(@RequestBody TapeBulkChangeLocationRequest request) {
+        Location l = catalogService.bulkChangeTapeLocation(request.volumeIds, request.newLocation);
+        return ResponseEntity.status(HttpStatus.OK).body(l);
+    }
 
     @PostMapping(value="/catalog/changeTapeLocation", produces = "application/json")
     public ResponseEntity<Location> changeTapeLocation(@RequestBody TapeChangeLocationRequest request) {
