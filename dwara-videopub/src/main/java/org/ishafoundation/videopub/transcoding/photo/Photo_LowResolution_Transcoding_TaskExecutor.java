@@ -56,8 +56,9 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	
 		long conversionStartTime = System.currentTimeMillis();
 		
-		List<String> proxyCommandParamsList = getProxyCommand(sourceFilePathname, thumbnailTargetLocation, proxyTargetLocation);
-		CommandLineExecutionResponse proxyCommandLineExecutionResponse = commandLineExecuter.executeCommand(proxyCommandParamsList);
+		String proxyCommand = getProxyCommand(sourceFilePathname, thumbnailTargetLocation, proxyTargetLocation);
+		Process proc = commandLineExecuter.createProcess(proxyCommand);
+		CommandLineExecutionResponse proxyCommandLineExecutionResponse = commandLineExecuter.executeCommand(proxyCommand, proc);
 		
 		long conversionEndTime = System.currentTimeMillis();
 		if(proxyCommandLineExecutionResponse.isComplete()) {
@@ -88,28 +89,32 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	}
 
 	// convert 20190716_VVD_0206.NEF \( +clone -resize 192 -quality 50 -write 20190716_VVD_0206-s33.jpg +delete \) -resize 1536 -quality 85 20190716_VVD_0206-s32.jpg
-	private List<String> getProxyCommand(String sourceFilePathname, String thumbnailTargetLocation, String proxyTargetLocation) {
-		List<String> thumbnailGenerationCommandParamsList = new ArrayList<String>();
-		thumbnailGenerationCommandParamsList.add("convert");
-		thumbnailGenerationCommandParamsList.add(sourceFilePathname);
-		thumbnailGenerationCommandParamsList.add("\\(");
-		thumbnailGenerationCommandParamsList.add("+clone");
-		thumbnailGenerationCommandParamsList.add("-resize");
-		thumbnailGenerationCommandParamsList.add("192");
-		thumbnailGenerationCommandParamsList.add("-quality");
-		thumbnailGenerationCommandParamsList.add("50");
-		thumbnailGenerationCommandParamsList.add("-write");
-		thumbnailGenerationCommandParamsList.add("JPEG:" + thumbnailTargetLocation);
-		thumbnailGenerationCommandParamsList.add("+delete");
-		thumbnailGenerationCommandParamsList.add("\\)");
-		thumbnailGenerationCommandParamsList.add("-resize");
-		thumbnailGenerationCommandParamsList.add("1536");
-		thumbnailGenerationCommandParamsList.add("-quality");
-		thumbnailGenerationCommandParamsList.add("85");
-		thumbnailGenerationCommandParamsList.add(proxyTargetLocation);
-		
-		return thumbnailGenerationCommandParamsList;
+	private String getProxyCommand(String sourceFilePathname, String thumbnailTargetLocation, String proxyTargetLocation) {
+		return "convert " + sourceFilePathname + " \\( +clone -resize 192 -quality 50 -write JPEG:" + thumbnailTargetLocation + " +delete \\) -resize 1536 -quality 85 " + proxyTargetLocation;
 	}
+
+//	private List<String> getProxyCommandAsList(String sourceFilePathname, String thumbnailTargetLocation, String proxyTargetLocation) {
+//		List<String> thumbnailGenerationCommandParamsList = new ArrayList<String>();
+//		thumbnailGenerationCommandParamsList.add("convert");
+//		thumbnailGenerationCommandParamsList.add(sourceFilePathname);
+//		thumbnailGenerationCommandParamsList.add("\\(");
+//		thumbnailGenerationCommandParamsList.add("+clone");
+//		thumbnailGenerationCommandParamsList.add("-resize");
+//		thumbnailGenerationCommandParamsList.add("192");
+//		thumbnailGenerationCommandParamsList.add("-quality");
+//		thumbnailGenerationCommandParamsList.add("50");
+//		thumbnailGenerationCommandParamsList.add("-write");
+//		thumbnailGenerationCommandParamsList.add("JPEG:" + thumbnailTargetLocation);
+//		thumbnailGenerationCommandParamsList.add("+delete");
+//		thumbnailGenerationCommandParamsList.add("\\)");
+//		thumbnailGenerationCommandParamsList.add("-resize");
+//		thumbnailGenerationCommandParamsList.add("1536");
+//		thumbnailGenerationCommandParamsList.add("-quality");
+//		thumbnailGenerationCommandParamsList.add("85");
+//		thumbnailGenerationCommandParamsList.add(proxyTargetLocation);
+//		
+//		return thumbnailGenerationCommandParamsList;
+//	}
 	
 	// exiv2 -eX ex 20190207_VVD_0101to0107-mp-e-ot1.tif
 	private List<String> extractXmpCommand(String sourceFilePathname, String destinationDirPath) {

@@ -30,7 +30,20 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 	
 	@Value("${commandlineExecutor.errorResponseTemporaryLocation}")
 	private String commandlineExecutorErrorResponseTemporaryLocation;
-
+	
+	public Process createProcess(String command) throws Exception {
+		Process proc = null;
+		try {
+			logger.debug("start "+ command);
+			ProcessBuilder pb = new ProcessBuilder(command);
+			proc = pb.start();
+		}
+		catch (Exception ee) {
+			logger.error("Unable to create process " + command + " : " + ee.getMessage(), ee);
+			throw ee;
+		}
+		return proc;
+	}
 	
 	public Process createProcess(List<String> commandList) throws Exception {
 		Process proc = null;
@@ -70,12 +83,12 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 	public CommandLineExecutionResponse executeCommand(List<String> commandList, boolean extractLastLineAsFailureReason) throws Exception {
 		return executeCommand(commandList, createProcess(commandList), extractLastLineAsFailureReason);
 	}
-	
-	public CommandLineExecutionResponse executeCommand(List<String> commandList, Process proc) throws Exception {
-		return executeCommand(commandList, proc, true);
+
+	public CommandLineExecutionResponse executeCommand(String command, Process proc) throws Exception {
+		return executeCommand(command, proc, true);
 	}
 	
-	public CommandLineExecutionResponse executeCommand(List<String> commandList, Process proc, boolean extractLastLineAsFailureReason) throws Exception {
+	public CommandLineExecutionResponse executeCommand(String command, Process proc, boolean extractLastLineAsFailureReason) throws Exception {
 		boolean isComplete = false;
 		
 		CommandLineExecutionResponse commandLineExecutionResponse = new CommandLineExecutionResponse();
@@ -134,10 +147,10 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 			}
 			commandLineExecutionResponse.setIsComplete(isComplete);			
 
-			logger.debug("end "+ commandList);
+			logger.debug("end "+ command);
 		}
 		catch (Exception ee) {
-			logger.error(commandList + " execution failed : " + ee.getMessage(), ee);
+			logger.error(command + " execution failed : " + ee.getMessage(), ee);
 			commandLineExecutionResponse.setFailureReason(ee.getMessage());
 			throw ee;
 		}finally {
@@ -151,12 +164,19 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 				in.close();
 				err.close();
 			} catch (IOException e) {
-				logger.error("Unable to close opened Inputstreams " + commandList + " : " + e.getMessage() + " This might impact resources and cause FileDescriptor(Too many files open) problem. Check it out...", e);
+				logger.error("Unable to close opened Inputstreams " + command + " : " + e.getMessage() + " This might impact resources and cause FileDescriptor(Too many files open) problem. Check it out...", e);
 			}
 			
 		}
 		return commandLineExecutionResponse;
-		
+	}
+	
+	public CommandLineExecutionResponse executeCommand(List<String> commandList, Process proc) throws Exception {
+		return executeCommand(commandList, proc, true);
+	}
+	
+	public CommandLineExecutionResponse executeCommand(List<String> commandList, Process proc, boolean extractLastLineAsFailureReason) throws Exception {
+		return executeCommand(commandList.toString(), proc, extractLastLineAsFailureReason);
 	}
 
 	// Not sure how to get the last line string just by reading the stream without having to write it to a file...
