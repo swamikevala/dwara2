@@ -263,10 +263,11 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 								String fileName = srcFileBaseName;
 								if(suffix != null)
 									fileName = srcFileBaseName + suffix;
+								fileName = fileName + "." + extensionFiletype.getExtension().getId().toLowerCase();
 								
-								File nthProcessedFile = new File(destinationDirPath + File.separator + fileName + File.separator + "." + extensionFiletype.getExtension().getId().toLowerCase());
+								File nthProcessedFile = new File(destinationDirPath + File.separator + fileName);
 								if(nthProcessedFile.exists()) {
-									processedFileNames.add(nthProcessedFile.getAbsolutePath());
+									processedFileNames.add(fileName);
 								}
 							}	
 						}else { // processingtask == null (core PTs like checksum-gen/verify) && processingtask.getOutputFiletypeId() == null (user PTs like mam-update)
