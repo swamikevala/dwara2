@@ -7,9 +7,8 @@ import org.ishafoundation.dwaraapi.api.req.catalog.ArtifactCatalogRequest;
 import org.ishafoundation.dwaraapi.api.req.catalog.TapeBulkChangeLocationRequest;
 import org.ishafoundation.dwaraapi.api.req.catalog.TapeCatalogRequest;
 import org.ishafoundation.dwaraapi.api.req.catalog.TapeChangeLocationRequest;
-import org.ishafoundation.dwaraapi.db.dao.master.LocationDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactCatalog;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TapeCatalog;
 import org.ishafoundation.dwaraapi.service.CatalogService;
@@ -32,14 +31,19 @@ public class CatalogController {
     @Autowired
     CatalogService catalogService;
 
-    @Autowired
-    LocationDao locationDao;
+    @GetMapping(value="/catalog/getArtifactclass", produces = "application/json")
+    public ResponseEntity<List<String>> getArtifactclass(){
+        List<Artifactclass> list = catalogService.getAllArtifactclass();
+        List<String> result = new ArrayList<String>();
+        for(Artifactclass a: list) {
+            result.add(a.getId());
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
 
     @GetMapping(value="/catalog/getLocations", produces = "application/json")
     public ResponseEntity<List<Location>> getLocations() {
-        List<Location> list = new ArrayList<Location>();
-        locationDao.findAll().forEach(list::add);
-        return ResponseEntity.status(HttpStatus.OK).body(list);
+        return ResponseEntity.status(HttpStatus.OK).body(catalogService.getAllLocations());
     }
 
     @PostMapping(value="/catalog/bulkChangeTapeLocation", produces = "application/json")

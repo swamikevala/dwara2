@@ -23,9 +23,12 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
+import org.ishafoundation.dwaraapi.db.dao.master.ArtifactclassDao;
 import org.ishafoundation.dwaraapi.db.dao.master.CatalogDao;
+import org.ishafoundation.dwaraapi.db.dao.master.LocationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
@@ -53,6 +56,25 @@ public class CatalogService extends DwaraService{
 
     @Autowired
     private RequestDao requestDao;
+
+    @Autowired
+    LocationDao locationDao;
+
+    @Autowired
+    private ArtifactclassDao artifactclassDao;
+
+    public List<Artifactclass> getAllArtifactclass() {
+        List<Artifactclass> list = new ArrayList<Artifactclass>();
+        artifactclassDao.findAll().forEach(list::add);
+        return list;
+    }
+
+    public List<Location> getAllLocations() {
+        List<Location> list = new ArrayList<Location>();
+        locationDao.findAll().forEach(list::add);
+        return list;
+    }
+
 
     public Location bulkChangeTapeLocation(String[] volumeIds, String newLocation) {
         if(volumeIds != null) {
