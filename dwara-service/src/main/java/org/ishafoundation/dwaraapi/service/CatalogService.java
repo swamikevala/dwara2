@@ -54,7 +54,6 @@ public class CatalogService extends DwaraService{
     @Autowired
     private RequestDao requestDao;
 
-
     public Location bulkChangeTapeLocation(String[] volumeIds, String newLocation) {
         if(volumeIds != null) {
             Location l = new Location();
@@ -84,13 +83,16 @@ public class CatalogService extends DwaraService{
     }
 
     public void updateUsedSpace() {
-        String query = "select b.volume_id, sum(a.total_size) from artifact1 a join artifact1_volume b join volume c where a.id=b.artifact_id and b.volume_id=c.id group by b.volume_id;";
+        String query = "select volume_id, max(json_extract(details, '$.end_volume_block')) from dwara.artifact1_volume group by volume_id;";
         Query q = entityManager.createNativeQuery(query);
         List<Object[]> results = q.getResultList();
         results.forEach((record) -> {
             String volumeId = (String)record[0];
-            Long usedCapacity = ((BigDecimal)record[1]).longValue();
             Volume volume = volumeDao.findById(volumeId).get();
+            String lastBlock = (String) record[1];
+            // logger.info("volumeId: " + volumeId + ", lastBlock: " + lastBlock);
+            Long usedCapacity = Long.parseLong(lastBlock)*volume.getDetails().getBlocksize();
+
             if(volume != null){
                 volume.setUsedCapacity(usedCapacity);
                 volumeDao.save(volume);
