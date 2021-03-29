@@ -3,6 +3,8 @@ package org.ishafoundation.dwaraapi.process.thread;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TTFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.ArtifactclassConfig;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
@@ -248,24 +251,44 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 
 						// get all the processed files and check if all the filetype extensions are returned...
 						//String processedFilePathName = processingtaskResponse.getDestinationPathname(); 
-						String srcFileBaseName = FilenameUtils.getBaseName(logicalFile.getAbsolutePath());
 						
-				        FilenameFilter fileNameFilter = new FilenameFilter() {
-				            @Override
-				            public boolean accept(File dir, String name) {
-				            	if(FilenameUtils.getBaseName(name).equals(srcFileBaseName))
-				            		return true;
-				               
-				               return false;
-				            }
-				         };
-						String[] processedFileNames = new File(destinationDirPath).list(fileNameFilter);
+						
+						String srcFileBaseName = FilenameUtils.getBaseName(logicalFile.getAbsolutePath());
+						ArrayList<String> processedFileNames = new ArrayList<String>();
+						if(processingtask != null && processingtask.getOutputFiletypeId() != null) {
+							Filetype filetype = getFiletype(processingtask.getOutputFiletypeId());
+							List<ExtensionFiletype> extn_Filetype_List = filetype.getExtensions(); //extensionFiletypeDao.findAllByFiletypeId(filetype.getId());
+							for (ExtensionFiletype extensionFiletype : extn_Filetype_List) {
+								String suffix = extensionFiletype.getSuffix();
+								String fileName = srcFileBaseName;
+								if(suffix != null)
+									fileName = srcFileBaseName + suffix;
+								fileName = fileName + "." + extensionFiletype.getExtension().getId().toLowerCase();
+								
+								File nthProcessedFile = new File(destinationDirPath + File.separator + fileName);
+								if(nthProcessedFile.exists()) {
+									processedFileNames.add(fileName);
+								}
+							}	
+						}else { // processingtask == null (core PTs like checksum-gen/verify) && processingtask.getOutputFiletypeId() == null (user PTs like mam-update)
+					        FilenameFilter fileNameFilter = new FilenameFilter() {
+					            @Override
+					            public boolean accept(File dir, String name) {
+					            	if(FilenameUtils.getBaseName(name).equals(srcFileBaseName))
+					            		return true;
+					               
+					               return false;
+					            }
+					         };
+							String[] processedFileNamesArray = new File(destinationDirPath).list(fileNameFilter);
+							processedFileNames.addAll(Arrays.asList(processedFileNamesArray));
+						}
 
 						//Validating if all files needed are generated
 						String outputFiletypeId = processingtask != null ? processingtask.getOutputFiletypeId() : null;
 						// TODO we will be using same artifactclass from 2 different processing tasks and so not all extns for the filetypes are available. so commenting this to out until we design it well 
-						boolean isCommentedOut = false;
-						if(isCommentedOut) {
+						boolean isCommentedOut = true;
+						if(!isCommentedOut) {
 						// if(outputFiletypeId != null) { // commenting out this validation to accomodate the last minute idx file extraction change
 							Filetype filetype = getFiletype(outputFiletypeId);
 							List<ExtensionFiletype> extn_Filetype_List = filetype.getExtensions(); //extensionFiletypeDao.findAllByFiletypeId(filetype.getId());
@@ -386,8 +409,21 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 							org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = filePathToFileObj.get(filepathName);
 							//org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = domainSpecificFileRepository.findByPathname(filepathName);
 							if(nthFile == null) { // only if not already created... 
-								logger.trace("Now creating file record for - " + filepathName);
-								createFile(outputArtifact.getArtifactclass().getPath() + File.separator + filepathName, outputArtifact, domainSpecificFileRepository, domain, nthTFile);	
+								String fullFilepathname =  outputArtifact.getArtifactclass().getPath() + File.separator + filepathName;
+								boolean addFileRecords = true;
+								
+								ArtifactclassConfig artifactclassConfig = outputArtifact.getArtifactclass().getConfig();
+								if(artifactclassConfig != null) {
+									String pathnameRegex = artifactclassConfig.getPathnameRegex();
+									if(!fullFilepathname.matches(pathnameRegex)) {
+										logger.trace("Doesnt match " + pathnameRegex + " regex for " + fullFilepathname);
+										addFileRecords = false;
+									}
+								}
+								if(addFileRecords) {
+									logger.trace("Now creating file record for - " + filepathName);
+									createFile(fullFilepathname, outputArtifact, domainSpecificFileRepository, domain, nthTFile);
+								}
 							}
 						}
 						
