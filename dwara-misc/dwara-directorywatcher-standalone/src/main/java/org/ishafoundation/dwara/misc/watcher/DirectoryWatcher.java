@@ -39,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwara.misc.common.Constants;
-import org.ishafoundation.dwara.misc.common.MoveUtil;
 import org.ishafoundation.dwara.misc.common.Status;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl;
 import org.slf4j.Logger;
@@ -244,8 +243,8 @@ public class DirectoryWatcher implements Runnable{
 	private void createTaskAndExecute(Path artifactPath) throws Exception{
 		Task task = new Task();
 		task.setArtifactPath(artifactPath);
-		copyingArtifacts.remove(artifactPath);
 		verifyPendingArtifacts.add(artifactPath);
+		copyingArtifacts.remove(artifactPath);
 		executor.execute(task);
 	}
 
@@ -259,14 +258,13 @@ public class DirectoryWatcher implements Runnable{
 		
 		@Override
 		public void run() {
-			//Path artifactPath = mxfFilePathname.getParent(); 
 			File artifactFileObj = artifactPath.toFile();
-
-			if(!artifactFileObj.isDirectory())
-				return;
-
-			String artifactName = artifactFileObj.getName();
 			try {
+				if(!artifactFileObj.isDirectory())
+					return;
+	
+				String artifactName = artifactFileObj.getName();
+			
 				ArtifactValidationResponse avr = ArtifactValidator.validateName(artifactName);
 				if(!avr.isValid()) { 
 					move(artifactPath, false, avr.getFailureReason());
@@ -295,11 +293,11 @@ public class DirectoryWatcher implements Runnable{
 						retryOrMove("md5 mismatch");
 					}
 				}
-			
-				verifyPendingArtifacts.remove(artifactPath);
 			}
 			catch (Exception e) {
-				logger.error(e.getMessage(), e);
+				logger.error("Unable to execute task for " + artifactPath + " : " + e.getMessage(), e);
+			}finally {
+				verifyPendingArtifacts.remove(artifactPath);
 			}
 		}
 
@@ -345,20 +343,17 @@ public class DirectoryWatcher implements Runnable{
 		Path csvFilePath = Paths.get(csvDirPath.toString(), csvFileName);
 		try {
 			Files.move(artifactPath, destPath, StandardCopyOption.ATOMIC_MOVE);
-			if(completed) {
-				CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
-				try {
-					List<String> setFileOwnershipCommandParamsList = new ArrayList<String>();
-					setFileOwnershipCommandParamsList.add("chown");
-					setFileOwnershipCommandParamsList.add("-R");
-					setFileOwnershipCommandParamsList.add("dwara:dwara");
-					setFileOwnershipCommandParamsList.add(destPath.toString());
-					clei.executeCommand(setFileOwnershipCommandParamsList, false);
-				} catch (Exception e) {
-					logger.error("Unable to change ownership " + e.getMessage(), e);
-				}
+			CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
+			try {
+				List<String> setFileOwnershipCommandParamsList = new ArrayList<String>();
+				setFileOwnershipCommandParamsList.add("chown");
+				setFileOwnershipCommandParamsList.add("-R");
+				setFileOwnershipCommandParamsList.add("dwara:dwara");
+				setFileOwnershipCommandParamsList.add(destPath.toString());
+				clei.executeCommand(setFileOwnershipCommandParamsList, false);
+			} catch (Exception e) {
+				logger.error("Unable to change ownership " + e.getMessage(), e);
 			}
-
 			//MoveUtil.move(artifactPath, destPath);
 			updateStatus(artifactPath, status);
 			updateCSV(csvFilePath, artifactName, failureReason);

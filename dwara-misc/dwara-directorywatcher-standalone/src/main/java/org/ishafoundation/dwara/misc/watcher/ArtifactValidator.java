@@ -27,7 +27,7 @@ public class ArtifactValidator {
 	
 	static Pattern dvFullTapeNameRegEx = Pattern.compile("([A-Z]+)([0-9]*)");
 	static Pattern sequenceLeadingZeroRegEx = Pattern.compile("([0]+)([0-9]*)");
-	static Pattern dvMultiPartTapeNameRegEx = Pattern.compile("([A-Z]+)([0-9]*)_PART_([0-9]*)");
+	static Pattern dvMultiPartTapeNameRegEx = Pattern.compile("_PART_([0-9]*)");
 	
 	static ArtifactValidationResponse validateName(String artifactName){
 		ArtifactValidationResponse avr = new ArtifactValidationResponse();
@@ -42,38 +42,38 @@ public class ArtifactValidator {
 		
 		Matcher dvFullTapeName = dvFullTapeNameRegEx.matcher(artifactName); 	
 		if(dvFullTapeName.find()) {
-			String sequencePart = dvFullTapeName.group(2);
-			Matcher sequence = sequenceLeadingZeroRegEx.matcher(sequencePart);
-			if(sequence.matches()) {
+			String tapeSequenceId = dvFullTapeName.group(2);
+			Matcher tapeSequence = sequenceLeadingZeroRegEx.matcher(tapeSequenceId);
+			if(tapeSequence.matches()) {
 				String failureReason = "Artifact Name contains leading zeroes";
 				logger.error(failureReason);
 				avr.setValid(false);
 				avr.setFailureReason(failureReason);
 				return avr;
 			}
-		}
 
-		if(artifactName.contains("PART")) { // For now just space
-			Matcher dvMultiPartTapeName = dvMultiPartTapeNameRegEx.matcher(artifactName);
-			if(dvMultiPartTapeName.matches()) {
-				String sequencePart = dvMultiPartTapeName.group(3);
-				Matcher sequence = sequenceLeadingZeroRegEx.matcher(sequencePart);
-				if(sequence.matches()) {
-					String failureReason = "Artifact Part Name contains leading zeroes";
+
+			if(artifactName.contains("PART")) { // For now just space
+				Matcher dvMultiPartTapeName = dvMultiPartTapeNameRegEx.matcher(artifactName);
+				if(dvMultiPartTapeName.find()) {
+					String partSequenceId = dvMultiPartTapeName.group(1);
+					Matcher partSequence = sequenceLeadingZeroRegEx.matcher(partSequenceId);
+					if(partSequence.matches()) {
+						String failureReason = "Artifact Part Name contains leading zeroes";
+						logger.error(failureReason);
+						avr.setValid(false);
+						avr.setFailureReason(failureReason);
+						return avr;
+					}
+				}else {
+					String failureReason = "Artifact with Parts should be something like \"AB123_PART_1\" or \"AB123_COPY_PART_1\"";
 					logger.error(failureReason);
 					avr.setValid(false);
 					avr.setFailureReason(failureReason);
 					return avr;
 				}
-			}else {
-				String failureReason = "Artifact with Parts should be something like \"AB123_PART_1\"";
-				logger.error(failureReason);
-				avr.setValid(false);
-				avr.setFailureReason(failureReason);
-				return avr;
 			}
-		}
-		
+		}		
 		avr.setValid(true);
 		return avr;
 	}
