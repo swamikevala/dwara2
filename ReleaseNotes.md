@@ -1,17 +1,27 @@
-# Dwara App Version - 2.1.15 (28th Mar 2021)
+# Dwara App Version - 2.1.16 (4th Apr 2021)
 ### New features
 
 1) Support for photo pub
 
-2) Bulk update locations
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_9.sql)
+
+1) Install ImageMagick ufraw exiv2
+
+2) create photo-proxy folder in MAM
+
+
+# Dwara App Version - 2.1.15 (28th Mar 2021)
+### New features
+
+1) Bulk update locations
+
+2) Processing layer changes to support outputfiletype's extensionFiletype suffix;
 
 ### Upgrade steps
 
 0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_8.sql)
-
-1) Install ImageMagick ufraw exiv2
-
-2) create photo-proxy in MAM
 
 # Dwara App Version - 2.1.14 (21st Mar 2021)
 ### New features
