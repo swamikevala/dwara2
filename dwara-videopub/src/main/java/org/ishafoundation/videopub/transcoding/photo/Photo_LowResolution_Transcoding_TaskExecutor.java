@@ -55,14 +55,8 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		String proxyTargetLocation = destinationDirPath + File.separator + fileName + "_p" + ".jpg";
 	
 		long conversionStartTime = System.currentTimeMillis();
-		
-		String proxyCommand = getProxyCommand(sourceFilePathname, thumbnailTargetLocation, proxyTargetLocation);
-		Process proc = commandLineExecuter.createProcess(proxyCommand);
-		CommandLineExecutionResponse proxyCommandLineExecutionResponse = commandLineExecuter.executeCommand(proxyCommand, proc);
-		
-//		List<String> proxyCommandList = getProxyCommandAsList(sourceFilePathname, destinationDirPath, thumbnailTargetLocation, proxyTargetLocation);
-//		CommandLineExecutionResponse proxyCommandLineExecutionResponse = commandLineExecuter.executeCommand(proxyCommandList);
-		
+		List<String> proxyCommandList = getProxyCommandAsList(sourceFilePathname, destinationDirPath, thumbnailTargetLocation, proxyTargetLocation);
+		CommandLineExecutionResponse proxyCommandLineExecutionResponse = commandLineExecuter.executeCommand(proxyCommandList);
 		long conversionEndTime = System.currentTimeMillis();
 		if(proxyCommandLineExecutionResponse.isComplete()) {
 			logger.info("Conversion for " + containerName + " success in " + ((conversionEndTime - conversionStartTime)/1000) + " seconds - " + thumbnailTargetLocation);
@@ -70,13 +64,18 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 			throw new Exception("Unable to convert " + thumbnailTargetLocation + " : because : " + proxyCommandLineExecutionResponse.getFailureReason());
 		}
 
-		// Copy the xmp file from source to derived folder...
+		// Copy or extract xmp file
 		File xmpSidecarFile = logicalFile.getSidecarFile("xmp");
-		if(xmpSidecarFile != null) {
+		if(xmpSidecarFile != null) { // if xmp file already exists with the source - Just copy the xmp file from source to derived folder...
 			FileUtils.copyFile(xmpSidecarFile, new File(destinationDirPath + File.separator + fileName + ".xmp"));  
 		}else {
 			List<String> extractXmpCommandParamsList = extractXmpCommand(sourceFilePathname, destinationDirPath);
 			CommandLineExecutionResponse extractXmpCommandLineExecutionResponse = commandLineExecuter.executeCommand(extractXmpCommandParamsList);
+			if(proxyCommandLineExecutionResponse.isComplete()) {
+				logger.info("Xmp extraction for " + containerName + " success");
+			}else {
+				throw new Exception("Unable to extract xmp from " + sourceFilePathname + " : because : " + extractXmpCommandLineExecutionResponse.getFailureReason());
+			}
 		}
 		
 		
@@ -92,20 +91,11 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	}
 
 	// convert 20190716_VVD_0206.NEF \( +clone -resize 192 -quality 50 -write 20190716_VVD_0206-s33.jpg +delete \) -resize 1536 -quality 85 20190716_VVD_0206-s32.jpg
-	private String getProxyCommand(String sourceFilePathname, String thumbnailTargetLocation, String proxyTargetLocation) {
-		return "sh -c 'convert \"" + sourceFilePathname + "\" \\( +clone -resize 192 -quality 50 -write \"JPEG:" + thumbnailTargetLocation + "\" +delete \\) -resize 1536 -quality 85 \"" + proxyTargetLocation + "\"'";
-	}
-
 	private List<String> getProxyCommandAsList(String sourceFilePathname, String destinationDirPath, String thumbnailTargetLocation, String proxyTargetLocation) {
 		List<String> thumbnailGenerationCommandParamsList = new ArrayList<String>();
-		thumbnailGenerationCommandParamsList.add("sh");
-		thumbnailGenerationCommandParamsList.add("-c");
-		thumbnailGenerationCommandParamsList.add("'cd");
-		thumbnailGenerationCommandParamsList.add(destinationDirPath);
-		thumbnailGenerationCommandParamsList.add(";");
 		thumbnailGenerationCommandParamsList.add("convert");
 		thumbnailGenerationCommandParamsList.add(sourceFilePathname);
-		thumbnailGenerationCommandParamsList.add("\\(");
+		thumbnailGenerationCommandParamsList.add("(");
 		thumbnailGenerationCommandParamsList.add("+clone");
 		thumbnailGenerationCommandParamsList.add("-resize");
 		thumbnailGenerationCommandParamsList.add("192");
@@ -114,12 +104,12 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		thumbnailGenerationCommandParamsList.add("-write");
 		thumbnailGenerationCommandParamsList.add("JPEG:" + thumbnailTargetLocation);
 		thumbnailGenerationCommandParamsList.add("+delete");
-		thumbnailGenerationCommandParamsList.add("\\)");
+		thumbnailGenerationCommandParamsList.add(")");
 		thumbnailGenerationCommandParamsList.add("-resize");
 		thumbnailGenerationCommandParamsList.add("1536");
 		thumbnailGenerationCommandParamsList.add("-quality");
 		thumbnailGenerationCommandParamsList.add("85");
-		thumbnailGenerationCommandParamsList.add(proxyTargetLocation + "'");
+		thumbnailGenerationCommandParamsList.add(proxyTargetLocation);
 		
 		return thumbnailGenerationCommandParamsList;
 	}
