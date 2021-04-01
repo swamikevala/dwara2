@@ -5,6 +5,12 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
@@ -17,13 +23,17 @@ import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public abstract class AbstractBruArchiver implements IArchiveformatter {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractBruArchiver.class);
-	
+
+	@Autowired
+	private DomainUtil domainUtil;
+
 	@Override
 	public ArchiveResponse write(ArchiveformatJob archiveformatJob) throws Exception {
 		String artifactSourcePath = archiveformatJob.getArtifactSourcePath();
@@ -155,6 +165,22 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
 		String filePathNameToBeRestored = file.getPathname();
+		
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
+    	Domain domain = storageJob.getDomain();
+		Artifact artifact = storageJob.getArtifact();
+		Volume volume = storageJob.getVolume();
+
+		// If artifactName is renamed then use the artifactNameOnTape (from artifactVolume.getName()) rather than the artifactName on file.getPathname();
+		String artifactName = artifact.getName();
+		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
+		String artifactNameOnTape = artifactVolume.getName();
+		
+		if(!artifactNameOnTape.equals(artifactName)) {
+			filePathNameToBeRestored = filePathNameToBeRestored.replace(artifactName, artifactNameOnTape);
+		}
+			
 		long filesize = file.getSize();
 
 		logger.trace("Creating the directory " + targetLocationPath + ", if not already present");
@@ -164,7 +190,6 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 //		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
 			executeRestoreCommand(commandList);
 //		}
-		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		
 		if(storageJob.isRestoreVerify()) {
 			boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());

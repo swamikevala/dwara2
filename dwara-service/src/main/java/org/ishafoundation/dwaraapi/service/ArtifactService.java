@@ -23,6 +23,7 @@ import org.ishafoundation.dwaraapi.service.common.ArtifactDeleter;
 import org.ishafoundation.dwaraapi.staged.scan.Error;
 import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
+import org.ishafoundation.videopub.mam.MamUpdateTaskExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,9 @@ public class ArtifactService extends DwaraService{
 
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
+	
+	@Autowired
+	private MamUpdateTaskExecutor mamUpdateTaskExecutor;
 
 	public ArtifactResponse deleteArtifact(int artifactId) throws Exception{
 		ArtifactRepository<Artifact> artifactRepository = null;
@@ -145,65 +149,70 @@ public class ArtifactService extends DwaraService{
 		data.put("artifactNewName",artifactNewName);
 		
 		Request userRequest = createUserRequest(Action.rename, Status.in_progress, data);
-
-		// 2 (a) (i) Change the artifact name entry in artifact table
-		artifactToRenameActualRow.setName(artifactNewName);
+		
+    	List<Artifact> artifactList = artifactRepository.findAllByWriteRequestId(writeRequestRowForTheArtifactToRename.getId());
+    	for (Artifact artifact : artifactList) {
+    		sequenceId = artifact.getSequenceCode();
+    		artifactNewName = sequenceId + "_" + newName; 
 			
-		// 2 (a) (ii) Change the File Table entries and the file names 
-		// Step 4 - Flag all the file entries as soft-deleted
-		String parentFolderReplaceRegex = "^"+artifactName; 
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifactToRenameActualRow, domain);			
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileListForRollback = fileRepositoryUtil.getAllArtifactFileList(artifactToRenameActualRow, domain);			
-		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File eachfile : artifactFileList) { 
-			// Each file will now be renamed and the DB entry changed subsequently like butter through knife...
-			String eachFilePath = eachfile.getPathname();
-			// Getting the filename
-			String filepath = eachfile.getPathname();
-			// Change the parent folder name by replacing the older artifact name by newer name
-			String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, artifactNewName); 
-			eachfile.setPathname(correctedFilePathForArtifactFile);
-			byte[] filePathChecksum = ChecksumUtil.getChecksum(correctedFilePathForArtifactFile);
-			eachfile.setPathnameChecksum(filePathChecksum);
-
-		} // File entry manipulation and renaming ends here 
+    		// 2 (a) (i) Change the artifact name entry in artifact table
+			artifactToRenameActualRow.setName(artifactNewName);
+			// Save Artifact first
+			try {
+				artifactRepository.save(artifactToRenameActualRow);
+			}
+			catch (Exception e) {
+				userRequest.setStatus(Status.failed);
+				requestDao.save(userRequest);
+				throw new Exception("Artifact Table rename failed " + e.getMessage());
+			}
+				
+			// 2 (a) (ii) Change the File Table entries and the file names 
+			// Step 4 - Flag all the file entries as soft-deleted
+			String parentFolderReplaceRegex = "^"+artifactName; 
+			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifactToRenameActualRow, domain);			
+			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File eachfile : artifactFileList) { 
+				// Each file will now be renamed and the DB entry changed subsequently like butter through knife...
+				String eachFilePath = eachfile.getPathname();
+				// Getting the filename
+				String filepath = eachfile.getPathname();
+				// Change the parent folder name by replacing the older artifact name by newer name
+				String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, artifactNewName); 
+				eachfile.setPathname(correctedFilePathForArtifactFile);
+				byte[] filePathChecksum = ChecksumUtil.getChecksum(correctedFilePathForArtifactFile);
+				eachfile.setPathnameChecksum(filePathChecksum);
+	
+			} // File entry manipulation and renaming ends here 
+				
+			List<TFile> artifactTFileList  = tFileDao.findAllByArtifactId(artifactId); // Including the Deleted Ones
+			// TODO : what happens if Tfile records are purged...
+			for (TFile nthTFile : artifactTFileList) {
+				String filepath = nthTFile.getPathname();
+				// Change the parent folder name by replacing the older artifact name by newer name
+				String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, artifactNewName); 
+				nthTFile.setPathname(correctedFilePathForArtifactFile);	
+				byte[] filePathChecksum = ChecksumUtil.getChecksum(correctedFilePathForArtifactFile);
+				nthTFile.setPathnameChecksum(filePathChecksum);
+			}
+				
+			FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+			// Update the file table
+			try {
+				domainSpecificFileRepository.saveAll(artifactFileList);
+				tFileDao.saveAll(artifactTFileList);
+			}
+			catch (Exception e) {
+				userRequest.setStatus(Status.failed);
+				requestDao.save(userRequest);
+				throw new Exception("File Table rename failed " + e.getMessage());
+			}
 			
-		List<TFile> artifactTFileList  = tFileDao.findAllByArtifactId(artifactId); // Including the Deleted Ones
-		// TODO : what happens if Tfile records are purged...
-		for (TFile nthTFile : artifactTFileList) {
-			String filepath = nthTFile.getPathname();
-			// Change the parent folder name by replacing the older artifact name by newer name
-			String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, artifactNewName); 
-			nthTFile.setPathname(correctedFilePathForArtifactFile);	
-			byte[] filePathChecksum = ChecksumUtil.getChecksum(correctedFilePathForArtifactFile);
-			nthTFile.setPathnameChecksum(filePathChecksum);
-		}
-			
-		// Save Artifact first
-		try {
-			artifactRepository.save(artifactToRenameActualRow);
-		}
-		catch (Exception e) {
-			userRequest.setStatus(Status.failed);
-			requestDao.save(userRequest);
-			throw new Exception("Artifact Table rename failed " + e.getMessage());
-		}
-			
-		FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-		// Update the file table
-		try {
-			domainSpecificFileRepository.saveAll(artifactFileList);
-			tFileDao.saveAll(artifactTFileList);
-		}
-		catch (Exception e) {
-			// Roll-back the artifact table update change
-			artifactToRenameActualRow.setName(artifactName);
-			artifactRepository.save(artifactToRenameActualRow);
-			userRequest.setStatus(Status.failed);
-			
-			requestDao.save(userRequest);
-			throw new Exception("File Table rename failed " + e.getMessage());
-		}
-
+			if(!artifact.getArtifactclass().getSource())
+				mamUpdateTaskExecutor.rename(artifact.getName(), artifactNewName, artifact.getArtifactclass().getCategory());
+    	}
+    	
+    	
+    	
 		userRequest.setStatus(Status.completed);
 		requestDao.save(userRequest);
 

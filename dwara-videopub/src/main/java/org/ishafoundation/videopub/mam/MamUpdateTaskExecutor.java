@@ -3,6 +3,8 @@ package org.ishafoundation.videopub.mam;
 import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,7 +25,10 @@ import org.ishafoundation.videopub.mam.authn.Authenticator;
 import org.ishafoundation.videopub.mam.ingest.CatalogChecker;
 import org.ishafoundation.videopub.mam.ingest.CatalogCreator;
 import org.ishafoundation.videopub.mam.ingest.CatalogDeleter;
+import org.ishafoundation.videopub.mam.ingest.CatalogNameUpdater;
+import org.ishafoundation.videopub.mam.ingest.ClipIdsGetter;
 import org.ishafoundation.videopub.mam.ingest.ClipInserter;
+import org.ishafoundation.videopub.mam.ingest.ClipMediaPathUpdater;
 import org.ishafoundation.videopub.mam.ingest.ClipUpdater;
 import org.ishafoundation.videopub.mam.ingest.ThumbnailInserter;
 import org.ishafoundation.videopub.mam.sch.CatdvSshSessionHelper;
@@ -31,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -58,6 +62,15 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 	
 	@Autowired
 	private CatalogChecker catalogChecker;
+	
+	@Autowired
+	private CatalogNameUpdater catalogNameUpdater;
+	
+	@Autowired
+	private ClipMediaPathUpdater clipMediaPathUpdater;
+	
+	@Autowired
+	private ClipIdsGetter clipIdsGetter;
 
 	@Autowired
 	private CatalogCreator cc;
@@ -312,5 +325,58 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			}
 		}		
 		return catalogName;
+	}
+	
+	
+	public void rename(String existingArtifactName, String newArtifactName, String category) {
+		Session jSchSession = null;
+		String catdvSessionId = null;
+		try {
+			// STEP 1 - RENAME THE CATALOG IN CATDV DB...
+			catdvSessionId = getSessionId();
+			String catalogName = getCatalogName(existingArtifactName);
+			String response = catalogChecker.getCatalog(catdvSessionId, catalogName);
+			int catalogId = 0;
+			List<Map<String, Object>> catalogs = JsonPathUtil.getArray(response , "data");
+			
+			if(catalogs.size() > 0) {
+				Map<String, Object> catalog = catalogs.get(0);
+				catalogId = (int) catalog.get("ID");			
+			}
+
+			
+		    String renamedCatalogName = catalogName.replace(existingArtifactName, newArtifactName);
+			catalogNameUpdater.updateCatalogName(catdvSessionId, response, renamedCatalogName);
+			logger.debug("Renamed the catalog on MAM");
+		
+			// STEP 2 - UPDATE ALL THE PATHS...
+    		// Get all media files that are needed to be executed for this request...
+			if(catalogId > 0) {
+				List<Integer> clipIdsList = clipIdsGetter.getClipIds(catdvSessionId, catalogId);
+				for (Integer nthClipId : clipIdsList) {
+					clipMediaPathUpdater.updateClip(catdvSessionId, nthClipId+"", existingArtifactName, newArtifactName);	
+				}
+			}
+    		logger.debug("updated all the clips path on MAM");
+    		
+			// STEP 3 - RENAME THE PROXY FOLDER 
+			String existingProxiesPath = catDVConfiguration.getSshProxiesRootLocation() + File.separator + category + File.separator + existingArtifactName;
+			String newProxyPath = catDVConfiguration.getSshProxiesRootLocation() + File.separator + category + File.separator + newArtifactName;
+			
+			// renaming the folder remotely
+			String renameCommand = "mv " + existingProxiesPath + " " + newProxyPath;
+			jSchSession = catdvSshSessionHelper.getSession();
+			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, renameCommand,  newArtifactName + ".out");
+			catdvSshSessionHelper.disconnectSession(jSchSession);
+			logger.debug("renamed the proxy folder");
+		} catch (Exception e) {
+			logger.error("Unable to rename the medialibrary artifacts " + e.getMessage());
+		}finally {
+			if (jSchSession != null) 
+				catdvSshSessionHelper.disconnectSession(jSchSession);
+			if(catdvSessionId != null)
+				deleteSession(catdvSessionId);
+		}
+
 	}
 }

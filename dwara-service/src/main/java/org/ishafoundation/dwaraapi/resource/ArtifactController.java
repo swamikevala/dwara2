@@ -3,7 +3,6 @@ package org.ishafoundation.dwaraapi.resource;
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
-import org.ishafoundation.dwaraapi.api.req.artifact.ArtifactRenameFile;
 import org.ishafoundation.dwaraapi.api.req.artifact.ArtifactSoftRenameRequest;
 import org.ishafoundation.dwaraapi.api.resp.artifact.ArtifactResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
