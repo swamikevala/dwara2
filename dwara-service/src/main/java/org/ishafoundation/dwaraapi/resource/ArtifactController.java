@@ -3,6 +3,8 @@ package org.ishafoundation.dwaraapi.resource;
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
+import org.ishafoundation.dwaraapi.api.req.artifact.ArtifactRenameFile;
+import org.ishafoundation.dwaraapi.api.req.artifact.ArtifactSoftRenameRequest;
 import org.ishafoundation.dwaraapi.api.resp.artifact.ArtifactResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
@@ -23,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -71,6 +74,26 @@ public class ArtifactController {
 		return ResponseEntity.status(HttpStatus.OK).body(deleteArtifactResponse);
 	}
 
+	@PostMapping(value = "/artifact/{artifactId}/softRename", produces = "application/json")
+	public ResponseEntity<ArtifactResponse> softRename(@RequestBody ArtifactSoftRenameRequest artifactSoftRenameRequest, @PathVariable("artifactId") int artifactId, @RequestParam Boolean force){
+		ArtifactResponse artifactSoftRenameResponse = null;
+    	String artifactNewName = artifactSoftRenameRequest.getNewName();		 
+		// Set the domain for the artifact
+    	logger.info("/artifact/" + artifactId + "/softRename");		
+		try {
+			artifactSoftRenameResponse = artifactservice.softRenameArtifact(artifactId, artifactNewName, force);
+		}catch (Exception e) {
+			String errorMsg = "Unable to rename artifact - " + e.getMessage();
+			logger.error(errorMsg, e);
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(artifactSoftRenameResponse);
+	}
+	
 	@ApiOperation(value = "Generates a specific Artifact' Label and saves it in the configured temp location. Useful for dd-ing the artifact label manually if something goes wrong with label writing after content is written to tape")
 	@ApiResponses(value = { 
 			@ApiResponse(code = 200, message = "Ok")
