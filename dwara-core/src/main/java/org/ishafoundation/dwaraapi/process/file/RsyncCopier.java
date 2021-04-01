@@ -44,11 +44,17 @@ public class RsyncCopier implements IProcessingTask {
 		String inputArtifactName = inputArtifact.getName();
 		
 		String destinationDirPath = processContext.getOutputDestinationDirPath(); // This includes the host ip
-		// TODO - Validate the pattern here
-		String destination = StringUtils.substringBefore(destinationDirPath, inputArtifactName);
 		logger.trace("destinationDirPath " + destinationDirPath);
-		logger.trace("destination " + destination);
-		String destinationFilePathname = destination + ".copying" + File.separator + logicalFile.getName(); // Reqmt - No need for the filepathname structur as when job fails, leaves the empty folder structure causing confusion
+		
+		String destinationFilePathname = null;
+		// TODO --- REMOVE THIS AFTER DIGI IS OVER... 
+		if(inputArtifact.getArtifactclass().getId().startsWith("video-digi-2020")) {
+			String destination = StringUtils.substringBefore(destinationDirPath, inputArtifactName);
+			logger.trace("destination " + destination);
+			destinationFilePathname = destination + ".copying" + File.separator + logicalFile.getName(); // Reqmt - No need for the filepathname structur as when job fails, leaves the empty folder structure causing confusion
+		}
+		else
+			destinationFilePathname = destinationDirPath + File.separator + ".copying" + File.separator ;
 			
 		String sshUser = configuration.getSshSystemUser();
 		String host = StringUtils.substringBefore(destinationDirPath, ":");
@@ -73,7 +79,8 @@ public class RsyncCopier implements IProcessingTask {
 	        // now moving back the file from the .copying to the original destination...
 	        Session jSchSession = null;
 	        CommandLineExecutionResponse response = null;
-	        String command1 = "mv " + StringUtils.substringAfter(destinationFilePathname, ":") + " " + StringUtils.substringAfter(destination, ":");
+	        String tmpDestination = StringUtils.substringAfter(destinationFilePathname, ":");
+	        String command1 = "mv " + tmpDestination + " " + StringUtils.substringBefore(tmpDestination, ".copying");
 	        try {
 	        	jSchSession = sshSessionHelper.getSession(host, sshUser);
 				logger.trace("executing remotely " + command1);
