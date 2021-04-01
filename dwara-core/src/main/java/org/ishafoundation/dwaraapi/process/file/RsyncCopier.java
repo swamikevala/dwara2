@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.process.file;
 
 import java.io.File;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.commandline.remote.sch.RemoteCommandLineExecuter;
@@ -45,7 +46,14 @@ public class RsyncCopier implements IProcessingTask {
 		
 		String destinationDirPath = processContext.getOutputDestinationDirPath(); // This includes the host ip
 		logger.trace("destinationDirPath " + destinationDirPath);
-		
+
+		String sshUser = configuration.getSshSystemUser();
+		String host = StringUtils.substringBefore(destinationDirPath, ":");
+        
+        ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
+        
+        int jobId = processContext.getJob().getId();
+        
 		String destinationFilePathname = null;
 		// TODO --- REMOVE THIS AFTER DIGI IS OVER... 
 		if(inputArtifact.getArtifactclass().getId().startsWith("video-digi-2020")) {
@@ -53,12 +61,15 @@ public class RsyncCopier implements IProcessingTask {
 			logger.trace("destination " + destination);
 			destinationFilePathname = destination + ".copying" + File.separator + logicalFile.getName(); // Reqmt - No need for the filepathname structur as when job fails, leaves the empty folder structure causing confusion
 		}
-		else
-			destinationFilePathname = destinationDirPath + File.separator + ".copying" + File.separator ;
+		else {
+			String parentDir = FilenameUtils.getFullPathNoEndSeparator(destinationDirPath);
+			String command1 = "mkdir -p \"" + parentDir + "\"";
 			
-		String sshUser = configuration.getSshSystemUser();
-		String host = StringUtils.substringBefore(destinationDirPath, ":");
-        logger.info("processing rsync copy: " +  logicalFile.getAbsolutePath() + ", destination: " + destinationFilePathname);
+			processingtaskResponse = executeCommandRemotely(host, sshUser, command1, jobId, processingtaskResponse);
+			if(!processingtaskResponse.isComplete())
+				throw new Exception("Unable to create dir remotely " + processingtaskResponse.getFailureReason());
+		}
+		logger.info("processing rsync copy: " +  logicalFile.getAbsolutePath() + ", destination: " + destinationFilePathname);
         
         RSync rsync = new RSync()
         .source(logicalFile.getAbsolutePath())
@@ -74,72 +85,45 @@ public class RsyncCopier implements IProcessingTask {
         logger.info(output.getStdOut());
         logger.info("Exit code: " + output.getExitCode());
  
-        ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
-		if(output.getExitCode() == 0){
+		// TODO --- REMOVE THIS AFTER DIGI IS OVER...
+		if(output.getExitCode() == 0 && inputArtifact.getArtifactclass().getId().startsWith("video-digi-2020")){
 	        // now moving back the file from the .copying to the original destination...
-	        Session jSchSession = null;
-	        CommandLineExecutionResponse response = null;
 	        String tmpDestination = StringUtils.substringAfter(destinationFilePathname, ":");
 	        String command1 = "mv " + tmpDestination + " " + StringUtils.substringBefore(tmpDestination, ".copying");
-	        try {
-	        	jSchSession = sshSessionHelper.getSession(host, sshUser);
-				logger.trace("executing remotely " + command1);
-				response = remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, processContext.getJob().getId() + ".out_mv_qcErr");
-				if(response.isComplete()) {
-			        processingtaskResponse.setIsComplete(true);
-			        processingtaskResponse.setStdOutResponse(response.getStdOutResponse());
-				}else {
-					throw new Exception("Remotecommand executer failed");
-				}
-	        }catch (Exception e) {
-	        	processingtaskResponse.setIsComplete(false);
-	        	processingtaskResponse.setFailureReason(response.getFailureReason());
-	        	logger.error("Unable to execute " + command1 + " remotely" + e.getMessage(), e);
-			}finally {
-				if (jSchSession != null) 
-					sshSessionHelper.disconnectSession(jSchSession);
-			}
+	        
+	        processingtaskResponse = executeCommandRemotely(host, sshUser, command1, jobId, processingtaskResponse);
 		}else {
 	        processingtaskResponse.setIsComplete(output.getExitCode() == 0);
 	        processingtaskResponse.setFailureReason(output.getExitCode() + ":" + output.getStdErr());
 	        processingtaskResponse.setStdOutResponse(output.getStdOut());
 		}
-        
-        /*
-        if(output.getExitCode() < 0) {
-            processingtaskResponse.setIsComplete(false);
-        }
-        else {
-            //verify checksum
-            rsync.dryRun(true);
-            ProcessBuilder builder = rsync.builder();
-            builder.redirectErrorStream(true);
-            Process process = builder.start();
-            InputStream is = process.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-            String line = null;
-            int numFilesTransferred = -1;
-            while ((line = reader.readLine()) != null) {
-                logger.info(line);
-                if(line.contains("Number of files transferred")) {
-                    numFilesTransferred = Integer.parseInt(line.replace("Number of files transferred: ", ""));
-                }
-                else if(line.contains("Number of regular files transferred")) {
-                    numFilesTransferred = Integer.parseInt(line.replace("Number of regular files transferred: ", ""));
-                }
-            }
-            is.close();
-            reader.close();
 
-            if(numFilesTransferred == 0) {
-                processingtaskResponse.setIsComplete(true);
-            }
-            else {
-                processingtaskResponse.setIsComplete(false);
-            } 
-        }*/
 		return processingtaskResponse;
 	}
 
+	
+	private ProcessingtaskResponse executeCommandRemotely(String host, String sshUser, String command1, int jobId, ProcessingtaskResponse processingtaskResponse) {
+		Session jSchSession = null;
+        CommandLineExecutionResponse response = null;
+        try {
+        	jSchSession = sshSessionHelper.getSession(host, sshUser);
+			logger.trace("executing remotely " + command1);
+			response = remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command1, jobId + ".out_err");
+			if(response.isComplete()) {
+		        processingtaskResponse.setIsComplete(true);
+		        processingtaskResponse.setStdOutResponse(response.getStdOutResponse());
+			}else {
+				throw new Exception("Remotecommand executer failed");
+			}
+        }catch (Exception e) {
+        	processingtaskResponse.setIsComplete(false);
+        	processingtaskResponse.setFailureReason(response.getFailureReason());
+        	logger.error("Unable to execute " + command1 + " remotely" + e.getMessage(), e);
+		}finally {
+			if (jSchSession != null) 
+				sshSessionHelper.disconnectSession(jSchSession);
+		}
+        return  processingtaskResponse;
+	}
 }
 
