@@ -119,6 +119,7 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		List<String> xmpCommandParamsList = new ArrayList<String>();
 		xmpCommandParamsList.add("exiv2");
 		xmpCommandParamsList.add("-eX");
+		xmpCommandParamsList.add("-f");
 		xmpCommandParamsList.add("-l");
 		xmpCommandParamsList.add(destinationDirPath);
 		xmpCommandParamsList.add("ex");
@@ -126,5 +127,4 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		
 		return xmpCommandParamsList;
 	}
-
 }
