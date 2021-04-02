@@ -3,6 +3,12 @@
 
 1) Support for photo pub
 
+2) Soft rename
+
+### Bug fix
+
+1) Exclude deleted artifacts from dupe check
+
 ### Upgrade steps
 
 0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_9.sql)

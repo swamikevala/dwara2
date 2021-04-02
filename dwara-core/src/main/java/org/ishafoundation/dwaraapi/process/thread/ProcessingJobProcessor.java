@@ -500,8 +500,25 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			nthTFileRowToBeInserted.setSize(afd.getTotalSize());
 		}
 		
-		tFileDao.save(nthTFileRowToBeInserted);
-		return nthTFileRowToBeInserted;
+		org.ishafoundation.dwaraapi.db.model.transactional.TFile savedTFile = null;
+		logger.debug("DB TFile Creation");
+		try {
+			savedTFile = tFileDao.save(nthTFileRowToBeInserted);
+		}
+		catch (Exception e) {
+			nthTFileRowToBeInserted = tFileDao.findByPathname(filePathname);
+			// This check is because of the same file getting queued up for processing again...
+			// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
+			// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
+			if(nthTFileRowToBeInserted != null) {
+				logger.trace("TFile details possibly updated by another thread already");
+				return nthTFileRowToBeInserted;
+			}
+			else
+				throw e;
+		}
+		logger.debug("DB TFile Creation - Success");
+		return savedTFile;
 	}
 
 	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository, Domain domain, org.ishafoundation.dwaraapi.db.model.transactional.TFile tFileDBObj) throws Exception {
