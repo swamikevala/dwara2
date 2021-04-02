@@ -153,13 +153,14 @@ public class ArtifactService extends DwaraService{
     	List<Artifact> artifactList = artifactRepository.findAllByWriteRequestId(writeRequestRowForTheArtifactToRename.getId());
     	for (Artifact artifact : artifactList) {
     		sequenceId = artifact.getSequenceCode();
+    		artifactName = artifact.getName();
     		artifactNewName = sequenceId + "_" + newName; 
 			
     		// 2 (a) (i) Change the artifact name entry in artifact table
-			artifactToRenameActualRow.setName(artifactNewName);
+    		artifact.setName(artifactNewName);
 			// Save Artifact first
 			try {
-				artifactRepository.save(artifactToRenameActualRow);
+				artifactRepository.save(artifact);
 			}
 			catch (Exception e) {
 				userRequest.setStatus(Status.failed);
@@ -170,7 +171,7 @@ public class ArtifactService extends DwaraService{
 			// 2 (a) (ii) Change the File Table entries and the file names 
 			// Step 4 - Flag all the file entries as soft-deleted
 			String parentFolderReplaceRegex = "^"+artifactName; 
-			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifactToRenameActualRow, domain);			
+			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifact, domain);			
 			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File eachfile : artifactFileList) { 
 				// Each file will now be renamed and the DB entry changed subsequently like butter through knife...
 				String eachFilePath = eachfile.getPathname();
@@ -184,7 +185,7 @@ public class ArtifactService extends DwaraService{
 	
 			} // File entry manipulation and renaming ends here 
 				
-			List<TFile> artifactTFileList  = tFileDao.findAllByArtifactId(artifactId); // Including the Deleted Ones
+			List<TFile> artifactTFileList  = tFileDao.findAllByArtifactId(artifact.getId()); // Including the Deleted Ones
 			// TODO : what happens if Tfile records are purged...
 			for (TFile nthTFile : artifactTFileList) {
 				String filepath = nthTFile.getPathname();
@@ -208,7 +209,7 @@ public class ArtifactService extends DwaraService{
 			}
 			
 			if(!artifact.getArtifactclass().getSource())
-				mamUpdateTaskExecutor.rename(artifact.getName(), artifactNewName, artifact.getArtifactclass().getCategory());
+				mamUpdateTaskExecutor.rename(artifactName, artifactNewName, artifact.getArtifactclass().getCategory());
     	}
     	
     	
@@ -220,7 +221,11 @@ public class ArtifactService extends DwaraService{
 		ArtifactResponse dr = new ArtifactResponse();
 		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForDeleteArtifactResponse(artifactToRenameActualRow);
 		dr.setArtifact(artifactForResponse);
-		dr.setAction(Action.rename.name());        
+		dr.setUserRequestId(userRequest.getId());
+		dr.setAction(Action.rename.name());
+		dr.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
+		dr.setRequestedBy(userRequest.getRequestedBy().getName());
+
 		return dr;
 	}
 }

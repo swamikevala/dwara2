@@ -342,8 +342,10 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			if(catalogs.size() > 0) {
 				Map<String, Object> catalog = catalogs.get(0);
 				catalogId = (int) catalog.get("ID");			
+			}else {
+				logger.warn("Catalog not found and hence would not be able to rename");
+				return;
 			}
-
 			
 		    String renamedCatalogName = catalogName.replace(existingArtifactName, newArtifactName);
 			catalogNameUpdater.updateCatalogName(catdvSessionId, response, renamedCatalogName);
@@ -368,9 +370,10 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 			jSchSession = catdvSshSessionHelper.getSession();
 			remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, renameCommand,  newArtifactName + ".out");
 			catdvSshSessionHelper.disconnectSession(jSchSession);
+			
 			logger.debug("renamed the proxy folder");
 		} catch (Exception e) {
-			logger.error("Unable to rename the medialibrary artifacts " + e.getMessage());
+			logger.error("Unable to rename the artifact " + e.getMessage());
 		}finally {
 			if (jSchSession != null) 
 				catdvSshSessionHelper.disconnectSession(jSchSession);
