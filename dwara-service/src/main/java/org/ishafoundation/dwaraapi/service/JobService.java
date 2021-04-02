@@ -1,20 +1,33 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
+import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.keys.JobRunKey;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobRun;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
+import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.job.JobManipulator;
 import org.slf4j.Logger;
@@ -44,6 +57,9 @@ public class JobService extends DwaraService{
 	
 	@Autowired
 	private JobCreator jobCreator;
+
+	@Autowired
+	private UserDao userDao;
 
 	public List<JobResponse> getJobs(Integer systemRequestId, List<Status> statusList) {
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
@@ -87,6 +103,66 @@ public class JobService extends DwaraService{
 	
 	public JobResponse requeueJob(int jobId) throws Exception{
 		return frameJobResponse(jobServiceRequeueHelper.requeueJob(jobId, getUserFromContext()));
+	}
+
+	public JobResponse markedCompletedJob(int jobId) throws Exception {
+		Request userRequest = null;
+		String userName = getUserFromContext();
+		Job job = null;
+		try {		
+			job = jobDao.findById(jobId).get();
+			if(job.getStatus() != Status.completed_failures && job.getStatus() != Status.failed)
+				throw new DwaraException("Job cannot be marked completed. Only failed or a job completed with some failures can be rerun. @TEAM - Any extra protection needed for avoiding written content getting requeued again?"); //
+	    	
+			userRequest = new Request();
+	    	userRequest.setType(RequestType.user);
+			userRequest.setActionId(Action.requeue);
+
+			User requestedByUser = userDao.findByName(userName);
+	    	userRequest.setRequestedBy(requestedByUser);
+			userRequest.setRequestedAt(LocalDateTime.now());
+			RequestDetails details = new RequestDetails();
+			ObjectMapper mapper = new ObjectMapper();
+	
+			HashMap<String, Object> data = new HashMap<String, Object>();
+	    	data.put("jobId", jobId);
+	    	
+	    	String jsonAsString = mapper.writeValueAsString(data);
+			JsonNode postBodyJson = mapper.readValue(jsonAsString, JsonNode.class);
+			details.setBody(postBodyJson);
+			userRequest.setDetails(details);
+			
+	    	userRequest = requestDao.save(userRequest);
+	    	int userRequestId = userRequest.getId();
+	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
+	    	
+	    	if(job.getProcessingtaskId() != null) {
+				List<ProcessingFailure> processingFailureList = processingFailureDao.findAllByJobId(jobId);
+				processingFailureDao.deleteAll(processingFailureList);
+		    	logger.debug("Processing failure records cleaned up " + jobId);
+	    	}
+			
+			job.setStatus(Status.marked_completed);
+			job.setMessage(null);
+			job = jobDao.save(job);
+			logger.info("Job queued successfully " + jobId);
+			
+			Request jobSystemRequest = job.getRequest();
+			jobSystemRequest.setStatus(Status.marked_completed);
+			requestDao.save(jobSystemRequest);
+			
+			userRequest.setStatus(Status.completed);
+			userRequest = requestDao.save(userRequest);
+			
+		}catch (Exception e) {
+			if(userRequest != null && userRequest.getId() != 0) {
+				userRequest.setStatus(Status.failed);
+				userRequest = requestDao.save(userRequest);
+			}
+			throw e;
+		}
+
+		return frameJobResponse(job);
 	}
 	
 

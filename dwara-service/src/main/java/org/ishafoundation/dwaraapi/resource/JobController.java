@@ -96,6 +96,24 @@ public class JobController {
 		}
     	return ResponseEntity.status(HttpStatus.OK).body(jobResponseList);
     }
+
+	@PostMapping("/job/{jobId}/marked_completed")
+    public ResponseEntity<JobResponse> markedCompletedJob(@PathVariable("jobId") int jobId) {
+    	logger.info("/job/" + jobId + "/marked_completed");
+    	JobResponse jobResponse = null;
+    	try {
+    		jobResponse = jobService.markedCompletedJob(jobId);
+		}catch (Exception e) {
+			String errorMsg = "Unable to get Jobs - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+    	return ResponseEntity.status(HttpStatus.OK).body(jobResponse);
+    }
 	
 	
     @PostMapping("/job/{jobId}/requeue")
