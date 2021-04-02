@@ -91,34 +91,36 @@ public class StoragetypeJobDelegator {
 			StorageJob storageJob = storageJobUtil.wrapJobWithStorageInfo(job);
 			if(storageJob == null)
 				continue;
-			
-			if(blockingJobsInFlight > 0) { // format/tape map drive request in progress, so blocking all storage jobs until the job is complete...
-				logger.trace("Skipping adding to storagejob collection as already a blocking request is " + Status.in_progress.name());
+
+			Volume volume = storageJob.getVolume();
+			if(volume == null) {
+				String msg = "No volume available just yet for job "  + job.getId() + ". So skipping this job this schedule...";
+				logger.info(msg);
+				job.setMessage("[info] No volume available");
+				job = jobDao.save(job);
 				continue;
 			}
-			else if(blockingJobsLinedUp > 0) { // if any format/tape map drive request queued up
-				// only adding one blocking job to the list
-				if(job.getRequest().getActionId() == Action.initialize || job.getRequest().getActionId() == Action.map_tapedrives) {
-					if(storageJobList.size() == 0) { // add only one job at a time. If already added skip adding to the list and continue loop(we still need to continue so non-storage jobs are managed)...
-						storageJobList.add(storageJob);
-						logger.trace("Added to storagejob collection");
-					}
-					else {
-						logger.trace("Already another blocking job added to storagejob collection. So skipping this");
-						continue;
+			
+			if(volume.getStoragetype() == Storagetype.tape) {
+				if(blockingJobsInFlight > 0) { // format/tape map drive request in progress, so blocking all storage jobs until the job is complete...
+					logger.trace("Skipping adding to storagejob collection as already a blocking request is " + Status.in_progress.name());
+					continue;
+				}
+				else if(blockingJobsLinedUp > 0) { // if any format/tape map drive request queued up
+					// only adding one blocking job to the list
+					if(job.getRequest().getActionId() == Action.initialize || job.getRequest().getActionId() == Action.map_tapedrives) {
+						if(storageJobList.size() == 0) { // add only one job at a time. If already added skip adding to the list and continue loop(we still need to continue so non-storage jobs are managed)...
+							storageJobList.add(storageJob);
+							logger.trace("Added to storagejob collection");
+						}
+						else {
+							logger.trace("Already another blocking job added to storagejob collection. So skipping this");
+							continue;
+						}
 					}
 				}
-			}
-			else { // only add when no tapedrivemapping or format activity
-				// all storage jobs need to be grouped for some optimisation...
-				Volume volume = storageJob.getVolume();
-				if(volume == null) {
-					String msg = "No volume available just yet for job "  + job.getId() + ". So skipping this job this schedule...";
-					logger.info(msg);
-					job.setMessage("[info] No volume available");
-					job = jobDao.save(job);
-					continue;
-				}else {
+				else { // only add when no tapedrivemapping or format activity
+					// all storage jobs need to be grouped for some optimisation...
 					Job inProgressJobOnVolume = volume_InProgressJob_Map.get(volume); // Filtering already inprogress same volume jobs
 					if(inProgressJobOnVolume == null) {
 						inProgressJobOnVolume = jobDao.findByStoragetaskActionIdIsNotNullAndVolumeIdAndStatus(volume.getId(), Status.in_progress);
@@ -157,12 +159,13 @@ public class StoragetypeJobDelegator {
 							}
 						}
 					}
-					
 					storageJobList.add(storageJob);
 					logger.trace("Added to storagejob collection");
 				}
+			}else {
+				storageJobList.add(storageJob);
+				logger.trace("Added to storagejob collection");
 			}
-
 		}
 		
 		if(storageJobList.size() > 0) {

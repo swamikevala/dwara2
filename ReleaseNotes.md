@@ -17,6 +17,7 @@
 
 2) create photo-proxy/.copying folders in MAM
 
+INSERT INTO `volume` (`id`, `capacity`, `checksumtype`, `defective`, `details`, `finalized`, `imported`, `initialized_at`, `storagelevel`, `storagesubtype`, `storagetype`, `suspect`, `type`, `uuid`, `archiveformat_id`, `group_ref_id`, `location_id`) VALUES ('bru', '6000000000000', 'sha256', 0, NULL, 0, 0, NULL, 'file', NULL, 'disk', 0, 'physical', 'bru', NULL, NULL, NULL);
 
 # Dwara App Version - 2.1.15 (28th Mar 2021)
 ### New features

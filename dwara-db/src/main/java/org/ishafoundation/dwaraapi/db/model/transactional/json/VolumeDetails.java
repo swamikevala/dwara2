@@ -9,6 +9,8 @@ public class VolumeDetails {
 	private Boolean barcoded; // Only applicable for tape volumes. Needed for the tape library to automatically load/unload tapes. This field specifies whether or not the volume has a machine readable barcode with the UID. Tapes without barcodes can be imported, however Dwara will not be able to restore any data from them. (Useful for keeping track of old tapes, which can serve as emergency copies and be barcoded on demand).
 	private Integer blocksize; // Only applicable for block based storage volumes
 	private String mountpoint; // Mount point for disks
+	@JsonProperty("remote_destination")
+	private String remoteDestination;// like destination.path entry
 	private Integer provider;
 	@JsonProperty("remove_after_job")
 	private Boolean removeAfterJob; // Set this for tapes which should be removed from the autoloader as soon as any job is completed. Used for managing the security of tapes that hold confidential data.
@@ -29,6 +31,12 @@ public class VolumeDetails {
 	}
 	public void setMountpoint(String mountpoint) {
 		this.mountpoint = mountpoint;
+	}
+	public String getRemoteDestination() {
+		return remoteDestination;
+	}
+	public void setRemoteDestination(String remoteDestination) {
+		this.remoteDestination = remoteDestination;
 	}
 	public Integer getProvider() {
 		return provider;
