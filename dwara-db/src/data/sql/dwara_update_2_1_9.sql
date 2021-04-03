@@ -108,9 +108,9 @@ INSERT INTO `processingtask` (`id`, `description`, `filetype_id`, `max_errors`, 
 
 -- FLOW_ELEMENT --
 INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `flow_ref_id`, `processingtask_id`, `storagetask_action_id`, `task_config`) VALUES
-('U24', 1, null, 0, 1, 'photo-proxy-flow', null, 'photo-proxy-gen', null, null),
+('U24', 1, null, 0, 1, 'photo-proxy-flow', null, 'photo-proxy-gen', null, null);
 -- copy as a storage task change ('U25', 1, '["U24"]', 0, 2, 'photo-proxy-flow', null, 'file-copy', null, '{"destination_id": "catdv-photo-proxy"}');
-('U25', 1, '["U24"]', 0, 2, 'photo-proxy-flow', null, null, 'copy', '{"destination_id": "catdv-photo-proxy"}');
+-- we decided to do this later TODO ('U25', 1, '["U24"]', 0, 2, 'photo-proxy-flow', null, null, 'copy', '{"destination_id": "catdv-photo-proxy"}');
 
 -- UPDATE `flowelement` SET `processingtask_id`=NULL, `storagetask_action_id`='copy' WHERE `id`='U25';
 
@@ -132,7 +132,7 @@ INSERT INTO `action_artifactclass_flow` (`action_id`, `artifactclass_id`, `flow_
 
 -- UPDATE `flowelement` SET `processingtask_id`=NULL, `storagetask_action_id`='write' WHERE `id`='U14';
 
-INSERT INTO `action` (`id`, `type`) VALUES ('copy', 'storage_task');
+-- TODO later INSERT INTO `action` (`id`, `type`) VALUES ('copy', 'storage_task');
 INSERT INTO `action` (`id`, `type`) VALUES ('marked_completed', 'sync');
 
 SET foreign_key_checks = 1;
