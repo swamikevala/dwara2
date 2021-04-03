@@ -29,5 +29,6 @@ public enum Action {
 	map_tapedrives,
 	diagnostics,
 	requeue,
-	mark_completed
+	marked_completed,
+	copy
 }

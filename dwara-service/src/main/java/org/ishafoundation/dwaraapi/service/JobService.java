@@ -125,7 +125,7 @@ public class JobService extends DwaraService{
 	    	
 			userRequest = new Request();
 	    	userRequest.setType(RequestType.user);
-			userRequest.setActionId(Action.mark_completed);
+			userRequest.setActionId(Action.marked_completed);
 
 			User requestedByUser = userDao.findByName(userName);
 	    	userRequest.setRequestedBy(requestedByUser);

@@ -142,7 +142,7 @@ public class StagedFileEvaluator {
 
 		// 4- dupe check on size against existing artifact
 		ArtifactRepository<Artifact> domainSpecificArtifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-		List<Artifact> alreadyExistingArtifacts = domainSpecificArtifactRepository.findAllByTotalSize(size);
+		List<Artifact> alreadyExistingArtifacts = domainSpecificArtifactRepository.findAllByTotalSizeAndDeletedIsFalse(size);
 
 		if(alreadyExistingArtifacts.size() > 0) {
 			Error error = new Error();
@@ -156,25 +156,25 @@ public class StagedFileEvaluator {
 		}
 		
 		// 4b- For digi artifacts - dupe check on prev-seq-code against existing artifact
-		if(FilenameUtils.getBaseName(sourcePath).startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX)) {
-			String prevSequenceCode = sequenceUtil.getExtractedCode(sequence, fileName);
-			
-			List<Artifact> alreadyExistingArtifactList = domainSpecificArtifactRepository.findAllByPrevSequenceCode(prevSequenceCode);
-			if(alreadyExistingArtifactList.size() > 0) {
-				for (Artifact artifact : alreadyExistingArtifactList) {
-					if(!artifact.isDeleted() && artifact.getWriteRequest().getDetails().getStagedFilename().equals(fileName) && artifact.getWriteRequest().getStatus() != Status.cancelled){ 
-						Error error = new Error();
-						error.setType(Errortype.Warning);
-						StringBuffer sb = new StringBuffer();
-						sb.append(" Id:" + artifact.getId() + " ArtifactName:" + artifact.getName());
-						error.setMessage("Artifact probably already exists in dwara. Please double check. Matches" + sb.toString());
-						errorList.add(error);
-						break;
-					}
+		//if(FilenameUtils.getBaseName(sourcePath).startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX)) {
+		String prevSequenceCode = sequenceUtil.getExtractedCode(sequence, fileName);
+		
+		List<Artifact> alreadyExistingArtifactList = domainSpecificArtifactRepository.findAllByPrevSequenceCode(prevSequenceCode);
+		if(alreadyExistingArtifactList.size() > 0) {
+			for (Artifact artifact : alreadyExistingArtifactList) {
+				if(!artifact.isDeleted() && artifact.getWriteRequest().getDetails().getStagedFilename().equals(fileName) && artifact.getWriteRequest().getStatus() != Status.cancelled){ 
+					Error error = new Error();
+					error.setType(Errortype.Warning);
+					StringBuffer sb = new StringBuffer();
+					sb.append(" Id:" + artifact.getId() + " ArtifactName:" + artifact.getName());
+					error.setMessage("Artifact probably already exists in dwara. Please double check. Matches" + sb.toString());
+					errorList.add(error);
+					break;
 				}
 			}
-
 		}
+
+		//}
 				
 		// 5- Unsupported extns
 		if(unSupportedExtns.size() > 0) {
@@ -244,7 +244,7 @@ public class StagedFileEvaluator {
 		return nthIngestFile;
 	}
 
-	private List<Error> validateName(String fileName) {
+	public List<Error> validateName(String fileName) {
 		List<Error> errorList = new ArrayList<Error>();
 		if(fileName.length() > 245) { // 245 because we need to add sequence number
 			Error error = new Error();

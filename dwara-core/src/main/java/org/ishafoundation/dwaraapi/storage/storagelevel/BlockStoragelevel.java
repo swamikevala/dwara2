@@ -39,6 +39,11 @@ public class BlockStoragelevel implements IStoragelevel {
 	private String filesystemTemporarylocation;
 
 	@Override
+	public StorageResponse copy(SelectedStorageJob selectedStorageJob) throws Exception{
+		throw new Exception("Copy not supported");
+	}
+		
+	@Override
 	public StorageResponse initialize(SelectedStorageJob selectedStorageJob) throws Exception{
 		
 		boolean status = labelManager.writeVolumeLabel(selectedStorageJob);
