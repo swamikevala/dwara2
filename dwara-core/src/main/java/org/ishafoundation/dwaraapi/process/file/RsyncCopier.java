@@ -62,6 +62,7 @@ public class RsyncCopier implements IProcessingTask {
 			destinationFilePathname = destination + ".copying" + File.separator + logicalFile.getName(); // Reqmt - No need for the filepathname structur as when job fails, leaves the empty folder structure causing confusion
 		}
 		else {
+			destinationFilePathname = destinationDirPath;
 			String parentDir = FilenameUtils.getFullPathNoEndSeparator(destinationDirPath);
 			String command1 = "mkdir -p \"" + parentDir + "\"";
 			

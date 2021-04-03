@@ -65,43 +65,41 @@ public class FileStoragelevel implements IStoragelevel {
 	
 	@Autowired
 	private	LogicalFileHelper logicalFileHelper;
-	
+
 	@Override
-	public StorageResponse initialize(SelectedStorageJob job) throws Exception{
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	@Override
-	public StorageResponse write(SelectedStorageJob selectedStorageJob) throws Exception{
+	public StorageResponse copy(SelectedStorageJob selectedStorageJob) throws Exception{
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		Artifact inputArtifact = storageJob.getArtifact();
-		Volume volume = storageJob.getVolume();
-		String inputArtifactName = inputArtifact.getName();
-				
-//		String configuredDestinationId = volume.getId();
-//		String configuredDestinationPath = null;
-//		if(configuredDestinationId != null) {
-//			Destination destination = configurationTablesUtil.getDestination(configuredDestinationId);
-//			if(destination == null)
-//				throw new DwaraException("Destination " + configuredDestinationId + " is not configured in DB");
-//			configuredDestinationPath = destination.getPath();
-//		}
 
-		String destinationDirPath = volume.getDetails().getRemoteDestination(); // This includes the host ip
+		String inputArtifactName = inputArtifact.getName();
+
+        String taskConfigPathnameRegex = null;
+        String configuredDestinationId = null;
+        String flowElementId = storageJob.getJob().getFlowelementId();
+        if(!flowElementId.startsWith("C")) {
+        	Flowelement fe = flowelementDao.findById(flowElementId).get();
+        	taskConfigPathnameRegex = fe.getTaskconfig().getPathnameRegex();
+        	configuredDestinationId = fe.getTaskconfig().getDestinationId();
+        }
+
+//		Volume volume = storageJob.getVolume();
+//		String configuredDestinationId = volume.getId();
+		String configuredDestinationPath = null;
+		if(configuredDestinationId != null) {
+			Destination destination = configurationTablesUtil.getDestination(configuredDestinationId);
+			if(destination == null)
+				throw new DwaraException("Destination " + configuredDestinationId + " is not configured in DB");
+			configuredDestinationPath = destination.getPath();
+		}
+
+//		String destinationDirPath = volume.getDetails().getRemoteDestination(); // This includes the host ip
+        String destinationDirPath = configuredDestinationPath; // This includes the host ip
 		logger.trace("destinationDirPath " + destinationDirPath);
 
 		String sshUser = configuration.getSshSystemUser();
 		String host = StringUtils.substringBefore(destinationDirPath, ":");
         
         int jobId = storageJob.getJob().getId();
-        String taskConfigPathnameRegex = null;
-        
-        String flowElementId = storageJob.getJob().getFlowelementId();
-        if(!flowElementId.startsWith("C")) {
-        	Flowelement fe = flowelementDao.findById(flowElementId).get();
-        	taskConfigPathnameRegex = fe.getTaskconfig().getPathnameRegex();
-        }
         
         String artifactPrefixPath = storageJob.getArtifactPrefixPath();
         Path sourceFilePath = Paths.get(artifactPrefixPath, inputArtifactName);
@@ -111,67 +109,67 @@ public class FileStoragelevel implements IStoragelevel {
 		String destinationFilePathname = null;
 		String tmpDestinationFilePathname = destination + ".copying" + File.separator;
 		
-        Collection<File> fileCollection =  new ArrayList<File>(); 
-		List<String> extensions = null;
-		String[] extensionsArray = null;
-
-		Set<String> pathsToBeUsed = new TreeSet<String>();
-		Set<String> extnsToBeUsed = null; 
-        if(taskConfigPathnameRegex != null) {
-			FiletypePathnameReqexVisitor filetypePathnameReqexVisitor = new FiletypePathnameReqexVisitor(taskConfigPathnameRegex);
-			try {
-				Files.walkFileTree(sourceFilePath, filetypePathnameReqexVisitor);
-			} catch (IOException e) {
-				// swallow for now
-			}
-			if(filetypePathnameReqexVisitor != null) {
-				pathsToBeUsed.addAll(filetypePathnameReqexVisitor.getPaths());
-				if(filetypePathnameReqexVisitor.getExtns().size() > 0) { // if regex contains specific file extns we need to only use processable files with that extn only{
-					extnsToBeUsed = filetypePathnameReqexVisitor.getExtns();
-				}
-			}
-
-			if(extnsToBeUsed != null) {
-				extensions = new ArrayList<String>();
-				extensions.addAll(extnsToBeUsed);
-				extensionsArray = ArrayUtils.toStringArray(extensions.toArray());
-			}
-
-	        
-			for (String nthPathToBeUsed : pathsToBeUsed) {
-				fileCollection.addAll(FileUtils.listFiles(new File(nthPathToBeUsed), extensionsArray, true));
-			}
-
-			for (File file : fileCollection) {
-				
-				// TODO --- REMOVE THIS AFTER DIGI IS OVER...
-				if(inputArtifact.getArtifactclass().getId().startsWith("video-digi-2020")) {
-					destinationFilePathname = tmpDestinationFilePathname + file.getName(); // Reqmt - No need for the filepathname structur as when job fails, leaves the empty folder structure causing confusion
-				}
-				else {
-					String filepathname = StringUtils.substringAfter(destinationDirPath, destination);
-					logger.trace("filepathname " + filepathname);
-					
-					destinationFilePathname = tmpDestinationFilePathname + filepathname;
-				}
-
-				copy(jobId, host, sshUser, file, destinationFilePathname);
-				
-		        if(inputArtifact.getArtifactclass().getId().startsWith("video-digi-2020")) {
-			        String tmpDestination = StringUtils.substringAfter(destinationFilePathname, ":");
-			        String mvCommand = "mv " + tmpDestination + " " + StringUtils.substringBefore(tmpDestination, ".copying");
-			        
-			        executeCommandRemotely(host, sshUser, mvCommand, jobId);
-			        return new StorageResponse();
-		        }		        
-			}
-
-        }
-        else {
+//        Collection<File> fileCollection =  new ArrayList<File>(); 
+//		List<String> extensions = null;
+//		String[] extensionsArray = null;
+//
+//		Set<String> pathsToBeUsed = new TreeSet<String>();
+//		Set<String> extnsToBeUsed = null; 
+//        if(taskConfigPathnameRegex != null) {
+//			FiletypePathnameReqexVisitor filetypePathnameReqexVisitor = new FiletypePathnameReqexVisitor(taskConfigPathnameRegex);
+//			try {
+//				Files.walkFileTree(sourceFilePath, filetypePathnameReqexVisitor);
+//			} catch (IOException e) {
+//				// swallow for now
+//			}
+//			if(filetypePathnameReqexVisitor != null) {
+//				pathsToBeUsed.addAll(filetypePathnameReqexVisitor.getPaths());
+//				if(filetypePathnameReqexVisitor.getExtns().size() > 0) { // if regex contains specific file extns we need to only use processable files with that extn only{
+//					extnsToBeUsed = filetypePathnameReqexVisitor.getExtns();
+//				}
+//			}
+//
+//			if(extnsToBeUsed != null) {
+//				extensions = new ArrayList<String>();
+//				extensions.addAll(extnsToBeUsed);
+//				extensionsArray = ArrayUtils.toStringArray(extensions.toArray());
+//			}
+//
+//	        
+//			for (String nthPathToBeUsed : pathsToBeUsed) {
+//				fileCollection.addAll(FileUtils.listFiles(new File(nthPathToBeUsed), extensionsArray, true));
+//			}
+//
+//			for (File file : fileCollection) {
+//				
+//				// TODO --- REMOVE THIS AFTER DIGI IS OVER...
+//				if(inputArtifact.getArtifactclass().getId().startsWith("video-digi-2020")) {
+//					destinationFilePathname = tmpDestinationFilePathname + file.getName(); // Reqmt - No need for the filepathname structur as when job fails, leaves the empty folder structure causing confusion
+//				}
+//				else {
+//					String filepathname = StringUtils.substringAfter(destinationDirPath, destination);
+//					logger.trace("filepathname " + filepathname);
+//					
+//					destinationFilePathname = tmpDestinationFilePathname + filepathname;
+//				}
+//
+//				copy(jobId, host, sshUser, file, destinationFilePathname);
+//				
+//		        if(inputArtifact.getArtifactclass().getId().startsWith("video-digi-2020")) {
+//			        String tmpDestination = StringUtils.substringAfter(destinationFilePathname, ":");
+//			        String mvCommand = "mv " + tmpDestination + " " + StringUtils.substringBefore(tmpDestination, ".copying");
+//			        
+//			        executeCommandRemotely(host, sshUser, mvCommand, jobId);
+//			        return new StorageResponse();
+//		        }		        
+//			}
+//
+//        }
+//        else {
 			destinationFilePathname = tmpDestinationFilePathname + inputArtifactName;
 
 			copy(jobId, host, sshUser, sourceFilePath.toFile(), destinationFilePathname);
-        }
+//        }
         
         // now moving back the file from the .copying to the original destination...
         String tmpDestination = StringUtils.substringAfter(tmpDestinationFilePathname + inputArtifactName, ":"); // /data/photo-proxy/.copying/P123_SadhguruOnMyEnlightenment_2010
@@ -180,8 +178,8 @@ public class FileStoragelevel implements IStoragelevel {
         executeCommandRemotely(host, sshUser, mvCommand, jobId);
         
 		return new StorageResponse();
+		
 	}
-
 	private void copy(int jobId, String host, String sshUser, File file, String destinationFilePathname) throws Exception {
 		String parentDir = FilenameUtils.getFullPathNoEndSeparator(destinationFilePathname);
 		String command1 = "mkdir -p \"" + parentDir + "\"";
@@ -225,6 +223,17 @@ public class FileStoragelevel implements IStoragelevel {
         return response;
 	}
 
+	@Override
+	public StorageResponse initialize(SelectedStorageJob job) throws Exception{
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	public StorageResponse write(SelectedStorageJob selectedStorageJob) throws Exception{
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 	@Override
 	public StorageResponse verify(SelectedStorageJob job) throws Exception{
