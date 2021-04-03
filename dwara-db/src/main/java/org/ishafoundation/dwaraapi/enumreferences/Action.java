@@ -28,5 +28,6 @@ public enum Action {
 	import_,
 	map_tapedrives,
 	diagnostics,
-	requeue
+	requeue,
+	mark_completed
 }

@@ -15,6 +15,8 @@ import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.JobRunDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.JobRunKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
@@ -22,6 +24,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobRun;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
@@ -60,6 +63,12 @@ public class JobService extends DwaraService{
 
 	@Autowired
 	private UserDao userDao;
+
+	@Autowired
+	private TTFileJobDao tFileJobDao;
+
+	@Autowired
+	private JobRunDao jobRunDao;
 
 	public List<JobResponse> getJobs(Integer systemRequestId, List<Status> statusList) {
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
@@ -116,11 +125,12 @@ public class JobService extends DwaraService{
 	    	
 			userRequest = new Request();
 	    	userRequest.setType(RequestType.user);
-			userRequest.setActionId(Action.requeue);
+			userRequest.setActionId(Action.mark_completed);
 
 			User requestedByUser = userDao.findByName(userName);
 	    	userRequest.setRequestedBy(requestedByUser);
 			userRequest.setRequestedAt(LocalDateTime.now());
+			userRequest.setCompletedAt(LocalDateTime.now());
 			RequestDetails details = new RequestDetails();
 			ObjectMapper mapper = new ObjectMapper();
 	
@@ -135,6 +145,21 @@ public class JobService extends DwaraService{
 	    	userRequest = requestDao.save(userRequest);
 	    	int userRequestId = userRequest.getId();
 	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
+
+			// update the reference table    
+			long jobRunCount = jobRunDao.countByJobId(jobId);
+	    	int nextId = (int) (jobRunCount + 1);
+	    	JobRun jobRun = new JobRun();
+	    	jobRun.setId(new JobRunKey(jobId, nextId));
+	    	jobRun.setJob(job);
+	    	jobRun.setStartedAt(job.getStartedAt());
+	    	jobRun.setCompletedAt(job.getCompletedAt());
+	    	jobRun.setStatus(job.getStatus());
+	    	jobRun.setMessage(job.getMessage());
+	    	jobRun.setDevice(job.getDevice());
+	    	jobRun.setVolume(job.getVolume());
+	    	jobRunDao.save(jobRun);
+	    	logger.debug("JobRun record created successfully " + jobId + ":" + nextId);
 	    	
 	    	if(job.getProcessingtaskId() != null) {
 				List<ProcessingFailure> processingFailureList = processingFailureDao.findAllByJobId(jobId);
@@ -144,8 +169,9 @@ public class JobService extends DwaraService{
 			
 			job.setStatus(Status.marked_completed);
 			job.setMessage(null);
+			job.setCompletedAt(LocalDateTime.now());
 			job = jobDao.save(job);
-			logger.info("Job queued successfully " + jobId);
+			logger.info("Job mark completed successfully " + jobId);
 			
 			Request jobSystemRequest = job.getRequest();
 			jobSystemRequest.setStatus(Status.marked_completed);
@@ -153,8 +179,11 @@ public class JobService extends DwaraService{
 			
 			userRequest.setStatus(Status.completed);
 			userRequest = requestDao.save(userRequest);
-			
-		}catch (Exception e) {
+
+			List<TTFileJob> jobFileList = tFileJobDao.findAllByJobId(jobId); 
+			if(jobFileList != null && jobFileList.size() > 0)
+				tFileJobDao.deleteAll(jobFileList);
+		} catch (Exception e) {
 			if(userRequest != null && userRequest.getId() != 0) {
 				userRequest.setStatus(Status.failed);
 				userRequest = requestDao.save(userRequest);
