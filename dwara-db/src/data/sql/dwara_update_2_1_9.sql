@@ -109,8 +109,10 @@ INSERT INTO `processingtask` (`id`, `description`, `filetype_id`, `max_errors`, 
 -- FLOW_ELEMENT --
 INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `flow_ref_id`, `processingtask_id`, `storagetask_action_id`, `task_config`) VALUES
 ('U24', 1, null, 0, 1, 'photo-proxy-flow', null, 'photo-proxy-gen', null, null),
-('U25', 1, '["U24"]', 0, 2, 'photo-proxy-flow', null, 'file-copy', null, '{"destination_id": "catdv-photo-proxy"}');
+-- copy as a storage task change ('U25', 1, '["U24"]', 0, 2, 'photo-proxy-flow', null, 'file-copy', null, '{"destination_id": "catdv-photo-proxy"}');
+('U25', 1, '["U24"]', 0, 2, 'photo-proxy-flow', null, null, 'copy', '{"destination_id": "catdv-photo-proxy"}');
 
+-- UPDATE `flowelement` SET `processingtask_id`=NULL, `storagetask_action_id`='copy' WHERE `id`='U25';
 
 -- ACTION_ARTIFACTCLASS_FLOW --
 INSERT INTO `action_artifactclass_flow` (`action_id`, `artifactclass_id`, `flow_id`, `active`) VALUES 
@@ -122,5 +124,15 @@ INSERT INTO `action_artifactclass_flow` (`action_id`, `artifactclass_id`, `flow_
 ('ingest', 'photo-edit-pub', 'photo-proxy-flow', 1),
 ('ingest', 'photo-edit-priv2', 'archive-flow', 1),
 ('ingest', 'photo-edit-priv2', 'photo-proxy-flow', 0);
+
+
+-- copy as storage task changes
+
+-- not needed INSERT INTO `volume` (`id`, `capacity`, `checksumtype`, `defective`, `details`, `finalized`, `imported`, `initialized_at`, `storagelevel`, `storagesubtype`, `storagetype`, `suspect`, `type`, `uuid`, `archiveformat_id`, `group_ref_id`, `location_id`) VALUES ('bru', '6000000000000', 'sha256', 0, NULL, 0, 0, NULL, 'file', NULL, 'disk', 0, 'physical', 'bru', NULL, NULL, NULL);
+
+-- UPDATE `flowelement` SET `processingtask_id`=NULL, `storagetask_action_id`='write' WHERE `id`='U14';
+
+INSERT INTO `action` (`id`, `type`) VALUES ('copy', 'storage_task');
+INSERT INTO `action` (`id`, `type`) VALUES ('marked_completed', 'sync');
 
 SET foreign_key_checks = 1;
