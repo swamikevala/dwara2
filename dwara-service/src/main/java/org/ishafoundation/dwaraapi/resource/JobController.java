@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -98,11 +99,11 @@ public class JobController {
     }
 
 	@PostMapping("/job/{jobId}/marked_completed")
-    public ResponseEntity<JobResponse> markedCompletedJob(@PathVariable("jobId") int jobId) {
+    public ResponseEntity<JobResponse> markedCompletedJob(@PathVariable("jobId") int jobId, @RequestBody String reason) {
     	logger.info("/job/" + jobId + "/marked_completed");
     	JobResponse jobResponse = null;
     	try {
-    		jobResponse = jobService.markedCompletedJob(jobId);
+    		jobResponse = jobService.markedCompletedJob(jobId, reason);
 		}catch (Exception e) {
 			String errorMsg = "Unable to get Jobs - " + e.getMessage();
 			logger.error(errorMsg, e);

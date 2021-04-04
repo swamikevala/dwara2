@@ -114,7 +114,7 @@ public class JobService extends DwaraService{
 		return frameJobResponse(jobServiceRequeueHelper.requeueJob(jobId, getUserFromContext()));
 	}
 
-	public JobResponse markedCompletedJob(int jobId) throws Exception {
+	public JobResponse markedCompletedJob(int jobId, String reason) throws Exception {
 		Request userRequest = null;
 		String userName = getUserFromContext();
 		Job job = null;
@@ -158,6 +158,7 @@ public class JobService extends DwaraService{
 	    	jobRun.setMessage(job.getMessage());
 	    	jobRun.setDevice(job.getDevice());
 	    	jobRun.setVolume(job.getVolume());
+			jobRun.setMessage(reason);
 	    	jobRunDao.save(jobRun);
 	    	logger.debug("JobRun record created successfully " + jobId + ":" + nextId);
 	    	
@@ -167,8 +168,9 @@ public class JobService extends DwaraService{
 		    	logger.debug("Processing failure records cleaned up " + jobId);
 	    	}
 			
+			job.setMessage(reason);
 			job.setStatus(Status.marked_completed);
-			job.setMessage(null);
+			job.setStartedAt(LocalDateTime.now());
 			job.setCompletedAt(LocalDateTime.now());
 			job = jobDao.save(job);
 			logger.info("Job mark completed successfully " + jobId);
