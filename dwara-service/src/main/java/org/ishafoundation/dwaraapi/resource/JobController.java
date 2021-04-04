@@ -99,7 +99,7 @@ public class JobController {
     }
 
 	@PostMapping("/job/{jobId}/marked_completed")
-    public ResponseEntity<JobResponse> markedCompletedJob(@PathVariable("jobId") int jobId, @RequestBody String reason) {
+    public ResponseEntity<JobResponse> markedCompletedJob(@PathVariable("jobId") int jobId, @RequestBody (required=false) String reason) {
     	logger.info("/job/" + jobId + "/marked_completed");
     	JobResponse jobResponse = null;
     	try {
