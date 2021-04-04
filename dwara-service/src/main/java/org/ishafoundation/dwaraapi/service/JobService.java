@@ -158,7 +158,6 @@ public class JobService extends DwaraService{
 	    	jobRun.setMessage(job.getMessage());
 	    	jobRun.setDevice(job.getDevice());
 	    	jobRun.setVolume(job.getVolume());
-			jobRun.setMessage(reason);
 	    	jobRunDao.save(jobRun);
 	    	logger.debug("JobRun record created successfully " + jobId + ":" + nextId);
 	    	
