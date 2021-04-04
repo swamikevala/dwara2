@@ -5,9 +5,15 @@
 
 2) Soft rename
 
+3) Mark completed action for a job
+
 ### Bug fix
 
 1) Exclude deleted artifacts from dupe check
+
+2) Api updateUsedSpace to calculate tape free capacity
+
+3) Locations: default location LTO Room doesn't map to a copy
 
 ### Upgrade steps
 
@@ -17,8 +23,9 @@
 
 2) create photo-proxy/.copying folders in MAM
 
-3) Clean tape drive
+3) Call api end points from swagger: /catalog/updateUsedSpace
 
+4) Clean tape drive
 
 # Dwara App Version - 2.1.15 (28th Mar 2021)
 ### New features
