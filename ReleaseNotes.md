@@ -17,6 +17,8 @@
 
 2) create photo-proxy/.copying folders in MAM
 
+3) Clean tape drive
+
 
 # Dwara App Version - 2.1.15 (28th Mar 2021)
 ### New features

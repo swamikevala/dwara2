@@ -363,7 +363,7 @@ public class ScheduledStatusUpdater {
 					String srcRootLocation = artifactclass.getPath();
 
 					if(artifactclass.isSource()){ // source artifacts need to be moved to configured ingest completed location something like "/data/ingested" 
-						if(srcRootLocation != null) {
+						if(srcRootLocation != null && !artifactclass.getId().startsWith("photo")) {
 							try {
 								java.io.File srcFile = FileUtils.getFile(srcRootLocation, artifact.getName());
 								java.io.File destFile = FileUtils.getFile(configuration.getIngestCompleteDirRoot(), artifact.getName());
