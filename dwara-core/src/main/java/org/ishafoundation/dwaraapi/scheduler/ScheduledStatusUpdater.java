@@ -449,6 +449,7 @@ public class ScheduledStatusUpdater {
 		boolean anyCancelled = false;
 		boolean anyCompletedWithFailures = false;
 		boolean hasFailures = false;
+		boolean anyMarkedCompleted = false;
 		boolean isAllComplete = true;
 					
 		for (Status status : entityStatusList) {
@@ -478,6 +479,9 @@ public class ScheduledStatusUpdater {
 					isAllComplete = false;
 					break;
 				case marked_completed:
+					anyMarkedCompleted = true;
+					isAllComplete = false;
+					break;
 				case completed:
 					break;						
 				default:
@@ -493,6 +497,7 @@ public class ScheduledStatusUpdater {
 			cancelled
 			failed
 			completed_failures
+			marked_completed
 			completed
 			*/
 		Status status = Status.queued;
@@ -513,6 +518,9 @@ public class ScheduledStatusUpdater {
 		}
 		else if(anyCompletedWithFailures) {
 			status = Status.completed_failures; 
+		}
+		else if(anyMarkedCompleted) {
+			status = Status.marked_completed;
 		}
 		else if(isAllComplete) { // All jobs have successfully completed.
 			status = Status.completed; 

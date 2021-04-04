@@ -139,7 +139,7 @@ public class ArtifactService extends DwaraService{
 		// Check if the system request is completed - only allow softrename on completed requests - NOTE with force option even when the request is not completed we allow softrename 
 		Request systemRequest = artifactToRenameActualRow.getWriteRequest();
 		Status systemRequestStatus =  systemRequest.getStatus();
-		if (!force && systemRequestStatus != Status.completed) {
+		if (!force && systemRequestStatus != Status.completed && systemRequestStatus != Status.marked_completed) {
 			throw new Exception("System request " + systemRequest.getId() + " not yet completed");
 		}
 
