@@ -27,6 +27,8 @@
 
 4) Clean tape drive
 
+5) reminder to update props file with some junk additions
+
 # Dwara App Version - 2.1.15 (28th Mar 2021)
 ### New features
 
