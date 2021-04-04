@@ -363,7 +363,7 @@ public class ScheduledStatusUpdater {
 					String srcRootLocation = artifactclass.getPath();
 
 					if(artifactclass.isSource()){ // source artifacts need to be moved to configured ingest completed location something like "/data/ingested" 
-						if(srcRootLocation != null && !artifactclass.getId().startsWith("photo")) {
+						if(srcRootLocation != null) {
 							try {
 								java.io.File srcFile = FileUtils.getFile(srcRootLocation, artifact.getName());
 								java.io.File destFile = FileUtils.getFile(configuration.getIngestCompleteDirRoot(), artifact.getName());
@@ -383,8 +383,7 @@ public class ScheduledStatusUpdater {
 						
 					}
 					else { // derived artifacts can be deleted
-						// TODO - we are yet to copy the derived/transcoded files for photo-pub properly - so dont delete the proxies just yet 
-						if(srcRootLocation != null && !artifactclass.getId().startsWith("photo")) {
+						if(srcRootLocation != null) {
 							try {
 								java.io.File srcFile = FileUtils.getFile(srcRootLocation, artifact.getName());
 

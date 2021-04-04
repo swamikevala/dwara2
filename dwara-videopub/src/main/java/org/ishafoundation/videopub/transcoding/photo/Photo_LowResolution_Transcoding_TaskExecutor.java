@@ -97,18 +97,20 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		thumbnailGenerationCommandParamsList.add(sourceFilePathname);
 		thumbnailGenerationCommandParamsList.add("(");
 		thumbnailGenerationCommandParamsList.add("+clone");
-		thumbnailGenerationCommandParamsList.add("-resize");
+		thumbnailGenerationCommandParamsList.add("-thumbnail");
 		thumbnailGenerationCommandParamsList.add("192");
 		thumbnailGenerationCommandParamsList.add("-quality");
-		thumbnailGenerationCommandParamsList.add("50");
+		thumbnailGenerationCommandParamsList.add("82");
+		thumbnailGenerationCommandParamsList.add("-strip");
 		thumbnailGenerationCommandParamsList.add("-write");
 		thumbnailGenerationCommandParamsList.add("JPEG:" + thumbnailTargetLocation);
 		thumbnailGenerationCommandParamsList.add("+delete");
 		thumbnailGenerationCommandParamsList.add(")");
-		thumbnailGenerationCommandParamsList.add("-resize");
+		thumbnailGenerationCommandParamsList.add("-thumbnail");
 		thumbnailGenerationCommandParamsList.add("1536");
 		thumbnailGenerationCommandParamsList.add("-quality");
-		thumbnailGenerationCommandParamsList.add("85");
+		thumbnailGenerationCommandParamsList.add("82");
+		thumbnailGenerationCommandParamsList.add("-strip");
 		thumbnailGenerationCommandParamsList.add(proxyTargetLocation);
 		
 		return thumbnailGenerationCommandParamsList;
