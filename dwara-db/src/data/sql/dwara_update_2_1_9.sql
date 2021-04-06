@@ -126,7 +126,7 @@ INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `displa
 -- copy as a storage task change ('U25', 1, '["U24"]', 0, 2, 'photo-proxy-flow', null, 'file-copy', null, '{"destination_id": "catdv-photo-proxy"}');
 -- we decided to do this later TODO ('U25', 1, '["U24"]', 0, 2, 'photo-proxy-flow', null, null, 'copy', '{"destination_id": "catdv-photo-proxy"}');
 -- UPDATE `flowelement` SET `processingtask_id`=NULL, `storagetask_action_id`='copy' WHERE `id`='U25';
-('U26', 1, '["U24"]', 0, 3, 'photo-proxy-flow', 'archive-flow', null, null, null);
+('U25', 1, '["U24"]', 0, 3, 'photo-proxy-flow', 'archive-flow', null, null, null);
 
 -- ACTION_ARTIFACTCLASS_FLOW --
 INSERT INTO `action_artifactclass_flow` (`action_id`, `artifactclass_id`, `flow_id`, `active`) VALUES 

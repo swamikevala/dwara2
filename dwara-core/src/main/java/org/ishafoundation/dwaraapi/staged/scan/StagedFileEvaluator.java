@@ -9,6 +9,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -53,13 +55,16 @@ public class StagedFileEvaluator {
 
 	private List<Pattern> excludedFileNamesRegexList = new ArrayList<Pattern>();
 	private Pattern allowedChrsInFileNamePattern = null;
-
+	private Pattern photoSeriesArtifactclassArifactNamePattern = null;
+	private static SimpleDateFormat photoSeriesArtifactNameDateFormat = new SimpleDateFormat("yyyyMMdd");
+	
+	
 	@PostConstruct
 	public void getExcludedFileNamesRegexList() {
 		String regexAllowedChrsInFileName = config.getRegexAllowedChrsInFileName();
 		//allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName, Pattern.UNICODE_CHARACTER_CLASS); // Reverted this change per latest comment on DU-194
 		allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
-
+		photoSeriesArtifactclassArifactNamePattern = Pattern.compile("([0-9]{8})_[A-Z]{3}_" + regexAllowedChrsInFileName); // 20200101_CMM_Adiyogi-Ratham-Guru-Pooja-SK-IYC
 		String[] junkFilesFinderRegexPatternList = config.getJunkFilesFinderRegexPatternList();
 		for (int i = 0; i < junkFilesFinderRegexPatternList.length; i++) {
 			Pattern nthJunkFilesFinderRegexPattern = Pattern.compile(junkFilesFinderRegexPatternList[i]);
@@ -117,6 +122,34 @@ public class StagedFileEvaluator {
 		
 		// 1- validateName
 		errorList.addAll(validateName(fileName));
+
+		// 1a - validateName for photo* artifactclass
+		if(FilenameUtils.getBaseName(sourcePath).startsWith("photo")) { // validation only for photo* artifactclass
+			Matcher m = photoSeriesArtifactclassArifactNamePattern.matcher(fileName);
+			if(!m.matches()) { 
+				Error error = new Error();
+				error.setType(Errortype.Error);
+				error.setMessage("Artifact Name should be in yyyyMMdd_XXX_* pattern");
+				errorList.add(error);
+			} else {
+				// should i check for a valid date here???
+				try {
+					photoSeriesArtifactNameDateFormat.parse(m.group(1));
+				} catch (ParseException e) {
+					Error error = new Error();
+					error.setType(Errortype.Error);
+					error.setMessage("Artifact Name date should be in yyyyMMdd pattern");
+					errorList.add(error);
+				}
+			}
+			
+			if(sfv != null && sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0) {
+				Error error = new Error();
+				error.setType(Errortype.Error);
+				error.setMessage("File Names shoud be in yyyymmdd_xxx_dddd pattern");
+				errorList.add(error);
+			}
+		}
 		
 		// 2- validateCount
 		if(fileCount == 0) {
@@ -246,10 +279,10 @@ public class StagedFileEvaluator {
 
 	public List<Error> validateName(String fileName) {
 		List<Error> errorList = new ArrayList<Error>();
-		if(fileName.length() > 245) { // 245 because we need to add sequence number
+		if(fileName.length() > 238) { // 238 because we need to add sequence number and when inserting catalog to catdv it becomes like 2006/09/VDL1154_
 			Error error = new Error();
 			error.setType(Errortype.Error);
-			error.setMessage("Artifact Name gt 245 characters");
+			error.setMessage("Artifact Name gt 238 characters");
 			errorList.add(error);
 		}
 

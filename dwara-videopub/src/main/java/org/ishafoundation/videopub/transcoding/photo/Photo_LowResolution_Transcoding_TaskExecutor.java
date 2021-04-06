@@ -91,6 +91,17 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	}
 
 	// convert 20190716_VVD_0206.NEF \( +clone -resize 192 -quality 50 -write 20190716_VVD_0206-s33.jpg +delete \) -resize 1536 -quality 85 20190716_VVD_0206-s32.jpg
+	
+	/*
+	We can specify the total pixel area of the photo that we want using "@" suffix
+
+	proxy: 1536x1024 = 1,572,864
+	thumbnail: 192x128 = 24,576
+
+	so the command should say "-thumbnail 1572864@" instead of "-thumbnail 1536", and similarly for the thumbnail
+
+	pls can you put this explanation in the code comments
+	*/
 	private List<String> getProxyCommandAsList(String sourceFilePathname, String destinationDirPath, String thumbnailTargetLocation, String proxyTargetLocation) {
 		List<String> thumbnailGenerationCommandParamsList = new ArrayList<String>();
 		thumbnailGenerationCommandParamsList.add("convert");
@@ -98,7 +109,7 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		thumbnailGenerationCommandParamsList.add("(");
 		thumbnailGenerationCommandParamsList.add("+clone");
 		thumbnailGenerationCommandParamsList.add("-thumbnail");
-		thumbnailGenerationCommandParamsList.add("192");
+		thumbnailGenerationCommandParamsList.add("24576@");
 		thumbnailGenerationCommandParamsList.add("-quality");
 		thumbnailGenerationCommandParamsList.add("82");
 		thumbnailGenerationCommandParamsList.add("-strip");
@@ -107,7 +118,7 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		thumbnailGenerationCommandParamsList.add("+delete");
 		thumbnailGenerationCommandParamsList.add(")");
 		thumbnailGenerationCommandParamsList.add("-thumbnail");
-		thumbnailGenerationCommandParamsList.add("1536");
+		thumbnailGenerationCommandParamsList.add("1572864@");
 		thumbnailGenerationCommandParamsList.add("-quality");
 		thumbnailGenerationCommandParamsList.add("82");
 		thumbnailGenerationCommandParamsList.add("-strip");
