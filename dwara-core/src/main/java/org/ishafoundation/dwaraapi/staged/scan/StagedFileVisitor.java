@@ -52,6 +52,7 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	private Set<String> filePathNamesGt4096Chrs = new TreeSet<String>();
 	private Set<String> fileNamesWithNonUnicodeChrs = new TreeSet<String>();
 	private Set<String> photoSeriesFileNameValidationFailedFileNames = new TreeSet<String>();
+	private String photoSeriesFileNameToBeExcludedFromValidation = ".BridgeSort";
 	
 	private static Pattern photoSeriesArtifactclassFileNamePattern = Pattern.compile("([0-9]{8})_[A-Z]{3}_[0-9]{4}(-e)?\\.[A-Za-z0-9]*"); //20200101_CMM_0002.NEF or 20200101_CMM_0002-e.NEF (-e optional)
 	private static Pattern photoSeriesArtifactclassFileNamePattern2 = Pattern.compile("([0-9]{8})_[A-Z]{3}_[0-9]{4}"); //20200101_CMM_0002.NEF or 20200101_CMM_0002-e.NEF (-e optional)
@@ -181,9 +182,12 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 //				photoSeriesFileNameValidationFailedFileNames.add(file.getFileName().toString());
 //			}
 
-			Matcher m = photoSeriesArtifactclassFileNamePattern2.matcher(file.getFileName().toString());
-			if(!m.find()) {
-				photoSeriesFileNameValidationFailedFileNames.add(file.getFileName().toString());
+			String fileName = file.getFileName().toString();
+			if(!fileName.equals(photoSeriesFileNameToBeExcludedFromValidation)) {
+				Matcher m = photoSeriesArtifactclassFileNamePattern2.matcher(fileName);
+				if(!m.find()) {
+					photoSeriesFileNameValidationFailedFileNames.add(fileName);
+				}
 			}
 		}
 		
