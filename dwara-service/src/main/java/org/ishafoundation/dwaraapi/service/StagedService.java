@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -29,6 +30,7 @@ import org.ishafoundation.dwaraapi.api.req.staged.rename.StagedRenameFile;
 import org.ishafoundation.dwaraapi.api.resp.staged.ingest.IngestResponse;
 import org.ishafoundation.dwaraapi.api.resp.staged.ingest.IngestSystemRequest;
 import org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameResponse;
+import org.ishafoundation.dwaraapi.api.resp.staged.scan.ArtifactClassGroupedStagedFileDetails;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
@@ -133,7 +135,28 @@ public class StagedService extends DwaraService{
 	
 	@Autowired
 	private TagService tagService;
-	
+
+    public List<ArtifactClassGroupedStagedFileDetails> getAllIngestableFiles(){
+    	List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
+    	List<ArtifactClassGroupedStagedFileDetails> artifactClassGroupedStagedFileDetailsList = new ArrayList<ArtifactClassGroupedStagedFileDetails>();
+    	for (Artifactclass nthArtifactclass : artifactclassList) {
+    		String artifactclassId = nthArtifactclass.getId();
+    		List<StagedFileDetails> nthArtifactclassStagedFileDetails = getAllIngestableFiles(artifactclassId);
+    		int stagedFileCnt = nthArtifactclassStagedFileDetails.size();
+    		if(stagedFileCnt > 0) {
+	    		ArtifactClassGroupedStagedFileDetails artifactClassGroupedStagedFileDetails = new ArtifactClassGroupedStagedFileDetails();
+	    		artifactClassGroupedStagedFileDetails.setArtifactclass(artifactclassId);
+	    		artifactClassGroupedStagedFileDetails.setArtifactTotalCount(stagedFileCnt);
+	    		artifactClassGroupedStagedFileDetails.setArtifactWarnCount(0);
+	    		artifactClassGroupedStagedFileDetails.setArtifactErrorCount(0);
+	    		artifactClassGroupedStagedFileDetails.setArtifact(nthArtifactclassStagedFileDetails);
+	    		artifactClassGroupedStagedFileDetailsList.add(artifactClassGroupedStagedFileDetails);
+    		}
+		}
+		return artifactClassGroupedStagedFileDetailsList;
+	}
+
+    
     public List<StagedFileDetails> getAllIngestableFiles(String artifactclassId){
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 		List<String> scanFolderBasePathList = new ArrayList<String>();
@@ -207,33 +230,15 @@ public class StagedService extends DwaraService{
     public IngestResponse ingest(IngestUserRequest ingestUserRequest){	
     	IngestResponse ingestResponse = new IngestResponse();
     	try{
-			String artifactclassId = ingestUserRequest.getArtifactclass();
-			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
-			String readyToIngestPath =  artifactclass.getPathPrefix();
-			Domain domain = artifactclass.getDomain();
-			Sequence sequence = artifactclass.getSequence();
-			
-			List<Integer> actionelementsToBeSkipped = ingestUserRequest.getSkipActionelements();
-			
-//	    	Request userRequest = new Request();
-//	    	userRequest.setType(RequestType.user);
-//			userRequest.setActionId(Action.ingest);
-//			userRequest.setStatus(Status.queued);
-//	    	userRequest.setRequestedBy(getUserObjFromContext());
-//			userRequest.setRequestedAt(LocalDateTime.now());
-//			
-//			RequestDetails details = new RequestDetails();
-//			JsonNode postBodyJson = getRequestDetails(ingestUserRequest); 
-//			details.setBody(postBodyJson);
-//			userRequest.setDetails(details);
-//			
-//	    	userRequest = requestDao.save(userRequest);
-//	    	int userRequestId = userRequest.getId();
-//	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
-			
 			Request userRequest = createUserRequest(Action.ingest, ingestUserRequest);
 	    	int userRequestId = userRequest.getId();
-	    	
+
+
+			List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
+			Map<String, Artifactclass> id_artifactclassMap = new HashMap<String, Artifactclass>();
+			for (Artifactclass nthArtifactclass : artifactclassList) {
+				id_artifactclassMap.put(nthArtifactclass.getId(), nthArtifactclass);
+			}
 	    	// TODO Move it to validation class
 	    	boolean isLevel0Pass = true;
 	    	List<StagedFileDetails> stagedFileDetailsList = new ArrayList<StagedFileDetails>();
@@ -275,6 +280,11 @@ public class StagedService extends DwaraService{
 	    	}
 	    	else {
 		    	for (StagedFile stagedFile : stagedFileList) {
+					String artifactclassId = stagedFile.getArtifactclass();
+					Artifactclass artifactclass = id_artifactclassMap.get(artifactclassId);
+					Domain domain = artifactclass.getDomain();
+					Sequence sequence = artifactclass.getSequence();
+					
 					String artifactName = stagedFile.getName();
 					String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
 					
@@ -414,7 +424,10 @@ public class StagedService extends DwaraService{
 	    	}
 	    	else { // Validation Level 3 - Move file - Only when level 2 is success we continue...
 		    	for (StagedFile stagedFile : stagedFileList) {
-
+					String artifactclassId = stagedFile.getArtifactclass();
+					Artifactclass artifactclass = id_artifactclassMap.get(artifactclassId);
+					String readyToIngestPath =  artifactclass.getPathPrefix();
+					
 		    		String stagedFileName = stagedFile.getName();
 		    		String stagedFilePath = stagedFile.getPath();
 	
@@ -466,6 +479,12 @@ public class StagedService extends DwaraService{
 	    	else { // Next steps on Ingest - Only when level 3 validation succeeds...
 		    	List<IngestSystemRequest> ingestSystemRequests = new ArrayList<IngestSystemRequest>();
 		    	for (StagedFile stagedFile : stagedFileList) {
+					String artifactclassId = stagedFile.getArtifactclass();
+					Artifactclass artifactclass = id_artifactclassMap.get(artifactclassId);
+					String readyToIngestPath =  artifactclass.getPathPrefix();
+					Domain domain = artifactclass.getDomain();
+					Sequence sequence = artifactclass.getSequence();
+					
 		    		String stagedFileName = stagedFile.getName();
 	
 		        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, stagedFileName);
@@ -520,7 +539,7 @@ public class StagedService extends DwaraService{
 		    		
 		    		// transitioning from global level on the request to artifact level...
 		    		systemrequestDetails.setArtifactclassId(artifactclassId); 
-		    		systemrequestDetails.setSkipActionelements(actionelementsToBeSkipped);
+		    		//systemrequestDetails.setSkipActionelements(actionelementsToBeSkipped);
 		    		
 					systemrequest.setDetails(systemrequestDetails);
 					
@@ -556,7 +575,7 @@ public class StagedService extends DwaraService{
 					IngestSystemRequest ingestSystemRequest = new IngestSystemRequest();
 					ingestSystemRequest.setId(systemrequest.getId());
 					ingestSystemRequest.setStagedFilePath(systemrequest.getDetails().getStagedFilepath());
-					ingestSystemRequest.setSkippedActionElements(actionelementsToBeSkipped);
+					//ingestSystemRequest.setSkippedActionElements(actionelementsToBeSkipped);
 					int rerunNo = 0; // TODO Hardcoded
 					ingestSystemRequest.setRerunNo(rerunNo);
 					
@@ -572,7 +591,7 @@ public class StagedService extends DwaraService{
 	    	
 	    	ingestResponse.setUserRequestId(userRequestId);
 	    	ingestResponse.setAction(userRequest.getActionId().name());
-	    	ingestResponse.setArtifactclass(artifactclassId);
+	    	//ingestResponse.setArtifactclass(artifactclassId);
 	    	ingestResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
 	    	ingestResponse.setRequestedBy(userRequest.getRequestedBy().getName());
 	    	

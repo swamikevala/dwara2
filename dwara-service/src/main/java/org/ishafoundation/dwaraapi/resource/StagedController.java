@@ -6,6 +6,7 @@ import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.rename.StagedRenameFile;
 import org.ishafoundation.dwaraapi.api.resp.staged.ingest.IngestResponse;
 import org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameResponse;
+import org.ishafoundation.dwaraapi.api.resp.staged.scan.ArtifactClassGroupedStagedFileDetails;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.StagedService;
@@ -34,7 +35,22 @@ public class StagedController {
 	@Autowired
 	private StagedService stagedService;
 	
-
+	@ApiOperation(value = "Scans all artifactclass passed and lists all candidate folders from across all users to ingest", response = List.class)
+	@ApiResponses(value = { 
+		    @ApiResponse(code = 200, message = "Ok"),
+		    @ApiResponse(code = 404, message = "Not Found")
+	})
+	@GetMapping(value="/staged/scan", produces = "application/json")
+    public ResponseEntity<List<ArtifactClassGroupedStagedFileDetails>> getAllIngestableFiles(){
+		List<ArtifactClassGroupedStagedFileDetails> ingestFileList = stagedService.getAllIngestableFiles();
+		
+		if (ingestFileList.size() > 0) {
+			return ResponseEntity.ok(ingestFileList);
+		} else {
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+		}
+	}
+	
 	@ApiOperation(value = "Scans the selected libraryclass passed and lists all candidate folders from across all users to ingest", response = List.class)
 	@ApiResponses(value = { 
 		    @ApiResponse(code = 200, message = "Ok"),
