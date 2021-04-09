@@ -42,6 +42,7 @@ public class StagedController {
 	})
 	@GetMapping(value="/staged/scan", produces = "application/json")
     public ResponseEntity<List<ArtifactClassGroupedStagedFileDetails>> getAllIngestableFiles(){
+		logger.info("/staged/scan");
 		List<ArtifactClassGroupedStagedFileDetails> ingestFileList = stagedService.getAllIngestableFiles();
 		
 		if (ingestFileList.size() > 0) {
@@ -51,12 +52,6 @@ public class StagedController {
 		}
 	}
 	
-	@ApiOperation(value = "Scans the selected libraryclass passed and lists all candidate folders from across all users to ingest", response = List.class)
-	@ApiResponses(value = { 
-		    @ApiResponse(code = 200, message = "Ok"),
-		    @ApiResponse(code = 404, message = "Not Found")
-	})
-	@GetMapping(value="/staged/scan", produces = "application/json")
     public ResponseEntity<List<StagedFileDetails>> getAllIngestableFiles(@RequestParam("artifactclass") String artifactclassId){
 		List<StagedFileDetails> ingestFileList = stagedService.getAllIngestableFiles(artifactclassId);
 		

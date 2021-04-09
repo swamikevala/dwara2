@@ -140,17 +140,21 @@ public class StagedService extends DwaraService{
     	List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
     	List<ArtifactClassGroupedStagedFileDetails> artifactClassGroupedStagedFileDetailsList = new ArrayList<ArtifactClassGroupedStagedFileDetails>();
     	for (Artifactclass nthArtifactclass : artifactclassList) {
-    		String artifactclassId = nthArtifactclass.getId();
-    		List<StagedFileDetails> nthArtifactclassStagedFileDetails = getAllIngestableFiles(artifactclassId);
-    		int stagedFileCnt = nthArtifactclassStagedFileDetails.size();
-    		if(stagedFileCnt > 0) {
-	    		ArtifactClassGroupedStagedFileDetails artifactClassGroupedStagedFileDetails = new ArtifactClassGroupedStagedFileDetails();
-	    		artifactClassGroupedStagedFileDetails.setArtifactclass(artifactclassId);
-	    		artifactClassGroupedStagedFileDetails.setArtifactTotalCount(stagedFileCnt);
-	    		artifactClassGroupedStagedFileDetails.setArtifactWarnCount(0);
-	    		artifactClassGroupedStagedFileDetails.setArtifactErrorCount(0);
-	    		artifactClassGroupedStagedFileDetails.setArtifact(nthArtifactclassStagedFileDetails);
-	    		artifactClassGroupedStagedFileDetailsList.add(artifactClassGroupedStagedFileDetails);
+    		if(nthArtifactclass.isSource()) {
+	    		String artifactclassId = nthArtifactclass.getId();
+	    		logger.debug("Now scanning " + artifactclassId);
+	    		List<StagedFileDetails> nthArtifactclassStagedFileDetails = getAllIngestableFiles(artifactclassId);
+	    		int stagedFileCnt = nthArtifactclassStagedFileDetails.size();
+	    		logger.debug("Total candidate files " + stagedFileCnt);
+	    		if(stagedFileCnt > 0) {
+		    		ArtifactClassGroupedStagedFileDetails artifactClassGroupedStagedFileDetails = new ArtifactClassGroupedStagedFileDetails();
+		    		artifactClassGroupedStagedFileDetails.setArtifactclass(artifactclassId);
+		    		artifactClassGroupedStagedFileDetails.setArtifactTotalCount(stagedFileCnt);
+		    		//artifactClassGroupedStagedFileDetails.setArtifactWarnCount(0);
+		    		//artifactClassGroupedStagedFileDetails.setArtifactErrorCount(0);
+		    		artifactClassGroupedStagedFileDetails.setArtifact(nthArtifactclassStagedFileDetails);
+		    		artifactClassGroupedStagedFileDetailsList.add(artifactClassGroupedStagedFileDetails);
+	    		}
     		}
 		}
 		return artifactClassGroupedStagedFileDetailsList;
