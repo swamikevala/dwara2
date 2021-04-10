@@ -180,6 +180,8 @@ public class VolumeInitializer {
 
 	
 	public InitializeResponse initialize(String userName, List<InitializeUserRequest> initializeRequestList) throws Exception{
+		if(initializeRequestList.size() == 0)
+			return null;
 		InitializeResponse initializeResponse = new InitializeResponse();
 		Request userRequest = new Request();
 		userRequest.setType(RequestType.user);
