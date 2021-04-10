@@ -155,7 +155,7 @@ public class VolumeInitializer {
 				// #4 - Volume blocksize should be multiple of 64KiB
 				int divisorInBytes = 65536; // 64 * 1024
 				Integer volumeBlocksize = nthInitializeRequest.getVolumeBlocksize();
-				if(volumeBlocksize%divisorInBytes != 0) {
+				if(volumeBlocksize != null && volumeBlocksize%divisorInBytes != 0) {
 					throw new DwaraException("Volume " + volumeId + " blocksize is not in multiple of 64KiB" , null);
 				}
 				
