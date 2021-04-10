@@ -156,6 +156,7 @@ public class VolumeService extends DwaraService {
 			volResp.setUnusedCapacity(groupVolumeUnusedCapacity/1073741824);
 			volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity/1073741824);
 			volResp.setSizeUnit("GiB"); // 1 GiB = 1073741824 bytes...
+			volResp.setNextBarcodeToBePrinted(volume.getSequence().getPrefix() + (volume.getSequence().getCurrrentNumber() + 1) + "L7"); // TODO - How to findout LTO Generation???
 		}
 		
 		if(volume.getLocation() != null)
