@@ -33,6 +33,7 @@ import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.resource.mapper.RequestToEntityObjectMapper;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.VolumeindexManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeFinalizer;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeInitializer;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,7 @@ public class VolumeService extends DwaraService {
 	private ConfigurationTablesUtil configurationTablesUtil;
 	
 	@Autowired
-	private JobCreator jobCreator;
+	private VolumeInitializer volumeInitializer;
 
 	@Autowired
 	private VolumeFinalizer volumeFinalizer;
@@ -69,9 +70,6 @@ public class VolumeService extends DwaraService {
 	@Autowired
 	private VolumeindexManager volumeindexManager;
 	
-	@Autowired
-	private RequestToEntityObjectMapper requestToEntityObjectMapper; 
-
 	@Value("${filesystem.temporarylocation}")
 	private String filesystemTemporarylocation;
 
@@ -158,6 +156,7 @@ public class VolumeService extends DwaraService {
 			volResp.setUnusedCapacity(groupVolumeUnusedCapacity/1073741824);
 			volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity/1073741824);
 			volResp.setSizeUnit("GiB"); // 1 GiB = 1073741824 bytes...
+			volResp.setNextBarcodeToBePrinted(volume.getSequence().getPrefix() + (volume.getSequence().getCurrrentNumber() + 1) + "L7"); // TODO - How to findout LTO Generation???
 		}
 		
 		if(volume.getLocation() != null)
@@ -179,82 +178,15 @@ public class VolumeService extends DwaraService {
 			volResp.setDetails(details);
 		}
 		return volResp;
-
 	}
+	
 	public InitializeResponse initialize(List<InitializeUserRequest> initializeRequestList) throws Exception{	
-		InitializeResponse initializeResponse = new InitializeResponse();
 		Action requestedBusinessAction = Action.initialize;
 		org.ishafoundation.dwaraapi.db.model.master.reference.Action action = configurationTablesUtil.getAction(requestedBusinessAction);
 		if(action == null)
 			throw new Exception("Action for " + requestedBusinessAction.name() + " not configured in DB properly. Please set it first");
 
-		
-//		Request request = new Request();
-//		request.setType(RequestType.user);
-//		request.setActionId(requestedBusinessAction);
-//		request.setStatus(Status.queued);
-//    	User user = getUserObjFromContext();
-//    	String requestedBy = user.getName();
-//
-//    	LocalDateTime requestedAt = LocalDateTime.now();
-//		request.setRequestedAt(requestedAt);
-//		request.setRequestedBy(user);
-//		RequestDetails details = new RequestDetails();
-//		JsonNode postBodyJson = getRequestDetails(initializeRequestList); 
-//		details.setBody(postBodyJson);
-//		request.setDetails(details);
-//
-//		request = requestDao.save(request);
-//		int requestId = request.getId();
-//		logger.info(DwaraConstants.USER_REQUEST + requestId);
-
-		Request userRequest = createUserRequest(requestedBusinessAction, initializeRequestList);
-    	int userRequestId = userRequest.getId();
-
-		List<SystemRequestForInitializeResponse> systemRequests = new ArrayList<SystemRequestForInitializeResponse>();
-		
-		for (InitializeUserRequest nthInitializeRequest : initializeRequestList) {
-			Request systemrequest = new Request();
-			systemrequest.setType(RequestType.system);
-			systemrequest.setRequestRef(userRequest);
-			systemrequest.setActionId(userRequest.getActionId());
-			systemrequest.setStatus(Status.queued);
-			systemrequest.setRequestedBy(userRequest.getRequestedBy());
-			systemrequest.setRequestedAt(LocalDateTime.now());
-
-			RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForInitialize(nthInitializeRequest);
-
-			systemrequest.setDetails(systemrequestDetails);
-			systemrequest = requestDao.save(systemrequest);
-			logger.info(DwaraConstants.SYSTEM_REQUEST + systemrequest.getId());
-
-			Job job = jobCreator.createJobs(systemrequest, null).get(0); // Initialize generates just one job
-			int jobId = job.getId();
-			Status status = job.getStatus();
-			
-//			The updated sequence no for a volume group in initialize is saved along with User Request...
-//			Volume volumeGroup = volumeDao.findById(nthInitializeRequest.getVolumeGroup());
-//			Sequence sequence = volumeGroup.getSequence();
-//			sequence.incrementCurrentNumber();
-//			sequenceDao.save(sequence);
-//			logger.info("Sequence for - " + volumeGroup.getId() + " updated to " + sequence.getCurrrentNumber());
-			
-			SystemRequestForInitializeResponse systemRequestForInitializeResponse = new SystemRequestForInitializeResponse();
-			systemRequestForInitializeResponse.setId(systemrequest.getId());
-			systemRequestForInitializeResponse.setJobId(jobId);
-			systemRequestForInitializeResponse.setStatus(status);
-			systemRequestForInitializeResponse.setVolume(nthInitializeRequest.getVolume());
-			
-			systemRequests.add(systemRequestForInitializeResponse);
-		}
-		
-		// Framing the response object here...
-		initializeResponse.setUserRequestId(userRequestId);
-		initializeResponse.setAction(userRequest.getActionId().name());
-		initializeResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
-		initializeResponse.setRequestedBy(userRequest.getRequestedBy().getName());
-		initializeResponse.setSystemRequests(systemRequests);
-		return initializeResponse;	
+		return volumeInitializer.initialize(getUserFromContext(), initializeRequestList);
 	}
 	
 	public String finalize(String volumeId) throws Exception{

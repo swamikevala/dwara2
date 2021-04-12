@@ -3,11 +3,9 @@ package org.ishafoundation.digitization.preservation;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.configuration.FfmpegThreadConfiguration;
@@ -35,12 +33,10 @@ public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask imple
 	
 	@Value("${scheduler.statusUpdater.enabled:true}")
 	private boolean isEnabled;
-	
-	private String processingtaskName = "video-digi-2020-preservation-gen";
-	
+
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
-	
+
 		String taskName = processContext.getJob().getProcessingtaskId();
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		Integer fileId = processContext.getFile().getId();
@@ -111,10 +107,8 @@ public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask imple
 		return processingtaskResponse;
 	}
 	
-	
-	
-	
-	//ffmpeg -i N0023_CHENNAI_PROGRAM_INTRO_2.mxf -acodec copy -vcodec ffv1 -level 3 -coder 1 -context 1 -g 1 -slicecrc 1 -map 0:a -map 0:v N0023.mkv
+	//ffmpeg -y -i <<srcFilePathname>> -acodec copy -vcodec ffv1 -level 3 -coder 1 -context 1 -g 1 -slicecrc 1 -map 0:v -map 0:a <<targetFilePathname>>
+	//ffmpeg -y -i /data/dwara/staged/VD123_N0023/mxf/N0023_CHENNAI_PROGRAM_INTRO_2.mxf -acodec copy -vcodec ffv1 -level 3 -coder 1 -context 1 -g 1 -slicecrc 1 -map 0:v -map 0:a /data/dwara/staged/VD123_N0023/N0023_CHENNAI_PROGRAM_INTRO_2.mkv
 	private List<String> getCompressionCommand(String sourceFilePathname, String compressedFileTargetLocation) {
 		List<String> compressionCommandParamsList = new ArrayList<String>();
 		

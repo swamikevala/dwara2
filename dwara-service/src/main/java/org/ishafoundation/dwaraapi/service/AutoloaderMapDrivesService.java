@@ -21,16 +21,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AutoloaderService extends DwaraService{
+public class AutoloaderMapDrivesService extends DwaraService{
 
-	private static final Logger logger = LoggerFactory.getLogger(AutoloaderService.class);
+	private static final Logger logger = LoggerFactory.getLogger(AutoloaderMapDrivesService.class);
 	
 	@Autowired
 	private RequestDao requestDao;
 	
 	@Autowired
 	private JobCreator jobCreator;
-	
+
     public MapDrivesResponse mapDrives(String autoloaderId) throws Exception{	
     	MapDrivesResponse mapDrivesResponse = new MapDrivesResponse();
 

@@ -352,7 +352,7 @@ public class ScheduledStatusUpdater {
  
 			requestDao.save(nthRequest);
 			
-			if(nthRequest.getActionId() == Action.ingest && status == Status.completed) {
+			if(nthRequest.getActionId() == Action.ingest && (status == Status.marked_completed || status == Status.completed)) {
 				
 				Domain domain = domainUtil.getDomain(nthRequest);
 				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
