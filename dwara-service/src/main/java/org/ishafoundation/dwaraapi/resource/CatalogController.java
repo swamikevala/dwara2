@@ -32,13 +32,13 @@ public class CatalogController {
     CatalogService catalogService;
 
     @GetMapping(value="/catalog/getArtifactclass", produces = "application/json")
-    public ResponseEntity<List<String>> getArtifactclass(){
+    public ResponseEntity<List<Artifactclass>> getArtifactclass(){
         List<Artifactclass> list = catalogService.getAllArtifactclass();
-        List<String> result = new ArrayList<String>();
-        for(Artifactclass a: list) {
-            result.add(a.getId());
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(result);
+        // List<String> result = new ArrayList<String>();
+        // for(Artifactclass a: list) {
+        //     result.add(a.getId());
+        // }
+        return ResponseEntity.status(HttpStatus.OK).body(list);
     }
 
     @GetMapping(value="/catalog/getLocations", produces = "application/json")
