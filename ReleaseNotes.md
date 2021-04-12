@@ -1,3 +1,5 @@
+scheduler.blankTapeAutoInitializer.cronExpression=0 0 * ? * *
+
 # Dwara App Version - 2.1.16 (4th Apr 2021)
 ### New features
 
