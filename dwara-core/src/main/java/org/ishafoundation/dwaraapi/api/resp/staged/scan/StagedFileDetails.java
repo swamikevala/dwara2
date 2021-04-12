@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class StagedFileDetails {
 	private String path;
+	private String user;
 	private String name;
 	private String suggestedName;
 	private Integer fileCount;
@@ -24,6 +25,12 @@ public class StagedFileDetails {
 	}
 	public void setPath(String path) {
 		this.path = path;
+	}
+	public String getUser() {
+		return user;
+	}
+	public void setUser(String user) {
+		this.user = user;
 	}
 	public String getName() {
 		return name;

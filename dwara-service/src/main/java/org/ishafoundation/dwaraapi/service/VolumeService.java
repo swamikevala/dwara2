@@ -1,36 +1,26 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.io.File;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
-import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
-import org.ishafoundation.dwaraapi.api.resp.initialize.SystemRequestForInitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.Details;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
-import org.ishafoundation.dwaraapi.db.model.transactional.Job;
-import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.enumreferences.RequestType;
-import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
-import org.ishafoundation.dwaraapi.job.JobCreator;
-import org.ishafoundation.dwaraapi.resource.mapper.RequestToEntityObjectMapper;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.VolumeindexManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeFinalizer;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeInitializer;
@@ -156,7 +146,6 @@ public class VolumeService extends DwaraService {
 			volResp.setUnusedCapacity(groupVolumeUnusedCapacity/1073741824);
 			volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity/1073741824);
 			volResp.setSizeUnit("GiB"); // 1 GiB = 1073741824 bytes...
-			volResp.setNextBarcodeToBePrinted(volume.getSequence().getPrefix() + (volume.getSequence().getCurrrentNumber() + 1) + "L7"); // TODO - How to findout LTO Generation???
 		}
 		
 		if(volume.getLocation() != null)
@@ -167,14 +156,17 @@ public class VolumeService extends DwaraService {
 			Details details = new Details();
 			
 			//details.setBarcoded(volumeDetails.isBarcoded());
-			if(volumeDetails.getBlocksize() != null)
+			if(volumeDetails.getBlocksize() != null) {
 				details.setBlocksize(volumeDetails.getBlocksize()/1024);
-			details.setBlocksizeUnit("KiB");
-			
+				details.setBlocksizeUnit("KiB");
+			}
 			details.setStoragesubtype(volume.getStoragesubtype());
 			//details.setMountPoint(mountPoint);
 			//details.setProvider(provider);
 			//details.setRemoveAfterJob(removeAfterJob);
+			if(volume.getType() == Volumetype.group)
+				details.setNextBarcode(volume.getSequence().getPrefix() + (volume.getSequence().getCurrrentNumber() + 1) + "L7"); // TODO - How to findout LTO Generation???
+			
 			volResp.setDetails(details);
 		}
 		return volResp;

@@ -258,7 +258,7 @@ public class StagedService extends DwaraService{
 					if(!mxfFilePath.toFile().exists()) {
 			        	isLevel0Pass = false;
 						StagedFileDetails sfd = new StagedFileDetails();
-						
+						sfd.setUser(Paths.get(path).getName(Paths.get(configuration.getReadyToIngestSrcDirRoot()).getNameCount()).toString());
 						sfd.setPath(path);
 						sfd.setName(artifactName);
 	

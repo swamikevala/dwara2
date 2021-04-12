@@ -8,6 +8,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -52,6 +53,9 @@ public class StagedFileEvaluator {
 
 	@Autowired
 	protected SequenceUtil sequenceUtil;
+	
+	@Autowired
+	protected Configuration configuration;
 
 	private List<Pattern> excludedFileNamesRegexList = new ArrayList<Pattern>();
 	private Pattern allowedChrsInFileNamePattern = null;
@@ -253,6 +257,9 @@ public class StagedFileEvaluator {
 		}
 
 		StagedFileDetails nthIngestFile = new StagedFileDetails();
+		
+		Path srcPath = Paths.get(sourcePath);
+		nthIngestFile.setUser(srcPath.getName(Paths.get(configuration.getReadyToIngestSrcDirRoot()).getNameCount()).toString());
 		nthIngestFile.setName(fileName);		
 		nthIngestFile.setPath(sourcePath);
 		nthIngestFile.setFileCount(fileCount);
