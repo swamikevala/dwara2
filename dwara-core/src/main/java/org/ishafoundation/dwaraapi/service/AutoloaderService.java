@@ -184,7 +184,7 @@ public class AutoloaderService{
 			TapeUsageStatus usageStatus = null;
 			if(volume != null) {  
 				tape.setLocation(volume.getLocation().getId());
-				tape.setRemoveAfterJob(volume.getDetails().getRemoveAfterJob()); // TODO : When do we set this??
+				tape.setRemoveAfterJob(volume.getDetails().getRemoveAfterJob()); // TODO : When do we set this?? // TODO : From volumegroup.details ???
 				tapeStatus = getTapeStatus(volume);
 				usageStatus = volumeUtil.getTapeUsageStatus(volume.getId());
 			}

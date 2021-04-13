@@ -12,6 +12,7 @@ public class Details {
 	private String mountPoint = null;
 	private String provider = null;
 	private Boolean removeAfterJob;
+	private boolean expandCapacity; // is capacity to be bumped by adding more volumes?
 	private String nextBarcode;
 
 	// Getter Methods 
@@ -72,6 +73,14 @@ public class Details {
 
 	public void setProvider(String provider) {
 		this.provider = provider;
+	}
+
+	public boolean isExpandCapacity() {
+		return expandCapacity;
+	}
+
+	public void setExpandCapacity(boolean expandCapacity) {
+		this.expandCapacity = expandCapacity;
 	}
 
 	public void setRemoveAfterJob(Boolean removeAfterJob) {

@@ -25,6 +25,8 @@ public class Tape
     private TapeUsageStatus usageStatus;
 
     private String location;
+    
+    private String action;
 
     
 	public Element getElement() {
@@ -97,5 +99,13 @@ public class Tape
 
 	public void setLocation(String location) {
 		this.location = location;
+	}
+
+	public String getAction() {
+		return action;
+	}
+
+	public void setAction(String action) {
+		this.action = action;
 	}
 }

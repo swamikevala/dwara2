@@ -7,24 +7,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.AutoloaderResponse;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.Element;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.ToLoadTape;
 import org.ishafoundation.dwaraapi.api.resp.mapdrives.MapDrivesResponse;
+import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.AutoloaderMapDrivesService;
 import org.ishafoundation.dwaraapi.service.AutoloaderService;
+import org.ishafoundation.dwaraapi.service.VolumeService;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeOnLibrary;
+import org.ishafoundation.dwaraapi.utils.TapeUsageStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +63,9 @@ public class AutoloaderController {
 	
 	@Autowired
 	private AutoloaderService autoloaderService;
+	
+	@Autowired
+	private VolumeService volumeService;
 	
 	@Autowired
 	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
@@ -112,6 +125,120 @@ public class AutoloaderController {
 		}
 		AutoloaderResponse autoloaderResponse = autoloaderService.getAutoloader(autoloaderDevice);
 		return ResponseEntity.status(HttpStatus.OK).body(autoloaderResponse);
+	}
+	
+	@GetMapping(value = "/autoloader/handleTapes", produces = "application/json")
+	public ResponseEntity<Set<Tape>> handleTapes(){
+		logger.info("/autoloader/handleTapes");
+		Set<Tape> handleTapeList = new HashSet<Tape>();
+		try {
+			List<String> onlineVolumeList = new ArrayList<String>();
+			Map<String, String> onlineVolume_Autoloader_Map = new HashMap<String, String>();
+			Map<String, Tape> onlineBarcode_Tape_Map = new HashMap<String, Tape>();
+	
+			// get all online tapes across all libraries
+			Set<Tape> tapeList = new HashSet<Tape>();
+			
+			List<Device> autoloaderDevices = deviceDao.findAllByType(Devicetype.tape_autoloader);
+			for (Device autoloaderDevice : autoloaderDevices) {
+				String autoloaderId = autoloaderDevice.getId();
+				tapeList.addAll(autoloaderService.getLoadedTapesInLibrary(autoloaderDevice, false));
+
+				for (Tape nthTape : tapeList) {
+					String barcode = nthTape.getBarcode();
+					onlineVolumeList.add(barcode);
+					onlineVolume_Autoloader_Map.put(barcode, autoloaderId);
+					onlineBarcode_Tape_Map.put(barcode, nthTape);
+				}
+			}
+			
+			List<Status> statusList = new ArrayList<Status>();
+			statusList.add(Status.queued);
+			statusList.add(Status.in_progress);
+			
+			List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusInOrderById(statusList);
+			if(jobList.size() == 0)
+				logger.info("No storage jobs in queue");
+			else {
+				int priorityCount = 1;
+				for (Job nthJob : jobList) {
+					Volume volume = null;
+					TapeUsageStatus tapeUsageStatus = null;
+					if(nthJob.getStatus() == Status.queued) {
+						if(!jobUtil.isJobReadyToBeExecuted(nthJob))
+							continue;
+						
+						AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(nthJob.getStoragetaskActionId().name());
+						logger.trace("Building storage job - " + nthJob.getId() + ":" + storagetaskActionImpl.getClass().getSimpleName());
+						StorageJob storageJob = null;
+						try {
+							storageJob = storagetaskActionImpl.buildStorageJob(nthJob);
+						} catch (Exception e) {
+							logger.error("Unable to gather necessary details for executing the job " + nthJob.getId() + " - " + Status.failed, e);
+							continue;
+						}
+						
+						volume = storageJob.getVolume();
+						tapeUsageStatus = TapeUsageStatus.job_queued;
+
+					}else { // job is in_progress
+						volume = nthJob.getVolume();
+						tapeUsageStatus = TapeUsageStatus.job_in_progress;
+					}
+					
+					if(volume != null) {
+						String barcode = volume.getId();
+						if(!onlineVolumeList.contains(barcode)) {
+							Tape tapeNeeded = new Tape();//onlineBarcode_Tape_Map.get(barcode);
+							tapeNeeded.setBarcode(barcode);
+							tapeNeeded.setAction(nthJob.getStoragetaskActionId().name());
+							tapeNeeded.setLocation(volume.getLocation().getId());
+							tapeNeeded.setUsageStatus(tapeUsageStatus);
+							//toLoadTape.setAutoloader(onlineVolume_Autoloader_Map.get(barcode));
+							handleTapeList.add(tapeNeeded);
+							priorityCount = priorityCount + 1;
+						}
+					}
+				}
+			}
+			
+			// If there are any groups running out of space and needing new tapes
+			List<VolumeResponse> volGroupList = volumeService.getVolumeByVolumetype(Volumetype.group.name());
+			for (VolumeResponse volumeResponse : volGroupList) {
+				if(volumeResponse.getDetails().isExpandCapacity()) {
+					Tape tapeNeeded = new Tape();//onlineBarcode_Tape_Map.get(barcode);
+					tapeNeeded.setBarcode(volumeResponse.getDetails().getNextBarcode());
+					tapeNeeded.setAction("??"); // TODO - Action = Write ???
+					// tapeNeeded.setUsageStatus(TapeUsageStatus.job_queued);
+					handleTapeList.add(tapeNeeded);
+				}
+			}
+
+			for (Tape nthTapeOnLibrary : tapeList) {
+				if(nthTapeOnLibrary.getUsageStatus() == TapeUsageStatus.no_job_queued && (nthTapeOnLibrary.getStatus() == TapeStatus.finalized || nthTapeOnLibrary.isRemoveAfterJob())) {
+					// last job on tape determines if the tape need to be shown in remove tapes(restore) or written tapes
+					Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndStatusAndCompletedAtIsNotNullOrderByCompletedAtDesc(nthTapeOnLibrary.getBarcode(), Status.completed);
+					Request request = lastJobOnTape.getRequest();
+					Action requestedAction = request.getActionId();
+					if(requestedAction == Action.ingest)
+						nthTapeOnLibrary.setAction("write");
+					else
+						nthTapeOnLibrary.setAction("restore");
+					handleTapeList.add(nthTapeOnLibrary);
+				}
+				
+			}
+		}
+		catch (Exception e) {
+			String errorMsg = "Unable to get toload details - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(handleTapeList);
 	}
 	
 	@GetMapping(value = "/autoloader/toLoad", produces = "application/json")

@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.resource;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
@@ -13,6 +14,7 @@ import org.ishafoundation.dwaraapi.service.RequestService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -41,8 +43,8 @@ public class RequestController {
 	 * @return
 	 */
 	@GetMapping(value = "/request", produces = "application/json")
-	public ResponseEntity<List<RequestResponse>> getRequests(@RequestParam(value="type", required=false) String type, @RequestParam(required=false) String action, @RequestParam(required=false) String status){
-		logger.info("/request?type=" + type + "&action=" + action + "&status=" + status);
+	public ResponseEntity<List<RequestResponse>> getRequests(@RequestParam(value="type", required=false) String type, @RequestParam(required=false) String action, @RequestParam(required=false) String status, @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedTo){
+		logger.info("/request?type=" + type + "&action=" + action + "&status=" + status + "&completedFrom=" + completedFrom + "&completedTo=" + completedTo);
 		List<RequestResponse> requestResponseList = null;
 		try {
 			
@@ -73,7 +75,7 @@ public class RequestController {
 				}
 			}
 			
-			requestResponseList = requestService.getRequests(requestType, actionEnumList, statusList);
+			requestResponseList = requestService.getRequests(requestType, actionEnumList, statusList, completedFrom, completedTo);
 		}catch (Exception e) {
 			String errorMsg = "Unable to get Request details - " + e.getMessage();
 			logger.error(errorMsg, e);

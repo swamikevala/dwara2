@@ -4,7 +4,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -60,13 +62,13 @@ public class RequestService extends DwaraService{
 	@Autowired
 	private ArtifactDeleter artifactDeleter; 
 	
-	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList){
+	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, Date completedFrom, Date completedTo){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
 		logger.info("Retrieving requests " + requestType.name() + ":" + action + ":" + statusList);
 		
 		String user = null;
-		LocalDateTime fromDate = null;
-		LocalDateTime toDate = null;
+		LocalDateTime fromDate = completedFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+		LocalDateTime toDate = completedTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 		int pageNumber = 0;
 		int pageSize = 0;
 

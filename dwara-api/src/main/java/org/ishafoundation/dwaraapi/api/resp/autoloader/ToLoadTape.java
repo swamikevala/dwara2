@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.api.resp.autoloader;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -56,4 +58,11 @@ public class ToLoadTape
 	public void setFinalized(boolean finalized) {
 		this.finalized = finalized;
 	}
+	
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ToLoadTape toLoadTape = (ToLoadTape) o;
+        return Objects.equals(barcode, toLoadTape.barcode);
+    }
 }
