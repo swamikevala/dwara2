@@ -152,11 +152,13 @@ public class AutoloaderController {
 				}
 			}
 			
-			List<Status> statusList = new ArrayList<Status>();
-			statusList.add(Status.queued);
-			statusList.add(Status.in_progress);
+//			List<Status> statusList = new ArrayList<Status>();
+//			statusList.add(Status.queued);
+//			statusList.add(Status.in_progress);
+//			
+//			List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusInOrderById(statusList);
 			
-			List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusInOrderById(statusList);
+			List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued);
 			if(jobList.size() == 0)
 				logger.info("No storage jobs in queue");
 			else {
@@ -164,27 +166,21 @@ public class AutoloaderController {
 				for (Job nthJob : jobList) {
 					Volume volume = null;
 					TapeUsageStatus tapeUsageStatus = null;
-					if(nthJob.getStatus() == Status.queued) {
-						if(!jobUtil.isJobReadyToBeExecuted(nthJob))
-							continue;
-						
-						AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(nthJob.getStoragetaskActionId().name());
-						logger.trace("Building storage job - " + nthJob.getId() + ":" + storagetaskActionImpl.getClass().getSimpleName());
-						StorageJob storageJob = null;
-						try {
-							storageJob = storagetaskActionImpl.buildStorageJob(nthJob);
-						} catch (Exception e) {
-							logger.error("Unable to gather necessary details for executing the job " + nthJob.getId() + " - " + Status.failed, e);
-							continue;
-						}
-						
-						volume = storageJob.getVolume();
-						tapeUsageStatus = TapeUsageStatus.job_queued;
-
-					}else { // job is in_progress
-						volume = nthJob.getVolume();
-						tapeUsageStatus = TapeUsageStatus.job_in_progress;
+					if(!jobUtil.isJobReadyToBeExecuted(nthJob))
+						continue;
+					
+					AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(nthJob.getStoragetaskActionId().name());
+					logger.trace("Building storage job - " + nthJob.getId() + ":" + storagetaskActionImpl.getClass().getSimpleName());
+					StorageJob storageJob = null;
+					try {
+						storageJob = storagetaskActionImpl.buildStorageJob(nthJob);
+					} catch (Exception e) {
+						logger.error("Unable to gather necessary details for executing the job " + nthJob.getId() + " - " + Status.failed, e);
+						continue;
 					}
+					
+					volume = storageJob.getVolume();
+					tapeUsageStatus = TapeUsageStatus.job_queued;
 					
 					if(volume != null) {
 						String barcode = volume.getId();
@@ -196,11 +192,34 @@ public class AutoloaderController {
 							tapeNeeded.setUsageStatus(tapeUsageStatus);
 							//toLoadTape.setAutoloader(onlineVolume_Autoloader_Map.get(barcode));
 							handleTapeList.add(tapeNeeded);
+							logger.debug(tapeUsageStatus + " but tape " + barcode + " missing in library");
 							priorityCount = priorityCount + 1;
 						}
 					}
 				}
 			}
+
+			
+			List<Job> inProgressJobsList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.in_progress);
+			if(inProgressJobsList.size() == 0)
+				logger.info("No storage jobs in progress");
+			else {
+				for (Job nthJob : inProgressJobsList) {
+					Volume volume = nthJob.getVolume();
+					TapeUsageStatus tapeUsageStatus = TapeUsageStatus.job_in_progress;
+					if(volume != null) {
+						String barcode = volume.getId();
+						Tape tapeInAction = new Tape();
+						tapeInAction.setBarcode(barcode);
+						tapeInAction.setAction(nthJob.getStoragetaskActionId().name());
+						tapeInAction.setLocation(volume.getLocation().getId());
+						tapeInAction.setUsageStatus(tapeUsageStatus);
+						handleTapeList.add(tapeInAction);
+						logger.debug(barcode + " " + tapeUsageStatus);
+					}
+				}
+			}
+
 			
 			// If there are any groups running out of space and needing new tapes
 			List<VolumeResponse> volGroupList = volumeService.getVolumeByVolumetype(Volumetype.group.name());
@@ -230,7 +249,7 @@ public class AutoloaderController {
 			}
 		}
 		catch (Exception e) {
-			String errorMsg = "Unable to get toload details - " + e.getMessage();
+			String errorMsg = "Unable to get tape details - " + e.getMessage();
 			logger.error(errorMsg, e);
 			
 			if(e instanceof DwaraException)

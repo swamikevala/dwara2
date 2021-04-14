@@ -67,8 +67,14 @@ public class RequestService extends DwaraService{
 		logger.info("Retrieving requests " + requestType.name() + ":" + action + ":" + statusList);
 		
 		String user = null;
-		LocalDateTime fromDate = completedFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-		LocalDateTime toDate = completedTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+		LocalDateTime fromDate = completedFrom != null ? completedFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+		LocalDateTime toDate = completedTo != null ? completedTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+		// requested to hardcode...
+		if(toDate != null) {
+			toDate = toDate.plusHours(23);
+			toDate = toDate.plusMinutes(59);
+			toDate = toDate.plusSeconds(59);
+		}
 		int pageNumber = 0;
 		int pageSize = 0;
 

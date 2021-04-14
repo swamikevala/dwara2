@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.api.resp.autoloader;
 
+import java.util.Objects;
+
 import org.ishafoundation.dwaraapi.utils.TapeUsageStatus;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -108,4 +110,11 @@ public class Tape
 	public void setAction(String action) {
 		this.action = action;
 	}
+	
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Tape tape = (Tape) o;
+        return Objects.equals(barcode, tape.barcode);
+    }
 }

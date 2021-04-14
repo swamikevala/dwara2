@@ -63,6 +63,4 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	
 	// SELECT * FROM dwara.job where started_at > '2021-01-17 01:00:00.000000' and status = 'failed' and processingtask_id in('video-mkv-pfr-metadata-extract', 'video-proxy-low-gen');
 	List<Job> findAllByStartedAtBetweenAndStatusAndProcessingtaskIdInOrderById(LocalDateTime startDateTime, LocalDateTime endDateTime, Status status, Collection<String> processingTaskList);
-
-	List<Job> findAllByStoragetaskActionIdIsNotNullAndStatusInOrderById(List<Status> statusList);
 }

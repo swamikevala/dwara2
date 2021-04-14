@@ -1,5 +1,12 @@
 scheduler.blankTapeAutoInitializer.cronExpression=0 0 * ? * *
 
+10 TB
+UPDATE `volume` SET `details`='{\"blocksize\": 262144, \"minimum_free_space\":10995116277760}' WHERE `type`='group' and `id` not in ('G1', 'G2', 'G3', 'X1', 'X2', 'X3');
+
+1 TB
+UPDATE `volume` SET `details`='{\"blocksize\": 262144, \"minimum_free_space\": 1099511627776}' WHERE `type`='group' and `id` in ('G1', 'G2', 'G3', 'X1', 'X2', 'X3');
+
+
 # Dwara App Version - 2.1.16 (4th Apr 2021)
 ### New features
 
