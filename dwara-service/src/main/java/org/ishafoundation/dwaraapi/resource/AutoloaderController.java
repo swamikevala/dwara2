@@ -158,6 +158,7 @@ public class AutoloaderController {
 //			
 //			List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusInOrderById(statusList);
 			
+			// Add tapes - for queued jobs not in tape library 			
 			List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued);
 			if(jobList.size() == 0)
 				logger.info("No storage jobs in queue");
@@ -199,7 +200,20 @@ public class AutoloaderController {
 				}
 			}
 
-			
+			// Add tapes - for capacity expansion
+			// If there are any groups running out of space and needing new tapes
+			List<VolumeResponse> volGroupList = volumeService.getVolumeByVolumetype(Volumetype.group.name());
+			for (VolumeResponse volumeResponse : volGroupList) {
+				if(volumeResponse.getDetails().isExpandCapacity()) {
+					Tape tapeNeeded = new Tape();//onlineBarcode_Tape_Map.get(barcode);
+					tapeNeeded.setBarcode(volumeResponse.getDetails().getNextBarcode());
+					tapeNeeded.setAction("@MH what action for pools running out of space???"); // TODO - Action = Write ???
+					// tapeNeeded.setUsageStatus(TapeUsageStatus.job_queued);
+					handleTapeList.add(tapeNeeded);
+				}
+			}
+
+			// Show Tapes in action - currently restoring/writing
 			List<Job> inProgressJobsList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.in_progress);
 			if(inProgressJobsList.size() == 0)
 				logger.info("No storage jobs in progress");
@@ -220,19 +234,7 @@ public class AutoloaderController {
 				}
 			}
 
-			
-			// If there are any groups running out of space and needing new tapes
-			List<VolumeResponse> volGroupList = volumeService.getVolumeByVolumetype(Volumetype.group.name());
-			for (VolumeResponse volumeResponse : volGroupList) {
-				if(volumeResponse.getDetails().isExpandCapacity()) {
-					Tape tapeNeeded = new Tape();//onlineBarcode_Tape_Map.get(barcode);
-					tapeNeeded.setBarcode(volumeResponse.getDetails().getNextBarcode());
-					tapeNeeded.setAction("??"); // TODO - Action = Write ???
-					// tapeNeeded.setUsageStatus(TapeUsageStatus.job_queued);
-					handleTapeList.add(tapeNeeded);
-				}
-			}
-
+			// Remove/Written tapes - No jobs queued and either finalized or removeAfterJob
 			for (Tape nthTapeOnLibrary : tapeList) {
 				if(nthTapeOnLibrary.getUsageStatus() == TapeUsageStatus.no_job_queued && (nthTapeOnLibrary.getStatus() == TapeStatus.finalized || nthTapeOnLibrary.isRemoveAfterJob())) {
 					// last job on tape determines if the tape need to be shown in remove tapes(restore) or written tapes

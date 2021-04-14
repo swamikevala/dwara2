@@ -165,7 +165,7 @@ public class VolumeService extends DwaraService {
 			//details.setProvider(provider);
 			//details.setRemoveAfterJob(removeAfterJob);
 			if(volume.getType() == Volumetype.group) {
-				if(volResp.getMaxPhysicalUnusedCapacity() < (volumeDetails.getMinimumFreeSpace()/1073741824))
+				if(volResp.getUnusedCapacity() < (volumeDetails.getMinimumFreeSpace()/1073741824))
 					details.setExpandCapacity(true);
 				details.setNextBarcode(volume.getSequence().getPrefix() + (volume.getSequence().getCurrrentNumber() + 1) + "L7"); // TODO - How to findout LTO Generation???
 			}
