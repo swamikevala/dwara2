@@ -8,4 +8,5 @@ public class ArtifactCatalogRequest {
     public String startDate;
     public String endDate;
     public String artifactName;
+    public boolean deleted;
 }
