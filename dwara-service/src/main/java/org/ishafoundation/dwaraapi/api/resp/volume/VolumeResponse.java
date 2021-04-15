@@ -22,7 +22,6 @@ public class VolumeResponse {
 	private String sizeUnit;
 	private String location;
 	private Details details;
-	private String nextBarcodeToBePrinted;
 	
 	public String getId() {
 		return id;
@@ -125,11 +124,5 @@ public class VolumeResponse {
 	}
 	public void setDetails(Details details) {
 		this.details = details;
-	}
-	public String getNextBarcodeToBePrinted() {
-		return nextBarcodeToBePrinted;
-	}
-	public void setNextBarcodeToBePrinted(String nextBarcodeToBePrinted) {
-		this.nextBarcodeToBePrinted = nextBarcodeToBePrinted;
 	}
 }

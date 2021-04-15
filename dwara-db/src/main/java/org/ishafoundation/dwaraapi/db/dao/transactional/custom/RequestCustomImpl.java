@@ -98,7 +98,7 @@ public class RequestCustomImpl implements RequestCustom {
 		if(fromDate != null) {
 			if(toDate == null)
 				toDate = LocalDateTime.now();
-			predicates.add(cb.between(requestRoot.get("requestedAt"), fromDate, toDate));
+			predicates.add(cb.between(requestRoot.get("completedAt"), fromDate, toDate));
 		}
 		return predicates;
 	}
