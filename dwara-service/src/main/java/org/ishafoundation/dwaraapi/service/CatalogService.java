@@ -286,7 +286,7 @@ public class CatalogService extends DwaraService{
         return list;
     }
 
-    public List<ArtifactCatalog> findArtifactsCatalog(String[] artifactClass, String[] volumeGroup, String[] copyNumber, String volumeId, String startDate, String endDate, String artifactName) {
+    public List<ArtifactCatalog> findArtifactsCatalog(String[] artifactClass, String[] volumeGroup, String[] copyNumber, String volumeId, String startDate, String endDate, String artifactName, boolean deleted) {
         String condition = "";
         if(artifactClass != null && artifactClass.length >=1 && !artifactClass[0].equals("all")) {
             condition += " and a.artifactclass_id in (";
@@ -324,7 +324,7 @@ public class CatalogService extends DwaraService{
         }
         String query = "select a.id, a.artifactclass_id, a.name, a.total_size, b.volume_id, c.group_ref_id, d.completed_at, e.name as ingestedBy, c.archiveformat_id" 
         + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.deleted=0"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.deleted=" + deleted
         + condition
         + " order by completed_at desc";
         Query q = entityManager.createNativeQuery(query);

@@ -32,13 +32,13 @@ public class CatalogController {
     CatalogService catalogService;
 
     @GetMapping(value="/catalog/getArtifactclass", produces = "application/json")
-    public ResponseEntity<List<String>> getArtifactclass(){
+    public ResponseEntity<List<Artifactclass>> getArtifactclass(){
         List<Artifactclass> list = catalogService.getAllArtifactclass();
-        List<String> result = new ArrayList<String>();
-        for(Artifactclass a: list) {
-            result.add(a.getId());
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(result);
+        // List<String> result = new ArrayList<String>();
+        // for(Artifactclass a: list) {
+        //     result.add(a.getId());
+        // }
+        return ResponseEntity.status(HttpStatus.OK).body(list);
     }
 
     @GetMapping(value="/catalog/getLocations", produces = "application/json")
@@ -73,7 +73,7 @@ public class CatalogController {
     @PostMapping(value="/catalog/artifacts", produces = "application/json")
     public ResponseEntity<List<ArtifactCatalog>> loadArtifactsCatalog(@RequestBody ArtifactCatalogRequest catalogRequest) {
         List<ArtifactCatalog> list = catalogService.findArtifactsCatalog(catalogRequest.artifactClass, catalogRequest.volumeGroup, catalogRequest.copyNumber, catalogRequest.volumeId, 
-            catalogRequest.startDate, catalogRequest.endDate, catalogRequest.artifactName);
+            catalogRequest.startDate, catalogRequest.endDate, catalogRequest.artifactName, catalogRequest.deleted);
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
 
