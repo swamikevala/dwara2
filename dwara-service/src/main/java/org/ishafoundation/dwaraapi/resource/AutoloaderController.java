@@ -207,7 +207,7 @@ public class AutoloaderController {
 				if(volumeResponse.getDetails().isExpandCapacity()) {
 					Tape tapeNeeded = new Tape();//onlineBarcode_Tape_Map.get(barcode);
 					tapeNeeded.setBarcode(volumeResponse.getDetails().getNextBarcode());
-					tapeNeeded.setAction("@MH what action for pools running out of space???"); // TODO - Action = Write ???
+					tapeNeeded.setAction(Action.write.name()); // TODO - Action = Write ??? @MH what action for pools running out of space???
 					// tapeNeeded.setUsageStatus(TapeUsageStatus.job_queued);
 					handleTapeList.add(tapeNeeded);
 				}

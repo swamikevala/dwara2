@@ -184,7 +184,7 @@ public class AutoloaderService{
 			TapeUsageStatus usageStatus = null;
 			if(volume != null) {  
 				tape.setLocation(volume.getLocation().getId());
-				tape.setRemoveAfterJob(volume.getDetails().getRemoveAfterJob()); // TODO : When do we set this?? // TODO : From volumegroup.details ???
+				tape.setRemoveAfterJob(volume.getGroupRef().getDetails().getRemoveAfterJob()); 
 				tapeStatus = getTapeStatus(volume);
 				usageStatus = volumeUtil.getTapeUsageStatus(volume.getId());
 			}
@@ -265,5 +265,125 @@ public class AutoloaderService{
 		}
 		return hasAnyArtifactOnVolume;
 	}
+	
+//	public Set<Tape> handleTapes(){
+//		Set<Tape> handleTapeList = new HashSet<Tape>();
+//		List<String> onlineVolumeList = new ArrayList<String>();
+//		Map<String, String> onlineVolume_Autoloader_Map = new HashMap<String, String>();
+//		Map<String, Tape> onlineBarcode_Tape_Map = new HashMap<String, Tape>();
+//	
+//		// get all online tapes across all libraries
+//		Set<Tape> tapeList = new HashSet<Tape>();
+//		
+//		List<Device> autoloaderDevices = deviceDao.findAllByType(Devicetype.tape_autoloader);
+//		for (Device autoloaderDevice : autoloaderDevices) {
+//			String autoloaderId = autoloaderDevice.getId();
+//			tapeList.addAll(getLoadedTapesInLibrary(autoloaderDevice, false));
+//	
+//			for (Tape nthTape : tapeList) {
+//				String barcode = nthTape.getBarcode();
+//				onlineVolumeList.add(barcode);
+//				onlineVolume_Autoloader_Map.put(barcode, autoloaderId);
+//				onlineBarcode_Tape_Map.put(barcode, nthTape);
+//			}
+//		}
+//		
+//	//	List<Status> statusList = new ArrayList<Status>();
+//	//	statusList.add(Status.queued);
+//	//	statusList.add(Status.in_progress);
+//	//	
+//	//	List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusInOrderById(statusList);
+//		
+//		// Add tapes - for queued jobs not in tape library 			
+//		List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued);
+//		if(jobList.size() == 0)
+//			logger.info("No storage jobs in queue");
+//		else {
+//			int priorityCount = 1;
+//			for (Job nthJob : jobList) {
+//				Volume volume = null;
+//				TapeUsageStatus tapeUsageStatus = null;
+//				if(!jobUtil.isJobReadyToBeExecuted(nthJob))
+//					continue;
+//				
+//				AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(nthJob.getStoragetaskActionId().name());
+//				logger.trace("Building storage job - " + nthJob.getId() + ":" + storagetaskActionImpl.getClass().getSimpleName());
+//				StorageJob storageJob = null;
+//				try {
+//					storageJob = storagetaskActionImpl.buildStorageJob(nthJob);
+//				} catch (Exception e) {
+//					logger.error("Unable to gather necessary details for executing the job " + nthJob.getId() + " - " + Status.failed, e);
+//					continue;
+//				}
+//				
+//				volume = storageJob.getVolume();
+//				tapeUsageStatus = TapeUsageStatus.job_queued;
+//				
+//				if(volume != null) {
+//					String barcode = volume.getId();
+//					if(!onlineVolumeList.contains(barcode)) {
+//						Tape tapeNeeded = new Tape();//onlineBarcode_Tape_Map.get(barcode);
+//						tapeNeeded.setBarcode(barcode);
+//						tapeNeeded.setAction(nthJob.getStoragetaskActionId().name());
+//						tapeNeeded.setLocation(volume.getLocation().getId());
+//						tapeNeeded.setUsageStatus(tapeUsageStatus);
+//						//toLoadTape.setAutoloader(onlineVolume_Autoloader_Map.get(barcode));
+//						handleTapeList.add(tapeNeeded);
+//						logger.debug(tapeUsageStatus + " but tape " + barcode + " missing in library");
+//						priorityCount = priorityCount + 1;
+//					}
+//				}
+//			}
+//		}
+//	
+//		// Add tapes - for capacity expansion
+//		// If there are any groups running out of space and needing new tapes
+//		List<VolumeResponse> volGroupList = volumeService.getVolumeByVolumetype(Volumetype.group.name());
+//		for (VolumeResponse volumeResponse : volGroupList) {
+//			if(volumeResponse.getDetails().isExpandCapacity()) {
+//				Tape tapeNeeded = new Tape();//onlineBarcode_Tape_Map.get(barcode);
+//				tapeNeeded.setBarcode(volumeResponse.getDetails().getNextBarcode());
+//				tapeNeeded.setAction("@MH what action for pools running out of space???"); // TODO - Action = Write ???
+//				// tapeNeeded.setUsageStatus(TapeUsageStatus.job_queued);
+//				handleTapeList.add(tapeNeeded);
+//			}
+//		}
+//	
+//		// Show Tapes in action - currently restoring/writing
+//		List<Job> inProgressJobsList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.in_progress);
+//		if(inProgressJobsList.size() == 0)
+//			logger.info("No storage jobs in progress");
+//		else {
+//			for (Job nthJob : inProgressJobsList) {
+//				Volume volume = nthJob.getVolume();
+//				TapeUsageStatus tapeUsageStatus = TapeUsageStatus.job_in_progress;
+//				if(volume != null) {
+//					String barcode = volume.getId();
+//					Tape tapeInAction = new Tape();
+//					tapeInAction.setBarcode(barcode);
+//					tapeInAction.setAction(nthJob.getStoragetaskActionId().name());
+//					tapeInAction.setLocation(volume.getLocation().getId());
+//					tapeInAction.setUsageStatus(tapeUsageStatus);
+//					handleTapeList.add(tapeInAction);
+//					logger.debug(barcode + " " + tapeUsageStatus);
+//				}
+//			}
+//		}
+//	
+//		// Remove/Written tapes - No jobs queued and either finalized or removeAfterJob
+//		for (Tape nthTapeOnLibrary : tapeList) {
+//			if(nthTapeOnLibrary.getUsageStatus() == TapeUsageStatus.no_job_queued && (nthTapeOnLibrary.getStatus() == TapeStatus.finalized || nthTapeOnLibrary.isRemoveAfterJob())) {
+//				// last job on tape determines if the tape need to be shown in remove tapes(restore) or written tapes
+//				Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndStatusAndCompletedAtIsNotNullOrderByCompletedAtDesc(nthTapeOnLibrary.getBarcode(), Status.completed);
+//				Request request = lastJobOnTape.getRequest();
+//				Action requestedAction = request.getActionId();
+//				if(requestedAction == Action.ingest)
+//					nthTapeOnLibrary.setAction("write");
+//				else
+//					nthTapeOnLibrary.setAction("restore");
+//				handleTapeList.add(nthTapeOnLibrary);
+//			}
+//		}
+//	}
 }
 
