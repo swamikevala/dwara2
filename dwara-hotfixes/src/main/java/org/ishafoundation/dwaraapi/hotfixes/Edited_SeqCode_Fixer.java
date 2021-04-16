@@ -121,11 +121,11 @@ public class Edited_SeqCode_Fixer {
 		
     	List<Artifact> artifactList = artifactRepository.findAllByWriteRequestId(systemRequest.getId());
     	for (Artifact artifact : artifactList) {
-			String artifactName = artifactToRenameActualRow.getName();
+			String artifactName = artifact.getName();
 			logger.info("Now Updating " + artifactName);
-			String sequenceCode = artifactToRenameActualRow.getSequenceCode();
+			String sequenceCode = artifact.getSequenceCode();
 			
-			String seqPrefix = null; // artifactToRenameActualRow.getArtifactclass().getSequence().getPrefix();
+			String seqPrefix = null; // artifact.getArtifactclass().getSequence().getPrefix();
 			
 			if(artifact.getArtifactclass().isSource()) {
 				seqPrefix = "Z";
