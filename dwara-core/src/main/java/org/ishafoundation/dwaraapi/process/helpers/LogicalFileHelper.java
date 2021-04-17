@@ -79,7 +79,7 @@ public class LogicalFileHelper {
 				LogicalFile logicalFile = new LogicalFile(filepathname);
 				
 				for (String sidecarExtension : sidecarExtensionsList) {
-					String sidecarFilePathname = fullPath + baseName + "" + sidecarExtension;
+					String sidecarFilePathname = fullPath + baseName + "." + sidecarExtension;
 					File sidecarFile = new File(sidecarFilePathname);
 					if(sidecarFile.exists()) {
 						HashMap<String, File> existingSidecarMap = logicalFile.getSidecarFiles();

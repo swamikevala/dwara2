@@ -134,8 +134,8 @@ public class ProcessingJobHelper {
 		if(pathnameRegex != null && filesToBeUsed != null) {
 			logicalFileCollection.addAll(logicalFileHelper.getFiles(filesToBeUsed, extensionsArray, includeSidecarFiles, sidecarExtensionsArray));
 		}else {
-			logger.trace("extensionsArray - " + extensionsArray);
-			logger.trace("sidecarExtensionsArray - " + sidecarExtensionsArray);
+			logger.trace("extensionsArray - " + extensions);
+			logger.trace("sidecarExtensionsArray - " + sidecarExtensions);
 			for (String nthPathToBeUsed : pathsToBeUsed) {
 				logicalFileCollection.addAll(logicalFileHelper.getFiles(nthPathToBeUsed, extensionsArray, includeSidecarFiles, sidecarExtensionsArray));				
 			}
