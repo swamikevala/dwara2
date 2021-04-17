@@ -1,3 +1,93 @@
+-- Edited (Translations) support
+
+-- SEQUENCE --
+INSERT INTO `sequence` (`id`, `type`, `prefix`, `code_regex`, `number_regex`, `group`, `starting_number`, `ending_number`, `current_number`, `sequence_ref_id`, `force_match`, `keep_code`, `replace_code`) VALUES 
+('video-edit-tr-grp', 'artifact', null, null, null, 1, 1, -1, 0, null, 0, 0, 0),
+('video-edit-tr-pub', 'artifact', 'ZT', '^[A-Z]{3}[a-z]{3}[A-Z]{2}\\d{6}(?=_)', null, 0, null, null, null,'video-edit-tr-grp', 0, 0, 0),
+('video-edit-tr-priv2', 'artifact', 'ZTX', '^[A-Z]{3}[a-z]{3}[A-Z]{2}\\d{6}(?=_)', null, 0, null, null, null,'video-edit-tr-grp', 0, 0, 0),
+('video-edit-tr-pub-proxy-low', 'artifact', 'ZTL', '^ZT\\d+(?=_)', '(?<=^ZT)\\d+(?=_)', 0, null, null, null, null, 1, 0, 1),
+('video-edit-tr-priv2-proxy-low', 'artifact', 'ZTXL', '^ZTX\\d+(?=_)', '(?<=^ZTX)\\d+(?=_)', 0, null, null, null, null, 1, 0, 1);
+
+-- ARTIFACTCLASS --
+INSERT INTO `artifactclass` (`id`, `description`, `domain_id`, `sequence_id`, `source`, `concurrent_volume_copies`, `display_order`, `path_prefix`, `artifactclass_ref_id`, `import_only`, `config`) VALUES 
+('video-edit-tr-pub', 'edited video tr', 1, 'video-edit-tr-pub', 1, 1, 1, '/data/dwara/staged', null, 0, '{\"pathname_regex\": \"^([^/]+/?){1,2}$|^[^/]+/Outputs?/[^/]+\\\\.mov$\"}'),
+('video-edit-tr-priv1', 'edited video tr', 1, 'video-edit-tr-pub', 1, 1, 2, '/data/dwara/staged', null, 0, '{\"pathname_regex\": \"^([^/]+/?){1,2}$|^[^/]+/Outputs?/[^/]+\\\\.mov$\"}'),
+('video-edit-tr-priv2', 'edited video tr', 1, 'video-edit-tr-priv2', 1, 1, 3, '/data/dwara/staged', null, 0, '{\"pathname_regex\": \"^([^/]+/?){1,2}$|^[^/]+/Outputs?/[^/]+\\\\.mov$\"}'),
+('video-edit-tr-pub-proxy-low', 'edited video tr proxy', 1, 'video-edit-tr-pub-proxy-low', 0, 1, 0, '/data/dwara/transcoded', 'video-edit-tr-pub', 0, null),
+('video-edit-tr-pub-proxy-priv1', 'edited video tr proxy', 1, 'video-edit-tr-pub-proxy-low', 0, 1, 0, '/data/dwara/transcoded', 'video-edit-tr-priv1', 0, null),
+('video-edit-tr-pub-proxy-priv2', 'edited video tr proxy', 1, 'video-edit-tr-priv2-proxy-low', 0, 1, 0, '/data/dwara/transcoded', 'video-edit-tr-priv2', 0, null);
+
+-- ARTIFACTCLASS_VOLUME --
+INSERT INTO `artifactclass_volume` (`artifactclass_id`, `volume_id`, `encrypted`, `active`) VALUES 
+('video-edit-tr-pub', 'E1', 0, 1),
+('video-edit-tr-pub', 'E2', 0, 1),
+('video-edit-tr-pub', 'E3', 0, 1),
+('video-edit-tr-priv1', 'E1', 0, 1),
+('video-edit-tr-priv1', 'E2', 0, 1),
+('video-edit-tr-priv1', 'E3', 0, 1),
+('video-edit-tr-priv2', 'X1', 0, 1),
+('video-edit-tr-priv2', 'X2', 0, 1),
+('video-edit-tr-priv2', 'X3', 0, 1),
+('video-edit-tr-pub-proxy-low', 'G1', 0, 1),
+('video-edit-tr-pub-proxy-low', 'G2', 0, 1),
+('video-edit-tr-priv1-proxy-low', 'G1', 0, 1),
+('video-edit-tr-priv1-proxy-low', 'G2', 0, 1),
+('video-edit-tr-priv2-proxy-low', 'G1', 0, 1),
+('video-edit-tr-priv2-proxy-low', 'G2', 0, 1);
+
+-- ACTION_ARTIFACTCLASS_USER --
+INSERT INTO `action_artifactclass_user` (`action_id`, `artifactclass_id`, `user_id`) VALUES 
+('ingest', 'video-edit-tr-pub', 1),
+('ingest', 'video-edit-tr-priv1', 1),
+('ingest', 'video-edit-tr-priv2', 1),
+('ingest', 'video-edit-tr-pub', 2),
+('ingest', 'video-edit-tr-priv1', 2),
+('ingest', 'video-edit-tr-priv2', 2),
+('ingest', 'video-edit-tr-pub', 3),
+('ingest', 'video-edit-tr-priv1', 3),
+('ingest', 'video-edit-tr-priv2', 3),
+('ingest', 'video-edit-tr-pub', 6),
+('ingest', 'video-edit-tr-priv1', 6),
+('ingest', 'video-edit-tr-priv2', 6);
+
+-- FLOW --
+INSERT INTO `flow` ( `id`, `description`) VALUES
+('video-edit-tr-proxy-flow', 'modified video-proxy-flow targeting specific output paths used by ILP and GLP');
+
+-- FLOW_ELEMENT --
+INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `flow_ref_id`, `processingtask_id`, `storagetask_action_id`, `task_config`) VALUES
+('U26', 1, null, 0, 1, 'video-edit-tr-proxy-flow', null, 'video-proxy-low-gen', null, '{\"pathname_regex\": \"(Video Output/|Output_)[^/]+\\\\.(mov|mp4)$\"}'),
+('U27', 1, '["U26"]', 0, 2, 'video-edit-tr-proxy-flow', null, 'video-mam-update', null, null),
+('U28', 1, '["U26"]', 0, 3, 'video-edit-tr-proxy-flow', 'archive-flow', null, null, null);
+
+-- ACTION_ARTIFACTCLASS_FLOW --
+INSERT INTO `action_artifactclass_flow` (`action_id`, `artifactclass_id`, `flow_id`, `active`) VALUES 
+('ingest', 'video-edit-tr-pub', 'archive-flow', 1),
+('ingest', 'video-edit-tr-pub', 'video-edit-tr-proxy-flow', 1),
+('ingest', 'video-edit-tr-priv1', 'archive-flow', 1),
+('ingest', 'video-edit-tr-priv1', 'video-edit-tr-proxy-flow', 1),
+('ingest', 'video-edit-tr-priv2', 'archive-flow', 1),
+-- setting this to inactive until we have implemented DU-396 (include/exclude flow elements)
+('ingest', 'video-edit-tr-priv2', 'video-edit-tr-proxy-flow', 0);
+
+-- flowelement cleanup
+-- deprecate unused QC gen jjobs
+UPDATE `flowelement` SET `deprecated` = 1 WHERE `id` = 'U18';
+UPDATE `flowelement` SET `deprecated` = 1 WHERE `id` = 'U19';
+UPDATE `flowelement` SET `deprecated` = 1 WHERE `id` = 'U20';
+-- digi-2020 pfr-meta-extract should be dependent on preservation-gen NOT on mxf file-delete 
+UPDATE `flowelement` SET `dependencies` = '["U5"]' WHERE `id` = 'U9';
+-- digi-2020 proxy flow should be dependent on pfr-meta-extract NOT on mxf file-delete
+UPDATE `flowelement` SET `dependencies` = '["U9"]' WHERE `id` = 'U8';
+-- pathname_regex to be configured such that it has only path inside the Artifact folder...  
+UPDATE `flowelement` SET `task_config`='{\"pathname_regex\": \"mxf/[^/]+\\\\.mxf$\"}' WHERE `id`='U7';
+UPDATE `flowelement` SET `task_config`='{\"pathname_regex\": \"Outputs?/[^/]+\\\\.mov$\"}' WHERE `id`='U15';
+
+-- todo
+-- make video-edit-proxy-flow also transcode top level mp4/mov files for swami nirvichara priv2 content -- needs discussion
+
+SET foreign_key_checks = 1;
+
 UPDATE `dwara`.`artifactclass` SET `description` = 'edited video digi proxy' WHERE (`id` = 'video-digi-2020-edit-priv1-proxy-low');
 UPDATE `dwara`.`artifactclass` SET `description` = 'audio' WHERE (`id` = 'audio-priv1');
 UPDATE `dwara`.`artifactclass` SET `description` = 'audio' WHERE (`id` = 'audio-priv2');
@@ -61,7 +151,7 @@ UPDATE `dwara`.`artifactclass` SET `display_order` = '46' WHERE (`id` = 'video-d
 
 -- SET foreign_key_checks = 0; 
 
--- minimum_free_space configuration 
+-- minimum_free_space configuration for tape load prompts
 -- 10 TB
 UPDATE `volume` SET `details`='{\"blocksize\": 262144, \"minimum_free_space\":10995116277760}' WHERE `type`='group' and `id` not in ('G1', 'G2', 'G3', 'X1', 'X2', 'X3');
 

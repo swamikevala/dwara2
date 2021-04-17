@@ -1,6 +1,8 @@
 # Dwara App Version - 2.1.17 (18th Apr 2021)
 ### New features
 
+0) Edited (Translations) support - flowelement.pathnameregex processing layer changed - needs regression
+
 1) Support for scanning artifacts globally across artifactclasses
 
 2) Auto initialising blank tapes - Needs the application.properties entry mentioned in upgrade steps section
