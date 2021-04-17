@@ -33,6 +33,7 @@ public class FiletypePathnameReqexVisitor extends SimpleFileVisitor<Path> {
 	
 	public FiletypePathnameReqexVisitor(String inputArtifactPath, String pathnameRegex) {
 		this.inputArtifactPath = inputArtifactPath;
+		logger.trace("inputArtifactPath - " + inputArtifactPath);
 		this.pathnameRegexPattern = Pattern.compile(pathnameRegex);
 	}
 
@@ -58,7 +59,7 @@ public class FiletypePathnameReqexVisitor extends SimpleFileVisitor<Path> {
 			BasicFileAttributes attrs) {
 		logger.trace("visited file - " + file.toString());
 		
-		Matcher pathnameRegexMatcher = pathnameRegexPattern.matcher(file.toString().replace(inputArtifactPath, "")); // only in relative to the artifact path 
+		Matcher pathnameRegexMatcher = pathnameRegexPattern.matcher(file.toString().replace(inputArtifactPath + File.separator, "")); // only in relative to the artifact path 
 		
 		if(pathnameRegexMatcher.matches()) {
 			logger.trace("matches regex - " + pathnameRegexPattern);
