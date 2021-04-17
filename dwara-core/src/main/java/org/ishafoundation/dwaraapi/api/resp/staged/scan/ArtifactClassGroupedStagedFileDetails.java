@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class ArtifactClassGroupedStagedFileDetails {
 	private String artifactclass;
+	private List<String> volumeGroup;
 	private Integer artifactTotalCount;
 	private Integer artifactWarnCount;
 	private Integer artifactErrorCount;
@@ -18,6 +19,12 @@ public class ArtifactClassGroupedStagedFileDetails {
 	}
 	public void setArtifactclass(String artifactclass) {
 		this.artifactclass = artifactclass;
+	}
+	public List<String> getVolumeGroup() {
+		return volumeGroup;
+	}
+	public void setVolumeGroup(List<String> volumeGroup) {
+		this.volumeGroup = volumeGroup;
 	}
 	public Integer getArtifactTotalCount() {
 		return artifactTotalCount;

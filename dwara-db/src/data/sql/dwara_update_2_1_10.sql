@@ -66,7 +66,10 @@ UPDATE `dwara`.`artifactclass` SET `display_order` = '46' WHERE (`id` = 'video-d
 UPDATE `volume` SET `details`='{\"blocksize\": 262144, \"minimum_free_space\":10995116277760}' WHERE `type`='group' and `id` not in ('G1', 'G2', 'G3', 'X1', 'X2', 'X3');
 
 -- 1 TB
-UPDATE `volume` SET `details`='{\"blocksize\": 262144, \"minimum_free_space\": 1099511627776}' WHERE `type`='group' and `id` in ('G1', 'G2', 'G3', 'X1', 'X2', 'X3');
+UPDATE `volume` SET `details`='{\"blocksize\": 262144, \"minimum_free_space\": 1099511627776}' WHERE `type`='group' and `id` in ('G1', 'G2', 'G3');
+
+-- 
+UPDATE `volume` SET `details`='{\"blocksize\": 262144, \"minimum_free_space\": 1099511627776,  \"remove_after_job\": true}' WHERE `type`='group' and `id` in ('X1', 'X2', 'X3');
 
 -- Commenting out as better done using programming 
 -- For some reason sequencenumber after 9350 got reset to 9265 again 
