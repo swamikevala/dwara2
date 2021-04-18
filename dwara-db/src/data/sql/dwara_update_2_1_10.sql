@@ -89,7 +89,7 @@ UPDATE `flowelement` SET `task_config`='{\"destination_id\": \"bru-qc\", \"pathn
 
 
 -- artifactclass config relative to artifact folder change
-UPDATE `artifactclass` SET `config`='{\"pathname_regex\": \"([^/]+/?){1}|Outputs?/[^/]+\\\\.mov\"}' WHERE `id` in ('video-edit-pub','video-edit-priv1','video-edit-priv2','video-edit-tr-pub','video-edit-tr-priv1','video-edit-tr-priv2');
+UPDATE `artifactclass` SET `config`='{\"pathname_regex\": \"[^/]+|Outputs?/[^/]+\\\\.mov\"}' WHERE `id` in ('video-edit-pub','video-edit-priv1','video-edit-priv2','video-edit-tr-pub','video-edit-tr-priv1','video-edit-tr-priv2');
 
 
 -- todo
