@@ -128,37 +128,26 @@ UPDATE `artifactclass` SET `description` = 'video proxy' WHERE (`id` = 'video-pr
 UPDATE `artifactclass` SET `description` = 'video' WHERE (`id` = 'video-priv3');
 UPDATE `artifactclass` SET `description` = 'video' WHERE (`id` = 'video-pub');
 UPDATE `artifactclass` SET `description` = 'video proxy' WHERE (`id` = 'video-pub-proxy-low');
+UPDATE `artifactclass` SET `description` = 'edited photo' WHERE (`id` = 'photo-edit-priv2');
+UPDATE `artifactclass` SET `description` = 'edited photo proxy' WHERE (`id` = 'photo-edit-priv2-proxy');
+UPDATE `artifactclass` SET `description` = 'edited photo' WHERE (`id` = 'photo-edit-pub');
+UPDATE `artifactclass` SET `description` = 'edited photo proxy' WHERE (`id` = 'photo-edit-pub-proxy');
+UPDATE `artifactclass` SET `description` = 'photo' WHERE (`id` = 'photo-priv2');
+UPDATE `artifactclass` SET `description` = 'photo proxy' WHERE (`id` = 'photo-priv2-proxy');
+UPDATE `artifactclass` SET `description` = 'photo' WHERE (`id` = 'photo-pub');
+UPDATE `artifactclass` SET `description` = 'photo proxy' WHERE (`id` = 'photo-pub-proxy');
 
 
-UPDATE `artifactclass` SET `display_order` = '1' WHERE (`id` = 'audio-pub');
-UPDATE `artifactclass` SET `display_order` = '2' WHERE (`id` = 'audio-priv3');
-UPDATE `artifactclass` SET `display_order` = '3' WHERE (`id` = 'audio-priv2');
-UPDATE `artifactclass` SET `display_order` = '4' WHERE (`id` = 'audio-priv1');
-UPDATE `artifactclass` SET `display_order` = '11' WHERE (`id` = 'video-pub');
-UPDATE `artifactclass` SET `display_order` = '12' WHERE (`id` = 'video-priv1');
-UPDATE `artifactclass` SET `display_order` = '13' WHERE (`id` = 'video-priv2');
-UPDATE `artifactclass` SET `display_order` = '14' WHERE (`id` = 'video-priv3');
-UPDATE `artifactclass` SET `display_order` = '16' WHERE (`id` = 'video-priv1-proxy-low');
-UPDATE `artifactclass` SET `display_order` = '17' WHERE (`id` = 'video-priv2-proxy-low');
-UPDATE `artifactclass` SET `display_order` = '15' WHERE (`id` = 'video-pub-proxy-low');
-UPDATE `artifactclass` SET `display_order` = '21' WHERE (`id` = 'video-digi-2020-pub');
-UPDATE `artifactclass` SET `display_order` = '22' WHERE (`id` = 'video-digi-2020-priv1');
-UPDATE `artifactclass` SET `display_order` = '23' WHERE (`id` = 'video-digi-2020-priv2');
-UPDATE `artifactclass` SET `display_order` = '24' WHERE (`id` = 'video-digi-2020-pub-proxy-low');
-UPDATE `artifactclass` SET `display_order` = '25' WHERE (`id` = 'video-digi-2020-priv1-proxy-low');
-UPDATE `artifactclass` SET `display_order` = '26' WHERE (`id` = 'video-digi-2020-priv2-proxy-low');
-UPDATE `artifactclass` SET `display_order` = '31' WHERE (`id` = 'video-edit-pub');
-UPDATE `artifactclass` SET `display_order` = '32' WHERE (`id` = 'video-edit-priv1');
-UPDATE `artifactclass` SET `display_order` = '33' WHERE (`id` = 'video-edit-priv2');
-UPDATE `artifactclass` SET `display_order` = '34' WHERE (`id` = 'video-edit-pub-proxy-low');
-UPDATE `artifactclass` SET `display_order` = '35' WHERE (`id` = 'video-edit-priv1-proxy-low');
-UPDATE `artifactclass` SET `display_order` = '36' WHERE (`id` = 'video-edit-priv2-proxy-low');
-UPDATE `artifactclass` SET `display_order` = '41' WHERE (`id` = 'video-digi-2020-edit-pub');
-UPDATE `artifactclass` SET `display_order` = '42' WHERE (`id` = 'video-digi-2020-edit-priv1');
-UPDATE `artifactclass` SET `display_order` = '43' WHERE (`id` = 'video-digi-2020-edit-priv2');
-UPDATE `artifactclass` SET `display_order` = '44' WHERE (`id` = 'video-digi-2020-edit-pub-proxy-low');
-UPDATE `artifactclass` SET `display_order` = '45' WHERE (`id` = 'video-digi-2020-edit-priv1-proxy-low');
-UPDATE `artifactclass` SET `display_order` = '46' WHERE (`id` = 'video-digi-2020-edit-priv2-proxy-low');
+UPDATE `artifactclass` SET `display_order` = '1' WHERE (`id` like 'audio-p%');
+
+UPDATE `artifactclass` SET `display_order` = '2' WHERE (`id` like 'video-p%');
+UPDATE `artifactclass` SET `display_order` = '3' WHERE (`id` like 'video-digi-2020-p%');
+UPDATE `artifactclass` SET `display_order` = '4' WHERE (`id` like 'video-digi-2020-edit-p%');
+UPDATE `artifactclass` SET `display_order` = '5' WHERE (`id` like 'video-edit-p%');
+UPDATE `artifactclass` SET `display_order` = '6' WHERE (`id` like 'video-edit-tr-p%');
+
+UPDATE `artifactclass` SET `display_order` = '7' WHERE (`id` like 'photo-p%');
+UPDATE `artifactclass` SET `display_order` = '8' WHERE (`id` like 'photo-edit-p%');
 
 -- SET foreign_key_checks = 0; 
 
@@ -190,5 +179,3 @@ UPDATE `volume` SET `details`='{\"blocksize\": 262144, \"minimum_free_space\": 1
 -- UPDATE `sequence` SET `current_number`='last seq no + total dupes somehting liek (9487 + 86)' WHERE `id`='video-edit-grp';
 
 -- SET foreign_key_checks = 1;
-
-
