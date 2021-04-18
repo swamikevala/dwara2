@@ -28,14 +28,17 @@ import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Extension;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -44,6 +47,9 @@ public class StagedFileEvaluator {
 
 	@Autowired
 	private ExtensionDao extensionDao;
+	
+	@Autowired
+	private FlowelementDao flowelementDao;
 
 	@Autowired
 	private Configuration config;
@@ -52,16 +58,20 @@ public class StagedFileEvaluator {
 	private DomainUtil domainUtil;
 
 	@Autowired
-	protected SequenceUtil sequenceUtil;
+	private SequenceUtil sequenceUtil;
 	
 	@Autowired
-	protected Configuration configuration;
+	private ProcessingJobManager processingJobManager;
+	
+	@Autowired
+	private Configuration configuration;
 
 	private List<Pattern> excludedFileNamesRegexList = new ArrayList<Pattern>();
 	private Pattern allowedChrsInFileNamePattern = null;
 	private Pattern photoSeriesArtifactclassArifactNamePattern = null;
 	private static SimpleDateFormat photoSeriesArtifactNameDateFormat = new SimpleDateFormat("yyyyMMdd");
-	
+	private String editedTrSeriesFlowelementTaskconfigPathnameRegex = null;
+	private Set<String> supportedExtns = null;
 	
 	@PostConstruct
 	public void getExcludedFileNamesRegexList() {
@@ -74,17 +84,18 @@ public class StagedFileEvaluator {
 			Pattern nthJunkFilesFinderRegexPattern = Pattern.compile(junkFilesFinderRegexPatternList[i]);
 			excludedFileNamesRegexList.add(nthJunkFilesFinderRegexPattern);
 		}
+		Iterable<Extension> extensionList = extensionDao.findAllByIgnoreIsTrueOrFiletypesIsNotNull();
+		supportedExtns = new TreeSet<String>();
+		for (Extension extension : extensionList) {
+			supportedExtns.add(extension.getId().toLowerCase());
+		}
+		Flowelement flowelement =  flowelementDao.findByFlowIdAndProcessingtaskIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc("video-edit-tr-proxy-flow", "video-proxy-low-gen");
+		editedTrSeriesFlowelementTaskconfigPathnameRegex = flowelement.getTaskconfig().getPathnameRegex();
 	}
 	
 	public StagedFileDetails evaluateAndGetDetails(Domain domain, Sequence sequence, String sourcePath, File nthIngestableFile){
 		long size = 0;
 		int fileCount = 0;
-		
-		Iterable<Extension> extensionList = extensionDao.findAllByIgnoreIsTrueOrFiletypesIsNotNull();
-		Set<String> supportedExtns =  new TreeSet<String>();
-		for (Extension extension : extensionList) {
-			supportedExtns.add(extension.getId().toLowerCase());
-		}
 		
 		Set<String> unSupportedExtns = new TreeSet<String>();
 		List<Error> errorList = new ArrayList<Error>();
@@ -255,6 +266,17 @@ public class StagedFileEvaluator {
 				
 			}
 		}
+		
+		// Hack for video-edit-tr* - If the folder structure doesnt match to the standards and arent any files to be proxied
+		if(FilenameUtils.getBaseName(sourcePath).startsWith("video-edit-tr")) { // validation only for video-edit-tr* artifactclass
+			if(!processingJobManager.isJobToBeCreated("video-proxy-low-gen", sourcePath, editedTrSeriesFlowelementTaskconfigPathnameRegex)) {
+				Error error = new Error();
+				error.setType(Errortype.Error);
+				error.setMessage("Restructure folder. Has no files to be proxied. No match for " + editedTrSeriesFlowelementTaskconfigPathnameRegex);
+				errorList.add(error);
+			}
+		}
+		
 
 		StagedFileDetails nthIngestFile = new StagedFileDetails();
 		

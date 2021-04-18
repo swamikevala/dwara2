@@ -262,7 +262,6 @@ public class StagedService extends DwaraService{
 			Request userRequest = createUserRequest(Action.ingest, ingestUserRequest);
 	    	int userRequestId = userRequest.getId();
 
-
 			List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
 			Map<String, Artifactclass> id_artifactclassMap = new HashMap<String, Artifactclass>();
 			for (Artifactclass nthArtifactclass : artifactclassList) {
@@ -513,8 +512,7 @@ public class StagedService extends DwaraService{
 					String readyToIngestPath =  artifactclass.getPathPrefix();
 					Domain domain = artifactclass.getDomain();
 					Sequence sequence = artifactclass.getSequence();
-					
-		    		String stagedFileName = stagedFile.getName();
+					String stagedFileName = stagedFile.getName();
 	
 		        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, stagedFileName);
 		        	
@@ -852,7 +850,6 @@ public class StagedService extends DwaraService{
 			}
 			if(pathnameReqexVisitor != null) {
 				libraryFileAndDirsList = pathnameReqexVisitor.getFileList();
-				libraryFileAndDirsList.add(stagedFileInAppReadyToIngest);
 			}
 		}
 		else {

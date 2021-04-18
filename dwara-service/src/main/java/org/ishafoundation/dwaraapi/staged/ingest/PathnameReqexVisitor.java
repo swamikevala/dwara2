@@ -18,6 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,7 @@ public class PathnameReqexVisitor extends SimpleFileVisitor<Path> {
 	private Pattern pathnameRegexPattern = null;
 	private String junkFilesStagedDirName = null;
 	
-	private Collection<java.io.File> fileList = new ArrayList<java.io.File>();
+	private Collection<File> fileList = new ArrayList<File>();
 		
 	public PathnameReqexVisitor(String pathPrefix, String artifactName, String pathnameRegex, String junkFilesStagedDirName) {
 		this.pathPrefix = pathPrefix;
@@ -43,8 +44,17 @@ public class PathnameReqexVisitor extends SimpleFileVisitor<Path> {
 	@Override
 	public FileVisitResult preVisitDirectory(Path dir,
 			BasicFileAttributes attrs) {
-
-		String dirPathname = dir.toString().replace(pathPrefix + java.io.File.separator + artifactName + java.io.File.separator, "");
+		
+		String dirPathname = dir.toString().replace(pathPrefix + File.separator + artifactName, "");
+		if(StringUtils.isBlank(dirPathname)) { // add artifact folder straight
+			fileList.add(dir.toFile());
+			return CONTINUE;
+		}
+			
+		
+		if(dirPathname.startsWith(File.separator))
+			dirPathname = dirPathname.substring(1);
+			
 		Matcher pathnameRegexMatcher = pathnameRegexPattern.matcher(FilenameUtils.separatorsToUnix(dirPathname));
 		
 		if(!pathnameRegexMatcher.matches() || dir.getFileName().toString().equals(junkFilesStagedDirName)) {
@@ -60,7 +70,7 @@ public class PathnameReqexVisitor extends SimpleFileVisitor<Path> {
 	public FileVisitResult visitFile(Path file,
 			BasicFileAttributes attrs) {
 		logger.trace("visited file - " + file.toString());
-		Matcher pathnameRegexMatcher = pathnameRegexPattern.matcher(FilenameUtils.separatorsToUnix(file.toString().replace(pathPrefix + java.io.File.separator, "")));
+		Matcher pathnameRegexMatcher = pathnameRegexPattern.matcher(FilenameUtils.separatorsToUnix(file.toString().replace(pathPrefix + File.separator + artifactName + File.separator, "")));
 		
 		if(pathnameRegexMatcher.matches()) {
 			logger.trace("matches regex - " + pathnameRegexPattern);
@@ -69,11 +79,11 @@ public class PathnameReqexVisitor extends SimpleFileVisitor<Path> {
 		return CONTINUE;
 	}
 
-	public Collection<java.io.File> getFileList() {
+	public Collection<File> getFileList() {
 		return fileList;
 	}
 
-	public void setFileList(Collection<java.io.File> fileList) {
+	public void setFileList(Collection<File> fileList) {
 		this.fileList = fileList;
 	}
 
