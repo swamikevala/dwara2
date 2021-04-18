@@ -74,10 +74,6 @@ public class Initialize extends AbstractStoragetaskAction{
 		volume.setType(Volumetype.physical);
 
 		Volume volumeGroup = volumeDao.findById(volumeGroupId).get();
-		volumeGroup.getSequence().incrementCurrentNumber();
-//		Sequence sequence = volumeGroup.getSequence(); 
-//		sequence.setCurrrentNumber(sequence.getCurrrentNumber() + 1);
-//		volumeGroup.setSequence(sequence);
 		volume.setGroupRef(volumeGroup);
 
 		String checksumalgorithm = configuration.getChecksumType();

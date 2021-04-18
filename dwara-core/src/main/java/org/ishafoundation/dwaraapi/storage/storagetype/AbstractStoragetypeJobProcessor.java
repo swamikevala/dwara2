@@ -16,6 +16,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
+import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
@@ -26,6 +27,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDa
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
@@ -62,6 +64,9 @@ public abstract class AbstractStoragetypeJobProcessor {
 
 	@Autowired
 	private VolumeDao volumeDao;
+
+	@Autowired
+	private SequenceDao sequenceDao;
 	
 	@Autowired
 	private DestinationDao destinationDao;
@@ -124,6 +129,11 @@ public abstract class AbstractStoragetypeJobProcessor {
 		Volume volume = storageJob.getVolume();
 		volume = volumeDao.save(volume);
 		logger.trace("Volume " + volume.getId() + " attached to dwara succesfully");
+
+		Sequence sequence = volume.getGroupRef().getSequence(); 
+		sequence.incrementCurrentNumber(); //setCurrrentNumber(sequence.getCurrrentNumber() + 1);
+		Sequence updatedSequence = sequenceDao.save(sequence);
+		logger.trace(sequence.getId() + " currentNumber updated to " + updatedSequence.getCurrrentNumber());
 		
 		Job job = storageJob.getJob();
 		job.setVolume(volume);
