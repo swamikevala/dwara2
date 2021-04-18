@@ -17,7 +17,7 @@
 
 ### Maintenance
 
-1) Soft rename artifacts with overlapping Sequence code - 
+1) Soft rename artifacts with overlapping Sequence code - Call API end point from swagger: /fixSeqCodeForEdited 
 
 ### Upgrade steps
 
@@ -27,7 +27,7 @@
 
 > scheduler.blankTapeAutoInitializer.cronExpression=0 0 * ? * *
 
-2) Call API end point from swagger: /fixSeqCodeForEdited
+2) Update dwara-operations shell script
 
 # Dwara App Version - 2.1.16 (4th Apr 2021)
 ### New features

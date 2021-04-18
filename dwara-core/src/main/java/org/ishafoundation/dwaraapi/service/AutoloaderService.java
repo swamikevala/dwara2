@@ -232,7 +232,7 @@ public class AutoloaderService{
 			tape.setUsageStatus(usageStatus);
 			tape.setStatus(tapeStatus);
 			
-			if(getBlankTapesOnly && tapeStatus == TapeStatus.blank) // only add blank tapes to blank tapes call
+			if(!getBlankTapesOnly || (getBlankTapesOnly && tapeStatus == TapeStatus.blank)) // only add blank tapes to blank tapes call
 				tapes.add(tape);
 		}
 		return tapes;
