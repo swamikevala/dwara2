@@ -844,7 +844,7 @@ public class StagedService extends DwaraService{
 			pathnameRegex = artifactclassConfig.getPathnameRegex();
 		
 		if(pathnameRegex != null) { // if artifactclass_processingtask has a pathregex we need to only get the processable files from that folder path and not from the entire archives directory... e.g., video-pub-edit will have .mov files under output folder
-			PathnameReqexVisitor pathnameReqexVisitor = new PathnameReqexVisitor(pathPrefix, pathnameRegex, junkFilesStagedDirName);
+			PathnameReqexVisitor pathnameReqexVisitor = new PathnameReqexVisitor(pathPrefix, artifact.getName(), pathnameRegex, junkFilesStagedDirName);
 			try {
 				Files.walkFileTree(stagedFileInAppReadyToIngest.toPath(), pathnameReqexVisitor);
 			} catch (IOException e) {
@@ -852,6 +852,7 @@ public class StagedService extends DwaraService{
 			}
 			if(pathnameReqexVisitor != null) {
 				libraryFileAndDirsList = pathnameReqexVisitor.getFileList();
+				libraryFileAndDirsList.add(stagedFileInAppReadyToIngest);
 			}
 		}
 		else {

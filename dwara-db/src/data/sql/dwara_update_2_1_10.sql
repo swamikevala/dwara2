@@ -56,7 +56,7 @@ INSERT INTO `flow` ( `id`, `description`) VALUES
 
 -- FLOW_ELEMENT --
 INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `flow_ref_id`, `processingtask_id`, `storagetask_action_id`, `task_config`) VALUES
-('U26', 1, null, 0, 1, 'video-edit-tr-proxy-flow', null, 'video-proxy-low-gen', null, '{\"pathname_regex\": \"(Video Output/|Output_)[^/]+\\\\.(mov|mp4)$\"}'),
+('U26', 1, null, 0, 1, 'video-edit-tr-proxy-flow', null, 'video-proxy-low-gen', null, '{\"pathname_regex\": \"(Video Output/|Output_)[^/]+\\\\.(mov|mp4)\"}'),
 ('U27', 1, '["U26"]', 0, 2, 'video-edit-tr-proxy-flow', null, 'video-mam-update', null, null),
 ('U28', 1, '["U26"]', 0, 3, 'video-edit-tr-proxy-flow', 'archive-flow', null, null, null);
 
@@ -77,11 +77,20 @@ UPDATE `flowelement` SET `deprecated` = 1 WHERE `id` = 'U19';
 UPDATE `flowelement` SET `deprecated` = 1 WHERE `id` = 'U20';
 -- digi-2020 pfr-meta-extract should be dependent on preservation-gen NOT on mxf file-delete 
 UPDATE `flowelement` SET `dependencies` = '["U5"]' WHERE `id` = 'U9';
+-- digi-2020 pfr-meta-extract need be put on hold...
+UPDATE `flowelement` SET `task_config`=NULL WHERE `id`='U9';
 -- digi-2020 proxy flow should be dependent on pfr-meta-extract NOT on mxf file-delete
-UPDATE `flowelement` SET `dependencies` = '["U9"]' WHERE `id` = 'U8';
+-- digi-2020 proxy flow should NOT be dependent on pfr-meta-extract as output artifact path of pfr = input artifact path of proxy and so files missing... So make it a dependency of video-digi-2020-preservation-gen U5 itself 
+UPDATE `flowelement` SET `dependencies` = '["U5"]' WHERE `id` = 'U10';
 -- pathname_regex to be configured such that it has only path inside the Artifact folder...  
-UPDATE `flowelement` SET `task_config`='{\"pathname_regex\": \"mxf/[^/]+\\\\.mxf$\"}' WHERE `id`='U7';
-UPDATE `flowelement` SET `task_config`='{\"pathname_regex\": \"Outputs?/[^/]+\\\\.mov$\"}' WHERE `id`='U15';
+UPDATE `flowelement` SET `task_config`='{\"pathname_regex\": \"mxf/[^/]+\\\\.mxf\"}' WHERE `id`='U7';
+UPDATE `flowelement` SET `task_config`='{\"pathname_regex\": \"Outputs?/[^/]+\\\\.mov\"}' WHERE `id`='U15';
+UPDATE `flowelement` SET `task_config`='{\"destination_id\": \"bru-qc\", \"pathname_regex\": \"[^/]+\\\\.mkv\"}' WHERE `id`='U14';
+
+
+-- artifactclass config relative to artifact folder change
+UPDATE `artifactclass` SET `config`='{\"pathname_regex\": \"([^/]+/?){1}|Outputs?/[^/]+\\\\.mov\"}' WHERE `id` in ('video-edit-pub','video-edit-priv1','video-edit-priv2','video-edit-tr-pub','video-edit-tr-priv1','video-edit-tr-priv2');
+
 
 -- todo
 -- make video-edit-proxy-flow also transcode top level mp4/mov files for swami nirvichara priv2 content -- needs discussion

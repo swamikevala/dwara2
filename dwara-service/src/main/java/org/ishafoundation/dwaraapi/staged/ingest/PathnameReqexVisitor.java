@@ -27,13 +27,15 @@ public class PathnameReqexVisitor extends SimpleFileVisitor<Path> {
 	private static final Logger logger = LoggerFactory.getLogger(PathnameReqexVisitor.class);
 
 	private String pathPrefix = null;
+	private String artifactName = null;
 	private Pattern pathnameRegexPattern = null;
 	private String junkFilesStagedDirName = null;
 	
 	private Collection<java.io.File> fileList = new ArrayList<java.io.File>();
 		
-	public PathnameReqexVisitor(String pathPrefix, String pathnameRegex, String junkFilesStagedDirName) {
+	public PathnameReqexVisitor(String pathPrefix, String artifactName, String pathnameRegex, String junkFilesStagedDirName) {
 		this.pathPrefix = pathPrefix;
+		this.artifactName = artifactName;
 		pathnameRegexPattern = Pattern.compile(pathnameRegex);
 		this.junkFilesStagedDirName = junkFilesStagedDirName;
 	}
@@ -42,7 +44,7 @@ public class PathnameReqexVisitor extends SimpleFileVisitor<Path> {
 	public FileVisitResult preVisitDirectory(Path dir,
 			BasicFileAttributes attrs) {
 
-		String dirPathname = dir.toString().replace(pathPrefix + java.io.File.separator, "");
+		String dirPathname = dir.toString().replace(pathPrefix + java.io.File.separator + artifactName + java.io.File.separator, "");
 		Matcher pathnameRegexMatcher = pathnameRegexPattern.matcher(FilenameUtils.separatorsToUnix(dirPathname));
 		
 		if(!pathnameRegexMatcher.matches() || dir.getFileName().toString().equals(junkFilesStagedDirName)) {
@@ -84,7 +86,7 @@ public class PathnameReqexVisitor extends SimpleFileVisitor<Path> {
 		//String pathnameRegex = ".*\\\\Output\\\\[^\\\\]*.mov$";
 //		String pathnameRegex = "\\\\.mxf$";
 		String pathnameRegex = "^([^\\/]+\\/?){1,2}$|^[^\\/]+\\/Output[s]?\\/.+\\.mov$";
-		PathnameReqexVisitor pathnameReqexVisitor = new PathnameReqexVisitor("C:\\data\\staged", pathnameRegex, ".junk");
+		PathnameReqexVisitor pathnameReqexVisitor = new PathnameReqexVisitor("C:\\data\\staged", "someArtifactName", pathnameRegex, ".junk");
 		try {
 			Files.walkFileTree(Paths.get(inputArtifactPath), pathnameReqexVisitor);
 		} catch (IOException e) {
