@@ -16,8 +16,8 @@ INSERT INTO `artifactclass` (`id`, `description`, `domain_id`, `sequence_id`, `s
 ('video-edit-tr-priv1', 'edited video tr', 1, 'video-edit-tr-pub', 1, 1, 2, '/data/dwara/staged', null, 0, '{\"pathname_regex\": \"^([^/]+/?){1,2}$|^[^/]+/Outputs?/[^/]+\\\\.mov$\"}'),
 ('video-edit-tr-priv2', 'edited video tr', 1, 'video-edit-tr-priv2', 1, 1, 3, '/data/dwara/staged', null, 0, '{\"pathname_regex\": \"^([^/]+/?){1,2}$|^[^/]+/Outputs?/[^/]+\\\\.mov$\"}'),
 ('video-edit-tr-pub-proxy-low', 'edited video tr proxy', 1, 'video-edit-tr-pub-proxy-low', 0, 1, 0, '/data/dwara/transcoded', 'video-edit-tr-pub', 0, null),
-('video-edit-tr-pub-proxy-priv1', 'edited video tr proxy', 1, 'video-edit-tr-pub-proxy-low', 0, 1, 0, '/data/dwara/transcoded', 'video-edit-tr-priv1', 0, null),
-('video-edit-tr-pub-proxy-priv2', 'edited video tr proxy', 1, 'video-edit-tr-priv2-proxy-low', 0, 1, 0, '/data/dwara/transcoded', 'video-edit-tr-priv2', 0, null);
+('video-edit-tr-priv1-proxy-low', 'edited video tr proxy', 1, 'video-edit-tr-pub-proxy-low', 0, 1, 0, '/data/dwara/transcoded', 'video-edit-tr-priv1', 0, null),
+('video-edit-tr-priv2-proxy-low', 'edited video tr proxy', 1, 'video-edit-tr-priv2-proxy-low', 0, 1, 0, '/data/dwara/transcoded', 'video-edit-tr-priv2', 0, null);
 
 -- ARTIFACTCLASS_VOLUME --
 INSERT INTO `artifactclass_volume` (`artifactclass_id`, `volume_id`, `encrypted`, `active`) VALUES 
