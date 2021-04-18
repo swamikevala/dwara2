@@ -1,11 +1,33 @@
-scheduler.blankTapeAutoInitializer.cronExpression=0 0 * ? * *
+# Dwara App Version - 2.1.17 (18th Apr 2021)
+### New features
 
-10 TB
-UPDATE `volume` SET `details`='{\"blocksize\": 262144, \"minimum_free_space\":10995116277760}' WHERE `type`='group' and `id` not in ('G1', 'G2', 'G3', 'X1', 'X2', 'X3');
+0) Edited (Translations) support - flowelement.pathnameregex processing layer changed - needs regression
 
-1 TB
-UPDATE `volume` SET `details`='{\"blocksize\": 262144, \"minimum_free_space\": 1099511627776}' WHERE `type`='group' and `id` in ('G1', 'G2', 'G3', 'X1', 'X2', 'X3');
+1) Support for scanning artifacts globally across artifactclasses
 
+2) Auto initialising blank tapes - Needs the application.properties entry mentioned in upgrade steps section
+
+3) Next barcode to be printed
+
+4) Support showing username and not path in scanned resultset
+
+5) Tapes Handling - load/unload tapes from library
+
+6) Support search on completed date range on /request API
+
+### Maintenance
+
+1) Soft rename artifacts with overlapping Sequence code - Call API end point from swagger: /fixSeqCodeForEdited 
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_10.sql)
+
+1) application.properties to have the below entry
+
+> scheduler.blankTapeAutoInitializer.cronExpression=0 0 * ? * *
+
+2) Update dwara-operations shell script
 
 # Dwara App Version - 2.1.16 (4th Apr 2021)
 ### New features

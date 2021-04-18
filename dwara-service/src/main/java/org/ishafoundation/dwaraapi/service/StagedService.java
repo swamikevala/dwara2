@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
@@ -35,6 +37,7 @@ import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassUserDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
@@ -45,6 +48,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.ArtifactclassCo
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Extension;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassUser;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -90,6 +94,9 @@ public class StagedService extends DwaraService{
 	
 	@Autowired
 	private ActionArtifactclassUserDao artifactclassActionUserDao;
+
+	@Autowired
+	private ArtifactclassVolumeDao artifactclassVolumeDao;
 	
 	@Autowired
 	private TFileDao tFileDao;
@@ -136,6 +143,23 @@ public class StagedService extends DwaraService{
 	@Autowired
 	private TagService tagService;
 
+	private Map<String, List<String>> artifactClass_volumeGroups_Map = new HashMap<String, List<String>>();
+	
+	@PostConstruct
+	public void getExcludedFileNamesRegexList() {
+    	List<ArtifactclassVolume> artifactclassVolumeList = (List<ArtifactclassVolume>) artifactclassVolumeDao.findAll();
+
+		for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {
+			String grpVolumeId = artifactclassVolume.getVolume().getId();
+			String artifactclassId = artifactclassVolume.getArtifactclass().getId();
+			List<String> volumeGroupList = artifactClass_volumeGroups_Map.get(artifactclassId);
+			if(volumeGroupList == null)
+				volumeGroupList = new ArrayList<String>();
+			volumeGroupList.add(grpVolumeId);
+			artifactClass_volumeGroups_Map.put(artifactclassId, volumeGroupList);
+		}		
+	}
+
     public List<ArtifactClassGroupedStagedFileDetails> getAllIngestableFiles(){
     	List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
     	List<ArtifactClassGroupedStagedFileDetails> artifactClassGroupedStagedFileDetailsList = new ArrayList<ArtifactClassGroupedStagedFileDetails>();
@@ -149,6 +173,7 @@ public class StagedService extends DwaraService{
 	    		if(stagedFileCnt > 0) {
 		    		ArtifactClassGroupedStagedFileDetails artifactClassGroupedStagedFileDetails = new ArtifactClassGroupedStagedFileDetails();
 		    		artifactClassGroupedStagedFileDetails.setArtifactclass(artifactclassId);
+		    		artifactClassGroupedStagedFileDetails.setVolumeGroup(artifactClass_volumeGroups_Map.get(artifactclassId));
 		    		artifactClassGroupedStagedFileDetails.setArtifactTotalCount(stagedFileCnt);
 		    		//artifactClassGroupedStagedFileDetails.setArtifactWarnCount(0);
 		    		//artifactClassGroupedStagedFileDetails.setArtifactErrorCount(0);
@@ -236,7 +261,6 @@ public class StagedService extends DwaraService{
     	try{
 			Request userRequest = createUserRequest(Action.ingest, ingestUserRequest);
 	    	int userRequestId = userRequest.getId();
-
 
 			List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
 			Map<String, Artifactclass> id_artifactclassMap = new HashMap<String, Artifactclass>();
@@ -488,8 +512,7 @@ public class StagedService extends DwaraService{
 					String readyToIngestPath =  artifactclass.getPathPrefix();
 					Domain domain = artifactclass.getDomain();
 					Sequence sequence = artifactclass.getSequence();
-					
-		    		String stagedFileName = stagedFile.getName();
+					String stagedFileName = stagedFile.getName();
 	
 		        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, stagedFileName);
 		        	
@@ -819,7 +842,7 @@ public class StagedService extends DwaraService{
 			pathnameRegex = artifactclassConfig.getPathnameRegex();
 		
 		if(pathnameRegex != null) { // if artifactclass_processingtask has a pathregex we need to only get the processable files from that folder path and not from the entire archives directory... e.g., video-pub-edit will have .mov files under output folder
-			PathnameReqexVisitor pathnameReqexVisitor = new PathnameReqexVisitor(pathPrefix, pathnameRegex, junkFilesStagedDirName);
+			PathnameReqexVisitor pathnameReqexVisitor = new PathnameReqexVisitor(pathPrefix, artifact.getName(), pathnameRegex, junkFilesStagedDirName);
 			try {
 				Files.walkFileTree(stagedFileInAppReadyToIngest.toPath(), pathnameReqexVisitor);
 			} catch (IOException e) {

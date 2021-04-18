@@ -9,4 +9,6 @@ public interface FlowelementDao extends CrudRepository<Flowelement,String> {
 	
 	List<Flowelement> findAllByFlowIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc(String flowId);
 	
+	Flowelement findByFlowIdAndProcessingtaskIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc(String flowId, String processingtaskId);
+	
 }
