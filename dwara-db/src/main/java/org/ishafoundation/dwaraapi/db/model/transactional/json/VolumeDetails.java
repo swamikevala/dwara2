@@ -15,7 +15,7 @@ public class VolumeDetails {
 	@JsonProperty("remove_after_job")
 	private Boolean removeAfterJob; // Set this for tapes which should be removed from the autoloader as soon as any job is completed. Used for managing the security of tapes that hold confidential data.
 	@JsonProperty("minimum_free_space")
-	private long minimumFreeSpace; 
+	private Long minimumFreeSpace; 
 	
 	public Boolean getBarcoded() {
 		return barcoded;
@@ -53,10 +53,10 @@ public class VolumeDetails {
 	public void setRemoveAfterJob(Boolean removeAfterJob) {
 		this.removeAfterJob = removeAfterJob;
 	}
-	public long getMinimumFreeSpace() {
+	public Long getMinimumFreeSpace() {
 		return minimumFreeSpace;
 	}
-	public void setMinimumFreeSpace(long minimumFreeSpace) {
+	public void setMinimumFreeSpace(Long minimumFreeSpace) {
 		this.minimumFreeSpace = minimumFreeSpace;
 	}
 	// TODO : equals and hashCode
