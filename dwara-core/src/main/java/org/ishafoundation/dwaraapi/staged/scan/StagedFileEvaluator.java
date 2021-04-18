@@ -268,14 +268,14 @@ public class StagedFileEvaluator {
 		}
 		
 		// Hack for video-edit-tr* - If the folder structure doesnt match to the standards and arent any files to be proxied
-//		if(FilenameUtils.getBaseName(sourcePath).startsWith("video-edit-tr")) { // validation only for video-edit-tr* artifactclass
-//			if(!processingJobManager.isJobToBeCreated("video-proxy-low-gen", sourcePath, editedTrSeriesFlowelementTaskconfigPathnameRegex)) {
-//				Error error = new Error();
-//				error.setType(Errortype.Error);
-//				error.setMessage("Restructure folder. Has no files to be proxied. No match for " + editedTrSeriesFlowelementTaskconfigPathnameRegex);
-//				errorList.add(error);
-//			}
-//		}
+		if(FilenameUtils.getBaseName(sourcePath).startsWith("video-edit-tr")) { // validation only for video-edit-tr* artifactclass
+			if(!processingJobManager.isJobToBeCreated("video-proxy-low-gen", nthIngestableFile.getAbsolutePath(), editedTrSeriesFlowelementTaskconfigPathnameRegex)) {
+				Error error = new Error();
+				error.setType(Errortype.Error);
+				error.setMessage("Restructure folder. Has no files to be proxied. No match for " + editedTrSeriesFlowelementTaskconfigPathnameRegex);
+				errorList.add(error);
+			}
+		}
 		
 
 		StagedFileDetails nthIngestFile = new StagedFileDetails();

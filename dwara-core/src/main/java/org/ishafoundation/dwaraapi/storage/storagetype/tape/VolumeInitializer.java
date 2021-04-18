@@ -108,14 +108,15 @@ public class VolumeInitializer {
 			//Sort the list
 			Collections.sort(volumeNumericSequenceList);
 
+			int cnt = 0;
 			for (Integer volumeNumericSequence : volumeNumericSequenceList) {
+				cnt = cnt + 1;
 				InitializeUserRequest nthInitializeRequest = volumeNumericSequence_InitializeRequest.get(volumeNumericSequence);
 				String volumeId = nthInitializeRequest.getVolume();
 				if(nthInitializeRequest.getForce()) {
 					if(!configuration.isAllowForceOptionForTesting())
 						throw new DwaraException("Force option not supported just yet. Volume " + volumeId, null);
 				}
-					
 				
 				// #1 - Volume ids should not be in use
 				try {
@@ -125,7 +126,6 @@ public class VolumeInitializer {
 				catch (Exception e) {
 					
 				}
-					
 
 				// #5 - Volume Group should be defined (db)
 				String volumeGroupId = nthInitializeRequest.getVolumeGroup();
@@ -135,8 +135,9 @@ public class VolumeInitializer {
 
 
 				// #2 - Volume id sequence numbers should be contiguous
-				int currentNumber = volumeGroup.getSequence().getCurrrentNumber();
-				int expectedSequenceOnLabel = volumeGroup.getSequence().incrementCurrentNumber();
+				int currentNumber = volumeGroup.getSequence().getCurrrentNumber(); // Dont call incrementNumber here as Sequence associated with Volume gets the updated currentnumber saved as well even before init
+				int expectedSequenceOnLabel = currentNumber + cnt;
+
 				String prefix = volumeGroup.getSequence().getPrefix();
 				int sequenceOnLabel = getSequenceUsedOnVolumeLabel(volumeId, prefix);
 				if(sequenceOnLabel != expectedSequenceOnLabel)
@@ -150,7 +151,6 @@ public class VolumeInitializer {
 				
 				// #3 - Volume id validations required by the storagesubtype (e.g. L7 suffix for LTO-7 tapes)
 				storagesubtypeMap.get(storagesubtypeStr).validateVolumeId(volumeId);
-				
 				
 				// #4 - Volume blocksize should be multiple of 64KiB
 				int divisorInBytes = 65536; // 64 * 1024
@@ -182,6 +182,7 @@ public class VolumeInitializer {
 	public InitializeResponse initialize(String userName, List<InitializeUserRequest> initializeRequestList) throws Exception{
 		if(initializeRequestList.size() == 0)
 			return null;
+		
 		InitializeResponse initializeResponse = new InitializeResponse();
 		Request userRequest = new Request();
 		userRequest.setType(RequestType.user);
@@ -218,6 +219,7 @@ public class VolumeInitializer {
 			logger.info(DwaraConstants.SYSTEM_REQUEST + systemrequest.getId());
 
 			Job job = jobCreator.createJobs(systemrequest, null).get(0); // Initialize generates just one job
+
 			int jobId = job.getId();
 			Status status = job.getStatus();
 
