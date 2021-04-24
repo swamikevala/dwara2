@@ -25,7 +25,7 @@ public enum Categoryelement {
 	U(20, "U - Prison Program Material", "U", "Public"),
 	V(21, "V - Construction", "V", "Public"),
 	W(22, "W - Teachers Training", "W", "Private2"),
-	X(23, "X - Private Meetings", "X", "Private2"),
+	X(23, "X - Private Meetings", "X", "X-Public/Private"),
 	Z(24, "Z - Edited Material", "Z", "Z-Public/Private"),
 	AA(25, "AA - Vanashree Eco Center", "AA", "Public"),
 	AB(26, "AB - Sharing", "AB", "Public"),

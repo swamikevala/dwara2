@@ -1,3 +1,14 @@
+# Dwara App Version - 2.1.18 (25th Apr 2021)
+### Bug fix
+0) avoid clean up tapes during mapdrive and initialization
+
+1) Fixed restore for soft renamed artifacts
+
+2) Fixed handleTapes api removeAfterJob NPE 
+
+3) Added support for xcat on ingester
+  
+
 # Dwara App Version - 2.1.17 (18th Apr 2021)
 ### New features
 

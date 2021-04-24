@@ -25,6 +25,7 @@ public class Ingester {
 	
 	private static Path rootIngestLoc = null;
 	private static Path zCategoryFileLoc = null;
+	private static Path xCategoryFileLoc = null;
 	private static String ingestEndpointUrl = null;
 	private static Pattern categoryNamePrefixPattern = Pattern.compile("^([A-Z]{1,2})\\d+");
 	
@@ -52,39 +53,17 @@ public class Ingester {
 			String artifactClassFolderName = null;
 			String category = categoryElement.getCategory();
 			if(category.equals("Z-Public/Private")) {
-				
 				List<String> zCategoryEntries = FileUtils.readLines(zCategoryFileLoc.toFile());
-				String zcategory = null;
-				for (String nthZCategoryEntry : zCategoryEntries) {
-					if(nthZCategoryEntry.startsWith(artifactName + ",")) {
-						zcategory = StringUtils.substringAfterLast(nthZCategoryEntry, ",").trim();
-						break;
-					}
-				}
-
-				if(StringUtils.isBlank(zcategory)){
-					String msg = "Not able to categorize " + artifactName;
-					logger.error(msg);
-					throw new Exception(msg);
-				}
-
-				if(zcategory.equals("Public"))
-					artifactClassFolderName = "video-digi-2020-edit-pub";
-				else if(zcategory.equals("Private1"))
-					artifactClassFolderName = "video-digi-2020-edit-priv1";
-				else if(zcategory.equals("Private2"))
-					artifactClassFolderName = "video-digi-2020-edit-priv2";
-				else {
-					String msg = "Not able to categorize " + artifactName;
-					logger.error(msg);
-					throw new Exception(msg);
-				}
-					
+				artifactClassFolderName = categorise(zCategoryEntries, artifactName);
 			}
-			else if(category.equals("Z-Private1")) {
+			else if(category.equals("X-Public/Private")) {
+				List<String> zCategoryEntries = FileUtils.readLines(xCategoryFileLoc.toFile());
+				artifactClassFolderName = categorise(zCategoryEntries, artifactName);
+			}
+			else if(category.equals("Z-Private1") || category.equals("X-Private1")) {
 				artifactClassFolderName = "video-digi-2020-edit-priv1";
 			}
-			else if(category.equals("Z-Private2")) {
+			else if(category.equals("Z-Private2") || category.equals("X-Private2")) {
 				artifactClassFolderName = "video-digi-2020-edit-priv2";
 			}
 			else {
@@ -112,6 +91,36 @@ public class Ingester {
 		return destArtifactPath;
 	}
 
+	private static String categorise(List<String> zCategoryEntries, String artifactName) throws Exception {
+		String artifactClassFolderName = null;
+		String zcategory = null;
+		for (String nthZCategoryEntry : zCategoryEntries) {
+			if(nthZCategoryEntry.startsWith(artifactName + ",")) {
+				zcategory = StringUtils.substringAfterLast(nthZCategoryEntry, ",").trim();
+				break;
+			}
+		}
+
+		if(StringUtils.isBlank(zcategory)){
+			String msg = "Not able to categorize " + artifactName;
+			logger.error(msg);
+			throw new Exception(msg);
+		}
+
+		if(zcategory.equals("Public"))
+			artifactClassFolderName = "video-digi-2020-edit-pub";
+		else if(zcategory.equals("Private1"))
+			artifactClassFolderName = "video-digi-2020-edit-priv1";
+		else if(zcategory.equals("Private2"))
+			artifactClassFolderName = "video-digi-2020-edit-priv2";
+		else {
+			String msg = "Not able to categorize " + artifactName;
+			logger.error(msg);
+			throw new Exception(msg);
+		}
+		return artifactClassFolderName;
+	}
+	
 	private static void ingest(Path path) {
 		if(path.getNameCount() > 7) { // Expecting path = /data/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1
 			System.err.println("File Path with more than 7 elements is not supported. Expected something like /data/dwara/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1 but actual is " + path);
@@ -121,8 +130,7 @@ public class Ingester {
 			String artifactName = path.getFileName().toString();
 			String artifactclass = path.getName(path.getNameCount() - 2).toString();
 
-
-			String payload = "{\"artifactclass\":\"<<Artifactclass>>\",\"stagedFiles\":[{\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\"}]}";
+			String payload = "{\"stagedFiles\":[{\"artifactclass\":\"<<Artifactclass>>\",\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\"}]}";
 			payload = payload.replace("<<Artifactclass>>", artifactclass);
 			payload = payload.replace("<<Path>>", artifactBasePath);
 			payload = payload.replace("<<ArtifactName>>", artifactName);
@@ -149,13 +157,15 @@ public class Ingester {
 				+ "validatedFolderPollingIntervalInSecs "
 				+ "<rootIngestLocation(\"/data/dwara/user/prasadcorp/ingest\")> "
 				+ "<zCategoryFileLocation(\"/opt/dwara/bin/z-category.csv\")> "
+				+ "<xCategoryFileLocation(\"/opt/dwara/bin/x-category.csv\")> "
 				+ "<ingestEndpointUrl(\"http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest\")>");
 		
 		System.err.println("args[0] - dirToBePolled - The directory where this service needs to look for files");
 		System.err.println("args[1] - validatedFolderPollingIntervalInSecs - The polling interval to check if there are directories ready");
 		System.err.println("args[2] - rootIngestLocation - Dwara's user specific ingest directory from where ingests are launched. Note Artifactclass gets appended dynamically to the path");
 		System.err.println("args[3] - zCategoryFileLocation - The Z set of tapes pub/private category mapping file location");
-		System.err.println("args[4] - ingestEndpointUrl - Ingest api url");
+		System.err.println("args[4] - xCategoryFileLocation - The X set of tapes pub/private category mapping file location");
+		System.err.println("args[5] - ingestEndpointUrl - Ingest api url");
 		
 		System.exit(-1);
 	}
@@ -163,7 +173,7 @@ public class Ingester {
 	public static void main(String[] args) {
 
 		// parse arguments
-		if (args.length != 5)
+		if (args.length != 6)
 			usage();
 
 		final Path dir = Paths.get(args[0]);
@@ -175,7 +185,13 @@ public class Ingester {
 			
 			System.exit(-1);
 		}
-		ingestEndpointUrl = args[4]; // "http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest";
+		xCategoryFileLoc = Paths.get(args[4]);
+		if(!xCategoryFileLoc.toFile().exists()) {
+			System.err.println(xCategoryFileLoc.toString() + " doesnt exist");
+			
+			System.exit(-1);
+		}
+		ingestEndpointUrl = args[5]; // "http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest";
 		
 
 		for(;;) {

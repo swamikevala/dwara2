@@ -236,7 +236,7 @@ public class AutoloaderController {
 
 			// Remove/Written tapes - No jobs queued and either finalized or removeAfterJob
 			for (Tape nthTapeOnLibrary : tapeList) {
-				if(nthTapeOnLibrary.getUsageStatus() == TapeUsageStatus.no_job_queued && (nthTapeOnLibrary.getStatus() == TapeStatus.finalized || nthTapeOnLibrary.isRemoveAfterJob())) {
+				if(nthTapeOnLibrary.getUsageStatus() == TapeUsageStatus.no_job_queued && (nthTapeOnLibrary.getStatus() == TapeStatus.finalized || (nthTapeOnLibrary.isRemoveAfterJob() != null && nthTapeOnLibrary.isRemoveAfterJob()))) {
 					// last job on tape determines if the tape need to be shown in remove tapes(restore) or written tapes
 					Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndStatusAndCompletedAtIsNotNullOrderByCompletedAtDesc(nthTapeOnLibrary.getBarcode(), Status.completed);
 					Request request = lastJobOnTape.getRequest();

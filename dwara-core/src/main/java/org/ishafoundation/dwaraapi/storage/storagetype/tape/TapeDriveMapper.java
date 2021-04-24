@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
@@ -65,7 +66,7 @@ public class TapeDriveMapper {
 					if(volumeTag == null) // not a barcoded tape... dwara doesnt know how to deal with it
 						continue;
 					
-					if(volumeTag.endsWith("CU")) // clean up tape shouldnt be used as an actor tape // TODO :: configure the chars...
+					if(volumeTag.startsWith(DwaraConstants.CLEANUP_TAPE_PREFIX)) // clean up tape shouldnt be used as an actor tape // TODO :: configure the chars...
 						continue;
 
 					Optional<Volume> volumeEntity = volumeDao.findById(volumeTag);

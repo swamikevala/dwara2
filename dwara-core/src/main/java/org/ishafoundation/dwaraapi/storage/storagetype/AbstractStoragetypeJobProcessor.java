@@ -471,6 +471,21 @@ public abstract class AbstractStoragetypeJobProcessor {
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
 		selectedStorageJob.setArtifactFileList(fileList);
 		selectedStorageJob.setFilePathNameToChecksum(getSourceFilesChecksum(fileList));
+
+		Volume volume = storageJob.getVolume();
+		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
+		selectedStorageJob.setArtifactVolume(artifactVolume);
+
+		String filePathNameToBeRestored = file.getPathname();
+		
+		// If artifactName is renamed then use the artifactNameOnTape (from artifactVolume.getName()) rather than the artifactName on file.getPathname();
+		String artifactName = artifact.getName();
+		String artifactNameOnVolume = artifactVolume.getName();
+		if(!artifactNameOnVolume.equals(artifactName)) {
+			filePathNameToBeRestored = filePathNameToBeRestored.replace(artifactName, artifactNameOnVolume);
+		}
+		selectedStorageJob.setFilePathNameToBeRestored(filePathNameToBeRestored);
     }
     
 	private HashMap<String, byte[]> getSourceFilesChecksum(List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList){
@@ -513,10 +528,12 @@ public abstract class AbstractStoragetypeJobProcessor {
 		if(requestedAction == Action.restore) { // for ingest and restore_process this happens in the scheduler... 
 			// upon completion moving the file to the original requested dest path		
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
-			String restoredFilePathName = file.getPathname();
+			
+			// NOTE : The variable names take a swap here - Dont be confused and tempted to change it
+			String restoredFilePathName = selectedStorageJob.getFilePathNameToBeRestored(); // After restore we need to swap the names of soft renamed entries. 
+			String filePathNameToBeRestored = file.getPathname();
 			
 			String srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName;
-			
 			
 			String timeCodeStart = storageJob.getTimecodeStart();
 			String timeCodeEnd = storageJob.getTimecodeEnd();
@@ -528,7 +545,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 				//srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
 				srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".mxf");
 			
-			String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");	
+			String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "").replace(restoredFilePathName,filePathNameToBeRestored);	
 			logger.trace("src " + srcPath);
 			logger.trace("dest " + destPath);
 			

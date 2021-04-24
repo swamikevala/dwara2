@@ -14,7 +14,6 @@ import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -37,7 +36,6 @@ import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 
@@ -275,7 +273,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 		if(!pfr) {
 			List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, selectedStorageJob.isUseBuffering(), fileSize, targetLocationPath, noOfTapeBlocksToBeRead);
 			
-			String filePathNameToBeRestored = archiveformatJob.getFilePathNameToBeRestored();
+			String filePathNameToBeRestored = selectedStorageJob.getFilePathNameToBeRestored();
 			
 			HashMap<String, byte[]> filePathNameToChecksumObj = selectedStorageJob.getFilePathNameToChecksum();
 
@@ -513,17 +511,15 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
 		Artifact artifact = storageJob.getArtifact();
 		Volume volume = storageJob.getVolume();
-
-		archiveformatJob.setFilePathNameToBeRestored(file.getPathname());
     	
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
+		ArtifactVolume artifactVolume = selectedStorageJob.getArtifactVolume();
 		
-		
+		String filePathname = file.getPathname();
+
 		Long fileSize = file.getSize();
 		int archiveformatBlocksize = archiveformatJob.getArchiveformatBlocksize();
 		int blockingFactor = TarBlockCalculatorUtil.getBlockingFactor(archiveformatBlocksize, archiveformatJob.getVolumeBlocksize()); 
-		String filePathname = file.getPathname();
+		
 		int seekedVolumeBlock = storageJob.getVolumeBlock();
 		if(StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) { //if file is folder
 			if(artifact.getName().equals(filePathname)) {// if file is entire artifact
