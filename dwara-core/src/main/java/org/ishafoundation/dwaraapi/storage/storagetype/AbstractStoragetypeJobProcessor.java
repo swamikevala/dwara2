@@ -11,7 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -40,6 +39,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.File
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactOnVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
@@ -266,6 +266,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolumeInstance(artifact.getId(), volume, domain); // lets just let users use the util consistently
 	    artifactVolume.setName(artifact.getName());
 	    artifactVolume.setJob(storagejob.getJob());
+	    artifactVolume.setStatus(ArtifactOnVolumeStatus.current);
 	    if(volume.getStoragelevel() == Storagelevel.block) {
 		    ArtifactVolumeDetails artifactVolumeDetails = new ArtifactVolumeDetails();
 		    
@@ -304,68 +305,68 @@ public abstract class AbstractStoragetypeJobProcessor {
     	}
     }
     
-    protected void beforeVerify(SelectedStorageJob selectedStorageJob) throws Exception {
-    	StorageJob storageJob = selectedStorageJob.getStorageJob();
-		
-		Volume volume = storageJob.getVolume();
-		
-		Domain domain = storageJob.getDomain();
-		Artifact artifact = storageJob.getArtifact();
-
-		
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
-		
-		selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStartVolumeBlock());
-		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEndVolumeBlock());
-		selectedStorageJob.setLastWrittenArtifactName(artifactVolume.getName());
-		
-		// to where
-		String targetLocationPath = configuration.getRestoreTmpLocationForVerification();
-		storageJob.setTargetLocationPath(targetLocationPath);
-		
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
-		selectedStorageJob.setArtifactFileList(fileList);
-		selectedStorageJob.setFilePathNameToChecksum(getSourceFilesChecksum(fileList));
-
-		for (File nthFile : fileList) {
-			if(nthFile.getPathname().equals(artifact.getName())) {
-				selectedStorageJob.setFile(nthFile);
-				break;
-			}
-		}
-    }
-    
-	public StorageResponse verify(SelectedStorageJob selectedStorageJob) throws Throwable{
-		logger.info("Verifying job " + selectedStorageJob.getStorageJob().getJob().getId());
-		StorageResponse storageResponse = null;
-    	beforeVerify(selectedStorageJob);
-    	
-    	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
-    	storageResponse = iStoragelevel.verify(selectedStorageJob);
-
-    	afterVerify(selectedStorageJob, storageResponse);
-    	return storageResponse; 
-   	
-    }
-	
-	protected void afterVerify(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception{
-		// update the verified date here...
-		updateFileVolumeTable(selectedStorageJob, storageResponse);
-		
-		StorageJob storageJob = selectedStorageJob.getStorageJob();
-		String fileNameToBeVerified = storageJob.getArtifact().getName();
-		String filePathNameToBeVerified = storageJob.getTargetLocationPath() + java.io.File.separator + fileNameToBeVerified;
-		logger.trace("filePathNameToBeVerified " + filePathNameToBeVerified);
-		java.io.File fileToBeVerified = new java.io.File(filePathNameToBeVerified);
-		if(fileToBeVerified.isDirectory())
-			FileUtils.deleteDirectory(fileToBeVerified);
-		else 
-			fileToBeVerified.delete();
-		
-		logger.trace(filePathNameToBeVerified + " deleted");
-			
-	}
+//    protected void beforeVerify(SelectedStorageJob selectedStorageJob) throws Exception {
+//    	StorageJob storageJob = selectedStorageJob.getStorageJob();
+//		
+//		Volume volume = storageJob.getVolume();
+//		
+//		Domain domain = storageJob.getDomain();
+//		Artifact artifact = storageJob.getArtifact();
+//
+//		
+//		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+//		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
+//		
+//		selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStartVolumeBlock());
+//		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEndVolumeBlock());
+//		selectedStorageJob.setLastWrittenArtifactName(artifactVolume.getName());
+//		
+//		// to where
+//		String targetLocationPath = configuration.getRestoreTmpLocationForVerification();
+//		storageJob.setTargetLocationPath(targetLocationPath);
+//		
+//		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
+//		selectedStorageJob.setArtifactFileList(fileList);
+//		selectedStorageJob.setFilePathNameToChecksum(getSourceFilesChecksum(fileList));
+//
+//		for (File nthFile : fileList) {
+//			if(nthFile.getPathname().equals(artifact.getName())) {
+//				selectedStorageJob.setFile(nthFile);
+//				break;
+//			}
+//		}
+//    }
+//    
+//	public StorageResponse verify(SelectedStorageJob selectedStorageJob) throws Throwable{
+//		logger.info("Verifying job " + selectedStorageJob.getStorageJob().getJob().getId());
+//		StorageResponse storageResponse = null;
+//    	beforeVerify(selectedStorageJob);
+//    	
+//    	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
+//    	storageResponse = iStoragelevel.verify(selectedStorageJob);
+//
+//    	afterVerify(selectedStorageJob, storageResponse);
+//    	return storageResponse; 
+//   	
+//    }
+//	
+//	protected void afterVerify(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception{
+//		// update the verified date here...
+//		updateFileVolumeTable(selectedStorageJob, storageResponse);
+//		
+//		StorageJob storageJob = selectedStorageJob.getStorageJob();
+//		String fileNameToBeVerified = storageJob.getArtifact().getName();
+//		String filePathNameToBeVerified = storageJob.getTargetLocationPath() + java.io.File.separator + fileNameToBeVerified;
+//		logger.trace("filePathNameToBeVerified " + filePathNameToBeVerified);
+//		java.io.File fileToBeVerified = new java.io.File(filePathNameToBeVerified);
+//		if(fileToBeVerified.isDirectory())
+//			FileUtils.deleteDirectory(fileToBeVerified);
+//		else 
+//			fileToBeVerified.delete();
+//		
+//		logger.trace(filePathNameToBeVerified + " deleted");
+//			
+//	}
 
 	private void updateFileVolumeTable(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();

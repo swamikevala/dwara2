@@ -17,6 +17,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactOnVolumeStatus;
 
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
 
@@ -46,6 +47,8 @@ public class ArtifactVolume {
 	private Job job;
 	
 	private String name; // artifact name on volume
+	
+	private ArtifactOnVolumeStatus status;
 	
 	@Type(type = "json")
 	@Column(name="details", columnDefinition = "json")
@@ -91,6 +94,14 @@ public class ArtifactVolume {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public ArtifactOnVolumeStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(ArtifactOnVolumeStatus status) {
+		this.status = status;
 	}
 
 	public ArtifactVolumeDetails getDetails() {

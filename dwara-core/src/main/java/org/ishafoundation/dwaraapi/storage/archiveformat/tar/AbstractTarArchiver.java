@@ -180,7 +180,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 		}
 		
 		archiveResponse.setArtifactStartVolumeBlock(artifactStartVolumeBlock);
-		artifactTotalVolumeBlocks = TarBlockCalculatorUtil.getFileVolumeEndBlock(lastTaredFile.getFilePathName(), lastTaredFile.getArchiveBlock(), 3, lastTaredFile.getFileSize(), archiveformatBlocksize, blockingFactor);
+		artifactTotalVolumeBlocks = TarBlockCalculatorUtil.getFileVolumeEndBlock(lastTaredFile.getArchiveBlock(), 3, lastTaredFile.getFileSize(), archiveformatBlocksize, blockingFactor);
 		int evbOldWays = artifactStartVolumeBlock + artifactTotalVolumeBlocks - TarBlockCalculatorUtil.INCLUSIVE_BLOCK_ADJUSTER;  // - 1 because svb inclusive
 		logger.trace("evbOldWays " + evbOldWays);
 //		archiveResponse.setArtifactEndVolumeBlock(evbOldWays);
@@ -539,11 +539,11 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 						Integer headerBlocks = fileVolume.getHeaderBlocks();
 						if(nthArtifactFilePathname.equals(filePathname)) { // first file
 							firstFileVolumeBlock = filevolumeBlock;
-							skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filePathname, filearchiveBlock, archiveformatBlocksize, blockingFactor);
+							skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filearchiveBlock, archiveformatBlocksize, blockingFactor);
 						}
 						else if(filearchiveBlock > lastFileArchiveBlock) {
 							lastFileArchiveBlock = filearchiveBlock;
-							lastFileEndVolumeBlock = TarBlockCalculatorUtil.getFileVolumeEndBlock(nthArtifactFilePathname, filearchiveBlock, headerBlocks, nthFile.getSize(), archiveformatBlocksize, blockingFactor); 
+							lastFileEndVolumeBlock = TarBlockCalculatorUtil.getFileVolumeEndBlock(filearchiveBlock, headerBlocks, nthFile.getSize(), archiveformatBlocksize, blockingFactor); 
 						}
 					}
 				}
@@ -558,8 +558,8 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, fileIdToBeRestored, volume.getId());// lets just let users use the util consistently
 			Long filearchiveBlock = fileVolume.getArchiveBlock();
 			Integer headerBlocks = fileVolume.getHeaderBlocks();
-			noOfBlocksToBeRead = artifactVolume.getDetails().getStartVolumeBlock() + TarBlockCalculatorUtil.getFileVolumeEndBlock(filePathname, filearchiveBlock, headerBlocks, fileSize, archiveformatBlocksize, blockingFactor) - seekedVolumeBlock;
-			skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filePathname, filearchiveBlock, archiveformatBlocksize, blockingFactor); 		
+			noOfBlocksToBeRead = artifactVolume.getDetails().getStartVolumeBlock() + TarBlockCalculatorUtil.getFileVolumeEndBlock(filearchiveBlock, headerBlocks, fileSize, archiveformatBlocksize, blockingFactor) - seekedVolumeBlock;
+			skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filearchiveBlock, archiveformatBlocksize, blockingFactor); 		
 		}
 		
 		archiveformatJob.setNoOfBlocksToBeRead(noOfBlocksToBeRead);

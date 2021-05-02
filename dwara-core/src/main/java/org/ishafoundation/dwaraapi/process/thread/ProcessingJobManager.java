@@ -137,6 +137,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				Job nthDependentJob = jobDao.findById(nthDependentJobId).get();
 				if(nthDependentJob.getStoragetaskActionId() == Action.restore) {
 					inputPath = restoreStorageTask.getRestoreLocation(nthDependentJob);
+					break;
 				}
 			}
 		}

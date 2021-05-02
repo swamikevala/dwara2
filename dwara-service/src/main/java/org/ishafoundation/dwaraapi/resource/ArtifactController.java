@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.resource;
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
+import org.ishafoundation.dwaraapi.api.req.RewriteRequest;
 import org.ishafoundation.dwaraapi.api.req.artifact.ArtifactSoftRenameRequest;
 import org.ishafoundation.dwaraapi.api.resp.artifact.ArtifactResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
@@ -116,6 +117,30 @@ public class ArtifactController {
 		logger.trace(response);
 
 		return ResponseEntity.status(HttpStatus.OK).body(response);
+		
+	}
+	
+	@ApiOperation(value = "Rewrite the artifact")
+	@ApiResponses(value = { 
+			@ApiResponse(code = 200, message = "Ok")
+	})
+	@PostMapping(value = "/artifact/{artifactId}/rewrite", produces = "application/json")
+	public ResponseEntity<ArtifactResponse> rewriteArtifact(@RequestBody RewriteRequest rewriteRequest, @PathVariable("artifactId") int artifactId) {
+		logger.info("/artifact/" + artifactId + "/rewrite");
+		ArtifactResponse rewriteArtifactResponse = null;
+		try {
+			rewriteArtifactResponse = artifactservice.rewriteArtifact(artifactId, (int) rewriteRequest.getRewriteCopy(), rewriteRequest.getGoodCopy());
+		}catch (Exception e) {
+			String errorMsg = "Unable to rewrite artifact - " + e.getMessage();
+			logger.error(errorMsg, e);
+
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(rewriteArtifactResponse);
 		
 	}
 }	

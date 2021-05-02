@@ -22,6 +22,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -29,10 +30,13 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactOnVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
+import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -221,52 +225,111 @@ public class ScheduledStatusUpdater {
 						}
 						// if the processing job has a dependency on restore - then delete the restored file from the tmp directory
 						ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
-						String inputPath = processingJobManager.getInputPath(job);
-						if(inputPath != null) {
-							if(requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId())){
-								// what need to be restored
-								int fileIdRestored = requestDetails.getFileId();
-								
-								String restoredFilePathName = null;
-								
-						    	Domain[] domains = Domain.values();
-					    		for (Domain nthDomain : domains) {
-					    			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainUtil.getDomainSpecificFile(nthDomain, fileIdRestored);
-					    			if(file != null) {
-					    				restoredFilePathName = file.getPathname();
-					    				break;
-					    			}
-								}
-								// inputPath = something like - /data/restored/someoutputfolder/.restoring
-								String srcPath = inputPath + java.io.File.separator + restoredFilePathName;
-								String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");	
-								logger.trace("src " + srcPath);
-								logger.trace("dest " + destPath);
-
-					    		try {
-									java.io.File srcFile = new java.io.File(srcPath);
-									java.io.File destFile = new java.io.File(destPath);
-							
-									if(srcFile.isFile())
-										Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
-									else
-										Files.createDirectories(Paths.get(destPath));
-								
-										Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
-										logger.info("Moved restored files from " + srcPath + " to " + destPath);
+						if(requestedAction == Action.rewrite) {
+							String flowelementId = job.getFlowelementId();
+							if(flowelementId != null) {
+								CoreFlowelement coreFlowelement = CoreFlowelement.findById(flowelementId);
+								if(coreFlowelement == CoreFlowelement.core_rewrite_flow_checksum_verify) { // last of the 2 verify jobs
+									String inputPath = processingJobManager.getInputPath(job);
+									File restoreTmpFolder = new File(inputPath);
+									try {
+										FileUtils.deleteDirectory(restoreTmpFolder);
+									} catch (IOException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
 									}
-								catch (Exception e) {
-									logger.error("Unable to move files from " + srcPath + " to " + destPath);
+									
+									Integer artifactId = job.getInputArtifactId();
+									Domain domain = null;
+									Domain[] domains = Domain.values();
+									for (Domain nthDomain : domains) {
+										Artifact artifact = domainUtil.getDomainSpecificArtifact(nthDomain, artifactId);
+										if(artifact != null) {
+											domain = nthDomain;
+											break;
+										}
+									}
+									
+									
+									String volumeId = job.getVolume().getId(); // most recent volume
+									ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+									List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(artifactId);
+									
+									int rewriteCopy = job.getRequest().getDetails().getRewriteCopy(); 
+									for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
+										if(rewriteCopy == nthArtifactVolume.getVolume().getGroupRef().getCopy().getId()) {
+											ArtifactOnVolumeStatus artifactVolumeStatus = ArtifactOnVolumeStatus.deleted;
+											if(volumeId.equals(nthArtifactVolume.getVolume().getId())) {
+												artifactVolumeStatus = ArtifactOnVolumeStatus.current;
+											}
+												
+											nthArtifactVolume.setStatus(artifactVolumeStatus);
+										}
+									}
+
+									domainSpecificArtifactVolumeRepository.saveAll(artifactVolumeList);
+									
+									// also delete the goodcopy/source restored content too
+									Job goodCopyVerifyJob = jobDao.findByRequestIdAndFlowelementId(job.getRequest().getId(), CoreFlowelement.core_rewrite_flow_good_copy_checksum_verify.getId());
+									inputPath = processingJobManager.getInputPath(goodCopyVerifyJob);
+									restoreTmpFolder = new File(inputPath);
+									try {
+										FileUtils.deleteDirectory(restoreTmpFolder);
+									} catch (IOException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
 								}
 							}
-							else if(requestedAction == Action.ingest || requestedAction == Action.restore_process) {
-								// inputPath = something like - /data/tmp/job-1234
-								File restoreTmpFolder = new File(inputPath);
-								try {
-									FileUtils.deleteDirectory(restoreTmpFolder);
-								} catch (IOException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
+						}
+						else {
+							String inputPath = processingJobManager.getInputPath(job);
+							if(inputPath != null) {
+								if(requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId())){
+									// what need to be restored
+									int fileIdRestored = requestDetails.getFileId();
+									
+									String restoredFilePathName = null;
+									
+							    	Domain[] domains = Domain.values();
+						    		for (Domain nthDomain : domains) {
+						    			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainUtil.getDomainSpecificFile(nthDomain, fileIdRestored);
+						    			if(file != null) {
+						    				restoredFilePathName = file.getPathname();
+						    				break;
+						    			}
+									}
+									// inputPath = something like - /data/restored/someoutputfolder/.restoring
+									String srcPath = inputPath + java.io.File.separator + restoredFilePathName;
+									String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");	
+									logger.trace("src " + srcPath);
+									logger.trace("dest " + destPath);
+	
+						    		try {
+										java.io.File srcFile = new java.io.File(srcPath);
+										java.io.File destFile = new java.io.File(destPath);
+								
+										if(srcFile.isFile())
+											Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
+										else
+											Files.createDirectories(Paths.get(destPath));
+									
+											Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+											logger.info("Moved restored files from " + srcPath + " to " + destPath);
+										}
+									catch (Exception e) {
+										logger.error("Unable to move files from " + srcPath + " to " + destPath);
+									}
+								}
+								else if(requestedAction == Action.ingest || requestedAction == Action.restore_process) {
+									// inputPath = something like - /data/tmp/job-1234
+									File restoreTmpFolder = new File(inputPath);
+									try {
+										FileUtils.deleteDirectory(restoreTmpFolder);
+									} catch (IOException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
 								}
 							}
 						}

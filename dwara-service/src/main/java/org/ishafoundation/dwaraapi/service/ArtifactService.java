@@ -1,9 +1,11 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.artifact.ArtifactResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -16,10 +18,13 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.resource.mapper.MiscObjectMapper;
 import org.ishafoundation.dwaraapi.service.common.ArtifactDeleter;
 import org.ishafoundation.dwaraapi.staged.scan.Error;
@@ -62,6 +67,9 @@ public class ArtifactService extends DwaraService{
 	
 	@Autowired
 	private MamUpdateTaskExecutor mamUpdateTaskExecutor;
+	
+	@Autowired
+	private JobCreator jobCreator;
 
 	public ArtifactResponse deleteArtifact(int artifactId) throws Exception{
 		ArtifactRepository<Artifact> artifactRepository = null;
@@ -246,6 +254,69 @@ public class ArtifactService extends DwaraService{
 		dr.setArtifact(artifactForResponse);
 		dr.setUserRequestId(userRequest.getId());
 		dr.setAction(Action.rename.name());
+		dr.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
+		dr.setRequestedBy(userRequest.getRequestedBy().getName());
+
+		return dr;
+	}
+
+	public ArtifactResponse rewriteArtifact(int artifactId, int rewriteCopy, int goodCopy) throws Exception {
+		
+		ArtifactRepository<Artifact> artifactRepository = null;
+		Artifact artifact = null; // get the artifact details from DB
+		Domain domain = null; 
+		Domain[] domains = Domain.values();
+		for (Domain nthDomain : domains) {
+			artifactRepository = domainUtil.getDomainSpecificArtifactRepository(nthDomain);
+			Optional<Artifact> artifactEntity = artifactRepository.findById(artifactId);
+			if(artifactEntity.isPresent()) {
+				artifact = artifactEntity.get();
+				domain = nthDomain;
+				break;
+			}
+		}
+
+		// 2 (a) ------ Artifact level change
+		// Check if the artifact id exists 
+		// If artifact ID is null return error and escape into the unknown
+		if (artifact == null) { 
+			throw new Exception("Artifact doesnt exist!");
+		}
+		
+		// Step 1 - Create User Request
+		HashMap<String, Object> data = new HashMap<String, Object>();
+		data.put("artifactId", artifactId);
+		data.put("rewriteCopy", rewriteCopy);
+		data.put("goodCopy", goodCopy);
+		
+		Request userRequest = createUserRequest(Action.rewrite, Status.queued, data);
+		
+		Request systemrequest = new Request();
+		systemrequest.setType(RequestType.system);
+		systemrequest.setRequestRef(userRequest);
+		systemrequest.setActionId(userRequest.getActionId());
+		systemrequest.setStatus(Status.queued);
+		systemrequest.setRequestedBy(userRequest.getRequestedBy());
+		systemrequest.setRequestedAt(LocalDateTime.now());
+
+		RequestDetails systemrequestDetails = new RequestDetails();
+		systemrequestDetails.setArtifactId(artifactId);
+		systemrequestDetails.setRewriteCopy(rewriteCopy);
+		systemrequestDetails.setGoodCopy(goodCopy);
+		
+		systemrequest.setDetails(systemrequestDetails);
+		systemrequest = requestDao.save(systemrequest);
+		logger.info(DwaraConstants.SYSTEM_REQUEST + systemrequest.getId());
+
+		jobCreator.createJobs(systemrequest, artifact);
+
+
+		// Return response
+		ArtifactResponse dr = new ArtifactResponse();
+		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForDeleteArtifactResponse(artifact);
+		dr.setArtifact(artifactForResponse);
+		dr.setUserRequestId(userRequest.getId());
+		dr.setAction(userRequest.getActionId().name());
 		dr.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
 		dr.setRequestedBy(userRequest.getRequestedBy().getName());
 

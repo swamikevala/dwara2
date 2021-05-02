@@ -239,19 +239,19 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	}
 
 	
-	@Override
-	protected void beforeVerify(SelectedStorageJob selectedStorageJob) throws Exception {
-		super.beforeVerify(selectedStorageJob);
-		TapeJob tapeJob = (TapeJob) selectedStorageJob;
-		String tapeLibraryName = tapeJob.getTapeLibraryName();
-		int driveElementAddress = tapeJob.getTapedriveNo();
-		int blockNumberToSeek = tapeJob.getArtifactStartVolumeBlock();
-		
-		loadTape(selectedStorageJob);
-
-		tapeDriveManager.setTapeHeadPositionForReading(tapeJob.getDeviceWwnId(), blockNumberToSeek);
-		logger.info("Tape Head positioned for verifying "+ tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
-	}
+//	@Override
+//	protected void beforeVerify(SelectedStorageJob selectedStorageJob) throws Exception {
+//		super.beforeVerify(selectedStorageJob);
+//		TapeJob tapeJob = (TapeJob) selectedStorageJob;
+//		String tapeLibraryName = tapeJob.getTapeLibraryName();
+//		int driveElementAddress = tapeJob.getTapedriveNo();
+//		int blockNumberToSeek = tapeJob.getArtifactStartVolumeBlock();
+//		
+//		loadTape(selectedStorageJob);
+//
+//		tapeDriveManager.setTapeHeadPositionForReading(tapeJob.getDeviceWwnId(), blockNumberToSeek);
+//		logger.info("Tape Head positioned for verifying "+ tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
+//	}
 
 	@Override
 	protected void beforeRestore(SelectedStorageJob selectedStorageJob) throws Exception {

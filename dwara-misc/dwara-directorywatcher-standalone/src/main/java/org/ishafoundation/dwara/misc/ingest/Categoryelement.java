@@ -56,7 +56,8 @@ public enum Categoryelement {
 	TV(51, "TV - Television Programs", "TV", "Public"),
 	Y(52, "Y - Brahmacharies", "Y", "Private2"),
 	ZY(53, "ZY - Edited Private2", "ZY", "Z-Private2"),
-	ZP(54, "ZP - Edited Private1", "ZP", "Z-Private1");
+	ZP(54, "ZP - Edited Private1", "ZP", "Z-Private1"),
+	GR(55, "GR - ", "Z", "GR-Public/Private"),;
 	
 	private int sNo;
 	private String categoryName;
