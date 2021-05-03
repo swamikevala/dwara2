@@ -39,6 +39,7 @@ import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
+import org.ishafoundation.dwaraapi.enumreferences.RewritePurpose;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
@@ -230,12 +231,12 @@ public class ScheduledStatusUpdater {
 							if(flowelementId != null) {
 								CoreFlowelement coreFlowelement = CoreFlowelement.findById(flowelementId);
 								if(coreFlowelement == CoreFlowelement.core_rewrite_flow_checksum_verify) { // last of the 2 verify jobs
+									// delete the restored file from the tmp directory
 									String inputPath = processingJobManager.getInputPath(job);
 									File restoreTmpFolder = new File(inputPath);
 									try {
 										FileUtils.deleteDirectory(restoreTmpFolder);
 									} catch (IOException e) {
-										// TODO Auto-generated catch block
 										e.printStackTrace();
 									}
 									
@@ -250,28 +251,31 @@ public class ScheduledStatusUpdater {
 										}
 									}
 									
-									
-									String volumeId = job.getVolume().getId(); // most recent volume
+									// update the status of the defective/migrated artifact/volume
 									ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-									List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(artifactId);
 									
-									// TODO _ make it common for all...
-									// if rewrite copy
 									Integer rewriteCopy = job.getRequest().getDetails().getRewriteCopy();
-									if(rewriteCopy != null) {
+									RewritePurpose rewritePurpose = job.getRequest().getDetails().getPurpose();
+									if(rewriteCopy != null) { // if rewrite artifact
+										List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(artifactId);
 										for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
-											if(rewriteCopy == nthArtifactVolume.getVolume().getGroupRef().getCopy().getId()) {
-												ArtifactVolumeStatus artifactVolumeStatus = ArtifactVolumeStatus.deleted;
-												if(volumeId.equals(nthArtifactVolume.getVolume().getId())) {
-													artifactVolumeStatus = ArtifactVolumeStatus.current;
-												}
-													
-												nthArtifactVolume.setStatus(artifactVolumeStatus);
+											if(nthArtifactVolume.getVolume().getGroupRef().getCopy().getId() == rewriteCopy && nthArtifactVolume.getVolume().getId() != job.getVolume().getId()) {
+												nthArtifactVolume.setStatus(ArtifactVolumeStatus.deleted);
+												domainSpecificArtifactVolumeRepository.save(nthArtifactVolume);
+												break;
 											}
 										}
-	
-										domainSpecificArtifactVolumeRepository.saveAll(artifactVolumeList);
+									}else if(rewritePurpose == RewritePurpose.defective_volume || rewritePurpose == RewritePurpose.volume_migration) { // if rewritten volume
+										String volumeId = job.getRequest().getDetails().getVolumeId();
+										ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
+										ArtifactVolumeStatus artifactVolumeStatus = ArtifactVolumeStatus.deleted;
+										if(rewritePurpose == RewritePurpose.volume_migration)
+											artifactVolumeStatus = ArtifactVolumeStatus.migrated;
+										artifactVolume.setStatus(artifactVolumeStatus);
+										
+										domainSpecificArtifactVolumeRepository.save(artifactVolume);
 									}
+									
 									// also delete the goodcopy/source restored content too
 									Job goodCopyVerifyJob = jobDao.findByRequestIdAndFlowelementId(job.getRequest().getId(), CoreFlowelement.core_rewrite_flow_good_copy_checksum_verify.getId());
 									inputPath = processingJobManager.getInputPath(goodCopyVerifyJob);
