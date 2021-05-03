@@ -104,7 +104,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 				long jobAlreadyRequeuedCount = jobRunDao.countByJobId(job.getId());
 				if(jobAlreadyRequeuedCount < configuration.getAllowedAutoRequeueAttemptsOnFailedStorageJobs()) {
 					try {
-						logger.info("Requeuing job " + job.getId() + ". Attempt " + jobAlreadyRequeuedCount + 1);
+						logger.info("Requeuing job " + job.getId() + ". Attempt " + (jobAlreadyRequeuedCount + 1));
 						jobServiceRequeueHelper.requeueJob(job.getId(),DwaraConstants.SYSTEM_USER_NAME);
 					} catch (Exception e1) {
 						logger.error("Unable to auto requeue failed job..." + job.getId(), e1);
@@ -150,7 +150,12 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 		job.setMessage(null);
 		job = updateJobStatus(job, Status.completed);
 		
-		jobCreator.createDependentJobs(job);
+		try {
+			jobCreator.createDependentJobs(job);
+		}catch (Exception e) {
+			logger.error("Unable to create dependent job for - " + job.getId());
+		}
+		
 		return job;
 	}
 	

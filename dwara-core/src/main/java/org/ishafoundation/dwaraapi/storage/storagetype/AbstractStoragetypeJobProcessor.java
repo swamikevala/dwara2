@@ -526,7 +526,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		
 		
-		if(requestedAction == Action.restore) { // for ingest and restore_process this happens in the scheduler... 
+		if(requestedAction == Action.restore || requestedAction == Action.rewrite) { // for ingest and restore_process this happens in the scheduler... 
 			// upon completion moving the file to the original requested dest path		
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
 			
