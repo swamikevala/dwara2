@@ -243,7 +243,7 @@ public class VolumeService extends DwaraService {
 		Domain domain = Domain.ONE; // TODO Hardcoded domain
 
 		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeId(volumeId);
+		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeIdAndStatus(volumeId, ArtifactVolumeStatus.current); // only not deleted artifacts need to be rewritten
 		
 		// loop artifacts on volume
 		for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
@@ -264,7 +264,7 @@ public class VolumeService extends DwaraService {
 			// Also System will skip any artifacts which already exist on the additional copy (e.g. if the config was changed to increase the number of copies from 3 to 4 while a tape was partially written - so the artifacts on the latter part of that tape would need to be skipped)
 			if(additionalCopy != null) {
 				boolean isCopyAlreadyWritten = false; 
-				List<ArtifactVolume> artifactVolumeList2 = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(artifactId);
+				List<ArtifactVolume> artifactVolumeList2 = domainSpecificArtifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
 				for (ArtifactVolume nthArtifactVolume2 : artifactVolumeList2) {
 					if(nthArtifactVolume2.getVolume().getGroupRef().getCopy().getId() == additionalCopy) {
 						isCopyAlreadyWritten = true;

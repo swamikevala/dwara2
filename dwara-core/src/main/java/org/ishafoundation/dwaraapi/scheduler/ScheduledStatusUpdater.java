@@ -257,7 +257,7 @@ public class ScheduledStatusUpdater {
 									Integer rewriteCopy = job.getRequest().getDetails().getRewriteCopy();
 									RewritePurpose rewritePurpose = job.getRequest().getDetails().getPurpose();
 									if(rewriteCopy != null) { // if rewrite artifact
-										List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(artifactId);
+										List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
 										for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
 											if(nthArtifactVolume.getVolume().getGroupRef().getCopy().getId() == rewriteCopy && nthArtifactVolume.getVolume().getId() != job.getVolume().getId()) {
 												nthArtifactVolume.setStatus(ArtifactVolumeStatus.deleted);

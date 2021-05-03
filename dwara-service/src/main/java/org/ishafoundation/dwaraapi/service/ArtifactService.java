@@ -271,6 +271,8 @@ public class ArtifactService extends DwaraService{
 			Optional<Artifact> artifactEntity = artifactRepository.findById(artifactId);
 			if(artifactEntity.isPresent()) {
 				artifact = artifactEntity.get();
+				if(artifact.isDeleted())
+					throw new Exception("Deleted Artifact cannot be rewritten");
 				domain = nthDomain;
 				break;
 			}
