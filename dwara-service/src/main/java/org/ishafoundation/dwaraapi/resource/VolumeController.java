@@ -10,7 +10,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.api.req.RewriteRequest;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
+import org.ishafoundation.dwaraapi.api.resp.artifact.ArtifactResponse;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -180,5 +182,29 @@ public class VolumeController {
 		}
 
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+	}
+	
+	@ApiOperation(value = "Rewrite the volume")
+	@ApiResponses(value = { 
+			@ApiResponse(code = 200, message = "Ok")
+	})
+	@PostMapping(value = "/volume/{volumeId}/rewrite", produces = "application/json")
+	public ResponseEntity<String> rewriteArtifact(@RequestBody RewriteRequest rewriteRequest, @PathVariable("volumeId") String volumeId) {
+		logger.info("/volume/" + volumeId + "/rewrite");
+		
+		try {
+			volumeService.rewriteVolume(volumeId, rewriteRequest);
+		}catch (Exception e) {
+			String errorMsg = "Unable to rewrite volume - " + e.getMessage();
+			logger.error(errorMsg, e);
+
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body("Done");
+		
 	}
 }

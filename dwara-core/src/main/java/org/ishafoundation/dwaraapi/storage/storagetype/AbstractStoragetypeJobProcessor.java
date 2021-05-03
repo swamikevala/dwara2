@@ -39,7 +39,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.File
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.ArtifactOnVolumeStatus;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
@@ -266,7 +266,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolumeInstance(artifact.getId(), volume, domain); // lets just let users use the util consistently
 	    artifactVolume.setName(artifact.getName());
 	    artifactVolume.setJob(storagejob.getJob());
-	    artifactVolume.setStatus(ArtifactOnVolumeStatus.current);
+	    artifactVolume.setStatus(ArtifactVolumeStatus.current);
 	    if(volume.getStoragelevel() == Storagelevel.block) {
 		    ArtifactVolumeDetails artifactVolumeDetails = new ArtifactVolumeDetails();
 		    

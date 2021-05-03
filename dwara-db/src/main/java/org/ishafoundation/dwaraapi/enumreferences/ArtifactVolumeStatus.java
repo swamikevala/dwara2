@@ -1,6 +1,6 @@
 package org.ishafoundation.dwaraapi.enumreferences;
 
-public enum ArtifactOnVolumeStatus {
+public enum ArtifactVolumeStatus {
 	current,
 	deleted,
 	migrated;

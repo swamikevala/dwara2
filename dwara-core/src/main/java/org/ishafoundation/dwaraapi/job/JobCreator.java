@@ -209,136 +209,173 @@ public class JobCreator {
 		
 		Action storagetaskAction = flowelement.getStoragetaskActionId();
 		String processingtaskId = flowelement.getProcessingtaskId();
-		boolean processingtaskWithDependencyStoragetask = false;
-		if(processingtaskId != null) {
-			List<String> flowelementDependenciesList = flowelement.getDependencies();
-			// Now check if any of the dependency is a storage task
-			if(flowelementDependenciesList != null) {
-				for (String nthFlowelementDependencyId : flowelementDependenciesList) {
-					Flowelement prereqFlowelement = flowelementUtil.findById(nthFlowelementDependencyId);
-					Action storagetaskDependency = prereqFlowelement.getStoragetaskActionId();  
-					if(storagetaskDependency != null) { // Is the dependency a Storage task?
-						processingtaskWithDependencyStoragetask = true;
-						break;
+
+		if(request.getActionId() == Action.ingest) {
+			boolean processingtaskWithDependencyStoragetask = false;
+			if(processingtaskId != null) {
+				List<String> flowelementDependenciesList = flowelement.getDependencies();
+				// Now check if any of the dependency is a storage task
+				if(flowelementDependenciesList != null) {
+					for (String nthFlowelementDependencyId : flowelementDependenciesList) {
+						Flowelement prereqFlowelement = flowelementUtil.findById(nthFlowelementDependencyId);
+						Action storagetaskDependency = prereqFlowelement.getStoragetaskActionId();  
+						if(storagetaskDependency != null) { // Is the dependency a Storage task?
+							processingtaskWithDependencyStoragetask = true;
+							break;
+						}
 					}
 				}
 			}
-		}
-		// if the sourceJob for which the dependants are to be created is a processing task and the flowelement is a storagetask we may have to create as many jobs as copies needed...
-		// But we should verify if they are not already created and create here... - 
-		// We might have race conditions with write completion thread creating one and just at the same time this one does too... Need to ensure that doesnt happen...
-		if(storagetaskAction != null || processingtaskWithDependencyStoragetask) {
-			if(sourceJob == null && request.getActionId() == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId())){
-				Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
-				job.setStoragetaskActionId(storagetaskAction);
-				job = saveJob(job);
-				jobsCreated.add(job);
-			}
-			else if(sourceJob == null || (sourceJob != null && sourceJob.getProcessingtaskId() != null)) { // only srcjob = processing task is from scheduler which needs multiple job creation 
-				logger.trace("Creating Job(s) for " + flowelement.getId() + ":" + storagetaskAction);
-				List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassIdAndActiveTrue(artifactclassId);
-				logger.trace("No. of copies for artifactclass " + artifactclassId + "-" + artifactclassVolumeList.size());
-				for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {
-					Volume grpVolume = artifactclassVolume.getVolume();
-
+			// if the sourceJob for which the dependants are to be created is a processing task and the flowelement is a storagetask we may have to create as many jobs as copies needed...
+			// But we should verify if they are not already created and create here... - 
+			// We might have race conditions with write completion thread creating one and just at the same time this one does too... Need to ensure that doesnt happen...
+			if(storagetaskAction != null || processingtaskWithDependencyStoragetask) {
+				if(sourceJob == null || (sourceJob != null && sourceJob.getProcessingtaskId() != null)) { // only srcjob = processing task is from scheduler which needs multiple job creation 
+					logger.trace("Creating Job(s) for " + flowelement.getId() + ":" + storagetaskAction);
+					List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassIdAndActiveTrue(artifactclassId);
+					logger.trace("No. of copies for artifactclass " + artifactclassId + "-" + artifactclassVolumeList.size());
+					for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {
+						Volume grpVolume = artifactclassVolume.getVolume();
+	
+						List<Integer> dependentJobIds = new ArrayList<Integer>();
+						if(sourceJob != null) {
+							dependentJobIds.add(sourceJob.getId());
+						}
+						// validating if all its other dependencies are complete
+						boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, grpVolume.getId(), dependentJobIds);
+						if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
+							Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
+							if(dependentJobIds.size() > 0) {
+								Collections.sort(dependentJobIds);
+								job.setDependencies(dependentJobIds);
+							}
+							job.setStoragetaskActionId(storagetaskAction);
+							job.setProcessingtaskId(processingtaskId);
+							job.setGroupVolume(grpVolume); // we dont know the physical volume yet... How about provisioned volumes?
+	
+							job = saveJob(job);
+							jobsCreated.add(job);
+						}
+					}
+				}
+				else { // sourceJob != null - called from a storage dependency job 
+					logger.trace("Creating Job for flowelement " + flowelement.getId() + " from source Job " + sourceJob.getId());
 					List<Integer> dependentJobIds = new ArrayList<Integer>();
 					if(sourceJob != null) {
 						dependentJobIds.add(sourceJob.getId());
 					}
+					
 					// validating if all its other dependencies are complete
-					boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, grpVolume.getId(), dependentJobIds);
+					boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, null, dependentJobIds);
+	
 					if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
 						Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
-						if(dependentJobIds.size() > 0) {
-							Collections.sort(dependentJobIds);
-							job.setDependencies(dependentJobIds);
-						}
 						job.setStoragetaskActionId(storagetaskAction);
 						job.setProcessingtaskId(processingtaskId);
-						job.setGroupVolume(grpVolume); // we dont know the physical volume yet... How about provisioned volumes?
-
+						job.setGroupVolume(sourceJob.getGroupVolume()); // we already know the physical volume used by its parent job
+						job.setVolume(sourceJob.getVolume());
+						Collections.sort(dependentJobIds);
+						job.setDependencies(dependentJobIds);
 						job = saveJob(job);
 						jobsCreated.add(job);
 					}
 				}
 			}
-			else { // sourceJob != null - called from a storage dependency job 
-				logger.trace("Creating Job for flowelement " + flowelement.getId() + " from source Job " + sourceJob.getId());
+			else { // processing task with no storage dependency
+				Job job = createProcessingJob(processingtaskId, flowelement, sourceJob, request, artifactclassId, artifact);
+				if(job != null)
+					jobsCreated.add(job);
+			}
+		}
+		else if(request.getActionId() == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId())){
+			if(storagetaskAction != null) {
+				Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
+				job.setStoragetaskActionId(storagetaskAction);
+				job = saveJob(job);
+				jobsCreated.add(job);
+			} else {
+				Job job = createProcessingJob(processingtaskId, flowelement, sourceJob, request, artifactclassId, artifact);
+				if(job != null)
+					jobsCreated.add(job);
+			}
+		}
+		else if(request.getActionId() == Action.rewrite) {
+			if(storagetaskAction != null) {
+				Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
+				job.setStoragetaskActionId(storagetaskAction);
 				List<Integer> dependentJobIds = new ArrayList<Integer>();
 				if(sourceJob != null) {
 					dependentJobIds.add(sourceJob.getId());
 				}
-				
-				// validating if all its other dependencies are complete
-				boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, null, dependentJobIds);
-
-				if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
-					Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
-					job.setStoragetaskActionId(storagetaskAction);
-					job.setProcessingtaskId(processingtaskId);
-					job.setGroupVolume(sourceJob.getGroupVolume()); // we already know the physical volume used by its parent job
-					job.setVolume(sourceJob.getVolume());
-					Collections.sort(dependentJobIds);
-					job.setDependencies(dependentJobIds);
-					job = saveJob(job);
-					jobsCreated.add(job);
-				}
-			}
-		}
-		else {
-			logger.trace("Creating Job for " + flowelement.getId() + ":" + processingtaskId);
-			String inputArtifactName = artifact.getName();
-			Artifactclass inputArtifactclass = artifact.getArtifactclass();
-			String inputArtifactPath = inputArtifactclass.getPath() + File.separator + inputArtifactName;
-			Volume groupVolume = null;
-			Volume volume = null;
-			String groupVolumeId = null;
-			// If sourceJob of this processing flowelement is restore then the processing f/w should pick up the file from the restored tmp location instead of the artifactclass.pathprefix 
-			if(sourceJob != null && sourceJob.getStoragetaskActionId() == Action.restore) {
-				inputArtifactPath = restoreStorageTask.getRestoreLocation(sourceJob) + File.separator + inputArtifactName;
-				groupVolume = sourceJob.getGroupVolume();
-				volume = sourceJob.getVolume();
-				//groupVolumeId = groupVolume != null ? groupVolume.getId() : null;
-			}
-			// TODO : What if the first parent job is a processing that has no files to process and hence no job created. So DependentJobs wont be created. Fine. So there is no Job in the request. Is it ok to create a request with no Jobs
-			ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
-			Taskconfig taskconfig =	flowelement.getTaskconfig();
-			String pathnameRegex = null;
-			if(taskconfig != null)
-				pathnameRegex = taskconfig.getPathnameRegex();
-			if(!processingJobManager.isJobToBeCreated(processingtaskId, inputArtifactPath, pathnameRegex)) { // Dont create jobs for something we know would eventually fail...
-				logger.trace("Job not to be created - " + flowelement.getId());
-				return jobsCreated;
-			}
-			
-			List<Integer> dependentJobIds = new ArrayList<Integer>();
-			if(sourceJob != null) {
-				dependentJobIds.add(sourceJob.getId());
-			}
-			
-			// validating if all its other dependencies are complete
-			boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, groupVolumeId, dependentJobIds);
-			if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
-				logger.trace("Creating Job for " + processingtaskId + ":" + flowelement.getId());
-				Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
-				
 				if(dependentJobIds.size() > 0) {
 					Collections.sort(dependentJobIds);
 					job.setDependencies(dependentJobIds);
 				}
-				
-				job.setProcessingtaskId(processingtaskId);
-				if(groupVolume != null)
-					job.setGroupVolume(groupVolume);
-				if(volume != null)
-					job.setVolume(volume);
 				job = saveJob(job);
 				jobsCreated.add(job);
+			}else {
+				Job job = createProcessingJob(processingtaskId, flowelement, sourceJob, request, artifactclassId, artifact);
+				if(job != null)
+					jobsCreated.add(job);
 			}
 		}
+
 		return jobsCreated;
 	}
 
+	private Job createProcessingJob(String processingtaskId, Flowelement flowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact){
+		logger.trace("Creating processing Job for " + flowelement.getId() + ":" + processingtaskId);
+		String inputArtifactName = artifact.getName();
+		Artifactclass inputArtifactclass = artifact.getArtifactclass();
+		String inputArtifactPath = inputArtifactclass.getPath() + File.separator + inputArtifactName;
+		Volume groupVolume = null;
+		Volume volume = null;
+		String groupVolumeId = null;
+		// If sourceJob of this processing flowelement is restore then the processing f/w should pick up the file from the restored tmp location instead of the artifactclass.pathprefix 
+		if(sourceJob != null && sourceJob.getStoragetaskActionId() == Action.restore) {
+			inputArtifactPath = restoreStorageTask.getRestoreLocation(sourceJob) + File.separator + inputArtifactName;
+			groupVolume = sourceJob.getGroupVolume();
+			volume = sourceJob.getVolume();
+			//groupVolumeId = groupVolume != null ? groupVolume.getId() : null;
+		}
+		// TODO : What if the first parent job is a processing that has no files to process and hence no job created. So DependentJobs wont be created. Fine. So there is no Job in the request. Is it ok to create a request with no Jobs
+		ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
+		Taskconfig taskconfig =	flowelement.getTaskconfig();
+		String pathnameRegex = null;
+		if(taskconfig != null)
+			pathnameRegex = taskconfig.getPathnameRegex();
+		if(!processingJobManager.isJobToBeCreated(processingtaskId, inputArtifactPath, pathnameRegex)) { // Dont create jobs for something we know would eventually fail...
+			logger.trace("Job not to be created - " + flowelement.getId());
+			return null;
+		}
+		
+		List<Integer> dependentJobIds = new ArrayList<Integer>();
+		if(sourceJob != null) {
+			dependentJobIds.add(sourceJob.getId());
+		}
+		
+		// validating if all its other dependencies are complete
+		boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, groupVolumeId, dependentJobIds);
+		if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
+			logger.trace("Creating Job for " + processingtaskId + ":" + flowelement.getId());
+			Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
+			
+			if(dependentJobIds.size() > 0) {
+				Collections.sort(dependentJobIds);
+				job.setDependencies(dependentJobIds);
+			}
+			
+			job.setProcessingtaskId(processingtaskId);
+			if(groupVolume != null)
+				job.setGroupVolume(groupVolume);
+			if(volume != null)
+				job.setVolume(volume);
+			job = saveJob(job);
+			return job;
+		}
+		return null;
+	}
+	
 	private boolean isJobGoodToBeCreated(Flowelement nthFlowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact, String groupVolumeId, List<Integer> dependentJobIds) {
 		boolean isJobGoodToBeCreated = true;
 		logger.trace("Validating if all dependencies Jobs of flowelement " + nthFlowelement + " are created and completed");

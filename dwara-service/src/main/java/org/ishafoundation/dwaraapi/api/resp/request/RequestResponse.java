@@ -5,7 +5,6 @@ import java.util.List;
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

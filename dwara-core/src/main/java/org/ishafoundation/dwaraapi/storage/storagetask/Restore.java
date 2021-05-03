@@ -6,16 +6,20 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -35,6 +39,9 @@ public class Restore extends AbstractStoragetaskAction{
 	
 	@Autowired
 	private DomainUtil domainUtil;
+	
+	@Autowired
+	private FileEntityUtil fileEntityUtil;
 	
 	@Autowired
 	private Configuration configuration;
@@ -231,10 +238,28 @@ public class Restore extends AbstractStoragetaskAction{
 //    	return domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeLocationId(fileIdToBeRestored, locationId);
 //	}
 	
-	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, int copyNumber) {
+	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, int copyNumber) throws Exception {
     	@SuppressWarnings("unchecked")
 		FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-    	return domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeGroupRefCopyId(fileIdToBeRestored, copyNumber);
+    	List<FileVolume> fileVolumeList = domainSpecificFileVolumeRepository.findAllByIdFileIdAndVolumeGroupRefCopyId(fileIdToBeRestored, copyNumber);
+    	FileVolume fileVolume = null;
+    	if(fileVolumeList.size() > 1) {
+    		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+    		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainSpecificFileRepository.findById(fileIdToBeRestored).get();
+    		Artifact artifact = fileEntityUtil.getArtifact(file, domain);
+			ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);	    	
+	    	for (FileVolume nthFileVolume : fileVolumeList) {
+				ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifact.getId(), nthFileVolume.getId().getVolumeId());
+				if(artifactVolume.getStatus() == ArtifactVolumeStatus.current) {
+					fileVolume = nthFileVolume;
+					break;
+				}
+			}
+    	}
+    	else {
+    		fileVolume = fileVolumeList.get(0);
+    	}
+    	return fileVolume;
 	}
 	
 	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, String volumeId) {

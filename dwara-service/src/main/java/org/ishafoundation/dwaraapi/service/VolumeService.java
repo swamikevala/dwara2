@@ -1,11 +1,15 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
+import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.api.req.RewriteRequest;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.Details;
@@ -13,14 +17,21 @@ import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
+import org.ishafoundation.dwaraapi.enumreferences.RewritePurpose;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
+import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.VolumeindexManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeFinalizer;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeInitializer;
@@ -56,6 +67,9 @@ public class VolumeService extends DwaraService {
 
 	@Autowired
 	private VolumeFinalizer volumeFinalizer;
+	
+	@Autowired
+	private JobCreator jobCreator;
 	
 	@Autowired
 	private VolumeindexManager volumeindexManager;
@@ -200,8 +214,62 @@ public class VolumeService extends DwaraService {
 		
 		return response;
 	}
-	
-	
-	
+
+	public void rewriteVolume(String volumeId, RewriteRequest rewriteRequest) {
+		// create user request
+		HashMap<String, Object> data = new HashMap<String, Object>();
+		data.put("volumeId", volumeId);
+		data.put("purpose", rewriteRequest.getPurpose());
+		data.put("goodCopy", rewriteRequest.getGoodCopy());
+		if(rewriteRequest.getAdditionalCopy() != null)
+			data.put("additionalCopy", rewriteRequest.getAdditionalCopy());
+		String artifactclassRegex = rewriteRequest.getArtifactclassRegex();
+		if(artifactclassRegex != null)
+			data.put("artifactclassRegex", artifactclassRegex);
+		
+		Request userRequest = createUserRequest(Action.rewrite, data);
+
+		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(Domain.ONE);// TODO Hardcoded domain
+		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeId(volumeId);
+		
+		// loop artifacts on volume
+		// TODO - filter on artifactclassRegex
+		for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
+			int artifactId = nthArtifactVolume.getId().getArtifactId();
+			
+			Artifact artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(Domain.ONE).findById(artifactId).get(); // get the artifact details from DB
+			// TODO filter out artifacts that only matches specified artifactclass(es) 
+			
+			// TODO Also only if copy not already exists 
+			// (System will skip any artifacts which already exist on the additional copy (e.g. if the config was changed to increase the number of copies from 3 to 4 while a tape was partially written - so the artifacts on the latter part of that tape would need to be skipped))
+			
+			//create system requests			
+			Request systemRequest = new Request();
+			systemRequest.setType(RequestType.system);
+			systemRequest.setRequestRef(userRequest);
+			systemRequest.setActionId(userRequest.getActionId());
+			systemRequest.setStatus(Status.queued);
+			systemRequest.setRequestedBy(userRequest.getRequestedBy());
+			systemRequest.setRequestedAt(LocalDateTime.now());
+		
+			RequestDetails systemrequestDetails = new RequestDetails();
+			systemrequestDetails.setArtifactId(artifactId);
+			systemrequestDetails.setVolumeId(volumeId);
+			systemrequestDetails.setPurpose(RewritePurpose.valueOf(rewriteRequest.getPurpose()));
+			systemrequestDetails.setGoodCopy(rewriteRequest.getGoodCopy());
+			if(rewriteRequest.getAdditionalCopy() != null)
+				systemrequestDetails.setAdditionalCopy(rewriteRequest.getAdditionalCopy());
+			if(rewriteRequest.getArtifactclassRegex() != null)
+				systemrequestDetails.setArtifactclassRegex(rewriteRequest.getArtifactclassRegex());
+			systemRequest.setDetails(systemrequestDetails);
+			systemRequest = requestDao.save(systemRequest);
+			
+			logger.info(DwaraConstants.SYSTEM_REQUEST + systemRequest.getId());
+			
+
+			//create jobs
+			jobCreator.createJobs(systemRequest, artifact);
+		}
+	}
 }
 

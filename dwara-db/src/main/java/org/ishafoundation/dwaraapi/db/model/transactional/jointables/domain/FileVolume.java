@@ -64,6 +64,14 @@ public class FileVolume {
 		this.id = new FileVolumeKey(fileId, volume.getId());
 	}
 
+	public FileVolumeKey getId() {
+		return id;
+	}
+
+	public void setId(FileVolumeKey id) {
+		this.id = id;
+	}
+
 	public Volume getVolume() {
 		return volume;
 	}

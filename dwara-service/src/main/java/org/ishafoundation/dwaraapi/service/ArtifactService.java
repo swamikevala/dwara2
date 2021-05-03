@@ -280,8 +280,12 @@ public class ArtifactService extends DwaraService{
 		// Check if the artifact id exists 
 		// If artifact ID is null return error and escape into the unknown
 		if (artifact == null) { 
-			throw new Exception("Artifact doesnt exist!");
+			throw new Exception("Artifact doesnt exist");
 		}
+		
+		// validate copies
+		if(rewriteCopy == goodCopy)
+			throw new Exception("Both rewrite and good copy cannot be same");
 		
 		// Step 1 - Create User Request
 		HashMap<String, Object> data = new HashMap<String, Object>();

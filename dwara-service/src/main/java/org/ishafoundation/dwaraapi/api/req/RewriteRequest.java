@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class RewriteRequest {
 	   
 	private Integer rewriteCopy;
-	private int goodCopy = 1;
+	private int goodCopy = 1; // defaulted to 1...
 	private String purpose;
 	private String artifactclassRegex;
 	private Integer additionalCopy;

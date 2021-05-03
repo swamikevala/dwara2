@@ -34,7 +34,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.Arti
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.ArtifactOnVolumeStatus;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -255,20 +255,23 @@ public class ScheduledStatusUpdater {
 									ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 									List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(artifactId);
 									
-									int rewriteCopy = job.getRequest().getDetails().getRewriteCopy(); 
-									for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
-										if(rewriteCopy == nthArtifactVolume.getVolume().getGroupRef().getCopy().getId()) {
-											ArtifactOnVolumeStatus artifactVolumeStatus = ArtifactOnVolumeStatus.deleted;
-											if(volumeId.equals(nthArtifactVolume.getVolume().getId())) {
-												artifactVolumeStatus = ArtifactOnVolumeStatus.current;
+									// TODO _ make it common for all...
+									// if rewrite copy
+									Integer rewriteCopy = job.getRequest().getDetails().getRewriteCopy();
+									if(rewriteCopy != null) {
+										for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
+											if(rewriteCopy == nthArtifactVolume.getVolume().getGroupRef().getCopy().getId()) {
+												ArtifactVolumeStatus artifactVolumeStatus = ArtifactVolumeStatus.deleted;
+												if(volumeId.equals(nthArtifactVolume.getVolume().getId())) {
+													artifactVolumeStatus = ArtifactVolumeStatus.current;
+												}
+													
+												nthArtifactVolume.setStatus(artifactVolumeStatus);
 											}
-												
-											nthArtifactVolume.setStatus(artifactVolumeStatus);
 										}
+	
+										domainSpecificArtifactVolumeRepository.saveAll(artifactVolumeList);
 									}
-
-									domainSpecificArtifactVolumeRepository.saveAll(artifactVolumeList);
-									
 									// also delete the goodcopy/source restored content too
 									Job goodCopyVerifyJob = jobDao.findByRequestIdAndFlowelementId(job.getRequest().getId(), CoreFlowelement.core_rewrite_flow_good_copy_checksum_verify.getId());
 									inputPath = processingJobManager.getInputPath(goodCopyVerifyJob);

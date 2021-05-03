@@ -29,7 +29,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.Arti
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.ArtifactOnVolumeStatus;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -156,7 +156,7 @@ public class ArtifactDeleter {
 
 			if(artifactVolumeList.size() > 0) {
 				for (ArtifactVolume artifactVolume : artifactVolumeList) {
-					artifactVolume.setStatus(ArtifactOnVolumeStatus.deleted);
+					artifactVolume.setStatus(ArtifactVolumeStatus.deleted);
 				}
 				
 				domainSpecificArtifactVolumeRepository.saveAll(artifactVolumeList);
