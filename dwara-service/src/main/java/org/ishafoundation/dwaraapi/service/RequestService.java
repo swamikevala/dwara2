@@ -57,7 +57,7 @@ public class RequestService extends DwaraService{
 	@Autowired
 	private ArtifactDeleter artifactDeleter; 
 	
-	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo){
+	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
 		logger.info("Retrieving requests " + requestType.name() + ":" + action + ":" + statusList);
 		
@@ -84,7 +84,7 @@ public class RequestService extends DwaraService{
 		int pageNumber = 0;
 		int pageSize = 0;
 
-		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, pageNumber, pageSize);
+		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd,artifactName, pageNumber, pageSize);
 		for (Request request : requestList) {
 			RequestResponse requestResponse = frameRequestResponse(request, requestType);
 //			List<JobResponse> jobList = jobService.getPlaceholderJobs(request.getId());

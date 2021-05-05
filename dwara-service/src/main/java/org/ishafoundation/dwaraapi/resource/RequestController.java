@@ -43,8 +43,8 @@ public class RequestController {
 	 * @return
 	 */
 	@GetMapping(value = "/request", produces = "application/json")
-	public ResponseEntity<List<RequestResponse>> getRequests(@RequestParam(value="type", required=false) String type, @RequestParam(required=false) String action, @RequestParam(required=false) String status, @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedTo, @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedTo){
-		logger.info("/request?type=" + type + "&action=" + action + "&status=" + status + "&requestedFrom=" + requestedFrom + "&requestedTo=" + requestedTo + "&completedFrom=" + completedFrom + "&completedTo=" + completedTo);
+	public ResponseEntity<List<RequestResponse>> getRequests(@RequestParam(value="type", required=false) String type, @RequestParam(required=false) String action, @RequestParam(required=false) String status, @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedTo, @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedTo, @RequestParam(required=false) String artifactName){
+		logger.info("/request?type=" + type + "&action=" + action + "&status=" + status + "&requestedFrom=" + requestedFrom + "&requestedTo=" + requestedTo + "&completedFrom=" + completedFrom + "&completedTo=" + completedTo + "&artifactName=" + artifactName);
 		List<RequestResponse> requestResponseList = null;
 		try {
 			
@@ -75,7 +75,7 @@ public class RequestController {
 				}
 			}
 			
-			requestResponseList = requestService.getRequests(requestType, actionEnumList, statusList, requestedFrom, requestedTo, completedFrom, completedTo);
+			requestResponseList = requestService.getRequests(requestType, actionEnumList, statusList, requestedFrom, requestedTo, completedFrom, completedTo, artifactName);
 		}catch (Exception e) {
 			String errorMsg = "Unable to get Request details - " + e.getMessage();
 			logger.error(errorMsg, e);
