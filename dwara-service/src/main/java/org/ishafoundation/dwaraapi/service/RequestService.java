@@ -1,8 +1,5 @@
 package org.ishafoundation.dwaraapi.service;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -11,8 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
@@ -62,23 +57,34 @@ public class RequestService extends DwaraService{
 	@Autowired
 	private ArtifactDeleter artifactDeleter; 
 	
-	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, Date completedFrom, Date completedTo){
+	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
 		logger.info("Retrieving requests " + requestType.name() + ":" + action + ":" + statusList);
 		
 		String user = null;
-		LocalDateTime fromDate = completedFrom != null ? completedFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
-		LocalDateTime toDate = completedTo != null ? completedTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+
+		LocalDateTime requestedAtStart = requestedFrom != null ? requestedFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+		LocalDateTime requestedAtEnd = requestedTo != null ? requestedTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
 		// requested to hardcode...
-		if(toDate != null) {
-			toDate = toDate.plusHours(23);
-			toDate = toDate.plusMinutes(59);
-			toDate = toDate.plusSeconds(59);
+		if(requestedAtEnd != null) {
+			requestedAtEnd = requestedAtEnd.plusHours(23);
+			requestedAtEnd = requestedAtEnd.plusMinutes(59);
+			requestedAtEnd = requestedAtEnd.plusSeconds(59);
 		}
+		
+		LocalDateTime completedAtStart = completedFrom != null ? completedFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+		LocalDateTime completedAtEnd = completedTo != null ? completedTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+		// requested to hardcode...
+		if(completedAtEnd != null) {
+			completedAtEnd = completedAtEnd.plusHours(23);
+			completedAtEnd = completedAtEnd.plusMinutes(59);
+			completedAtEnd = completedAtEnd.plusSeconds(59);
+		}
+		
 		int pageNumber = 0;
 		int pageSize = 0;
 
-		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, fromDate, toDate, pageNumber, pageSize);
+		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, pageNumber, pageSize);
 		for (Request request : requestList) {
 			RequestResponse requestResponse = frameRequestResponse(request, requestType);
 //			List<JobResponse> jobList = jobService.getPlaceholderJobs(request.getId());

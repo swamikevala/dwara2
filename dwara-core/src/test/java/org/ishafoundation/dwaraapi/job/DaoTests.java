@@ -8,7 +8,6 @@ import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -66,12 +65,14 @@ public class DaoTests{
 		statusList.add(Status.queued);
 		statusList.add(Status.in_progress);
 		String user = null;
-		LocalDateTime fromDate = null;
-		LocalDateTime toDate = null;
+		LocalDateTime requestedAtStart = null;
+		LocalDateTime requestedAtEnd = null;
+		LocalDateTime completedAtStart = null;
+		LocalDateTime completedAtEnd = null;
 		int pageNumber = 0;
 		int pageSize = 0;
 
-		List<Request> requestLit = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, fromDate, toDate, pageNumber, pageSize);
+		List<Request> requestLit = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, pageNumber, pageSize);
 		for (Request request : requestLit) {
 			System.out.println(request.getId() + ":" + request.getActionId());
 		}
