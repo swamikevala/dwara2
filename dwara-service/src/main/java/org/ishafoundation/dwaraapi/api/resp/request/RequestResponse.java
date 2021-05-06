@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.api.resp.request;
 
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.api.resp.job.GroupedJobResponse;
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
@@ -29,12 +30,14 @@ public class RequestResponse {
 
     private Integer id;
     private String type;
-    private Integer userRequestId;
+    private Integer userRequestId; // if requestType is system
     private String requestedAt;
     private String completedAt;
     private String requestedBy;
     private String action;
     private String status;
+    
+    private List<RequestResponse> request;
     
     // For ingest
     private Artifact artifact;
@@ -46,7 +49,10 @@ public class RequestResponse {
     private File file;
    
     // The job List for the each request
-    private List<JobResponse> jobList;
+    private List<JobResponse> job;
+    
+    private List<GroupedJobResponse> groupedJob;
+    
     // For volume relate actions like initialize, map_drives etc.
     @JsonProperty("volume")
 	private VolumeResponse volume;
@@ -115,6 +121,14 @@ public class RequestResponse {
 		this.status = status;
 	}
 
+	public List<RequestResponse> getRequest() {
+		return request;
+	}
+
+	public void setRequest(List<RequestResponse> request) {
+		this.request = request;
+	}
+
 	public Artifact getArtifact() {
 		return artifact;
 	}
@@ -155,6 +169,22 @@ public class RequestResponse {
 		this.file = file;
 	}
 
+	public List<JobResponse> getJob() {
+		return job;
+	}
+
+	public void setJob(List<JobResponse> job) {
+		this.job = job;
+	}
+	
+	public List<GroupedJobResponse> getGroupedJob() {
+		return groupedJob;
+	}
+
+	public void setGroupedJob(List<GroupedJobResponse> groupedJob) {
+		this.groupedJob = groupedJob;
+	}
+
 	public VolumeResponse getVolume() {
 		return volume;
 	}
@@ -162,13 +192,5 @@ public class RequestResponse {
 	public void setVolume(VolumeResponse volume) {
 		this.volume = volume;
 	}
-
-	public List<JobResponse> getJobList() {
-		return jobList;
-	}
-
-	public void setJobList(List<JobResponse> jobList) {
-		this.jobList = jobList;
-	}	 
 }
 

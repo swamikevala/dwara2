@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
@@ -25,6 +26,7 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.JobDetailsType;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -50,6 +52,9 @@ public class RequestService extends DwaraService{
 
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
+
+	@Autowired
+	private JobService jobService;
 	
 	@Autowired
 	private VolumeService volumeService;
@@ -57,7 +62,7 @@ public class RequestService extends DwaraService{
 	@Autowired
 	private ArtifactDeleter artifactDeleter; 
 	
-	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName){
+	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName, JobDetailsType jobDetailsType){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
 		logger.info("Retrieving requests " + requestType.name() + ":" + action + ":" + statusList);
 		
@@ -84,11 +89,9 @@ public class RequestService extends DwaraService{
 		int pageNumber = 0;
 		int pageSize = 0;
 
-		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd,artifactName, pageNumber, pageSize);
+		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, pageNumber, pageSize);
 		for (Request request : requestList) {
-			RequestResponse requestResponse = frameRequestResponse(request, requestType);
-//			List<JobResponse> jobList = jobService.getPlaceholderJobs(request.getId());
-//			requestResponse.setJobList(jobList);
+			RequestResponse requestResponse = frameRequestResponse(request, requestType, request.getId(), jobDetailsType);
 			requestResponseList.add(requestResponse);
 		}
 		return requestResponseList;
@@ -293,13 +296,20 @@ public class RequestService extends DwaraService{
 	}
 	
 	public RequestResponse frameRequestResponse(Request request, RequestType requestType){
+		return frameRequestResponse(request, requestType, null, null);
+	}
+	
+	public RequestResponse frameRequestResponse(Request request, RequestType requestType, Integer userReqId, JobDetailsType jobDetailsType){
 		RequestResponse requestResponse = new RequestResponse();
 		int requestId = request.getId();
 		
 		requestResponse.setId(requestId);
 		requestResponse.setType(request.getType().name());
-		if(requestType == RequestType.system)
-			requestResponse.setUserRequestId(request.getRequestRef().getId());
+		if(requestType == RequestType.system) {
+			if(userReqId == null)
+				userReqId = request.getRequestRef().getId(); // This would make a DB call to request table. For user requestType calls when on loop on systemRequests this would unnecessarily make DB call to get the already available userReqId 
+			requestResponse.setUserRequestId(userReqId);
+		}
 		requestResponse.setRequestedAt(getDateForUI(request.getRequestedAt()));
 		requestResponse.setCompletedAt(getDateForUI(request.getCompletedAt()));
 		requestResponse.setRequestedBy(request.getRequestedBy().getName());
@@ -307,17 +317,29 @@ public class RequestService extends DwaraService{
 		requestResponse.setStatus(request.getStatus().name());
 		Action requestAction = request.getActionId();
 		requestResponse.setAction(requestAction.name());
+		if(requestType == RequestType.user) {
+			if(requestAction == Action.ingest) {
+				List<RequestResponse> systemRequestResponseList = new ArrayList<RequestResponse>();
+				List<Request> systemRequestList = requestDao.findAllByRequestRefId(requestId);
+
+				for (Request nthSystemRequest : systemRequestList) {
+					systemRequestResponseList.add(frameRequestResponse(nthSystemRequest, RequestType.system, userReqId, jobDetailsType));
+				}
+				requestResponse.setRequest(systemRequestResponseList);
+			}
+		}
 		if(requestType == RequestType.system) {		
 			if(requestAction == Action.ingest) {
 				String artifactclassId = request.getDetails().getArtifactclassId();
 				Domain domain = domainUtil.getDomain(artifactclassId);
 				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 
-				Artifact systemArtifact = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(requestId); 
+				Artifact systemArtifact = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(requestId); // TODO use Artifactclass().isSource() instead of orderBy
 				if(systemArtifact != null) {
 					org.ishafoundation.dwaraapi.api.resp.request.Artifact artifactForResponse = new org.ishafoundation.dwaraapi.api.resp.request.Artifact();
 					artifactForResponse.setId(systemArtifact.getId());
 					artifactForResponse.setName(systemArtifact.getName());
+					artifactForResponse.setDisplayName(StringUtils.substringAfter(systemArtifact.getName(),"_"));
 					artifactForResponse.setDeleted(systemArtifact.isDeleted());
 					artifactForResponse.setArtifactclass(systemArtifact.getArtifactclass().getId());
 					artifactForResponse.setPrevSequenceCode(systemArtifact.getPrevSequenceCode());
@@ -341,6 +363,14 @@ public class RequestService extends DwaraService{
 					}
 
 					requestResponse.setArtifact(artifactForResponse);
+				}
+				if(jobDetailsType != null) {
+					if(jobDetailsType == JobDetailsType.vanilla)
+						requestResponse.setJob(jobService.getJobs(request.getId(), null));
+					else if(jobDetailsType == JobDetailsType.placeholder)
+						requestResponse.setJob(jobService.getPlaceholderJobs(request));
+					else if(jobDetailsType == JobDetailsType.grouped_placeholder)
+						requestResponse.setGroupedJob(jobService.getGroupedPlaceholderJobs(request, systemArtifact.getId()));
 				}
 			} 
 			else if(requestAction == Action.restore || (requestAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId()))) {

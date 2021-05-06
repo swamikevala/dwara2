@@ -38,6 +38,8 @@ public class JobResponse {
     private String processingTask;
     @JsonProperty("requestId")
     private Integer requestId;
+    // TODO requested artifact name
+    
     @JsonProperty("flowelementId")
     private String flowelementId;
     @JsonProperty("inputArtifactId")

@@ -4,12 +4,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.api.resp.job.GroupedJobResponse;
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
@@ -33,10 +32,14 @@ import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.job.JobManipulator;
+import org.ishafoundation.dwaraapi.utils.StatusUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class JobService extends DwaraService{
@@ -83,11 +86,15 @@ public class JobService extends DwaraService{
 	}
 	
 	public List<JobResponse> getPlaceholderJobs(int systemRequestId){
+		Request systemRequest = requestDao.findById(systemRequestId).get();
+
+		return getPlaceholderJobs(systemRequest);
+	}
+	
+	public List<JobResponse> getPlaceholderJobs(Request systemRequest){
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
-		
-		Request request = requestDao.findById(systemRequestId).get();
-				
-		List<Job> jobList = jobManipulator.getJobs(request);
+						
+		List<Job> jobList = jobManipulator.getJobs(systemRequest);
 		
 		for (Job job : jobList) {
 			JobResponse jobResponse = frameJobResponse(job);
@@ -95,6 +102,83 @@ public class JobService extends DwaraService{
 			jobResponseList.add(jobResponse);
 		}
 		return jobResponseList;
+	}
+	
+	public List<GroupedJobResponse> getGroupedPlaceholderJobs(Request systemRequest, int sourceArtifactId){
+		List<GroupedJobResponse> groupedJobResponseList = new ArrayList<GroupedJobResponse>();
+		Map<String, GroupedJobResponse> columnName_GroupedJobResponse_Map = new HashMap<String, GroupedJobResponse>();
+		
+		List<Job> jobList = jobManipulator.getJobs(systemRequest);
+	
+		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
+		for (Job job : jobList) {
+			JobResponse jobResponse = frameJobResponse(job);
+			jobResponseList.add(jobResponse);
+			
+			String processingTask = jobResponse.getProcessingTask();
+			String storageTask = jobResponse.getStoragetaskAction();
+			if(processingTask != null && (processingTask.equals("file-copy") || processingTask.equals("video-mam-update"))) {
+				GroupedJobResponse groupedJobResponse = new GroupedJobResponse();
+				groupedJobResponse.setColumnName(jobResponse.getProcessingTask());
+				groupedJobResponse.setStatus(jobResponse.getStatus());
+				groupedJobResponse.setMessage(jobResponse.getMessage());
+				List<JobResponse> jobResponseArrayList = new ArrayList<JobResponse>();
+				jobResponseArrayList.add(jobResponse);
+				groupedJobResponse.setPlaceholderJob(jobResponseArrayList);
+				groupedJobResponseList.add(groupedJobResponse);
+			}else if(storageTask != null && storageTask.equals("write")) {
+				GroupedJobResponse groupedJobResponse = new GroupedJobResponse();
+				Integer copyId = jobResponse.getCopy();
+				String columnName = "copy-" + copyId;
+				if(jobResponse.getInputArtifactId() == sourceArtifactId)
+					columnName = "Raw " + columnName;
+				else
+					columnName = "Proxy " + columnName;
+				groupedJobResponse.setColumnName(jobResponse.getProcessingTask());
+				
+				groupedJobResponse.setStatus(jobResponse.getStatus());
+				groupedJobResponse.setMessage(jobResponse.getMessage());
+
+				List<JobResponse> jobResponseArrayList = new ArrayList<JobResponse>();
+				jobResponseArrayList.add(jobResponse);
+				groupedJobResponse.setPlaceholderJob(jobResponseArrayList);
+				groupedJobResponseList.add(groupedJobResponse);
+				columnName_GroupedJobResponse_Map.put(columnName, groupedJobResponse);
+			}
+		}
+		
+		
+		for (JobResponse nthJobResponse : jobResponseList) {
+			String processingTask = nthJobResponse.getProcessingTask();
+			String storageTask = nthJobResponse.getStoragetaskAction();
+
+			Integer copyId = nthJobResponse.getCopy();
+			if(copyId != null) {
+				String columnName = "copy-" + copyId;
+				if(nthJobResponse.getInputArtifactId() == sourceArtifactId)
+					columnName = "Raw " + columnName;
+				else
+					columnName = "Proxy " + columnName;
+				
+				
+				if((storageTask != null && storageTask.equals("restore")) || (processingTask != null && processingTask.equals("checksum-verify"))) {
+					GroupedJobResponse groupedJobResponse = columnName_GroupedJobResponse_Map.get(columnName);
+					List<JobResponse> jobResponseArrayList = groupedJobResponse.getPlaceholderJob();
+					jobResponseArrayList.add(nthJobResponse);
+					groupedJobResponse.setPlaceholderJob(jobResponseArrayList);
+
+					List<Status> jobStatusList = new ArrayList<Status>();
+					jobStatusList.add(Status.valueOf(nthJobResponse.getStatus()));
+					jobStatusList.add(Status.valueOf(groupedJobResponse.getStatus()));
+					
+					Status status = StatusUtil.getStatus(jobStatusList);
+
+					groupedJobResponse.setStatus(status.name());
+					groupedJobResponse.setMessage(StringUtils.isNotBlank(groupedJobResponse.getMessage()) ? groupedJobResponse.getMessage() : "" + nthJobResponse.getMessage());
+				}
+			}
+		}
+		return groupedJobResponseList;
 	}
 	
 	public List<JobResponse> createDependentJobs(int jobId) throws Exception{

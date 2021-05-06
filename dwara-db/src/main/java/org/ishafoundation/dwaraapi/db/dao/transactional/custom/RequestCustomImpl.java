@@ -109,8 +109,9 @@ public class RequestCustomImpl implements RequestCustom {
 			predicates.add(cb.between(requestRoot.get("completedAt"), completedAtStart, completedAtEnd));
 		}
 		
+		// TODO - This wont reflect renamed artifacts. Need to join artifact table 
 		if(artifactName != null) {
-			predicates.add(cb.like(cb.function("JSON_EXTRACT", String.class, requestRoot.get("details"), cb.literal("$.staged_filename")), artifactName));
+			predicates.add(cb.equal(cb.function("JSON_EXTRACT", String.class, requestRoot.get("details"), cb.literal("$.staged_filename")), artifactName));
 		}
 		return predicates;
 	}

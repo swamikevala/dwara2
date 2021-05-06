@@ -7,6 +7,7 @@ import java.util.List;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.JobDetailsType;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -43,8 +44,8 @@ public class RequestController {
 	 * @return
 	 */
 	@GetMapping(value = "/request", produces = "application/json")
-	public ResponseEntity<List<RequestResponse>> getRequests(@RequestParam(value="type", required=false) String type, @RequestParam(required=false) String action, @RequestParam(required=false) String status, @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedTo, @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedTo, @RequestParam(required=false) String artifactName){
-		logger.info("/request?type=" + type + "&action=" + action + "&status=" + status + "&requestedFrom=" + requestedFrom + "&requestedTo=" + requestedTo + "&completedFrom=" + completedFrom + "&completedTo=" + completedTo + "&artifactName=" + artifactName);
+	public ResponseEntity<List<RequestResponse>> getRequests(@RequestParam(value="type", required=false) String type, @RequestParam(required=false) String action, @RequestParam(required=false) String status, @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedTo, @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedTo, @RequestParam(required=false) String artifactName, @RequestParam(required=false) JobDetailsType jobDetailsType){
+		logger.info("/request?type=" + type + "&action=" + action + "&status=" + status + "&requestedFrom=" + requestedFrom + "&requestedTo=" + requestedTo + "&completedFrom=" + completedFrom + "&completedTo=" + completedTo + "&artifactName=" + artifactName + "&jobDetailsType=" + jobDetailsType);
 		List<RequestResponse> requestResponseList = null;
 		try {
 			
@@ -75,7 +76,7 @@ public class RequestController {
 				}
 			}
 			
-			requestResponseList = requestService.getRequests(requestType, actionEnumList, statusList, requestedFrom, requestedTo, completedFrom, completedTo, artifactName);
+			requestResponseList = requestService.getRequests(requestType, actionEnumList, statusList, requestedFrom, requestedTo, completedFrom, completedTo, artifactName, jobDetailsType);
 		}catch (Exception e) {
 			String errorMsg = "Unable to get Request details - " + e.getMessage();
 			logger.error(errorMsg, e);
