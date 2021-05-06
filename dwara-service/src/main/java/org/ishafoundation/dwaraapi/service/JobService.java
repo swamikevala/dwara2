@@ -129,12 +129,8 @@ public class JobService extends DwaraService{
 			}else if(storageTask != null && storageTask.equals("write")) {
 				GroupedJobResponse groupedJobResponse = new GroupedJobResponse();
 				Integer copyId = jobResponse.getCopy();
-				String columnName = "copy-" + copyId;
-				if(jobResponse.getInputArtifactId() == sourceArtifactId)
-					columnName = "Raw " + columnName;
-				else
-					columnName = "Proxy " + columnName;
-				groupedJobResponse.setColumnName(jobResponse.getProcessingTask());
+				String columnName = getColumnName(copyId, jobResponse, sourceArtifactId);
+				groupedJobResponse.setColumnName(columnName);
 				
 				groupedJobResponse.setStatus(jobResponse.getStatus());
 				groupedJobResponse.setMessage(jobResponse.getMessage());
@@ -154,31 +150,41 @@ public class JobService extends DwaraService{
 
 			Integer copyId = nthJobResponse.getCopy();
 			if(copyId != null) {
-				String columnName = "copy-" + copyId;
-				if(nthJobResponse.getInputArtifactId() == sourceArtifactId)
-					columnName = "Raw " + columnName;
-				else
-					columnName = "Proxy " + columnName;
-				
+				String columnName = getColumnName(copyId, nthJobResponse, sourceArtifactId);
 				
 				if((storageTask != null && storageTask.equals("restore")) || (processingTask != null && processingTask.equals("checksum-verify"))) {
 					GroupedJobResponse groupedJobResponse = columnName_GroupedJobResponse_Map.get(columnName);
 					List<JobResponse> jobResponseArrayList = groupedJobResponse.getPlaceholderJob();
 					jobResponseArrayList.add(nthJobResponse);
 					groupedJobResponse.setPlaceholderJob(jobResponseArrayList);
-
-					List<Status> jobStatusList = new ArrayList<Status>();
-					jobStatusList.add(Status.valueOf(nthJobResponse.getStatus()));
-					jobStatusList.add(Status.valueOf(groupedJobResponse.getStatus()));
 					
-					Status status = StatusUtil.getStatus(jobStatusList);
-
-					groupedJobResponse.setStatus(status.name());
+					String groupedJobStatus = groupedJobResponse.getStatus();
+					String currentJobStatus = nthJobResponse.getStatus();
+					if(groupedJobStatus != null) {
+						List<Status> jobStatusList = new ArrayList<Status>();
+						jobStatusList.add(Status.valueOf(groupedJobStatus));
+						
+						if(currentJobStatus == null) // means job not created just yet...
+							currentJobStatus = Status.queued.name();
+						jobStatusList.add(Status.valueOf(currentJobStatus));
+					
+						Status status = StatusUtil.getStatus(jobStatusList);
+						groupedJobResponse.setStatus(status.name());
+					}
 					groupedJobResponse.setMessage(StringUtils.isNotBlank(groupedJobResponse.getMessage()) ? groupedJobResponse.getMessage() : "" + nthJobResponse.getMessage());
 				}
 			}
 		}
 		return groupedJobResponseList;
+	}
+	
+	private String getColumnName(Integer copyId, JobResponse jobResponse, int sourceArtifactId) {
+		String columnName = "copy-" + copyId;
+		if(jobResponse.getInputArtifactId() != null && jobResponse.getInputArtifactId() == sourceArtifactId)
+			columnName = "Raw " + columnName;
+		else
+			columnName = "Proxy " + columnName;
+		return columnName;
 	}
 	
 	public List<JobResponse> createDependentJobs(int jobId) throws Exception{

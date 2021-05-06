@@ -1,29 +1,43 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.artifact.ArtifactResponse;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.resource.mapper.MiscObjectMapper;
 import org.ishafoundation.dwaraapi.service.common.ArtifactDeleter;
@@ -51,6 +65,9 @@ public class ArtifactService extends DwaraService{
 	private JobDao jobDao;
 	
 	@Autowired
+	private ArtifactclassVolumeDao artifactclassVolumeDao;
+
+	@Autowired
 	private DomainUtil domainUtil;
 
 	@Autowired
@@ -64,6 +81,12 @@ public class ArtifactService extends DwaraService{
 
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
+	
+	@Autowired
+	private ConfigurationTablesUtil configurationTablesUtil;
+	
+	@Autowired
+	private SequenceUtil sequenceUtil;
 	
 	@Autowired
 	private MamUpdateTaskExecutor mamUpdateTaskExecutor;
@@ -106,7 +129,7 @@ public class ArtifactService extends DwaraService{
 		logger.info(userRequest.getId() + " - Completed");
 
 		ArtifactResponse dr = new ArtifactResponse();
-		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForDeleteArtifactResponse(artifact);
+		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForArtifactResponse(artifact);
 		dr.setArtifact(artifactForResponse);
 		dr.setUserRequestId(userRequest.getId());
 		dr.setAction(Action.delete.name());
@@ -204,8 +227,6 @@ public class ArtifactService extends DwaraService{
 			String parentFolderReplaceRegex = "^"+artifactName; 
 			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifact, domain);			
 			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File eachfile : artifactFileList) { 
-				// Each file will now be renamed and the DB entry changed subsequently like butter through knife...
-				String eachFilePath = eachfile.getPathname();
 				// Getting the filename
 				String filepath = eachfile.getPathname();
 				// Change the parent folder name by replacing the older artifact name by newer name
@@ -250,7 +271,7 @@ public class ArtifactService extends DwaraService{
 
 		// Return response
 		ArtifactResponse dr = new ArtifactResponse();
-		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForDeleteArtifactResponse(artifactToRenameActualRow);
+		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForArtifactResponse(artifactToRenameActualRow);
 		dr.setArtifact(artifactForResponse);
 		dr.setUserRequestId(userRequest.getId());
 		dr.setAction(Action.rename.name());
@@ -319,10 +340,192 @@ public class ArtifactService extends DwaraService{
 
 		// Return response
 		ArtifactResponse dr = new ArtifactResponse();
-		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForDeleteArtifactResponse(artifact);
+		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForArtifactResponse(artifact);
 		dr.setArtifact(artifactForResponse);
 		dr.setUserRequestId(userRequest.getId());
 		dr.setAction(userRequest.getActionId().name());
+		dr.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
+		dr.setRequestedBy(userRequest.getRequestedBy().getName());
+
+		return dr;
+	}
+
+	public ArtifactResponse changeArtifactclass(int artifactId, String newArtifactclassId, Boolean force) throws Exception {
+		// validate 
+		ArtifactRepository<Artifact> artifactRepository = null;
+		Artifact requestedArtifact = null; // get the artifact details from DB
+		Domain domain = null; 
+		Domain[] domains = Domain.values();
+		for (Domain nthDomain : domains) {
+			artifactRepository = domainUtil.getDomainSpecificArtifactRepository(nthDomain);
+			Optional<Artifact> artifactEntity = artifactRepository.findById(artifactId);
+			if(artifactEntity.isPresent()) {
+				requestedArtifact = artifactEntity.get();
+				if(requestedArtifact.isDeleted())
+					throw new Exception("Deleted Artifact cannot be changed");
+				domain = nthDomain;
+				break;
+			}
+		}
+
+		// 2 (a) ------ Artifact level change
+		// Check if the artifact id exists 
+		// If artifact ID is null return error and escape into the unknown
+		if (requestedArtifact == null) { 
+			throw new Exception("Artifact doesnt exist");
+		}
+
+		// if same artifactclass
+		Artifactclass currentArtifactclass = requestedArtifact.getArtifactclass();
+		String currentArtifactclassId = currentArtifactclass.getId();
+		if(currentArtifactclassId.equals(newArtifactclassId))
+			throw new DwaraException("Artifactclass cannot be changed to same current artifactclass. Current " + currentArtifactclassId + " Requested " + newArtifactclassId);
+		
+		// if new artifactclass exists
+		Artifactclass newArtifactclass = configurationTablesUtil.getArtifactclass(newArtifactclassId);
+		
+		if(newArtifactclass == null) {
+			throw new DwaraException(newArtifactclassId + " not configured in artifactclass table. Please double check");
+		}
+
+		// Validate if current and new artifactclasses belong to same group check ??? Wont work if the following needed Eg., video-digi-edit* to video-digi*
+		String currentSequenceRefId = currentArtifactclass.getSequence().getSequenceRef().getId();
+		String newSequenceRefId = newArtifactclass.getSequence().getSequenceRef().getId();
+		if(!force && !newSequenceRefId.equals(currentSequenceRefId))
+			throw new DwaraException("Only changing within same sequence group is supported. Current " + currentSequenceRefId + " Requested " + newSequenceRefId + ". If you know what you are doing try force option");
+			
+		// status check on request
+		Request request = requestedArtifact.getWriteRequest();
+		Status requestStatus = request.getStatus();
+		boolean isGoodToGo = false;
+		if(requestStatus == Status.completed) {
+			isGoodToGo = true;
+		}
+		else if(requestStatus == Status.on_hold) {
+			ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+			List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(artifactId);
+			
+			if(artifactVolumeList.size() > 0)
+				throw new Exception("Some or all copies written to tape. Wait till the request gets completed");
+			else
+				isGoodToGo = true;
+		}
+		
+		if(!isGoodToGo) {
+			throw new DwaraException("Changing artifactclass not supported for running requests. Please put the jobs on hold");			
+			// Lets not be tempted to complicate this and automate by putting the jobs first on hold for queued requests when no write happened...
+		}
+			
+		// synchronous task so create userRequest
+		// Step 1 - Create User Request
+		HashMap<String, Object> data = new HashMap<String, Object>();
+		data.put("artifactId", artifactId);
+		data.put("artifactclass", currentArtifactclassId);
+		data.put("newArtifactclass", newArtifactclassId);
+		
+		Request userRequest = createUserRequest(Action.change_artifactclass, Status.in_progress, data);
+				
+		try {
+			List<Artifact> artifactList = artifactRepository.findAllByWriteRequestId(request.getId());
+			for (Artifact nthArtifact : artifactList) {
+				if(nthArtifact.getId() != requestedArtifact.getId()) { // if the looping artifact is not the requested artifact then
+					currentArtifactclass = nthArtifact.getArtifactclass();
+					newArtifactclass = configurationTablesUtil.getArtifactclass(currentArtifactclass.getId().replace(currentArtifactclassId, newArtifactclassId));
+				}
+				
+				// sequence code
+				String artifactName = nthArtifact.getName();
+				String currentSeqCode = StringUtils.substringBefore(artifactName,"_");
+				String artifactNameWithoutSequence = StringUtils.substringAfter(artifactName,"_");
+				String newSeqCode = null;
+				
+				currentSequenceRefId = currentArtifactclass.getSequence().getSequenceRef().getId();
+				newSequenceRefId = newArtifactclass.getSequence().getSequenceRef().getId();
+				
+				if(newSequenceRefId.equals(currentSequenceRefId)) {
+					// just replace the sequence number with the correct prefix
+					newSeqCode = currentSeqCode.replace(currentArtifactclass.getSequence().getPrefix(), newArtifactclass.getSequence().getPrefix());
+				}
+				else if(force) {
+					newSeqCode = sequenceUtil.getSequenceCode(newArtifactclass.getSequence(), artifactNameWithoutSequence);	
+				}
+		
+				String toBeArtifactName = newSeqCode + "_" + artifactNameWithoutSequence;
+		
+				// update artifact table
+				nthArtifact.setSequenceCode(newSeqCode);
+				nthArtifact.setName(toBeArtifactName);
+				nthArtifact.setArtifactclass(newArtifactclass);
+				artifactRepository.save(nthArtifact);
+				
+				String parentFolderReplaceRegex = "^"+artifactName; 
+				List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(nthArtifact, domain);			
+				for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File eachfile : artifactFileList) { 
+					// Getting the filename
+					String filepath = eachfile.getPathname();
+					// Change the parent folder name by replacing the older artifact name by newer name
+					String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, toBeArtifactName); 
+					eachfile.setPathname(correctedFilePathForArtifactFile);
+					byte[] filePathChecksum = ChecksumUtil.getChecksum(correctedFilePathForArtifactFile);
+					eachfile.setPathnameChecksum(filePathChecksum);
+				} // File entry manipulation and renaming ends here 
+					
+				List<TFile> artifactTFileList  = tFileDao.findAllByArtifactId(nthArtifact.getId()); // Including the Deleted Ones
+				// TODO : what happens if Tfile records are purged...
+				for (TFile nthTFile : artifactTFileList) {
+					String filepath = nthTFile.getPathname();
+					// Change the parent folder name by replacing the older artifact name by newer name
+					String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, toBeArtifactName); 
+					nthTFile.setPathname(correctedFilePathForArtifactFile);	
+					byte[] filePathChecksum = ChecksumUtil.getChecksum(correctedFilePathForArtifactFile);
+					nthTFile.setPathnameChecksum(filePathChecksum);
+				}
+					
+				FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+				// Update the file table
+				domainSpecificFileRepository.saveAll(artifactFileList);
+				tFileDao.saveAll(artifactTFileList);
+		
+				if(requestStatus == Status.on_hold) {
+					// get the write jobs and change the group volume id
+					List<Job> jobList = jobDao.findAllByRequestIdAndInputArtifactId(request.getId(), artifactId);
+					
+					Map<Integer, Volume> copyId_GrpVolume_Map = new HashMap<Integer, Volume>();
+					List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassIdAndActiveTrue(newArtifactclassId);
+					for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {
+						Volume grpVolume = artifactclassVolume.getVolume();
+						copyId_GrpVolume_Map.put(grpVolume.getCopy().getId(), grpVolume);
+					}
+					
+					for (Job nthJob : jobList) {
+						if(nthJob.getStoragetaskActionId() == Action.write) {
+							nthJob.setGroupVolume(copyId_GrpVolume_Map.get(nthJob.getGroupVolume().getCopy().getId()));
+							jobDao.save(nthJob);
+						}
+					}
+					
+					// mv the physical folder
+					String readyToIngestPath =  currentArtifactclass.getPathPrefix();
+					String newReadyToIngestPath =  newArtifactclass.getPathPrefix();
+					Files.move(Paths.get(readyToIngestPath, artifactName), Paths.get(newReadyToIngestPath, toBeArtifactName), StandardCopyOption.ATOMIC_MOVE);
+		
+				}
+			}
+		}catch (Exception e) {
+			userRequest.setStatus(Status.failed);
+			requestDao.save(userRequest);
+			throw new Exception("Unable to change Artifactclass for " + artifactId + " : " + e.getMessage());
+		}
+		
+		userRequest.setStatus(Status.completed);
+		requestDao.save(userRequest);
+
+		// Return response
+		ArtifactResponse dr = new ArtifactResponse();
+		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForArtifactResponse(requestedArtifact);
+		dr.setArtifact(artifactForResponse);
+		dr.setUserRequestId(userRequest.getId());
+		dr.setAction(Action.change_artifactclass.name());
 		dr.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
 		dr.setRequestedBy(userRequest.getRequestedBy().getName());
 

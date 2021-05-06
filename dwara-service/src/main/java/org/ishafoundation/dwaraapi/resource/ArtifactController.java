@@ -4,6 +4,7 @@ import java.io.File;
 
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.api.req.RewriteRequest;
+import org.ishafoundation.dwaraapi.api.req.artifact.ArtifactChangeArtifactclassRequest;
 import org.ishafoundation.dwaraapi.api.req.artifact.ArtifactSoftRenameRequest;
 import org.ishafoundation.dwaraapi.api.resp.artifact.ArtifactResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
@@ -92,6 +93,25 @@ public class ArtifactController {
 		}
 
 		return ResponseEntity.status(HttpStatus.OK).body(artifactSoftRenameResponse);
+	}
+	
+	@PostMapping(value = "/artifact/{artifactId}/changeArtifactclass", produces = "application/json")
+	public ResponseEntity<ArtifactResponse> changeArtifactclass(@RequestBody ArtifactChangeArtifactclassRequest artifactChangeArtifactclassRequest, @PathVariable("artifactId") int artifactId, @RequestParam Boolean force){
+		ArtifactResponse artifactResponse = null;
+    	logger.info("/artifact/" + artifactId + "/changeArtifactclass");		
+		try {
+			String newArtifactclass = artifactChangeArtifactclassRequest.getArtifactclass();		
+			artifactResponse = artifactservice.changeArtifactclass(artifactId, newArtifactclass, force);
+		}catch (Exception e) {
+			String errorMsg = "Unable to change Artifactclass for artifact " + artifactId + "- " + e.getMessage();
+			logger.error(errorMsg, e);
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(artifactResponse);
 	}
 	
 	@ApiOperation(value = "Generates a specific Artifact' Label and saves it in the configured temp location. Useful for dd-ing the artifact label manually if something goes wrong with label writing after content is written to tape")

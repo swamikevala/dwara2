@@ -30,5 +30,6 @@ public enum Action {
 	diagnostics,
 	requeue,
 	marked_completed,
-	copy
+	copy,
+	change_artifactclass;
 }
