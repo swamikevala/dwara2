@@ -41,10 +41,13 @@ public class ScheduledBlankTapeAutoInitializer {
 				List<InitializeUserRequest> initializeUserRequestList = new ArrayList<InitializeUserRequest>(); 
 				List<Tape> blankTapesList = autoloaderService.getLoadedTapesInLibrary(autoloaderDevice, true); // get only blank tapes from library
 				for (Tape tape : blankTapesList) {
+					String barcode = tape.getBarcode();
+					if(barcode.startsWith(DwaraConstants.CLEANUP_TAPE_PREFIX)) // Dont load clean up tapes
+						continue;
 					InitializeUserRequest initializeUserRequest = new InitializeUserRequest();
 					initializeUserRequest.setForce(false);
 					initializeUserRequest.setStoragesubtype(tape.getStoragesubtype());
-					initializeUserRequest.setVolume(tape.getBarcode());
+					initializeUserRequest.setVolume(barcode);
 					// Not needed initializeUserRequest.setVolumeBlocksize(524288);
 					initializeUserRequest.setVolumeGroup(tape.getVolumeGroup());
 					initializeUserRequestList.add(initializeUserRequest);

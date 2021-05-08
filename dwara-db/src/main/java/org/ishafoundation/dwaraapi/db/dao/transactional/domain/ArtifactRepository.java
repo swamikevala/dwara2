@@ -11,7 +11,7 @@ public interface ArtifactRepository<T extends Artifact> extends CrudRepository<T
 
 	List<Artifact> findAllByWriteRequestId(int ingestRequestId);
 	
-	Artifact findTopByWriteRequestIdOrderByIdAsc(int ingestRequestId);
+	Artifact findTopByWriteRequestIdOrderByIdAsc(int ingestRequestId); // TODO use Artifactclass().isSource() instead of orderBy
 
 	Artifact findByName(String artifactName);
 	

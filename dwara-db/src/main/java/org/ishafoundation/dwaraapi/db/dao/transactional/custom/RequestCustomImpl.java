@@ -28,12 +28,13 @@ public class RequestCustomImpl implements RequestCustom {
      * args[2] - status - status List
      * args[3] - userId - filter on who created the request
      * args[4,5] - fromDate, toDate - the date range within which the request is requested
-     * args[6] - pageNumber - the nth pagenumber that need to be shown...
-     * args[7] - pageSize - no. or rows that should be returned in the resultset
+     * args[6,7] - fromDate, toDate - the date range within which the request is completed
+     * args[8] - pageNumber - the nth pagenumber that need to be shown...
+     * args[9] - pageSize - no. or rows that should be returned in the resultset
      */
     
 	@Override
-	public List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, List<Action> action, List<Status> statusList, String user, LocalDateTime fromDate, LocalDateTime toDate, int pageNumber, int pageSize) {
+	public List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, List<Action> action, List<Status> statusList, String user, LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName, int pageNumber, int pageSize) {
 		
 		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 		
@@ -49,7 +50,7 @@ public class RequestCustomImpl implements RequestCustom {
         CriteriaQuery<Request> query = cb.createQuery(Request.class);
         Root<Request> requestRoot = query.from(Request.class);
         
-        List<Predicate> predicates = getFramedPredicates(requestRoot, cb, requestType, action, statusList, user, fromDate, toDate);
+        List<Predicate> predicates = getFramedPredicates(requestRoot, cb, requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName);
        	query.select(requestRoot).where(cb.and(predicates.toArray(new Predicate[0])));
        	query.orderBy(cb.desc(requestRoot.get("id"))); // default orderby most recent first
         //List<Request> requestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
@@ -66,7 +67,7 @@ public class RequestCustomImpl implements RequestCustom {
 
 	
 	private List<Predicate> getFramedPredicates(Root<Request> requestRoot, CriteriaBuilder cb, RequestType requestType, List<Action> actionList, List<Status> statusList, String user,
-			LocalDateTime fromDate, LocalDateTime toDate) {
+			LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName) {
         
         
 	    List<Predicate> predicates = new ArrayList<>();
@@ -95,10 +96,22 @@ public class RequestCustomImpl implements RequestCustom {
 		if(user != null) {
 			predicates.add(cb.equal(requestRoot.get("requestedBy"), user));
 		}
-		if(fromDate != null) {
-			if(toDate == null)
-				toDate = LocalDateTime.now();
-			predicates.add(cb.between(requestRoot.get("completedAt"), fromDate, toDate));
+
+		if(requestedAtStart != null) {
+			if(requestedAtEnd == null)
+				requestedAtEnd = LocalDateTime.now();
+			predicates.add(cb.between(requestRoot.get("requestedAt"), requestedAtStart, requestedAtEnd));
+		}
+		
+		if(completedAtStart != null) {
+			if(completedAtEnd == null)
+				completedAtEnd = LocalDateTime.now();
+			predicates.add(cb.between(requestRoot.get("completedAt"), completedAtStart, completedAtEnd));
+		}
+		
+		// TODO - This wont reflect renamed artifacts. Need to join artifact table 
+		if(artifactName != null) {
+			predicates.add(cb.equal(cb.function("JSON_EXTRACT", String.class, requestRoot.get("details"), cb.literal("$.staged_filename")), artifactName));
 		}
 		return predicates;
 	}

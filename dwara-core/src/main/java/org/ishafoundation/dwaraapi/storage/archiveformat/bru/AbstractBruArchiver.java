@@ -164,23 +164,8 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 		String targetLocationPath = archiveformatJob.getTargetLocationPath();
 		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
-		String filePathNameToBeRestored = file.getPathname();
-		
-		StorageJob storageJob = selectedStorageJob.getStorageJob();
-    	Domain domain = storageJob.getDomain();
-		Artifact artifact = storageJob.getArtifact();
-		Volume volume = storageJob.getVolume();
-
-		// If artifactName is renamed then use the artifactNameOnTape (from artifactVolume.getName()) rather than the artifactName on file.getPathname();
-		String artifactName = artifact.getName();
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
-		String artifactNameOnTape = artifactVolume.getName();
-		
-		if(!artifactNameOnTape.equals(artifactName)) {
-			filePathNameToBeRestored = filePathNameToBeRestored.replace(artifactName, artifactNameOnTape);
-		}
-			
+		StorageJob storageJob = selectedStorageJob.getStorageJob();			
+		String filePathNameToBeRestored = selectedStorageJob.getFilePathNameToBeRestored();
 		long filesize = file.getSize();
 
 		logger.trace("Creating the directory " + targetLocationPath + ", if not already present");

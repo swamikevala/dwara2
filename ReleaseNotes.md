@@ -1,3 +1,40 @@
+# Dwara App Version - 2.1.18 (25th Apr 2021)
+### Bug fix
+
+
+0) avoid clean up tapes during mapdrive and initialization
+
+1) Fixed restore for soft renamed artifacts
+
+2) Fixed handleTapes api removeAfterJob NPE 
+
+3) Added support for xcat on ingester
+
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_11.sql)
+
+ 
+
+UPDATE `artifactclass` SET `config` = '{"pathname_regex": "[^/]+|Video Output/[^/]+\\\\.(mov|mp4)"}' where `id` = 'video-edit-tr-pub';
+UPDATE `artifactclass` SET `config` = '{"pathname_regex": "[^/]+|Video Output/[^/]+\\\\.(mov|mp4)"}' where `id` = 'video-edit-tr-priv1';
+UPDATE `artifactclass` SET `config` = '{"pathname_regex": "[^/]+|Video Output/[^/]+\\\\.(mov|mp4)"}' where `id` = 'video-edit-tr-priv2';
+
+UPDATE `flowelement` SET `task_config` = '{"pathname_regex": "(Video Output/|Output_)[^/]+\\\\.(mov|mp4)"}' where `id` = 'U26';
+
+1) clean up drive -
+
+4) update ltowala sequence code for overlapping Zs
+
+279375 - hard shut down impacted job -- 
+
+rerun the failed VPUB restore jobs
+
+ingest the digi priv1(4) and pub(2) - ingester up app down(5), app not responding window(1)
+
+  
+
 # Dwara App Version - 2.1.17 (18th Apr 2021)
 ### New features
 

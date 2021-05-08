@@ -185,7 +185,7 @@ public class OnHoldArtifactRenameService extends DwaraService{
 		requestDao.save(userRequest);
 		// Return response
 		ArtifactResponse dr = new ArtifactResponse();
-		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForDeleteArtifactResponse(artifactToRenameActualRow);
+		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForArtifactResponse(artifactToRenameActualRow);
 		dr.setArtifact(artifactForResponse);
 		dr.setAction(Action.rename.name());        
 		return dr;

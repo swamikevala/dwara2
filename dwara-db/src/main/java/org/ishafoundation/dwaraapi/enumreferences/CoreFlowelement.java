@@ -16,7 +16,13 @@ public enum CoreFlowelement {
 	core_archive_flow_checksum_verify("C4", "archive-flow", null, "checksum-verify", new String[] {"C1","C3"}, null, 4, true, false, null),
 	
 	core_restore_verify_flow_restore("C11", "restore-verify-flow", "restore", null, null, null, 11, true, false, null),
-	core_restore_verify_flow_checksum_verify("C12", "restore-verify-flow", null, "checksum-verify", new String[] {"C11"}, null, 12, true, false, null);
+	core_restore_verify_flow_checksum_verify("C12", "restore-verify-flow", null, "checksum-verify", new String[] {"C11"}, null, 12, true, false, null),
+
+	core_rewrite_flow_good_copy_restore("C21", "rewrite-flow", "restore", null, null, null, 21, true, false, null),
+	core_rewrite_flow_good_copy_checksum_verify("C22", "rewrite-flow", null, "checksum-verify", new String[] {"C21"}, null, 22, true, false, null),
+	core_rewrite_flow_write("C23", "rewrite-flow", "write", null, new String[] {"C22"}, null, 23, true, false, null),
+	core_rewrite_flow_restore("C24", "rewrite-flow", "restore", null, new String[] {"C23"}, null, 24, true, false, null),
+	core_rewrite_flow_checksum_verify("C25", "rewrite-flow", null, "checksum-verify", new String[] {"C24"}, null, 25, true, false, null);
 
 	private String id;
 	private String flowId;

@@ -17,6 +17,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepositor
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -24,9 +25,11 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -148,7 +151,18 @@ public class ArtifactDeleter {
 	    	logger.info("Artifact flagged Deleted");
 	    	
 	    	// Step 6 - Flag the artifactVolume deleted
-	    	// N/A
+			ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+			List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(nthArtifact.getId());
+
+			if(artifactVolumeList.size() > 0) {
+				for (ArtifactVolume artifactVolume : artifactVolumeList) {
+					artifactVolume.setStatus(ArtifactVolumeStatus.deleted);
+				}
+				
+				domainSpecificArtifactVolumeRepository.saveAll(artifactVolumeList);
+			}
+			
+			
 	    	
 	    	// Step 7 - Move/Delete the file system files
 	    	// TODO - should we delete or move the file system files???

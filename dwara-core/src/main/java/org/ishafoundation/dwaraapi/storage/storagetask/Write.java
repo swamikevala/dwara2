@@ -6,16 +6,21 @@ import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.RewritePurpose;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
@@ -37,15 +42,21 @@ public class Write extends AbstractStoragetaskAction{
 	
 	@Autowired
 	private ProcessingtaskDao processingtaskDao;
-	
+
 	@Autowired
 	private VolumeDao volumeDao;
+	
+	@Autowired
+	private ArtifactclassVolumeDao artifactclassVolumeDao;
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
 	
 	@Autowired
 	private VolumeUtil volumeUtil;
+	
+	@Autowired
+	private Restore restore;
 		
 	@Override
 	public StorageJob buildStorageJob(Job job) throws Exception{
@@ -100,16 +111,55 @@ public class Write extends AbstractStoragetaskAction{
 			//String artifactpathToBeCopied = pathPrefix + java.io.File.separator + artifactName;
 			artifactSize = artifact.getTotalSize();//FileUtils.sizeOf(new java.io.File(artifactpathToBeCopied)); 
 			volume = volumeUtil.getToBeUsedPhysicalVolume(domain, volumegroupId, artifactSize);
-		}else if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.rewrite || requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.migrate) {
-			artifactName = request.getDetails().getStagedFilename();
-			pathPrefix = "whereverRestoredByThePrecedingRestoreJob";//artifactclass.getPath();
-			// TODO have a util for Group Uid to Uid 
-//			String volumegroupUid = request.getDetails().getVolume_group_uid();
-//			Volume volume = volumeDao.findByUid(volumegroupUid);
-//			volumegroupId = volume.getId();
-			// TODO domain = ??
-			String volumeUid = request.getDetails().getTo_volume_uid();
-			volume = volumeDao.findById(volumeUid).get();
+		}else if(requestedAction == Action.rewrite || requestedAction == Action.migrate) {
+			
+			Integer inputArtifactId = job.getInputArtifactId();
+			Domain[] domains = Domain.values();
+   		
+    		for (Domain nthDomain : domains) {
+    			artifact = domainUtil.getDomainSpecificArtifact(nthDomain, inputArtifactId);
+    			if(artifact != null) {
+    				domain = nthDomain;
+    				break;
+    			}
+			}
+			artifactName = artifact.getName();			
+
+			Integer rewriteCopy = job.getRequest().getDetails().getRewriteCopy();
+			RewritePurpose rewritePurpose = job.getRequest().getDetails().getPurpose();
+			if(rewritePurpose != null) { // volume rewrite
+				if(rewritePurpose == RewritePurpose.defective_volume || rewritePurpose == RewritePurpose.volume_migration) {
+					Volume volumeInQuestion = volumeDao.findById(job.getRequest().getDetails().getVolumeId()).get();
+					volumegroupId = volumeInQuestion.getGroupRef().getId();
+				}
+			}
+
+			if(volumegroupId == null) {
+				Integer copyToBeWritten = null; 
+				if(rewriteCopy != null) // artifact rewrite
+					copyToBeWritten = rewriteCopy;
+				else if(rewritePurpose != null && rewritePurpose == RewritePurpose.additional_copy) { // volume rewrite (additional copy)
+					Integer additionalCopy = job.getRequest().getDetails().getAdditionalCopy();
+					copyToBeWritten = additionalCopy;
+				}
+				
+				if(copyToBeWritten != null){
+					List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassIdAndActiveTrue(artifact.getArtifactclass().getId());
+					for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {
+						Volume grpVolume = artifactclassVolume.getVolume();
+						if(grpVolume.getCopy().getId() == copyToBeWritten) {
+							volumegroupId = grpVolume.getId();
+						}
+					}
+				}
+			}
+			
+			artifactSize = artifact.getTotalSize(); 
+			volume = volumeUtil.getToBeUsedPhysicalVolume(domain, volumegroupId, artifactSize);
+		
+			// get write job's storage dependency - can't be anything but restore, but looping for making the code generic giving some flexibility
+			Job restoreJob = getGoodCopyRestoreJob(job);
+			pathPrefix = restore.getRestoreLocation(restoreJob); 
 		}
 
 		
@@ -133,4 +183,30 @@ public class Write extends AbstractStoragetaskAction{
 	
 	}
 
+	// get the upstream restore job
+	private Job getGoodCopyRestoreJob(Job job){
+		return jobDao.findByRequestIdAndFlowelementId(job.getRequest().getId(), CoreFlowelement.core_rewrite_flow_good_copy_restore.getId());
+		
+		
+//		List<Integer> dependencies = job.getDependencies();
+//		for (Integer nthDependencyJobId : dependencies) {
+//			Job nthDependencyJob = jobDao.findById(nthDependencyJobId).get();
+//			Action storagetaskAction = nthDependencyJob.getStoragetaskActionId();
+//			if(storagetaskAction != null && storagetaskAction == Action.restore) {
+//				restoreJob = nthDependencyJob;
+//				break;
+//			}
+//		}
+
+		
+		
+//		List<Job> dependentJobList = jobUtil.getDependentJobs(job);
+//		for (Job nthDependentJob : dependentJobList) {
+//			
+//			if(nthDependentJob.getStoragetaskActionId() != null && nthDependentJob.getStoragetaskActionId() == Action.restore) {
+//				restoreJob = nthDependentJob;
+//				break;
+//			}
+//		}	
+	}
 }

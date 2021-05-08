@@ -3,6 +3,8 @@ package org.ishafoundation.dwaraapi.storage.model;
 import java.util.HashMap;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+
 public class SelectedStorageJob {
 	
 	private StorageJob storageJob;
@@ -19,6 +21,8 @@ public class SelectedStorageJob {
 	// restore stuff
 	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File file;
 	private boolean useBuffering;
+	private ArtifactVolume artifactVolume;
+	private String filePathNameToBeRestored;
 	
 	// common for both verify and restore
 	private List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList;
@@ -87,6 +91,22 @@ public class SelectedStorageJob {
 
 	public void setUseBuffering(boolean useBuffering) {
 		this.useBuffering = useBuffering;
+	}
+
+	public ArtifactVolume getArtifactVolume() {
+		return artifactVolume;
+	}
+
+	public void setArtifactVolume(ArtifactVolume artifactVolume) {
+		this.artifactVolume = artifactVolume;
+	}
+
+	public String getFilePathNameToBeRestored() {
+		return filePathNameToBeRestored;
+	}
+
+	public void setFilePathNameToBeRestored(String filePathNameToBeRestored) {
+		this.filePathNameToBeRestored = filePathNameToBeRestored;
 	}
 
 	public List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getArtifactFileList() {

@@ -10,6 +10,6 @@ import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 public interface RequestCustom {
 	
-	List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, List<Action> action, List<Status> statusList, String user, LocalDateTime fromDate, LocalDateTime toDate, int pageNumber, int pageSize);
+	List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, List<Action> action, List<Status> statusList, String user, LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName, int pageNumber, int pageSize);
 
 }

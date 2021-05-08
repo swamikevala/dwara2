@@ -2,6 +2,8 @@ package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.enumreferences.RewritePurpose;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
@@ -80,12 +82,22 @@ public class RequestDetails {
 	private Integer domainId;
 	
 	// rewrite stuff
-	private Integer artifact_id;// artifact_id or name???
+	@JsonProperty("artifact_id")
+	private Integer artifactId;
+
+	@JsonProperty("rewrite_copy")
+	private Integer rewriteCopy;
+
+	@JsonProperty("good_copy")
+	private Integer goodCopy;
+
+	private RewritePurpose purpose;
 	
-	private String from_volume_uid;
+	@JsonProperty("artifactclass_regex")
+	private String artifactclassRegex;
 	
-	private String to_volume_uid;
-	
+	@JsonProperty("additional_copy")
+	private Integer additionalCopy;
 
 	public JsonNode getBody() {
 		return body;
@@ -294,30 +306,54 @@ public class RequestDetails {
 
 	/********************  REWRITE  ********************/
 	
-	public Integer getArtifact_id() {
-		return artifact_id;
+	public Integer getArtifactId() {
+		return artifactId;
 	}
 
-	public void setArtifact_id(Integer artifact_id) {
-		this.artifact_id = artifact_id;
+	public void setArtifactId(Integer artifactId) {
+		this.artifactId = artifactId;
 	}
 
-	public String getFrom_volume_uid() {
-		return from_volume_uid;
+	public Integer getRewriteCopy() {
+		return rewriteCopy;
 	}
 
-	public void setFrom_volume_uid(String from_volume_uid) {
-		this.from_volume_uid = from_volume_uid;
+	public void setRewriteCopy(Integer rewriteCopy) {
+		this.rewriteCopy = rewriteCopy;
 	}
 
-	public String getTo_volume_uid() {
-		return to_volume_uid;
+	public Integer getGoodCopy() {
+		return goodCopy;
 	}
 
-	public void setTo_volume_uid(String to_volume_uid) {
-		this.to_volume_uid = to_volume_uid;
+	public void setGoodCopy(Integer goodCopy) {
+		this.goodCopy = goodCopy;
 	}
-	
+
+	public RewritePurpose getPurpose() {
+		return purpose;
+	}
+
+	public void setPurpose(RewritePurpose purpose) {
+		this.purpose = purpose;
+	}
+
+	public String getArtifactclassRegex() {
+		return artifactclassRegex;
+	}
+
+	public void setArtifactclassRegex(String artifactclassRegex) {
+		this.artifactclassRegex = artifactclassRegex;
+	}
+
+	public Integer getAdditionalCopy() {
+		return additionalCopy;
+	}
+
+	public void setAdditionalCopy(Integer additionalCopy) {
+		this.additionalCopy = additionalCopy;
+	}
+
 	// TODO : equals and hashCode
 //	@Override
 //    public boolean equals(Object o) {

@@ -1,11 +1,17 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
+import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.api.req.RewriteRequest;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.Details;
@@ -13,14 +19,22 @@ import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
+import org.ishafoundation.dwaraapi.enumreferences.RewritePurpose;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
+import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.VolumeindexManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeFinalizer;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeInitializer;
@@ -56,6 +70,9 @@ public class VolumeService extends DwaraService {
 
 	@Autowired
 	private VolumeFinalizer volumeFinalizer;
+	
+	@Autowired
+	private JobCreator jobCreator;
 	
 	@Autowired
 	private VolumeindexManager volumeindexManager;
@@ -200,8 +217,93 @@ public class VolumeService extends DwaraService {
 		
 		return response;
 	}
-	
-	
-	
+
+	public void rewriteVolume(String volumeId, RewriteRequest rewriteRequest) throws Exception {
+		//Optional<Volume> volumeEntity = volumeDao.findById(volumeId);
+		Volume volume = volumeDao.findById(volumeId).get();
+		if(!volume.getDefective())
+			throw new Exception(volumeId + " not flagged as defective. Please double check and flag it first");
+			
+		// create user request
+		HashMap<String, Object> data = new HashMap<String, Object>();
+		data.put("volumeId", volumeId);
+		data.put("purpose", rewriteRequest.getPurpose());
+		data.put("goodCopy", rewriteRequest.getGoodCopy());
+		Integer additionalCopy = rewriteRequest.getAdditionalCopy();
+		if(additionalCopy != null)
+			data.put("additionalCopy", additionalCopy);
+		
+		Pattern artifactclassRegexPattern = null;
+		String artifactclassRegex = rewriteRequest.getArtifactclassRegex();
+		if(artifactclassRegex != null) {
+			artifactclassRegexPattern = Pattern.compile(artifactclassRegex);
+			data.put("artifactclassRegex", artifactclassRegex);
+		}
+		Request userRequest = createUserRequest(Action.rewrite, data);
+		Domain domain = Domain.ONE; // TODO Hardcoded domain
+
+		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeIdAndStatus(volumeId, ArtifactVolumeStatus.current); // only not deleted artifacts need to be rewritten
+		
+		// loop artifacts on volume
+		for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
+			int artifactId = nthArtifactVolume.getId().getArtifactId();
+			
+			Artifact artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).findById(artifactId).get(); // get the artifact details from DB
+ 
+			// filtering out artifacts that dont match specified artifactclass(es)
+			if(artifactclassRegexPattern != null) {
+				String artifactclassId = artifact.getArtifactclass().getId();
+				Matcher m = artifactclassRegexPattern.matcher(artifactclassId);
+				if(!m.matches()) { 
+					logger.info("Skipping " + artifact.getName() + "(" + artifactId + ") as " + artifactclassId + " doesnt match " + artifactclassRegex);
+					continue;
+				}
+			}
+
+			// Also System will skip any artifacts which already exist on the additional copy (e.g. if the config was changed to increase the number of copies from 3 to 4 while a tape was partially written - so the artifacts on the latter part of that tape would need to be skipped)
+			if(additionalCopy != null) {
+				boolean isCopyAlreadyWritten = false; 
+				List<ArtifactVolume> artifactVolumeList2 = domainSpecificArtifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
+				for (ArtifactVolume nthArtifactVolume2 : artifactVolumeList2) {
+					if(nthArtifactVolume2.getVolume().getGroupRef().getCopy().getId() == additionalCopy) {
+						isCopyAlreadyWritten = true;
+						break;
+					}
+				}
+				if(isCopyAlreadyWritten) {
+					logger.info("Skipping " + artifact.getName() + "(" + artifactId + ") as additional copy already written");
+					continue;
+				}
+			}
+			
+			//create system requests			
+			Request systemRequest = new Request();
+			systemRequest.setType(RequestType.system);
+			systemRequest.setRequestRef(userRequest);
+			systemRequest.setActionId(userRequest.getActionId());
+			systemRequest.setStatus(Status.queued);
+			systemRequest.setRequestedBy(userRequest.getRequestedBy());
+			systemRequest.setRequestedAt(LocalDateTime.now());
+		
+			RequestDetails systemrequestDetails = new RequestDetails();
+			systemrequestDetails.setArtifactId(artifactId);
+			systemrequestDetails.setVolumeId(volumeId);
+			systemrequestDetails.setPurpose(RewritePurpose.valueOf(rewriteRequest.getPurpose()));
+			systemrequestDetails.setGoodCopy(rewriteRequest.getGoodCopy());
+			if(rewriteRequest.getAdditionalCopy() != null)
+				systemrequestDetails.setAdditionalCopy(rewriteRequest.getAdditionalCopy());
+			if(rewriteRequest.getArtifactclassRegex() != null)
+				systemrequestDetails.setArtifactclassRegex(rewriteRequest.getArtifactclassRegex());
+			systemRequest.setDetails(systemrequestDetails);
+			systemRequest = requestDao.save(systemRequest);
+			
+			logger.info(DwaraConstants.SYSTEM_REQUEST + systemRequest.getId());
+			
+
+			//create jobs
+			jobCreator.createJobs(systemRequest, artifact);
+		}
+	}
 }
 
