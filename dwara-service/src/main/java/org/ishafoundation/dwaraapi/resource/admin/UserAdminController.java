@@ -1,6 +1,8 @@
 package org.ishafoundation.dwaraapi.resource.admin;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -119,6 +121,15 @@ public class UserAdminController {
 
 		userDao.save(user);
 		return ResponseEntity.status(HttpStatus.OK).body("Done");
+	}
+
+	@RequestMapping(value = "/users", method = RequestMethod.GET)
+	public ResponseEntity<List<String>> findAllUserName() {
+		List<String> listUserName = new ArrayList<String>();
+		userDao.findAll().forEach(user -> {
+			listUserName.add(user.getName());
+		});
+		return ResponseEntity.status(HttpStatus.OK).body(listUserName);
 	}
 
 	
