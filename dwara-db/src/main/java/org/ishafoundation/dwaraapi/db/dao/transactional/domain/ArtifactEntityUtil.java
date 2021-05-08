@@ -3,6 +3,8 @@ package org.ishafoundation.dwaraapi.db.dao.transactional.domain;
 import java.lang.reflect.Method;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -11,6 +13,11 @@ import org.springframework.stereotype.Component;
 public class ArtifactEntityUtil {
 
 	private static final Logger logger = LoggerFactory.getLogger(ArtifactEntityUtil.class);
+	
+    public Artifact getDomainSpecificArtifactRef(Artifact artifact) throws Exception {
+		Method artifactRefGetter = artifact.getClass().getMethod("get" + artifact.getClass().getSimpleName() + "Ref");
+		return (Artifact) artifactRefGetter.invoke(artifact);
+	}
 	
 	public void setDomainSpecificArtifactRef(Artifact artifact, Artifact artifactRef) throws Exception {
 		Method artifactRefSetter = artifact.getClass().getMethod("set" + artifact.getClass().getSimpleName() + "Ref", artifact.getClass());

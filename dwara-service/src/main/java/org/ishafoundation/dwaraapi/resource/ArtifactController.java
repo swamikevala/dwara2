@@ -76,7 +76,7 @@ public class ArtifactController {
 	}
 
 	@PostMapping(value = "/artifact/{artifactId}/softRename", produces = "application/json")
-	public ResponseEntity<ArtifactResponse> softRename(@RequestBody ArtifactSoftRenameRequest artifactSoftRenameRequest, @PathVariable("artifactId") int artifactId, @RequestParam Boolean force){
+	public ResponseEntity<ArtifactResponse> softRename(@RequestBody ArtifactSoftRenameRequest artifactSoftRenameRequest, @PathVariable("artifactId") int artifactId, @RequestParam(required=false) Boolean force){
 		ArtifactResponse artifactSoftRenameResponse = null;
     	String artifactNewName = artifactSoftRenameRequest.getNewName();		 
 		// Set the domain for the artifact
@@ -96,7 +96,7 @@ public class ArtifactController {
 	}
 	
 	@PostMapping(value = "/artifact/{artifactId}/changeArtifactclass", produces = "application/json")
-	public ResponseEntity<ArtifactResponse> changeArtifactclass(@RequestBody ArtifactChangeArtifactclassRequest artifactChangeArtifactclassRequest, @PathVariable("artifactId") int artifactId, @RequestParam Boolean force){
+	public ResponseEntity<ArtifactResponse> changeArtifactclass(@RequestBody ArtifactChangeArtifactclassRequest artifactChangeArtifactclassRequest, @PathVariable("artifactId") int artifactId, @RequestParam(required=false) Boolean force){
 		ArtifactResponse artifactResponse = null;
     	logger.info("/artifact/" + artifactId + "/changeArtifactclass");		
 		try {

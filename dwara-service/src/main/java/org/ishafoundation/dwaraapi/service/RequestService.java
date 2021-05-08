@@ -91,6 +91,7 @@ public class RequestService extends DwaraService{
 
 		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, pageNumber, pageSize);
 		for (Request request : requestList) {
+			logger.trace("Now processing " + request.getId());
 			RequestResponse requestResponse = frameRequestResponse(request, requestType, request.getId(), jobDetailsType);
 			requestResponseList.add(requestResponse);
 		}
