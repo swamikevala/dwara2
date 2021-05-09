@@ -66,6 +66,7 @@ public class DaoTests{
 		statusList.add(Status.in_progress);
 		String user = null;
 		String artifactName = null;
+		String artifactclass = null;
 		LocalDateTime requestedAtStart = null;
 		LocalDateTime requestedAtEnd = null;
 		LocalDateTime completedAtStart = null;
@@ -73,7 +74,7 @@ public class DaoTests{
 		int pageNumber = 0;
 		int pageSize = 0;
 
-		List<Request> requestLit = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, pageNumber, pageSize);
+		List<Request> requestLit = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, artifactclass, pageNumber, pageSize);
 		for (Request request : requestLit) {
 			System.out.println(request.getId() + ":" + request.getActionId());
 		}

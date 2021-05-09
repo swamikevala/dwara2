@@ -34,7 +34,7 @@ public class RequestCustomImpl implements RequestCustom {
      */
     
 	@Override
-	public List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, List<Action> action, List<Status> statusList, String user, LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName, int pageNumber, int pageSize) {
+	public List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, List<Action> action, List<Status> statusList, String requestedBy, LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName, String artifactclass, int pageNumber, int pageSize) {
 		
 		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 		
@@ -50,7 +50,7 @@ public class RequestCustomImpl implements RequestCustom {
         CriteriaQuery<Request> query = cb.createQuery(Request.class);
         Root<Request> requestRoot = query.from(Request.class);
         
-        List<Predicate> predicates = getFramedPredicates(requestRoot, cb, requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName);
+        List<Predicate> predicates = getFramedPredicates(requestRoot, cb, requestType, action, statusList, requestedBy, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName);
        	query.select(requestRoot).where(cb.and(predicates.toArray(new Predicate[0])));
        	query.orderBy(cb.desc(requestRoot.get("id"))); // default orderby most recent first
         //List<Request> requestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
@@ -66,7 +66,7 @@ public class RequestCustomImpl implements RequestCustom {
 
 
 	
-	private List<Predicate> getFramedPredicates(Root<Request> requestRoot, CriteriaBuilder cb, RequestType requestType, List<Action> actionList, List<Status> statusList, String user,
+	private List<Predicate> getFramedPredicates(Root<Request> requestRoot, CriteriaBuilder cb, RequestType requestType, List<Action> actionList, List<Status> statusList, String requestedBy,
 			LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName) {
         
         
@@ -93,8 +93,8 @@ public class RequestCustomImpl implements RequestCustom {
 			predicates.add(cb.or(statusPredicates.toArray(new Predicate[statusPredicates.size()])));
 	    } 
 	    
-		if(user != null) {
-			predicates.add(cb.equal(requestRoot.get("requestedBy"), user));
+		if(requestedBy != null) {
+			predicates.add(cb.equal(requestRoot.get("requestedBy"), requestedBy));
 		}
 
 		if(requestedAtStart != null) {

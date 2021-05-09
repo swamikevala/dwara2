@@ -62,11 +62,9 @@ public class RequestService extends DwaraService{
 	@Autowired
 	private ArtifactDeleter artifactDeleter; 
 	
-	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName, JobDetailsType jobDetailsType){
+	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, String requestedBy, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName, String artifactclass, JobDetailsType jobDetailsType){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
 		logger.info("Retrieving requests " + requestType.name() + ":" + action + ":" + statusList);
-		
-		String user = null;
 
 		LocalDateTime requestedAtStart = requestedFrom != null ? requestedFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
 		LocalDateTime requestedAtEnd = requestedTo != null ? requestedTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
@@ -89,7 +87,7 @@ public class RequestService extends DwaraService{
 		int pageNumber = 0;
 		int pageSize = 0;
 
-		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, pageNumber, pageSize);
+		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, requestedBy, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, artifactclass, pageNumber, pageSize);
 		for (Request request : requestList) {
 			logger.trace("Now processing " + request.getId());
 			RequestResponse requestResponse = frameRequestResponse(request, requestType, request.getId(), jobDetailsType);

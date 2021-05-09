@@ -1,3 +1,17 @@
+# Dwara App Version - 2.1.19 (9th May 2021)
+### New features
+
+1) Defective tape rewrite
+
+2) Request API enhancements(groupedPlaceholderJobs)
+
+3) Change artifactclass API 
+
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_11.sql)
+
 # Dwara App Version - 2.1.18 (25th Apr 2021)
 ### Bug fix
 
@@ -13,15 +27,7 @@
 
 ### Upgrade steps
 
-0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_11.sql)
-
- 
-
-UPDATE `artifactclass` SET `config` = '{"pathname_regex": "[^/]+|Video Output/[^/]+\\\\.(mov|mp4)"}' where `id` = 'video-edit-tr-pub';
-UPDATE `artifactclass` SET `config` = '{"pathname_regex": "[^/]+|Video Output/[^/]+\\\\.(mov|mp4)"}' where `id` = 'video-edit-tr-priv1';
-UPDATE `artifactclass` SET `config` = '{"pathname_regex": "[^/]+|Video Output/[^/]+\\\\.(mov|mp4)"}' where `id` = 'video-edit-tr-priv2';
-
-UPDATE `flowelement` SET `task_config` = '{"pathname_regex": "(Video Output/|Output_)[^/]+\\\\.(mov|mp4)"}' where `id` = 'U26';
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_10_HotFix.sql)
 
 1) clean up drive -
 
@@ -376,7 +382,7 @@ Now apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_1.sql)
 
 In DB version 2.1.0 we are moving from latin1 to unicode charset and to achieve this 
 
-* Following lines to be added to /etc/my.conf
+* Following lines to be added to /etc/my.cnf
 
 > innodb_file_format = Barracuda
 
