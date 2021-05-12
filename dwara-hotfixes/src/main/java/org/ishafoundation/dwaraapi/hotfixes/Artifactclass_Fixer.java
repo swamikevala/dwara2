@@ -36,6 +36,11 @@ public class Artifactclass_Fixer {
 		// Refer the list from Artifactclass_Fixer.csv -- The first four in the file need to be manually done and the below collection is the remaing to be automated
 		List<String> artifactListToBeChanged = new ArrayList<String>();
 		//artifactListToBeChanged.add("Prev Seq Code,Artifact Id,Current ArtifactClass,New Artifactclass");
+
+		// Added for testing
+//		artifactListToBeChanged.add("K1000,13284,video-digi-2020-priv2,video-digi-2020-pub");
+//		artifactListToBeChanged.add("K1001,13286,video-digi-2020-pub,video-digi-2020-edit-pub");
+
 		artifactListToBeChanged.add("GR10,27654,video-digi-2020-edit-pub,video-digi-2020-pub");
 		artifactListToBeChanged.add("GR11,27661,video-digi-2020-edit-pub,video-digi-2020-pub");
 		artifactListToBeChanged.add("GR13,27657,video-digi-2020-edit-pub,video-digi-2020-pub");

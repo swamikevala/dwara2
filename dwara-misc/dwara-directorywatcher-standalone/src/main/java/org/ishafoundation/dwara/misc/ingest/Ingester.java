@@ -27,7 +27,7 @@ public class Ingester {
 	private static Path zCategoryFileLoc = null;
 	private static Path categoryFileLoc = null;
 	private static String ingestEndpointUrl = null;
-	private static Pattern categoryNamePrefixPattern = Pattern.compile("^([A-Z]{1,2})\\d+");
+	private static Pattern categoryNamePrefixPattern = Pattern.compile("^([A-Z]{1,2})(-[0-9A-Za-z-]+-)?\\d+");
 	
 	private static Path moveFolderToIngestUserArea(Path artifactPath) throws Exception {
 		Path destArtifactPath = null;
@@ -54,16 +54,16 @@ public class Ingester {
 			String category = categoryElement.getCategory();
 			if(category.equals("Z-Public/Private")) {
 				List<String> zCategoryEntries = FileUtils.readLines(zCategoryFileLoc.toFile());
-				artifactClassFolderName = categorise(zCategoryEntries, artifactName);
+				artifactClassFolderName = categorise(zCategoryEntries, true, artifactName);
 			}
 			else if(category.equals("X-Public/Private") || category.equals("GR-Public/Private")) {
-				List<String> zCategoryEntries = FileUtils.readLines(categoryFileLoc.toFile());
-				artifactClassFolderName = categorise(zCategoryEntries, artifactName);
+				List<String> miscCategoryEntries = FileUtils.readLines(categoryFileLoc.toFile());
+				artifactClassFolderName = categorise(miscCategoryEntries, false, artifactName);
 			}
-			else if(category.equals("Z-Private1") || category.equals("X-Private1") || category.equals("GR-Private1")) {
+			else if(category.equals("Z-Private1")) {// || category.equals("X-Private1") || category.equals("GR-Private1")) {
 				artifactClassFolderName = "video-digi-2020-edit-priv1";
 			}
-			else if(category.equals("Z-Private2") || category.equals("X-Private2") || category.equals("GR-Private2")) {
+			else if(category.equals("Z-Private2")) {// || category.equals("X-Private2") || category.equals("GR-Private2")) {
 				artifactClassFolderName = "video-digi-2020-edit-priv2";
 			}
 			else {
@@ -91,12 +91,12 @@ public class Ingester {
 		return destArtifactPath;
 	}
 
-	private static String categorise(List<String> zCategoryEntries, String artifactName) throws Exception {
+	private static String categorise(List<String> categoryEntries, boolean edited, String artifactName) throws Exception {
 		String artifactClassFolderName = null;
 		String zcategory = null;
-		for (String nthZCategoryEntry : zCategoryEntries) {
-			if(nthZCategoryEntry.startsWith(artifactName + ",")) {
-				zcategory = StringUtils.substringAfterLast(nthZCategoryEntry, ",").trim();
+		for (String nthCategoryEntry : categoryEntries) {
+			if(nthCategoryEntry.startsWith(artifactName + ",")) {
+				zcategory = StringUtils.substringAfterLast(nthCategoryEntry, ",").trim();
 				break;
 			}
 		}
@@ -107,12 +107,17 @@ public class Ingester {
 			throw new Exception(msg);
 		}
 
+		artifactClassFolderName = "video-digi-2020-";
+		
+		if(edited)
+			artifactClassFolderName = artifactClassFolderName + "edit-";
+		
 		if(zcategory.equals("Public"))
-			artifactClassFolderName = "video-digi-2020-edit-pub";
+			artifactClassFolderName = artifactClassFolderName + "pub";
 		else if(zcategory.equals("Private1"))
-			artifactClassFolderName = "video-digi-2020-edit-priv1";
+			artifactClassFolderName = artifactClassFolderName + "priv1";
 		else if(zcategory.equals("Private2"))
-			artifactClassFolderName = "video-digi-2020-edit-priv2";
+			artifactClassFolderName = artifactClassFolderName + "priv2";
 		else {
 			String msg = "Not able to categorize " + artifactName;
 			logger.error(msg);

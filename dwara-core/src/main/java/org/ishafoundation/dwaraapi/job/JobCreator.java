@@ -90,17 +90,17 @@ public class JobCreator {
 
 			}else if(requestedBusinessAction == Action.restore_process) {
 				if(request.getDetails().getFlowId().equals(CoreFlow.core_restore_checksumverify_flow.getFlowName()))
-					jobList.addAll(iterateFlow(request, sourceArtifactclassId, sourceArtifact, CoreFlow.core_restore_checksumverify_flow.getFlowName()));
+					jobList.addAll(iterateFlow(request, sourceArtifact, CoreFlow.core_restore_checksumverify_flow.getFlowName()));
 			}
 			else if(requestedBusinessAction == Action.rewrite) {
-				jobList.addAll(iterateFlow(request, sourceArtifactclassId, sourceArtifact, CoreFlow.core_rewrite_flow.getFlowName()));
+				jobList.addAll(iterateFlow(request, sourceArtifact, CoreFlow.core_rewrite_flow.getFlowName()));
 			}
 			
 			if(actionArtifactclassFlowList != null) {
 				for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
 					String nthFlowId = actionArtifactclassFlow.getId().getFlowId();
 					logger.trace("flow " + nthFlowId);
-					jobList.addAll(iterateFlow(request, sourceArtifactclassId, sourceArtifact, nthFlowId));
+					jobList.addAll(iterateFlow(request, sourceArtifact, nthFlowId));
 				}
 			}
 		}
@@ -113,10 +113,11 @@ public class JobCreator {
 		return jobList;
 	}
 
-	private List<Job> iterateFlow(Request request, String artifactclassId, Artifact artifact, String flowId) {
+	private List<Job> iterateFlow(Request request, Artifact artifact, String flowId) {
 		List<Job> jobsCreated = new ArrayList<Job>();
 		
 		logger.trace("Iterating flow " + flowId);
+		String artifactclassId = artifact.getArtifactclass().getId(); 
 		logger.trace("artifactclassId " + artifactclassId);
 		logger.trace("artifactId " + (artifact != null ? artifact.getId() : null));
 		//  get all the flow elements for the flow

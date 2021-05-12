@@ -69,16 +69,38 @@ public class JobManipulator {
 
 		if(Actiontype.complex == action.getType()) {
 			logger.trace("Complex action");
+
+			List<Artifact> artifactList = null;
+			Domain[] domains = Domain.values();
+			for (Domain nthDomain : domains) {
+				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(nthDomain);
+
+				artifactList = artifactRepository.findAllByWriteRequestId(request.getId());
+				
+				if(artifactList != null && artifactList.size() > 0) {
+					break;
+				}
+			}
 			
 			List<ActionArtifactclassFlow> actionArtifactclassFlowList = null;
 			String sourceArtifactclassId = null;
 			if(requestedBusinessAction == Action.ingest) {
-				sourceArtifactclassId = request.getDetails().getArtifactclassId();
+				// sourceArtifactclassId = request.getDetails().getArtifactclassId(); on artifacts with artifactclass changed - this value will be wrong...
+				
+				// Opt 1 - if the request has a reference to succesfully completed change_artifactclass use artifactclass from the changeartifactclass request
+				// Opt 2 - Iterate through the artifacts here and get the artifactclass from the source artifact...
+				for (Artifact nthArtifact : artifactList) {
+					if(nthArtifact.getArtifactclass().isSource()) {
+						sourceArtifactclassId = nthArtifact.getArtifactclass().getId(); 
+						break;
+					}
+				}	
+				
 				// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
 				actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByIdArtifactclassIdAndActionIdAndActiveTrue(sourceArtifactclassId, requestedBusinessAction.name()); //
 			}else if(requestedBusinessAction == Action.restore_process) {
 				if(request.getDetails().getFlowId().equals(CoreFlow.core_restore_checksumverify_flow.getFlowName()))
-					iterateFlow(request, sourceArtifactclassId, CoreFlow.core_restore_checksumverify_flow.getFlowName(), null, alreadyCreatedJobList, jobList);
+					iterateFlow(request, artifactList, sourceArtifactclassId, CoreFlow.core_restore_checksumverify_flow.getFlowName(), null, alreadyCreatedJobList, jobList);
 //				actionArtifactclassFlowList = new ArrayList<ActionArtifactclassFlow>();
 //				actionArtifactclassFlowList.add(actionArtifactclassFlowDao.findByActionIdAndFlowIdAndActiveTrue(requestedBusinessAction.name(), DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME)); //
 			}
@@ -87,7 +109,7 @@ public class JobManipulator {
 				for (ActionArtifactclassFlow actionArtifactclassFlow : actionArtifactclassFlowList) {
 					String nthFlowId = actionArtifactclassFlow.getId().getFlowId();
 					logger.trace("flow " + nthFlowId);
-					iterateFlow(request, sourceArtifactclassId, nthFlowId, null, alreadyCreatedJobList, jobList);
+					iterateFlow(request, artifactList, sourceArtifactclassId, nthFlowId, null, alreadyCreatedJobList, jobList);
 				}
 			}
 		}
@@ -106,21 +128,8 @@ public class JobManipulator {
 	 * @param alreadyCreatedJobList - The jobs that are already in DB
 	 * @param jobList - the joblist for response...
 	 */
-	private void iterateFlow(Request request, String artifactclassId, String nthFlowId, Flowelement referencingFlowelement, List<Job> alreadyCreatedJobList, List<Job> jobList) {
+	private void iterateFlow(Request request, List<Artifact> artifactList, String artifactclassId, String nthFlowId, Flowelement referencingFlowelement, List<Job> alreadyCreatedJobList, List<Job> jobList) {
 		logger.trace("Iterating flow " + nthFlowId);
-
-		List<Artifact> artifactList = null;
-		Domain[] domains = Domain.values();
-		for (Domain nthDomain : domains) {
-			ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(nthDomain);
-
-			artifactList = artifactRepository.findAllByWriteRequestId(request.getId());
-			
-			if(artifactList != null && artifactList.size() > 0) {
-				break;
-			}
-		}
-		
 		//  get all the flow elements for the flow
 		List<Flowelement> flowelementList = flowelementUtil.getAllFlowElements(nthFlowId);
 		for (Flowelement nthFlowelement : flowelementList) {
@@ -166,7 +175,7 @@ public class JobManipulator {
 			if(referredFlowId != null) { // If the flowelement references a flow(has a flowRef), that means one of this flowelement dependency is a processing task generating an output artifact, that is to be consumed as input
 
 				logger.trace("Output ArtifactclassId " + outputArtifactclassId);
-				iterateFlow(request, outputArtifactclassId, referredFlowId, nthFlowelement, alreadyCreatedJobList, jobList);
+				iterateFlow(request, artifactList, outputArtifactclassId, referredFlowId, nthFlowelement, alreadyCreatedJobList, jobList);
 			} else {
 				
 				Action storagetaskAction = nthFlowelement.getStoragetaskActionId();
@@ -276,9 +285,10 @@ public class JobManipulator {
 					}
 				}else {
 					String uId = referencingFlowPrefix + nthFlowelementId;
-					logger.trace("uid - " + uId);
+					logger.trace("uid - " + uId + ":" + request.getId() + ":" + artifactId + ":" + nthFlowelementId);
 					// check if job already created and details available... 
 					Job job = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifactId, nthFlowelementId, null);
+					
 					if(job == null) {
 						job = new Job();
 						job.setInputArtifactId(artifactId);

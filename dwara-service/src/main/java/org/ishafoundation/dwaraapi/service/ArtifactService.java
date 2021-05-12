@@ -513,10 +513,11 @@ public class ArtifactService extends DwaraService{
 					
 					for (Job nthJob : jobList) {
 						if(nthJob.getStoragetaskActionId() == Action.write) {
-							Volume grpVolume = copyId_GrpVolume_Map.get(nthJob.getGroupVolume().getCopy().getId());
-							nthJob.setGroupVolume(grpVolume);
+							String exitingGrpVolumeId= nthJob.getGroupVolume().getId();
+							Volume newGrpVolume = copyId_GrpVolume_Map.get(nthJob.getGroupVolume().getCopy().getId());
+							nthJob.setGroupVolume(newGrpVolume);
 							jobDao.save(nthJob);
-							logger.info(nthJob.getId() + "'s groupvolume changed from " + nthJob.getGroupVolume().getId() + " to " + grpVolume.getId());							
+							logger.info(nthJob.getId() + "'s groupvolume changed from " + exitingGrpVolumeId + " to " + newGrpVolume.getId());							
 						}
 					}
 					

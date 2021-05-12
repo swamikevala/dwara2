@@ -10,4 +10,8 @@ SET foreign_key_checks = 0;
 -- @Swami - need to add action in schema doc
 INSERT INTO `action` (`id`, `type`) VALUES ('change_artifactclass', 'sync');
 
+-- chaged from ^[A-Z]{1,2}\d+
+UPDATE `sequence` SET `code_regex`='^[0-9A-Za-z-]+' WHERE `id`='video-digi-2020-priv2';
+UPDATE `sequence` SET `code_regex`='^[0-9A-Za-z-]+' WHERE `id`='video-digi-2020-pub';
+
 SET foreign_key_checks = 1;

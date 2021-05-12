@@ -90,7 +90,7 @@ public class RequestService extends DwaraService{
 		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, requestedBy, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, artifactclass, pageNumber, pageSize);
 		for (Request request : requestList) {
 			logger.trace("Now processing " + request.getId());
-			RequestResponse requestResponse = frameRequestResponse(request, requestType, request.getId(), jobDetailsType);
+			RequestResponse requestResponse = frameRequestResponse(request, requestType, requestType == RequestType.user ? request.getId() : request.getRequestRef().getId(), jobDetailsType);
 			requestResponseList.add(requestResponse);
 		}
 		return requestResponseList;
@@ -117,22 +117,35 @@ public class RequestService extends DwaraService{
     	Request requestToBeCancelled = requestDao.findById(requestId).get();
     	if(requestToBeCancelled.getActionId() == Action.ingest) { // TODO should this behaviour be same for digi and video-pub or should we not move video-pub to cancelled dir...
     		return cancelAndCleanupRequest(requestToBeCancelled);
-    	} else {
+    	} 
+    	else if(requestToBeCancelled.getActionId() == Action.restore) {
+    		return cancelRequest(requestToBeCancelled, true);
+    	}
+    	else {
     		return cancelRequestOnlyIfAllJobsQueued(requestToBeCancelled);
     	}
     }
+    
+    private RequestResponse cancelRequestOnlyIfAllJobsQueued(Request requestToBeCancelled) throws Exception{
+    	return cancelRequest(requestToBeCancelled, false);
+    }
 
-	private RequestResponse cancelRequestOnlyIfAllJobsQueued(Request requestToBeCancelled) throws Exception{
+	private RequestResponse cancelRequest(Request requestToBeCancelled, boolean force) throws Exception{
 		int requestId = requestToBeCancelled.getId();
 		logger.info("Cancelling request " + requestId);
 		Request userRequest = null;
 		try {
 			List<Job> jobList = jobDao.findAllByRequestId(requestId);
 			for (Job job : jobList) {
-				if(job.getStatus() == Status.queued)
+				if(force) { // irrespective of the status of job just mark it cancelled... - TODO: Only static status or allow dynamically transitioning statuses too
 					job.setStatus(Status.cancelled);
-				else
-					throw new DwaraException(requestId + " request cannot be cancelled. All jobs should be in queued status");
+				}
+				else {
+					if(job.getStatus() == Status.queued)
+						job.setStatus(Status.cancelled);
+					else
+						throw new DwaraException(requestId + " request cannot be cancelled. All jobs should be in queued status");
+				}
 			}
 			
 			HashMap<String, Object> data = new HashMap<String, Object>();
@@ -146,12 +159,15 @@ public class RequestService extends DwaraService{
 			
 			requestToBeCancelled.setStatus(Status.cancelled);
 			requestDao.save(requestToBeCancelled);
+
+			Request userRequestToBeCancelled = requestToBeCancelled.getRequestRef();
+			userRequestToBeCancelled.setStatus(Status.cancelled);
+			requestDao.save(userRequestToBeCancelled);
 			
 			userRequest.setStatus(Status.completed);
 			userRequest = requestDao.save(userRequest);
 			
 	        return frameRequestResponse(userRequest, RequestType.user);
-			//return frameRequestResponse(requestToBeCancelled, RequestType.system);
 		}
 		catch (Exception e) {
 			if(userRequest != null && userRequest.getId() != 0) {
