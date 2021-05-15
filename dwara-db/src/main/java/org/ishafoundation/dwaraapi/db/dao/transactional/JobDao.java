@@ -8,6 +8,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.custom.JobCustom;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
 
 public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
@@ -18,6 +19,8 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	List<Job> findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status status);
 	
 	List<Job> findAllByStatusOrderById(Status status);
+	
+	List<Job> findAllByStatusAndProcessingtaskIdOrderById(Status status, Collection<String> processingTaskList, Pageable pageable);
 	
 	List<Job> findAllByStatusAndProcessingtaskIdIsNotNullOrderById(Status status); 
 	

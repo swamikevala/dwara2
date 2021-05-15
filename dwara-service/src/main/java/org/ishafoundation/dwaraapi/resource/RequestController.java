@@ -1,9 +1,11 @@
 package org.ishafoundation.dwaraapi.resource;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -107,6 +109,31 @@ public class RequestController {
 		}
     	return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
     }
+    
+    @PostMapping("/request/multi-cancel")
+    public ResponseEntity<List<RequestResponse>> cancelMultipleRequests(@RequestParam("requestIds") String systemRequestIds) {
+    	List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
+		List<String> systemRequestIdsList = Arrays.asList(systemRequestIds.split(","));
+		for (String systemRequestIdAsString : systemRequestIdsList) {
+			int requestId = Integer.parseInt(systemRequestIdAsString);
+			RequestResponse requestResponse = null;
+	    	try {
+	    		requestResponse = requestService.cancelRequest(requestId);
+	    		requestResponseList.add(requestResponse);
+			}catch (Exception e) {
+				String errorMsg = "Unable to cancel Requests - " + e.getMessage();
+				logger.error(errorMsg, e);
+				
+				if(e instanceof DwaraException)
+					throw (DwaraException) e;
+				else
+					throw new DwaraException(errorMsg, null);
+			}
+		}
+			
+    	return ResponseEntity.status(HttpStatus.OK).body(requestResponseList);
+    }
+
     
 //    @PostMapping("/request/{requestId}/delete")
 //    public ResponseEntity<RequestResponse> deleteRequest(@PathVariable("requestId") int requestId) {
