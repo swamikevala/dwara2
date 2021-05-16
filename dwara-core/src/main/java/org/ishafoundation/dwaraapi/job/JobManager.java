@@ -161,7 +161,7 @@ public class JobManager {
 				
 				Pageable limitBy = PageRequest.of(0, jobDaoQueryProps.getLimit());
 				List<Job> jobList = jobDao.findAllByStatusAndProcessingtaskIdInOrderById(Status.queued, jobDaoQueryProps.getTaskNameList(), limitBy);
-				logger.trace(executorName + ":" + jobDaoQueryProps.getLimit() + ":" + jobList.size());
+				logger.trace("===" + executorName + ":" + jobDaoQueryProps.getTaskNameList() + ":" + jobDaoQueryProps.getLimit() + ":" + jobList.size());
 				
 				if(jobList.size() > 0) {
 					for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
@@ -175,14 +175,15 @@ public class JobManager {
 	
 						BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
 						boolean alreadyQueued = false;
-						for (Runnable runnable : runnableQueueList) {
-							ProcessingJobManager pjm = (ProcessingJobManager) runnable;
-							if(job.getId() == pjm.getJob().getId()) {
-								logger.debug(job.getId() + " already in ProcessingJobManager queue. Skipping it...");
-								alreadyQueued = true;
-								break;
-							}
-						}
+						// NOT POSSIBLE - HENCE COMMENTING OUT
+//						for (Runnable runnable : runnableQueueList) {
+//							ProcessingJobManager pjm = (ProcessingJobManager) runnable;
+//							if(job.getId() == pjm.getJob().getId()) {
+//								logger.debug(job.getId() + " already in ProcessingJobManager queue. Skipping it...");
+//								alreadyQueued = true;
+//								break;
+//							}
+//						}
 						if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
 							ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
 							processingJobManager.setJob(job);

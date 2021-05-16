@@ -47,6 +47,7 @@ import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -92,6 +93,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	
 	@Autowired
 	private FileEntityToFileForProcessConverter fileEntityToFileForProcessConverter;
+	
+	@Value("${wowo.useNewJobManagementLogic:true}")
+	private boolean useNewJobManagementLogic;
 
 	private Job job;
 
@@ -191,8 +195,8 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				ProcessingJobProcessor pjp = (ProcessingJobProcessor) runnable;
 				jobsOnQueueSet.add(pjp.getJob().getId());
 			}
-
-			if(jobsOnQueueSet.size() >= (tpe.getCorePoolSize() + 2)) {
+			logger.trace("---" + executorName + ":" + tpe.getCorePoolSize() + ":" + jobsOnQueueSet.size() + ":" + jobsOnQueueSet);
+			if(useNewJobManagementLogic && jobsOnQueueSet.size() >= (tpe.getCorePoolSize() + 2)) {
 				logger.info("Already enough jobs(" + jobsOnQueueSet.size() + ")'s files are in " + executorName + " processing queue");
 				return;
 			} 
