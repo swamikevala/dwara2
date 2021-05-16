@@ -133,7 +133,7 @@ public class OnHoldArtifactRenameService extends DwaraService{
 	
 			} // File entry manipulation and renaming ends here 
 			
-			List<TFile> artifactTFileList  = tFileDao.findAllByArtifactId(artifactId); // Including the Deleted Ones
+			List<TFile> artifactTFileList  = tFileDao.findAllByArtifactId(artifact.getId()); // Including the Deleted Ones
 			for (TFile nthTFile : artifactTFileList) {
 				String filepath = nthTFile.getPathname() ;
 				// Change the parent folder name by replacing the older artifact name by newer name
