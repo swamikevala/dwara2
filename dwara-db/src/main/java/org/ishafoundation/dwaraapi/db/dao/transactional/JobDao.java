@@ -2,7 +2,9 @@ package org.ishafoundation.dwaraapi.db.dao.transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.custom.JobCustom;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
@@ -13,6 +15,8 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	
+	public static Map<String, JobDaoQueryProps> executorName_queryProps_map = new HashMap<String, JobDaoQueryProps>();
+	
 	// used for toLoad api - get all jobs with volume id and storagetask is not null and status is queued
 //	List<Job> findAllByVolumeIdIsNotNullAndStoragetaskActionIdIsNotNullAndStatus(Status status);
 //	List<Job> findAllByGroupVolumeIdIsNotNullAndStoragetaskActionIdIsNotNullAndStatus(Status status);
@@ -20,7 +24,7 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	
 	List<Job> findAllByStatusOrderById(Status status);
 	
-	List<Job> findAllByStatusAndProcessingtaskIdOrderById(Status status, Collection<String> processingTaskList, Pageable pageable);
+	List<Job> findAllByStatusAndProcessingtaskIdInOrderById(Status status, Collection<String> processingTaskList, Pageable pageable);
 	
 	List<Job> findAllByStatusAndProcessingtaskIdIsNotNullOrderById(Status status); 
 	

@@ -15,6 +15,7 @@ import javax.annotation.PostConstruct;
 import org.ishafoundation.dwaraapi.ApplicationStatus;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDaoQueryProps;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -53,61 +54,6 @@ public class JobManager {
 		
 	@Autowired
 	private Configuration configuration;
-	
-	@Autowired
-	private Map<String, IProcessingTask> processingtaskActionMap;
-
-	private Map<String, QueryProps> executorName_queryProps_map = new HashMap<String, QueryProps>();
-	
-	public class QueryProps {
-		
-		private List<String> taskNameList = new ArrayList<String>();
-		
-		private int limit;
-
-		public List<String> getTaskNameList() {
-			return taskNameList;
-		}
-
-		public int getLimit() {
-			return limit;
-		}
-
-		public void setTaskNameList(List<String> taskNameList) {
-			this.taskNameList = taskNameList;
-		}
-
-		public void setLimit(int limit) {
-			this.limit = limit;
-		}
-		
-	}
-	
-	@PostConstruct
-	public void MapExecutorNameToQueryProps() {
-		Set<String> processingtaskSet = processingtaskActionMap.keySet(); // has all the processing tasks
-		HashMap<String, Executor> taskName_executor_map = IProcessingTask.taskName_executor_map;
-		for (String processingtaskName : processingtaskSet) {
-			ThreadPoolExecutor executor = (ThreadPoolExecutor)taskName_executor_map.get(processingtaskName);
-			String identifier = null;
-			if(executor == null) { // need to be added to the globalthreadpool
-				identifier = IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER;
-				executor = (ThreadPoolExecutor) taskName_executor_map.get(identifier);
-			}
-			else {
-				identifier = processingtaskName;
-			}
-			
-			QueryProps queryProps = executorName_queryProps_map.get(identifier);
-			if(queryProps == null) {
-				queryProps = new QueryProps();
-			}
-			queryProps.getTaskNameList().add(processingtaskName);
-			queryProps.setLimit(executor.getCorePoolSize() + 2);
-
-			executorName_queryProps_map.put(identifier, queryProps);
-		}
-	}
 	
 	public void manageJobs() {
 		logger.info("***** Managing jobs now *****");
@@ -161,11 +107,11 @@ public class JobManager {
 		// processing specific jobs
 		// get all different configured threadexecutors
 		// and only get jobs + 2
-		for (String executorName : executorName_queryProps_map.keySet()) {
-			QueryProps qp = executorName_queryProps_map.get(executorName);
+		for (String executorName : JobDao.executorName_queryProps_map.keySet()) {
+			JobDaoQueryProps jobDaoQueryProps = JobDao.executorName_queryProps_map.get(executorName);
 			
-			Pageable limitBy = PageRequest.of(0, qp.getLimit());
-			List<Job> jobList = jobDao.findAllByStatusAndProcessingtaskIdOrderById(Status.queued, qp.getTaskNameList(), limitBy);
+			Pageable limitBy = PageRequest.of(0, jobDaoQueryProps.getLimit());
+			List<Job> jobList = jobDao.findAllByStatusAndProcessingtaskIdInOrderById(Status.queued, jobDaoQueryProps.getTaskNameList(), limitBy);
 
 			if(jobList.size() > 0) {
 				for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {

@@ -1,3 +1,16 @@
+# Dwara App Version - 2.1.20 (16th May 2021)
+### New features 
+
+1) Cancelling failed restore requests
+
+2) Job manager changes
+
+3) Ingester supporting Hi8
+
+### Bug fixes
+
+1) changeArtifactclass placeholderJob manipulation and logging fixed
+
 # Dwara App Version - 2.1.19 (9th May 2021)
 ### New features
 
