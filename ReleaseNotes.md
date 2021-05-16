@@ -11,6 +11,14 @@
 
 1) changeArtifactclass placeholderJob manipulation and logging fixed
 
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_12.sql)
+
+1) application.properties to have the below entry
+
+> wowo.useNewJobManagementLogic=true
+
 # Dwara App Version - 2.1.19 (9th May 2021)
 ### New features
 

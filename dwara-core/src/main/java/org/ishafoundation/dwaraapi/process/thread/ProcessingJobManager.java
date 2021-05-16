@@ -8,6 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -174,10 +176,26 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			if(processingtaskImpl == null)
 				throw new Exception(processingtaskId + " class is still not impl. Please refer IProcessingTask doc...");
 			
-			Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
-			if(executor == null)
-				executor = IProcessingTask.taskName_executor_map.get(IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER);
+			String executorName = processingtaskId.toLowerCase();
+			Executor executor = IProcessingTask.taskName_executor_map.get(executorName);
+			if(executor == null) {
+				executorName = IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER;
+				executor = IProcessingTask.taskName_executor_map.get(executorName);
+			}
 			// TODO Any check needed on the configured executor? 
+			// Checking if more than needed jobs are already queued to avoid too many files queued up on respective executors
+			ThreadPoolExecutor tpe = (ThreadPoolExecutor) executor;
+			Set<Integer> jobsOnQueueSet = new TreeSet<Integer>();
+			BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
+			for (Runnable runnable : runnableQueueList) {
+				ProcessingJobProcessor pjp = (ProcessingJobProcessor) runnable;
+				jobsOnQueueSet.add(pjp.getJob().getId());
+			}
+
+			if(jobsOnQueueSet.size() >= (tpe.getCorePoolSize() + 2)) {
+				logger.info("Already enough jobs(" + jobsOnQueueSet.size() + ")'s files are in " + executorName + " processing queue");
+				return;
+			} 
 			
 			Processingtask processingtask = getProcessingtask(processingtaskId);
 
@@ -348,8 +366,6 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					// This check is because of the same file getting queued up for processing again...
 					// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
 					// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
-					ThreadPoolExecutor tpe = (ThreadPoolExecutor) executor;
-					BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
 					boolean alreadyQueued = false;
 					for (Runnable runnable : runnableQueueList) {
 						ProcessingJobProcessor pjp = (ProcessingJobProcessor) runnable;

@@ -1,16 +1,12 @@
 package org.ishafoundation.dwaraapi.job;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
-
-import javax.annotation.PostConstruct;
 
 import org.ishafoundation.dwaraapi.ApplicationStatus;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -19,7 +15,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDaoQueryProps;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
-import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator;
 import org.ishafoundation.dwaraapi.storage.storagetype.thread.IStoragetypeThreadPoolExecutor;
@@ -27,6 +22,7 @@ import org.ishafoundation.dwaraapi.thread.executor.ProcessingtaskSingleThreadExe
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -54,6 +50,9 @@ public class JobManager {
 		
 	@Autowired
 	private Configuration configuration;
+	
+	@Value("${wowo.useNewJobManagementLogic:true}")
+	private boolean useNewJobManagementLogic;
 	
 	public void manageJobs() {
 		logger.info("***** Managing jobs now *****");
@@ -100,69 +99,122 @@ public class JobManager {
 			return;
 		}
 		List<Job> storageJobsList = new ArrayList<Job>();
-		
-		// storage specific jobs
-		// defective tape migration use case with lot of same tape jobs just give one or two..give.
-		
-		// processing specific jobs
-		// get all different configured threadexecutors
-		// and only get jobs + 2
-		for (String executorName : JobDao.executorName_queryProps_map.keySet()) {
-			JobDaoQueryProps jobDaoQueryProps = JobDao.executorName_queryProps_map.get(executorName);
-			
-			Pageable limitBy = PageRequest.of(0, jobDaoQueryProps.getLimit());
-			List<Job> jobList = jobDao.findAllByStatusAndProcessingtaskIdInOrderById(Status.queued, jobDaoQueryProps.getTaskNameList(), limitBy);
-
+		if(!useNewJobManagementLogic) {
+			List<Job> jobList = jobDao.findAllByStatusOrderById(Status.queued); // Irrespective of the tapedrivemapping or format request non storage jobs can still be dequeued, hence we are querying it all... 
 			if(jobList.size() > 0) {
 				for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
 					Job job = (Job) iterator.next();
-
-					// This check is because of the same file getting queued up for processing again...
-					// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
-					// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
-
-					BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
-					boolean alreadyQueued = false;
-					for (Runnable runnable : runnableQueueList) {
-						ProcessingJobManager pjm = (ProcessingJobManager) runnable;
-						if(job.getId() == pjm.getJob().getId()) {
-							logger.debug(job.getId() + " already in ProcessingJobManager queue. Skipping it...");
-							alreadyQueued = true;
-							break;
-						}
+					
+					String jobName = null;
+					Action storagetaskAction = job.getStoragetaskActionId();
+					String processingtaskId = job.getProcessingtaskId();
+					if(storagetaskAction != null) {
+						jobName = storagetaskAction.name();
 					}
-					if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
-						ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
-						processingJobManager.setJob(job);
-						logger.debug(job.getId() + " added to the ProcessingJobManager queue.");
-						tpe.execute(processingJobManager);
+					else {
+						jobName = processingtaskId;
+					}
+					logger.trace("Job - " + job.getId() + ":" + jobName);
+					
+					if(processingtaskId != null) { // a non-storage process job
+						// This check is because of the same file getting queued up for processing again...
+						// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
+						// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
+						
+						BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
+						boolean alreadyQueued = false;
+						for (Runnable runnable : runnableQueueList) {
+							ProcessingJobManager pjm = (ProcessingJobManager) runnable;
+							if(job.getId() == pjm.getJob().getId()) {
+								logger.debug(job.getId() + " already in ProcessingJobManager queue. Skipping it...");
+								alreadyQueued = true;
+								break;
+							}
+						}
+						if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
+							ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
+							processingJobManager.setJob(job);
+							logger.debug(job.getId() + " added to the ProcessingJobManager queue.");
+							tpe.execute(processingJobManager);
+						}
+					}else {
+						storageJobsList.add(job);
 					}
 				}
-			}
-		}
-		
-		List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued); // Irrespective of the tapedrivemapping or format request non storage jobs can still be dequeued, hence we are querying it all... 
-		if(jobList.size() > 0) {
-			for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
-				Job job = (Job) iterator.next();
 				
-				Action storagetaskAction = job.getStoragetaskActionId();
-				String jobName = storagetaskAction.name();
-				logger.trace("Job - " + job.getId() + ":" + jobName);
-				storageJobsList.add(job);
+				if(storageJobsList.size() > 0) {
+					logger.debug(storageJobsList.size() + " storage jobs are process ready");
+					storagetypeJobDelegator.delegate(storageJobsList);
+				}else {
+					logger.trace("No storage job to be processed");
+				}
 			}
-			
-			if(storageJobsList.size() > 0) {
-				logger.debug(storageJobsList.size() + " storage jobs are process ready");
-				storagetypeJobDelegator.delegate(storageJobsList);
-			}else {
-				logger.trace("No storage job to be processed");
+			else {
+				logger.trace("No jobs queued up");
 			}
 		}
 		else {
-			logger.trace("No jobs queued up");
+			// storage specific jobs
+			// defective tape migration use case with lot of same tape jobs just give one or two..give.
+			for (String executorName : JobDao.executorName_queryProps_map.keySet()) {
+				JobDaoQueryProps jobDaoQueryProps = JobDao.executorName_queryProps_map.get(executorName);
+				
+				Pageable limitBy = PageRequest.of(0, jobDaoQueryProps.getLimit());
+				List<Job> jobList = jobDao.findAllByStatusAndProcessingtaskIdInOrderById(Status.queued, jobDaoQueryProps.getTaskNameList(), limitBy);
+				logger.trace(executorName + ":" + jobDaoQueryProps.getLimit() + ":" + jobList.size());
+				
+				if(jobList.size() > 0) {
+					for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
+						Job job = (Job) iterator.next();
+						String processingtaskName = job.getProcessingtaskId();
+						
+						logger.trace("Job - " + job.getId() + ":" + processingtaskName);
+						// This check is because of the same file getting queued up for processing again...
+						// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
+						// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
+	
+						BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
+						boolean alreadyQueued = false;
+						for (Runnable runnable : runnableQueueList) {
+							ProcessingJobManager pjm = (ProcessingJobManager) runnable;
+							if(job.getId() == pjm.getJob().getId()) {
+								logger.debug(job.getId() + " already in ProcessingJobManager queue. Skipping it...");
+								alreadyQueued = true;
+								break;
+							}
+						}
+						if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
+							ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
+							processingJobManager.setJob(job);
+							logger.debug(job.getId() + " added to the ProcessingJobManager queue.");
+							tpe.execute(processingJobManager);
+						}
+					}
+				}
+			}
+			
+			List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued); // Irrespective of the tapedrivemapping or format request non storage jobs can still be dequeued, hence we are querying it all... 
+			if(jobList.size() > 0) {
+				for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
+					Job job = (Job) iterator.next();
+					
+					Action storagetaskAction = job.getStoragetaskActionId();
+					String jobName = storagetaskAction.name();
+					logger.trace("Job - " + job.getId() + ":" + jobName);
+					storageJobsList.add(job);
+				}
+				
+				if(storageJobsList.size() > 0) {
+					logger.debug(storageJobsList.size() + " storage jobs are process ready");
+					storagetypeJobDelegator.delegate(storageJobsList);
+				}else {
+					logger.trace("No storage job to be processed");
+				}
+			}
+			else {
+				logger.trace("No jobs queued up");
+			}
 		}
 	}
-
 }
 	
