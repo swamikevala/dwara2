@@ -14,18 +14,18 @@ UPDATE `artifact1` SET `prev_sequence_code`= replace(prev_sequence_code,@old,@ne
 select * from artifact1 where prev_sequence_code like binary (@binarynew);
 
 -- update system request
-select sr.* from request sr where sr.id in (select write_request_id from artifact1 where prev_sequence_code like binary (@binarynew));
+select sr.* from request sr where json_extract(sr.details, '$.staged_filename') like binary @binaryold;
 
-UPDATE `request` sr SET sr.`details`= replace(sr.details, json_extract(sr.details, '$.staged_filename'), replace(json_extract(sr.details, '$.staged_filename'),@old,@new)) where sr.id in (select write_request_id from artifact1 where prev_sequence_code like binary (@binarynew));
+UPDATE `request` sr SET sr.`details`= replace(sr.details, json_extract(sr.details, '$.staged_filename'), replace(json_extract(sr.details, '$.staged_filename'),@old,@new)) where json_extract(sr.details, '$.staged_filename') like binary @binaryold;
 
-select sr.* from request sr where sr.id in (select write_request_id from artifact1 where prev_sequence_code like binary (@binarynew));
+select sr.* from request sr where json_extract(sr.details, '$.staged_filename') like binary @binarynew;
 
 -- update user request
-select json_extract(ur.details, '$.body.stagedFiles[0].name') from request ur where ur.id in (select * from(select sr.request_ref_id from request sr where sr.id in (select write_request_id from artifact1 where prev_sequence_code like binary (@binarynew))) tblTmp);
+select json_extract(ur.details, '$.body.stagedFiles[0].name') from request ur where json_extract(ur.details, '$.body.stagedFiles[0].name')  like binary @binaryold;
 
-UPDATE `request` ur SET `details`= replace(ur.details, json_extract(ur.details, '$.body.stagedFiles[0].name'), replace(json_extract(ur.details, '$.body.stagedFiles[0].name'),@old,@new)) where ur.id in (select * from(select sr.request_ref_id from request sr where sr.id in (select write_request_id from artifact1 where prev_sequence_code like binary (@binarynew))) tblTmp);
+UPDATE `request` ur SET `details`= replace(ur.details, json_extract(ur.details, '$.body.stagedFiles[0].name'), replace(json_extract(ur.details, '$.body.stagedFiles[0].name'),@old,@new)) where json_extract(ur.details, '$.body.stagedFiles[0].name')  like binary @binaryold;
 
-select json_extract(ur.details, '$.body.stagedFiles[0].name') from request ur where ur.id in (select * from(select sr.request_ref_id from request sr where sr.id in (select write_request_id from artifact1 where prev_sequence_code like binary (@binarynew))) tblTmp);
+select json_extract(ur.details, '$.body.stagedFiles[0].name') from request ur where json_extract(ur.details, '$.body.stagedFiles[0].name')  like binary @binarynew;
 
 
 SET foreign_key_checks = 1;
