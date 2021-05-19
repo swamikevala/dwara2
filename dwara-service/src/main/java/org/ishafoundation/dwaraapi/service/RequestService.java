@@ -118,7 +118,7 @@ public class RequestService extends DwaraService{
     	if(requestToBeCancelled.getActionId() == Action.ingest) { // TODO should this behaviour be same for digi and video-pub or should we not move video-pub to cancelled dir...
     		return cancelAndCleanupRequest(requestToBeCancelled);
     	} 
-    	else if(requestToBeCancelled.getActionId() == Action.restore) {
+    	else if(requestToBeCancelled.getActionId() == Action.restore || requestToBeCancelled.getActionId() == Action.restore_process) {
     		return cancelRequest(requestToBeCancelled, true);
     	}
     	else {

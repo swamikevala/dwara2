@@ -52,10 +52,7 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	private Set<String> filePathNamesGt4096Chrs = new TreeSet<String>();
 	private Set<String> fileNamesWithNonUnicodeChrs = new TreeSet<String>();
 	private Set<String> photoSeriesFileNameValidationFailedFileNames = new TreeSet<String>();
-	private String photoSeriesFileNameToBeExcludedFromValidation = ".BridgeSort";
-	
-	private static Pattern photoSeriesArtifactclassFileNamePattern = Pattern.compile("([0-9]{8})_[A-Z]{3}_[0-9]{4}(-e)?\\.[A-Za-z0-9]*"); //20200101_CMM_0002.NEF or 20200101_CMM_0002-e.NEF (-e optional)
-	private static Pattern photoSeriesArtifactclassFileNamePattern2 = Pattern.compile("([0-9]{8})_[A-Z]{3}_[0-9]{4}"); //20200101_CMM_0002.NEF or 20200101_CMM_0002-e.NEF (-e optional)
+	private static Pattern photoSeriesArtifactclassFileNamePattern = Pattern.compile("([0-9]{8})_[A-Z]{3}_[0-9]{4}(.)*"); // 20200101_CMM_0002.NEF or 20200101_CMM_0002-e.NEF (-e optional) or 20200105_CMM_9999_Ashram-Program-Volunteers-Meet-Tamil-Group-Photo-1.tif or 20200428_CMM_0030to0032-mp-e.jpg
 	StagedFileVisitor(String stagedFileName, String junkFilesStagedDirName, List<Pattern> excludedFileNamesRegexList, Set<String> supportedExtns) {
 		this.stagedFileName = stagedFileName;
 		this.junkFilesStagedDirName = junkFilesStagedDirName;
@@ -177,14 +174,9 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 		}
 		
 		if(filePathName.contains("photo")) {
-//			Matcher m = photoSeriesArtifactclassFileNamePattern.matcher(file.getFileName().toString());
-//			if(!m.matches()) { 
-//				photoSeriesFileNameValidationFailedFileNames.add(file.getFileName().toString());
-//			}
-
 			String fileName = file.getFileName().toString();
-			if(!fileName.equals(photoSeriesFileNameToBeExcludedFromValidation)) {
-				Matcher m = photoSeriesArtifactclassFileNamePattern2.matcher(fileName);
+			if(!file.toFile().isHidden()) { // ignore hidden files from validation - Refer Sailusha akka email on 19th May 2021 - Sub: Photo pub file name validations
+				Matcher m = photoSeriesArtifactclassFileNamePattern.matcher(fileName);
 				if(!m.find()) {
 					photoSeriesFileNameValidationFailedFileNames.add(fileName);
 				}

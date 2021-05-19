@@ -39,11 +39,15 @@ import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class StagedFileEvaluator {
+	
+	private static final Logger logger = LoggerFactory.getLogger(StagedFileEvaluator.class);
 
 	@Autowired
 	private ExtensionDao extensionDao;
@@ -163,6 +167,7 @@ public class StagedFileEvaluator {
 				error.setType(Errortype.Error);
 				error.setMessage("File Names shoud be in yyyymmdd_xxx_dddd pattern");
 				errorList.add(error);
+				logger.error(fileName + " has following files failing validation "  + sfv.getPhotoSeriesFileNameValidationFailedFileNames());
 			}
 		}
 		
