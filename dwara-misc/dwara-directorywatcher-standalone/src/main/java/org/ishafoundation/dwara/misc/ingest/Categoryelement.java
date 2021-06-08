@@ -46,7 +46,7 @@ public enum Categoryelement {
 	AW(41, "AW - Special Workshops", "AW", "Public"),
 	AX(42, "AX - Sacred Spaces", "AX", "Public"),
 	AY(43, "AY - Project Green Hands", "AY", "Public"),
-	AZ(44, "AZ-US CENTRE", "AZ", "Private1"),
+	AZ(44, "AZ-US CENTRE", "AZ", "AZ-Private1/Private2"),
 	BB(45, "BB - Gramotsav", "BB", "Public"),
 	BC(46, "BC - External Shoots", "BC", "Public"),
 	BD(47, "BD - Sadhguru's Class Recording", "BD", "Private1"),

@@ -66,6 +66,12 @@ public class Ingester {
 			else if(category.equals("Z-Private2")) {// || category.equals("X-Private2") || category.equals("GR-Private2")) {
 				artifactClassFolderName = "video-digi-2020-edit-priv2";
 			}
+			else if(category.equals("AZ-Private1/Private2")) {
+				if(artifactName.equals("AZ30") || artifactName.equals("AZ31") || artifactName.equals("AZ38") || artifactName.equals("AZ39"))
+					artifactClassFolderName = "video-digi-2020-priv2";
+				else
+					artifactClassFolderName = "video-digi-2020-priv1";
+			}
 			else {
 				if(category.equals("Public"))
 					artifactClassFolderName = "video-digi-2020-pub";

@@ -34,7 +34,7 @@ public class FileController {
 	@Autowired
 	FileService fileService;
 
-	@ApiOperation(value = "Restores the list of files requested from location into the target volume grouped under the output dir")
+	@ApiOperation(value = "List the requested files details")
 	@GetMapping("/file/list")
 	public ResponseEntity<List<File>> list(@RequestParam String ids){
 		List<String> fileIdsList = Arrays.asList(ids.split(","));
@@ -49,6 +49,12 @@ public class FileController {
 		return ResponseEntity.status(HttpStatus.OK).body(fileList);
 	}
 
+	@ApiOperation(value = "Search and list the artifacts (and their file details) like the requested searchstr")
+	@GetMapping("/file/list/v2")
+	public ResponseEntity<List<File>> listV2(@RequestParam String spaceSeparatedArtifactSearchString){ // something like 'Sadhguru Dhyanalinga 02-Apr' etc., 
+		List<File> fileList = fileService.listV2("%" + spaceSeparatedArtifactSearchString.replace(" ", "%") + "%");
+		return ResponseEntity.status(HttpStatus.OK).body(fileList);
+	}
 	
 	@ApiOperation(value = "Restores the list of files requested from location into the target volume grouped under the output dir")
 	@PostMapping("/file/restore/v2")

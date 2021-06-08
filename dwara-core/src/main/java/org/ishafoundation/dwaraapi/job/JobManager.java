@@ -12,8 +12,11 @@ import org.ishafoundation.dwaraapi.ApplicationStatus;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDaoQueryProps;
+import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.StoragetypeJobDelegator;
@@ -35,6 +38,9 @@ public class JobManager {
 	
 	@Autowired
 	private JobDao jobDao;	
+	
+	@Autowired
+	private RequestDao requestDao;	
 	
 	@Autowired
 	private StoragetypeJobDelegator storagetypeJobDelegator;
@@ -194,7 +200,20 @@ public class JobManager {
 				}
 			}
 			
-			List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued); // Irrespective of the tapedrivemapping or format request non storage jobs can still be dequeued, hence we are querying it all... 
+			List<Job> jobList = null;
+			
+			List<Status> statusList = new ArrayList<Status>();
+			statusList.add(Status.queued);
+			statusList.add(Status.in_progress);
+			
+			List<Request> rewriteSystemRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.rewrite, statusList, RequestType.system);
+			if(rewriteSystemRequestList.size() > 0) { // if there are any rewrite request pending, dont add all its jobs to the queue
+				jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndRequestActionIdIsNotAndStatusOrderById(Action.rewrite, Status.queued);
+				jobList.add(jobDao.findTopByStoragetaskActionIdIsNotNullAndRequestActionIdAndStatusOrderByRequestId(Action.rewrite, Status.queued)); // add only one rewrite specific job to the collection
+			}
+			else
+				jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued); // Irrespective of the tapedrivemapping or format request non storage jobs can still be dequeued, hence we are querying it all...
+			
 			if(jobList.size() > 0) {
 				for (Iterator<Job> iterator = jobList.iterator(); iterator.hasNext();) {
 					Job job = (Job) iterator.next();

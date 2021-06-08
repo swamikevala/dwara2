@@ -28,4 +28,7 @@ UPDATE `request` ur SET `details`= replace(ur.details, json_extract(ur.details, 
 select json_extract(ur.details, '$.body.stagedFiles[0].name') from request ur where json_extract(ur.details, '$.body.stagedFiles[0].name')  like binary @binarynew;
 
 
+-- update video-edit-priv1-proxy-low sequence
+UPDATE `artifactclass` SET `sequence_id`='video-edit-pub-proxy-low' WHERE `id`='video-edit-priv1-proxy-low';
+
 SET foreign_key_checks = 1;

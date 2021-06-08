@@ -1,10 +1,16 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.math.BigInteger;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FilenameUtils;
@@ -18,6 +24,7 @@ import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactCatalog;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -40,6 +47,9 @@ public class FileService extends DwaraService{
 
 	private static final Logger logger = LoggerFactory.getLogger(FileService.class);
 	
+    @PersistenceContext
+    private EntityManager entityManager;
+    
 	@Autowired
 	private RequestDao requestDao;
 	
@@ -75,6 +85,40 @@ public class FileService extends DwaraService{
 		
 		return fileList;
 		
+	}
+
+	/**
+	 * join vs subquery
+	 * 
+	 * joins take longer to respond when there is more resultset
+	 * select file1.id, artifact1.name from artifact1 join file1 on artifact1.id = file1.artifact_id where artifact1.name like '%Sadhguru%Instagram%02-Apr-2021%' and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name;
+	 * 
+	 * subqueries take longer when the searchstr is complicated
+	 * select id, pathname from file1 where pathname in (select name from artifact1 where name like '%Sadhguru%Instagram%02-Apr-2021%' and artifactclass_id not like '%proxy-low');
+	 * 
+	 * No specific reason but will go for joins
+	 * 
+	 * @param artifactNameSearchStr - eg. something like '%Sadhguru%Instagram%02-Apr-2021%'
+	 * @return
+	 */
+	public List<File> listV2(String artifactNameSearchStr){
+		String query="select file1.id, file1.pathname, file1.size from artifact1 join file1 on artifact1.id = file1.artifact_id where artifact1.name like '" + artifactNameSearchStr + "' and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name";
+        Query q = entityManager.createNativeQuery(query);
+        List<Object[]> results = q.getResultList();
+        List<File> list = new ArrayList<File>();
+        results.stream().forEach((record) -> {
+            int fileId = ((Integer) record[0]).intValue();
+            String artifactName = (String) record[1];
+            long size = ((BigInteger)record[2]).longValue();
+
+			File file = new File();
+			file.setId(fileId);
+			file.setPathname(artifactName);
+			file.setSize(size);
+			list.add(file);
+        });
+		
+		return list;
 	}
 	
     public RestoreResponse restore(RestoreUserRequest restoreUserRequest, Action action, String flow) throws Exception{	

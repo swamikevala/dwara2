@@ -22,6 +22,10 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 //	List<Job> findAllByGroupVolumeIdIsNotNullAndStoragetaskActionIdIsNotNullAndStatus(Status status);
 	List<Job> findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status status);
 	
+	Job findTopByStoragetaskActionIdIsNotNullAndRequestActionIdAndStatusOrderByRequestId(Action action, Status status);
+	
+	List<Job> findAllByStoragetaskActionIdIsNotNullAndRequestActionIdIsNotAndStatusOrderById(Action action, Status status);
+	
 	List<Job> findAllByStatusOrderById(Status status);
 	
 	List<Job> findAllByStatusAndProcessingtaskIdInOrderById(Status status, Collection<String> processingTaskList, Pageable pageable);
