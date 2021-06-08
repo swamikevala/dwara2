@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.db.model.master.jointables;
 import java.util.Objects;
 
 import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
@@ -21,6 +22,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
  * 
  * 
 */
+@Entity(name = "RoleUser")
 @Table(name="role_user")
 public class RoleUser {
 

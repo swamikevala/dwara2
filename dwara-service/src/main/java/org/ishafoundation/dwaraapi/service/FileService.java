@@ -108,11 +108,11 @@ public class FileService extends DwaraService{
 		String[] searchParts = spaceSeparatedArtifactSearchString.split(" ");
 		StringBuffer sb = new StringBuffer();
 		for (int i = 0; i < searchParts.length; i++) {
-			if(i > 1)
+			if(i > 0)
 				sb.append(" and ");
-			sb.append("artifact1.name like '");
+			sb.append("artifact1.name like '%");
 			sb.append(searchParts[i]);
-			sb.append("'");
+			sb.append("%'");
 		}
 		
 		String query="select file1.id, file1.pathname, file1.size from artifact1 join file1 on artifact1.id = file1.artifact_id where " + sb.toString() + " and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name";
