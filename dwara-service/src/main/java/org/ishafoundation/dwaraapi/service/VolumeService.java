@@ -123,6 +123,10 @@ public class VolumeService extends DwaraService {
 			long groupVolumeUnusedCapacity = 0L;
 			long groupVolumeUsedCapacity = 0L;
 			long maxPhysicalUnusedCapacity = 0L;
+			long GiB = 1073741824L; // 1 GiB = 1073741824 bytes...
+			long TiB = 1099511627776L;
+			String sizeUnit = "TiB"; // "GiB"; 
+			long sizeUnitDivisor = TiB;
 			List<Volume> physicalVolumeList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndDefectiveIsFalseAndSuspectIsFalseOrderByIdAsc(volume.getId()); // get all not finalized physical volume in the group
 			
 			for (Volume nthPhyscialVolume : physicalVolumeList) { // iterate all physical volume from the group and sum up for total/used/unused cap
@@ -144,25 +148,25 @@ public class VolumeService extends DwaraService {
 //				long nthPhysicalVolumeUsedCapacity = volumeUtil.getVolumeUsedCapacity(domain, nthPhyscialVolume);
 				groupVolumeCapacity += volumeUtil.getVolumeUsableCapacity(domain, nthPhyscialVolume);//nthPhyscialVolume.getCapacity();
 				logger.trace("Dashboard -groupVolumeCapacity - " + groupVolumeCapacity);
-				logger.trace("Dashboard -groupVolumeCapacity in GiB - " + groupVolumeCapacity/1073741824);
+				logger.trace("Dashboard -groupVolumeCapacity in " + sizeUnit + " - " + groupVolumeCapacity/sizeUnitDivisor);
 				long nthPhysicalVolumeUnusedCapacity = volumeUtil.getVolumeUnusedCapacity(domain, nthPhyscialVolume);
 				groupVolumeUnusedCapacity += nthPhysicalVolumeUnusedCapacity;
 				logger.trace("Dashboard -groupVolumeUnusedCapacity - " + groupVolumeUnusedCapacity);
-				logger.trace("Dashboard -groupVolumeUnusedCapacity in GiB - " + groupVolumeUnusedCapacity/1073741824);
+				logger.trace("Dashboard -groupVolumeUnusedCapacity in " + sizeUnit + " - "  + groupVolumeUnusedCapacity/sizeUnitDivisor);
 				if(maxPhysicalUnusedCapacity < nthPhysicalVolumeUnusedCapacity)
 					maxPhysicalUnusedCapacity = nthPhysicalVolumeUnusedCapacity;
 				logger.trace("Dashboard -maxPhysicalUnusedCapacity - " + maxPhysicalUnusedCapacity);
-				logger.trace("Dashboard -maxPhysicalUnusedCapacity in GiB - " + maxPhysicalUnusedCapacity/1073741824);
+				logger.trace("Dashboard -maxPhysicalUnusedCapacity in " + sizeUnit + " - "  + maxPhysicalUnusedCapacity/sizeUnitDivisor);
 				groupVolumeUsedCapacity += volumeUtil.getVolumeUsedCapacity(domain, nthPhyscialVolume);
 				logger.trace("Dashboard -groupVolumeUsedCapacity - " + groupVolumeUsedCapacity);
-				logger.trace("Dashboard -groupVolumeUsedCapacity in GiB - " + groupVolumeUsedCapacity/1073741824);
+				logger.trace("Dashboard -groupVolumeUsedCapacity in " + sizeUnit + " - "  + groupVolumeUsedCapacity/sizeUnitDivisor);
 			}
 
-			volResp.setTotalCapacity(groupVolumeCapacity/1073741824);
-			volResp.setUsedCapacity(groupVolumeUsedCapacity/1073741824);
-			volResp.setUnusedCapacity(groupVolumeUnusedCapacity/1073741824);
-			volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity/1073741824);
-			volResp.setSizeUnit("GiB"); // 1 GiB = 1073741824 bytes...
+			volResp.setTotalCapacity(groupVolumeCapacity/sizeUnitDivisor);
+			volResp.setUsedCapacity(groupVolumeUsedCapacity/sizeUnitDivisor);
+			volResp.setUnusedCapacity(groupVolumeUnusedCapacity/sizeUnitDivisor);
+			volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity/sizeUnitDivisor);
+			volResp.setSizeUnit(sizeUnit); 
 		}
 		
 		if(volume.getLocation() != null)
