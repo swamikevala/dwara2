@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,17 +93,29 @@ public class FileService extends DwaraService{
 	 * 
 	 * joins take longer to respond when there is more resultset
 	 * select file1.id, artifact1.name from artifact1 join file1 on artifact1.id = file1.artifact_id where artifact1.name like '%Sadhguru%Instagram%02-Apr-2021%' and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name;
+	 * when the order of the searchstr is expected to be haphazard
+	 * select file1.id, artifact1.name from artifact1 join file1 on artifact1.id = file1.artifact_id where artifact1.name like '%02-Apr-2021%' and artifact1.name like '%Sadhguru%' and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name;
 	 * 
 	 * subqueries take longer when the searchstr is complicated
 	 * select id, pathname from file1 where pathname in (select name from artifact1 where name like '%Sadhguru%Instagram%02-Apr-2021%' and artifactclass_id not like '%proxy-low');
 	 * 
 	 * No specific reason but will go for joins
 	 * 
-	 * @param artifactNameSearchStr - eg. something like '%Sadhguru%Instagram%02-Apr-2021%'
+	 * @param spaceSeparatedArtifactSearchString - eg. something like '02-Apr-2021 Sadhguru Instagram'
 	 * @return
 	 */
-	public List<File> listV2(String artifactNameSearchStr){
-		String query="select file1.id, file1.pathname, file1.size from artifact1 join file1 on artifact1.id = file1.artifact_id where artifact1.name like '" + artifactNameSearchStr + "' and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name";
+	public List<File> listV2(String spaceSeparatedArtifactSearchString){
+		String[] searchParts = spaceSeparatedArtifactSearchString.split(" ");
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < searchParts.length; i++) {
+			if(i > 1)
+				sb.append(" and ");
+			sb.append("artifact1.name like '");
+			sb.append(searchParts[i]);
+			sb.append("'");
+		}
+		
+		String query="select file1.id, file1.pathname, file1.size from artifact1 join file1 on artifact1.id = file1.artifact_id where " + sb.toString() + " and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name";
         Query q = entityManager.createNativeQuery(query);
         List<Object[]> results = q.getResultList();
         List<File> list = new ArrayList<File>();

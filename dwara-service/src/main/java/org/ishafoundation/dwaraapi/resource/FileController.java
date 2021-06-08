@@ -51,8 +51,9 @@ public class FileController {
 
 	@ApiOperation(value = "Search and list the artifacts (and their file details) like the requested searchstr")
 	@GetMapping("/file/list/v2")
-	public ResponseEntity<List<File>> listV2(@RequestParam String spaceSeparatedArtifactSearchString){ // something like 'Sadhguru Dhyanalinga 02-Apr' etc., 
-		List<File> fileList = fileService.listV2("%" + spaceSeparatedArtifactSearchString.replace(" ", "%") + "%");
+	public ResponseEntity<List<File>> listV2(@RequestParam String spaceSeparatedArtifactSearchString){ // something like 'Sadhguru Dhyanalinga 02-Apr' etc.,
+		// "%" + spaceSeparatedArtifactSearchString.replace(" ", "%") + "%"
+		List<File> fileList = fileService.listV2(spaceSeparatedArtifactSearchString);
 		return ResponseEntity.status(HttpStatus.OK).body(fileList);
 	}
 	
