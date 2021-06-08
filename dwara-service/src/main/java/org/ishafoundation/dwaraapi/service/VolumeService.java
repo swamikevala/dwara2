@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.io.File;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -80,6 +81,8 @@ public class VolumeService extends DwaraService {
 	@Value("${filesystem.temporarylocation}")
 	private String filesystemTemporarylocation;
 
+	private static DecimalFormat df = new DecimalFormat("0.00");
+	
 	public List<VolumeResponse> getVolumeByVolumetype(String volumetype){
 		List<VolumeResponse> volumeResponseList = null;
 			// validate
@@ -103,6 +106,12 @@ public class VolumeService extends DwaraService {
 	}
 	
 	private VolumeResponse getVolume_Internal(Volume volume) {
+		double GiB = 1073741824; // 1 GiB = 1073741824 bytes...
+		double TiB = 1099511627776.00;
+		double TB = 1000000000000.00;
+		String sizeUnit = "TB"; // "GiB"; 
+		double sizeUnitDivisor = TB;
+		
 		VolumeResponse volResp = new VolumeResponse();
 		volResp.setId(volume.getId());
 		volResp.setVolumetype(volume.getType().name());
@@ -123,10 +132,7 @@ public class VolumeService extends DwaraService {
 			long groupVolumeUnusedCapacity = 0L;
 			long groupVolumeUsedCapacity = 0L;
 			long maxPhysicalUnusedCapacity = 0L;
-			long GiB = 1073741824L; // 1 GiB = 1073741824 bytes...
-			long TiB = 1099511627776L;
-			String sizeUnit = "TiB"; // "GiB"; 
-			long sizeUnitDivisor = TiB;
+
 			List<Volume> physicalVolumeList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndDefectiveIsFalseAndSuspectIsFalseOrderByIdAsc(volume.getId()); // get all not finalized physical volume in the group
 			
 			for (Volume nthPhyscialVolume : physicalVolumeList) { // iterate all physical volume from the group and sum up for total/used/unused cap
@@ -162,10 +168,10 @@ public class VolumeService extends DwaraService {
 				logger.trace("Dashboard -groupVolumeUsedCapacity in " + sizeUnit + " - "  + groupVolumeUsedCapacity/sizeUnitDivisor);
 			}
 
-			volResp.setTotalCapacity(groupVolumeCapacity/sizeUnitDivisor);
-			volResp.setUsedCapacity(groupVolumeUsedCapacity/sizeUnitDivisor);
-			volResp.setUnusedCapacity(groupVolumeUnusedCapacity/sizeUnitDivisor);
-			volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity/sizeUnitDivisor);
+			volResp.setTotalCapacity(Float.valueOf(df.format(groupVolumeCapacity/sizeUnitDivisor)));
+			volResp.setUsedCapacity(Float.valueOf(df.format(groupVolumeUsedCapacity/sizeUnitDivisor)));
+			volResp.setUnusedCapacity(Float.valueOf(df.format(groupVolumeUnusedCapacity/sizeUnitDivisor)));
+			volResp.setMaxPhysicalUnusedCapacity(Float.valueOf(df.format(maxPhysicalUnusedCapacity/sizeUnitDivisor)));
 			volResp.setSizeUnit(sizeUnit); 
 		}
 		
@@ -186,7 +192,7 @@ public class VolumeService extends DwaraService {
 			//details.setProvider(provider);
 			//details.setRemoveAfterJob(removeAfterJob);
 			if(volume.getType() == Volumetype.group) {
-				if(volResp.getUnusedCapacity() < (volumeDetails.getMinimumFreeSpace()/1073741824))
+				if(volResp.getUnusedCapacity() < (volumeDetails.getMinimumFreeSpace()/sizeUnitDivisor))
 					details.setExpandCapacity(true);
 				details.setNextBarcode(volume.getSequence().getPrefix() + (volume.getSequence().getCurrrentNumber() + 1) + "L7"); // TODO - How to findout LTO Generation???
 			}
