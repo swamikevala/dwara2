@@ -1,5 +1,7 @@
 SET foreign_key_checks = 0; 
 
+UPDATE `artifact1` SET `prev_sequence_code`=replace(name, CONCAT(sequence_code, '_')) WHERE name REGEXP '_Z-DVCAM' and artifactclass_id not like '%-proxy-low';
+
 -- SEQUENCE --
 -- *************** NOTE *************** No grouping of sequence needed for dept artifact classes ***************
 INSERT INTO `sequence` (`id`, `type`, `prefix`, `code_regex`, `number_regex`, `group`, `starting_number`, `ending_number`, `current_number`, `sequence_ref_id`, `force_match`, `keep_code`, `replace_code`) VALUES 

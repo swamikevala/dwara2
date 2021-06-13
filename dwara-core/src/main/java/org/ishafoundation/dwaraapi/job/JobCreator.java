@@ -6,16 +6,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassFlow;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig.IncludeExcludeProperties;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
@@ -211,6 +216,26 @@ public class JobCreator {
 		Action storagetaskAction = flowelement.getStoragetaskActionId();
 		String processingtaskId = flowelement.getProcessingtaskId();
 
+		Taskconfig taskconfig =	flowelement.getTaskconfig();
+		if(taskconfig != null) {
+			IncludeExcludeProperties excludeProperties = taskconfig.getExcludeIf();
+			if(excludeProperties != null) {
+				boolean isExcludeJob = doIncludeExcludePropertiesMatch(excludeProperties, artifactclassId, artifact);
+				if(isExcludeJob) {
+					logger.info("Excluding Flowelement " + flowelement.getId());
+					return jobsCreated;
+				}
+			}
+			IncludeExcludeProperties includeProperties = taskconfig.getIncludeIf();
+			if(includeProperties != null) {  
+				boolean isIncludeJob = doIncludeExcludePropertiesMatch(includeProperties, artifactclassId, artifact);
+				if(!isIncludeJob) { // only proceed creating job if condition is met else return
+					logger.info("Flowelement " + flowelement.getId() + "doesnt match include condition");
+					return jobsCreated;					
+				}
+			}
+		}
+
 		if(request.getActionId() == Action.ingest) {
 			boolean processingtaskWithDependencyStoragetask = false;
 			if(processingtaskId != null) {
@@ -322,6 +347,32 @@ public class JobCreator {
 		}
 
 		return jobsCreated;
+	}
+
+	private boolean doIncludeExcludePropertiesMatch(IncludeExcludeProperties includeExcludeProperties, String artifactclassId, Artifact artifact){	
+		boolean isMatch = false;
+		
+		String tag = includeExcludeProperties.getTag();
+		String artifactclassRegex = includeExcludeProperties.getArtifactclassRegex();
+		if(tag != null) {
+			Set<Tag> tags = artifact.getTags();
+			for (Tag nthTag : tags) {
+				if(nthTag.getTag().equals(tag)) {
+					isMatch = true;
+					break;
+				}
+			}
+		}
+		
+		if(artifactclassRegex != null) {
+			Pattern artifactclassRegexPattern = Pattern.compile(artifactclassRegex);
+			Matcher artifactclassRegexMatcher = artifactclassRegexPattern.matcher(artifactclassId); // only in relative to the artifact path 
+			if(artifactclassRegexMatcher.matches()) {
+				isMatch = true;
+			}
+		}
+		
+		return isMatch;
 	}
 
 	private Job createProcessingJob(String processingtaskId, Flowelement flowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact){
