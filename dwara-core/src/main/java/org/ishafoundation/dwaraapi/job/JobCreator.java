@@ -4,6 +4,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,9 +12,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.db.dao.master.TagDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactEntityUtil;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassFlow;
@@ -73,6 +76,12 @@ public class JobCreator {
 	
 	@Autowired
 	private Restore restoreStorageTask;
+	
+	@Autowired
+	private ArtifactEntityUtil artifactEntityUtil;
+	
+	@Autowired
+	private TagDao tagDao;
 
 	// only if action is async create job should be called...
 	public List<Job> createJobs(Request request, Artifact sourceArtifact){
@@ -348,14 +357,35 @@ public class JobCreator {
 
 		return jobsCreated;
 	}
-
+    
 	private boolean doIncludeExcludePropertiesMatch(IncludeExcludeProperties includeExcludeProperties, String artifactclassId, Artifact artifact){	
 		boolean isMatch = false;
 		
 		String tag = includeExcludeProperties.getTag();
 		String artifactclassRegex = includeExcludeProperties.getArtifactclassRegex();
 		if(tag != null) {
-			Set<Tag> tags = artifact.getTags();
+			boolean isSource = artifact.getArtifactclass().isSource();
+			Set<Tag> tags = null;
+			
+			if(isSource) {
+				tags = artifact.getTags(); 
+				
+				if(tags == null){
+					// StagedService isnt set properly hence had to hit DB ...
+					
+					List<Tag> tagList = tagDao.findByArtifacts_Id(artifact.getId());
+					if(tagList != null)
+						tags = new HashSet<Tag>(tagList);
+				}
+			}
+			else { // if artifact is a derived artifact - tags are only saved with the source artifacts - so get the tag collection from source artifact 
+				try {
+					tags = artifactEntityUtil.getDomainSpecificArtifactRef(artifact).getTags();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 			for (Tag nthTag : tags) {
 				if(nthTag.getTag().equals(tag)) {
 					isMatch = true;
