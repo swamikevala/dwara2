@@ -5,6 +5,7 @@ public interface PfrConstants {
 	// Binary reversal
 	public static final String HDR_EXTN = ".hdr";
 	public static final String FTR_EXTN = ".ftr";
+	public static final String MOV_META_EXTN = ".mov_meta";
 	public static final String QC_REPORT_EXTN = ".qcr";
 	
 	// PFR
