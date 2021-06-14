@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
@@ -47,16 +48,21 @@ public class MxfMetaDataCollector implements IProcessingTask {
 		
 		String sourceFilePathname = logicalFile.getAbsolutePath();
 		String fileName = FilenameUtils.getBaseName(sourceFilePathname);
+		String extension = FilenameUtils.getExtension(sourceFilePathname);
 		
 		FileUtils.forceMkdir(new File(destinationDirPath));
-		
+
 		String hdrTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.HDR_EXTN;
 		String ftrTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.FTR_EXTN;
 //		String qcrTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.QC_REPORT_EXTN;
 		
-		extractAndSaveHeader(sourceFilePathname, hdrTargetLocation);
-		extractAndSaveFooter(sourceFilePathname, ftrTargetLocation);
-		
+
+		if(extension.equals("mxf")) {
+			extractAndSaveHeader(sourceFilePathname, hdrTargetLocation);
+			extractAndSaveFooter(sourceFilePathname, ftrTargetLocation);
+		}else {
+			extractAndSaveMovMeta(sourceFilePathname, ftrTargetLocation);
+		}
 		
 //		// copies the QCReport file;
 //		File qcReportFile = logicalFile.getSidecarFile("qcr");
@@ -64,13 +70,29 @@ public class MxfMetaDataCollector implements IProcessingTask {
 		
 		// TODO : better this...
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
-		processingtaskResponse.setDestinationPathname(hdrTargetLocation);
+		processingtaskResponse.setDestinationPathname(ftrTargetLocation);
 		processingtaskResponse.setIsComplete(true);
 		processingtaskResponse.setIsCancelled(false);
 		processingtaskResponse.setStdOutResponse("");
 		processingtaskResponse.setFailureReason("");
 
 		return processingtaskResponse;
+	}
+	
+	private void extractAndSaveMovMeta(String sourceFilePathname, String ftrTargetLocation) throws Exception {
+		long srcFileSize = new File(sourceFilePathname).length();
+    	int bufferSize = 524288;
+    	InputStream is = new BufferedInputStream(new FileInputStream(sourceFilePathname), bufferSize);
+    	is.skip(8); // skipping the first 8 bytes...
+    	
+		byte[] footerchunk = new byte[8];
+		logger.trace("read the length's " + is.read(footerchunk, 0, footerchunk.length) + " bytes");
+		
+		long footerchunkByteSize = ByteBuffer.wrap(footerchunk).getLong();
+		
+		byte[] footerData = extractFooterChunk(sourceFilePathname, PfrConstants.MOV_EXTN, srcFileSize - footerchunkByteSize);
+		
+		IOUtils.write(footerData, new FileOutputStream(ftrTargetLocation));
 	}
 	
     private void extractAndSaveHeader(String sourceFilePathname, String hdrTargetLocation) throws Exception {
@@ -116,7 +138,7 @@ public class MxfMetaDataCollector implements IProcessingTask {
         	logger.trace(""+count);
         	long chunkByteSize = bufferSize * count;
         	
-        	byte[] data = extractFooterChunk(sourceFilePathname, srcFileSize - chunkByteSize);
+        	byte[] data = extractFooterChunk(sourceFilePathname, PfrConstants.MXF_EXTN, srcFileSize - chunkByteSize);
         	int footerIndexPos = HexPatternFinderUtil.indexOf(data, footerIdentifierPattern);
         	logger.trace("footerIndexPos " + footerIndexPos);
         	if(footerIndexPos != -1) {
@@ -142,9 +164,9 @@ public class MxfMetaDataCollector implements IProcessingTask {
         }
 	}
     
-	private byte[] extractFooterChunk(String filePathName, long bytesToBeSkipped) throws Exception{
+	private byte[] extractFooterChunk(String filePathName, String fileExtn, long bytesToBeSkipped) throws Exception{
 		byte[] data = null;
-		String extractedChunkTmpFile = filePathName.replace(PfrConstants.MXF_EXTN, PfrConstants.FTR_EXTN + ".tmp");
+		String extractedChunkTmpFile = filePathName.replace(fileExtn, PfrConstants.FTR_EXTN + ".tmp");
 		String ddCommand = "dd if=" + filePathName + " skip=" + bytesToBeSkipped + " iflag=skip_bytes,count_bytes of=" + extractedChunkTmpFile;
 		
 		logger.trace("ddCommand " + ddCommand);

@@ -584,6 +584,7 @@ public class StagedService extends DwaraService{
 					artifact.setPrevSequenceCode(prevSeqCode);
 					artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
 
+					// TODO : Talk to Dong anna and clean this up - Attach tags to the artifact object so that it can be used downstream - for eg, in jobcreation via flowelement.taskconfig.inc/exc on tags 
 					//Tag
 					List<String> tags = stagedFile.getTags();
 					if(tags != null && tags.size() > 0) {

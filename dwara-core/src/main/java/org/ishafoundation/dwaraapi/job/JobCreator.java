@@ -225,26 +225,10 @@ public class JobCreator {
 		Action storagetaskAction = flowelement.getStoragetaskActionId();
 		String processingtaskId = flowelement.getProcessingtaskId();
 
-		Taskconfig taskconfig =	flowelement.getTaskconfig();
-		if(taskconfig != null) {
-			IncludeExcludeProperties excludeProperties = taskconfig.getExcludeIf();
-			if(excludeProperties != null) {
-				boolean isExcludeJob = doIncludeExcludePropertiesMatch(excludeProperties, artifactclassId, artifact);
-				if(isExcludeJob) {
-					logger.info("Excluding Flowelement " + flowelement.getId());
-					return jobsCreated;
-				}
-			}
-			IncludeExcludeProperties includeProperties = taskconfig.getIncludeIf();
-			if(includeProperties != null) {  
-				boolean isIncludeJob = doIncludeExcludePropertiesMatch(includeProperties, artifactclassId, artifact);
-				if(!isIncludeJob) { // only proceed creating job if condition is met else return
-					logger.info("Flowelement " + flowelement.getId() + "doesnt match include condition");
-					return jobsCreated;					
-				}
-			}
-		}
-
+		boolean continueWithJobCreation = dealWithInclusionExclusion(flowelement, artifactclassId, artifact);
+		if(!continueWithJobCreation)
+			return jobsCreated;
+		
 		if(request.getActionId() == Action.ingest) {
 			boolean processingtaskWithDependencyStoragetask = false;
 			if(processingtaskId != null) {
@@ -357,7 +341,41 @@ public class JobCreator {
 
 		return jobsCreated;
 	}
-    
+ 
+	/**
+	 * deals With Inclusion Exclusion
+	 * @param flowelement
+	 * @param artifactclassId
+	 * @param artifact
+	 * @returns if job should be created or not for the configured flowelement
+	 */
+	private boolean dealWithInclusionExclusion(Flowelement flowelement, String artifactclassId, Artifact artifact){
+		boolean isJobToBeCreated = true;
+		Taskconfig taskconfig =	flowelement.getTaskconfig();
+		if(taskconfig != null) {
+			IncludeExcludeProperties excludeProperties = taskconfig.getExcludeIf();
+			if(excludeProperties != null) {
+				boolean isExcludeJob = doIncludeExcludePropertiesMatch(excludeProperties, artifactclassId, artifact);
+				if(isExcludeJob) {
+					logger.info("Excluding Flowelement " + flowelement.getId());
+					isJobToBeCreated = false;
+					return isJobToBeCreated;
+				}
+			}
+			
+			IncludeExcludeProperties includeProperties = taskconfig.getIncludeIf();
+			if(includeProperties != null) {  
+				boolean isIncludeJob = doIncludeExcludePropertiesMatch(includeProperties, artifactclassId, artifact);
+				if(!isIncludeJob) { // only proceed creating job if condition is met else return
+					logger.info("Flowelement " + flowelement.getId() + "doesnt match include condition");
+					isJobToBeCreated = false;
+					return isJobToBeCreated;
+				}
+			}
+		}
+		return isJobToBeCreated;
+	}
+	
 	private boolean doIncludeExcludePropertiesMatch(IncludeExcludeProperties includeExcludeProperties, String artifactclassId, Artifact artifact){	
 		boolean isMatch = false;
 		
@@ -371,8 +389,7 @@ public class JobCreator {
 				tags = artifact.getTags(); 
 				
 				if(tags == null){
-					// StagedService isnt set properly hence had to hit DB ...
-					
+					// During ingest(StagedService) tags isnt set properly in artifact object - hence had to hit DB ...
 					List<Tag> tagList = tagDao.findByArtifacts_Id(artifact.getId());
 					if(tagList != null)
 						tags = new HashSet<Tag>(tagList);
@@ -382,14 +399,15 @@ public class JobCreator {
 				try {
 					tags = artifactEntityUtil.getDomainSpecificArtifactRef(artifact).getTags();
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					logger.error("Unable to get tags info from source artifact for " + artifact.getId() + " : " + e.getMessage());
 				}
 			}
-			for (Tag nthTag : tags) {
-				if(nthTag.getTag().equals(tag)) {
-					isMatch = true;
-					break;
+			if(tags != null) {
+				for (Tag nthTag : tags) {
+					if(nthTag.getTag().equals(tag)) {
+						isMatch = true;
+						break;
+					}
 				}
 			}
 		}
@@ -466,22 +484,30 @@ public class JobCreator {
 			for (String nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
 				if(sourceJob != null && sourceJob.getFlowelementId().equals(nthPreRequesiteFlowelementId))
 					continue;
-				
+
+				Flowelement prereqFlowelement = flowelementUtil.findById(nthPreRequesiteFlowelementId);
 				logger.trace("Now verifying if flowelement " + nthFlowelement + "'s dependency flowelement " + nthPreRequesiteFlowelementId + " has job created and completed");
 				if(groupVolumeId == null) {
-					Flowelement prereqFlowelement = flowelementUtil.findById(nthPreRequesiteFlowelementId);
 					if(prereqFlowelement.getStoragetaskActionId() != null && sourceJob.getGroupVolume() != null)
 						groupVolumeId = sourceJob.getGroupVolume().getId();
 					logger.trace("Group Volume Id " + groupVolumeId);
 				}				
 				Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), nthPreRequesiteFlowelementId, groupVolumeId);
-				
-				if(jobInQuestion == null || jobInQuestion.getStatus() != Status.completed) {
-					isJobGoodToBeCreated = false;
-					if(jobInQuestion == null)
+			
+				if(jobInQuestion == null) {
+					boolean isJobSupposedToBeCreated = dealWithInclusionExclusion(prereqFlowelement, artifactclassId, artifact);
+					
+					if(isJobSupposedToBeCreated) {
+						isJobGoodToBeCreated = false;
 						logger.trace("Job for requestId " + request.getId() + " artifactId " + artifact.getId() +  " flowelement " + nthPreRequesiteFlowelementId + " groupVolumeId " + groupVolumeId + " is not created yet");
-					else
-						logger.trace(jobInQuestion + " is not completed yet");
+					} else {
+						logger.trace("Job not configured to be created. Check Flowelement " + prereqFlowelement.getId() + " taskconfig");
+					}
+
+				}
+				else if(jobInQuestion.getStatus() != Status.completed) {
+					isJobGoodToBeCreated = false;
+					logger.trace(jobInQuestion + " is not completed yet");
 					break;
 				}
 				dependentJobIds.add(jobInQuestion.getId());

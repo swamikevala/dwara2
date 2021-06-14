@@ -10,6 +10,7 @@ public interface PfrConstants {
 	
 	// PFR
 	public static final String MXF_EXTN = ".mxf";
+	public static final String MOV_EXTN = ".mov";
 	public static final String MKV_EXTN = ".mkv";
 	public static final String INDEX_EXTN = ".idx";
 	
