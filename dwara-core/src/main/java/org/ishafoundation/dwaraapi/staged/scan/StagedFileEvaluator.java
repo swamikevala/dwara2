@@ -132,10 +132,10 @@ public class StagedFileEvaluator {
 		}
 
 		// 0- For digi artifactclass there should be a mxf subfolder
-		if(FilenameUtils.getBaseName(sourcePath).startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX) && !Paths.get(nthIngestableFile.getPath().toString(), "mxf").toFile().exists()) {
+		if(FilenameUtils.getBaseName(sourcePath).startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX) && !(Paths.get(nthIngestableFile.getPath().toString(), "mxf").toFile().exists() || Paths.get(nthIngestableFile.getPath().toString(), "mov").toFile().exists())) {
 			Error error = new Error();
 			error.setType(Errortype.Error);
-			error.setMessage("Artifact Folder has no mxf subfolder");
+			error.setMessage("Artifact Folder has no mxf|mov subfolder");
 			errorList.add(error);
 		}	
 		

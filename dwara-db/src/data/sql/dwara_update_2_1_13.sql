@@ -1,55 +1,34 @@
 SET foreign_key_checks = 0; 
 
+-- ### Bug fixes
+-- prev_sequence_code missed out getting updated because of sequence.coderegex for video-digi-2020-edit* 
+-- already ran on 1st week of june UPDATE `artifact1` SET `prev_sequence_code`=replace(name, CONCAT(sequence_code, '_')) WHERE name REGEXP '_Z-DVCAM' and artifactclass_id not like '%-proxy-low';
+
+
+
+-- ******** -- ******** -- ******** -- ******** -- ********
 -- HDV support
+-- rename src filetype so its not specific to mxf but generic 
+UPDATE `filetype` SET `id`='video-digi-2020' WHERE `id`='video-digi-2020-mxf-v210';
 
-INSERT INTO `filetype` (`id`, `description`) VALUES ('video-digi-2020', 'both mxf and mov');
+UPDATE `extension_filetype` SET `filetype_id`='video-digi-2020' WHERE `filetype_id`='video-digi-2020-mxf-v210';
+INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (0, 'mov', 'video-digi-2020'); -- add mov to the filetype so hdv is supported
 
-INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (1, 'ftr', 'video-digi-2020');
-INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (1, 'hdr', 'video-digi-2020');
-INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (1, 'log', 'video-digi-2020');
-INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (1, 'md5', 'video-digi-2020');
-INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (0, 'mxf', 'video-digi-2020');
-INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (1, 'qc', 'video-digi-2020');
-INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (0, 'mov', 'video-digi-2020');
+-- change filetype for processingtasks to accommodate mov as well
+UPDATE `processingtask` SET `filetype_id`='video-digi-2020', `output_filetype_id`='video-digi-2020' WHERE `id`='video-digi-2020-header-extract';
+UPDATE `processingtask` SET `filetype_id`='video-digi-2020' WHERE `id`='video-digi-2020-preservation-gen';
 
-
-UPDATE `flowelement` SET `task_config`='{\"pathname_regex\": \"(mxf|mov)/[^/]+\\\\.(mxf|mov)\"}' WHERE `id`='U7';
-
-
--- reverted the below change
-UPDATE `flowelement` SET `active`=0, `deprecated`=1 WHERE `id`='U400';
-UPDATE `flowelement` SET `dependencies`='[\"U4\", \"U5\"]' WHERE `id`='U6';
-UPDATE `flowelement` SET `task_config`=NULL WHERE `id`='U4';
-
-
--- new metadata extraction task for hdv mov files  
-INSERT INTO `processingtask` (`id`, `description`, `filetype_id`, `max_errors`, `output_artifactclass_suffix`, `output_filetype_id`) VALUES ('video-digi-2020-mov-meta-extract', 'extracts header and footer from uncompressed mxf', 'video-digi-2020-mxf-v210', '1', '', 'video-digi-2020-mxf-v210');
-
--- insert the above processing task to the digi flow
-INSERT INTO `flowelement` (`id`, `active`, `deprecated`, `display_order`, `flow_id`, `processingtask_id`) VALUES ('U400', 1, 0, '1', 'video-digi-2020-flow', 'video-digi-2020-mov-meta-extract');
-
--- ensure the above task need to be included on condition that tape digitised is hdv
--- if hdv include video-digi-2020-mov-meta-extract(for mov only)
-UPDATE `flowelement` SET `task_config`='{\"include_if\": {\"tag\": \"guru:shambho\"}}' WHERE `id`='U400';
--- if hdv exclude video-digi-2020-header-extract job(for mxf only)
-UPDATE `flowelement` SET `task_config`='{\"exclude_if\": {\"tag\": \"guru:shambho\"}}' WHERE `id`='U4';
-
--- checksumgen prerequisite corrected
-UPDATE `flowelement` SET `dependencies`='[\"U4\",\"U400\", \"U5\"]' WHERE `id`='U6';
-
+-- file delete
+UPDATE `flowelement` SET `task_config`='{\"pathname_regex\": \"(mxf/[^/]+\\\\.mxf|mov/[^/]+\\\\.mov)\"}' WHERE `id`='U7';
 -- exclude video-mam-update from video-digi-2020-proxy-flow for priv2
 UPDATE `flowelement` SET `task_config`='{\"exclude_if\":{\"artifactclass_regex\":\".*-priv2.*\"}}' WHERE `id`='U22';
 
--- ******** -- ******** -- ******** -- ******** -- ********
- 
--- prev_sequence_code missed out getting updated because of sequence.coderegex for video-digi-2020-edit* 
-UPDATE `artifact1` SET `prev_sequence_code`=replace(name, CONCAT(sequence_code, '_')) WHERE name REGEXP '_Z-DVCAM' and artifactclass_id not like '%-proxy-low';
+
 
 -- ******** -- ******** -- ******** -- ******** -- ********
--- EMEDIA And
-
+-- EMEDIA And Impression support
 -- SEQUENCE --
--- *************** NOTE *************** No grouping of sequence needed for dept artifact classes ***************
+-- *** NOTE - No grouping of sequence needed for dept artifact classes ***
 INSERT INTO `sequence` (`id`, `type`, `prefix`, `code_regex`, `number_regex`, `group`, `starting_number`, `ending_number`, `current_number`, `sequence_ref_id`, `force_match`, `keep_code`, `replace_code`) VALUES 
 ('dept-emedia', 'artifact', 'BE', null, null, 0, 1, -1, 0, null, 0, 0, 0),
 ('dept-impressions', 'artifact', 'BM', null, null, 0, 1, -1, 0, null, 0, 0, 0);

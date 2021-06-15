@@ -383,22 +383,26 @@ public class ScheduledStatusUpdater {
 		
 		// TODO : Digi hack - clean this up -Long term - iterate through files that are directories and calc their size and update them...
 		if("file-delete".equals(job.getProcessingtaskId()) && artifact.getArtifactclass().getId().startsWith("video-digi-2020-")) {
-			Path artifactMxfSubfolderPath = Paths.get(artifactPath.toString(), "mxf");
-			File artifactMxfSubfolderObj = artifactMxfSubfolderPath.toFile();
-		    if(artifactMxfSubfolderObj.isDirectory()) {
-		    	long artifactMxfSubfolderSize = FileUtils.sizeOfDirectory(artifactMxfSubfolderObj);
-		    	Path artifactMxfSubfolderFilePath = Paths.get(artifact.getName(), "mxf");
-				org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactMxfSubfolderFileFromDB = domainSpecificFileRepository.findByPathname(artifactMxfSubfolderFilePath.toString());
-				artifactMxfSubfolderFileFromDB.setSize(artifactMxfSubfolderSize);
-				domainSpecificFileRepository.save(artifactMxfSubfolderFileFromDB);
+			String subfolder = "mxf";
+			Path artifactSubfolderPath = Paths.get(artifactPath.toString(), subfolder);
+			File artifactSubfolderObj = artifactSubfolderPath.toFile();
+			if(!artifactSubfolderObj.isDirectory()) {
+				subfolder = "mov";
+				artifactSubfolderPath = Paths.get(artifactPath.toString(), subfolder);
+				artifactSubfolderObj = artifactSubfolderPath.toFile();
+			}
+			if(artifactSubfolderObj.isDirectory()) {
+		    	long artifactSubfolderSize = FileUtils.sizeOfDirectory(artifactSubfolderObj);
+		    	Path artifactSubfolderFilePath = Paths.get(artifact.getName(), subfolder);
+				org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactSubfolderFileFromDB = domainSpecificFileRepository.findByPathname(artifactSubfolderFilePath.toString());
+				artifactSubfolderFileFromDB.setSize(artifactSubfolderSize);
+				domainSpecificFileRepository.save(artifactSubfolderFileFromDB);
 				
-		    	TFile tfileFromDB = tFileDao.findByPathname(artifactMxfSubfolderFilePath.toString());
-		    	tfileFromDB.setSize(artifactMxfSubfolderSize);
+		    	TFile tfileFromDB = tFileDao.findByPathname(artifactSubfolderFilePath.toString());
+		    	tfileFromDB.setSize(artifactSubfolderSize);
 		    	tFileDao.save(tfileFromDB);
 		    }
 		}
-			
-		
 	}
 	
 	private void updateSystemRequestStatus(List<Request> requestList) {

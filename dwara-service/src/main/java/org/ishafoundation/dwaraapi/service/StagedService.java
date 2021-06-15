@@ -279,7 +279,8 @@ public class StagedService extends DwaraService{
 	    		if(FilenameUtils.getBaseName(path).startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX)) {
 	    			String artifactName = stagedFile.getName();
 					Path mxfFilePath = Paths.get(path, artifactName, "mxf");
-					if(!mxfFilePath.toFile().exists()) {
+					Path movFilePath = Paths.get(path, artifactName, "mov");
+					if(!(mxfFilePath.toFile().exists() || movFilePath.toFile().exists())) {
 			        	isLevel0Pass = false;
 						StagedFileDetails sfd = new StagedFileDetails();
 						sfd.setUser(Paths.get(path).getName(Paths.get(configuration.getReadyToIngestSrcDirRoot()).getNameCount()).toString());
@@ -290,7 +291,7 @@ public class StagedService extends DwaraService{
 	
 						Error error = new Error();
 						error.setType(Errortype.Error);
-						error.setMessage(artifactName + " doesnt have a mxf subfolder in it");
+						error.setMessage(artifactName + " doesnt have a mxf|mov subfolder in it");
 						errorList.add(error);
 						
 			        	sfd.setErrors(errorList);

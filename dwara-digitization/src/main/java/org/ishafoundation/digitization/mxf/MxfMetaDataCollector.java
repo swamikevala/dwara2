@@ -61,7 +61,7 @@ public class MxfMetaDataCollector implements IProcessingTask {
 			extractAndSaveHeader(sourceFilePathname, hdrTargetLocation);
 			extractAndSaveFooter(sourceFilePathname, ftrTargetLocation);
 		}else {
-			extractAndSaveMovMeta(sourceFilePathname, ftrTargetLocation);
+			extractAndSaveMovMeta(sourceFilePathname, hdrTargetLocation, ftrTargetLocation);
 		}
 		
 //		// copies the QCReport file;
@@ -79,18 +79,22 @@ public class MxfMetaDataCollector implements IProcessingTask {
 		return processingtaskResponse;
 	}
 	
-	private void extractAndSaveMovMeta(String sourceFilePathname, String ftrTargetLocation) throws Exception {
-		long srcFileSize = new File(sourceFilePathname).length();
-    	int bufferSize = 524288;
-    	InputStream is = new BufferedInputStream(new FileInputStream(sourceFilePathname), bufferSize);
-    	is.skip(8); // skipping the first 8 bytes...
+	// header + video data + footer = mov container structure
+	private void extractAndSaveMovMeta(String sourceFilePathname, String hdrTargetLocation, String ftrTargetLocation) throws Exception {
+    	int bufferSize = 16;
+    	InputStream bis = new BufferedInputStream(new FileInputStream(sourceFilePathname), bufferSize);
     	
-		byte[] footerchunk = new byte[8];
-		logger.trace("read the length's " + is.read(footerchunk, 0, footerchunk.length) + " bytes");
+		byte[] header = new byte[16];
+		logger.trace("Read the header's " + bis.read(header, 0, header.length) + " bytes");
+		IOUtils.write(header, new FileOutputStream(hdrTargetLocation));
 		
-		long footerchunkByteSize = ByteBuffer.wrap(footerchunk).getLong();
+		InputStream bais = new ByteArrayInputStream(header);
+	    bais.skip(8); // skipping the first 8 bytes...
+	    byte[] dataLengthInBytes = new byte[8];
+	    bais.read(dataLengthInBytes, 0, dataLengthInBytes.length);
+		long dataLength = ByteBuffer.wrap(dataLengthInBytes).getLong();
 		
-		byte[] footerData = extractFooterChunk(sourceFilePathname, PfrConstants.MOV_EXTN, srcFileSize - footerchunkByteSize);
+		byte[] footerData = extractFooterChunk(sourceFilePathname, PfrConstants.MOV_EXTN, dataLength); // skip the entire data length so we can get the footer.. 
 		
 		IOUtils.write(footerData, new FileOutputStream(ftrTargetLocation));
 	}
