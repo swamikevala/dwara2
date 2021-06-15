@@ -27,6 +27,7 @@ public class Ingester {
 	private static Path zCategoryFileLoc = null;
 	private static Path categoryFileLoc = null;
 	private static String ingestEndpointUrl = null;
+	private static Path hdvTapeListFileLoc = null;
 	private static Pattern categoryNamePrefixPattern = Pattern.compile("^([A-Z]{1,2})(-[0-9A-Za-z-]+-)?\\d+");
 	
 	private static Path moveFolderToIngestUserArea(Path artifactPath) throws Exception {
@@ -132,7 +133,7 @@ public class Ingester {
 		return artifactClassFolderName;
 	}
 	
-	private static void ingest(Path path) {
+	private static void ingest(Path path, boolean isTag) {
 		if(path.getNameCount() > 7) { // Expecting path = /data/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1
 			System.err.println("File Path with more than 7 elements is not supported. Expected something like /data/dwara/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1 but actual is " + path);
 		}
@@ -142,6 +143,8 @@ public class Ingester {
 			String artifactclass = path.getName(path.getNameCount() - 2).toString();
 
 			String payload = "{\"stagedFiles\":[{\"artifactclass\":\"<<Artifactclass>>\",\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\"}]}";
+			if(isTag)
+				payload = "{\"stagedFiles\":[{\"artifactclass\":\"<<Artifactclass>>\",\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\",\"tags\": [\"digi-tape-type:hdv\"]}]}";
 			payload = payload.replace("<<Artifactclass>>", artifactclass);
 			payload = payload.replace("<<Path>>", artifactBasePath);
 			payload = payload.replace("<<ArtifactName>>", artifactName);
@@ -169,7 +172,8 @@ public class Ingester {
 				+ "<rootIngestLocation(\"/data/dwara/user/prasadcorp/ingest\")> "
 				+ "<zCategoryFileLocation(\"/opt/dwara/bin/z-category.csv\")> "
 				+ "<categoryFileLocation(\"/opt/dwara/bin/category.csv\")> "
-				+ "<ingestEndpointUrl(\"http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest\")>");
+				+ "<ingestEndpointUrl(\"http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest\")>"
+				+ "<hdvTapeListFileLocation(\"/opt/dwara/bin/hdv.csv\")>");
 		
 		System.err.println("args[0] - dirToBePolled - The directory where this service needs to look for files");
 		System.err.println("args[1] - validatedFolderPollingIntervalInSecs - The polling interval to check if there are directories ready");
@@ -177,6 +181,7 @@ public class Ingester {
 		System.err.println("args[3] - zCategoryFileLocation - The Z set of tapes pub/private category mapping file location");
 		System.err.println("args[4] - categoryFileLocation - The X and GR set of tapes pub/private category mapping file location");
 		System.err.println("args[5] - ingestEndpointUrl - Ingest api url");
+		System.err.println("args[6] - hdvTapeListFileLocation - The exhaustive hdv tape list file location");
 		
 		System.exit(-1);
 	}
@@ -184,7 +189,7 @@ public class Ingester {
 	public static void main(String[] args) {
 
 		// parse arguments
-		if (args.length != 6)
+		if (args.length != 7)
 			usage();
 
 		final Path dir = Paths.get(args[0]);
@@ -203,7 +208,12 @@ public class Ingester {
 			System.exit(-1);
 		}
 		ingestEndpointUrl = args[5]; // "http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest";
-		
+		hdvTapeListFileLoc = Paths.get(args[6]);
+		if(!hdvTapeListFileLoc.toFile().exists()) {
+			System.err.println(hdvTapeListFileLoc.toString() + " doesnt exist");
+			
+			System.exit(-1);
+		}
 
 		for(;;) {
 			try {
@@ -219,8 +229,17 @@ public class Ingester {
 								Path destArtifactPath;
 								try {
 									destArtifactPath = moveFolderToIngestUserArea(path);
+									boolean toBeTagged = false;
+									String artifactName = destArtifactPath.getFileName().toString();
+									List<String> hdvTapeNames = FileUtils.readLines(hdvTapeListFileLoc.toFile());
+									for (String nthHdvTapeName : hdvTapeNames) {
+										if(nthHdvTapeName.equals(artifactName)) {
+											toBeTagged = true; // if artifactName present in hdv list, its a hdv tape
+											break;
+										}
+									}
 									// now trigger ingest
-									ingest(destArtifactPath);
+									ingest(destArtifactPath, toBeTagged);
 								} catch (Exception e) {
 									logger.error("Unable to move " + path + ". Skipping ingesting it");
 									return FileVisitResult.CONTINUE;

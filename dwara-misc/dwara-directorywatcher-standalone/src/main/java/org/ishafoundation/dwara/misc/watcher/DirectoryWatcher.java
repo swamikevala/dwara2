@@ -56,6 +56,7 @@ public class DirectoryWatcher implements Runnable{
 	private final WatchService watchService;
 	private final Path watchedDirPath;
 	private final Path csvDirPath;
+	private final Path hdvTapeListFile;
 	private final Map<WatchKey,Path> keys;
 	private final Map<Path, Long> expirationTimes = new HashMap<Path, Long>();
 	private Long newFileWait = 10000L;
@@ -70,7 +71,7 @@ public class DirectoryWatcher implements Runnable{
 	private Path copiedDirPath = null;
 	private Path copyFailedDirPath = null;
 	private Map<Path, Integer> artifact_Retrycount_Map = new HashMap<Path, Integer>();
-	
+		
 	@SuppressWarnings("unchecked")
 	static <T> WatchEvent<T> cast(WatchEvent<?> event) {
 		return (WatchEvent<T>)event;
@@ -79,11 +80,12 @@ public class DirectoryWatcher implements Runnable{
 	/**
 	 * Creates a WatchService and registers the given directory
 	 */
-	DirectoryWatcher(Path watchedDir,  Long waitTime, boolean isChecksumVerificationNeeded, Path systemDir, Path csvDir) throws IOException {
+	DirectoryWatcher(Path watchedDir,  Long waitTime, boolean isChecksumVerificationNeeded, Path systemDir, Path csvDir, Path hdvTapeListFile) throws IOException {
 		this.watchService = FileSystems.getDefault().newWatchService();
 		this.watchedDirPath = watchedDir;
 		
 		this.csvDirPath = csvDir;
+		this.hdvTapeListFile = hdvTapeListFile;
 		this.newFileWait = waitTime;
 		this.keys = new HashMap<WatchKey,Path>();
 		this.isChecksumVerificationNeeded = isChecksumVerificationNeeded;
@@ -119,7 +121,7 @@ public class DirectoryWatcher implements Runnable{
 		// if there are folders with no events pending, trigger a modify event so that we handleExpiredTimes 
 		CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
 		try {
-			if(!artifactDirPath.toString().endsWith("mxf"))
+			if(!(artifactDirPath.toString().endsWith("mxf") || artifactDirPath.toString().endsWith("mov")))
 				updateStatus(artifactDirPath, Status.copying);
 
 			List<String> setFilePermissionsCommandParamsList = new ArrayList<String>();
@@ -277,16 +279,32 @@ public class DirectoryWatcher implements Runnable{
 					return;
 				}
 				
-
-				Collection<File> neededFiles = FileUtils.listFiles(artifactFileObj, ArtifactValidator.justNeededExtns, false);
-				avr = ArtifactValidator.neededFiles(artifactFileObj, neededFiles);
+				boolean hdv = false;
+				List<String> hdvTapeNames = FileUtils.readLines(hdvTapeListFile.toFile());
+				for (String nthHdvTapeName : hdvTapeNames) {
+					if(nthHdvTapeName.equals(artifactName)) {
+						hdv = true; // if artifactName present in hdv list, its a hdv tape
+						break;
+					}
+				}
+				
+				Collection<File> recievedFiles = null;
+				if(!hdv) {
+					recievedFiles = FileUtils.listFiles(artifactFileObj, ArtifactValidator.neededExtns, false);
+					avr = ArtifactValidator.neededFilesPresent(artifactFileObj, ArtifactValidator.neededExtns, recievedFiles);
+				}
+				else {
+					recievedFiles = FileUtils.listFiles(artifactFileObj, ArtifactValidator.neededExtns_HDV, false);
+					avr = ArtifactValidator.neededFilesPresent(artifactFileObj, ArtifactValidator.neededExtns_HDV, recievedFiles);
+				}
+				
 				
 				if(!avr.isValid())
 					retryOrMove(avr.getFailureReason());
 				else if(avr.isValid() && !isChecksumVerificationNeeded){
 					move(artifactPath, true);	// if checksum verify is not needed move it to valid folder from here...
 				}else if(isChecksumVerificationNeeded) {
-					boolean isChecksumValid = ArtifactValidator.validateChecksum(artifactPath, neededFiles);
+					boolean isChecksumValid = ArtifactValidator.validateChecksum(artifactPath, recievedFiles);
 					if(isChecksumValid){
 						move(artifactPath, true);		
 					}else {
@@ -402,7 +420,10 @@ public class DirectoryWatcher implements Runnable{
 				+ "isChecksumVerificationNeeded "
 				+ "systemDirPath "
 				+ "csvsDirPath "
-				+ "noOfThreadsForChksumValidation");
+				+ "noOfThreadsForChksumValidation"
+				+ "hdvTapeListFileLocation");
+		
+		
 		System.err.println("where,");
 		System.err.println("args[0] - dirToBeWatched - The directory where this service needs to watched for modify events on files");
 		System.err.println("args[1] - folderAgeInSecs - The wait period only after which the files are watched for events");
@@ -412,6 +433,7 @@ public class DirectoryWatcher implements Runnable{
 		System.err.println("args[5] - systemDirPath - The directory where sub directories needed by system like \"Validated\", \"Copied\", \"CopyFailed\" need to be");
 		System.err.println("args[6] - csvsDirPath - The directory in which csv files need to be created");
 		System.err.println("args[7] - noOfThreadsForParallelProcessing - no of parallel processing threads after copy is complete");
+		System.err.println("args[8] - hdvTapeListFileLocation - The exhaustive hdv tape list file location");
 		System.exit(-1);
 	}
 	
@@ -422,7 +444,7 @@ public class DirectoryWatcher implements Runnable{
 	 */
 	public static void main(String[] args) throws Exception {
 		// parse arguments
-		if (args.length != 8)
+		if (args.length != 9)
 			usage();
 
 		// register directory and process its events
@@ -434,13 +456,14 @@ public class DirectoryWatcher implements Runnable{
 		final Path systemDirLocation = Paths.get(args[5]);
 		final Path csvLocation = Paths.get(args[6]); 
 		int noOfThreadsForParallelProcessing = Integer.parseInt(args[7]);
+		final Path hdvTapeListFileLoc = Paths.get(args[8]);
 		
 		Path validatedCSVFilePath = Paths.get(csvLocation.toString(), Constants.validatedCsvName);
 		validatedCSVFilePath.toFile().createNewFile();
 		Path failedCSVFilePath = Paths.get(csvLocation.toString(), Constants.failedCsvName);
 		failedCSVFilePath.toFile().createNewFile();
 		
-		final DirectoryWatcher dirwatcher = new DirectoryWatcher(dirToBeWatched, waitTimes, isChecksumVerificationNeeded, systemDirLocation, csvLocation);
+		final DirectoryWatcher dirwatcher = new DirectoryWatcher(dirToBeWatched, waitTimes, isChecksumVerificationNeeded, systemDirLocation, csvLocation, hdvTapeListFileLoc);
 		Thread thread = new Thread(dirwatcher);
 		thread.setDaemon(true);
 		thread.start();
