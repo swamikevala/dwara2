@@ -56,12 +56,18 @@ public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask imple
 		long startms = System.currentTimeMillis();
 	
 		String fileName = FilenameUtils.getBaseName(sourceFilePathname);
-		
+		String extension = FilenameUtils.getExtension(sourceFilePathname);
+		boolean isHdv = false;
+		if(extension.equals("mov")) {
+			isHdv = true;
+		}		
 		FileUtils.forceMkdir(new File(destinationDirPath));
 		
 		String compressedFileTmpTargetLocation = destinationDirPath + File.separator + fileName + "_tmp" + PfrConstants.MKV_EXTN ;// TODO How do we know if it should be mkv or mxf or what not???
 		String compressedFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.MKV_EXTN;// TODO How do we know if it should be mkv or mxf or what not???	
-		
+		if(isHdv)
+			compressedFileTmpTargetLocation = compressedFileTargetLocation;
+
 		/*************** COMPRESSION ***************/
 		long proxyStartTime = System.currentTimeMillis();
 		logger.info("Compression starts for " + sourceFilePathname + " - targetLocation is - " + compressedFileTmpTargetLocation);
@@ -73,25 +79,27 @@ public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask imple
 		if(compressionCommandLineExecutionResponse.isComplete())
 			logger.info("Compression successful - " + compressedFileTmpTargetLocation);
 		
-		// DU-241 - The ffmpeg output has the audio tracks NOT in proper aligment in a cluster. So we have to run this
-		// TODO - the mkvmerge command has a lowerlimit of 100ms which is putting more than 1 frame in a cluster. We ideally want just 1 frame/cluster. Swami liasing with the mkvtool developer...
-		// TODO - Not able to put 5 frames in one cluster...
-		// TODO - handle ntsc vs pal on cluster-length 
-		logger.info("Now aligning the tracks in cluster");
-		List<String> mkvmergeCommandParamsList = new ArrayList<String>();
-		mkvmergeCommandParamsList.add("mkvmerge");
-		mkvmergeCommandParamsList.add("-o");
-		mkvmergeCommandParamsList.add(compressedFileTargetLocation);
-		mkvmergeCommandParamsList.add(compressedFileTmpTargetLocation);
-		mkvmergeCommandParamsList.add("--cluster-length");
-		mkvmergeCommandParamsList.add("5");
-//		String mkvmergeCommand = "mkvmerge -o " + compressedFileTargetLocation + " " + compressedFileTmpTargetLocation + " --cluster-length 5";
-//		CommandLineExecutionResponse mkvmergeCommandLineExecutionResponse = commandLineExecuter.executeCommand(mkvmergeCommand);
-		
-		CommandLineExecutionResponse mkvmergeCommandLineExecutionResponse = commandLineExecuter.executeCommand(mkvmergeCommandParamsList);
-		if(mkvmergeCommandLineExecutionResponse.isComplete()) {
-			logger.info("Alignment successful - " + compressedFileTargetLocation);
-			new File(compressedFileTmpTargetLocation).delete();
+		if(!isHdv) {
+			// DU-241 - The ffmpeg output has the audio tracks NOT in proper aligment in a cluster. So we have to run this
+			// TODO - the mkvmerge command has a lowerlimit of 100ms which is putting more than 1 frame in a cluster. We ideally want just 1 frame/cluster. Swami liasing with the mkvtool developer...
+			// TODO - Not able to put 5 frames in one cluster...
+			// TODO - handle ntsc vs pal on cluster-length 
+			logger.info("Now aligning the tracks in cluster");
+			List<String> mkvmergeCommandParamsList = new ArrayList<String>();
+			mkvmergeCommandParamsList.add("mkvmerge");
+			mkvmergeCommandParamsList.add("-o");
+			mkvmergeCommandParamsList.add(compressedFileTargetLocation);
+			mkvmergeCommandParamsList.add(compressedFileTmpTargetLocation);
+			mkvmergeCommandParamsList.add("--cluster-length");
+			mkvmergeCommandParamsList.add("5");
+	//		String mkvmergeCommand = "mkvmerge -o " + compressedFileTargetLocation + " " + compressedFileTmpTargetLocation + " --cluster-length 5";
+	//		CommandLineExecutionResponse mkvmergeCommandLineExecutionResponse = commandLineExecuter.executeCommand(mkvmergeCommand);
+			
+			CommandLineExecutionResponse mkvmergeCommandLineExecutionResponse = commandLineExecuter.executeCommand(mkvmergeCommandParamsList);
+			if(mkvmergeCommandLineExecutionResponse.isComplete()) {
+				logger.info("Alignment successful - " + compressedFileTargetLocation);
+				new File(compressedFileTmpTargetLocation).delete();
+			}
 		}
 		
 		long proxyEndTime = System.currentTimeMillis();
@@ -107,8 +115,8 @@ public class Video_Digitization_Transcoding_TaskExecutor extends MediaTask imple
 		return processingtaskResponse;
 	}
 	
-	//ffmpeg -y -i <<srcFilePathname>> -acodec copy -vcodec ffv1 -level 3 -coder 1 -context 1 -g 1 -slicecrc 1 -map 0:v -map 0:a <<targetFilePathname>>
-	//ffmpeg -y -i /data/dwara/staged/VD123_N0023/mxf/N0023_CHENNAI_PROGRAM_INTRO_2.mxf -acodec copy -vcodec ffv1 -level 3 -coder 1 -context 1 -g 1 -slicecrc 1 -map 0:v -map 0:a /data/dwara/staged/VD123_N0023/N0023_CHENNAI_PROGRAM_INTRO_2.mkv
+	// ffmpeg -y -i <<sourceFilePathname>> -acodec copy -vcodec ffv1 -level 3 -coder 1 -context 1 -g 1 -slicecrc 1 -map 0:v -map 0:a <<compressedFileTargetLocation>>
+	// ffmpeg -y -i /data/dwara/staged/VD123_N0023/mxf/N0023_CHENNAI_PROGRAM_INTRO_2.mxf -acodec copy -vcodec ffv1 -level 3 -coder 1 -context 1 -g 1 -slicecrc 1 -map 0:v -map 0:a /data/dwara/staged/VD123_N0023/N0023_CHENNAI_PROGRAM_INTRO_2.mkv
 	private List<String> getCompressionCommand(String sourceFilePathname, String compressedFileTargetLocation) {
 		List<String> compressionCommandParamsList = new ArrayList<String>();
 		

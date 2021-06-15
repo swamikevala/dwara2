@@ -30,7 +30,7 @@ public class Ingester {
 	private static Path hdvTapeListFileLoc = null;
 	private static Pattern categoryNamePrefixPattern = Pattern.compile("^([A-Z]{1,2})(-[0-9A-Za-z-]+-)?\\d+");
 	
-	private static Path moveFolderToIngestUserArea(Path artifactPath) throws Exception {
+	private static Path moveFolderToIngestUserArea(Path artifactPath, boolean isHdv) throws Exception {
 		Path destArtifactPath = null;
 		try {
 			String artifactName = artifactPath.getFileName().toString();
@@ -88,7 +88,10 @@ public class Ingester {
 				throw new Exception(msg);
 			}
 			destArtifactPath = Paths.get(rootIngestLoc.toString(), artifactClassFolderName, artifactName);
-			final Path dest = Paths.get(destArtifactPath.toString(), "mxf");
+			String subfolder = "mxf";
+			if(isHdv)
+				subfolder = "mov";
+			final Path dest = Paths.get(destArtifactPath.toString(), subfolder);
 			MoveUtil.move(artifactPath, dest);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
@@ -133,7 +136,7 @@ public class Ingester {
 		return artifactClassFolderName;
 	}
 	
-	private static void ingest(Path path, boolean isTag) {
+	private static void ingest(Path path, boolean isHdv) {
 		if(path.getNameCount() > 7) { // Expecting path = /data/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1
 			System.err.println("File Path with more than 7 elements is not supported. Expected something like /data/dwara/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1 but actual is " + path);
 		}
@@ -143,7 +146,7 @@ public class Ingester {
 			String artifactclass = path.getName(path.getNameCount() - 2).toString();
 
 			String payload = "{\"stagedFiles\":[{\"artifactclass\":\"<<Artifactclass>>\",\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\"}]}";
-			if(isTag)
+			if(isHdv) // if hdv tag the request
 				payload = "{\"stagedFiles\":[{\"artifactclass\":\"<<Artifactclass>>\",\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\",\"tags\": [\"digi-tape-type:hdv\"]}]}";
 			payload = payload.replace("<<Artifactclass>>", artifactclass);
 			payload = payload.replace("<<Path>>", artifactBasePath);
@@ -186,7 +189,7 @@ public class Ingester {
 		System.exit(-1);
 	}
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 
 		// parse arguments
 		if (args.length != 7)
@@ -215,6 +218,8 @@ public class Ingester {
 			System.exit(-1);
 		}
 
+		final List<String> hdvTapeNames = FileUtils.readLines(hdvTapeListFileLoc.toFile());
+		
 		for(;;) {
 			try {
 				if(dir.toFile().exists()) {
@@ -228,18 +233,19 @@ public class Ingester {
 								// Move the folder from prasad area to ingest user area
 								Path destArtifactPath;
 								try {
-									destArtifactPath = moveFolderToIngestUserArea(path);
-									boolean toBeTagged = false;
-									String artifactName = destArtifactPath.getFileName().toString();
-									List<String> hdvTapeNames = FileUtils.readLines(hdvTapeListFileLoc.toFile());
+									boolean isHdv = false;
+									String artifactName = path.getFileName().toString();
 									for (String nthHdvTapeName : hdvTapeNames) {
 										if(nthHdvTapeName.equals(artifactName)) {
-											toBeTagged = true; // if artifactName present in hdv list, its a hdv tape
+											isHdv = true; // if artifactName present in hdv list, its a hdv tape
 											break;
 										}
 									}
+
+									destArtifactPath = moveFolderToIngestUserArea(path, isHdv);
+
 									// now trigger ingest
-									ingest(destArtifactPath, toBeTagged);
+									ingest(destArtifactPath, isHdv);
 								} catch (Exception e) {
 									logger.error("Unable to move " + path + ". Skipping ingesting it");
 									return FileVisitResult.CONTINUE;

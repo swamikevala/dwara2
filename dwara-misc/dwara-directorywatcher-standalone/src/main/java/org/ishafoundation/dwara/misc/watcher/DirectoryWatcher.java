@@ -56,7 +56,7 @@ public class DirectoryWatcher implements Runnable{
 	private final WatchService watchService;
 	private final Path watchedDirPath;
 	private final Path csvDirPath;
-	private final Path hdvTapeListFile;
+	private final List<String> hdvTapeNames;
 	private final Map<WatchKey,Path> keys;
 	private final Map<Path, Long> expirationTimes = new HashMap<Path, Long>();
 	private Long newFileWait = 10000L;
@@ -85,7 +85,7 @@ public class DirectoryWatcher implements Runnable{
 		this.watchedDirPath = watchedDir;
 		
 		this.csvDirPath = csvDir;
-		this.hdvTapeListFile = hdvTapeListFile;
+		this.hdvTapeNames = FileUtils.readLines(hdvTapeListFile.toFile());
 		this.newFileWait = waitTime;
 		this.keys = new HashMap<WatchKey,Path>();
 		this.isChecksumVerificationNeeded = isChecksumVerificationNeeded;
@@ -280,7 +280,6 @@ public class DirectoryWatcher implements Runnable{
 				}
 				
 				boolean hdv = false;
-				List<String> hdvTapeNames = FileUtils.readLines(hdvTapeListFile.toFile());
 				for (String nthHdvTapeName : hdvTapeNames) {
 					if(nthHdvTapeName.equals(artifactName)) {
 						hdv = true; // if artifactName present in hdv list, its a hdv tape
