@@ -9,14 +9,14 @@ SET foreign_key_checks = 0;
 -- ******** -- ******** -- ******** -- ******** -- ********
 -- HDV support
 -- rename src filetype so its not specific to mxf but generic 
-UPDATE `filetype` SET `id`='video-digi-2020' WHERE `id`='video-digi-2020-mxf-v210';
+UPDATE `filetype` SET `id`='video-digi-2020-src' WHERE `id`='video-digi-2020-mxf-v210';
 
-UPDATE `extension_filetype` SET `filetype_id`='video-digi-2020' WHERE `filetype_id`='video-digi-2020-mxf-v210';
-INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (0, 'mov', 'video-digi-2020'); -- add mov to the filetype so hdv is supported
+UPDATE `extension_filetype` SET `filetype_id`='video-digi-2020-src' WHERE `filetype_id`='video-digi-2020-mxf-v210';
+INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (0, 'mov', 'video-digi-2020-src'); -- add mov to the filetype so hdv is supported
 
 -- change filetype for processingtasks to accommodate mov as well
-UPDATE `processingtask` SET `filetype_id`='video-digi-2020', `output_filetype_id`='video-digi-2020' WHERE `id`='video-digi-2020-header-extract';
-UPDATE `processingtask` SET `filetype_id`='video-digi-2020' WHERE `id`='video-digi-2020-preservation-gen';
+UPDATE `processingtask` SET `filetype_id`='video-digi-2020-src', `output_filetype_id`='video-digi-2020-src' WHERE `id`='video-digi-2020-header-extract';
+UPDATE `processingtask` SET `filetype_id`='video-digi-2020-src' WHERE `id`='video-digi-2020-preservation-gen';
 
 -- file delete
 UPDATE `flowelement` SET `task_config`='{\"pathname_regex\": \"(mxf/[^/]+\\\\.mxf|mov/[^/]+\\\\.mov)\"}' WHERE `id`='U7';
