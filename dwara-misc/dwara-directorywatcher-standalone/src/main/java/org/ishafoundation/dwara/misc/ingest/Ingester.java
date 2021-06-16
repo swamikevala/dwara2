@@ -147,7 +147,7 @@ public class Ingester {
 
 			String payload = "{\"stagedFiles\":[{\"artifactclass\":\"<<Artifactclass>>\",\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\"}]}";
 			if(isHdv) // if hdv tag the request
-				payload = "{\"stagedFiles\":[{\"artifactclass\":\"<<Artifactclass>>\",\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\",\"tags\": [\"digi-tape-type:hdv\"]}]}";
+				payload = "{\"stagedFiles\":[{\"artifactclass\":\"<<Artifactclass>>\",\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\",\"tags\": [\"video-digi-type:hdv\"]}]}";
 			payload = payload.replace("<<Artifactclass>>", artifactclass);
 			payload = payload.replace("<<Path>>", artifactBasePath);
 			payload = payload.replace("<<ArtifactName>>", artifactName);

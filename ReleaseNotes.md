@@ -1,3 +1,24 @@
+# Dwara App Version - 2.1.22 (16th Jun 2021)
+### New features 
+
+1) Emedia and impressions support
+2) JobManager improvements for rewrite scenario 
+3) Restore by artifactname
+4) Human readable tape size in dashboard
+5) User Roles support
+6) HDV support
+7) Job Inclusion/Exclusion based on Flowelement.taskconfig inc/exc props
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_13.sql)
+
+# Dwara App Version - 2.1.21 (19th May 2021)
+### New features 
+
+1) Photo pub file name validation change request
+
+
 # Dwara App Version - 2.1.20 (16th May 2021)
 ### New features 
 
