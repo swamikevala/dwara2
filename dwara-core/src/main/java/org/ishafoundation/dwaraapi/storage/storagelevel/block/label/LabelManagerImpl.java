@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.storage.storagelevel.block.label;
 
 import java.io.File;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -224,6 +225,16 @@ public class LabelManagerImpl implements LabelManager{
 		return writeLabel(label, storageJob.getJob().getId() + "_label", deviceName, artifactlabel.getBlocksize());
 	}
 	
+	// This method saves a placeholder file to occupy disk space before any write happens to avoid - "a tape with artifact data written, but failing at the time of artifact label generation due to no free disk space"
+	public void writeArtifactLabelTemporarilyOnDisk(SelectedStorageJob selectedStorageJob) throws Exception {
+		StorageJob storageJob = selectedStorageJob.getStorageJob();
+	
+		URL fileUrl = this.getClass().getResource("/template/PlaceholderArtifactLabelTemplate.txt");
+		String placeholderLabel = FileUtils.readFileToString(new File(fileUrl.getFile()));
+		
+		writeLabelTemporarilyOnDisk(placeholderLabel, storageJob.getJob().getId() + "_label");
+	}
+	
 	public InterArtifactlabel generateArtifactLabel(Artifact artifact, Volume volume, Integer svb, Integer evb) throws Exception {
 
 		InterArtifactlabel artifactlabel = new InterArtifactlabel();
@@ -270,6 +281,13 @@ public class LabelManagerImpl implements LabelManager{
 			xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
 		return xmlMapper.writeValueAsString(label);
 	}
+
+	private void writeLabelTemporarilyOnDisk(String label, String tempFileName) throws Exception {
+		File file = new File(filesystemTemporarylocation + File.separator + tempFileName + ".xml");
+		FileUtils.writeStringToFile(file, label);
+		logger.trace(file.getAbsolutePath() + " created with placeholder data");
+	}
+
 	
 	/*
 	 	Writing a label to the tape has multiple options..

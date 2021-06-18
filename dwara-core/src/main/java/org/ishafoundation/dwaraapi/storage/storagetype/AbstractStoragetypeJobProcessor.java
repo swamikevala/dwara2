@@ -143,7 +143,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 	}
 
 	
-    protected void beforeWrite(SelectedStorageJob selectedStorageJob) throws Exception {}
+    protected void beforeWrite(SelectedStorageJob selectedStorageJob) throws Exception {
+    	
+    	labelManager.writeArtifactLabelTemporarilyOnDisk(selectedStorageJob);
+    }
     
     public StorageResponse write(SelectedStorageJob selectedStorageJob) throws Throwable{
     	logger.info("Writing job " + selectedStorageJob.getStorageJob().getJob().getId());

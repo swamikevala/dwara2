@@ -10,5 +10,7 @@ public interface LabelManager {
 	
 	public boolean writeVolumeLabel(SelectedStorageJob selectedStorageJob) throws Exception;
 	
+	public void writeArtifactLabelTemporarilyOnDisk(SelectedStorageJob selectedStorageJob) throws Exception;
+	
 	public boolean writeArtifactLabel(SelectedStorageJob selectedStorageJob) throws Exception;
 }

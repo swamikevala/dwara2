@@ -1,0 +1,11 @@
+This template is used by the Labelmanager as a placeholder file to occupy disk space before any write happens to avoid - "a tape with artifact data written, but failing at the time of artifact label generation due to no free disk space"
+
+Some Sadhguru quotes
+
+There is only one problem in the world - The Human Being.
+No matter how many things you gather in life, there is no container service in the end. Time to move from accumulation to true enhancement of life.
+If you do not do what you cannot do, it is all right. But if you do not do what you can do, your life is a tragedy.
+Do not hold back your love, your joy, and your exuberance. Only what you give becomes your quality, not what you hold back.
+If you are constantly aware of your mortal nature, you will only do what truly matters.
+
+Constantly seek that which you know to be the highest. Living with the vision is an elevating experience and a joyous process in itself.

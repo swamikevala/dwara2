@@ -1,12 +1,5 @@
 SET foreign_key_checks = 0; 
 
--- ### Bug fixes
--- prev_sequence_code missed out getting updated because of sequence.coderegex for video-digi-2020-edit* 
--- already ran on 1st week of june UPDATE `artifact1` SET `prev_sequence_code`=replace(name, CONCAT(sequence_code, '_')) WHERE name REGEXP '_Z-DVCAM' and artifactclass_id not like '%-proxy-low';
-
-
-
--- ******** -- ******** -- ******** -- ******** -- ********
 -- HDV support
 -- rename src filetype so its not specific to mxf but generic 
 UPDATE `filetype` SET `id`='video-digi-2020-src' WHERE `id`='video-digi-2020-mxf-v210';
