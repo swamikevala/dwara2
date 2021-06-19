@@ -258,7 +258,6 @@ public class DirectoryWatcher implements Runnable{
 			this.artifactPath = artifactPath; 
 		}
 		
-		@Override
 		public void run() {
 			File artifactFileObj = artifactPath.toFile();
 			try {
