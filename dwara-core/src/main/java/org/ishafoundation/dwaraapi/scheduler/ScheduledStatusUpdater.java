@@ -109,7 +109,7 @@ public class ScheduledStatusUpdater {
     			updateTransactionalTablesStatus();
     		}
     		catch (Exception e) {
-    			logger.error("Unable to update status " + e.getMessage());
+    			logger.error("Unable to update status " + e.getMessage(), e);
 			}
 	    	return ResponseEntity.status(HttpStatus.OK).body("Done");
     	}
@@ -200,8 +200,11 @@ public class ScheduledStatusUpdater {
 						tFileJobDao.deleteAll(jobFileList);
 						logger.info("tFileJob cleaned up files of Job " + job.getId());
 
-						jobCreator.createDependentJobs(job);
-
+						try {
+							jobCreator.createDependentJobs(job);
+						}catch (Exception e) {
+							logger.error("Unable to create dependent jobs " + e.getMessage(), e);
+						}
 						Request request = job.getRequest();
 						RequestDetails requestDetails = request.getDetails();
 						org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();

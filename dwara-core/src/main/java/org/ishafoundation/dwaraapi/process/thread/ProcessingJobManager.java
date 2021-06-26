@@ -152,7 +152,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	
 	@Override
     public void run() {
-		logger.info("Managing processing job - " + job.getId());
+		logger.debug("Managing processing job - " + job.getId());
 		
 		// This check is because of the same file getting queued up for processing again...
 		// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
@@ -197,9 +197,10 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			}
 			logger.trace("---" + executorName + ":" + tpe.getCorePoolSize() + ":" + jobsOnQueueSet.size() + ":" + jobsOnQueueSet);
 			if(useNewJobManagementLogic && jobsOnQueueSet.size() >= (tpe.getCorePoolSize() + 2)) {
-				logger.info("Already enough jobs(" + jobsOnQueueSet.size() + ")'s files are in " + executorName + " processing queue");
+				logger.debug("Already enough jobs(" + jobsOnQueueSet.size() + ")'s files are in " + executorName + " processing queue");
 				return;
-			} 
+			} else
+				logger.info("Taking up processing job " + job.getId() + " for preprocessing and delegating it to PJP thread executor");
 			
 			Processingtask processingtask = getProcessingtask(processingtaskId);
 

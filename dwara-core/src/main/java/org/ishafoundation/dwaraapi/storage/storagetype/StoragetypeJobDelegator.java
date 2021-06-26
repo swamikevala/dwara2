@@ -95,7 +95,7 @@ public class StoragetypeJobDelegator {
 			Volume volume = storageJob.getVolume();
 			if(volume == null) {
 				String msg = "No volume available just yet for job "  + job.getId() + ". So skipping this job this schedule...";
-				logger.info(msg);
+				logger.debug(msg);
 				job.setMessage("[info] No volume available");
 				job = jobDao.save(job);
 				continue;

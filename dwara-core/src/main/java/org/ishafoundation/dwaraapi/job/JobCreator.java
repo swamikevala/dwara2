@@ -493,21 +493,24 @@ public class JobCreator {
 					logger.trace("Group Volume Id " + groupVolumeId);
 				}				
 				Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), nthPreRequesiteFlowelementId, groupVolumeId);
-			
-				if(jobInQuestion == null) {
-					boolean isJobSupposedToBeCreated = dealWithInclusionExclusion(prereqFlowelement, artifactclassId, artifact);
-					
-					if(isJobSupposedToBeCreated) {
-						isJobGoodToBeCreated = false;
-						logger.trace("Job for requestId " + request.getId() + " artifactId " + artifact.getId() +  " flowelement " + nthPreRequesiteFlowelementId + " groupVolumeId " + groupVolumeId + " is not created yet");
-					} else {
-						logger.trace("Job not configured to be created. Check Flowelement " + prereqFlowelement.getId() + " taskconfig");
+				
+				if(jobInQuestion == null || jobInQuestion.getStatus() != Status.completed) {
+					if(logger.isTraceEnabled()) {
+						if(jobInQuestion == null) {
+								String msgPrefix = "Job for requestId " + request.getId() + " artifactId " + artifact.getId() +  " flowelement " + nthPreRequesiteFlowelementId + " groupVolumeId " + groupVolumeId;
+								boolean isJobSupposedToBeCreated = dealWithInclusionExclusion(prereqFlowelement, artifactclassId, artifact);
+								if(isJobSupposedToBeCreated) {
+									logger.trace(msgPrefix + " is not created yet");
+								} else {
+									logger.trace(msgPrefix + " not configured to be created anyway. Check Flowelement " + prereqFlowelement.getId() + " taskconfig");
+								}
+						}
+						else if(jobInQuestion.getStatus() != Status.completed) {
+							logger.trace(jobInQuestion + " is not completed yet");	
+							
+						}
 					}
-
-				}
-				else if(jobInQuestion.getStatus() != Status.completed) {
 					isJobGoodToBeCreated = false;
-					logger.trace(jobInQuestion + " is not completed yet");
 					break;
 				}
 				dependentJobIds.add(jobInQuestion.getId());

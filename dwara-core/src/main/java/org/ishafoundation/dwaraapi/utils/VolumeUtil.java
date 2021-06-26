@@ -104,7 +104,7 @@ public class VolumeUtil {
 			}
 		}
 		if(toBeUsedVolume == null)
-			logger.warn(volumegroupId + " hasnt got enough capacity. Bump it");
+			logger.debug(volumegroupId + " hasnt got enough capacity. Bump it");
 		return toBeUsedVolume;		
 	}
 
