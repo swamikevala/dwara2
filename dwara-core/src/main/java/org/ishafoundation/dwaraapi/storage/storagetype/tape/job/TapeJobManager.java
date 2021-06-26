@@ -377,7 +377,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			}
 			else {
 				String message = volumeTag + " not inside the library ";
-				logger.info(message + tapeLibraryName +" . Skipping job - " + nthStorageJob.getJob().getId()); 
+				logger.debug(message + tapeLibraryName +" . Skipping job - " + nthStorageJob.getJob().getId()); 
 				Job nthJob = nthStorageJob.getJob();
 				nthJob.setMessage(message);
 				jobDao.save(nthJob);

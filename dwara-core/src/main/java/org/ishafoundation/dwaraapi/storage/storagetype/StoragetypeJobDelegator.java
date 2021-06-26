@@ -131,7 +131,7 @@ public class StoragetypeJobDelegator {
 					}							
 
 					if(inProgressJobOnVolume != null) {
-						logger.info("Skipping "  + job.getId() + " as same volume is already in use " + inProgressJobOnVolume.getId());
+						logger.debug("Skipping "  + job.getId() + " as same volume is already in use " + inProgressJobOnVolume.getId());
 						continue;
 					}
 					else {
