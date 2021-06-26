@@ -271,7 +271,21 @@ public class JobCreator {
 							job.setStoragetaskActionId(storagetaskAction);
 							job.setProcessingtaskId(processingtaskId);
 							job.setGroupVolume(grpVolume); // we dont know the physical volume yet... How about provisioned volumes?
-	
+							Volume volume = null;
+							for (Integer nthDependentJobId : dependentJobIds) {
+								if(sourceJob.getId() == nthDependentJobId) {
+									volume = sourceJob.getVolume();
+								}
+								else {
+									Job nthDependentJob = jobDao.findById(nthDependentJobId).get();
+									volume = nthDependentJob.getVolume();
+								}
+								if(volume != null)
+									break;
+							}
+							if(volume != null)
+								job.setVolume(volume);
+							
 							job = saveJob(job);
 							jobsCreated.add(job);
 						}
