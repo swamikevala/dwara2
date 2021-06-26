@@ -300,6 +300,10 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			ArchiveResponse archiveResponse = new ArchiveResponse();
 			archiveResponse.setArchivedFilePathNameToHeaderBlockCnt(tsr.getFilePathNameToHeaderBlockCnt());
 			
+			java.io.File restoredfile = new java.io.File(targetLocationPath, file.getPathname());
+			if(!restoredfile.exists())
+				throw new Exception("Restore seems to be completed, but for some reason file doesnt exist in the destination location");
+			
 			logger.info("Restoration complete");
 			return archiveResponse;
 		}else {
@@ -490,7 +494,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			
 			if(errorMessage.contains(errorMsg) && nthRetryAttempt <= 2){
 				logger.debug("Must be a parallel mt status call... Retrying again");
-				tsr = streamWithRetriesOnDeviceBusyError(dataTransferElementName, commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, isFilePathNameWeNeedIsDirectory, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj, errorMsg, nthRetryAttempt);
+				tsr = streamWithRetriesOnDeviceBusyError(dataTransferElementName, commandList, volumeBlocksize, skipByteCount, filePathNameWeNeed, isFilePathNameWeNeedIsDirectory, toBeRestored, destinationPath, toBeVerified, checksumtype, filePathNameToChecksumObj, errorMsg, nthRetryAttempt + 1);
 			}
 			else
 				throw e;
