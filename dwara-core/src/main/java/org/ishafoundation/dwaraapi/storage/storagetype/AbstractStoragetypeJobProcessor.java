@@ -405,7 +405,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    if(toBeAddedFileVolumeTableEntries.size() > 0) {
 	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
 	    	domainSpecificFileVolumeRepository.saveAll(toBeAddedFileVolumeTableEntries);
-	    	logger.info("FileVolume records updated with verifiedat successfully");
+	    	logger.info("FileVolume records updated with headerblock details successfully");
 	    }
 	}
 	

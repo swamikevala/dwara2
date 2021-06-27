@@ -178,7 +178,7 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	
 		return metaDataExtractionCommandParamsList;
 	}
-	
+
 	private List<String> getProxyGenCommand(String sourceFilePathname, String reversedTimeCode, String proxyTargetLocation) {
 		List<String> proxyGenerationCommandParamsList = new ArrayList<String>();
 		
@@ -193,6 +193,12 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		proxyGenerationCommandParamsList.add("-y");
 		proxyGenerationCommandParamsList.add("-i");
 		proxyGenerationCommandParamsList.add(sourceFilePathname);
+		proxyGenerationCommandParamsList.add("-map");
+		proxyGenerationCommandParamsList.add("0:v:0");
+		proxyGenerationCommandParamsList.add("-map");
+		proxyGenerationCommandParamsList.add("0:a:0");
+		proxyGenerationCommandParamsList.add("-map");
+		proxyGenerationCommandParamsList.add("0:a:1?");
 		if(ffmpegThreadConfiguration.getVideoProxyLowGen().getThreads() > 0) {
 			proxyGenerationCommandParamsList.add("-threads");
 			String ffmpegThreads = ffmpegThreadConfiguration.getVideoProxyLowGen().getThreads() + "";
@@ -225,7 +231,7 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		proxyGenerationCommandParamsList.add("-b:a");
 		proxyGenerationCommandParamsList.add("80000");
 		proxyGenerationCommandParamsList.add("-ac");
-		proxyGenerationCommandParamsList.add("2");
+		proxyGenerationCommandParamsList.add("1");
 		proxyGenerationCommandParamsList.add(proxyTargetLocation);
 	
 		return proxyGenerationCommandParamsList;
