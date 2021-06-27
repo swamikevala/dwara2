@@ -1,12 +1,44 @@
+# Dwara App Version - 2.1.23 (27th Jun 2021)
+### New features
+1) Proxy conversion command now includes audio channel 2 too
+
+### Bug fixes
+
+1) Some loglevel changes to avoid cluttering logs which is bothering Swami's eyes - Hopefully no more excuses not to look at app logs anymore
+
+
+2) Jobcreator prod bug fix - dependency jobs not getting created for processingtaskWithDependencyStoragetask for a specific scenario. Impacted requests sorted out. Verified using 
+
+> select * from file1_volume join file1 on file1.id = file_id where verified_at is null and directory = 0;
+
+
+3) Used the opportunity presented by above and fixed setting job.volume for update missed out usecase
+
+
+4) Fix for restores complete - but weirdly no files present in destination scenario
+
+
 # Dwara App Version - 2.1.22 (16th Jun 2021)
 ### New features 
 
 1) Emedia and impressions support
+
+
 2) JobManager improvements for rewrite scenario 
+
+
 3) Restore by artifactname
+
+
 4) Human readable tape size in dashboard
+
+
 5) User Roles support
+
+
 6) HDV support
+
+
 7) Job Inclusion/Exclusion based on Flowelement.taskconfig inc/exc props
 
 ### Upgrade steps
