@@ -131,7 +131,7 @@ public class JobCreator {
 		List<Job> jobsCreated = new ArrayList<Job>();
 		
 		logger.trace("Iterating flow " + flowId);
-		String artifactclassId = artifact.getArtifactclass().getId(); 
+		String artifactclassId = artifact != null ? artifact.getArtifactclass().getId() : null; 
 		logger.trace("artifactclassId " + artifactclassId);
 		logger.trace("artifactId " + (artifact != null ? artifact.getId() : null));
 		//  get all the flow elements for the flow

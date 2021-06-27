@@ -18,6 +18,11 @@
 4) Fix for restores complete - but weirdly no files present in destination scenario
 
 
+5) Create dummy artifact label in disk with placeholder data to avoid write failures during no free disk space times.
+
+
+6) Fix for "Restore verify" requests throwing exception
+
 # Dwara App Version - 2.1.22 (16th Jun 2021)
 ### New features 
 
