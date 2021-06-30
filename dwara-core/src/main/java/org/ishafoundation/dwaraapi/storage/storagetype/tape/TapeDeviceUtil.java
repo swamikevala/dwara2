@@ -197,7 +197,9 @@ public class TapeDeviceUtil {
 					try {
 						tapeLibraryManager.unload(tapelibraryName, toBeUsedDataTransferElementSNo);
 					} catch (Exception e) {
-						logger.error("Unable to unload " + tapelibraryName + ":" + toBeUsedDataTransferElementSNo);
+						String errMsg = "Blocking jobs need to unload all tapes from drive. Unable to unload " + tapelibraryName + ":" + toBeUsedDataTransferElementSNo + " :: " + e.getMessage();
+						logger.error(errMsg);
+						throw new Exception(errMsg);
 					}
 					logger.debug("Unloaded drive " + toBeUsedDataTransferElementSNo);
 				}
