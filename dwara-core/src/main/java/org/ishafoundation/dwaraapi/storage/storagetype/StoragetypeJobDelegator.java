@@ -151,7 +151,7 @@ public class StoragetypeJobDelegator {
 								// if a write job failed and we are requeing it its possible that the lastArtifactOnVolume is the same job. if so skip this check 
 								if(lastWriteJob.getId() != job.getId() && !jobUtil.isWriteJobAndItsDependentJobsComplete(lastWriteJob)) {
 									String msg = "Skipping "  + job.getId() + " as previous write job [" + lastWriteJob.getId() + "] and/or its dependent jobs are yet to complete";
-									logger.info(msg);
+									logger.debug(msg);
 									job.setMessage(msg);
 									jobDao.save(job);
 									continue;
