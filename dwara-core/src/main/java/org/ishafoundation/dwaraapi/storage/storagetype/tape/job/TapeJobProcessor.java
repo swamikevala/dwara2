@@ -155,7 +155,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 			
 			String dataTransferElementName = usedDriveDetails.getDriveName();
 
-			if(!tapeJob.getStorageJob().isForce()) { // if its not a forced format check if tape is blank and proceed // count == 0 check because 
+			if(!tapeJob.getStorageJob().isForce()) { // if its not a forced format check if tape is blank and proceed 
 				logger.trace("Checking if tape is blank");
 				if(!tapeDriveManager.isTapeBlank(dataTransferElementName)) // if tape is not blank throw error and dont continue...
 					throw new Exception("Tape to be initialized " + volume.getId() + " is not blank. If you still want to initialize use the \"force\" option...");
