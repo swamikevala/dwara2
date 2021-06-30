@@ -172,7 +172,7 @@ public class VolumeindexManager {
 	    XmlMapper xmlMapper = new XmlMapper();
 	    String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;
 	    xmlMapper.getFactory().getXMLOutputFactory().setProperty(propName, true);
-	    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true);
+	    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_1_1, true);
 	    xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
 		String xmlFromJava = xmlMapper.writeValueAsString(volumeindex);
 		return xmlFromJava;
