@@ -44,6 +44,9 @@ Storage Changer /dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400:3 Drives, 24
         Storage Element 22 IMPORT/EXPORT:Empty
         Storage Element 23 IMPORT/EXPORT:Empty
         Storage Element 24 IMPORT/EXPORT:Empty
+        
+UPDATE : Data Transfer Element 3:Full (Unknown Storage Element Loaded):VolumeTag = G20002L7 is also possible when the library is loaded with more than 80+ tapes....
+
 */
 public class MtxStatusResponseParser {
 	
@@ -52,7 +55,10 @@ public class MtxStatusResponseParser {
 		// Data Transfer Element 1:Empty
 		String dteRegEx = "Data Transfer Element ([0-9]*):(.*)";
 		String dteEmptyRegEx = "Empty";
-		String dteVolTagRegEx = "Full \\(Storage Element ([0-9]*) Loaded\\):VolumeTag = (.*)";
+		//String dteVolTagRegEx = "Full \\(Storage Element ([0-9]*) Loaded\\):VolumeTag = (.*)";
+		//String dteVolTagRegEx = "Full \\(([^\\)]*)\\):VolumeTag = (.*)";
+		String dteVolTagRegEx = "Full (\\(Storage Element ([0-9]*) Loaded\\)|\\(Unknown Storage Element Loaded\\)):VolumeTag = (.*)";
+
 		Pattern dteRegExPattern = Pattern.compile(dteRegEx);
 		Pattern dteVolTagRegExPattern = Pattern.compile(dteVolTagRegEx);
 
@@ -81,8 +87,10 @@ public class MtxStatusResponseParser {
 				else {
 					Matcher dteVolTagRegExMatcher = dteVolTagRegExPattern.matcher(dteState);
 					if(dteVolTagRegExMatcher.matches()) {
-						dte.setStorageElementNo(Integer.parseInt(dteVolTagRegExMatcher.group(1)));
-						dte.setVolumeTag(dteVolTagRegExMatcher.group(2));
+						String storageElementNoAsString = dteVolTagRegExMatcher.group(2);
+						if(storageElementNoAsString != null)
+						dte.setStorageElementNo(Integer.parseInt(storageElementNoAsString));
+						dte.setVolumeTag(dteVolTagRegExMatcher.group(3));
 					}
 				}
 				mtxStatus.getDteList().add(dte);
