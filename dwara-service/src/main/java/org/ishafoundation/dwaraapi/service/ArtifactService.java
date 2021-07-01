@@ -318,7 +318,7 @@ public class ArtifactService extends DwaraService{
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		data.put("artifactId", artifactId);
 		data.put("rewriteCopy", rewriteCopy);
-		data.put("goodCopy", goodCopy);
+		data.put("sourceCopy", goodCopy);
 		
 		Request userRequest = createUserRequest(Action.rewrite, Status.queued, data);
 		
@@ -333,7 +333,7 @@ public class ArtifactService extends DwaraService{
 		RequestDetails systemrequestDetails = new RequestDetails();
 		systemrequestDetails.setArtifactId(artifactId);
 		systemrequestDetails.setRewriteCopy(rewriteCopy);
-		systemrequestDetails.setGoodCopy(goodCopy);
+		systemrequestDetails.setSourceCopy(goodCopy);
 		
 		systemrequest.setDetails(systemrequestDetails);
 		systemrequest = requestDao.save(systemrequest);

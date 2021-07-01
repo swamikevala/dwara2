@@ -39,7 +39,7 @@ import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
-import org.ishafoundation.dwaraapi.enumreferences.RewritePurpose;
+import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
@@ -259,7 +259,7 @@ public class ScheduledStatusUpdater {
 									ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 									
 									Integer rewriteCopy = job.getRequest().getDetails().getRewriteCopy();
-									RewritePurpose rewritePurpose = job.getRequest().getDetails().getPurpose();
+									RewriteMode rewritePurpose = job.getRequest().getDetails().getMode();
 									if(rewriteCopy != null) { // if rewrite artifact
 										List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
 										for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
@@ -269,11 +269,11 @@ public class ScheduledStatusUpdater {
 												break;
 											}
 										}
-									}else if(rewritePurpose == RewritePurpose.defective_volume || rewritePurpose == RewritePurpose.volume_migration) { // if rewritten volume
+									}else if(rewritePurpose == RewriteMode.replace || rewritePurpose == RewriteMode.migrate) { // if rewritten volume
 										String volumeId = job.getRequest().getDetails().getVolumeId();
 										ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
 										ArtifactVolumeStatus artifactVolumeStatus = ArtifactVolumeStatus.deleted;
-										if(rewritePurpose == RewritePurpose.volume_migration)
+										if(rewritePurpose == RewriteMode.migrate)
 											artifactVolumeStatus = ArtifactVolumeStatus.migrated;
 										artifactVolume.setStatus(artifactVolumeStatus);
 										

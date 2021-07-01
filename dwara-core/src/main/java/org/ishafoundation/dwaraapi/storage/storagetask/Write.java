@@ -20,7 +20,7 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.enumreferences.RewritePurpose;
+import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
@@ -126,9 +126,9 @@ public class Write extends AbstractStoragetaskAction{
 			artifactName = artifact.getName();			
 
 			Integer rewriteCopy = job.getRequest().getDetails().getRewriteCopy();
-			RewritePurpose rewritePurpose = job.getRequest().getDetails().getPurpose();
+			RewriteMode rewritePurpose = job.getRequest().getDetails().getMode();
 			if(rewritePurpose != null) { // volume rewrite
-				if(rewritePurpose == RewritePurpose.defective_volume || rewritePurpose == RewritePurpose.volume_migration) {
+				if(rewritePurpose == RewriteMode.replace || rewritePurpose == RewriteMode.migrate) {
 					Volume volumeInQuestion = volumeDao.findById(job.getRequest().getDetails().getVolumeId()).get();
 					volumegroupId = volumeInQuestion.getGroupRef().getId();
 				}
@@ -138,8 +138,8 @@ public class Write extends AbstractStoragetaskAction{
 				Integer copyToBeWritten = null; 
 				if(rewriteCopy != null) // artifact rewrite
 					copyToBeWritten = rewriteCopy;
-				else if(rewritePurpose != null && rewritePurpose == RewritePurpose.additional_copy) { // volume rewrite (additional copy)
-					Integer additionalCopy = job.getRequest().getDetails().getAdditionalCopy();
+				else if(rewritePurpose != null && rewritePurpose == RewriteMode.copy) { // volume rewrite (additional copy)
+					Integer additionalCopy = job.getRequest().getDetails().getDestinationCopy();
 					copyToBeWritten = additionalCopy;
 				}
 				

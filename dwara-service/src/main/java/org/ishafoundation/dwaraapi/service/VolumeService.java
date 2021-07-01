@@ -32,7 +32,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
-import org.ishafoundation.dwaraapi.enumreferences.RewritePurpose;
+import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.job.JobCreator;
@@ -237,11 +237,11 @@ public class VolumeService extends DwaraService {
 		// create user request
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		data.put("volumeId", volumeId);
-		data.put("purpose", rewriteRequest.getPurpose());
-		data.put("goodCopy", rewriteRequest.getGoodCopy());
-		Integer additionalCopy = rewriteRequest.getAdditionalCopy();
+		data.put("mode", rewriteRequest.getMode());
+		data.put("souceCopy", rewriteRequest.getSourceCopy());
+		Integer additionalCopy = rewriteRequest.getDestinationCopy();
 		if(additionalCopy != null)
-			data.put("additionalCopy", additionalCopy);
+			data.put("destinationCopy", additionalCopy);
 		
 		Pattern artifactclassRegexPattern = null;
 		String artifactclassRegex = rewriteRequest.getArtifactclassRegex();
@@ -299,10 +299,10 @@ public class VolumeService extends DwaraService {
 			RequestDetails systemrequestDetails = new RequestDetails();
 			systemrequestDetails.setArtifactId(artifactId);
 			systemrequestDetails.setVolumeId(volumeId);
-			systemrequestDetails.setPurpose(RewritePurpose.valueOf(rewriteRequest.getPurpose()));
-			systemrequestDetails.setGoodCopy(rewriteRequest.getGoodCopy());
-			if(rewriteRequest.getAdditionalCopy() != null)
-				systemrequestDetails.setAdditionalCopy(rewriteRequest.getAdditionalCopy());
+			systemrequestDetails.setMode(RewriteMode.valueOf(rewriteRequest.getMode()));
+			systemrequestDetails.setSourceCopy(rewriteRequest.getSourceCopy());
+			if(rewriteRequest.getDestinationCopy() != null)
+				systemrequestDetails.setDestinationCopy(rewriteRequest.getDestinationCopy());
 			if(rewriteRequest.getArtifactclassRegex() != null)
 				systemrequestDetails.setArtifactclassRegex(rewriteRequest.getArtifactclassRegex());
 			systemRequest.setDetails(systemrequestDetails);

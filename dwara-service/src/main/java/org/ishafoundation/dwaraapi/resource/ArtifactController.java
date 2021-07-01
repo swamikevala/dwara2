@@ -149,7 +149,7 @@ public class ArtifactController {
 		logger.info("/artifact/" + artifactId + "/rewrite");
 		ArtifactResponse rewriteArtifactResponse = null;
 		try {
-			rewriteArtifactResponse = artifactservice.rewriteArtifact(artifactId, (int) rewriteRequest.getRewriteCopy(), rewriteRequest.getGoodCopy());
+			rewriteArtifactResponse = artifactservice.rewriteArtifact(artifactId, (int) rewriteRequest.getRewriteCopy(), rewriteRequest.getSourceCopy());
 		}catch (Exception e) {
 			String errorMsg = "Unable to rewrite artifact - " + e.getMessage();
 			logger.error(errorMsg, e);

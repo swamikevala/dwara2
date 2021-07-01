@@ -2,7 +2,7 @@ package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.enumreferences.RewritePurpose;
+import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -88,16 +88,16 @@ public class RequestDetails {
 	@JsonProperty("rewrite_copy")
 	private Integer rewriteCopy;
 
-	@JsonProperty("good_copy")
-	private Integer goodCopy;
+	@JsonProperty("source_copy")
+	private Integer sourceCopy;
 
-	private RewritePurpose purpose;
+	private RewriteMode mode;
 	
 	@JsonProperty("artifactclass_regex")
 	private String artifactclassRegex;
 	
-	@JsonProperty("additional_copy")
-	private Integer additionalCopy;
+	@JsonProperty("destination_copy")
+	private Integer destinationCopy;
 
 	public JsonNode getBody() {
 		return body;
@@ -322,20 +322,20 @@ public class RequestDetails {
 		this.rewriteCopy = rewriteCopy;
 	}
 
-	public Integer getGoodCopy() {
-		return goodCopy;
+	public Integer getSourceCopy() {
+		return sourceCopy;
 	}
 
-	public void setGoodCopy(Integer goodCopy) {
-		this.goodCopy = goodCopy;
+	public void setSourceCopy(Integer sourceCopy) {
+		this.sourceCopy = sourceCopy;
 	}
 
-	public RewritePurpose getPurpose() {
-		return purpose;
+	public RewriteMode getMode() {
+		return mode;
 	}
 
-	public void setPurpose(RewritePurpose purpose) {
-		this.purpose = purpose;
+	public void setMode(RewriteMode mode) {
+		this.mode = mode;
 	}
 
 	public String getArtifactclassRegex() {
@@ -346,12 +346,12 @@ public class RequestDetails {
 		this.artifactclassRegex = artifactclassRegex;
 	}
 
-	public Integer getAdditionalCopy() {
-		return additionalCopy;
+	public Integer getDestinationCopy() {
+		return destinationCopy;
 	}
 
-	public void setAdditionalCopy(Integer additionalCopy) {
-		this.additionalCopy = additionalCopy;
+	public void setDestinationCopy(Integer destinationCopy) {
+		this.destinationCopy = destinationCopy;
 	}
 
 	// TODO : equals and hashCode

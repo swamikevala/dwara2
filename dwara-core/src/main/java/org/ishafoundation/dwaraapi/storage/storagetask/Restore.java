@@ -95,7 +95,7 @@ public class Restore extends AbstractStoragetaskAction{
 			storageJob.setFileId(fileIdToBeRestored);
 			
 			FileVolume fileVolume = null;
-			Integer goodCopy = request.getDetails().getGoodCopy(); // artifact rewrite or defective_volume has this
+			Integer goodCopy = request.getDetails().getSourceCopy(); // artifact rewrite or defective_volume has this
 			if(goodCopy != null)
 				fileVolume = getFileVolume(domain, fileIdToBeRestored, goodCopy);
 			else //if(request.getDetails().getPurpose() == RewritePurpose.volume_migration || request.getDetails().getPurpose() == RewritePurpose.additonal_copy)

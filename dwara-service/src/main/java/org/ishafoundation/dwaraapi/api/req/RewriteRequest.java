@@ -6,10 +6,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class RewriteRequest {
 	   
 	private Integer rewriteCopy;
-	private int goodCopy = 1; // defaulted to 1...
-	private String purpose;
+	private int sourceCopy = 1; // defaulted to 1...
+	private String mode;
 	private String artifactclassRegex;
-	private Integer additionalCopy;
+	private Integer destinationCopy;
 
 	public Integer getRewriteCopy() {
 		return rewriteCopy;
@@ -17,17 +17,17 @@ public class RewriteRequest {
 	public void setRewriteCopy(Integer rewriteCopy) {
 		this.rewriteCopy = rewriteCopy;
 	}
-	public int getGoodCopy() {
-		return goodCopy;
+	public int getSourceCopy() {
+		return sourceCopy;
 	}
-	public void setGoodCopy(int goodCopy) {
-		this.goodCopy = goodCopy;
+	public void setSourceCopy(int sourceCopy) {
+		this.sourceCopy = sourceCopy;
 	}
-	public String getPurpose() {
-		return purpose;
+	public String getMode() {
+		return mode;
 	}
-	public void setPurpose(String purpose) {
-		this.purpose = purpose;
+	public void setMode(String mode) {
+		this.mode = mode;
 	}
 	public String getArtifactclassRegex() {
 		return artifactclassRegex;
@@ -35,10 +35,10 @@ public class RewriteRequest {
 	public void setArtifactclassRegex(String artifactclassRegex) {
 		this.artifactclassRegex = artifactclassRegex;
 	}
-	public Integer getAdditionalCopy() {
-		return additionalCopy;
+	public Integer getDestinationCopy() {
+		return destinationCopy;
 	}
-	public void setAdditionalCopy(Integer additionalCopy) {
-		this.additionalCopy = additionalCopy;
+	public void setDestinationCopy(Integer destinationCopy) {
+		this.destinationCopy = destinationCopy;
 	}
 }
