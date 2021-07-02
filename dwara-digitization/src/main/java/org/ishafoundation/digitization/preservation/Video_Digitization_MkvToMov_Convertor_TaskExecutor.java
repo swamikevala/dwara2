@@ -93,7 +93,8 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		compressionCommandParamsList.add("-c:v");
 		compressionCommandParamsList.add("dvvideo");
 		compressionCommandParamsList.add("-vf");
-		compressionCommandParamsList.add("\"scale=720:576\"");
+		//compressionCommandParamsList.add("\"scale=720:576\"");
+		compressionCommandParamsList.add("[in]scale=720x576[scaled]");
 		compressionCommandParamsList.add("-b:v");
 		compressionCommandParamsList.add("50M");
 		compressionCommandParamsList.add(outputFileTargetLocation);
