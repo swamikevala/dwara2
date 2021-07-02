@@ -364,10 +364,14 @@ public class JobCreator {
 	 */
 	private boolean dealWithInclusionExclusion(Flowelement flowelement, String artifactclassId, Artifact artifact){
 		boolean isJobToBeCreated = true;
+		logger.trace("Dealing with Inc/Exc for " + flowelement.getId() + " : " + artifactclassId + " : " + artifact.getId());
 		Taskconfig taskconfig =	flowelement.getTaskconfig();
+		logger.trace("" + taskconfig);
 		if(taskconfig != null) {
+			logger.trace("taskconfig configured for "+ flowelement.getId());
 			IncludeExcludeProperties excludeProperties = taskconfig.getExcludeIf();
 			if(excludeProperties != null) {
+				logger.trace("Has exclude props" + excludeProperties);
 				boolean isExcludeJob = doIncludeExcludePropertiesMatch(excludeProperties, artifactclassId, artifact);
 				if(isExcludeJob) {
 					logger.info("Excluding Flowelement " + flowelement.getId());
@@ -377,7 +381,8 @@ public class JobCreator {
 			}
 			
 			IncludeExcludeProperties includeProperties = taskconfig.getIncludeIf();
-			if(includeProperties != null) {  
+			if(includeProperties != null) {
+				logger.trace("Has include props" + includeProperties);
 				boolean isIncludeJob = doIncludeExcludePropertiesMatch(includeProperties, artifactclassId, artifact);
 				if(!isIncludeJob) { // only proceed creating job if condition is met else return
 					logger.info("Flowelement " + flowelement.getId() + "doesnt match include condition");

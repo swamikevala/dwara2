@@ -9,6 +9,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public enum CoreFlowelement {
+	/**
+	 *  NOTE : if you add any extra param in here to reflect change in coreflowelement table - pls ensure FlowelementUtil.getFlowelement() is also attended
+	 */
 	dep_archive_flow_checksum_gen("1", "archive-flow", null, "checksum-gen", null, null, 1, false, true, null),
 	dep_archive_flow_write("2", "archive-flow", "write", null, null, null, 2, false, true, null),
 	dep_archive_flow_checksum_verify("3", "archive-flow", "verify", null, new String[] {"1","2"}, null, 3, false, true, null),
@@ -42,7 +45,7 @@ public enum CoreFlowelement {
 	private boolean deprecated;
 	private Taskconfig taskconfig;
 
-	CoreFlowelement(String id, String flowId, String storagetaskActionId, String processingtaskId, String[] dependencies, String flowRefId, int displayOrder, boolean active, boolean deprecated, String taskconfig){
+	CoreFlowelement(String id, String flowId, String storagetaskActionId, String processingtaskId, String[] dependencies, String flowRefId, int displayOrder, boolean active, boolean deprecated, String taskconfigString){
 		this.id = id; 
 		this.flowId = flowId;
 		this.storagetaskActionId = storagetaskActionId;
@@ -53,11 +56,12 @@ public enum CoreFlowelement {
 		this.active = active;
 		this.deprecated = deprecated;
 		Taskconfig taskConfig_mkv_mov = null;
-		if(taskconfig != null) {
+		if(taskconfigString != null) {
 			ObjectMapper mapper = new ObjectMapper();
 			try {
-				taskConfig_mkv_mov = mapper.readValue(taskconfig, Taskconfig.class);
+				taskConfig_mkv_mov = mapper.readValue(taskconfigString, Taskconfig.class);
 			} catch (JsonProcessingException e) {
+				//System.err.println("Unable to map taskconfig for core flowelement id " + id + " : " + e.getMessage());
 				e.printStackTrace(); // how do we bubble up the exception 
 			}
 		}

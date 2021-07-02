@@ -56,6 +56,7 @@ public class FlowelementUtil {
 			flowelement.setStoragetaskActionId(Action.valueOf(nthCoreFlowelement.getStoragetaskActionId()));
 		else
 			flowelement.setProcessingtaskId(nthCoreFlowelement.getProcessingtaskId());
+		flowelement.setTaskconfig(nthCoreFlowelement.getTaskconfig());
 		
 		return flowelement;
 	}

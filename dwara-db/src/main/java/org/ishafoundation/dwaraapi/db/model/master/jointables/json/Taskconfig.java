@@ -104,5 +104,16 @@ public class Taskconfig {
 		public void setArtifactclassRegex(String artifactclassRegex) {
 			this.artifactclassRegex = artifactclassRegex;
 		}
+		
+		@Override
+		public String toString() {
+			return "tag : " + tag + " artifactclass_regex : " + artifactclassRegex;
+		}
 	}
+	
+	@Override
+	public String toString() {
+		return "create_held_jobs : " + createHeldJobs + " pathname_regex : " + pathnameRegex + " output_path : " + outputPath + " exclude_if : " + excludeIf + " include_if : " + includeIf;
+	}
+
 }
