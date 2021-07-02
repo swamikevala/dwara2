@@ -99,8 +99,7 @@ public class JobManipulator {
 				// get all the flows for the action on the artifactclass - Some could be global across artifactclasses and some specific to that artifactclass. so using "_all_" for global
 				actionArtifactclassFlowList = actionArtifactclassFlowDao.findAllByIdArtifactclassIdAndActionIdAndActiveTrue(sourceArtifactclassId, requestedBusinessAction.name()); //
 			}else if(requestedBusinessAction == Action.restore_process) {
-				if(request.getDetails().getFlowId().equals(CoreFlow.core_restore_checksumverify_flow.getFlowName()))
-					iterateFlow(request, artifactList, sourceArtifactclassId, CoreFlow.core_restore_checksumverify_flow.getFlowName(), null, alreadyCreatedJobList, jobList);
+				iterateFlow(request, artifactList, sourceArtifactclassId, request.getDetails().getFlowId(), null, alreadyCreatedJobList, jobList);
 //				actionArtifactclassFlowList = new ArrayList<ActionArtifactclassFlow>();
 //				actionArtifactclassFlowList.add(actionArtifactclassFlowDao.findByActionIdAndFlowIdAndActiveTrue(requestedBusinessAction.name(), DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME)); //
 			}
@@ -204,7 +203,7 @@ public class JobManipulator {
 				}
 				Integer artifactId = (artifact != null ? artifact.getId() : null);
 				List<String> uIdDependencies = null;
-				if(request.getActionId() == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId())){
+				if(request.getActionId() == Action.restore_process){
 					String uId = referencingFlowPrefix + nthFlowelementId;
 					logger.trace("uid - " + uId);
 					// check if job already created and details available... 

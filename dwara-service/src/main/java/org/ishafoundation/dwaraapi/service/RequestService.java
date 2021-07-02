@@ -388,7 +388,7 @@ public class RequestService extends DwaraService{
 						requestResponse.setGroupedJob(jobService.getGroupedPlaceholderJobs(request, systemArtifact.getId()));
 				}
 			} 
-			else if(requestAction == Action.restore || (requestAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId()))) {
+			else if(requestAction == Action.restore || requestAction == Action.restore_process) {
 				Domain domain = domainUtil.getDomain(request);
 				if(domain == null)
 					domain = domainUtil.getDefaultDomain();

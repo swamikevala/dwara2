@@ -52,12 +52,12 @@ public class Restore extends AbstractStoragetaskAction{
 		Request request = job.getRequest();
 		RequestDetails requestDetails = request.getDetails();
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
-		if(requestedAction == Action.restore || (requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId()))){
+		if(requestedAction == Action.restore || requestedAction == Action.restore_process){
 			String destinationPath = requestDetails.getDestinationPath();//requested destination path
 			String outputFolder = requestDetails.getOutputFolder();
 			restoreLocation = destinationPath + java.io.File.separator + outputFolder + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier();
 		}
-		else if(requestedAction == Action.ingest || requestedAction == Action.restore_process || requestedAction == Action.rewrite)
+		else if(requestedAction == Action.ingest || requestedAction == Action.rewrite)
 			restoreLocation = configuration.getRestoreTmpLocationForVerification() + File.separator + "job-" + job.getId();
 		
 		return restoreLocation;
@@ -212,7 +212,7 @@ public class Restore extends AbstractStoragetaskAction{
 //				verify = volume.getArchiveformat().isRestoreVerify();
 //			storageJob.setRestoreVerify(verify);
 
-			if(requestedAction == Action.restore || (requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId()))){
+			if(requestedAction == Action.restore || requestedAction == Action.restore_process){
 //			if(requestedAction == Action.restore && !storageJob.isRestoreVerify()) {
 				String destinationPath = requestDetails.getDestinationPath();//requested destination path
 				storageJob.setDestinationPath(destinationPath);
@@ -221,10 +221,10 @@ public class Restore extends AbstractStoragetaskAction{
 				String targetLocationPath = getRestoreLocation(job);
 				storageJob.setTargetLocationPath(targetLocationPath);
 			}
-			else if(requestedAction == Action.restore_process) {
-				String targetLocationPath = getRestoreLocation(job);
-				storageJob.setTargetLocationPath(targetLocationPath);
-			}
+//			else if(requestedAction == Action.restore_process) {
+//				String targetLocationPath = getRestoreLocation(job);
+//				storageJob.setTargetLocationPath(targetLocationPath);
+//			}
 		}
 		
 		

@@ -103,8 +103,7 @@ public class JobCreator {
 					throw new DwaraException("No flow configured for " + sourceArtifactclassId + " in action_artifactclass_flow");
 
 			}else if(requestedBusinessAction == Action.restore_process) {
-				if(request.getDetails().getFlowId().equals(CoreFlow.core_restore_checksumverify_flow.getFlowName()))
-					jobList.addAll(iterateFlow(request, sourceArtifact, CoreFlow.core_restore_checksumverify_flow.getFlowName()));
+				jobList.addAll(iterateFlow(request, sourceArtifact, request.getDetails().getFlowId()));
 			}
 			else if(requestedBusinessAction == Action.rewrite) {
 				jobList.addAll(iterateFlow(request, sourceArtifact, CoreFlow.core_rewrite_flow.getFlowName()));
@@ -320,7 +319,7 @@ public class JobCreator {
 					jobsCreated.add(job);
 			}
 		}
-		else if(request.getActionId() == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId())){
+		else if(request.getActionId() == Action.restore_process){
 			if(storagetaskAction != null) {
 				Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
 				job.setStoragetaskActionId(storagetaskAction);

@@ -296,7 +296,7 @@ public class ScheduledStatusUpdater {
 						else {
 							String inputPath = processingJobManager.getInputPath(job);
 							if(inputPath != null) {
-								if(requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId())){
+								if(requestedAction == Action.restore_process){
 									// what need to be restored
 									int fileIdRestored = requestDetails.getFileId();
 									
