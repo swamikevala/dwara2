@@ -5,6 +5,9 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public enum CoreFlowelement {
 	dep_archive_flow_checksum_gen("1", "archive-flow", null, "checksum-gen", null, null, 1, false, true, null),
 	dep_archive_flow_write("2", "archive-flow", "write", null, null, null, 2, false, true, null),
@@ -22,8 +25,12 @@ public enum CoreFlowelement {
 	core_rewrite_flow_good_copy_checksum_verify("C22", "rewrite-flow", null, "checksum-verify", new String[] {"C21"}, null, 22, true, false, null),
 	core_rewrite_flow_write("C23", "rewrite-flow", "write", null, new String[] {"C22"}, null, 23, true, false, null),
 	core_rewrite_flow_restore("C24", "rewrite-flow", "restore", null, new String[] {"C23"}, null, 24, true, false, null),
-	core_rewrite_flow_checksum_verify("C25", "rewrite-flow", null, "checksum-verify", new String[] {"C24"}, null, 25, true, false, null);
+	core_rewrite_flow_checksum_verify("C25", "rewrite-flow", null, "checksum-verify", new String[] {"C24"}, null, 25, true, false, null),
 
+	core_restore_flow_restore("C31", "restore-flow", "restore", null, null, null, 31, true, false, null),
+	core_restore_flow_mkv_mov("C32", "restore-flow", null, "video-digi-2020-mkv-mov-gen", new String[] {"C31"}, null, 32, true, false, "{\"include_if\": {\"artifactclass_regex\": \"video-digi-2020.*\"}}");
+
+	
 	private String id;
 	private String flowId;
 	private String storagetaskActionId;
@@ -35,7 +42,7 @@ public enum CoreFlowelement {
 	private boolean deprecated;
 	private Taskconfig taskconfig;
 
-	CoreFlowelement(String id, String flowId, String storagetaskActionId, String processingtaskId, String[] dependencies, String flowRefId, int displayOrder, boolean active, boolean deprecated, Taskconfig taskconfig){
+	CoreFlowelement(String id, String flowId, String storagetaskActionId, String processingtaskId, String[] dependencies, String flowRefId, int displayOrder, boolean active, boolean deprecated, String taskconfig){
 		this.id = id; 
 		this.flowId = flowId;
 		this.storagetaskActionId = storagetaskActionId;
@@ -45,7 +52,16 @@ public enum CoreFlowelement {
 		this.displayOrder = displayOrder;
 		this.active = active;
 		this.deprecated = deprecated;
-		this.taskconfig = taskconfig;
+		Taskconfig taskConfig_mkv_mov = null;
+		if(taskconfig != null) {
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				taskConfig_mkv_mov = mapper.readValue(taskconfig, Taskconfig.class);
+			} catch (JsonProcessingException e) {
+				e.printStackTrace(); // how do we bubble up the exception 
+			}
+		}
+		this.taskconfig = taskConfig_mkv_mov;
 	}
 
 	public String getId() {
