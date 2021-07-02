@@ -177,36 +177,6 @@ public abstract class AbstractStoragetypeJobProcessor {
 			filepathNameHexSB.append(hexString);
 		}
 		return filepathNameHexSB.toString();
-//		String newFilepathName = filepathName;
-//		if(filepathName.contains("\\")) {
-//			logger.info("im here");
-////			
-////			Pattern octPattern = Pattern.compile("\\([0-9]*)");
-////			Matcher m = octPattern.matcher(filepathName); 	
-////			while(m.find()) {
-////			 String hexnum = Integer.toHexString(Integer.parseInt(m.group(1)));
-////			 logger.info("here " + hexnum);
-////			}
-//			
-//			Pattern octPattern = Pattern.compile("\\\\([0-9]*)");
-//			Matcher m = octPattern.matcher(filepathName); 	
-//			while(m.find()) {
-//			 String hexnum = Integer.toHexString(Integer.parseInt(m.group(1),8));
-//			 filepathNameHexSB.append(hexnum);
-//			 filepathName = filepathName.replace(m.group(0), "");
-//			 newFilepathName = newFilepathName.replace(m.group(0), hexnum);
-//			 logger.info("here 2 " +hexnum);
-//			}
-//		}
-//		String filePathNameHex = Hex.encodeHexString(filepathName.getBytes());
-//		newFilepathName = newFilepathName.replace(filepathName, filePathNameHex);
-//		for(int i = 0; i < filepathName.length(); i++){
-//			logger.info("" + filepathName.charAt(i));
-//			String hexString = Integer.toHexString(filepathName.charAt(i));	
-//			newFilepathName = newFilepathName.replace(String.valueOf(filepathName.charAt(i)), hexString);
-//			filepathNameHexSB.append(hexString);
-//		}
-//		return newFilepathName;
 	}
     
     protected void afterWrite(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception {
@@ -361,71 +331,8 @@ public abstract class AbstractStoragetypeJobProcessor {
     		volumeFinalizer.finalize(volume.getId(), DwaraConstants.SYSTEM_USER_NAME);
     	}
     }
-    
-//    protected void beforeVerify(SelectedStorageJob selectedStorageJob) throws Exception {
-//    	StorageJob storageJob = selectedStorageJob.getStorageJob();
-//		
-//		Volume volume = storageJob.getVolume();
-//		
-//		Domain domain = storageJob.getDomain();
-//		Artifact artifact = storageJob.getArtifact();
-//
-//		
-//		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-//		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
-//		
-//		selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStartVolumeBlock());
-//		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEndVolumeBlock());
-//		selectedStorageJob.setLastWrittenArtifactName(artifactVolume.getName());
-//		
-//		// to where
-//		String targetLocationPath = configuration.getRestoreTmpLocationForVerification();
-//		storageJob.setTargetLocationPath(targetLocationPath);
-//		
-//		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
-//		selectedStorageJob.setArtifactFileList(fileList);
-//		selectedStorageJob.setFilePathNameToChecksum(getSourceFilesChecksum(fileList));
-//
-//		for (File nthFile : fileList) {
-//			if(nthFile.getPathname().equals(artifact.getName())) {
-//				selectedStorageJob.setFile(nthFile);
-//				break;
-//			}
-//		}
-//    }
-//    
-//	public StorageResponse verify(SelectedStorageJob selectedStorageJob) throws Throwable{
-//		logger.info("Verifying job " + selectedStorageJob.getStorageJob().getJob().getId());
-//		StorageResponse storageResponse = null;
-//    	beforeVerify(selectedStorageJob);
-//    	
-//    	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
-//    	storageResponse = iStoragelevel.verify(selectedStorageJob);
-//
-//    	afterVerify(selectedStorageJob, storageResponse);
-//    	return storageResponse; 
-//   	
-//    }
-//	
-//	protected void afterVerify(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception{
-//		// update the verified date here...
-//		updateFileVolumeTable(selectedStorageJob, storageResponse);
-//		
-//		StorageJob storageJob = selectedStorageJob.getStorageJob();
-//		String fileNameToBeVerified = storageJob.getArtifact().getName();
-//		String filePathNameToBeVerified = storageJob.getTargetLocationPath() + java.io.File.separator + fileNameToBeVerified;
-//		logger.trace("filePathNameToBeVerified " + filePathNameToBeVerified);
-//		java.io.File fileToBeVerified = new java.io.File(filePathNameToBeVerified);
-//		if(fileToBeVerified.isDirectory())
-//			FileUtils.deleteDirectory(fileToBeVerified);
-//		else 
-//			fileToBeVerified.delete();
-//		
-//		logger.trace(filePathNameToBeVerified + " deleted");
-//			
-//	}
 
-	private void updateFileVolumeTable(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) {
+    private void updateFileVolumeTable(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
 	
 		Request request = storageJob.getJob().getRequest();
@@ -624,9 +531,5 @@ public abstract class AbstractStoragetypeJobProcessor {
 		Storagelevel storagelevel = selectedStorageJob.getStorageJob().getVolume().getStoragelevel();
 		return storagelevelMap.get(storagelevel.name()+DwaraConstants.STORAGELEVEL_SUFFIX);//+"Storagelevel");
 	}
-	
-//	protected abstract void afterRestore(StorageTypeJob selectedStorageJob);
-//
-//	protected abstract void beforeRestore(StorageTypeJob selectedStorageJob);
 
 }
