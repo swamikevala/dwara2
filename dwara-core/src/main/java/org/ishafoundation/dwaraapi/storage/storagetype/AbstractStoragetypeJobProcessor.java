@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -160,6 +161,54 @@ public abstract class AbstractStoragetypeJobProcessor {
     	return storageResponse; 
     }
     
+	private static String getHexString(String filepathName) {
+		StringBuffer filepathNameHexSB = new StringBuffer();
+		for(int i = 0; i < filepathName.length(); i++){
+			char nthChar = filepathName.charAt(i);
+			char[] dst = new char[3];
+			String hexString = null;
+			if(String.valueOf(nthChar).equals("\\")) {
+				filepathName.getChars(i+1, i+4, dst, 0);
+				hexString = Integer.toHexString(Integer.parseInt(String.valueOf(dst),8));
+				i = i +3;
+			}else {
+				hexString = Integer.toHexString(nthChar);
+			}
+			filepathNameHexSB.append(hexString);
+		}
+		return filepathNameHexSB.toString();
+//		String newFilepathName = filepathName;
+//		if(filepathName.contains("\\")) {
+//			logger.info("im here");
+////			
+////			Pattern octPattern = Pattern.compile("\\([0-9]*)");
+////			Matcher m = octPattern.matcher(filepathName); 	
+////			while(m.find()) {
+////			 String hexnum = Integer.toHexString(Integer.parseInt(m.group(1)));
+////			 logger.info("here " + hexnum);
+////			}
+//			
+//			Pattern octPattern = Pattern.compile("\\\\([0-9]*)");
+//			Matcher m = octPattern.matcher(filepathName); 	
+//			while(m.find()) {
+//			 String hexnum = Integer.toHexString(Integer.parseInt(m.group(1),8));
+//			 filepathNameHexSB.append(hexnum);
+//			 filepathName = filepathName.replace(m.group(0), "");
+//			 newFilepathName = newFilepathName.replace(m.group(0), hexnum);
+//			 logger.info("here 2 " +hexnum);
+//			}
+//		}
+//		String filePathNameHex = Hex.encodeHexString(filepathName.getBytes());
+//		newFilepathName = newFilepathName.replace(filepathName, filePathNameHex);
+//		for(int i = 0; i < filepathName.length(); i++){
+//			logger.info("" + filepathName.charAt(i));
+//			String hexString = Integer.toHexString(filepathName.charAt(i));	
+//			newFilepathName = newFilepathName.replace(String.valueOf(filepathName.charAt(i)), hexString);
+//			filepathNameHexSB.append(hexString);
+//		}
+//		return newFilepathName;
+	}
+    
     protected void afterWrite(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception {
 		List<ArchivedFile> archivedFileList = null;
 
@@ -173,13 +222,15 @@ public abstract class AbstractStoragetypeJobProcessor {
 		Domain domain = storagejob.getDomain();
 		
 		// Get a map of Paths and their File object
-		HashMap<String, ArchivedFile> filePathNameToArchivedFileObj = new LinkedHashMap<String, ArchivedFile>();
+		HashMap<String, ArchivedFile> filePathNameHexToArchivedFileObj = new LinkedHashMap<String, ArchivedFile>();
 		if(volume.getStoragelevel() == Storagelevel.block) { //could use if(storageResponse != null && storageResponse.getArchiveResponse() != null) { but archive and block are NOT mutually exclusive
 			archivedFileList = storageResponse.getArchiveResponse().getArchivedFileList();
 			for (Iterator<ArchivedFile> iterator = archivedFileList.iterator(); iterator.hasNext();) {
 				ArchivedFile archivedFile = (ArchivedFile) iterator.next();
 				String filePathName = archivedFile.getFilePathName();
-				filePathNameToArchivedFileObj.put(filePathName, archivedFile);
+				String filePathNameHex = getHexString(filePathName);
+				logger.trace("AFList - " + filePathName + ":" + filePathNameHex);
+				filePathNameHexToArchivedFileObj.put(filePathNameHex, archivedFile);
 			}
 		}
 		
@@ -192,10 +243,11 @@ public abstract class AbstractStoragetypeJobProcessor {
 		for (Iterator<TFile> iterator = artifactTFileList.iterator(); iterator.hasNext();) {
 			TFile nthTFile = iterator.next();
 			String filePathname = FilenameUtils.separatorsToUnix(nthTFile.getPathname());
-			
+			String filePathNameHex = Hex.encodeHexString(filePathname.getBytes());
+			logger.trace("Tfile - " + filePathname + ":" + filePathNameHex);
 			TFileVolume tfileVolume = new TFileVolume(nthTFile.getId(), volume);
-			
-			ArchivedFile archivedFile = filePathNameToArchivedFileObj.get(filePathname);
+			ArchivedFile archivedFile = filePathNameHexToArchivedFileObj.get(filePathNameHex);
+			//logger.info(archivedFile.toString());
 			if(archivedFile != null) { // if(volume.getStoragelevel() == Storagelevel.block) { - need to check if the file is archived anyway even if its block, so going with the archivedFile check alone
 				Integer volumeBlock = archivedFile.getVolumeBlock();
 				tfileVolume.setVolumeBlock(volumeBlock);
@@ -227,6 +279,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 		for (Iterator<File> iterator = artifactFileList.iterator(); iterator.hasNext();) {
 			File nthFile = iterator.next();
 			String filePathname = FilenameUtils.separatorsToUnix(nthFile.getPathname());
+			String filePathNameHex = Hex.encodeHexString(filePathname.getBytes());
+			logger.trace("File - " + filePathname + ":" + filePathNameHex);
 //			if(nthFile.getChecksum() != null && StringUtils.isNotBlank(FilenameUtils.getExtension(filePathname))) { //if file is not folder
 //				String readyToIngestPath =  "C:\\data\\ingested"; // TODO Hardcoded
 //				java.io.File file = new java.io.File(readyToIngestPath + java.io.File.separator + nthFile.getPathname());
@@ -239,7 +293,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 			//fileVolume.setVerifiedAt(verifiedAt);
 			//fileVolume.setEncrypted(encrypted);
 
-			ArchivedFile archivedFile = filePathNameToArchivedFileObj.get(filePathname);
+			ArchivedFile archivedFile = filePathNameHexToArchivedFileObj.get(filePathNameHex);
 			if(archivedFile != null) { // if(volume.getStoragelevel() == Storagelevel.block) { - need to check if the file is archived anyway even if its block, so going with the archivedFile check alone
 				Integer volumeBlock = archivedFile.getVolumeBlock();
 				if(volumeBlock == null) {
@@ -525,7 +579,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 		//if(requestedAction == Action.ingest || (requestedAction == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(request.getDetails().getFlowName())))
 		if(requestedAction == Action.ingest)
-			updateFileVolumeTable(selectedStorageJob, storageResponse); // update the verified date here...
+			updateFileVolumeTable(selectedStorageJob, storageResponse); // update the headerblocks
 		
 		
 		
