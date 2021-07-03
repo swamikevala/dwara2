@@ -364,7 +364,7 @@ public class JobCreator {
 	 */
 	private boolean dealWithInclusionExclusion(Flowelement flowelement, String artifactclassId, Artifact artifact){
 		boolean isJobToBeCreated = true;
-		logger.trace("Dealing with Inc/Exc for " + flowelement.getId() + " : " + artifactclassId + " : " + artifact.getId());
+		logger.trace("Dealing with Inc/Exc for " + flowelement.getId() + " : " + artifactclassId + " : " + (artifact != null ? artifact.getId() : null));
 		Taskconfig taskconfig =	flowelement.getTaskconfig();
 		logger.trace("" + taskconfig);
 		if(taskconfig != null) {
