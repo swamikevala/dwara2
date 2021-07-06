@@ -313,7 +313,7 @@ public class CatalogService extends DwaraService{
             condition += ")";
         }
         if(volumeId != "")
-            condition += " and b.volume_id='" + volumeId + "'";
+            condition += " and b.volume_id like '%" + volumeId + "%'";
         if(startDate != "")
             condition += " and d.completed_at >= '" + startDate + "'";
         if(endDate != "")
