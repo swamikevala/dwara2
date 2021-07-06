@@ -473,13 +473,15 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 						volumeDao.save(volume);
 						logger.info("Marked the volume " + volume.getId() + " as suspect");
 						
+						/* commented out as Suspect API  need to be revisited
 						// create user request for tracking
 						HashMap<String, Object> data = new HashMap<String, Object>();
 						data.put("volumeId", volume.getId());
 						data.put("action", VolumeAction.mark_suspect);
 						data.put("reason", "Repeated failure on write job " + job.getId());
 						userRequestHelper.createUserRequest(Action.mark_volume, DwaraConstants.SYSTEM_USER_NAME, Status.completed, data);
-
+						*/
+						
 						// requeuing the job in question after marking the tape bad, so that it gets picked up with the new tape...
 						try {
 							logger.info("Requeuing job " + job.getId() + " after marking the current tape as suspect. Attempt " + jobAlreadyRequeuedCount + 1);
