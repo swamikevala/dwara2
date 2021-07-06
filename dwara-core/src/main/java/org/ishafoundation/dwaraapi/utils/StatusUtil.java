@@ -12,6 +12,7 @@ public class StatusUtil {
 		boolean anyOnHold = false;
 		boolean anyCancelled = false;
 		boolean anyCompletedWithFailures = false;
+		boolean anyMarkedFailed = false;
 		boolean hasFailures = false;
 		boolean anyMarkedCompleted = false;
 		boolean isAllComplete = true;
@@ -36,6 +37,10 @@ public class StatusUtil {
 					break;
 				case completed_failures:
 					anyCompletedWithFailures = true;
+					isAllComplete = false;
+					break;
+				case marked_failed:	
+					anyMarkedFailed = true;
 					isAllComplete = false;
 					break;
 				case failed:
@@ -85,6 +90,9 @@ public class StatusUtil {
 		}
 		else if(anyMarkedCompleted) {
 			status = Status.marked_completed;
+		}
+		else if(anyMarkedFailed) {
+			status = Status.marked_failed;
 		}
 		else if(isAllComplete) { // All jobs have successfully completed.
 			status = Status.completed; 
