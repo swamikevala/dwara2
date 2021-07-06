@@ -65,6 +65,7 @@ public class StatusUtil {
 			on_hold
 			cancelled
 			failed
+			marked_failed
 			completed_failures
 			marked_completed
 			completed
@@ -85,14 +86,14 @@ public class StatusUtil {
 		else if(hasFailures) {
 			status = Status.failed;
 		}
+		else if(anyMarkedFailed) {
+			status = Status.marked_failed;
+		}
 		else if(anyCompletedWithFailures) {
 			status = Status.completed_failures; 
 		}
 		else if(anyMarkedCompleted) {
 			status = Status.marked_completed;
-		}
-		else if(anyMarkedFailed) {
-			status = Status.marked_failed;
 		}
 		else if(isAllComplete) { // All jobs have successfully completed.
 			status = Status.completed; 
