@@ -14,8 +14,10 @@ import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.RewriteRequest;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
+import org.ishafoundation.dwaraapi.api.req.volume.MarkVolumeStatusRequest;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.Details;
+import org.ishafoundation.dwaraapi.api.resp.volume.MarkVolumeStatusResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -34,6 +36,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeAction;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.VolumeindexManager;
@@ -314,6 +317,65 @@ public class VolumeService extends DwaraService {
 			//create jobs
 			jobCreator.createJobs(systemRequest, artifact);
 		}
+	}
+
+	public MarkVolumeStatusResponse markVolumeStatus(String volumeId, String action, MarkVolumeStatusRequest markVolumeStatusRequest) throws Exception {
+		MarkVolumeStatusResponse markVolumeStatusResponse = new MarkVolumeStatusResponse();
+		
+		Volume volume = volumeDao.findById(volumeId).get();
+		if(volume == null)
+			throw new Exception(volumeId + " not flagged as defective. Please double check and flag it first");
+		
+		VolumeAction volumeAction = null;
+		try {
+			volumeAction = VolumeAction.valueOf(action);
+			if(volumeAction == null)
+				throw new Exception(action + " not supported");
+				
+		}catch (Exception e) {
+			throw new Exception(action + " not supported");
+		}
+		
+		// create user request
+		HashMap<String, Object> data = new HashMap<String, Object>();
+		data.put("volumeId", volumeId);
+		data.put("action", action);
+		data.put("reason", markVolumeStatusRequest.getReason());
+		Request userRequest = createUserRequest(Action.mark_volume, data);
+
+		Boolean suspect = volume.getSuspect();
+		Boolean defective = volume.getDefective();
+		switch (volumeAction) {
+			case mark_suspect:
+				suspect = true;
+				break;
+			case not_suspect:
+				suspect = false;
+				break;
+			case mark_defective:
+				defective = true;
+				break;
+			case not_defective:
+				defective = false;
+				break;
+		}
+		
+		volume.setDefective(defective);
+		volume.setSuspect(suspect);
+		volumeDao.save(volume);
+		
+		markVolumeStatusResponse.setRequestId(userRequest.getId());
+		markVolumeStatusResponse.setRequestedBy(userRequest.getRequestedBy().getName());
+		markVolumeStatusResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
+		
+		markVolumeStatusResponse.setVolumeId(volumeId);
+		markVolumeStatusResponse.setVolumeStatus(action);
+		
+		markVolumeStatusResponse.setAction(userRequest.getActionId().name());
+		markVolumeStatusResponse.setStatus(userRequest.getStatus().name());
+		markVolumeStatusResponse.setCompletedAt(getDateForUI(userRequest.getCompletedAt()));
+		
+		return markVolumeStatusResponse;
 	}
 }
 

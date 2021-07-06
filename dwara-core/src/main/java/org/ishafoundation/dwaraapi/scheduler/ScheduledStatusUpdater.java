@@ -8,12 +8,14 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
@@ -35,14 +37,15 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
-import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeAction;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
+import org.ishafoundation.dwaraapi.service.UserRequestHelper;
 import org.ishafoundation.dwaraapi.staged.StagedFileOperations;
 import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
 import org.ishafoundation.dwaraapi.utils.StatusUtil;
@@ -96,6 +99,9 @@ public class ScheduledStatusUpdater {
 	
 	@Autowired
     private StagedFileEvaluator stagedFileEvaluator;
+	
+	@Autowired
+	private UserRequestHelper userRequestHelper;
 	
 	@Value("${scheduler.statusUpdater.enabled:true}")
 	private boolean isEnabled;
@@ -193,6 +199,14 @@ public class ScheduledStatusUpdater {
 							volume.setSuspect(true);
 							volumeDao.save(volume);
 							logger.info("Marked the volume " + volume.getId() + " as suspect");
+							
+							// create user request for tracking
+							HashMap<String, Object> data = new HashMap<String, Object>();
+							data.put("volumeId", volume.getId());
+							data.put("action", VolumeAction.mark_suspect);
+							data.put("reason", "Repeated failure on processing job " + job.getId());
+							userRequestHelper.createUserRequest(Action.mark_volume, DwaraConstants.SYSTEM_USER_NAME, Status.completed, data);
+
 						}
 							
 					}

@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype.thread;
 
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,9 +18,11 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeAction;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.service.JobServiceRequeueHelper;
+import org.ishafoundation.dwaraapi.service.UserRequestHelper;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -52,6 +55,9 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 	
 	@Autowired
 	private JobServiceRequeueHelper jobServiceRequeueHelper;
+	
+	@Autowired
+	private UserRequestHelper userRequestHelper;
 	
 	@Autowired
 	private Configuration configuration;
@@ -100,7 +106,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 			job.setMessage("[error] " + errorMsg);
 			updateJobFailed(job);
 			
-			if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.restore) { // Any write or verify failure should have the tape marked as suspect...
+			if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.restore) { // Any write or restore failure should have the tape marked as suspect...
 				long jobAlreadyRequeuedCount = jobRunDao.countByJobId(job.getId());
 				if(jobAlreadyRequeuedCount < configuration.getAllowedAutoRequeueAttemptsOnFailedStorageJobs()) {
 					try {
@@ -113,9 +119,17 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 				else {
 					if(job.getStoragetaskActionId() == Action.write) { // TODO: Should we Mark a tape suspect on restore failures too or only for write?
 						Volume volume = selectedStorageJob.getStorageJob().getVolume();
+						
 						volume.setSuspect(true);
 						volumeDao.save(volume);
 						logger.info("Marked the volume " + volume.getId() + " as suspect");
+						
+						// create user request for tracking
+						HashMap<String, Object> data = new HashMap<String, Object>();
+						data.put("volumeId", volume.getId());
+						data.put("action", VolumeAction.mark_suspect);
+						data.put("reason", "Repeated failure on write job " + job.getId());
+						userRequestHelper.createUserRequest(Action.mark_volume, DwaraConstants.SYSTEM_USER_NAME, Status.completed, data);
 					}
 				}	
 			}

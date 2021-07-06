@@ -1,32 +1,21 @@
 package org.ishafoundation.dwaraapi.resource;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.req.RewriteRequest;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
-import org.ishafoundation.dwaraapi.api.resp.artifact.ArtifactResponse;
+import org.ishafoundation.dwaraapi.api.req.volume.MarkVolumeStatusRequest;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
+import org.ishafoundation.dwaraapi.api.resp.volume.MarkVolumeStatusResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
-import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
-import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.enumreferences.TapeStoragesubtype;
-import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.VolumeService;
-import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.VolumeindexManager;
-import org.ishafoundation.dwaraapi.storage.storagesubtype.AbstractStoragesubtype;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeInitializer;
-import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -205,6 +194,30 @@ public class VolumeController {
 		}
 
 		return ResponseEntity.status(HttpStatus.OK).body("Done");
+	}
+	
+	@ApiOperation(value = "Marks a volume suspect|not_suspect|defective|not_defective")
+	@ApiResponses(value = { 
+			@ApiResponse(code = 200, message = "Ok")
+	})
+	@PostMapping(value = "/volume/{volumeId}/{action}", produces = "application/json")
+	public ResponseEntity<MarkVolumeStatusResponse> markVolumeStatus(@RequestBody MarkVolumeStatusRequest markVolumeStatusRequest, @PathVariable("volumeId") String volumeId, @PathVariable("action") String action) {
+		logger.info("/volume/" + volumeId + action);
+		
+		MarkVolumeStatusResponse markVolumeStatusResponse = null;
+		try {
+			markVolumeStatusResponse = volumeService.markVolumeStatus(volumeId, action, markVolumeStatusRequest);
+		}catch (Exception e) {
+			String errorMsg = "Unable to mark volume status - " + e.getMessage();
+			logger.error(errorMsg, e);
+
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(markVolumeStatusResponse);
 		
 	}
 }
