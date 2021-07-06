@@ -45,7 +45,7 @@ public class JobServiceRequeueHelper extends UserRequestHelper{
 		Request userRequest = null;
 		try {		
 			Job jobToBeRequeued = jobDao.findById(jobId).get();
-			if(jobToBeRequeued.getStatus() != Status.completed_failures && jobToBeRequeued.getStatus() != Status.failed)
+			if(jobToBeRequeued.getStatus() != Status.completed_failures && jobToBeRequeued.getStatus() != Status.failed && jobToBeRequeued.getStatus() != Status.marked_failed)
 				throw new DwaraException("Job cannot be requeued. Only failed or a job completed with some failures can be rerun. @TEAM - Any extra protection needed for avoiding written content getting requeued again?"); //
 
 	    	long jobRunCount = jobRunDao.countByJobId(jobId);

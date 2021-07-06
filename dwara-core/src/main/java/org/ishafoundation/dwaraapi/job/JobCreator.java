@@ -37,6 +37,7 @@ import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
+import org.ishafoundation.dwaraapi.service.JobServiceRequeueHelper;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.slf4j.Logger;
@@ -82,6 +83,9 @@ public class JobCreator {
 	
 	@Autowired
 	private TagDao tagDao;
+	
+	@Autowired
+	private JobServiceRequeueHelper jobServiceRequeueHelper;
 
 	// only if action is async create job should be called...
 	public List<Job> createJobs(Request request, Artifact sourceArtifact){
@@ -552,8 +556,13 @@ public class JobCreator {
 		Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), flowelement.getId(), groupVolumeId);
 		boolean continueJobCreation = true;
 		if(jobInQuestion != null && jobInQuestion.getStatus() == Status.marked_failed) {
-			jobInQuestion.setStatus(Status.queued);
 			continueJobCreation = false;
+			try {
+				logger.info("Requeuing the marked_failed job " + jobInQuestion.getId());
+				jobServiceRequeueHelper.requeueJob(jobInQuestion.getId(),DwaraConstants.SYSTEM_USER_NAME);
+			} catch (Exception e1) {
+				logger.error("Unable to auto requeue failed job..." + jobInQuestion.getId(), e1);
+			}
 		}
 		
 		return continueJobCreation;

@@ -273,14 +273,14 @@ public class JobService extends DwaraService{
 		Job job = null;
 		try {		
 			job = jobDao.findById(jobId).get();
-			if(job.getStatus() != Status.completed) // && job.getStatus() != Status.completed_failures)
-				throw new DwaraException("Job cannot be marked failed. Only completed job can marked failed" + jobId); // TODO - completed_failures?
+			if(job.getStatus() != Status.completed && job.getStatus() != Status.completed_failures)
+				throw new DwaraException("Job " + jobId + " cannot be marked failed. Only jobs with completed or completed_failures status can marked failed");
 
 			// should we validate the dependent jobs and their status too
 			List<Job> dependentJobList = jobUtil.getDependentJobs(job);
 			for (Job nthDependentJob : dependentJobList) {
 				if(nthDependentJob.getStatus() == Status.in_progress)
-					throw new DwaraException(jobId + " cannot be marked failed as its dependent job " + nthDependentJob.getId() + " is still in " + nthDependentJob.getStatus()); // TODO - completed_failures?
+					throw new DwaraException("Job " + jobId + " cannot be marked failed as its dependent job " + nthDependentJob.getId() + " is still " + nthDependentJob.getStatus());
 			}
 			
 			HashMap<String, Object> data = new HashMap<String, Object>();
