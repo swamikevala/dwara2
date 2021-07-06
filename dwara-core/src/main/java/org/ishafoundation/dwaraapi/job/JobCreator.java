@@ -375,7 +375,7 @@ public class JobCreator {
 		boolean isJobToBeCreated = true;
 		logger.trace("Dealing with Inc/Exc for " + flowelement.getId() + " : " + artifactclassId + " : " + (artifact != null ? artifact.getId() : null));
 		Taskconfig taskconfig =	flowelement.getTaskconfig();
-		logger.trace("" + taskconfig);
+		logger.trace("taskconfig " + taskconfig);
 		if(taskconfig != null) {
 			logger.trace("taskconfig configured for "+ flowelement.getId());
 			IncludeExcludeProperties excludeProperties = taskconfig.getExcludeIf();
@@ -549,7 +549,7 @@ public class JobCreator {
 
 	private boolean dealWithMarkedFailedJobs(Flowelement flowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact) {
 		String groupVolumeId = null;
-		if(flowelement.getStoragetaskActionId() != null && sourceJob.getGroupVolume() != null)
+		if(sourceJob.getGroupVolume() != null)
 			groupVolumeId = sourceJob.getGroupVolume().getId();
 		logger.trace("Group Volume Id " + groupVolumeId);
 
