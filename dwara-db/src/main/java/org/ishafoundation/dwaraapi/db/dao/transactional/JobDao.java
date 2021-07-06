@@ -63,6 +63,8 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	
 	Job findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(int requestId, Integer inputArtifactId,  String flowelementId, String groupVolumeId);
 	
+	List<Job> findAllByRequestIdAndInputArtifactIdAndFlowelementId(int requestId, Integer inputArtifactId,  String flowelementId);
+	
 	List<Job> findAllByRequestIdAndInputArtifactId(int requestId, Integer inputArtifactId);
 	
 	// Used for LtoWala

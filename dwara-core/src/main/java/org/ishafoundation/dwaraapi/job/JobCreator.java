@@ -546,32 +546,50 @@ public class JobCreator {
 		logger.debug("Is all dependencies Job for flowelement " + nthFlowelement + " are complete and Job good to be created - " + isJobGoodToBeCreated);
 		return isJobGoodToBeCreated;
 	}
-
+	
+	/*
+		CG
+		|Write
+		|	Restore
+		--------CV
+		|Write
+		|	Restore
+		--------CV
+	*/			
 	private boolean dealWithMarkedFailedJobs(Flowelement flowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact) {
-		String groupVolumeId = null;
-		if(sourceJob.getGroupVolume() != null)
-			groupVolumeId = sourceJob.getGroupVolume().getId();
-		logger.trace("Group Volume Id " + groupVolumeId);
-
-		Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), flowelement.getId(), groupVolumeId);
 		boolean continueJobCreation = true;
-		if(jobInQuestion != null) { //  && jobInQuestion.getStatus() == Status.marked_failed
-			continueJobCreation = false;
-			
+		List<Job> jobList = new ArrayList<Job>();
+		String groupVolumeId = null;
+		if(sourceJob.getGroupVolume() != null) {
+			groupVolumeId = sourceJob.getGroupVolume().getId();
+			logger.trace("Group Volume Id " + groupVolumeId);
+			Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), flowelement.getId(), groupVolumeId);
+			if(jobInQuestion != null) { //  && jobInQuestion.getStatus() == Status.marked_failed
+				jobList.add(jobInQuestion);
+				continueJobCreation = false;
+			}
+		}else {
+			jobList = jobDao.findAllByRequestIdAndInputArtifactIdAndFlowelementId(request.getId(), artifact.getId(), flowelement.getId());
+			List<ArtifactclassVolume> artifactclassVolumeList = artifactclassVolumeDao.findAllByArtifactclassIdAndActiveTrue(artifactclassId);
+			if(artifactclassVolumeList.size() == jobList.size())
+				continueJobCreation = false;
+		}
+		
+		for (Job nthJob : jobList) {
 			List<Integer> dependentJobIds = new ArrayList<Integer>();
 			if(sourceJob != null) {
 				dependentJobIds.add(sourceJob.getId());
 			}
 			
-			// validating if all its other dependencies are complete
-			boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, null, dependentJobIds);
+			// only requeue the job if all its other dependencies are complete
+			boolean isJobGoodToBeRequeued = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, nthJob.getGroupVolume().getId(), dependentJobIds);
 
-			if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
+			if(isJobGoodToBeRequeued) { // if all dependency jobs are complete...
 				try {
-					logger.info("Requeuing the marked_failed job " + jobInQuestion.getId());
-					jobServiceRequeueHelper.requeueJob(jobInQuestion.getId(),DwaraConstants.SYSTEM_USER_NAME);
+					logger.info("Requeuing the marked_failed job " + nthJob.getId());
+					jobServiceRequeueHelper.requeueJob(nthJob.getId(),DwaraConstants.SYSTEM_USER_NAME);
 				} catch (Exception e1) {
-					logger.error("Unable to auto requeue failed job..." + jobInQuestion.getId(), e1);
+					logger.error("Unable to auto requeue failed job..." + nthJob.getId(), e1);
 				}
 			}
 		}
