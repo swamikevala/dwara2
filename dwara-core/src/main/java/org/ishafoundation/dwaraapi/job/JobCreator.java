@@ -555,13 +555,24 @@ public class JobCreator {
 
 		Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), flowelement.getId(), groupVolumeId);
 		boolean continueJobCreation = true;
-		if(jobInQuestion != null && jobInQuestion.getStatus() == Status.marked_failed) {
+		if(jobInQuestion != null) { //  && jobInQuestion.getStatus() == Status.marked_failed
 			continueJobCreation = false;
-			try {
-				logger.info("Requeuing the marked_failed job " + jobInQuestion.getId());
-				jobServiceRequeueHelper.requeueJob(jobInQuestion.getId(),DwaraConstants.SYSTEM_USER_NAME);
-			} catch (Exception e1) {
-				logger.error("Unable to auto requeue failed job..." + jobInQuestion.getId(), e1);
+			
+			List<Integer> dependentJobIds = new ArrayList<Integer>();
+			if(sourceJob != null) {
+				dependentJobIds.add(sourceJob.getId());
+			}
+			
+			// validating if all its other dependencies are complete
+			boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, null, dependentJobIds);
+
+			if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
+				try {
+					logger.info("Requeuing the marked_failed job " + jobInQuestion.getId());
+					jobServiceRequeueHelper.requeueJob(jobInQuestion.getId(),DwaraConstants.SYSTEM_USER_NAME);
+				} catch (Exception e1) {
+					logger.error("Unable to auto requeue failed job..." + jobInQuestion.getId(), e1);
+				}
 			}
 		}
 		
