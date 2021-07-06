@@ -229,6 +229,11 @@ public class JobCreator {
 			return jobsCreated;
 		
 		if(request.getActionId() == Action.ingest) {
+			
+			continueWithJobCreation = dealWithMarkedFailedJobs(flowelement, sourceJob, request, artifactclassId, artifact);
+			if(!continueWithJobCreation)
+				return jobsCreated;
+			
 			boolean processingtaskWithDependencyStoragetask = false;
 			if(processingtaskId != null) {
 				List<String> flowelementDependenciesList = flowelement.getDependencies();
@@ -496,7 +501,7 @@ public class JobCreator {
 	
 	private boolean isJobGoodToBeCreated(Flowelement nthFlowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact, String groupVolumeId, List<Integer> dependentJobIds) {
 		boolean isJobGoodToBeCreated = true;
-		logger.trace("Validating if all dependencies Jobs of flowelement " + nthFlowelement + " are created and completed");
+		logger.trace("Validating if all dependencies Jobs of flowelement " + nthFlowelement + " are created and completed"); // For eg., For checksum-verify job to be created, both checksum-gen and restore are dependencies/prerequisites and had jobs created and completed.
 		List<String> preRequesiteFlowelements = nthFlowelement.getDependencies();
 		if(preRequesiteFlowelements != null) {
 			for (String nthPreRequesiteFlowelementId : preRequesiteFlowelements) {
@@ -536,6 +541,22 @@ public class JobCreator {
 		}
 		logger.debug("Is all dependencies Job for flowelement " + nthFlowelement + " are complete and Job good to be created - " + isJobGoodToBeCreated);
 		return isJobGoodToBeCreated;
+	}
+
+	private boolean dealWithMarkedFailedJobs(Flowelement flowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact) {
+		String groupVolumeId = null;
+		if(flowelement.getStoragetaskActionId() != null && sourceJob.getGroupVolume() != null)
+			groupVolumeId = sourceJob.getGroupVolume().getId();
+		logger.trace("Group Volume Id " + groupVolumeId);
+
+		Job jobInQuestion = jobDao.findByRequestIdAndInputArtifactIdAndFlowelementIdAndGroupVolumeId(request.getId(), artifact.getId(), flowelement.getId(), groupVolumeId);
+		boolean continueJobCreation = true;
+		if(jobInQuestion != null && jobInQuestion.getStatus() == Status.marked_failed) {
+			jobInQuestion.setStatus(Status.queued);
+			continueJobCreation = false;
+		}
+		
+		return continueJobCreation;
 	}
 	
 	private Job createJob(Flowelement nthFlowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact) {

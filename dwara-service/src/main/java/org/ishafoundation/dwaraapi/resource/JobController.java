@@ -116,6 +116,24 @@ public class JobController {
     	return ResponseEntity.status(HttpStatus.OK).body(jobResponse);
     }
 	
+	@PostMapping("/job/{jobId}/marked_failed")
+    public ResponseEntity<JobResponse> markedFailedJob(@PathVariable("jobId") int jobId, @RequestBody (required=false) String reason) {
+    	logger.info("/job/" + jobId + "/marked_failed");
+    	JobResponse jobResponse = null;
+    	try {
+    		jobResponse = jobService.markedFailedJob(jobId, reason);
+		}catch (Exception e) {
+			String errorMsg = "Unable to get Jobs - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+    	return ResponseEntity.status(HttpStatus.OK).body(jobResponse);
+    }
+	
 	
     @PostMapping("/job/{jobId}/requeue")
     public ResponseEntity<JobResponse> requeueJob(@PathVariable("jobId") int jobId) {

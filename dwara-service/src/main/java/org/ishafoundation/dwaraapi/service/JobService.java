@@ -7,26 +7,22 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.job.GroupedJobResponse;
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
-import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.JobRunDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.JobRunKey;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobRun;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
-import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -37,9 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class JobService extends DwaraService{
@@ -65,14 +58,14 @@ public class JobService extends DwaraService{
 	private JobCreator jobCreator;
 
 	@Autowired
-	private UserDao userDao;
-
-	@Autowired
 	private TTFileJobDao tFileJobDao;
 
 	@Autowired
 	private JobRunDao jobRunDao;
 
+	@Autowired
+	private JobUtil jobUtil;	
+	
 	public List<JobResponse> getJobs(Integer systemRequestId, List<Status> statusList) {
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
 		
@@ -206,50 +199,40 @@ public class JobService extends DwaraService{
 
 	public JobResponse markedCompletedJob(int jobId, String reason) throws Exception {
 		Request userRequest = null;
-		String userName = getUserFromContext();
 		Job job = null;
 		try {		
 			job = jobDao.findById(jobId).get();
 			if(job.getStatus() != Status.completed_failures && job.getStatus() != Status.failed)
 				throw new DwaraException("Job cannot be marked completed. Only failed or a job completed with some failures can be rerun. @TEAM - Any extra protection needed for avoiding written content getting requeued again?"); //
-	    	
-			userRequest = new Request();
-	    	userRequest.setType(RequestType.user);
-			userRequest.setActionId(Action.marked_completed);
 
-			User requestedByUser = userDao.findByName(userName);
-	    	userRequest.setRequestedBy(requestedByUser);
-			userRequest.setRequestedAt(LocalDateTime.now());
-			userRequest.setCompletedAt(LocalDateTime.now());
-			RequestDetails details = new RequestDetails();
-			ObjectMapper mapper = new ObjectMapper();
-	
 			HashMap<String, Object> data = new HashMap<String, Object>();
 	    	data.put("jobId", jobId);
-	    	
-	    	String jsonAsString = mapper.writeValueAsString(data);
-			JsonNode postBodyJson = mapper.readValue(jsonAsString, JsonNode.class);
-			details.setBody(postBodyJson);
-			userRequest.setDetails(details);
 			
-	    	userRequest = requestDao.save(userRequest);
-	    	int userRequestId = userRequest.getId();
-	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
+			userRequest = createUserRequest(Action.marked_completed, data);
+//			userRequest = new Request();
+//	    	userRequest.setType(RequestType.user);
+//			userRequest.setActionId(Action.marked_completed);
+//
+//			User requestedByUser = userDao.findByName(userName);
+//	    	userRequest.setRequestedBy(requestedByUser);
+//			userRequest.setRequestedAt(LocalDateTime.now());
+//			userRequest.setCompletedAt(LocalDateTime.now());
+//			RequestDetails details = new RequestDetails();
+//			ObjectMapper mapper = new ObjectMapper();
+//	
+//			HashMap<String, Object> data = new HashMap<String, Object>();
+//	    	data.put("jobId", jobId);
+//	    	
+//	    	String jsonAsString = mapper.writeValueAsString(data);
+//			JsonNode postBodyJson = mapper.readValue(jsonAsString, JsonNode.class);
+//			details.setBody(postBodyJson);
+//			userRequest.setDetails(details);
+//			
+//	    	userRequest = requestDao.save(userRequest);
+//	    	int userRequestId = userRequest.getId();
+//	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
 
-			// update the reference table    
-			long jobRunCount = jobRunDao.countByJobId(jobId);
-	    	int nextId = (int) (jobRunCount + 1);
-	    	JobRun jobRun = new JobRun();
-	    	jobRun.setId(new JobRunKey(jobId, nextId));
-	    	jobRun.setJob(job);
-	    	jobRun.setStartedAt(job.getStartedAt());
-	    	jobRun.setCompletedAt(job.getCompletedAt());
-	    	jobRun.setStatus(job.getStatus());
-	    	jobRun.setMessage(job.getMessage());
-	    	jobRun.setDevice(job.getDevice());
-	    	jobRun.setVolume(job.getVolume());
-	    	jobRunDao.save(jobRun);
-	    	logger.debug("JobRun record created successfully " + jobId + ":" + nextId);
+			createJobRunRecord(job, reason);
 	    	
 	    	if(job.getProcessingtaskId() != null) {
 				List<ProcessingFailure> processingFailureList = processingFailureDao.findAllByJobId(jobId);
@@ -262,7 +245,7 @@ public class JobService extends DwaraService{
 			job.setStartedAt(LocalDateTime.now());
 			job.setCompletedAt(LocalDateTime.now());
 			job = jobDao.save(job);
-			logger.info("Job mark completed successfully " + jobId);
+			logger.info("Job marked as completed successfully " + jobId);
 			
 			Request jobSystemRequest = job.getRequest();
 			jobSystemRequest.setStatus(Status.marked_completed);
@@ -284,8 +267,88 @@ public class JobService extends DwaraService{
 
 		return frameJobResponse(job);
 	}
-	
 
+	public JobResponse markedFailedJob(int jobId, String reason) {
+		Request userRequest = null;
+		Job job = null;
+		try {		
+			job = jobDao.findById(jobId).get();
+			if(job.getStatus() != Status.completed) // && job.getStatus() != Status.completed_failures)
+				throw new DwaraException("Job cannot be marked failed. Only completed job can marked failed" + jobId); // TODO - completed_failures?
+
+			// should we validate the dependent jobs and their status too
+			List<Job> dependentJobList = jobUtil.getDependentJobs(job);
+			for (Job nthDependentJob : dependentJobList) {
+				if(nthDependentJob.getStatus() == Status.in_progress)
+					throw new DwaraException(jobId + " cannot be marked failed as its dependent job " + nthDependentJob.getId() + " is still in " + nthDependentJob.getStatus()); // TODO - completed_failures?
+			}
+			
+			HashMap<String, Object> data = new HashMap<String, Object>();
+	    	data.put("jobId", jobId);
+			
+			userRequest = createUserRequest(Action.marked_failed, data);
+
+			createJobRunRecord(job, reason);
+			updateJobStatus(job, Status.marked_failed, reason);
+			
+			StringBuffer impactedJobIdsForLogging = new StringBuffer();
+			impactedJobIdsForLogging.append(jobId);
+
+			for (Job nthDependentJob : dependentJobList) {
+				createJobRunRecord(nthDependentJob, reason);
+				updateJobStatus(nthDependentJob, Status.marked_failed, reason);
+
+			    impactedJobIdsForLogging.append(nthDependentJob.getId());
+			    logger.trace("Job marked as failed successfully " + nthDependentJob.getId());
+			}
+			logger.info("Following jobs marked failed successfully " + impactedJobIdsForLogging.toString());
+			
+			Request jobSystemRequest = job.getRequest();
+			jobSystemRequest.setStatus(Status.marked_failed);
+			requestDao.save(jobSystemRequest);
+			
+			userRequest.setStatus(Status.completed);
+			userRequest = requestDao.save(userRequest);
+		} catch (Exception e) {
+			if(userRequest != null && userRequest.getId() != 0) {
+				userRequest.setStatus(Status.failed);
+				userRequest = requestDao.save(userRequest);
+			}
+			throw e;
+		}
+
+		// TODO Should show the list of impacted jobs including  
+		return frameJobResponse(job);
+	}
+
+	
+	private void createJobRunRecord(Job job, String reason) {
+		int jobId = job.getId();
+		// update the history reference table    
+		long jobRunCount = jobRunDao.countByJobId(jobId);
+    	int nextId = (int) (jobRunCount + 1);
+    	JobRun jobRun = new JobRun();
+    	jobRun.setId(new JobRunKey(jobId, nextId));
+    	jobRun.setJob(job);
+    	jobRun.setStartedAt(job.getStartedAt());
+    	jobRun.setCompletedAt(job.getCompletedAt());
+    	jobRun.setStatus(job.getStatus());
+    	jobRun.setMessage(job.getMessage());
+    	jobRun.setDevice(job.getDevice());
+    	jobRun.setVolume(job.getVolume());
+    	jobRunDao.save(jobRun);
+    	logger.debug("JobRun record created successfully " + jobId + ":" + nextId);
+	} 	
+	
+	private void updateJobStatus(Job job, Status status, String reason) {
+		job.setMessage(reason);
+		job.setStatus(status);
+//		job.setStartedAt(LocalDateTime.now());
+//		job.setCompletedAt(LocalDateTime.now());
+		job = jobDao.save(job);
+		logger.trace("Job " + status + " - " + job.getId());
+
+	}
 	private JobResponse frameJobResponse(Job job) {
 		JobResponse jobResponse = new JobResponse();
 		int jobId = job.getId();
