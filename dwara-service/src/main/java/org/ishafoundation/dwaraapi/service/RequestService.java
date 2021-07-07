@@ -402,7 +402,7 @@ public class RequestService extends DwaraService{
 					for (JobResponse jobResponse : jobResponseList) {
 						if(cnt > 1)
 							msgBfr.append(",");
-						msgBfr.append(jobResponse.getJobId() + "-" + jobResponse.getMessage());
+						msgBfr.append(jobResponse.getProcessingTask() != null ? jobResponse.getProcessingTask() : jobResponse.getStoragetaskAction() + "(" + jobResponse.getJobId() + ")-" + jobResponse.getMessage());
 						cnt = cnt + 1;
 					}
 					
