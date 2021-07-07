@@ -61,6 +61,8 @@ public class RequestController {
 				String[] actionArrAsString = action.split(",");
 			   	
 			   	for (int i = 0; i < actionArrAsString.length; i++) {
+			   		if(actionArrAsString[i].equalsIgnoreCase("all")) // Weird UI sends the value "all" also, filter it here regardless of UI is fixed or not
+			   			continue;
 					ActionAttributeConverter actionAttributeConverter = new ActionAttributeConverter();
 					Action actionEnum = actionAttributeConverter.convertToEntityAttribute(actionArrAsString[i]);
 			   		actionEnumList.add(actionEnum);
@@ -73,6 +75,8 @@ public class RequestController {
 				String[] statusArrAsString = status.split(",");
 			   	
 			   	for (int i = 0; i < statusArrAsString.length; i++) {
+			   		if(statusArrAsString[i].equalsIgnoreCase("all")) // Weird UI sends the value "all" also, filter it here regardless of UI is fixed or not
+			   			continue;
 			   		Status statusEnum = Status.valueOf(statusArrAsString[i]);
 			   		statusList.add(statusEnum);
 				}
@@ -84,11 +88,25 @@ public class RequestController {
 				String[] requestedByListAsArr = requestedBy.split(",");
 			   	
 			   	for (int i = 0; i < requestedByListAsArr.length; i++) {
+			   		if(requestedByListAsArr[i].equalsIgnoreCase("all")) // Weird UI sends the value "all" also, filter it here regardless of UI is fixed or not
+			   			continue;
 			   		requestedByList.add(requestedByListAsArr[i]);
 				}
 			}
 			
-			requestResponseList = requestService.getRequests(requestType, actionEnumList, statusList, requestedByList, requestedFrom, requestedTo, completedFrom, completedTo, artifactName, artifactclass, jobDetailsType);
+			List<String> artifactclassList = null;
+			if(artifactclass != null) { 
+				artifactclassList = new ArrayList<String>();
+				String[] artifactclassListAsArr = artifactclass.split(",");
+			   	
+			   	for (int i = 0; i < artifactclassListAsArr.length; i++) {
+			   		if(artifactclassListAsArr[i].equalsIgnoreCase("all")) // Weird UI sends the value "all" also, filter it here regardless of UI is fixed or not
+			   			continue;
+			   		artifactclassList.add(artifactclassListAsArr[i]);
+				}
+			}
+			
+			requestResponseList = requestService.getRequests(requestType, actionEnumList, statusList, artifactclassList, requestedFrom, requestedTo, completedFrom, completedTo, artifactName, artifactclassList, jobDetailsType);
 		}catch (Exception e) {
 			String errorMsg = "Unable to get Request details - " + e.getMessage();
 			logger.error(errorMsg, e);

@@ -62,7 +62,7 @@ public class RequestService extends DwaraService{
 	@Autowired
 	private ArtifactDeleter artifactDeleter; 
 	
-	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, List<String> requestedByList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName, String artifactclass, JobDetailsType jobDetailsType){
+	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, List<String> requestedByList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName, List<String> artifactclassList, JobDetailsType jobDetailsType){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
 		logger.info("Retrieving requests " + requestType.name() + ":" + action + ":" + statusList);
 
@@ -87,7 +87,7 @@ public class RequestService extends DwaraService{
 		int pageNumber = 0;
 		int pageSize = 0;
 
-		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, requestedByList, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, artifactclass, pageNumber, pageSize);
+		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, requestedByList, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, artifactclassList, pageNumber, pageSize);
 		for (Request request : requestList) {
 			logger.trace("Now processing " + request.getId());
 			RequestResponse requestResponse = frameRequestResponse(request, requestType, requestType == RequestType.user ? request.getId() : request.getRequestRef().getId(), jobDetailsType);

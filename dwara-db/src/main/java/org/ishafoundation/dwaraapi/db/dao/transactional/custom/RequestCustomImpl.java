@@ -34,7 +34,7 @@ public class RequestCustomImpl implements RequestCustom {
      */
     
 	@Override
-	public List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, List<Action> action, List<Status> statusList, List<String> requestedByList, LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName, String artifactclass, int pageNumber, int pageSize) {
+	public List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, List<Action> action, List<Status> statusList, List<String> requestedByList, LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName, List<String> artifactclassList, int pageNumber, int pageSize) {
 		
 		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 		
@@ -50,7 +50,7 @@ public class RequestCustomImpl implements RequestCustom {
         CriteriaQuery<Request> query = cb.createQuery(Request.class);
         Root<Request> requestRoot = query.from(Request.class);
         
-        List<Predicate> predicates = getFramedPredicates(requestRoot, cb, requestType, action, statusList, requestedByList, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName);
+        List<Predicate> predicates = getFramedPredicates(requestRoot, cb, requestType, action, statusList, requestedByList, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, artifactclassList);
        	query.select(requestRoot).where(cb.and(predicates.toArray(new Predicate[0])));
        	query.orderBy(cb.desc(requestRoot.get("id"))); // default orderby most recent first
         //List<Request> requestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
@@ -67,7 +67,7 @@ public class RequestCustomImpl implements RequestCustom {
 
 	
 	private List<Predicate> getFramedPredicates(Root<Request> requestRoot, CriteriaBuilder cb, RequestType requestType, List<Action> actionList, List<Status> statusList, List<String> requestedByList,
-			LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName) {
+			LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName, List<String> artifactclassList) {
         
         
 	    List<Predicate> predicates = new ArrayList<>();
