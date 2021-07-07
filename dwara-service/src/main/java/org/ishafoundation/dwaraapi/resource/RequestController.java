@@ -106,7 +106,7 @@ public class RequestController {
 				}
 			}
 			
-			requestResponseList = requestService.getRequests(requestType, actionEnumList, statusList, artifactclassList, requestedFrom, requestedTo, completedFrom, completedTo, artifactName, artifactclassList, jobDetailsType);
+			requestResponseList = requestService.getRequests(requestType, actionEnumList, statusList, requestedByList, requestedFrom, requestedTo, completedFrom, completedTo, artifactName, artifactclassList, jobDetailsType);
 		}catch (Exception e) {
 			String errorMsg = "Unable to get Request details - " + e.getMessage();
 			logger.error(errorMsg, e);
