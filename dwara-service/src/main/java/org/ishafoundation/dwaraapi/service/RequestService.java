@@ -17,6 +17,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -24,7 +25,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.JobDetailsType;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
@@ -46,7 +46,7 @@ public class RequestService extends DwaraService{
 
 	@Autowired
 	private JobDao jobDao;
-	
+
 	@Autowired
 	private DomainUtil domainUtil;
 
@@ -62,7 +62,7 @@ public class RequestService extends DwaraService{
 	@Autowired
 	private ArtifactDeleter artifactDeleter; 
 	
-	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, List<String> requestedByList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName, List<String> artifactclassList, JobDetailsType jobDetailsType){
+	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, List<User> requestedByList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName, List<String> artifactclassList, JobDetailsType jobDetailsType){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
 		logger.info("Retrieving requests " + requestType.name() + ":" + action + ":" + statusList);
 

@@ -3,11 +3,14 @@ package org.ishafoundation.dwaraapi.resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
+import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.JobDetailsType;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
@@ -36,6 +39,9 @@ public class RequestController {
 	
 	@Autowired
 	RequestService requestService;
+
+	@Autowired
+	private UserDao userDao;
 		
 	/**
 	 * Assuming all params are mandatory to be passed...
@@ -82,15 +88,21 @@ public class RequestController {
 				}
 			}
 			
-			List<String> requestedByList = null;
+			List<User> requestedByList = null;
 			if(requestedBy != null) { 
-				requestedByList = new ArrayList<String>();
+				requestedByList = new ArrayList<User>();
 				String[] requestedByListAsArr = requestedBy.split(",");
 			   	
+				HashMap<String, User> userName_User_Map = new HashMap<String, User>(); 
+				Iterable<User> usersFromDB = userDao.findAll();
+				for (User nthuser : usersFromDB) {
+					userName_User_Map.put(nthuser.getName(), nthuser);
+				}
 			   	for (int i = 0; i < requestedByListAsArr.length; i++) {
 			   		if(requestedByListAsArr[i].equalsIgnoreCase("all")) // Weird UI sends the value "all" also, filter it here regardless of UI is fixed or not
 			   			continue;
-			   		requestedByList.add(requestedByListAsArr[i]);
+			   		
+			   		requestedByList.add(userName_User_Map.get(requestedByListAsArr[i]));
 				}
 			}
 			

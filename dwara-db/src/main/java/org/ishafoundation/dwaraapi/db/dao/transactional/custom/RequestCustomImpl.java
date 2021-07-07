@@ -12,6 +12,7 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
@@ -21,6 +22,8 @@ public class RequestCustomImpl implements RequestCustom {
 
     @PersistenceContext
     private EntityManager entityManager;
+    
+    
     
     /*
      * args[0] - type - the request type
@@ -34,7 +37,7 @@ public class RequestCustomImpl implements RequestCustom {
      */
     
 	@Override
-	public List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, List<Action> action, List<Status> statusList, List<String> requestedByList, LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName, List<String> artifactclassList, int pageNumber, int pageSize) {
+	public List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, List<Action> action, List<Status> statusList, List<User> requestedByList, LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName, List<String> artifactclassList, int pageNumber, int pageSize) {
 		
 		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 		
@@ -66,7 +69,7 @@ public class RequestCustomImpl implements RequestCustom {
 
 
 	
-	private List<Predicate> getFramedPredicates(Root<Request> requestRoot, CriteriaBuilder cb, RequestType requestType, List<Action> actionList, List<Status> statusList, List<String> requestedByList,
+	private List<Predicate> getFramedPredicates(Root<Request> requestRoot, CriteriaBuilder cb, RequestType requestType, List<Action> actionList, List<Status> statusList, List<User> requestedByList,
 			LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName, List<String> artifactclassList) {
         
         
@@ -96,7 +99,8 @@ public class RequestCustomImpl implements RequestCustom {
 	    if(requestedByList != null) {
 		    Path<String> requestedByPath = requestRoot.get("requestedBy");
 		    List<Predicate> requestedByPredicates = new ArrayList<>();
-		    for (String requestedBy : requestedByList) {
+		    for (User requestedBy : requestedByList) {
+		    	
 				requestedByPredicates.add(cb.equal(requestedByPath, requestedBy));
 			}
 			predicates.add(cb.or(requestedByPredicates.toArray(new Predicate[requestedByPredicates.size()])));
