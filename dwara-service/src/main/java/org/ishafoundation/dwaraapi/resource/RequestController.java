@@ -78,7 +78,17 @@ public class RequestController {
 				}
 			}
 			
-			requestResponseList = requestService.getRequests(requestType, actionEnumList, statusList, requestedBy, requestedFrom, requestedTo, completedFrom, completedTo, artifactName, artifactclass, jobDetailsType);
+			List<String> requestedByList = null;
+			if(requestedBy != null) { 
+				requestedByList = new ArrayList<String>();
+				String[] requestedByListAsArr = requestedBy.split(",");
+			   	
+			   	for (int i = 0; i < requestedByListAsArr.length; i++) {
+			   		requestedByList.add(requestedByListAsArr[i]);
+				}
+			}
+			
+			requestResponseList = requestService.getRequests(requestType, actionEnumList, statusList, requestedByList, requestedFrom, requestedTo, completedFrom, completedTo, artifactName, artifactclass, jobDetailsType);
 		}catch (Exception e) {
 			String errorMsg = "Unable to get Request details - " + e.getMessage();
 			logger.error(errorMsg, e);
