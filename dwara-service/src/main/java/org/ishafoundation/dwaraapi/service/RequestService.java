@@ -10,6 +10,7 @@ import java.util.List;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
@@ -386,6 +387,26 @@ public class RequestService extends DwaraService{
 						requestResponse.setJob(jobService.getPlaceholderJobs(request));
 					else if(jobDetailsType == JobDetailsType.grouped_placeholder)
 						requestResponse.setGroupedJob(jobService.getGroupedPlaceholderJobs(request, systemArtifact.getId()));
+				}
+				
+				if(request.getStatus() == Status.failed || request.getStatus() == Status.completed_failures || request.getStatus() == Status.marked_failed) { // update the failure message for failed requests
+					
+					StringBuffer msgBfr = new StringBuffer();
+					List<Status> statusList = new ArrayList<Status>();
+					statusList.add(Status.failed);
+					statusList.add(Status.completed_failures);
+					statusList.add(Status.marked_failed);
+					
+					List<JobResponse> jobResponseList = jobService.getJobs(request.getId(), statusList);
+					int cnt = 1;
+					for (JobResponse jobResponse : jobResponseList) {
+						if(cnt > 1)
+							msgBfr.append(",");
+						msgBfr.append(jobResponse.getJobId() + "-" + jobResponse.getMessage());
+						cnt = cnt + 1;
+					}
+					
+					requestResponse.setMessage(msgBfr.toString());
 				}
 			} 
 			else if(requestAction == Action.restore || requestAction == Action.restore_process) {

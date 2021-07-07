@@ -36,6 +36,7 @@ public class RequestResponse {
     private String requestedBy;
     private String action;
     private String status;
+    private String message;
     
     private List<RequestResponse> request;
     
@@ -119,6 +120,14 @@ public class RequestResponse {
 
 	public void setStatus(String status) {
 		this.status = status;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
 	}
 
 	public List<RequestResponse> getRequest() {
