@@ -46,6 +46,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+/**
+ * Naming convention - 
+ * Dependencies - For checksum-verify flowelement/job, checksum-gen and restore are dependencies/prerequisites
+ * Depende(a)nts - For a restore job, checksum-verify is a dependent.
+ */
+
 @Component
 public class JobCreator {
 
@@ -161,7 +167,6 @@ public class JobCreator {
 	 * @param job - source job for which dependent jobs need to be created
 	 * @return
 	 */
-	
 	public List<Job> createDependentJobs(Job job){
 		List<Job> jobsCreated = new ArrayList<Job>();
 		String flowelementId = job.getFlowelementId();
@@ -269,7 +274,7 @@ public class JobCreator {
 							dependentJobIds.add(sourceJob.getId());
 						}
 						// validating if all its other dependencies are complete
-						boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, grpVolume.getId(), dependentJobIds);
+						boolean isJobGoodToBeCreated = isJobGoodToBeCreatedOrRequeued(flowelement, sourceJob, request, artifactclassId, artifact, grpVolume.getId(), dependentJobIds);
 						if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
 							Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
 							if(dependentJobIds.size() > 0) {
@@ -307,7 +312,7 @@ public class JobCreator {
 					}
 					
 					// validating if all its other dependencies are complete
-					boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, null, dependentJobIds);
+					boolean isJobGoodToBeCreated = isJobGoodToBeCreatedOrRequeued(flowelement, sourceJob, request, artifactclassId, artifact, null, dependentJobIds);
 	
 					if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
 						Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
@@ -482,7 +487,7 @@ public class JobCreator {
 		}
 		
 		// validating if all its other dependencies are complete
-		boolean isJobGoodToBeCreated = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, groupVolumeId, dependentJobIds);
+		boolean isJobGoodToBeCreated = isJobGoodToBeCreatedOrRequeued(flowelement, sourceJob, request, artifactclassId, artifact, groupVolumeId, dependentJobIds);
 		if(isJobGoodToBeCreated) { // if all dependency jobs are complete...
 			logger.trace("Creating Job for " + processingtaskId + ":" + flowelement.getId());
 			Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
@@ -503,8 +508,9 @@ public class JobCreator {
 		return null;
 	}
 	
-	private boolean isJobGoodToBeCreated(Flowelement nthFlowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact, String groupVolumeId, List<Integer> dependentJobIds) {
+	private boolean isJobGoodToBeCreatedOrRequeued(Flowelement nthFlowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact, String groupVolumeId, List<Integer> dependentJobIds) {
 		boolean isJobGoodToBeCreated = true;
+		logger.trace("nthFlowelement " + nthFlowelement.getId() + " sourceJob " + sourceJob.getId() + " request " + request.getId() + " artifactclassId " + artifactclassId + " artifact " +  artifact.getId() + " groupVolumeId " + groupVolumeId );
 		logger.trace("Validating if all dependencies Jobs of flowelement " + nthFlowelement + " are created and completed"); // For eg., For checksum-verify job to be created, both checksum-gen and restore are dependencies/prerequisites and had jobs created and completed.
 		List<String> preRequesiteFlowelements = nthFlowelement.getDependencies();
 		if(preRequesiteFlowelements != null) {
@@ -548,13 +554,23 @@ public class JobCreator {
 	}
 	
 	/*
+	 * Deals with marked_failed jobs in 2 aspects
+	 * 1) Should the dependent jobs to be let(let because job creation happens after this) created by further down code or if already created - don't let continue
+	 * 2) Should the dependent job be requeued - by checking its dependencies are completed or not
+	 * 
+	 *  For eg., lets say proxy ChecksumGen(CG) and the proxy write jobs are intially marked-failed, then the already created job hierarchy structure are all marked-failed
 		CG
-		|Write
-		|	Restore
-		--------CV
-		|Write
-		|	Restore
-		--------CV
+		|Write1
+		|	Restore2
+		--------CV1
+		|Write2
+		|	Restore2
+		--------CV2
+	*
+	*  This method takes care of scenarios like
+	*  1) CG complete first, W/R job completes after CG - Respective R copy will requeue respective CV - Straight forward
+	*  2) R2 completed first, CV2 still marked-failed, CG Completes but R1 still on, CV2 requeued but CV1 still remains marked-failed, R1 completes CV1 requeued
+	*  3) R1/R2 completes, CV1/2 remains marked-failed, CG Completes, both CV1/2 requeued... 
 	*/			
 	private boolean dealWithMarkedFailedJobs(Flowelement flowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact) {
 		boolean continueJobCreation = true;
@@ -576,20 +592,19 @@ public class JobCreator {
 		}
 		
 		for (Job nthJob : jobList) {
-			List<Integer> dependentJobIds = new ArrayList<Integer>();
-			if(sourceJob != null) {
-				dependentJobIds.add(sourceJob.getId());
-			}
+			List<Integer> dependentJobIds = new ArrayList<Integer>();// dummy
 			
-			// only requeue the job if all its other dependencies are complete
-			boolean isJobGoodToBeRequeued = isJobGoodToBeCreated(flowelement, sourceJob, request, artifactclassId, artifact, nthJob.getGroupVolume().getId(), dependentJobIds);
-
-			if(isJobGoodToBeRequeued) { // if all dependency jobs are complete...
-				try {
-					logger.info("Requeuing the marked_failed job " + nthJob.getId());
-					jobServiceRequeueHelper.requeueJob(nthJob.getId(),DwaraConstants.SYSTEM_USER_NAME);
-				} catch (Exception e1) {
-					logger.error("Unable to auto requeue failed job..." + nthJob.getId(), e1);
+			if(nthJob.getStatus() == Status.marked_failed) {
+				// only requeue the job if all its other dependencies are complete
+				boolean isJobGoodToBeRequeued = isJobGoodToBeCreatedOrRequeued(flowelement, sourceJob, request, artifactclassId, artifact, sourceJob.getStoragetaskActionId() != null ? null : nthJob.getGroupVolume().getId(), dependentJobIds);
+	
+				if(isJobGoodToBeRequeued) { // if all dependency jobs are complete...
+					try {
+						logger.info("Requeuing the marked_failed job " + nthJob.getId());
+						jobServiceRequeueHelper.requeueJob(nthJob.getId(),DwaraConstants.SYSTEM_USER_NAME);
+					} catch (Exception e1) {
+						logger.error("Unable to auto requeue failed job..." + nthJob.getId(), e1);
+					}
 				}
 			}
 		}

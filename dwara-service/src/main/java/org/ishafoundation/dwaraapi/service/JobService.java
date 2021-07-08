@@ -12,17 +12,31 @@ import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.JobRunDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.keys.JobRunKey;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobRun;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -62,9 +76,21 @@ public class JobService extends DwaraService{
 
 	@Autowired
 	private JobRunDao jobRunDao;
+	
+	@Autowired
+	private TFileDao tFileDao;
+	
+	@Autowired
+	private TFileVolumeDao tFileVolumeDao;
 
 	@Autowired
 	private JobUtil jobUtil;	
+	
+	@Autowired
+	private FileRepositoryUtil fileRepositoryUtil;
+
+	@Autowired
+	private DomainUtil domainUtil;
 	
 	public List<JobResponse> getJobs(Integer systemRequestId, List<Status> statusList) {
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
@@ -268,7 +294,7 @@ public class JobService extends DwaraService{
 		return frameJobResponse(job);
 	}
 
-	public JobResponse markedFailedJob(int jobId, String reason) {
+	public JobResponse markedFailedJob(int jobId, String reason) throws Exception {
 		Request userRequest = null;
 		Job job = null;
 		try {		
@@ -290,6 +316,8 @@ public class JobService extends DwaraService{
 
 			createJobRunRecord(job, reason);
 			updateJobStatus(job, Status.marked_failed, reason);
+			if(job.getStoragetaskActionId() == Action.write)
+				delete_Artifact_File_TFile_PhysicalEntityRecords(job.getInputArtifactId(), job.getGroupVolume());
 			
 			StringBuffer impactedJobIdsForLogging = new StringBuffer();
 			impactedJobIdsForLogging.append(jobId);
@@ -310,6 +338,7 @@ public class JobService extends DwaraService{
 			userRequest.setStatus(Status.completed);
 			userRequest = requestDao.save(userRequest);
 		} catch (Exception e) {
+			logger.error("Unable to mark fail job " + job.getId() + ":" + e.getMessage(),e);
 			if(userRequest != null && userRequest.getId() != 0) {
 				userRequest.setStatus(Status.failed);
 				userRequest = requestDao.save(userRequest);
@@ -347,8 +376,62 @@ public class JobService extends DwaraService{
 //		job.setCompletedAt(LocalDateTime.now());
 		job = jobDao.save(job);
 		logger.trace("Job " + status + " - " + job.getId());
-
 	}
+	
+	private void delete_Artifact_File_TFile_PhysicalEntityRecords(int artifactId, Volume groupVolume) throws Exception {
+		Domain domain = Domain.ONE; // TODO Hardcoded domain...
+		
+		Volume volumeInvolved = null;
+		// Deleting the artifactvolume record
+		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain); // artifact.getArtifactclass().getDomain());
+		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
+		for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
+			
+			if(nthArtifactVolume.getVolume().getGroupRef().getId() ==  groupVolume.getId()) {
+				volumeInvolved = nthArtifactVolume.getVolume();	
+				nthArtifactVolume.setStatus(ArtifactVolumeStatus.deleted);	
+				domainSpecificArtifactVolumeRepository.save(nthArtifactVolume);
+				break;
+			}
+		}		
+
+	    // Now deleting the file/tfilevolume records
+		// softDelete Filevolume entries
+		ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(Domain.ONE);
+		Artifact artifact = artifactRepository.findById(artifactId).get();
+		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
+		List<FileVolume> toBeUpdatedFileVolumeTableEntries = new ArrayList<FileVolume>();
+		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
+			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volumeInvolved.getId());
+			if(fileVolume != null) {
+				fileVolume.setDeleted(true);
+				toBeUpdatedFileVolumeTableEntries.add(fileVolume);
+			}
+		}
+	    if(toBeUpdatedFileVolumeTableEntries.size() > 0) {
+	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
+	    	domainSpecificFileVolumeRepository.saveAll(toBeUpdatedFileVolumeTableEntries);
+	    	logger.info("All FileVolume records for " + artifact.getName() + " [" + artifactId + "] in volume " + volumeInvolved.getId() + " flagged deleted successfully");
+	    }
+	    
+	    // softDelete TFileVolume entries
+	    List<TFile> artifactTFileList  = tFileDao.findAllByArtifactId(artifactId);
+		if(artifactTFileList != null) { // An artifact can be deleted even after the tape is finalized at that point no TFile entries will be there
+		    List<TFileVolume> toBeUpdatedTFileVolumeTableEntries = new ArrayList<TFileVolume>();
+		    for (TFile nthTFile : artifactTFileList) {
+		    	TFileVolume tFileVolume = tFileVolumeDao.findByIdFileIdAndIdVolumeId(nthTFile.getId(), volumeInvolved.getId());
+				if(tFileVolume != null) {
+					tFileVolume.setDeleted(true);
+					toBeUpdatedTFileVolumeTableEntries.add(tFileVolume);
+				}
+		    }
+		    if(toBeUpdatedTFileVolumeTableEntries.size() > 0) {
+		    	tFileVolumeDao.saveAll(toBeUpdatedTFileVolumeTableEntries);
+		    	logger.info("All TFileVolume records for " + artifact.getName() + " [" + artifactId + "] in volume " + volumeInvolved.getId() + " flagged deleted successfully");
+		    }
+		}
+	}
+	
 	private JobResponse frameJobResponse(Job job) {
 		JobResponse jobResponse = new JobResponse();
 		int jobId = job.getId();
