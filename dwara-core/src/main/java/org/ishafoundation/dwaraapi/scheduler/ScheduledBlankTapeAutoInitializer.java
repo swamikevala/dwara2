@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PostMapping;
 
 @Component
 public class ScheduledBlankTapeAutoInitializer {
@@ -32,6 +33,7 @@ public class ScheduledBlankTapeAutoInitializer {
 	private VolumeInitializer volumeInitializer;
 
 	@Scheduled(cron = "${scheduler.blankTapeAutoInitializer.cronExpression}")
+	@PostMapping("/autoInitializeBlankTapes")
 	public void autoInitializeBlankTapes(){
 		logger.info("***** Auto initializing blank Tapes *****");
 

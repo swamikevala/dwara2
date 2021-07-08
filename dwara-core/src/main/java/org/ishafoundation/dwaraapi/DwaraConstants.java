@@ -21,6 +21,6 @@ public interface DwaraConstants {
 	
 	public static final String VIDEO_DIGI_ARTIFACTCLASS_PREFIX = "video-digi-2020";
 	
-	public static final String CLEANUP_TAPE_PREFIX = "CU";
+	public static final String CLEANUP_TAPE_PREFIX = "CL";
 
 }
