@@ -159,7 +159,7 @@ public class RequestCustomImpl implements RequestCustom {
 			toBeAnded = true;
 		}
 		logger.info("mysql query: " + query);
-		Query q = entityManager.createNativeQuery(query.toString());
+		Query q = entityManager.createNativeQuery(query.toString(), Request.class);
 		
 		return q.getResultList();
 
