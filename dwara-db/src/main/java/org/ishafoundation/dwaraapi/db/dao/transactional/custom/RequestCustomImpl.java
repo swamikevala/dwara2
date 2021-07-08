@@ -58,16 +58,14 @@ public class RequestCustomImpl implements RequestCustom {
 		 */
 
 		StringBuffer query = new StringBuffer();
-		query.append("select request.* from request join artifact1 on artifact1.write_request_id = request.id join artifactclass on artifact1.artifactclass_id = artifactclass.id where ");
-		boolean toBeAnded = false;
+		query.append("select request.* from request join artifact1 on artifact1.write_request_id = request.id join artifactclass on artifact1.artifactclass_id = artifactclass.id where artifact1.artifactclass_id not like '%-proxy-low'");
 		if(requestType != null) {
+			query.append(" and ");
 			query.append("request.type = '" + requestType + "'");
-			toBeAnded = true;
 		}
 
 		if(actionList != null) {
-			if(toBeAnded)
-				query.append(" and ");
+			query.append(" and ");
 
 			query.append("request.action_id in (");	
 			int cnt = 1;
@@ -80,12 +78,10 @@ public class RequestCustomImpl implements RequestCustom {
 				cnt = cnt + 1;
 			}
 			query.append(")");
-			toBeAnded = true;
 		} 
 
 		if(statusList != null) {
-			if(toBeAnded)
-				query.append(" and ");
+			query.append(" and ");
 
 			query.append("request.status in (");	
 			int cnt = 1;
@@ -98,12 +94,10 @@ public class RequestCustomImpl implements RequestCustom {
 				cnt = cnt + 1;
 			}
 			query.append(")");
-			toBeAnded = true;
 		} 
 
 		if(requestedByList != null) {
-			if(toBeAnded)
-				query.append(" and ");
+			query.append(" and ");
 
 			query.append("request.requested_by_id in (");	
 			int cnt = 1;
@@ -116,34 +110,28 @@ public class RequestCustomImpl implements RequestCustom {
 				cnt = cnt + 1;
 			}
 			query.append(")");
-			toBeAnded = true;
 		}
 
 		if(requestedAtStart != null) {
 			if(requestedAtEnd == null)
 				requestedAtEnd = LocalDateTime.now();
 
-			if(toBeAnded)
-				query.append(" and ");
+			query.append(" and ");
 
 			query.append("(request.requested_at between '" + requestedAtStart + "' and '" + requestedAtEnd + "')");	
-			toBeAnded = true;
 		}
 
 		if(completedAtStart != null) {
 			if(completedAtEnd == null)
 				completedAtEnd = LocalDateTime.now();
 
-			if(toBeAnded)
-				query.append(" and ");
+			query.append(" and ");
 
 			query.append("(request.completed_at between '" + completedAtStart + "' and '" + completedAtEnd + "')");	
-			toBeAnded = true;
 		}
 
 		if(artifactclassList != null) {
-			if(toBeAnded)
-				query.append(" and ");
+			query.append(" and ");
 
 			query.append("artifactclass.id in (");	
 			int cnt = 1;
@@ -156,7 +144,6 @@ public class RequestCustomImpl implements RequestCustom {
 				cnt = cnt + 1;
 			}
 			query.append(")");
-			toBeAnded = true;
 		}
 		logger.info("mysql query: " + query);
 		Query q = entityManager.createNativeQuery(query.toString(), Request.class);
