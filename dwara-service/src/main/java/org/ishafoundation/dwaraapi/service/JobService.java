@@ -385,6 +385,8 @@ public class JobService extends DwaraService{
 		// Deleting the artifactvolume record
 		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain); // artifact.getArtifactclass().getDomain());
 		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
+		if(artifactVolumeList == null || artifactVolumeList.size() == 0)
+			artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, null);
 		for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
 			
 			if(nthArtifactVolume.getVolume().getGroupRef().getId() ==  groupVolume.getId()) {

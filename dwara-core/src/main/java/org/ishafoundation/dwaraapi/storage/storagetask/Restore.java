@@ -250,7 +250,7 @@ public class Restore extends AbstractStoragetaskAction{
 			ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);	    	
 	    	for (FileVolume nthFileVolume : fileVolumeList) {
 				ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifact.getId(), nthFileVolume.getId().getVolumeId());
-				if(artifactVolume.getStatus() == ArtifactVolumeStatus.current) {
+				if(artifactVolume.getStatus() == ArtifactVolumeStatus.current || artifactVolume.getStatus() == null) {
 					fileVolume = nthFileVolume;
 					break;
 				}
