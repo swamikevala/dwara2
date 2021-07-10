@@ -93,11 +93,13 @@ private List<Request> getRequestListUsingNativeQuery(RequestType requestType, Li
 
 	StringBuffer query = new StringBuffer();
 	query.append("select request.* from request join artifact1 on artifact1.write_request_id = request.id join artifactclass on artifact1.artifactclass_id = artifactclass.id where artifact1.artifactclass_id not like '%-proxy-low'");
+/*
+ * wont work if requestType = user is passed 	
 	if(requestType != null) {
 		query.append(" and ");
 		query.append("request.type = '" + requestType + "'");
 	}
-
+*/
 	if(actionList != null) {
 		query.append(" and ");
 
