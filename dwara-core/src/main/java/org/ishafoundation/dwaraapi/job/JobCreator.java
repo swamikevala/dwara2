@@ -512,7 +512,7 @@ public class JobCreator {
 	
 	private boolean isJobGoodToBeCreatedOrRequeued(Flowelement nthFlowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact, String groupVolumeId, List<Integer> dependentJobIds) {
 		boolean isJobGoodToBeCreated = true;
-		logger.trace("nthFlowelement " + nthFlowelement.getId() + " sourceJob " + sourceJob.getId() + " request " + request.getId() + " artifactclassId " + artifactclassId + " artifact " +  artifact.getId() + " groupVolumeId " + groupVolumeId );
+		logger.trace("nthFlowelement " + nthFlowelement.getId() + " sourceJob " + (sourceJob != null ? sourceJob.getId() : null) + " request " + (request != null ? request.getId() : null) + " artifactclassId " + artifactclassId + " artifact " +  (artifact != null ? artifact.getId() : null) + " groupVolumeId " + groupVolumeId );
 		logger.trace("Validating if all dependencies Jobs of flowelement " + nthFlowelement + " are created and completed"); // For eg., For checksum-verify job to be created, both checksum-gen and restore are dependencies/prerequisites and had jobs created and completed.
 		List<String> preRequesiteFlowelements = nthFlowelement.getDependencies();
 		if(preRequesiteFlowelements != null) {
