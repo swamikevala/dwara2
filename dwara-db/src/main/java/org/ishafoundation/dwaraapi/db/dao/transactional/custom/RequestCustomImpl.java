@@ -8,6 +8,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
@@ -43,115 +44,9 @@ public class RequestCustomImpl implements RequestCustom {
 	@Override
 	public List<Request> findAllDynamicallyBasedOnParamsOrderByLatest(RequestType requestType, List<Action> actionList, List<Status> statusList, List<User> requestedByList, LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName, List<String> artifactclassList, int pageNumber, int pageSize) {
 
-		//select * from request join artifact1 on artifact1.write_request_id = request.id join artifactclass on artifact1.artifactclass_id = artifactclass.id where artifactclass.id like 'video%' and requested_at>'2021-06';
-
-		/*
-		select request.* from request join artifact1 on artifact1.write_request_id = request.id join artifactclass on artifact1.artifactclass_id = artifactclass.id 
-				where 
-				request.type = 'system' 
-				and 
-				request.action_id in ('ingest','restore')
-				and
-				artifactclass.id in ('video-pub','video-digi-2020-pub') 
-				and 
-				requested_at>'2021-06';
-		 */
-
-		StringBuffer query = new StringBuffer();
-		query.append("select request.* from request join artifact1 on artifact1.write_request_id = request.id join artifactclass on artifact1.artifactclass_id = artifactclass.id where artifact1.artifactclass_id not like '%-proxy-low'");
-		if(requestType != null) {
-			query.append(" and ");
-			query.append("request.type = '" + requestType + "'");
-		}
-
-		if(actionList != null) {
-			query.append(" and ");
-
-			query.append("request.action_id in (");	
-			int cnt = 1;
-
-			for (Action action : actionList) {
-				if(cnt > 1)
-					query.append(",");
-
-				query.append("'" + action + "'");
-				cnt = cnt + 1;
-			}
-			query.append(")");
-		} 
-
-		if(statusList != null) {
-			query.append(" and ");
-
-			query.append("request.status in (");	
-			int cnt = 1;
-
-			for (Status status : statusList) {
-				if(cnt > 1)
-					query.append(",");
-
-				query.append("'" + status + "'");
-				cnt = cnt + 1;
-			}
-			query.append(")");
-		} 
-
-		if(requestedByList != null) {
-			query.append(" and ");
-
-			query.append("request.requested_by_id in (");	
-			int cnt = 1;
-
-			for (User requestedBy : requestedByList) {
-				if(cnt > 1)
-					query.append(",");
-
-				query.append("'" + requestedBy.getId() + "'");
-				cnt = cnt + 1;
-			}
-			query.append(")");
-		}
-
-		if(requestedAtStart != null) {
-			if(requestedAtEnd == null)
-				requestedAtEnd = LocalDateTime.now();
-
-			query.append(" and ");
-
-			query.append("(request.requested_at between '" + requestedAtStart + "' and '" + requestedAtEnd + "')");	
-		}
-
-		if(completedAtStart != null) {
-			if(completedAtEnd == null)
-				completedAtEnd = LocalDateTime.now();
-
-			query.append(" and ");
-
-			query.append("(request.completed_at between '" + completedAtStart + "' and '" + completedAtEnd + "')");	
-		}
-
-		if(artifactclassList != null) {
-			query.append(" and ");
-
-			query.append("artifactclass.id in (");	
-			int cnt = 1;
-
-			for (String artifactclass : artifactclassList) {
-				if(cnt > 1)
-					query.append(",");
-
-				query.append("'" + artifactclass + "'");
-				cnt = cnt + 1;
-			}
-			query.append(")");
-		}
-		logger.info("mysql query: " + query);
-		Query q = entityManager.createNativeQuery(query.toString(), Request.class);
+		if(actionList != null && actionList.size() == 1 && actionList.contains(Action.ingest) && artifactclassList != null && artifactclassList.size() > 0) // used in ingest summary...
+			return getRequestListUsingNativeQuery(requestType, actionList, statusList, requestedByList, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, artifactclassList, pageNumber, pageSize);
 		
-		return q.getResultList();
-
-
-		/*
 		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 
 //		Long count = null;
@@ -166,7 +61,7 @@ public class RequestCustomImpl implements RequestCustom {
         CriteriaQuery<Request> query = cb.createQuery(Request.class);
         Root<Request> requestRoot = query.from(Request.class);
 
-        List<Predicate> predicates = getFramedPredicates(requestRoot, cb, requestType, action, statusList, requestedByList, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, artifactclassList);
+        List<Predicate> predicates = getFramedPredicates(requestRoot, cb, requestType, actionList, statusList, requestedByList, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, artifactclassList);
        	query.select(requestRoot).where(cb.and(predicates.toArray(new Predicate[0])));
        	query.orderBy(cb.desc(requestRoot.get("id"))); // default orderby most recent first
         //List<Request> requestList = entityManager.createQuery(query).setFirstResult((pageNumber - 1) * pageSize).setMaxResults(pageSize).getResultList();
@@ -178,10 +73,118 @@ public class RequestCustomImpl implements RequestCustom {
 //        wrappedRequestList.setTotal(count);
 //        wrappedRequestList.setRequestList(requestList);
         return requestList;
-		 */
+		 
 	}
 
+private List<Request> getRequestListUsingNativeQuery(RequestType requestType, List<Action> actionList, List<Status> statusList, List<User> requestedByList, LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName, List<String> artifactclassList, int pageNumber, int pageSize) {
+	//select * from request join artifact1 on artifact1.write_request_id = request.id join artifactclass on artifact1.artifactclass_id = artifactclass.id where artifactclass.id like 'video%' and requested_at>'2021-06';
 
+	/*
+	select request.* from request join artifact1 on artifact1.write_request_id = request.id join artifactclass on artifact1.artifactclass_id = artifactclass.id 
+			where 
+			request.type = 'system' 
+			and 
+			request.action_id in ('ingest','restore')
+			and
+			artifactclass.id in ('video-pub','video-digi-2020-pub') 
+			and 
+			requested_at>'2021-06';
+	 */
+
+	StringBuffer query = new StringBuffer();
+	query.append("select request.* from request join artifact1 on artifact1.write_request_id = request.id join artifactclass on artifact1.artifactclass_id = artifactclass.id where artifact1.artifactclass_id not like '%-proxy-low'");
+	if(requestType != null) {
+		query.append(" and ");
+		query.append("request.type = '" + requestType + "'");
+	}
+
+	if(actionList != null) {
+		query.append(" and ");
+
+		query.append("request.action_id in (");	
+		int cnt = 1;
+
+		for (Action action : actionList) {
+			if(cnt > 1)
+				query.append(",");
+
+			query.append("'" + action + "'");
+			cnt = cnt + 1;
+		}
+		query.append(")");
+	} 
+
+	if(statusList != null) {
+		query.append(" and ");
+
+		query.append("request.status in (");	
+		int cnt = 1;
+
+		for (Status status : statusList) {
+			if(cnt > 1)
+				query.append(",");
+
+			query.append("'" + status + "'");
+			cnt = cnt + 1;
+		}
+		query.append(")");
+	} 
+
+	if(requestedByList != null) {
+		query.append(" and ");
+
+		query.append("request.requested_by_id in (");	
+		int cnt = 1;
+
+		for (User requestedBy : requestedByList) {
+			if(cnt > 1)
+				query.append(",");
+
+			query.append("'" + requestedBy.getId() + "'");
+			cnt = cnt + 1;
+		}
+		query.append(")");
+	}
+
+	if(requestedAtStart != null) {
+		if(requestedAtEnd == null)
+			requestedAtEnd = LocalDateTime.now();
+
+		query.append(" and ");
+
+		query.append("(request.requested_at between '" + requestedAtStart + "' and '" + requestedAtEnd + "')");	
+	}
+
+	if(completedAtStart != null) {
+		if(completedAtEnd == null)
+			completedAtEnd = LocalDateTime.now();
+
+		query.append(" and ");
+
+		query.append("(request.completed_at between '" + completedAtStart + "' and '" + completedAtEnd + "')");	
+	}
+
+	if(artifactclassList != null) {
+		query.append(" and ");
+
+		query.append("artifactclass.id in (");	
+		int cnt = 1;
+
+		for (String artifactclass : artifactclassList) {
+			if(cnt > 1)
+				query.append(",");
+
+			query.append("'" + artifactclass + "'");
+			cnt = cnt + 1;
+		}
+		query.append(")");
+	}
+	logger.info("mysql query: " + query);
+	Query q = entityManager.createNativeQuery(query.toString(), Request.class);
+	
+	return q.getResultList();
+
+}
 
 	private List<Predicate> getFramedPredicates(Root<Request> requestRoot, CriteriaBuilder cb, RequestType requestType, List<Action> actionList, List<Status> statusList, List<User> requestedByList,
 			LocalDateTime requestedAtStart, LocalDateTime requestedAtEnd, LocalDateTime completedAtStart, LocalDateTime completedAtEnd, String artifactName, List<String> artifactclassList) {
