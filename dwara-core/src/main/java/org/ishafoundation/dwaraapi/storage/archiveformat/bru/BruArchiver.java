@@ -42,11 +42,16 @@ public class BruArchiver extends AbstractBruArchiver {
 	@Override
 	protected String executeRestoreCommand(List<String> restoreCommandParamsList) throws Exception {
 		String mtStatusResponse = null;
+		// TODO - why not call executeCommand(restoreCommandParamsList); // why this speciality?
 		CommandLineExecutionResponse cler = null;
 		try {
 			cler = retriableCommandLineExecutorImpl.executeCommandWithRetriesOnSpecificError(restoreCommandParamsList, DwaraConstants.DRIVE_BUSY_ERROR, false);
 			if(cler.isComplete())
 				mtStatusResponse = cler.getStdOutResponse();
+			else {
+				logger.error("Bru command execution failed " + cler.getFailureReason());
+				throw new Exception("Unable to execute bru command successfully");
+			}
 		}
 		catch (Exception e) {
 			String errorMsg = e.getMessage();
