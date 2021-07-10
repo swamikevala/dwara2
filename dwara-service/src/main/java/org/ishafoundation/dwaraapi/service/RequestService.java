@@ -65,7 +65,7 @@ public class RequestService extends DwaraService{
 	
 	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, List<User> requestedByList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName, List<String> artifactclassList, JobDetailsType jobDetailsType){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
-		logger.info("Retrieving requests " + requestType.name() + ":" + action + ":" + statusList);
+		logger.info("Retrieving requests " + (requestType != null ? requestType.name() : null) + ":" + action + ":" + statusList);
 
 		LocalDateTime requestedAtStart = requestedFrom != null ? requestedFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
 		LocalDateTime requestedAtEnd = requestedTo != null ? requestedTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
