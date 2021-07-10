@@ -186,7 +186,7 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 	}
 
 	private List<String> frameRestoreCommand(int volumeBlocksize, String deviceName, boolean useBuffering, long fileSize, String destinationPath, String filePathNameToBeRestored) {
-		String bruRestoreCommand = "bru -B -xvvvvvvvvv -QV -C -b " + volumeBlocksize + " -f " + deviceName + " " + filePathNameToBeRestored;
+		String bruRestoreCommand = "bru -xvvvvvvvvv -ua -B -QV -C -b " + volumeBlocksize + " -f " + deviceName + " " + filePathNameToBeRestored;
 
 		if(useBuffering) {
 			/*
@@ -207,7 +207,7 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 			int m = (int) Math.max(1, Math.round(fileSizeInGiB/16.0));
 			String mValue = m + "G";
 			
-			bruRestoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e  | bru -B -xvvvvvvvvv -QV -C -Pf -b " + volumeBlocksize + " -f /dev/stdin " + filePathNameToBeRestored;
+			bruRestoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e  | bru -xvvvvvvvvv -ua -B -QV -C -Pf -b " + volumeBlocksize + " -f /dev/stdin " + filePathNameToBeRestored;
 		}
 		logger.info("Bru restoring to " + destinationPath + " - " +  bruRestoreCommand);
 	
