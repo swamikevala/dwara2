@@ -239,9 +239,11 @@ public class JobCreator {
 		
 		if(request.getActionId() == Action.ingest) {
 			
-			continueWithJobCreation = dealWithMarkedFailedJobs(flowelement, sourceJob, request, artifactclassId, artifact);
-			if(!continueWithJobCreation)
-				return jobsCreated;
+			if(sourceJob != null) { // avoid this for fresh ingest
+				continueWithJobCreation = dealWithMarkedFailedJobs(flowelement, sourceJob, request, artifactclassId, artifact);
+				if(!continueWithJobCreation)
+					return jobsCreated;
+			}
 			
 			boolean processingtaskWithDependencyStoragetask = false;
 			if(processingtaskId != null) {
