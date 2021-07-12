@@ -1,3 +1,16 @@
+# Dwara App Version - 2.1.24 (12th Jul 2021)
+### New features
+1) Support for marked_failed functionality
+
+2) Request API - Enhanced to support artifactclass filter for Ingest summary
+
+3) Auto initializer as API endpoint
+
+### Bug fixes
+1) Bru restores - handle non 0 status appropriately
+
+
+
 # Dwara App Version - 2.1.23 (27th Jun 2021)
 ### New features
 1) Proxy conversion command now includes audio channel 2 too
