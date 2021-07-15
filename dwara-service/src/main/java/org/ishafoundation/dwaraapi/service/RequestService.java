@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
@@ -62,7 +63,18 @@ public class RequestService extends DwaraService{
 	
 	@Autowired
 	private ArtifactDeleter artifactDeleter; 
+
 	
+    public RequestResponse getRequest(int requestId) throws Exception{
+    	Optional<Request> requestRecord = requestDao.findById(requestId);
+    	if(!requestRecord.isPresent())
+    		throw new Exception(requestId + " Request Id not found in the system");
+    	
+    	Request request = requestRecord.get();
+    	RequestType requestType = request.getType();
+		return frameRequestResponse(request, requestType, requestType == RequestType.user ? request.getId() : request.getRequestRef().getId(), null);
+	}
+
 	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, List<User> requestedByList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName, List<String> artifactclassList, JobDetailsType jobDetailsType){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
 		logger.info("Retrieving requests " + (requestType != null ? requestType.name() : null) + ":" + action + ":" + statusList);

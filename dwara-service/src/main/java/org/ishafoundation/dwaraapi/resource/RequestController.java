@@ -43,6 +43,25 @@ public class RequestController {
 	@Autowired
 	private UserDao userDao;
 		
+	@GetMapping("/request/{requestId}")
+    public ResponseEntity<RequestResponse> getRequest(@PathVariable("requestId") int requestId) {
+    	logger.info("/request/" + requestId);
+    	RequestResponse requestResponse = null;
+    	try {
+    		requestResponse = requestService.getRequest(requestId);
+		}catch (Exception e) {
+			String errorMsg = "Unable to get Request - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+    	return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
+    }
+
+    
 	/**
 	 * Assuming all params are mandatory to be passed...
 	 * 
