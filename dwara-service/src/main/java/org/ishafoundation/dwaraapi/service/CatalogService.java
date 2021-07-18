@@ -258,7 +258,7 @@ public class CatalogService extends DwaraService{
             condition = condition.substring(0, condition.length() -1);
             condition += ")";
         }
-        String query = "select a.id, a.artifactclass_id, a.name, a.total_size, b.volume_id, c.group_ref_id, d.completed_at, e.name as ingestedBy, c.archiveformat_id" 
+        String query = "select a.id, a.artifactclass_id, a.name, a.total_size, b.volume_id, c.group_ref_id, d.completed_at, e.name as ingestedBy, c.archiveformat_id, b.name as oldName" 
         + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.deleted=0"
         + condition
@@ -279,14 +279,15 @@ public class CatalogService extends DwaraService{
                 _ingestedDate = ((Timestamp) record[6]).toLocalDateTime().toString();
             String _ingestedBy = (String) record[7];
             String _format = (String) record[8];
+            String _oldName = (String) record[9];
 
-            list.add(new ArtifactCatalog(_artifactId, _artifactClass, _artifactName, _size, _volumeId, _groupVolume, _ingestedDate, _ingestedBy, _format));
+            list.add(new ArtifactCatalog(_artifactId, _artifactClass, _artifactName, _size, _volumeId, _groupVolume, _ingestedDate, _ingestedBy, _format, _oldName));
         });
         // logger.info("list size: " + list.size());
         return list;
     }
 
-    public List<ArtifactCatalog> findArtifactsCatalog(String[] artifactClass, String[] volumeGroup, String[] copyNumber, String volumeId, String startDate, String endDate, String artifactName, boolean deleted) {
+    public List<ArtifactCatalog> findArtifactsCatalog(String[] artifactClass, String[] volumeGroup, String[] copyNumber, String volumeId, String startDate, String endDate, String artifactName, boolean deleted, boolean softRenamed) {
         String condition = "";
         if(artifactClass != null && artifactClass.length >=1 && !artifactClass[0].equals("all")) {
             condition += " and a.artifactclass_id in (";
@@ -322,7 +323,11 @@ public class CatalogService extends DwaraService{
             String name = artifactName.replaceAll(" ", "%");
             condition += " and a.name like '%" + name + "%'";
         }
-        String query = "select a.id, a.artifactclass_id, a.name, a.total_size, b.volume_id, c.group_ref_id, d.completed_at, e.name as ingestedBy, c.archiveformat_id" 
+
+        if(softRenamed) {
+            condition += " and a.name != b.name";
+        }
+        String query = "select a.id, a.artifactclass_id, a.name, a.total_size, b.volume_id, c.group_ref_id, d.completed_at, e.name as ingestedBy, c.archiveformat_id, b.name as oldName" 
         + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.deleted=" + deleted
         + condition
@@ -343,8 +348,9 @@ public class CatalogService extends DwaraService{
                 _ingestedDate = ((Timestamp) record[6]).toLocalDateTime().toString();
             String _ingestedBy = (String) record[7];
             String _format = (String) record[8];
+            String _oldName = (String) record[9];
 
-            list.add(new ArtifactCatalog(_artifactId, _artifactClass, _artifactName, _size, _volumeId, _groupVolume, _ingestedDate, _ingestedBy, _format));
+            list.add(new ArtifactCatalog(_artifactId, _artifactClass, _artifactName, _size, _volumeId, _groupVolume, _ingestedDate, _ingestedBy, _format, _oldName));
         });
         // logger.info("list size: " + list.size());
         return list;
