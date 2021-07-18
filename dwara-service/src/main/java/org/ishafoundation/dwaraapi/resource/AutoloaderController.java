@@ -1,16 +1,16 @@
 package org.ishafoundation.dwaraapi.resource;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.AutoloaderResponse;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.Element;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeListSorter;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.ToLoadTape;
 import org.ishafoundation.dwaraapi.api.resp.mapdrives.MapDrivesResponse;
@@ -128,9 +128,9 @@ public class AutoloaderController {
 	}
 	
 	@GetMapping(value = "/autoloader/handleTapes", produces = "application/json")
-	public ResponseEntity<Set<Tape>> handleTapes(){
+	public ResponseEntity<List<Tape>> handleTapes(){
 		logger.info("/autoloader/handleTapes");
-		Set<Tape> handleTapeList = new HashSet<Tape>();
+		List<Tape> handleTapeList = new ArrayList<Tape>();
 		try {
 			List<String> onlineVolumeList = new ArrayList<String>();
 			Map<String, String> onlineVolume_Autoloader_Map = new HashMap<String, String>();
@@ -260,6 +260,7 @@ public class AutoloaderController {
 			else
 				throw new DwaraException(errorMsg, null);
 		}
+		Collections.sort(handleTapeList, new TapeListSorter()); // order the list by slot no
 		return ResponseEntity.status(HttpStatus.OK).body(handleTapeList);
 	}
 	
