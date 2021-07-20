@@ -10,7 +10,8 @@ import java.util.Set;
 
 import org.ishafoundation.dwaraapi.api.resp.autoloader.AutoloaderResponse;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeListSorter;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeListSorterUsingSlot;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeListSorterUsingBarcode;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.ToLoadTape;
 import org.ishafoundation.dwaraapi.api.resp.mapdrives.MapDrivesResponse;
@@ -260,7 +261,8 @@ public class AutoloaderController {
 			else
 				throw new DwaraException(errorMsg, null);
 		}
-		Collections.sort(handleTapeList, new TapeListSorter()); // order the list by slot no
+		Collections.sort(handleTapeList, new TapeListSorterUsingBarcode()); // first order the list by barcode
+		Collections.sort(handleTapeList, new TapeListSorterUsingSlot()); // next order the list by slot no
 		return ResponseEntity.status(HttpStatus.OK).body(handleTapeList);
 	}
 	
