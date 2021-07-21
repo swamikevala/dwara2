@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityResult;
@@ -258,45 +259,32 @@ public class CatalogService extends DwaraService{
             condition = condition.substring(0, condition.length() -1);
             condition += ")";
         }
-        String query = "select a.id, a.artifactclass_id, a.name, a.total_size, b.volume_id, c.group_ref_id, d.completed_at, e.name as ingestedBy, c.archiveformat_id, b.name as oldName" 
+        String query = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
         + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.deleted=0"
         + condition
-        + " order by completed_at desc";
+        + " group by a.id order by completed_at desc";
         Query q = entityManager.createNativeQuery(query);
         // logger.info("mysql query: " + query);
         List<Object[]> results = q.getResultList();
         List<ArtifactCatalog> list = new ArrayList<ArtifactCatalog>();
         results.stream().forEach((record) -> {
-            int _artifactId = ((Integer) record[0]).intValue();
-            String _artifactClass = (String) record[1];
-            String _artifactName = (String) record[2];
-            long _size = ((BigInteger)record[3]).longValue();
-            String _volumeId = (String) record[4];
-            String _groupVolume = (String) record[5];
-            String _ingestedDate = "";
-            if(record[6] != null)
-                _ingestedDate = ((Timestamp) record[6]).toLocalDateTime().toString();
-            String _ingestedBy = (String) record[7];
-            String _format = (String) record[8];
-            String _oldName = (String) record[9];
-
-            list.add(new ArtifactCatalog(_artifactId, _artifactClass, _artifactName, _size, _volumeId, _groupVolume, _ingestedDate, _ingestedBy, _format, _oldName));
+            list.add(handleArtifactCatalogData(record));
         });
         // logger.info("list size: " + list.size());
-        return list;
+        return handleProxyVolumeId(list);
     }
 
     public List<ArtifactCatalog> findArtifactsCatalog(String[] artifactClass, String[] volumeGroup, String[] copyNumber, String volumeId, String startDate, String endDate, String artifactName, boolean deleted, boolean softRenamed) {
         String condition = "";
-        if(artifactClass != null && artifactClass.length >=1 && !artifactClass[0].equals("all")) {
+        /* if(artifactClass != null && artifactClass.length >=1 && !artifactClass[0].equals("all")) {
             condition += " and a.artifactclass_id in (";
             for(String a: artifactClass) {
                 condition += "'" + a + "',";
             }
             condition = condition.substring(0, condition.length() -1);
             condition += ")";
-        }
+        } */
         if(volumeGroup != null && volumeGroup.length >=1 && !volumeGroup[0].equals("all")){
             condition += " and c.group_ref_id in (";
             for(String a: volumeGroup) {
@@ -305,14 +293,14 @@ public class CatalogService extends DwaraService{
             condition = condition.substring(0, condition.length() -1);
             condition += ")";
         }
-        if(copyNumber != null && copyNumber.length >= 1 && !copyNumber[0].equals("all")) {
+        /* if(copyNumber != null && copyNumber.length >= 1 && !copyNumber[0].equals("all")) {
             condition += " and substr(c.group_ref_id, 2, 1) in (";
             for(String a: copyNumber) {
                 condition += "'" + a + "',";
             }
             condition = condition.substring(0, condition.length() -1);
             condition += ")";
-        }
+        } */
         if(volumeId != "")
             condition += " and b.volume_id like '%" + volumeId + "%'";
         if(startDate != "")
@@ -327,32 +315,64 @@ public class CatalogService extends DwaraService{
         if(softRenamed) {
             condition += " and a.name != b.name";
         }
-        String query = "select a.id, a.artifactclass_id, a.name, a.total_size, b.volume_id, c.group_ref_id, d.completed_at, e.name as ingestedBy, c.archiveformat_id, b.name as oldName" 
+        String query = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
         + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.deleted=" + deleted
         + condition
-        + " order by completed_at desc";
+        + " group by a.id order by completed_at desc";
         Query q = entityManager.createNativeQuery(query);
-        // logger.info("mysql query: " + query);
+        logger.info("mysql query: " + query);
         List<Object[]> results = q.getResultList();
         List<ArtifactCatalog> list = new ArrayList<ArtifactCatalog>();
         results.stream().forEach((record) -> {
-            int _artifactId = ((Integer) record[0]).intValue();
-            String _artifactClass = (String) record[1];
-            String _artifactName = (String) record[2];
-            long _size = ((BigInteger)record[3]).longValue();
-            String _volumeId = (String) record[4];
-            String _groupVolume = (String) record[5];
-            String _ingestedDate = "";
-            if(record[6] != null)
-                _ingestedDate = ((Timestamp) record[6]).toLocalDateTime().toString();
-            String _ingestedBy = (String) record[7];
-            String _format = (String) record[8];
-            String _oldName = (String) record[9];
-
-            list.add(new ArtifactCatalog(_artifactId, _artifactClass, _artifactName, _size, _volumeId, _groupVolume, _ingestedDate, _ingestedBy, _format, _oldName));
+            list.add(handleArtifactCatalogData(record));
         });
         // logger.info("list size: " + list.size());
-        return list;
+        return handleProxyVolumeId(list);
+    }
+
+    private ArtifactCatalog handleArtifactCatalogData(Object[] record) {
+        int i = 0;
+        int _artifactId = ((Integer) record[i++]).intValue();
+        int _artifactRefId = -1;
+        if(record[i] != null)
+            _artifactRefId = ((Integer) record[i]).intValue();
+        i++;
+        String _artifactClass = (String) record[i++];
+        String _artifactName = (String) record[i++];
+        long _size = ((BigInteger)record[i++]).longValue();
+        String _volumeId = (String) record[i++];
+        String _ingestedDate = "";
+        if(record[i] != null)
+            _ingestedDate = ((Timestamp) record[i]).toLocalDateTime().toString();
+        i++;
+        String _ingestedBy = (String) record[i++];
+        String _oldName = (String) record[i];
+
+        return new ArtifactCatalog(_artifactId, _artifactRefId, _artifactClass, _artifactName, _size, _volumeId, _ingestedDate, _ingestedBy, _oldName);
+    }
+
+    private List<ArtifactCatalog> handleProxyVolumeId(List<ArtifactCatalog> list) {
+        List<ArtifactCatalog> result = new ArrayList<ArtifactCatalog>();
+        HashMap<Integer, ArtifactCatalog> listArtifact = new HashMap<Integer, ArtifactCatalog>();
+        HashMap<Integer, ArtifactCatalog> listProxy = new HashMap<Integer, ArtifactCatalog>();
+        list.forEach(artifact -> {
+            if(artifact.artifactRefId == -1) {
+                listArtifact.put(artifact.artifactId, artifact);
+            }
+            else {
+                listProxy.put(artifact.artifactRefId, artifact);
+            }
+        });
+
+        for(Map.Entry<Integer, ArtifactCatalog> entry : listArtifact.entrySet()) {
+            Integer id = entry.getKey();
+            if(listProxy.containsKey(id)) {
+                entry.getValue().proxyVolumeId = listProxy.get(id).volumeId;
+            }
+            result.add(entry.getValue());
+        }
+        
+        return result;
     }
 }
