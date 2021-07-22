@@ -26,6 +26,9 @@ UPDATE `action_artifactclass_flow` SET `active` = 1 WHERE `artifactclass_id` = '
 
 UPDATE `flowelement` SET `task_config` = '{"exclude_if": {"artifactclass_regex": ".*-priv2.*"}}' WHERE `artifactclass_id` = 'video-mam-update';
 
+-- Needed for rewrite action implemented as a core flow
+UPDATE `action` SET `type` = 'complex' WHERE id='rewrite';
+
 SET foreign_key_checks = 1;
 
 
