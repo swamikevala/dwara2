@@ -355,9 +355,9 @@ public class CatalogService extends DwaraService{
         // logger.info("list size: " + list.size());
 
         //Query proxy
-        String query3 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
-        + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id"
+        String query3 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName, group_concat(f.status order by b.volume_id separator ',') as proxyStatus" 
+        + " from artifact1 a join artifact1_volume b join volume c join request d join user e join job f"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and f.input_artifact_id=a.artifact_ref_id and f.output_artifact_id=a.id and f.processingtask_id='video-proxy-low-gen'"
         + " and a.artifact_ref_id in (" + query + ")"
         + " group by a.id order by completed_at desc";
         Query qProxy = entityManager.createNativeQuery(query3);
@@ -365,7 +365,9 @@ public class CatalogService extends DwaraService{
         List<Object[]> results2 = qProxy.getResultList();
         List<ArtifactCatalog> listProxy = new ArrayList<ArtifactCatalog>();
         results2.stream().forEach((record) -> {
-            listProxy.add(handleArtifactCatalogData(record));
+            ArtifactCatalog ac = handleArtifactCatalogData(record);
+
+            listProxy.add(ac);
         });
 
         return handleProxyVolumeId(list, listProxy);
@@ -387,9 +389,15 @@ public class CatalogService extends DwaraService{
             _ingestedDate = ((Timestamp) record[i]).toLocalDateTime().toString();
         i++;
         String _ingestedBy = (String) record[i++];
-        String _oldName = (String) record[i];
+        String _oldName = (String) record[i++];
+        String _proxyStatus = "";
+        if(record.length > i) {
+            _proxyStatus = (String)record[i];
+        }
 
-        return new ArtifactCatalog(_artifactId, _artifactRefId, _artifactClass, _artifactName, _size, _volumeId, _ingestedDate, _ingestedBy, _oldName);
+        ArtifactCatalog ac = new ArtifactCatalog(_artifactId, _artifactRefId, _artifactClass, _artifactName, _size, _volumeId, _ingestedDate, _ingestedBy, _oldName);
+        ac.proxyStatus = _proxyStatus;
+        return ac;
     }
 
     private List<ArtifactCatalog> handleProxyVolumeId(List<ArtifactCatalog> listArtifact, List<ArtifactCatalog> listProxy) {
@@ -408,6 +416,7 @@ public class CatalogService extends DwaraService{
             Integer id = entry.getKey();
             if(mapProxy.containsKey(id)) {
                 entry.getValue().proxyVolumeId = mapProxy.get(id).volumeId;
+                entry.getValue().proxyStatus = mapProxy.get(id).proxyStatus;
             }
             result.add(entry.getValue());
         }

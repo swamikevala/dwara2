@@ -41,6 +41,7 @@ public class ArtifactCatalog implements Serializable{
     public String format;
     public String oldName;
     public String proxyVolumeId;
+    public String proxyStatus;
 
     public ArtifactCatalog() {
 
