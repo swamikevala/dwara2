@@ -88,7 +88,7 @@ public class ProcessingJobHelper {
 			try {
 				Files.walkFileTree(Paths.get(inputArtifactPath), filetypePathnameReqexVisitor);
 			} catch (IOException e) {
-				// swallow for now
+				logger.error("Unable to walkFileTree for " + inputArtifactPath + ":" + e.getMessage(), e);
 			}
 			if(filetypePathnameReqexVisitor != null) {
 				filesToBeUsed = filetypePathnameReqexVisitor.getMatchedFiles();

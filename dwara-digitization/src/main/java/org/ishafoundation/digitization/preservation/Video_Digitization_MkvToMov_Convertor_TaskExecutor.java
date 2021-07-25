@@ -63,6 +63,9 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		CommandLineExecutionResponse conversionCommandLineExecutionResponse = createProcessAndExecuteCommand(fileId+"~"+taskName , conversionCommandParamsList);
 		if(conversionCommandLineExecutionResponse.isComplete())
 			logger.info("Mov Conversion successful - " + outputFileTargetLocation);
+		
+		// delete the mkv
+		new File(sourceFilePathname).delete();
 	
 		// TODO : better this...
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();

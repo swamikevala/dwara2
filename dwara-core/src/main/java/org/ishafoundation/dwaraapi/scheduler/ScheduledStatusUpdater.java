@@ -8,14 +8,12 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
@@ -23,6 +21,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
@@ -42,10 +41,9 @@ import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
-import org.ishafoundation.dwaraapi.enumreferences.VolumeAction;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
-import org.ishafoundation.dwaraapi.service.UserRequestHelper;
+import org.ishafoundation.dwaraapi.service.TFileVolumeDeleter;
 import org.ishafoundation.dwaraapi.staged.StagedFileOperations;
 import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
 import org.ishafoundation.dwaraapi.utils.StatusUtil;
@@ -101,7 +99,10 @@ public class ScheduledStatusUpdater {
     private StagedFileEvaluator stagedFileEvaluator;
 	
 	@Autowired
-	private UserRequestHelper userRequestHelper;
+	private TFileVolumeDeleter tFileVolumeDeleter;
+	
+	@Autowired
+	private FileRepositoryUtil fileRepositoryUtil;
 	
 	@Value("${scheduler.statusUpdater.enabled:true}")
 	private boolean isEnabled;
@@ -256,7 +257,7 @@ public class ScheduledStatusUpdater {
 									try {
 										FileUtils.deleteDirectory(restoreTmpFolder);
 									} catch (IOException e) {
-										e.printStackTrace();
+										logger.error("Unable to delete directory " + restoreTmpFolder + " : " + e.getMessage(), e);
 									}
 									
 									Integer artifactId = job.getInputArtifactId();
@@ -281,6 +282,8 @@ public class ScheduledStatusUpdater {
 											if(nthArtifactVolume.getVolume().getGroupRef().getCopy().getId() == rewriteCopy && nthArtifactVolume.getVolume().getId() != job.getVolume().getId()) {
 												nthArtifactVolume.setStatus(ArtifactVolumeStatus.deleted);
 												domainSpecificArtifactVolumeRepository.save(nthArtifactVolume);
+												
+												softDeleteTFileVolumeEntries(Domain.ONE, artifactId, nthArtifactVolume.getId().getVolumeId());		
 												break;
 											}
 										}
@@ -293,6 +296,8 @@ public class ScheduledStatusUpdater {
 										artifactVolume.setStatus(artifactVolumeStatus);
 										
 										domainSpecificArtifactVolumeRepository.save(artifactVolume);
+
+										// TODO : needed? softDeleteTFileVolumeEntries(Domain.ONE, artifactId, volumeId);
 									}
 									
 									// also delete the goodcopy/source restored content too
@@ -363,6 +368,18 @@ public class ScheduledStatusUpdater {
 				}
 			}
 		}
+	}
+	
+	private void softDeleteTFileVolumeEntries(Domain domain, int artifactId, String volumeId) {
+		Artifact nthArtifact = domainUtil.getDomainSpecificArtifact(artifactId);
+		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = null;
+		try {
+			artifactFileList = fileRepositoryUtil.getArtifactFileList(nthArtifact, domain);
+		} catch (Exception e) {
+			logger.error("Unable to getArtifactFileList for " + nthArtifact.getId() + " : " + e.getMessage(), e);
+		}
+		List<TFile> artifactTFileList  = tFileDao.findAllByArtifactId(nthArtifact.getId()); 
+		tFileVolumeDeleter.softDeleteTFileVolumeEntries(Domain.ONE, artifactFileList, artifactTFileList, nthArtifact, volumeId);
 	}
 	
 	private void updateArtifactSizeAndCount(Job job, int artifactId) {
