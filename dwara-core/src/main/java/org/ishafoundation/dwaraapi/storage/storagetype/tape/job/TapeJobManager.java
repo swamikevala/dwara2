@@ -385,8 +385,12 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 				String message = volumeTag + " not inside the library ";
 				logger.debug(message + tapeLibraryName +" . Skipping job - " + nthStorageJob.getJob().getId()); 
 				Job nthJob = nthStorageJob.getJob();
-				nthJob.setMessage(message);
-				jobDao.save(nthJob);
+				if(!message.equals(nthJob.getMessage())) {
+					nthJob.setMessage(message);
+					Job latestJobObjFromDb = jobDao.findById(nthJob.getId()).get();
+					if(latestJobObjFromDb.getStatus() != Status.cancelled) // if a job is cancelled in another thread - dont save the object as it overwrites the status
+						jobDao.save(nthJob);
+				}
 			}
 		}
 	
