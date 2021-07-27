@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityResult;
@@ -258,35 +259,43 @@ public class CatalogService extends DwaraService{
             condition = condition.substring(0, condition.length() -1);
             condition += ")";
         }
-        String query = "select a.id, a.artifactclass_id, a.name, a.total_size, b.volume_id, c.group_ref_id, d.completed_at, e.name as ingestedBy, c.archiveformat_id" 
+        String query = "select distinct a.id" 
         + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.deleted=0"
-        + condition
-        + " order by completed_at desc";
-        Query q = entityManager.createNativeQuery(query);
-        // logger.info("mysql query: " + query);
+        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.artifact_ref_id is null and a.deleted=0"
+        + condition;
+
+        String query2 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
+        + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and a.deleted=0"
+        + " and a.id in (" + query + ")"
+        + " group by a.id order by completed_at desc";
+        Query q = entityManager.createNativeQuery(query2);
+        logger.info("mysql query: " + query2);
         List<Object[]> results = q.getResultList();
         List<ArtifactCatalog> list = new ArrayList<ArtifactCatalog>();
         results.stream().forEach((record) -> {
-            int _artifactId = ((Integer) record[0]).intValue();
-            String _artifactClass = (String) record[1];
-            String _artifactName = (String) record[2];
-            long _size = ((BigInteger)record[3]).longValue();
-            String _volumeId = (String) record[4];
-            String _groupVolume = (String) record[5];
-            String _ingestedDate = "";
-            if(record[6] != null)
-                _ingestedDate = ((Timestamp) record[6]).toLocalDateTime().toString();
-            String _ingestedBy = (String) record[7];
-            String _format = (String) record[8];
-
-            list.add(new ArtifactCatalog(_artifactId, _artifactClass, _artifactName, _size, _volumeId, _groupVolume, _ingestedDate, _ingestedBy, _format));
+            list.add(handleArtifactCatalogData(record));
         });
         // logger.info("list size: " + list.size());
-        return list;
+
+        //Query proxy
+        String query3 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
+        + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and a.deleted=0"
+        + " and a.artifact_ref_id in (" + query + ")"
+        + " group by a.id order by completed_at desc";
+        Query qProxy = entityManager.createNativeQuery(query3);
+        logger.info("mysql query: " + query3);
+        List<Object[]> results2 = qProxy.getResultList();
+        List<ArtifactCatalog> listProxy = new ArrayList<ArtifactCatalog>();
+        results2.stream().forEach((record) -> {
+            listProxy.add(handleArtifactCatalogData(record));
+        });
+
+        return handleProxyVolumeId(list, listProxy);
     }
 
-    public List<ArtifactCatalog> findArtifactsCatalog(String[] artifactClass, String[] volumeGroup, String[] copyNumber, String volumeId, String startDate, String endDate, String artifactName, boolean deleted) {
+    public List<ArtifactCatalog> findArtifactsCatalog(String[] artifactClass, String[] volumeGroup, String[] copyNumber, String volumeId, String startDate, String endDate, String artifactName, boolean deleted, boolean softRenamed) {
         String condition = "";
         if(artifactClass != null && artifactClass.length >=1 && !artifactClass[0].equals("all")) {
             condition += " and a.artifactclass_id in (";
@@ -304,14 +313,14 @@ public class CatalogService extends DwaraService{
             condition = condition.substring(0, condition.length() -1);
             condition += ")";
         }
-        if(copyNumber != null && copyNumber.length >= 1 && !copyNumber[0].equals("all")) {
+        /* if(copyNumber != null && copyNumber.length >= 1 && !copyNumber[0].equals("all")) {
             condition += " and substr(c.group_ref_id, 2, 1) in (";
             for(String a: copyNumber) {
                 condition += "'" + a + "',";
             }
             condition = condition.substring(0, condition.length() -1);
             condition += ")";
-        }
+        } */
         if(volumeId != "")
             condition += " and b.volume_id like '%" + volumeId + "%'";
         if(startDate != "")
@@ -322,31 +331,96 @@ public class CatalogService extends DwaraService{
             String name = artifactName.replaceAll(" ", "%");
             condition += " and a.name like '%" + name + "%'";
         }
-        String query = "select a.id, a.artifactclass_id, a.name, a.total_size, b.volume_id, c.group_ref_id, d.completed_at, e.name as ingestedBy, c.archiveformat_id" 
+
+        if(softRenamed) {
+            condition += " and a.name != b.name";
+        }
+        String query = "select distinct a.id" 
         + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.deleted=" + deleted
-        + condition
-        + " order by completed_at desc";
-        Query q = entityManager.createNativeQuery(query);
-        // logger.info("mysql query: " + query);
+        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.artifact_ref_id is null and a.deleted=" + deleted
+        + condition;
+
+        String query2 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
+        + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id"
+        + " and a.id in (" + query + ")"
+        + " group by a.id order by completed_at desc";
+        Query q = entityManager.createNativeQuery(query2);
+        logger.info("mysql query: " + query2);
         List<Object[]> results = q.getResultList();
         List<ArtifactCatalog> list = new ArrayList<ArtifactCatalog>();
         results.stream().forEach((record) -> {
-            int _artifactId = ((Integer) record[0]).intValue();
-            String _artifactClass = (String) record[1];
-            String _artifactName = (String) record[2];
-            long _size = ((BigInteger)record[3]).longValue();
-            String _volumeId = (String) record[4];
-            String _groupVolume = (String) record[5];
-            String _ingestedDate = "";
-            if(record[6] != null)
-                _ingestedDate = ((Timestamp) record[6]).toLocalDateTime().toString();
-            String _ingestedBy = (String) record[7];
-            String _format = (String) record[8];
-
-            list.add(new ArtifactCatalog(_artifactId, _artifactClass, _artifactName, _size, _volumeId, _groupVolume, _ingestedDate, _ingestedBy, _format));
+            list.add(handleArtifactCatalogData(record));
         });
         // logger.info("list size: " + list.size());
-        return list;
+
+        //Query proxy
+        String query3 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName, group_concat(f.status order by b.volume_id separator ',') as proxyStatus" 
+        + " from artifact1 a join artifact1_volume b join volume c join request d join user e join job f"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and f.input_artifact_id=a.artifact_ref_id and f.output_artifact_id=a.id and f.processingtask_id='video-proxy-low-gen'"
+        + " and a.artifact_ref_id in (" + query + ")"
+        + " group by a.id order by completed_at desc";
+        Query qProxy = entityManager.createNativeQuery(query3);
+        logger.info("mysql query: " + query3);
+        List<Object[]> results2 = qProxy.getResultList();
+        List<ArtifactCatalog> listProxy = new ArrayList<ArtifactCatalog>();
+        results2.stream().forEach((record) -> {
+            ArtifactCatalog ac = handleArtifactCatalogData(record);
+
+            listProxy.add(ac);
+        });
+
+        return handleProxyVolumeId(list, listProxy);
+    }
+
+    private ArtifactCatalog handleArtifactCatalogData(Object[] record) {
+        int i = 0;
+        int _artifactId = ((Integer) record[i++]).intValue();
+        int _artifactRefId = -1;
+        if(record[i] != null)
+            _artifactRefId = ((Integer) record[i]).intValue();
+        i++;
+        String _artifactClass = (String) record[i++];
+        String _artifactName = (String) record[i++];
+        long _size = ((BigInteger)record[i++]).longValue();
+        String _volumeId = (String) record[i++];
+        String _ingestedDate = "";
+        if(record[i] != null)
+            _ingestedDate = ((Timestamp) record[i]).toLocalDateTime().toString();
+        i++;
+        String _ingestedBy = (String) record[i++];
+        String _oldName = (String) record[i++];
+        String _proxyStatus = "";
+        if(record.length > i) {
+            _proxyStatus = (String)record[i];
+        }
+
+        ArtifactCatalog ac = new ArtifactCatalog(_artifactId, _artifactRefId, _artifactClass, _artifactName, _size, _volumeId, _ingestedDate, _ingestedBy, _oldName);
+        ac.proxyStatus = _proxyStatus;
+        return ac;
+    }
+
+    private List<ArtifactCatalog> handleProxyVolumeId(List<ArtifactCatalog> listArtifact, List<ArtifactCatalog> listProxy) {
+        List<ArtifactCatalog> result = new ArrayList<ArtifactCatalog>();
+        HashMap<Integer, ArtifactCatalog> mapArtifact = new HashMap<Integer, ArtifactCatalog>();
+        HashMap<Integer, ArtifactCatalog> mapProxy = new HashMap<Integer, ArtifactCatalog>();
+        listArtifact.forEach(artifact -> {
+            mapArtifact.put(artifact.artifactId, artifact);
+        });
+
+        listProxy.forEach(artifact -> {
+            mapProxy.put(artifact.artifactRefId, artifact);
+        });
+
+        for(Map.Entry<Integer, ArtifactCatalog> entry : mapArtifact.entrySet()) {
+            Integer id = entry.getKey();
+            if(mapProxy.containsKey(id)) {
+                entry.getValue().proxyVolumeId = mapProxy.get(id).volumeId;
+                entry.getValue().proxyStatus = mapProxy.get(id).proxyStatus;
+            }
+            result.add(entry.getValue());
+        }
+        
+        return result;
     }
 }
