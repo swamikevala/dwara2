@@ -9,4 +9,5 @@ public class ArtifactCatalogRequest {
     public String endDate;
     public String artifactName;
     public boolean deleted;
+    public boolean softRenamed;
 }
