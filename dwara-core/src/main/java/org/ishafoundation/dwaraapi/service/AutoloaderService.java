@@ -160,7 +160,7 @@ public class AutoloaderService{
 			
 			tape.setAddress(tapeOnLibrary.getAddress());
 			
-			String volumeGroup = StringUtils.substring(barcode, 0, 2);
+			String volumeGroup = null; // StringUtils.substring(barcode, 0, 2);
 			int volumeGroupIdLength = 0;
 			for (String volumeGroupId : volumeGroupIdSet) {
 				if(barcode.contains(volumeGroupId) && volumeGroupId.length() > volumeGroupIdLength) {
@@ -201,7 +201,7 @@ public class AutoloaderService{
 				*/
 				usageStatus = TapeUsageStatus.no_job_queued;
 				
-				if(barcode.startsWith(volumeGroup)) {
+				if(volumeGroup != null && barcode.startsWith(volumeGroup)) {
 					tapeStatus = TapeStatus.blank;
 				}
 				
