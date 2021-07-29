@@ -196,7 +196,7 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		proxyGenerationCommandParamsList.add("-map");
 		proxyGenerationCommandParamsList.add("0:v:0");
 		proxyGenerationCommandParamsList.add("-map");
-		proxyGenerationCommandParamsList.add("0:a:0");
+		proxyGenerationCommandParamsList.add("0:a:0?");
 		proxyGenerationCommandParamsList.add("-map");
 		proxyGenerationCommandParamsList.add("0:a:1?");
 		if(ffmpegThreadConfiguration.getVideoProxyLowGen().getThreads() > 0) {
