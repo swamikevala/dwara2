@@ -296,8 +296,8 @@ public class ScheduledStatusUpdater {
 										artifactVolume.setStatus(artifactVolumeStatus);
 										
 										domainSpecificArtifactVolumeRepository.save(artifactVolume);
-
-										// TODO : needed? softDeleteTFileVolumeEntries(Domain.ONE, artifactId, volumeId);
+										if(artifactVolumeStatus == ArtifactVolumeStatus.deleted) // TODO : Figure out what should happen to migrate... NOTE : migrate and artifact rewrite piece not tested.
+											softDeleteTFileVolumeEntries(Domain.ONE, artifactId, volumeId);
 									}
 									
 									// also delete the goodcopy/source restored content too
