@@ -1,3 +1,31 @@
+# Dwara App Version - 2.1.25 (2nd Aug 2021)
+### New features
+1) Request API now supports single request
+
+2) Folder catalog changes
+
+
+### Bug fixes
+
+1) PROD Restore failures - Renamed artifacts move failures fixed
+
+2) Tape UI - avoid showing dupes, sort by slot id for removes, sort by barcode for adds   
+
+3) Rewrite need to flag *filevolume.deleted for the defective ones
+
+4) Handle "Unknown" tapes in UI view and autoinitialisation
+
+5) Extra guard while saving the job object in TapeJobManager to avoid concurrent request on it(eg., Cancel) causing jobs status to be overwritten
+
+6) Directory watcher - Dont register subfolders under watched dir - For eg.,  H-BETACAM-541/H-BETACAM-543 - H-BETACAM-543 should not be registerd and only H-BETACAM-541 need to be registered which will fail validation
+
+  
+### Upgrade steps
+
+1) Tapes UI - sorting etc., - not tested ensure its working after rollout and fix if anything needed right there and roll it out again... 
+
+2) Rollout Directory watcher
+
 # Dwara App Version - 2.1.24 (12th Jul 2021)
 ### New features
 1) Support for marked_failed functionality
@@ -8,7 +36,6 @@
 
 ### Bug fixes
 1) Bru restores - handle non 0 status appropriately
-
 
 
 # Dwara App Version - 2.1.23 (27th Jun 2021)
