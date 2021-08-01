@@ -261,10 +261,16 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 								}
 								// check if the last completed tape job' dependency is in the storageJobsList - 
 								// when a write job completes and creates its dependent restore job after the storageJobsList is prepared by the scheduled JobManager 
-								// we should skip the cycle so that the restore job gets in the list in the next cycle.
+								// the restore job will not be in the storageJobsList - ensure we pick it up here 
 								if(dependentJob != null && !isDependentJobInTheStorageList) {
-									selectedStorageJob = storageJobUtil.wrapJobWithStorageInfo(dependentJob);
-									logger.info("Last job on tape " + lastJobOnTape.getId() + " just got completed and its dependent job is not in the list for job selection. So had to wrap it here");
+									int delayInSecs = (int) (Long.parseLong(fixedDelayAsString)/1000);
+									
+									long elapsedSecsSinceLastTapeOnJob = ChronoUnit.SECONDS.between(LocalDateTime.now(), lastJobOnTape.getCompletedAt());
+
+									if(elapsedSecsSinceLastTapeOnJob < (delayInSecs + 60) && dependentJob.getStatus() == Status.queued) { // Also ensure the dependency job's status is queued - even a failed dependency job eg. restore will reach this far and cause a loop
+										selectedStorageJob = storageJobUtil.wrapJobWithStorageInfo(dependentJob);
+										logger.info("Last job on tape " + lastJobOnTape.getId() + " just got completed and its dependent job is not in the list for job selection. So had to wrap it here");
+									}
 								}
 							}
 							else { // if restore
