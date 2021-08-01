@@ -193,7 +193,7 @@ public class AutoloaderController {
 							tapeNeeded.setLocation(volume.getLocation().getId());
 							tapeNeeded.setUsageStatus(tapeUsageStatus);
 							//toLoadTape.setAutoloader(onlineVolume_Autoloader_Map.get(barcode));
-							if(!handleTapeList.stream().anyMatch(x -> x.equals(tapeNeeded)))
+							if(!handleTapeList.stream().anyMatch(x -> x.equals(tapeNeeded))) // avoid dupe entries...
 								handleTapeList.add(tapeNeeded);
 							logger.debug(tapeUsageStatus + " but tape " + barcode + " missing in library");
 							priorityCount = priorityCount + 1;

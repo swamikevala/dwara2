@@ -7,7 +7,7 @@
 
 ### Bug fixes
 
-1) PROD Restore failures - Renamed artifacts move failures fixed
+1) PROD Restore failures - Renamed artifacts move failures fixed and failed restores running in a loop
 
 2) Tape UI - avoid showing dupes, sort by slot id for removes, sort by barcode for adds   
 

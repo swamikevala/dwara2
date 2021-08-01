@@ -481,14 +481,14 @@ public class DirectoryWatcher implements Runnable{
 							 * 1) configured main watched dir itself
 							 * 2) predefined subfolders like MISC,Validated,ValFailed,Copied,CopyFailed
 							 * 3) already registered artifacts in the previous poll which are either getting copied or verified segments 
-							 * 
+							 * 4) folder inside a folder like H-BETACAM-541/H-BETACAM-543 - only H-BETACAM-541 should be registered which will fail validation as it has Files named other than H-BETACAM-541  
 							 * In other words we should only register artifact directories that are aged than configured folderAgeInMts and that too only once
 							*/ 
-							if(!dirPath.equals(dirToBeWatched.toString()) && 
-									!dirPath.startsWith(dirwatcher.miscDirPath.toString()) && !dirPath.startsWith(dirwatcher.failedDirPath.toString()) && 
-									!dirPath.startsWith(dirwatcher.validatedDirPath.toString()) && !dirPath.startsWith(dirwatcher.copiedDirPath.toString()) && 
-									!dirPath.startsWith(dirwatcher.copyFailedDirPath.toString()) && 
-									!dirwatcher.verifyPendingArtifacts.contains(path) && !dirwatcher.copyingArtifacts.contains(path)) { // Dont register the failed and completed dir...
+							if(!dirPath.equals(dirToBeWatched.toString()) && // #1
+									!dirPath.startsWith(dirwatcher.miscDirPath.toString()) && !dirPath.startsWith(dirwatcher.failedDirPath.toString()) && !dirPath.startsWith(dirwatcher.validatedDirPath.toString()) && !dirPath.startsWith(dirwatcher.copiedDirPath.toString()) && !dirPath.startsWith(dirwatcher.copyFailedDirPath.toString()) && // #2 
+									!dirwatcher.verifyPendingArtifacts.contains(path) && !dirwatcher.copyingArtifacts.contains(path) && // #3
+									!(new File(dirPath).getParent().equals(dirToBeWatched.toString())) // #4
+									) { // Dont register the failed and completed dir...
 								FileTime lastModified = attrs.lastModifiedTime();
 								if(System.currentTimeMillis() > lastModified.toMillis() + folderAgeInSecs) {
 									dirwatcher.register(path);
