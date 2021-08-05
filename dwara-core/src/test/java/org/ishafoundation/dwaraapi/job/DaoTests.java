@@ -74,10 +74,10 @@ public class DaoTests{
 		int pageNumber = 0;
 		int pageSize = 0;
 
-		List<Request> requestLit = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, artifactclass, pageNumber, pageSize);
-		for (Request request : requestLit) {
-			System.out.println(request.getId() + ":" + request.getActionId());
-		}
+//		List<Request> requestLit = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, user, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, artifactclass, pageNumber, pageSize);
+//		for (Request request : requestLit) {
+//			System.out.println(request.getId() + ":" + request.getActionId());
+//		}
 	}
 	
 //	@Test
