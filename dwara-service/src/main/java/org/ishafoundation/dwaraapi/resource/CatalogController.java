@@ -73,7 +73,7 @@ public class CatalogController {
     @PostMapping(value="/catalog/artifacts", produces = "application/json")
     public ResponseEntity<List<ArtifactCatalog>> loadArtifactsCatalog(@RequestBody ArtifactCatalogRequest catalogRequest) {
         List<ArtifactCatalog> list = catalogService.findArtifactsCatalog(catalogRequest.artifactClass, catalogRequest.volumeGroup, catalogRequest.copyNumber, catalogRequest.volumeId, 
-            catalogRequest.startDate, catalogRequest.endDate, catalogRequest.artifactName, catalogRequest.deleted, catalogRequest.softRenamed);
+            catalogRequest.startDate, catalogRequest.endDate, catalogRequest.artifactName, catalogRequest.deleted, catalogRequest.softRenamed, catalogRequest.status);
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
 

@@ -28,8 +28,8 @@ public class JobCreator_Rewrite_Test extends JobCreator_Test{
 		RequestDetails details = new RequestDetails();
 		String artifact_name = "";
 		//details.setArtifact_name(artifact_name);
-		details.setFrom_volume_uid("V5B001"); // TODO how do we validate that the volume passed is only physical and not
-		details.setTo_volume_uid("V5B002");
+		// details.setFrom("V5B001"); // TODO how do we validate that the volume passed is only physical and not
+		// details.setTo_volume_uid("V5B002");
 
 		return details;
 	}

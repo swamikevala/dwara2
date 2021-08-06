@@ -10,4 +10,5 @@ public class ArtifactCatalogRequest {
     public String artifactName;
     public boolean deleted;
     public boolean softRenamed;
+    public String[] status;
 }
