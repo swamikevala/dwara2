@@ -14,7 +14,6 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
@@ -29,6 +28,9 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
 	
     @Autowired
     private AuthenticationEntryPoint authEntryPoint;
+
+    @Autowired 
+    private MyPasswordEncoder myPasswordEncoder;
     
     @Autowired
     private DataSource dataSource;
@@ -49,7 +51,7 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
     	auth.jdbcAuthentication().dataSource(dataSource)
     	.usersByUsernameQuery("select name, hash, true " + " from user where name=?")
     	.authoritiesByUsernameQuery("select name, 'ROLE_ADMIN' from user where name=?")
-    	.passwordEncoder(new BCryptPasswordEncoder());
+    	.passwordEncoder(myPasswordEncoder);
     }
     
     @Override
