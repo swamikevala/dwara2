@@ -10,7 +10,8 @@ public class MyPasswordEncoder implements PasswordEncoder{
     @Override
     public String encode(CharSequence rawPassword) {
         String encodedString = Base64.getEncoder().encodeToString(rawPassword.toString().getBytes());
-        return encodedString;
+        StringBuilder sb = new StringBuilder(encodedString);
+        return sb.reverse().toString();
     }
 
     @Override

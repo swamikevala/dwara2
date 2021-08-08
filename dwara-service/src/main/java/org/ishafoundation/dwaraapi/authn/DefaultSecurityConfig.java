@@ -78,6 +78,7 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .csrf().disable()
                 .authorizeRequests().antMatchers("/login").permitAll()
+                .and().authorizeRequests().antMatchers("/googleLogin").permitAll()
                 .and().authorizeRequests().antMatchers("/clearAndReload").permitAll()
                 //.and().authorizeRequests().antMatchers("/v2/api-docs", "/configuration/**", "/swagger*/**", "/webjars/**").permitAll()
                 .and().authorizeRequests().antMatchers("/register").permitAll()
