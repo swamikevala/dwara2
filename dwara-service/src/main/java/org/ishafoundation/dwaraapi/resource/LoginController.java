@@ -1,7 +1,5 @@
 package org.ishafoundation.dwaraapi.resource;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +19,7 @@ import org.ishafoundation.dwaraapi.db.dao.master.jointables.RoleUserDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Priorityband;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.RoleUser;
+import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -140,12 +139,13 @@ public class LoginController {
 				return googleLoginResponse;
 			} else {
 				System.out.println("Invalid ID token.");
+				throw new DwaraException("Invalid ID token.", null);
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			throw new DwaraException("Invalid ID token.", null);
 		}
-		return null;
 	}
 
 	public String generatingRandomAlphanumericString() {
