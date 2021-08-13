@@ -57,11 +57,11 @@ public class ArtifactController {
 			@ApiResponse(code = 200, message = "Ok")
 	})
 	@PostMapping(value = "/artifact/{artifactId}/delete", produces = "application/json")
-	public ResponseEntity<ArtifactResponse> deleteArtifact(@PathVariable("artifactId") int artifactId) {
+	public ResponseEntity<ArtifactResponse> deleteArtifact(@PathVariable("artifactId") int artifactId, @RequestBody (required=true) String reason) {
 		logger.info("/artifact/" + artifactId + "/delete");
 		ArtifactResponse deleteArtifactResponse = null;
 		try {
-			deleteArtifactResponse = artifactservice.deleteArtifact(artifactId);
+			deleteArtifactResponse = artifactservice.deleteArtifact(artifactId, reason);
 		}catch (Exception e) {
 			String errorMsg = "Unable to delete artifact - " + e.getMessage();
 			logger.error(errorMsg, e);

@@ -10,6 +10,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -64,6 +65,7 @@ public class Request {
 	@Column(name="action_id")
 	private Action actionId;
 	
+	@Column(name="requested_by")
 	@OneToOne(fetch = FetchType.LAZY)
 	private User requestedBy;
 	
@@ -79,6 +81,10 @@ public class Request {
 	@Enumerated(EnumType.STRING)
 	@Column(name="status")
 	private Status status;
+	
+	@Lob
+	@Column(name="message")
+	private String message; 
 	
 	@Column(name="external_ref")
 	private String externalRef;
@@ -159,6 +165,14 @@ public class Request {
 		this.status = status;
 	}
 
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+	
 	public String getExternalRef() {
 		return externalRef;
 	}

@@ -126,8 +126,9 @@ public class RequestService extends DwaraService{
 //		}
 //	}
     
-    public RequestResponse cancelRequest(int requestId) throws Exception{
+    public RequestResponse cancelRequest(int requestId, String reason) throws Exception{
     	Request requestToBeCancelled = requestDao.findById(requestId).get();
+    	requestToBeCancelled.setMessage(reason);
     	if(requestToBeCancelled.getActionId() == Action.ingest) { // TODO should this behaviour be same for digi and video-pub or should we not move video-pub to cancelled dir...
     		return cancelAndCleanupRequest(requestToBeCancelled);
     	} 

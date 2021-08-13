@@ -154,11 +154,11 @@ public class RequestController {
 	}
 	
     @PostMapping("/request/{requestId}/cancel")
-    public ResponseEntity<RequestResponse> cancelRequest(@PathVariable("requestId") int requestId) {
+    public ResponseEntity<RequestResponse> cancelRequest(@PathVariable("requestId") int requestId, @RequestBody (required=true) String reason) {
     	logger.info("/request/" + requestId + "/cancel");
     	RequestResponse requestResponse = null;
     	try {
-    		requestResponse = requestService.cancelRequest(requestId);
+    		requestResponse = requestService.cancelRequest(requestId, reason);
 		}catch (Exception e) {
 			String errorMsg = "Unable to cancel Request - " + e.getMessage();
 			logger.error(errorMsg, e);
@@ -172,14 +172,14 @@ public class RequestController {
     }
     
     @PostMapping("/request/multi-cancel")
-    public ResponseEntity<List<RequestResponse>> cancelMultipleRequests(@RequestParam("requestIds") String systemRequestIds) {
+    public ResponseEntity<List<RequestResponse>> cancelMultipleRequests(@RequestParam("requestIds") String systemRequestIds, @RequestBody (required=false) String reason) {
     	List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
 		List<String> systemRequestIdsList = Arrays.asList(systemRequestIds.split(","));
 		for (String systemRequestIdAsString : systemRequestIdsList) {
 			int requestId = Integer.parseInt(systemRequestIdAsString);
 			RequestResponse requestResponse = null;
 	    	try {
-	    		requestResponse = requestService.cancelRequest(requestId);
+	    		requestResponse = requestService.cancelRequest(requestId, reason);
 	    		requestResponseList.add(requestResponse);
 			}catch (Exception e) {
 				String errorMsg = "Unable to cancel Requests - " + e.getMessage();

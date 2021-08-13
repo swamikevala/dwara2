@@ -98,7 +98,7 @@ public class ArtifactService extends DwaraService{
 	@Autowired
 	private JobCreator jobCreator;
 
-	public ArtifactResponse deleteArtifact(int artifactId) throws Exception{
+	public ArtifactResponse deleteArtifact(int artifactId, String reason) throws Exception{
 		ArtifactRepository<Artifact> artifactRepository = null;
 		Artifact artifact = null; // get the artifact details from DB
 		Domain domain = null; 
@@ -125,7 +125,7 @@ public class ArtifactService extends DwaraService{
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		data.put("artifactId", artifactId);
 		Request userRequest = createUserRequest(Action.delete, Status.in_progress, data);
-
+		userRequest.setMessage(reason);
 		artifactDeleter.cleanUp(userRequest, request,  domain, artifactRepository);
 
 		userRequest.setStatus(Status.completed);
