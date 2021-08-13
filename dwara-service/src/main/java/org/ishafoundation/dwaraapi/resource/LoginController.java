@@ -137,7 +137,7 @@ public class LoginController {
 				googleLoginResponse.password = userFromDB.getHash();
 				return googleLoginResponse;
 			} else {
-				System.out.println("Invalid ID token.");
+				// System.out.println("Invalid ID token.");
 				throw new DwaraException("Invalid ID token.", null);
 			}
 		} catch (Exception e) {
@@ -158,7 +158,7 @@ public class LoginController {
 		  .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
 		  .toString();
 	
-		System.out.println(generatedString);
+		// System.out.println(generatedString);
 		return generatedString;
 	}
 	
