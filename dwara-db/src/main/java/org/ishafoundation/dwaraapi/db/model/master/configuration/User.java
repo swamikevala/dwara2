@@ -33,12 +33,8 @@ public class User {//implements Cacheable{
 	@ManyToOne
 	private Priorityband priorityband;
 	
-	@Column(name="email")
+	@Column(name="email", unique=true)
 	private String email;
-
-	@Column(name="google_id", unique=true)
-	private String googleId;
-
 	
 //    @OneToMany(mappedBy = "user",
 //            cascade = CascadeType.MERGE,
@@ -49,14 +45,6 @@ public class User {//implements Cacheable{
             cascade = CascadeType.MERGE,
             orphanRemoval = true)
     private List<ActionArtifactclassUser> artifactclassActionUser = new ArrayList<>();     
-
-	public String getGoogleId() {
-		return googleId;
-	}
-
-	public void setGoogleId(String googleId) {
-		this.googleId = googleId;
-	}
     
 	public int getId() {
 		return id;

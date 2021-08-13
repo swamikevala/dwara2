@@ -87,11 +87,12 @@ public class LoginController {
 				Payload payload = idToken.getPayload();
 		
 				// Print user identifier
-				String googleUserId = payload.getSubject();
+				// String googleUserId = payload.getSubject();
 				// System.out.println("Google User ID: " + googleUserId);
 		
-				/* // Get profile information from payload
+				// Get profile information from payload
 				String email = payload.getEmail();
+				/*
 				boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
 				String name = (String) payload.get("name");
 				String pictureUrl = (String) payload.get("picture");
@@ -101,7 +102,7 @@ public class LoginController {
 		
 				// Use or store profile information
 				GoogleLoginResponse googleLoginResponse = new GoogleLoginResponse();
-				User userFromDB = userDao.findByGoogleId(googleUserId);
+				User userFromDB = userDao.findByEmail(email);
 		
 				if(userFromDB == null) {
 					userFromDB = new User();
@@ -111,14 +112,12 @@ public class LoginController {
 					String givenName = (String) payload.get("given_name");
 					String familyName = (String) payload.get("family_name");
 					userFromDB.setName(givenName.toLowerCase() + familyName.toLowerCase());
-					String rawPassword = generatingRandomAlphanumericString();
+					String rawPassword = generatingRandomAlphanumericString(21);
 					userFromDB.setHash(myPasswordEncoder.encode(rawPassword));
 
 					Priorityband priorityband = prioritybandDao.findById(1).get(); // TODO hardcoded to 1st PriorityBand
 					userFromDB.setPriorityband(priorityband);
-
-					userFromDB.setGoogleId(googleUserId);
-					String email = payload.getEmail();
+					
 					userFromDB.setEmail(email);
 					userDao.save(userFromDB);
 				}
@@ -148,15 +147,14 @@ public class LoginController {
 		}
 	}
 
-	public String generatingRandomAlphanumericString() {
+	public String generatingRandomAlphanumericString(int length) {
 		int leftLimit = 48; // numeral '0'
 		int rightLimit = 122; // letter 'z'
-		int targetStringLength = 10;
 		Random random = new Random();
 	
 		String generatedString = random.ints(leftLimit, rightLimit + 1)
 		  .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
-		  .limit(targetStringLength)
+		  .limit(length)
 		  .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
 		  .toString();
 	

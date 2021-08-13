@@ -7,7 +7,7 @@ public interface UserDao extends CrudRepository<User,Integer> {
 
 	User findByName(String name);
 
-	User findByGoogleId(String googleId);
+	User findByEmail(String email);
 	
 	User findTopByOrderByIdDesc();
 }
