@@ -149,9 +149,9 @@ public class Validator {
 			 * }
 			 */
 			errorList = nameValidator(pathName, file,errorList);
-			errorList = sizeLengthValidator( file,sfv,errorList);
+			errorList = sizeLengthValidator( file,sfv,errorList,size,fileCount);
 			errorList = FileValidator(sfv,errorList);
-
+			System.out.println(size+" "+fileCount);
 			for (Error error : errorList) {
 				System.out.println(error.getMessage());
 			}
@@ -244,10 +244,10 @@ public class Validator {
 
 	}
 
-	public List<Error> sizeLengthValidator(File file, StagedFileVisitor sfv, List<Error> errorList) {
+	public List<Error> sizeLengthValidator(File file, StagedFileVisitor sfv, List<Error> errorList, long size , long fileCount) {
 
-		long size = 0;
-		int fileCount = 0;
+		//long size = 0;
+		//int fileCount = 0;
 		if (sfv != null) {
 			size = sfv.getTotalSize();
 			fileCount = sfv.getFileCount();

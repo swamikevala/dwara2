@@ -176,7 +176,7 @@ public class StagedFileEvaluator extends Validator {
 		 * 
 		 */		
 		errorList=super.nameValidator(sourcePath, nthIngestableFile, errorList);
-		errorList =super.sizeLengthValidator(nthIngestableFile, sfv, errorList);
+		errorList =super.sizeLengthValidator(nthIngestableFile, sfv, errorList,size,fileCount);
 		errorList=super.FileValidator(sfv, errorList);
 		
 		// 4- dupe check on size against existing artifact
@@ -268,7 +268,7 @@ public class StagedFileEvaluator extends Validator {
 		nthIngestFile.setFileCount(fileCount);
 		nthIngestFile.setTotalSize(size);
 		nthIngestFile.setErrors(errorList);
-
+		//System.out.println(nthIngestFile.getFileCount()+nthIngestFile.getTotalSize());
 		Boolean isKeepExtractedCode = sequence.isKeepCode();
 		Boolean isForceMatch = sequence.getForceMatch();
 
