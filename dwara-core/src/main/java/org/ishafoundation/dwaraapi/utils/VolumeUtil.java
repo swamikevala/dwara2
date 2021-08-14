@@ -8,6 +8,8 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.Artifa
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeLifecyclestage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,7 +90,7 @@ public class VolumeUtil {
 	
 	public Volume getToBeUsedPhysicalVolume(Domain domain, String volumegroupId, long artifactSize) {
 		Volume toBeUsedVolume = null;
-		List<Volume> physicalVolumesList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndDefectiveIsFalseAndSuspectIsFalseOrderByIdAsc(volumegroupId);
+		List<Volume> physicalVolumesList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndHealthstatusAndLifecyclestageOrderByIdAsc(volumegroupId, VolumeHealthStatus.normal, VolumeLifecyclestage.active);
 		for (Volume nthPhysicalVolume : physicalVolumesList) {
 
 			long projectedArtifactSize = getProjectedArtifactSize(artifactSize, nthPhysicalVolume);
@@ -110,7 +112,7 @@ public class VolumeUtil {
 
 	public boolean isPhysicalVolumeGood(String physicalVolumeId) {
 		Volume toBeUsedVolume = volumeDao.findById(physicalVolumeId).get();
-		if(toBeUsedVolume.getSuspect())
+		if(toBeUsedVolume.getHealthstatus() != VolumeHealthStatus.normal)
 			return false;
 		return true;		
 	}

@@ -36,7 +36,8 @@ import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
-import org.ishafoundation.dwaraapi.enumreferences.VolumeAction;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeLifecyclestage;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.VolumeindexManager;
@@ -136,7 +137,7 @@ public class VolumeService extends DwaraService {
 			long groupVolumeUsedCapacity = 0L;
 			long maxPhysicalUnusedCapacity = 0L;
 
-			List<Volume> physicalVolumeList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndDefectiveIsFalseAndSuspectIsFalseOrderByIdAsc(volume.getId()); // get all not finalized physical volume in the group
+			List<Volume> physicalVolumeList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndHealthstatusAndLifecyclestageOrderByIdAsc(volume.getId(), VolumeHealthStatus.normal, VolumeLifecyclestage.active); // get all not finalized physical volume in the group
 			
 			for (Volume nthPhyscialVolume : physicalVolumeList) { // iterate all physical volume from the group and sum up for total/used/unused cap
 				logger.trace("Dashboard - " + nthPhyscialVolume.getId());
@@ -234,7 +235,7 @@ public class VolumeService extends DwaraService {
 	public void rewriteVolume(String volumeId, RewriteRequest rewriteRequest) throws Exception {
 		//Optional<Volume> volumeEntity = volumeDao.findById(volumeId);
 		Volume volume = volumeDao.findById(volumeId).get();
-		if(!volume.getDefective())
+		if(volume.getHealthstatus() != VolumeHealthStatus.defective)
 			throw new Exception(volumeId + " not flagged as defective. Please double check and flag it first");
 			
 		// create user request
@@ -319,49 +320,32 @@ public class VolumeService extends DwaraService {
 		}
 	}
 
-	public MarkVolumeStatusResponse markVolumeStatus(String volumeId, String action, MarkVolumeStatusRequest markVolumeStatusRequest) throws Exception {
+	public MarkVolumeStatusResponse markVolumeStatus(String volumeId, String status, MarkVolumeStatusRequest markVolumeStatusRequest) throws Exception {
 		MarkVolumeStatusResponse markVolumeStatusResponse = new MarkVolumeStatusResponse();
 		
 		Volume volume = volumeDao.findById(volumeId).get();
 		if(volume == null)
-			throw new Exception(volumeId + " not flagged as defective. Please double check and flag it first");
+			throw new Exception(volumeId + " not found");
 		
-		VolumeAction volumeAction = null;
+		VolumeHealthStatus volumeStatus = null;
 		try {
-			volumeAction = VolumeAction.valueOf(action);
-			if(volumeAction == null)
-				throw new Exception(action + " not supported");
+			volumeStatus = VolumeHealthStatus.valueOf(status);
+			if(volumeStatus == null)
+				throw new Exception(status + " not supported");
 				
 		}catch (Exception e) {
-			throw new Exception(action + " not supported");
+			throw new Exception(status + " not supported");
 		}
 		
 		// create user request
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		data.put("volumeId", volumeId);
-		data.put("action", action);
+		data.put("status", status);
 		data.put("reason", markVolumeStatusRequest.getReason());
 		Request userRequest = createUserRequest(Action.mark_volume, data);
-
-		Boolean suspect = volume.getSuspect();
-		Boolean defective = volume.getDefective();
-		switch (volumeAction) {
-			case mark_suspect:
-				suspect = true;
-				break;
-			case not_suspect:
-				suspect = false;
-				break;
-			case mark_defective:
-				defective = true;
-				break;
-			case not_defective:
-				defective = false;
-				break;
-		}
 		
-		volume.setDefective(defective);
-		volume.setSuspect(suspect);
+		volume.setHealthstatus(volumeStatus);
+
 		volumeDao.save(volume);
 		
 		markVolumeStatusResponse.setRequestId(userRequest.getId());
@@ -369,7 +353,7 @@ public class VolumeService extends DwaraService {
 		markVolumeStatusResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
 		
 		markVolumeStatusResponse.setVolumeId(volumeId);
-		markVolumeStatusResponse.setVolumeStatus(action);
+		markVolumeStatusResponse.setVolumeStatus(status);
 		
 		markVolumeStatusResponse.setAction(userRequest.getActionId().name());
 		markVolumeStatusResponse.setStatus(userRequest.getStatus().name());

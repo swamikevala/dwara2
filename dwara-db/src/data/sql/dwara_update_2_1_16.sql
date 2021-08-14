@@ -23,3 +23,10 @@ update request set status="marked_failed" where id=71625;
 UPDATE `sequence` SET `current_number`='1000', `ending_number`='1999', `starting_number`='1001' WHERE `id`='priv3-1';
 UPDATE `sequence` SET `current_number`='2000', `ending_number`='2999', `starting_number`='2001' WHERE `id`='priv3-2';
 
+-- Setting new hash for password admin(dwara) user - from Dong anna (Gmail login changes)
+UPDATE `user` SET `hash`='vhmYtFGaTFmdph2U' WHERE `id`='1';
+
+-- Volume schema changes 
+UPDATE `volume` SET `healthstatus`='normal' WHERE id in (SELECT id FROM volume where defective=0 and suspect=0);
+UPDATE `volume` SET `healthstatus`='suspect' WHERE id in (SELECT id FROM volume where suspect=1);
+UPDATE `volume` SET `healthstatus`='defective' WHERE id in (SELECT id FROM volume where defective=1);

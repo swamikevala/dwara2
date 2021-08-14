@@ -1,7 +1,7 @@
 package org.ishafoundation.dwaraapi.enumreferences;
 
-public enum VolumeStatus {
-	ok,
+public enum VolumeHealthStatus {
+	normal,
 	suspect,
 	defective
 }

@@ -23,6 +23,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeLifecyclestage;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
@@ -82,12 +84,12 @@ public class Volume {
 	@Column(name="imported")
 	private boolean imported;
 
-	@Column(name="suspect")
-	private Boolean suspect = false; // Not on VolumeGroups
+	@Column(name="healthstatus")
+	private VolumeHealthStatus healthstatus;
 
-	@Column(name="defective")
-	private Boolean defective = false; // Not on VolumeGroups
-
+	@Column(name="lifecyclestage")
+	private VolumeLifecyclestage lifecyclestage = VolumeLifecyclestage.active;
+	
 	@OneToOne
 	private Archiveformat archiveformat;
 	
@@ -201,20 +203,20 @@ public class Volume {
 		this.imported = imported;
 	}
 
-	public Boolean getSuspect() {
-		return suspect;
+	public VolumeHealthStatus getHealthstatus() {
+		return healthstatus;
 	}
 
-	public void setSuspect(Boolean suspect) {
-		this.suspect = suspect;
+	public void setHealthstatus(VolumeHealthStatus healthstatus) {
+		this.healthstatus = healthstatus;
 	}
 
-	public Boolean getDefective() {
-		return defective;
+	public VolumeLifecyclestage getLifecyclestage() {
+		return lifecyclestage;
 	}
 
-	public void setDefective(Boolean defective) {
-		this.defective = defective;
+	public void setLifecyclestage(VolumeLifecyclestage lifecyclestage) {
+		this.lifecyclestage = lifecyclestage;
 	}
 
 	public Archiveformat getArchiveformat() {

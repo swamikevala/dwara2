@@ -173,7 +173,7 @@ public class VolumeController {
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
 	}
 	
-	@ApiOperation(value = "Rewrite the volume")
+	@ApiOperation(value = "Rewrite the volume. To find the src copy volumes needed in library use something like where R39805L7 is the defective volume and R198% is the sourceCopy group - select distinct(volume_id) from artifact1_volume where artifact_id in (select artifact_id from artifact1_volume where volume_id= 'R39805L7') and volume_id like 'R198%';")
 	@ApiResponses(value = { 
 			@ApiResponse(code = 200, message = "Ok")
 	})
@@ -196,17 +196,17 @@ public class VolumeController {
 		return ResponseEntity.status(HttpStatus.OK).body("Done");
 	}
 	
-	@ApiOperation(value = "Marks a volume suspect|not_suspect|defective|not_defective")
+	@ApiOperation(value = "Marks a volume suspect|defective|normal")
 	@ApiResponses(value = { 
 			@ApiResponse(code = 200, message = "Ok")
 	})
-	@PostMapping(value = "/volume/{volumeId}/{action}", produces = "application/json")
-	public ResponseEntity<MarkVolumeStatusResponse> markVolumeStatus(@RequestBody MarkVolumeStatusRequest markVolumeStatusRequest, @PathVariable("volumeId") String volumeId, @PathVariable("action") String action) {
-		logger.info("/volume/" + volumeId + action);
+	@PostMapping(value = "/volume/{volumeId}/{status}", produces = "application/json")
+	public ResponseEntity<MarkVolumeStatusResponse> markVolumeStatus(@RequestBody MarkVolumeStatusRequest markVolumeStatusRequest, @PathVariable("volumeId") String volumeId, @PathVariable("status") String status) {
+		logger.info("/volume/" + volumeId + "/" + status);
 		
 		MarkVolumeStatusResponse markVolumeStatusResponse = null;
 		try {
-			markVolumeStatusResponse = volumeService.markVolumeStatus(volumeId, action, markVolumeStatusRequest);
+			markVolumeStatusResponse = volumeService.markVolumeStatus(volumeId, status, markVolumeStatusRequest);
 		}catch (Exception e) {
 			String errorMsg = "Unable to mark volume status - " + e.getMessage();
 			logger.error(errorMsg, e);
