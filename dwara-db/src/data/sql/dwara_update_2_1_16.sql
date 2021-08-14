@@ -27,9 +27,9 @@ UPDATE `sequence` SET `current_number`='2000', `ending_number`='2999', `starting
 UPDATE `user` SET `hash`='vhmYtFGaTFmdph2U' WHERE `id`='1';
 
 -- Volume schema changes 
-UPDATE `volume` SET `healthstatus`='normal' WHERE id in (SELECT id FROM volume where defective=0 and suspect=0);
-UPDATE `volume` SET `healthstatus`='suspect' WHERE id in (SELECT id FROM volume where suspect=1);
-UPDATE `volume` SET `healthstatus`='defective' WHERE id in (SELECT id FROM volume where defective=1);
+UPDATE `volume` SET `healthstatus`='normal' WHERE id in SELECT id FROM (SELECT id FROM volume where defective=0 and suspect=0) as c;
+UPDATE `volume` SET `healthstatus`='suspect' WHERE id in SELECT id FROM (SELECT id FROM volume where suspect=1) as c;
+UPDATE `volume` SET `healthstatus`='defective' WHERE id in SELECT id FROM (SELECT id FROM volume where defective=1) as c;
 
 -- delete columns defective and suspect from db
 ALTER TABLE `volume` DROP COLUMN `suspect`;

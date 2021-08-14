@@ -84,9 +84,11 @@ public class Volume {
 	@Column(name="imported")
 	private boolean imported;
 
+	@Enumerated(EnumType.STRING)
 	@Column(name="healthstatus")
 	private VolumeHealthStatus healthstatus;
 
+	@Enumerated(EnumType.STRING)
 	@Column(name="lifecyclestage")
 	private VolumeLifecyclestage lifecyclestage = VolumeLifecyclestage.active;
 	
