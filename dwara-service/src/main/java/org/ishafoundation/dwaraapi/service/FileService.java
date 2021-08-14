@@ -139,6 +139,8 @@ public class FileService extends DwaraService{
 
     	List<Integer> fileIds = restoreUserRequest.getFileIds();
 
+    	if(fileIds.size() == 0)
+    		throw new Exception("Invalid request. No File Id passed");
     	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
     	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
     	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
