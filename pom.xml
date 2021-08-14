@@ -19,5 +19,6 @@
 		<module>dwara-digitization</module>
     <module>dwara-api</module>
     <module>dwara-hotfixes</module>
-  </modules>
+    <module>dwara-validation</module>
+	</modules>
 </project>

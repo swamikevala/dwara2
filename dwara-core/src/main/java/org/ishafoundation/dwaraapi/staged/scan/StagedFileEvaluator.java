@@ -24,6 +24,7 @@ import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.ishafoundation.validation.Validator;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -45,7 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class StagedFileEvaluator {
+public class StagedFileEvaluator extends Validator {
 	
 	private static final Logger logger = LoggerFactory.getLogger(StagedFileEvaluator.class);
 
@@ -117,18 +118,16 @@ public class StagedFileEvaluator {
 			} catch (IOException e) {
 				// swallow for now
 			}
-			if(sfv != null) {
-				size = sfv.getTotalSize();
-				fileCount = sfv.getFileCount();
-				unSupportedExtns = sfv.getUnSupportedExtns();
-			}
-		}else { // if artifact is a file
-			size = FileUtils.sizeOf(nthIngestableFile);
-			fileCount = 1;
-			String fileExtn = FilenameUtils.getExtension(fileName);
-			// validate against the supported list of extensions in the system we have
-			if(!supportedExtns.contains(fileExtn.toLowerCase()))
-				unSupportedExtns.add(fileExtn);
+			 if(sfv != null) { 
+			//size = sfv.getTotalSize(); fileCount = sfv.getFileCount();
+			 unSupportedExtns = sfv.getUnSupportedExtns(); } }
+		
+		else { // if artifact is a
+			 // file size = FileUtils.sizeOf(nthIngestableFile); fileCount = 1; 
+			String fileExtn = FilenameUtils.getExtension(fileName); // validate against the supported list of extensions in the system we have
+			 if(!supportedExtns.contains(fileExtn.toLowerCase()))
+			  unSupportedExtns.add(fileExtn);
+			 
 		}
 
 		// 0- For digi artifactclass there should be a mxf subfolder
@@ -139,60 +138,47 @@ public class StagedFileEvaluator {
 			errorList.add(error);
 		}	
 		
-		// 1- validateName
-		errorList.addAll(validateName(fileName));
-
-		// 1a - validateName for photo* artifactclass
-		if(FilenameUtils.getBaseName(sourcePath).startsWith("photo")) { // validation only for photo* artifactclass
-			Matcher m = photoSeriesArtifactclassArifactNamePattern.matcher(fileName);
-			if(!m.matches()) { 
-				Error error = new Error();
-				error.setType(Errortype.Error);
-				error.setMessage("Artifact Name should be in yyyyMMdd_XXX_* pattern");
-				errorList.add(error);
-			} else {
-				// should i check for a valid date here???
-				try {
-					photoSeriesArtifactNameDateFormat.parse(m.group(1));
-				} catch (ParseException e) {
-					Error error = new Error();
-					error.setType(Errortype.Error);
-					error.setMessage("Artifact Name date should be in yyyyMMdd pattern");
-					errorList.add(error);
-				}
-			}
-			
-			if(sfv != null && sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0) {
-				Error error = new Error();
-				error.setType(Errortype.Error);
-				error.setMessage("File Names shoud be in yyyymmdd_xxx_dddd pattern");
-				errorList.add(error);
-				logger.error(fileName + " has following files failing validation "  + sfv.getPhotoSeriesFileNameValidationFailedFileNames());
-			}
-		}
+		/*
+		 * // 1- validateName errorList.addAll(validateName(fileName));
+		 * 
+		 * // 1a - validateName for photo* artifactclass
+		 * if(FilenameUtils.getBaseName(sourcePath).startsWith("photo")) { // validation
+		 * only for photo* artifactclass Matcher m =
+		 * photoSeriesArtifactclassArifactNamePattern.matcher(fileName);
+		 * if(!m.matches()) { Error error = new Error(); error.setType(Errortype.Error);
+		 * error.setMessage("Artifact Name should be in yyyyMMdd_XXX_* pattern");
+		 * errorList.add(error); } else { // should i check for a valid date here??? try
+		 * { photoSeriesArtifactNameDateFormat.parse(m.group(1)); } catch
+		 * (ParseException e) { Error error = new Error();
+		 * error.setType(Errortype.Error);
+		 * error.setMessage("Artifact Name date should be in yyyyMMdd pattern");
+		 * errorList.add(error); } }
+		 * 
+		 * if(sfv != null &&
+		 * sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0) { Error
+		 * error = new Error(); error.setType(Errortype.Error);
+		 * error.setMessage("File Names shoud be in yyyymmdd_xxx_dddd pattern");
+		 * errorList.add(error); logger.error(fileName +
+		 * " has following files failing validation " +
+		 * sfv.getPhotoSeriesFileNameValidationFailedFileNames()); } }
+		 * 
+		 * // 2- validateCount if(fileCount == 0) { Error error = new Error();
+		 * error.setType(Errortype.Error);
+		 * error.setMessage("Artifact Folder has no non-junk files inside");
+		 * errorList.add(error); }
+		 * 
+		 * // 3- validateSize long configuredSize = 1048576; // 1MB // TODO whats the
+		 * size we need to compare against? if(size == 0) { Error error = new Error();
+		 * error.setType(Errortype.Error); error.setMessage("Artifact size is 0");
+		 * errorList.add(error); }else if(size < configuredSize) { Error error = new
+		 * Error(); error.setType(Errortype.Warning);
+		 * error.setMessage("Artifact is less than 1 MiB"); errorList.add(error); };
+		 * 
+		 */		
+		errorList=super.nameValidator(sourcePath, nthIngestableFile, errorList);
+		errorList =super.sizeLengthValidator(nthIngestableFile, sfv, errorList);
+		errorList=super.FileValidator(sfv, errorList);
 		
-		// 2- validateCount
-		if(fileCount == 0) {
-			Error error = new Error();
-			error.setType(Errortype.Error);
-			error.setMessage("Artifact Folder has no non-junk files inside");
-			errorList.add(error);
-		}
-
-		// 3- validateSize
-		long configuredSize = 1048576; // 1MB // TODO whats the size we need to compare against?
-		if(size == 0) {
-			Error error = new Error();
-			error.setType(Errortype.Error);
-			error.setMessage("Artifact size is 0");
-			errorList.add(error);
-		}else if(size < configuredSize) {
-			Error error = new Error();
-			error.setType(Errortype.Warning);
-			error.setMessage("Artifact is less than 1 MiB");
-			errorList.add(error);
-		};
-
 		// 4- dupe check on size against existing artifact
 		ArtifactRepository<Artifact> domainSpecificArtifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 		List<Artifact> alreadyExistingArtifacts = domainSpecificArtifactRepository.findAllByTotalSizeAndDeletedIsFalse(size);
@@ -237,40 +223,30 @@ public class StagedFileEvaluator {
 			// commented as per DU-261 errorList.add(error);
 		}
 
-		if(sfv != null) {
-			// 6- SymLink Loop
-			if(sfv.getSymLinkLoops().size() > 0) {
-				Error error = new Error();
-				error.setType(Errortype.Error);
-				error.setMessage("Self referencing symbolic link loop(s) detected " + sfv.getSymLinkLoops());
-				errorList.add(error);
-			}
-			
-//			// 7- Unresolved SymLink
-//			if(sfv.getUnresolvedSymLinks().size() > 0) {
-//				Error error = new Error();
-//				error.setType(Errortype.Warning);
-//				error.setMessage("Unresolved sym link(s) found " + sfv.getUnresolvedSymLinks());
-//				errorList.add(error);
-//			}
-			
-			// 8- FilePathNameLength > 4096 
-			if(sfv.getFilePathNamesGt4096Chrs().size() > 0) {
-				Error error = new Error();
-				error.setType(Errortype.Error);
-				error.setMessage("Has file path name(s) length > 4096 chrs " + sfv.getFilePathNamesGt4096Chrs());
-				errorList.add(error);
-			}
-			
-			// 9- File/Directory Name contains a non-unicode char
-			if(sfv.getFileNamesWithNonUnicodeChrs().size() > 0) {
-				Error error = new Error();
-				error.setType(Errortype.Error);
-				error.setMessage("Has file name(s) with non-unicode chrs " + sfv.getFileNamesWithNonUnicodeChrs());
-				errorList.add(error);
-				
-			}
-		}
+		/*
+		 * if(sfv != null) { // 6- SymLink Loop if(sfv.getSymLinkLoops().size() > 0) {
+		 * Error error = new Error(); error.setType(Errortype.Error);
+		 * error.setMessage("Self referencing symbolic link loop(s) detected " +
+		 * sfv.getSymLinkLoops()); errorList.add(error); }
+		 * 
+		 * // // 7- Unresolved SymLink // if(sfv.getUnresolvedSymLinks().size() > 0) {
+		 * // Error error = new Error(); // error.setType(Errortype.Warning); //
+		 * error.setMessage("Unresolved sym link(s) found " +
+		 * sfv.getUnresolvedSymLinks()); // errorList.add(error); // }
+		 * 
+		 * // 8- FilePathNameLength > 4096 if(sfv.getFilePathNamesGt4096Chrs().size() >
+		 * 0) { Error error = new Error(); error.setType(Errortype.Error);
+		 * error.setMessage("Has file path name(s) length > 4096 chrs " +
+		 * sfv.getFilePathNamesGt4096Chrs()); errorList.add(error); }
+		 * 
+		 * // 9- File/Directory Name contains a non-unicode char
+		 * if(sfv.getFileNamesWithNonUnicodeChrs().size() > 0) { Error error = new
+		 * Error(); error.setType(Errortype.Error);
+		 * error.setMessage("Has file name(s) with non-unicode chrs " +
+		 * sfv.getFileNamesWithNonUnicodeChrs()); errorList.add(error);
+		 * 
+		 * } }
+		 */
 		
 		// Hack for video-edit-tr* - If the folder structure doesnt match to the standards and arent any files to be proxied
 		if(FilenameUtils.getBaseName(sourcePath).startsWith("video-edit-tr")) { // validation only for video-edit-tr* artifactclass

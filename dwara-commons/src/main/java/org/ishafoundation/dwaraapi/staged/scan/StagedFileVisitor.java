@@ -53,7 +53,7 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	private Set<String> fileNamesWithNonUnicodeChrs = new TreeSet<String>();
 	private Set<String> photoSeriesFileNameValidationFailedFileNames = new TreeSet<String>();
 	private static Pattern photoSeriesArtifactclassFileNamePattern = Pattern.compile("([0-9]{8})_[A-Z]{3}_[0-9]{4}(.)*"); // 20200101_CMM_0002.NEF or 20200101_CMM_0002-e.NEF (-e optional) or 20200105_CMM_9999_Ashram-Program-Volunteers-Meet-Tamil-Group-Photo-1.tif or 20200428_CMM_0030to0032-mp-e.jpg
-	StagedFileVisitor(String stagedFileName, String junkFilesStagedDirName, List<Pattern> excludedFileNamesRegexList, Set<String> supportedExtns) {
+	public StagedFileVisitor(String stagedFileName, String junkFilesStagedDirName, List<Pattern> excludedFileNamesRegexList, Set<String> supportedExtns) {
 		this.stagedFileName = stagedFileName;
 		this.junkFilesStagedDirName = junkFilesStagedDirName;
 		this.excludedFileNamesRegexList = excludedFileNamesRegexList;
@@ -61,7 +61,7 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	}
 
 	
-	StagedFileVisitor(String artifactSrcPathLocation, String stagedFileName, String junkFilesStagedDirName, List<Pattern> excludedFileNamesRegexList, Set<String> supportedExtns, boolean isMove) {
+	public StagedFileVisitor(String artifactSrcPathLocation, String stagedFileName, String junkFilesStagedDirName, List<Pattern> excludedFileNamesRegexList, Set<String> supportedExtns, boolean isMove) {
 		this.artifactSrcPathLocation = artifactSrcPathLocation;
 		this.stagedFileName = stagedFileName;
 		this.junkFilesStagedDirName = junkFilesStagedDirName;
