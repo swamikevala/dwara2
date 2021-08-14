@@ -205,7 +205,8 @@ public class CatalogService extends DwaraService{
                 _capacity = ((BigInteger)record[5]).longValue();
             boolean _isImported = (boolean)record[6];
             boolean _isFinalized = (boolean)record[7];
-            VolumeHealthStatus volumeHealthStatus = (VolumeHealthStatus)record[8];
+            String volumeHealthStatusAsString = (String) record[8];
+            VolumeHealthStatus volumeHealthStatus = VolumeHealthStatus.valueOf(volumeHealthStatusAsString);
             boolean _isSuspect = (volumeHealthStatus == VolumeHealthStatus.suspect ? true : false);
             String _finalizedAt = "";
             if(record[9] != null)
