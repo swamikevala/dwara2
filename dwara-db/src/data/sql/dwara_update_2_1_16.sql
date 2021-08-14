@@ -30,3 +30,7 @@ UPDATE `user` SET `hash`='vhmYtFGaTFmdph2U' WHERE `id`='1';
 UPDATE `volume` SET `healthstatus`='normal' WHERE id in (SELECT id FROM volume where defective=0 and suspect=0);
 UPDATE `volume` SET `healthstatus`='suspect' WHERE id in (SELECT id FROM volume where suspect=1);
 UPDATE `volume` SET `healthstatus`='defective' WHERE id in (SELECT id FROM volume where defective=1);
+
+-- delete columns defective and suspect from db
+ALTER TABLE `volume` DROP COLUMN `suspect`;
+ALTER TABLE `volume` DROP COLUMN `defective`;
