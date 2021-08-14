@@ -65,7 +65,7 @@ public class Request {
 	@Column(name="action_id")
 	private Action actionId;
 	
-	@Column(name="requested_by")
+	// TODO : how ? @Column(name="requested_by")
 	@OneToOne(fetch = FetchType.LAZY)
 	private User requestedBy;
 	

@@ -34,3 +34,11 @@ UPDATE `volume` SET `healthstatus`='defective' WHERE id in (SELECT id FROM volum
 -- delete columns defective and suspect from db
 ALTER TABLE `volume` DROP COLUMN `suspect`;
 ALTER TABLE `volume` DROP COLUMN `defective`;
+
+-- some invalid requests not validated properly - validation fixed
+UPDATE `request` SET `status`='failed' WHERE `id` in ('72358','72359','72360','72361','72363','72362','72364');
+
+-- request table column name
+-- ALTER TABLE `request` DROP FOREIGN KEY `FKe1oxajjb60tj4ehjm3d7kbiai`;
+-- ALTER TABLE `request` CHANGE COLUMN `requested_by_id` `requested_by` INT(11) NULL DEFAULT NULL ;
+-- ALTER TABLE `request` ADD CONSTRAINT `FKe1oxajjb60tj4ehjm3d7kbiai` FOREIGN KEY (`requested_by`) REFERENCES `user` (`id`);
