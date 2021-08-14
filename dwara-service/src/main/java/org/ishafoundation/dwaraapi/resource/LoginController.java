@@ -68,7 +68,7 @@ public class LoginController {
 		return userResp;
 	}
 
-	@PostMapping(value="/googleLogin", produces = "application/json")
+	/* @PostMapping(value="/googleLogin", produces = "application/json")
     public GoogleLoginResponse googleLogin(@RequestBody String idTokenString) {
 		// System.out.println("google token: " + idTokenString);
 		GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(),new GsonFactory())
@@ -92,13 +92,13 @@ public class LoginController {
 		
 				// Get profile information from payload
 				String email = payload.getEmail();
-				/*
-				boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
-				String name = (String) payload.get("name");
-				String pictureUrl = (String) payload.get("picture");
-				String locale = (String) payload.get("locale");
-				String familyName = (String) payload.get("family_name");
-				String givenName = (String) payload.get("given_name"); */
+				
+				// boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
+				// String name = (String) payload.get("name");
+				// String pictureUrl = (String) payload.get("picture");
+				// String locale = (String) payload.get("locale");
+				// String familyName = (String) payload.get("family_name");
+				// String givenName = (String) payload.get("given_name"); 
 		
 				// Use or store profile information
 				GoogleLoginResponse googleLoginResponse = new GoogleLoginResponse();
@@ -145,7 +145,7 @@ public class LoginController {
 			e.printStackTrace();
 			throw new DwaraException("Invalid ID token.", null);
 		}
-	}
+	} */
 
 	public String generatingRandomAlphanumericString(int length) {
 		int leftLimit = 48; // numeral '0'
