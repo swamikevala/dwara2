@@ -36,6 +36,7 @@ public class ArtifactCatalog implements Serializable{
     public String artifactName;
     public long size;
     public String volumeId;
+    public String requestStatus;
     public String ingestedDate;
     public String ingestedBy;
     public String format;
@@ -47,7 +48,7 @@ public class ArtifactCatalog implements Serializable{
 
     }
 
-    public ArtifactCatalog(int artifactId, int artifactRefId, String artifactClass, String artifactName, long size, String volumeId,
+    public ArtifactCatalog(int artifactId, int artifactRefId, String artifactClass, String artifactName, long size, String volumeId, String requestStatus,
             String ingestedDate, String ingestedBy, String oldName) {
         this.artifactId = artifactId;
         this.artifactRefId = artifactRefId;
@@ -55,6 +56,7 @@ public class ArtifactCatalog implements Serializable{
         this.artifactName = artifactName;
         this.size = size;
         this.volumeId = volumeId;
+        this.requestStatus = requestStatus;
         this.ingestedDate = ingestedDate;
         this.ingestedBy = ingestedBy;
         this.oldName = oldName;

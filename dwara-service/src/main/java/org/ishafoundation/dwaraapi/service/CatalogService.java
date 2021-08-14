@@ -1,6 +1,5 @@
 package org.ishafoundation.dwaraapi.service;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -10,22 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityResult;
-import javax.persistence.FieldResult;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.persistence.SqlResultSetMapping;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 
-import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.db.dao.master.ArtifactclassDao;
-import org.ishafoundation.dwaraapi.db.dao.master.CatalogDao;
 import org.ishafoundation.dwaraapi.db.dao.master.LocationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -33,10 +20,8 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactCatalog;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TapeCatalog;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.Artifact1Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -264,13 +249,13 @@ public class CatalogService extends DwaraService{
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.artifact_ref_id is null and a.deleted=0"
         + condition;
 
-        String query2 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
+        String query2 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
         + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and a.deleted=0"
         + " and a.id in (" + query + ")"
         + " group by a.id order by completed_at desc";
         Query q = entityManager.createNativeQuery(query2);
-        logger.info("mysql query: " + query2);
+        logger.info("artifact query: " + query2);
         List<Object[]> results = q.getResultList();
         List<ArtifactCatalog> list = new ArrayList<ArtifactCatalog>();
         results.stream().forEach((record) -> {
@@ -285,7 +270,7 @@ public class CatalogService extends DwaraService{
         + " and a.artifact_ref_id in (" + query + ")"
         + " group by a.id order by completed_at desc";
         Query qProxy = entityManager.createNativeQuery(query3);
-        logger.info("mysql query: " + query3);
+        logger.info("proxy query: " + query3);
         List<Object[]> results2 = qProxy.getResultList();
         List<ArtifactCatalog> listProxy = new ArrayList<ArtifactCatalog>();
         results2.stream().forEach((record) -> {
@@ -295,7 +280,7 @@ public class CatalogService extends DwaraService{
         return handleProxyVolumeId(list, listProxy);
     }
 
-    public List<ArtifactCatalog> findArtifactsCatalog(String[] artifactClass, String[] volumeGroup, String[] copyNumber, String volumeId, String startDate, String endDate, String artifactName, boolean deleted, boolean softRenamed) {
+    public List<ArtifactCatalog> findArtifactsCatalog(String[] artifactClass, String[] volumeGroup, String[] copyNumber, String volumeId, String startDate, String endDate, String artifactName, boolean deleted, boolean softRenamed, String[] status) {
         String condition = "";
         if(artifactClass != null && artifactClass.length >=1 && !artifactClass[0].equals("all")) {
             condition += " and a.artifactclass_id in (";
@@ -321,6 +306,14 @@ public class CatalogService extends DwaraService{
             condition = condition.substring(0, condition.length() -1);
             condition += ")";
         } */
+        if(status != null && status.length >=1 && !status[0].equals("all")){
+            condition += " and d.status in (";
+            for(String a: status) {
+                condition += "'" + a + "',";
+            }
+            condition = condition.substring(0, condition.length() -1);
+            condition += ")";
+        }
         if(volumeId != "")
             condition += " and b.volume_id like '%" + volumeId + "%'";
         if(startDate != "")
@@ -340,13 +333,13 @@ public class CatalogService extends DwaraService{
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.artifact_ref_id is null and a.deleted=" + deleted
         + condition;
 
-        String query2 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
+        String query2 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
         + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id"
         + " and a.id in (" + query + ")"
         + " group by a.id order by completed_at desc";
         Query q = entityManager.createNativeQuery(query2);
-        logger.info("mysql query: " + query2);
+        logger.info("artifact query: " + query2);
         List<Object[]> results = q.getResultList();
         List<ArtifactCatalog> list = new ArrayList<ArtifactCatalog>();
         results.stream().forEach((record) -> {
@@ -355,13 +348,13 @@ public class CatalogService extends DwaraService{
         // logger.info("list size: " + list.size());
 
         //Query proxy
-        String query3 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName, group_concat(f.status order by b.volume_id separator ',') as proxyStatus" 
+        String query3 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName, group_concat(f.status order by b.volume_id separator ',') as proxyStatus" 
         + " from artifact1 a join artifact1_volume b join volume c join request d join user e join job f"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and f.input_artifact_id=a.artifact_ref_id and f.output_artifact_id=a.id and f.processingtask_id='video-proxy-low-gen'"
         + " and a.artifact_ref_id in (" + query + ")"
         + " group by a.id order by completed_at desc";
         Query qProxy = entityManager.createNativeQuery(query3);
-        logger.info("mysql query: " + query3);
+        logger.info("proxy query: " + query3);
         List<Object[]> results2 = qProxy.getResultList();
         List<ArtifactCatalog> listProxy = new ArrayList<ArtifactCatalog>();
         results2.stream().forEach((record) -> {
@@ -384,6 +377,7 @@ public class CatalogService extends DwaraService{
         String _artifactName = (String) record[i++];
         long _size = ((BigInteger)record[i++]).longValue();
         String _volumeId = (String) record[i++];
+        String _requestStatus = (String) record[i++];
         String _ingestedDate = "";
         if(record[i] != null)
             _ingestedDate = ((Timestamp) record[i]).toLocalDateTime().toString();
@@ -395,7 +389,7 @@ public class CatalogService extends DwaraService{
             _proxyStatus = (String)record[i];
         }
 
-        ArtifactCatalog ac = new ArtifactCatalog(_artifactId, _artifactRefId, _artifactClass, _artifactName, _size, _volumeId, _ingestedDate, _ingestedBy, _oldName);
+        ArtifactCatalog ac = new ArtifactCatalog(_artifactId, _artifactRefId, _artifactClass, _artifactName, _size, _volumeId, _requestStatus, _ingestedDate, _ingestedBy, _oldName);
         ac.proxyStatus = _proxyStatus;
         return ac;
     }
