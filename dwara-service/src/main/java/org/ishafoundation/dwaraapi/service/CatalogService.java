@@ -25,6 +25,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TapeCatalog
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -182,7 +183,7 @@ public class CatalogService extends DwaraService{
             condition += " and a.finalized_at >= '" + startDate + "'";
         if(endDate != "")
             condition += " and a.finalized_at <= '" + endDate + "'";
-        String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.suspect, a.finalized_at, a.used_capacity, a.defective" 
+        String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.healthstatus, a.finalized_at, a.used_capacity" 
         + " from volume a"
         + " where a.initialized_at is not null"
         + condition
@@ -204,14 +205,15 @@ public class CatalogService extends DwaraService{
                 _capacity = ((BigInteger)record[5]).longValue();
             boolean _isImported = (boolean)record[6];
             boolean _isFinalized = (boolean)record[7];
-            boolean _isSuspect = (boolean)record[8];
+            VolumeHealthStatus volumeHealthStatus = (VolumeHealthStatus)record[8];
+            boolean _isSuspect = (volumeHealthStatus == VolumeHealthStatus.suspect ? true : false);
             String _finalizedAt = "";
             if(record[9] != null)
                 _finalizedAt = ((Timestamp) record[9]).toLocalDateTime().toString();
             long _usedCapacity = 0;
             if(record[10] != null)
                 _usedCapacity = ((BigInteger)record[10]).longValue();
-            boolean _isDefective = (boolean)record[11];
+            boolean _isDefective = (volumeHealthStatus == VolumeHealthStatus.defective ? true : false);
             List<String> _artifactClass = map.get(_volumeGroup);
 
             String status = "";
