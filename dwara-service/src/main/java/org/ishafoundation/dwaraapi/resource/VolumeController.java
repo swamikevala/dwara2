@@ -200,9 +200,9 @@ public class VolumeController {
 	@ApiResponses(value = { 
 			@ApiResponse(code = 200, message = "Ok")
 	})
-	@PostMapping(value = "/volume/{volumeId}/{status}", produces = "application/json")
+	@PostMapping(value = "/volume/{volumeId}/healthstatus/{status}", produces = "application/json")
 	public ResponseEntity<MarkVolumeStatusResponse> markVolumeStatus(@RequestBody MarkVolumeStatusRequest markVolumeStatusRequest, @PathVariable("volumeId") String volumeId, @PathVariable("status") String status) {
-		logger.info("/volume/" + volumeId + "/" + status);
+		logger.info("/volume/" + volumeId + "/healthstatus/" + status);
 		
 		MarkVolumeStatusResponse markVolumeStatusResponse = null;
 		try {
