@@ -63,6 +63,34 @@ public class ForSolutionSameerService {
 		
 		List<Artifact> artifactList = new ArrayList<Artifact>();
 		List<Request> requestList = requestDao.findAllByCompletedAtBetweenAndActionIdAndStatusInAndType(startDateTime, endDateTime, Action.ingest, statusList, RequestType.system);
+		
+
+		// find not completed but 3 copies completed list and send it to Vyom - Vyom's responsibility to dedupe
+		List<Status> threeCopiesStatusList = new ArrayList<Status>();
+		threeCopiesStatusList.add(Status.queued);
+		threeCopiesStatusList.add(Status.in_progress);
+		threeCopiesStatusList.add(Status.on_hold);
+		threeCopiesStatusList.add(Status.failed);
+		threeCopiesStatusList.add(Status.marked_completed);
+		threeCopiesStatusList.add(Status.marked_failed);
+		
+		List<Request> allNotCompletedRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.ingest, threeCopiesStatusList, RequestType.system);
+		for (Request request : allNotCompletedRequestList) {
+			int requestId = request.getId();
+			try {
+				ArtifactRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(Domain.ONE);
+				org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactFromDB = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(requestId);
+				int artifactId = artifactFromDB.getId();
+				
+				List<Job> writeJobList = jobDao.findAllByRequestIdAndInputArtifactIdAndStoragetaskActionIdAndStatus(requestId, artifactId, Action.write, Status.completed);
+				if(writeJobList.size() == 3)
+					requestList.add(request);
+			}
+			catch (Exception e) {
+				logger.warn("Skipping " + requestId + " : " + e.getMessage());
+			}
+		}
+		
 		for (Request request : requestList) {
 			try {
 				String artifactclassId = request.getDetails().getArtifactclassId();
