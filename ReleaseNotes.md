@@ -1,3 +1,28 @@
+# Dwara App Version - 2.1.26 (16th Aug 2021)
+### New features
+
+1) Tags support in process layer
+
+2) New mkv2mov converter
+
+3) Cancel/Delete reason capture
+
+4) Mark volume status API and schema changes
+
+
+### Bug fixes
+
+1) Fix rewrite top 2
+
+
+
+### Upgrade steps
+
+1) mkv2mov story 
+ * tagging needs to happen for ntsc
+ * change vyom endpoint and postbody
+ * change pgururmurthy password and change user id in vyom
+
 # Dwara App Version - 2.1.25 (2nd Aug 2021)
 ### New features
 1) Request API now supports single request
@@ -17,7 +42,7 @@
 
 5) Extra guard while saving the job object in TapeJobManager to avoid concurrent request on it(eg., Cancel) causing jobs status to be overwritten
 
-6) Directory watcher - Dont register subfolders under watched dir - For eg.,  H-BETACAM-541/H-BETACAM-543 - H-BETACAM-543 should not be registerd and only H-BETACAM-541 need to be registered which will fail validation
+6) Directory watcher - Dont register subfolders under watched dir - For eg.,  H-BETACAM-541/H-BETACAM-543 - H-BETACAM-543 should not be registered and only H-BETACAM-541 need to be registered which will fail validation
 
   
 ### Upgrade steps

@@ -337,12 +337,15 @@ public class VolumeService extends DwaraService {
 			throw new Exception(status + " not supported");
 		}
 		
+		String reason = markVolumeStatusRequest.getReason();
 		// create user request
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		data.put("volumeId", volumeId);
 		data.put("status", status);
-		data.put("reason", markVolumeStatusRequest.getReason());
+		data.put("reason", reason);
 		Request userRequest = createUserRequest(Action.mark_volume, data);
+		userRequest.setMessage(reason);
+		requestDao.save(userRequest);
 		
 		volume.setHealthstatus(volumeStatus);
 

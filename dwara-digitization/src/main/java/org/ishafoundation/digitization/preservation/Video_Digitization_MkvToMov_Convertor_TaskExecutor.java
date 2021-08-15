@@ -61,7 +61,7 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		// Doing this command creation and execution in 2 steps so that the process can be referenced in memory and so if cancel command for a specific medialibrary is issued the specific process(es) can be destroyed/killed referencing this...
 		// mapping only for proxy generation commands which are slightly heavy and time consuming than the thumbnail and metadata extraction...
 		
-		String videoDigiType = "pal";
+		String videoDigiType = "dv-pal";
 		for (String nthTag : tagList) {
 			if(nthTag.startsWith("video-digi-type")) {
 				videoDigiType = nthTag.split(":")[1];
@@ -76,7 +76,7 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		String r = "25";
 		String cropDimension = "720:576:0:32";
 
-		if(videoDigiType.equals("ntsc")) {
+		if(videoDigiType.equals("dv-ntsc")) {
 			pixFmt = "yuv411p";
 			r = "30000/1001";
 			cropDimension = "720:480:0:32";

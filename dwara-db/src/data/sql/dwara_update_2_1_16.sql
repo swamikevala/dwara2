@@ -38,9 +38,9 @@ UPDATE `artifact1` SET `file_count`='3' WHERE `id`='28798';
 UPDATE `user` SET `hash`='vhmYtFGaTFmdph2U' WHERE `id`='1';
 
 -- Volume schema changes 
-UPDATE `volume` SET `healthstatus`='normal',`lifecyclestage`='active' WHERE id in (SELECT id FROM (SELECT id FROM volume where defective=0 and suspect=0) as c);
-UPDATE `volume` SET `healthstatus`='suspect',`lifecyclestage`='active' WHERE id in (SELECT id FROM (SELECT id FROM volume where suspect=1) as c);
-UPDATE `volume` SET `healthstatus`='defective',`lifecyclestage`='purged' WHERE id in (SELECT id FROM (SELECT id FROM volume where defective=1) as c);
+UPDATE `volume` SET `healthstatus`='normal',`lifecyclestage`='active' WHERE id in (SELECT id FROM (SELECT id FROM volume where defective=0 and suspect=0) as c) and type='physical';
+UPDATE `volume` SET `healthstatus`='suspect',`lifecyclestage`='active' WHERE id in (SELECT id FROM (SELECT id FROM volume where suspect=1) as c) and type='physical';
+UPDATE `volume` SET `healthstatus`='defective',`lifecyclestage`='retired' WHERE id in (SELECT id FROM (SELECT id FROM volume where defective=1) as c) and type='physical';
 
 -- delete columns defective and suspect from db
 ALTER TABLE `volume` DROP COLUMN `suspect`;

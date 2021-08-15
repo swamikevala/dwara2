@@ -35,14 +35,16 @@ public class UserRequestHelper {
 	protected RequestDao requestDao;
 
 	public Request createUserRequest(Action requestedBusinessAction, String userName, Object requestPayload) {
-		return createUserRequest(requestedBusinessAction, userName, Status.queued, requestPayload);
+		return createUserRequest(requestedBusinessAction, userName, Status.queued, requestPayload, null);
 	}
 	
-	public Request createUserRequest(Action requestedBusinessAction, String userName, Status status, Object requestPayload) {
+	public Request createUserRequest(Action requestedBusinessAction, String userName, Status status, Object requestPayload, String reason) {
 		Request request = new Request();
 		request.setType(RequestType.user);
 		request.setActionId(requestedBusinessAction);
 		request.setStatus(status);
+		if(status == Status.completed)
+			request.setCompletedAt(LocalDateTime.now());
 
 		User requestedByUser = userDao.findByName(userName);
     	request.setRequestedBy(requestedByUser);
@@ -52,7 +54,7 @@ public class UserRequestHelper {
 		JsonNode postBodyJson = getRequestDetails(requestPayload); 
 		details.setBody(postBodyJson);
 		request.setDetails(details);
-
+		request.setMessage(reason);
 		request = requestDao.save(request);
 		logger.info(DwaraConstants.USER_REQUEST + request.getId() + " - " + requestedBusinessAction.name());
 
