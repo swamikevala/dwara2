@@ -36,6 +36,7 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		Integer fileId = processContext.getFile().getId();
 		String destinationDirPath = processContext.getOutputDestinationDirPath();
+		List<String> tagList = processContext.getTags();
 
 		if(logger.isTraceEnabled()) {
 			logger.trace("taskName " + taskName);
@@ -59,7 +60,29 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 	
 		// Doing this command creation and execution in 2 steps so that the process can be referenced in memory and so if cancel command for a specific medialibrary is issued the specific process(es) can be destroyed/killed referencing this...
 		// mapping only for proxy generation commands which are slightly heavy and time consuming than the thumbnail and metadata extraction...
-		List<String> conversionCommandParamsList = getConversionCommand(sourceFilePathname, outputFileTargetLocation);
+		
+		String videoDigiType = "pal";
+		for (String nthTag : tagList) {
+			if(nthTag.startsWith("video-digi-type")) {
+				videoDigiType = nthTag.split(":")[1];
+			}
+		}
+
+		if(videoDigiType.equals("hdv"))
+			throw new Exception("hdv is not supported for mov conversion yet");
+		
+		// by default set it to pal
+		String pixFmt = "yuv422p";
+		String r = "25";
+		String cropDimension = "720:576:0:32";
+
+		if(videoDigiType.equals("ntsc")) {
+			pixFmt = "yuv411p";
+			r = "30000/1001";
+			cropDimension = "720:480:0:32";
+		}
+		
+		List<String> conversionCommandParamsList = getConversionCommand(sourceFilePathname, outputFileTargetLocation, pixFmt, r, cropDimension);
 		CommandLineExecutionResponse conversionCommandLineExecutionResponse = createProcessAndExecuteCommand(fileId+"~"+taskName , conversionCommandParamsList);
 		if(conversionCommandLineExecutionResponse.isComplete())
 			logger.info("Mov Conversion successful - " + outputFileTargetLocation);
@@ -78,9 +101,16 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		return processingtaskResponse;
 	}
 	
-	// ffmpeg -y -i <<sourceFilePathname>> -acodec copy -pix_fmt yuv422p -r 25 -c:v dvvideo -vf "scale=720:576" -b:v 50M <<outputFileTargetLocation>>
-	// ffmpeg -y -i AC30.mkv -acodec copy -pix_fmt yuv422p -r 25 -c:v dvvideo -vf "scale=720:576" -b:v 50M AC30-2.mov
-	private List<String> getConversionCommand(String sourceFilePathname, String outputFileTargetLocation) {
+	/*
+		pal
+			ffmpeg -y -i E221.mkv -acodec copy -pix_fmt yuv422p -r 25 -c:v dvvideo -vf "crop=720:576:0:32" -b:v 50M E221-crop.mov
+			
+		ntsc
+			ffmpeg -y -i N880.mkv -acodec copy -pix_fmt yuv411p -r 30000/1001 -c:v dvvideo -vf "crop=720:480:0:32" -b:v 50M N880-11-crop.mov
+	*/
+	
+	// ffmpeg -y -i <<sourceFilePathname>> -acodec copy -pix_fmt <<pixFmt>> -r <<r>> -c:v dvvideo -vf "crop=<<dimension>>" -b:v 50M <<outputFileTargetLocation>>
+	private List<String> getConversionCommand(String sourceFilePathname, String outputFileTargetLocation, String pixFmt, String r, String cropDimension) {
 		List<String> compressionCommandParamsList = new ArrayList<String>();
 		
 		compressionCommandParamsList.add("ffmpeg");
@@ -90,14 +120,13 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		compressionCommandParamsList.add("-acodec");
 		compressionCommandParamsList.add("copy");
 		compressionCommandParamsList.add("-pix_fmt");
-		compressionCommandParamsList.add("yuv422p");
+		compressionCommandParamsList.add(pixFmt);
 		compressionCommandParamsList.add("-r");
-		compressionCommandParamsList.add("25");
+		compressionCommandParamsList.add(r);
 		compressionCommandParamsList.add("-c:v");
 		compressionCommandParamsList.add("dvvideo");
 		compressionCommandParamsList.add("-vf");
-		//compressionCommandParamsList.add("\"scale=720:576\"");
-		compressionCommandParamsList.add("[in]scale=720x576[scaled]");
+		compressionCommandParamsList.add("[in]crop=" + cropDimension + "[cropped]");
 		compressionCommandParamsList.add("-b:v");
 		compressionCommandParamsList.add("50M");
 		compressionCommandParamsList.add(outputFileTargetLocation);
