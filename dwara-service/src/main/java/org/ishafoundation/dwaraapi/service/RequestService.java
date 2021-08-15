@@ -128,23 +128,22 @@ public class RequestService extends DwaraService{
     
     public RequestResponse cancelRequest(int requestId, String reason) throws Exception{
     	Request requestToBeCancelled = requestDao.findById(requestId).get();
-    	requestToBeCancelled.setMessage(reason);
     	if(requestToBeCancelled.getActionId() == Action.ingest) { // TODO should this behaviour be same for digi and video-pub or should we not move video-pub to cancelled dir...
-    		return cancelAndCleanupRequest(requestToBeCancelled);
+    		return cancelAndCleanupRequest(requestToBeCancelled, reason);
     	} 
     	else if(requestToBeCancelled.getActionId() == Action.restore || requestToBeCancelled.getActionId() == Action.restore_process) {
-    		return cancelRequest(requestToBeCancelled, true);
+    		return cancelRequest(requestToBeCancelled, reason, true);
     	}
     	else {
-    		return cancelRequestOnlyIfAllJobsQueued(requestToBeCancelled);
+    		return cancelRequestOnlyIfAllJobsQueued(requestToBeCancelled, reason);
     	}
     }
     
-    private RequestResponse cancelRequestOnlyIfAllJobsQueued(Request requestToBeCancelled) throws Exception{
-    	return cancelRequest(requestToBeCancelled, false);
+    private RequestResponse cancelRequestOnlyIfAllJobsQueued(Request requestToBeCancelled, String reason) throws Exception{
+    	return cancelRequest(requestToBeCancelled, reason, false);
     }
 
-	private RequestResponse cancelRequest(Request requestToBeCancelled, boolean force) throws Exception{
+	private RequestResponse cancelRequest(Request requestToBeCancelled, String reason, boolean force) throws Exception{
 		int requestId = requestToBeCancelled.getId();
 		logger.info("Cancelling request " + requestId);
 		Request userRequest = null;
@@ -179,6 +178,8 @@ public class RequestService extends DwaraService{
 			requestDao.save(userRequestToBeCancelled);
 			
 			userRequest.setStatus(Status.completed);
+			userRequest.setCompletedAt(LocalDateTime.now());
+			userRequest.setMessage(reason);
 			userRequest = requestDao.save(userRequest);
 			
 	        return frameRequestResponse(userRequest, RequestType.user);
@@ -192,7 +193,7 @@ public class RequestService extends DwaraService{
 		}
 	}
     
-    private RequestResponse cancelAndCleanupRequest(Request requestToBeCancelled) throws Exception{
+    private RequestResponse cancelAndCleanupRequest(Request requestToBeCancelled, String reason) throws Exception{
 		Request userRequest = null;
 		try {
 	    	String artifactclassId = requestToBeCancelled.getDetails().getArtifactclassId();
@@ -221,6 +222,8 @@ public class RequestService extends DwaraService{
 			
 	    	userRequest.setRequestRef(requestToBeCancelled);
 	    	userRequest.setStatus(Status.completed);
+			userRequest.setCompletedAt(LocalDateTime.now());
+			userRequest.setMessage(reason);
 	        requestDao.save(userRequest);
 	        logger.info(userRequest.getId() + " - Completed");
 	        
