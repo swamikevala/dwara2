@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.process.thread;
 
 import java.io.File;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -25,6 +26,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
@@ -402,6 +404,16 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 						processContext.setTFile(fileEntityToFileForProcessConverter.getTFileForProcess(tFile));
 						processContext.setLogicalFile(logicalFile);
 						processContext.setOutputDestinationDirPath(outputFilePath);
+						Set<Tag> tagSet = inputArtifact.getTags();
+						
+						if(tagSet != null) {
+							List<String> tags = new ArrayList<String>();
+							for (Tag nthTag : tagSet) {
+								tags.add(nthTag.getTag());
+							}
+							processContext.setTags(tags);
+						}
+
 						/* Wont be effective once the ProcessingJobProcessor object is sent to the executor queue
 						BasicThreadFactory threadFactory =  (BasicThreadFactory) tpe.getThreadFactory();
 						processContext.setPriority(threadFactory.getPriority());

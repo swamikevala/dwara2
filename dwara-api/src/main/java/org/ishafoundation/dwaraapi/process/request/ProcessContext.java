@@ -1,5 +1,9 @@
 package org.ishafoundation.dwaraapi.process.request;
 
+import java.util.List;
+
+
+
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 
 public class ProcessContext {
@@ -15,6 +19,8 @@ public class ProcessContext {
 	private Job job;
 	
 	private String outputDestinationDirPath;
+	
+    private List<String> tags;
 	
 //	private Integer priority;
 
@@ -64,6 +70,14 @@ public class ProcessContext {
 
 	public void setOutputDestinationDirPath(String outputDestinationDirPath) {
 		this.outputDestinationDirPath = outputDestinationDirPath;
+	}
+
+	public List<String> getTags() {
+		return tags;
+	}
+
+	public void setTags(List<String> tags) {
+		this.tags = tags;
 	}
 
 	/*
