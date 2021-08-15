@@ -71,18 +71,8 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		if(videoDigiType.equals("hdv"))
 			throw new Exception("hdv is not supported for mov conversion yet");
 		
-		// by default set it to pal
-		String pixFmt = "yuv422p";
-		String r = "25";
-		String cropDimension = "720:576:0:32";
-
-		if(videoDigiType.equals("dv-ntsc")) {
-			pixFmt = "yuv411p";
-			r = "30000/1001";
-			cropDimension = "720:480:0:32";
-		}
 		
-		List<String> conversionCommandParamsList = getConversionCommand(sourceFilePathname, outputFileTargetLocation, pixFmt, r, cropDimension);
+		List<String> conversionCommandParamsList = getConversionCommand(sourceFilePathname, outputFileTargetLocation, videoDigiType);
 		CommandLineExecutionResponse conversionCommandLineExecutionResponse = createProcessAndExecuteCommand(fileId+"~"+taskName , conversionCommandParamsList);
 		if(conversionCommandLineExecutionResponse.isComplete())
 			logger.info("Mov Conversion successful - " + outputFileTargetLocation);
@@ -104,19 +94,40 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 	/*
 		pal
 			ffmpeg -y -i E221.mkv -acodec copy -pix_fmt yuv422p -r 25 -c:v dvvideo -vf "crop=720:576:0:32" -b:v 50M E221-crop.mov
+			ffmpeg -y -i E221.mkv -map 0:v:0 -map 0:a:0? -map 0:a:1? -acodec copy -pix_fmt yuv422p -r 25 -c:v dvvideo -vf crop=720:576:0:32,setdar=4/3 -b:v 50M E221-v3.mov
 			
 		ntsc
 			ffmpeg -y -i N880.mkv -acodec copy -pix_fmt yuv411p -r 30000/1001 -c:v dvvideo -vf "crop=720:480:0:32" -b:v 50M N880-11-crop.mov
+			ffmpeg -y -i N880.mkv -map 0:v:0 -map 0:a:0? -map 0:a:1? -acodec copy -pix_fmt yuv422p -r 30000/1001 -c:v dvvideo -vf crop=720:480:0:32,setdar=4/3 -b:v 50M N880-11-v3.mov
 	*/
 	
 	// ffmpeg -y -i <<sourceFilePathname>> -acodec copy -pix_fmt <<pixFmt>> -r <<r>> -c:v dvvideo -vf "crop=<<dimension>>" -b:v 50M <<outputFileTargetLocation>>
-	private List<String> getConversionCommand(String sourceFilePathname, String outputFileTargetLocation, String pixFmt, String r, String cropDimension) {
+	private List<String> getConversionCommand(String sourceFilePathname, String outputFileTargetLocation, String videoDigiType) {
+		
+		// by default set it to pal
+		String pixFmt = "yuv422p";
+		String r = "25";
+		String cropDimension = "720:576:0:32";
+
+		if(videoDigiType.equals("dv-ntsc")) {
+			pixFmt = "yuv411p";
+			r = "30000/1001";
+			cropDimension = "720:480:0:32";
+		}
+
+		
 		List<String> compressionCommandParamsList = new ArrayList<String>();
 		
 		compressionCommandParamsList.add("ffmpeg");
 		compressionCommandParamsList.add("-y");
 		compressionCommandParamsList.add("-i");
 		compressionCommandParamsList.add(sourceFilePathname);
+		compressionCommandParamsList.add("-map");
+		compressionCommandParamsList.add("0:v:0");
+		compressionCommandParamsList.add("-map");
+		compressionCommandParamsList.add("0:a:0?");
+		compressionCommandParamsList.add("-map");
+		compressionCommandParamsList.add("0:a:1?");
 		compressionCommandParamsList.add("-acodec");
 		compressionCommandParamsList.add("copy");
 		compressionCommandParamsList.add("-pix_fmt");
@@ -126,7 +137,8 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		compressionCommandParamsList.add("-c:v");
 		compressionCommandParamsList.add("dvvideo");
 		compressionCommandParamsList.add("-vf");
-		compressionCommandParamsList.add("[in]crop=" + cropDimension + "[cropped]");
+		compressionCommandParamsList.add("crop=" + cropDimension + ",setdar=4/3");
+		//compressionCommandParamsList.add("[in]crop=" + cropDimension + ",setdar=4/3[cropped]");
 		compressionCommandParamsList.add("-b:v");
 		compressionCommandParamsList.add("50M");
 		compressionCommandParamsList.add(outputFileTargetLocation);
