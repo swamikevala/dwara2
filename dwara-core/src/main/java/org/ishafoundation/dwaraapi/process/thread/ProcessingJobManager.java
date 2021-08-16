@@ -206,8 +206,8 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				logger.info("Taking up processing job " + job.getId() + " for preprocessing and delegating it to PJP thread executor");
 			
 			Processingtask processingtask = getProcessingtask(processingtaskId);
-			if(processingtask == null)
-				throw new Exception(processingtask + " is not configured in DB. Please configure ProcessingTask table properly");
+//			if(processingtask == null)
+//				throw new Exception(processingtask + " is not configured in DB. Please configure ProcessingTask table properly");
 
 
 			
