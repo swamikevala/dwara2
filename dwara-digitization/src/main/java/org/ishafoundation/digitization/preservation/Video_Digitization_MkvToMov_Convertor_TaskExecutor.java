@@ -72,14 +72,17 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 			/*
 				hdv - 1920x1080
 				dv-pal - 720x608
-				dv-ntsc - 720x480
+				dv-ntsc - 720x512
 	 		*/
 			if(response.equals("1920x1080"))
 				videoType = "hdv";
 			else if(response.equals("720x608"))
 				videoType = "dv-pal";
-			else if(response.equals("720x480"))
+			else if(response.equals("720x512"))
 				videoType = "dv-ntsc";
+			
+			if(videoType == null)
+				throw new Exception("Unable to determine video type for dimension " + response);
 			
 			logger.info("Video type determination successful - " + videoType);
 		}
