@@ -86,7 +86,7 @@ public class Volume {
 
 	@Enumerated(EnumType.STRING)
 	@Column(name="healthstatus")
-	private VolumeHealthStatus healthstatus;
+	private VolumeHealthStatus healthstatus = VolumeHealthStatus.normal;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name="lifecyclestage")
