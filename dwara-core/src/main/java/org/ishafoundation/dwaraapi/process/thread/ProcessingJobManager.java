@@ -182,6 +182,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			if(processingtaskImpl == null)
 				throw new Exception(processingtaskId + " class is still not impl. Please refer IProcessingTask doc...");
 			
+			
 			String executorName = processingtaskId.toLowerCase();
 			Executor executor = IProcessingTask.taskName_executor_map.get(executorName);
 			if(executor == null) {
@@ -205,6 +206,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				logger.info("Taking up processing job " + job.getId() + " for preprocessing and delegating it to PJP thread executor");
 			
 			Processingtask processingtask = getProcessingtask(processingtaskId);
+			if(processingtask == null)
+				throw new Exception(processingtask + " is not configured in DB. Please configure ProcessingTask table properly");
+
 
 			
 			Domain domain = null;
