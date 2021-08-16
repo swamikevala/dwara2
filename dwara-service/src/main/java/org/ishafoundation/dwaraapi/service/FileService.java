@@ -376,5 +376,19 @@ public class FileService extends DwaraService{
 			}
 		}
     }
+    public void markCorrupted(int fileId , String notes){
+    	Domain[] domains = Domain.values();
+		for (Domain nthDomain : domains) {
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(nthDomain, fileId);
+			if(fileFromDB != null) {
+				fileFromDB.setCorrupted(true);
+				fileFromDB.setNotes(notes);
+		    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(nthDomain);
+		    	domainSpecificFileRepository.save(fileFromDB);
+				break;
+			}
+		}
+    }
+
 }
 

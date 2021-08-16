@@ -41,6 +41,11 @@ public class FileColumns {
 	@Column(length=4096, name="symlink_path") 
 	private String symlinkPath;
 	
+	@Column(name="Corrupted")
+	private boolean corrupted;
+	
+	 @Column(length=4096 , name ="notes") 
+	 private String notes;
 
 	public String getPathname() {
 		return pathname;
@@ -113,7 +118,26 @@ public class FileColumns {
 	public void setSymlinkPath(String symlinkPath) {
 		this.symlinkPath = symlinkPath;
 	}
-
+	
+	public void setCorrupted(boolean corrupted) 
+	{
+		this.corrupted=corrupted;
+	}
+	
+	public void setNotes(String notes) 
+	{
+		this.notes=notes;
+	}
+	
+	public boolean getCorrupted() 
+	{
+		return corrupted;
+	}
+	
+	public String getNotes() 
+	{
+		return notes;
+	}
 	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
