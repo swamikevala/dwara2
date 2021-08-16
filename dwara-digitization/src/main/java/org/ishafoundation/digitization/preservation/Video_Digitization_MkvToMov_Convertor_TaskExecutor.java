@@ -52,27 +52,49 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 	
 		String fileName = FilenameUtils.getBaseName(sourceFilePathname);
 		FileUtils.forceMkdir(new File(destinationDirPath));
-		
-		String outputFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.MOV_EXTN ;// TODO How do we know if it should be mkv or mxf or what not???
 
-		/*************** CONVERSION ***************/
-		logger.info("Mov Conversion starts for " + sourceFilePathname + " - targetLocation is - " + outputFileTargetLocation);
-	
-		// Doing this command creation and execution in 2 steps so that the process can be referenced in memory and so if cancel command for a specific medialibrary is issued the specific process(es) can be destroyed/killed referencing this...
-		// mapping only for proxy generation commands which are slightly heavy and time consuming than the thumbnail and metadata extraction...
-		
+
+		/*************** DETERMINE TYPE ***************/
+		/* Instead of relying on tags for determining the video type we are now probing the file for the type 		
 		String videoDigiType = "dv-pal";
 		for (String nthTag : tagList) {
 			if(nthTag.startsWith("video-digi-type")) {
 				videoDigiType = nthTag.split(":")[1];
 			}
 		}
+		*/
+		
+		List<String> typeDeterminationCommandParamsList = getTypeDeterminationCommand(sourceFilePathname);
+		CommandLineExecutionResponse typeDeterminationCommandLineExecutionResponse = createProcessAndExecuteCommand(fileId+"~"+taskName+"~Type" , typeDeterminationCommandParamsList);
+		String videoType = null;
+		if(typeDeterminationCommandLineExecutionResponse.isComplete()) {
+			String response = typeDeterminationCommandLineExecutionResponse.getStdOutResponse().trim();
+			/*
+				hdv - 1920x1080
+				dv-pal - 720x608
+				dv-ntsc - 720x480
+	 		*/
+			if(response.equals("1920x1080"))
+				videoType = "hdv";
+			else if(response.equals("720x608"))
+				videoType = "dv-pal";
+			else if(response.equals("720x480"))
+				videoType = "dv-ntsc";
+			
+			logger.info("Video type determination successful - " + videoType);
+		}
+		else
+			throw new Exception("Unable to determine video type");
 
-		if(videoDigiType.equals("hdv"))
+
+		if(videoType.equals("hdv"))
 			throw new Exception("hdv is not supported for mov conversion yet");
+				
+		/*************** CONVERSION ***************/
+		String outputFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.MOV_EXTN ;// TODO How do we know if it should be mkv or mxf or what not???
+		logger.info("Mov Conversion starts for " + sourceFilePathname + " - targetLocation is - " + outputFileTargetLocation);
 		
-		
-		List<String> conversionCommandParamsList = getConversionCommand(sourceFilePathname, outputFileTargetLocation, videoDigiType);
+		List<String> conversionCommandParamsList = getConversionCommand(sourceFilePathname, outputFileTargetLocation, videoType);
 		CommandLineExecutionResponse conversionCommandLineExecutionResponse = createProcessAndExecuteCommand(fileId+"~"+taskName , conversionCommandParamsList);
 		if(conversionCommandLineExecutionResponse.isComplete())
 			logger.info("Mov Conversion successful - " + outputFileTargetLocation);
@@ -90,6 +112,26 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 
 		return processingtaskResponse;
 	}
+
+	// ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 A1353.mkv
+	// ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 <<sourceFilePathname>>
+	private List<String> getTypeDeterminationCommand(String sourceFilePathname) {
+		List<String> typeDeterminationCommandParamsList = new ArrayList<String>();
+		
+		typeDeterminationCommandParamsList.add("ffprobe");
+		typeDeterminationCommandParamsList.add("-v");
+		typeDeterminationCommandParamsList.add("error");
+		typeDeterminationCommandParamsList.add("-select_streams");
+		typeDeterminationCommandParamsList.add("v:0");
+		typeDeterminationCommandParamsList.add("-show_entries");
+		typeDeterminationCommandParamsList.add("stream=width,height");
+		typeDeterminationCommandParamsList.add("-of");
+		typeDeterminationCommandParamsList.add("csv=s=x:p=0");
+		typeDeterminationCommandParamsList.add(sourceFilePathname);
+	
+		return typeDeterminationCommandParamsList;
+	}
+
 	
 	/*
 		pal
@@ -102,14 +144,14 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 	*/
 	
 	// ffmpeg -y -i <<sourceFilePathname>> -acodec copy -pix_fmt <<pixFmt>> -r <<r>> -c:v dvvideo -vf "crop=<<dimension>>" -b:v 50M <<outputFileTargetLocation>>
-	private List<String> getConversionCommand(String sourceFilePathname, String outputFileTargetLocation, String videoDigiType) {
+	private List<String> getConversionCommand(String sourceFilePathname, String outputFileTargetLocation, String videoType) {
 		
 		// by default set it to pal
 		String pixFmt = "yuv422p";
 		String r = "25";
 		String cropDimension = "720:576:0:32";
 
-		if(videoDigiType.equals("dv-ntsc")) {
+		if(videoType.equals("dv-ntsc")) {
 			pixFmt = "yuv411p";
 			r = "30000/1001";
 			cropDimension = "720:480:0:32";

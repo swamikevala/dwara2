@@ -5,22 +5,26 @@
 
 2) New mkv2mov converter
 
-3) Cancel/Delete reason capture
+3) Cancel/Delete API enhancement - reason capture
 
-4) Mark volume status API and schema changes
+4) Mark volume status API and volume table schema changes
 
 
 ### Bug fixes
 
-1) Fix rewrite top 2
-
+1) Fix race condition in job management for defective tape rewrite - not 1 but top 2 storage jobs are now picked up for job selection
 
 
 ### Upgrade steps
 
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_16.sql)
+
 1) mkv2mov story 
+ 
  * tagging needs to happen for ntsc
+ 
  * change vyom endpoint and postbody
+ 
  * change pgururmurthy password and change user id in vyom
 
 # Dwara App Version - 2.1.25 (2nd Aug 2021)
