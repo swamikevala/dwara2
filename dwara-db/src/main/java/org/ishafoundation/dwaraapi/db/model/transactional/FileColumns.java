@@ -42,7 +42,7 @@ public class FileColumns {
 	private String symlinkPath;
 	
 	@Column(name="Corrupted")
-	private boolean corrupted;
+	private Boolean corrupted= false;
 	
 	 @Column(length=4096 , name ="notes") 
 	 private String notes;
@@ -91,7 +91,7 @@ public class FileColumns {
 		return directory;
 	}
 
-	public void setDirectory(boolean directory) {
+	public void setDirectory(Boolean directory) {
 		this.directory = directory;
 	}
 
@@ -129,7 +129,7 @@ public class FileColumns {
 		this.notes=notes;
 	}
 	
-	public boolean getCorrupted() 
+	public Boolean getCorrupted() 
 	{
 		return corrupted;
 	}
