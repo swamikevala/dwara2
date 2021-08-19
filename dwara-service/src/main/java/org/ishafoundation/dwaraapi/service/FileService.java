@@ -378,7 +378,17 @@ public class FileService extends DwaraService{
     }
     public void markCorrupted(int fileId , String notes){
     	Domain[] domains = Domain.values();
-		for (Domain nthDomain : domains) {
+    	HashMap<String, Object> data = new HashMap<String, Object>();
+    	
+		Request userRequest = null;
+		data.put("fileId", fileId);
+		data.put("corrupted", true);
+		data.put("remarks",notes);
+		userRequest = createUserRequest(Action.marked_completed, data);
+    	
+    	for (Domain nthDomain : domains) {
+						
+			
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(nthDomain, fileId);
 			if(fileFromDB != null) {
 				fileFromDB.setCorrupted(true);
@@ -388,6 +398,9 @@ public class FileService extends DwaraService{
 				break;
 			}
 		}
+    	
+    	userRequest.setStatus(Status.completed);
+		userRequest = requestDao.save(userRequest);
     }
 
 }
