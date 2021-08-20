@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.resource;
 
 import java.io.File;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.api.req.RewriteRequest;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -162,5 +164,25 @@ public class ArtifactController {
 
 		return ResponseEntity.status(HttpStatus.OK).body(rewriteArtifactResponse);
 		
+	}
+	
+	@ApiOperation(value = "List the files of the requested artifact")
+	@GetMapping("/artifact/{artifactId}/listFiles")
+	public ResponseEntity<List<org.ishafoundation.dwaraapi.api.resp.restore.File>> listFiles(@PathVariable("artifactId") int artifactId, @RequestParam boolean includeProxyPreviewURL){
+		logger.info("/artifact/" + artifactId + "/listFiles");
+		List<org.ishafoundation.dwaraapi.api.resp.restore.File> fileList = null;
+		try {
+			fileList = artifactservice.listFiles(artifactId, includeProxyPreviewURL);
+		}catch (Exception e) {
+			String errorMsg = "Unable to listFiles for artifact - " + e.getMessage();
+			logger.error(errorMsg, e);
+
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(fileList);
 	}
 }	

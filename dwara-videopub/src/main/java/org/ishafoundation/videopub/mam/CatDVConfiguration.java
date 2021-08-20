@@ -20,6 +20,8 @@ public class CatDVConfiguration {
 	private String webUserID;
 	private String webUserPwd;
 	
+	private String proxiesRootLocationSoftLinkName;
+	
 	public boolean isSecured() {
 		return isSecured;
 	}
@@ -61,5 +63,11 @@ public class CatDVConfiguration {
 	}
 	public void setWebUserPwd(String webUserPwd) {
 		this.webUserPwd = webUserPwd;
+	}
+	public String getProxiesRootLocationSoftLinkName() {
+		return proxiesRootLocationSoftLinkName;
+	}
+	public void setProxiesRootLocationSoftLinkName(String proxiesRootLocationSoftLinkName) {
+		this.proxiesRootLocationSoftLinkName = proxiesRootLocationSoftLinkName;
 	}
 }

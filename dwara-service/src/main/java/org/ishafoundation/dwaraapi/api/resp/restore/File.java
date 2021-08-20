@@ -12,6 +12,7 @@ public class File {
 	private long size;
 	private String checksum;
 	private String checksumType;
+	private String previewProxyUrl;
 	
 	public int getId() {
 		return id;
@@ -60,5 +61,11 @@ public class File {
 	}
 	public void setChecksumType(String checksumType) {
 		this.checksumType = checksumType;
+	}
+	public String getPreviewProxyUrl() {
+		return previewProxyUrl;
+	}
+	public void setPreviewProxyUrl(String previewProxyUrl) {
+		this.previewProxyUrl = previewProxyUrl;
 	}
 }
