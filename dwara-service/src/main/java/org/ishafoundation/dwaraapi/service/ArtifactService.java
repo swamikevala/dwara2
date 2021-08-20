@@ -19,6 +19,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
@@ -84,6 +85,9 @@ public class ArtifactService extends DwaraService{
 
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
+	
+	@Autowired
+	private FileEntityUtil fileEntityUtil;
 		
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
@@ -574,14 +578,14 @@ public class ArtifactService extends DwaraService{
     	String hostname = catDVConfiguration.getHost(); 
     	
 		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
-		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(Domain.ONE);
 		for (File file : artifactFileList) {
 			org.ishafoundation.dwaraapi.api.resp.restore.File nthFile = new org.ishafoundation.dwaraapi.api.resp.restore.File();
 			nthFile.setId(file.getId());
 			nthFile.setPathname(file.getPathname());
 			nthFile.setSize(file.getSize());
 			
-			File derivedFile = domainSpecificFileRepository.findByFileRefId(file.getId());
+			
+			File derivedFile = fileEntityUtil.getFileRef(file, domain.ONE);
 			if(derivedFile != null)
 				nthFile.setPreviewProxyUrl(protocol + "://" + hostname + "/" + catDVConfiguration.getProxiesRootLocationSoftLinkName() + "/" + derivedFile.getPathname());
 			
