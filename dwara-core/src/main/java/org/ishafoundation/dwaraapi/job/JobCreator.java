@@ -150,12 +150,19 @@ public class JobCreator {
 			
 			List<String> refFlowelementDepsList = nthFlowelement.getDependencies();
 			if(refFlowelementDepsList == null) {
-				jobsCreated.addAll(createJobs(nthFlowelement, null, request, artifactclassId, artifact));
+				jobsCreated.addAll(createJobs(nthFlowelement, null, request, artifactclassId, artifact, false));
 			}
 		}
 		return jobsCreated;
 	}
+
+	public List<Job> hasDependentJobsToBeCreated(Job job){
+		return createDependentJobs_internal(job, true);
+	}
 	
+	public List<Job> createDependentJobs(Job job){
+		return createDependentJobs_internal(job, false);
+	}
 
 	/**
 	 * Naming convention - 
@@ -167,7 +174,7 @@ public class JobCreator {
 	 * @param job - source job for which dependent jobs need to be created
 	 * @return
 	 */
-	public List<Job> createDependentJobs(Job job){
+	private List<Job> createDependentJobs_internal(Job job, boolean dryRun){
 		List<Job> jobsCreated = new ArrayList<Job>();
 		String flowelementId = job.getFlowelementId();
 		
@@ -178,7 +185,7 @@ public class JobCreator {
 			Request request = job.getRequest();
 			
 			logger.trace("Creating dependent job(s) for sourceJob " + job.getId() + " with flowelement " + flowelement);
-			iterateDependentFlowelements(job, request, flowId, flowelement, jobsCreated);
+			iterateDependentFlowelements(job, request, flowId, flowelement, jobsCreated, dryRun);
 			logger.trace("Dependent job(s) created for " + job.getId() + " - " + jobsCreated);
 		}else
 			logger.trace(job.getId() + " not a complex task and doesnt involve a flow");
@@ -186,7 +193,7 @@ public class JobCreator {
 		return jobsCreated;
 	}
 
-	private void iterateDependentFlowelements(Job job, Request request, String flowId, Flowelement flowelement, List<Job> jobList) {
+	private void iterateDependentFlowelements(Job job, Request request, String flowId, Flowelement flowelement, List<Job> jobList, boolean dryRun) {
 		List<Flowelement> dependentFlowelementList = getDependentFlowelements(flowId, flowelement);
 		logger.trace("Dependent Flowelements of flowelement " + flowelement.getId() + " - " + dependentFlowelementList);
 		
@@ -201,10 +208,10 @@ public class JobCreator {
 			
 			if(flowRefId != null) { // If the flowelement has a flowref, that means one of this flowelement dependency is a processing task generating an output artifact, that is to be consumed as input
 				logger.trace("References a flow again " + flowRefId);
-				iterateDependentFlowelements(job, request, flowRefId, nthDependentFlowelement, jobList);
+				iterateDependentFlowelements(job, request, flowRefId, nthDependentFlowelement, jobList, dryRun);
 			} else {
 				String artifactclassId = dependentJobInputArtifact!=null ? dependentJobInputArtifact.getArtifactclass().getId() : null;
-				jobList.addAll(createJobs(nthDependentFlowelement, job, request, artifactclassId, dependentJobInputArtifact));
+				jobList.addAll(createJobs(nthDependentFlowelement, job, request, artifactclassId, dependentJobInputArtifact, dryRun));
 			}
 		}
 	}
@@ -227,7 +234,7 @@ public class JobCreator {
 	 * OR
 	 * 1 job for a processing tasks 
 	 */
-	private synchronized List<Job> createJobs(Flowelement flowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact) {
+	private synchronized List<Job> createJobs(Flowelement flowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact, boolean dryRun) {
 		List<Job> jobsCreated = new ArrayList<Job>();
 		
 		Action storagetaskAction = flowelement.getStoragetaskActionId();
@@ -301,7 +308,7 @@ public class JobCreator {
 							if(volume != null)
 								job.setVolume(volume);
 							
-							job = saveJob(job);
+							job = saveJob(job, dryRun);
 							jobsCreated.add(job);
 						}
 					}
@@ -324,13 +331,13 @@ public class JobCreator {
 						job.setVolume(sourceJob.getVolume());
 						Collections.sort(dependentJobIds);
 						job.setDependencies(dependentJobIds);
-						job = saveJob(job);
+						job = saveJob(job, dryRun);
 						jobsCreated.add(job);
 					}
 				}
 			}
 			else { // processing task with no storage dependency
-				Job job = createProcessingJob(processingtaskId, flowelement, sourceJob, request, artifactclassId, artifact);
+				Job job = createProcessingJob(processingtaskId, flowelement, sourceJob, request, artifactclassId, artifact, dryRun);
 				if(job != null)
 					jobsCreated.add(job);
 			}
@@ -339,10 +346,10 @@ public class JobCreator {
 			if(storagetaskAction != null) {
 				Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
 				job.setStoragetaskActionId(storagetaskAction);
-				job = saveJob(job);
+				job = saveJob(job, dryRun);
 				jobsCreated.add(job);
 			} else {
-				Job job = createProcessingJob(processingtaskId, flowelement, sourceJob, request, artifactclassId, artifact);
+				Job job = createProcessingJob(processingtaskId, flowelement, sourceJob, request, artifactclassId, artifact, dryRun);
 				if(job != null)
 					jobsCreated.add(job);
 			}
@@ -359,10 +366,10 @@ public class JobCreator {
 					Collections.sort(dependentJobIds);
 					job.setDependencies(dependentJobIds);
 				}
-				job = saveJob(job);
+				job = saveJob(job, dryRun);
 				jobsCreated.add(job);
 			}else {
-				Job job = createProcessingJob(processingtaskId, flowelement, sourceJob, request, artifactclassId, artifact);
+				Job job = createProcessingJob(processingtaskId, flowelement, sourceJob, request, artifactclassId, artifact, dryRun);
 				if(job != null)
 					jobsCreated.add(job);
 			}
@@ -457,7 +464,7 @@ public class JobCreator {
 		return isMatch;
 	}
 
-	private Job createProcessingJob(String processingtaskId, Flowelement flowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact){
+	private Job createProcessingJob(String processingtaskId, Flowelement flowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact, boolean dryRun){
 		logger.trace("Creating processing Job for " + flowelement.getId() + ":" + processingtaskId);
 		String inputArtifactName = artifact.getName();
 		Artifactclass inputArtifactclass = artifact.getArtifactclass();
@@ -504,7 +511,7 @@ public class JobCreator {
 				job.setGroupVolume(groupVolume);
 			if(volume != null)
 				job.setVolume(volume);
-			job = saveJob(job);
+			job = saveJob(job, dryRun);
 			return job;
 		}
 		return null;
@@ -651,10 +658,12 @@ public class JobCreator {
 		return dependentFlowelementList;
 	}
 	
-	private Job saveJob(Job job) {
+	private Job saveJob(Job job, boolean dryRun) {
 		//logger.debug("DB Job row Creation");   
-		job = jobDao.save(job);
-		logger.info(DwaraConstants.JOB + job.getId());
+		if(!dryRun) {
+			job = jobDao.save(job);
+			logger.info(DwaraConstants.JOB + job.getId());
+		}
 		return job;
 	}
 }

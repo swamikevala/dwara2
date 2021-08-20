@@ -43,6 +43,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
+import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
@@ -101,6 +102,9 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private LabelManager labelManager;
+	
+	@Autowired
+	private JobCreator jobCreator;
 	
 	public AbstractStoragetypeJobProcessor() {
 		logger.debug(this.getClass().getName());
@@ -490,7 +494,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		
 		
-		if(requestedAction == Action.restore || requestedAction == Action.rewrite) { // for ingest and restore_process this happens in the scheduler... 
+		if(requestedAction == Action.restore || (requestedAction == Action.restore_process && (jobCreator.hasDependentJobsToBeCreated(storageJob.getJob()).size() == 0)) || requestedAction == Action.rewrite) { // for ingest and restore_process this happens in the scheduler... 
 			// upon completion moving the file to the original requested dest path		
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
 			
