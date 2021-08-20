@@ -33,5 +33,6 @@ public enum Action {
 	marked_failed,
 	copy,
 	mark_volume,
-	change_artifactclass;
+	change_artifactclass,
+	mark_corrupted;
 }

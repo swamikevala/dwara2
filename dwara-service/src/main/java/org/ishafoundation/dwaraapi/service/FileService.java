@@ -384,7 +384,7 @@ public class FileService extends DwaraService{
 		data.put("fileId", fileId);
 		data.put("corrupted", true);
 		data.put("remarks",notes);
-		userRequest = createUserRequest(Action.marked_completed, data);
+		userRequest = createUserRequest(Action.mark_corrupted, data);
     	
     	for (Domain nthDomain : domains) {
 						
