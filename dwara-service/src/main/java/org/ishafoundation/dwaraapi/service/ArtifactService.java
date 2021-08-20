@@ -586,7 +586,7 @@ public class ArtifactService extends DwaraService{
 			if(derivedFiles != null && derivedFiles.size() > 0) {
 				for (File nthDerivedFile : derivedFiles) {
 					if(nthDerivedFile.getPathname().endsWith(".mp4"))
-						nthFile.setPreviewProxyUrl(protocol + "://" + hostname + "/" + catDVConfiguration.getProxiesRootLocationSoftLinkName() + "/" + nthDerivedFile.getPathname());
+						nthFile.setPreviewProxyUrl(protocol + "://" + hostname + "/" + catDVConfiguration.getProxiesRootLocationSoftLinkName() + "/" + category + "/" + nthDerivedFile.getPathname());
 				}
 				
 			}
