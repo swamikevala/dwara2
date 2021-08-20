@@ -19,7 +19,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
@@ -85,9 +84,6 @@ public class ArtifactService extends DwaraService{
 
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
-	
-	@Autowired
-	private FileEntityUtil fileEntityUtil;
 		
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
@@ -578,6 +574,7 @@ public class ArtifactService extends DwaraService{
     	String hostname = catDVConfiguration.getHost(); 
     	
 		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
+
 		for (File file : artifactFileList) {
 			org.ishafoundation.dwaraapi.api.resp.restore.File nthFile = new org.ishafoundation.dwaraapi.api.resp.restore.File();
 			nthFile.setId(file.getId());
@@ -585,10 +582,14 @@ public class ArtifactService extends DwaraService{
 			nthFile.setSize(file.getSize());
 			
 			
-			File derivedFile = fileEntityUtil.getFileRef(file, domain.ONE);
-			if(derivedFile != null)
-				nthFile.setPreviewProxyUrl(protocol + "://" + hostname + "/" + catDVConfiguration.getProxiesRootLocationSoftLinkName() + "/" + derivedFile.getPathname());
-			
+			List<File> derivedFiles = fileRepositoryUtil.getAllDerivedFiles(file, Domain.ONE);
+			if(derivedFiles != null && derivedFiles.size() > 0) {
+				for (File nthDerivedFile : derivedFiles) {
+					if(nthDerivedFile.getPathname().endsWith(".mp4"))
+						nthFile.setPreviewProxyUrl(protocol + "://" + hostname + "/" + catDVConfiguration.getProxiesRootLocationSoftLinkName() + "/" + nthDerivedFile.getPathname());
+				}
+				
+			}
 			fileList.add(nthFile);
 		}
 		return fileList;

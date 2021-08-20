@@ -45,5 +45,16 @@ public class FileRepositoryUtil {
 		return fileList;
     }
     
-    
+    public List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getAllDerivedFiles(org.ishafoundation.dwaraapi.db.model.transactional.domain.File file, Domain domain) throws Exception {
+		String domainSpecificFileTableName = file.getClass().getSimpleName();
+		String separator = "$";
+		if(domainSpecificFileTableName.contains(separator)) {
+			logger.warn("class name has $ separator : " + domainSpecificFileTableName);
+			domainSpecificFileTableName = StringUtils.substringBefore(domainSpecificFileTableName, separator);
+		}
+		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+		Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_FILE_REF_ID.replace("<<DOMAIN_SPECIFIC_FILE_REF>>", domainSpecificFileTableName), int.class);
+		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = (List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>) fileDaoFindAllBy.invoke(domainSpecificFileRepository, file.getId());
+		return fileList;
+    }
 }
