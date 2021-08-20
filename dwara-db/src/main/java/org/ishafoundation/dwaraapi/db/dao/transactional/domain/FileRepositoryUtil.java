@@ -53,7 +53,7 @@ public class FileRepositoryUtil {
 			domainSpecificFileTableName = StringUtils.substringBefore(domainSpecificFileTableName, separator);
 		}
 		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-		Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_FILE_REF_ID.replace("<<DOMAIN_SPECIFIC_FILE_REF>>", domainSpecificFileTableName), int.class);
+		Method fileDaoFindAllBy = domainSpecificFileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_FILE_REF_ID.replace("<<DOMAIN_SPECIFIC_FILE>>", domainSpecificFileTableName), int.class);
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = (List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>) fileDaoFindAllBy.invoke(domainSpecificFileRepository, file.getId());
 		return fileList;
     }
