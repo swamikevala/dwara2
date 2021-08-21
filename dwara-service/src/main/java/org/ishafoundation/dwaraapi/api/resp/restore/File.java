@@ -13,6 +13,7 @@ public class File {
 	private String checksum;
 	private String checksumType;
 	private String previewProxyUrl;
+	private Boolean directory;
 	
 	public int getId() {
 		return id;
@@ -67,5 +68,11 @@ public class File {
 	}
 	public void setPreviewProxyUrl(String previewProxyUrl) {
 		this.previewProxyUrl = previewProxyUrl;
+	}
+	public Boolean getDirectory() {
+		return directory;
+	}
+	public void setDirectory(Boolean directory) {
+		this.directory = directory;
 	}
 }

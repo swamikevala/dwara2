@@ -580,7 +580,7 @@ public class ArtifactService extends DwaraService{
 			nthFile.setId(file.getId());
 			nthFile.setPathname(file.getPathname());
 			nthFile.setSize(file.getSize());
-			
+			nthFile.setDirectory(file.isDirectory());
 			
 			List<File> derivedFiles = fileRepositoryUtil.getAllDerivedFiles(file, Domain.ONE);
 			if(derivedFiles != null && derivedFiles.size() > 0) {
