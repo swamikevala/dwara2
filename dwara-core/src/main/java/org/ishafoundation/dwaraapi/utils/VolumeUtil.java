@@ -144,7 +144,7 @@ public class VolumeUtil {
 		if(jobInProgressCount > 0) {
 			tapeUsageStatus = TapeUsageStatus.job_in_progress;
 		}
-		else if(isQueuedJobOnGroupVolume(volumeId)){
+		else if(isQueuedJobOnGroupVolume(volumeDao.findById(volumeId).get().getGroupRef().getId())){
 			// any group job queued up
 			tapeUsageStatus = TapeUsageStatus.job_queued;
 		}
