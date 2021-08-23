@@ -122,9 +122,9 @@ public abstract class AbstractStoragetypeJobProcessor {
     	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
     	storageResponse = iStoragelevel.initialize(selectedStorageJob);
     	
-    	afterInitialize(selectedStorageJob);
-    	return storageResponse; 
-   	
+		afterInitialize(selectedStorageJob);
+
+		return storageResponse; 
     }
 	
 	protected void afterInitialize(SelectedStorageJob selectedStorageJob) {
@@ -494,7 +494,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		
 		
-		if(requestedAction == Action.restore || (requestedAction == Action.restore_process && (jobCreator.hasDependentJobsToBeCreated(storageJob.getJob()).size() == 0)) || requestedAction == Action.rewrite) { // for ingest and restore_process this happens in the scheduler... 
+		if(requestedAction == Action.restore || requestedAction == Action.restore_process || requestedAction == Action.rewrite) { // for ingest and restore_process with dependent jobs this happens in the scheduler... 
 			// upon completion moving the file to the original requested dest path		
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
 			
@@ -513,22 +513,35 @@ public abstract class AbstractStoragetypeJobProcessor {
 			if(pfr)
 				//srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
 				srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".mxf");
+
+			String destPath = srcPath.replace(restoredFilePathName,filePathNameToBeRestored);
 			
-			String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "").replace(restoredFilePathName,filePathNameToBeRestored);	
-			logger.trace("src " + srcPath);
-			logger.trace("dest " + destPath);
+			if(requestedAction != Action.restore_process) // we still dont know for restore_process if there is a dependent job to be created or not. Even to determine if a job need to be created or not the restored artifact with its correct name is needed 
+				destPath = destPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");
+
+			move(srcPath, destPath);
 			
-			java.io.File srcFile = new java.io.File(srcPath);
-			java.io.File destFile = new java.io.File(destPath);
-	
-			if(srcFile.isFile())
-				Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
-			else
-				Files.createDirectories(Paths.get(destPath));
-	
-			Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
-			logger.info("Moved restored files from " + srcPath + " to " + destPath);
+			// Had to do this in 2 steps for restore_process because we need the renamed artifact to determine if dependent jobs need to be created or not
+			if(requestedAction == Action.restore_process && (jobCreator.hasDependentJobsToBeCreated(storageJob.getJob()).size() == 0)) { // if no dependent jobs then move it out of the temp folder... 
+				move(destPath, destPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), ""));
+			}
 		}
+	}
+	
+	private void move(String srcPath, String destPath) throws Exception {
+		logger.trace("src " + srcPath);
+		logger.trace("dest " + destPath);
+		
+		java.io.File srcFile = new java.io.File(srcPath);
+		java.io.File destFile = new java.io.File(destPath);
+
+		if(srcFile.isFile())
+			Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
+		else
+			Files.createDirectories(Paths.get(destPath));
+
+		Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+		logger.info("Moved restored files from " + srcPath + " to " + destPath);
 	}
 	
 	private IStoragelevel getStoragelevelImpl(SelectedStorageJob selectedStorageJob){
