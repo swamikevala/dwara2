@@ -6,7 +6,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class File {
 	private int id;
 	private Integer systemRequestId;
-	private int priority;
+	private Integer priority;
+	private Integer artifactId;
 	private String artifactclass;
 	private String pathname;
 	private long size;
@@ -27,11 +28,17 @@ public class File {
 	public void setSystemRequestId(Integer systemRequestId) {
 		this.systemRequestId = systemRequestId;
 	}
-	public int getPriority() {
+	public Integer getPriority() {
 		return priority;
 	}
-	public void setPriority(int priority) {
+	public void setPriority(Integer priority) {
 		this.priority = priority;
+	}
+	public Integer getArtifactId() {
+		return artifactId;
+	}
+	public void setArtifactId(Integer artifactId) {
+		this.artifactId = artifactId;
 	}
 	public String getArtifactclass() {
 		return artifactclass;
