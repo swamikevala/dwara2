@@ -380,7 +380,7 @@ public class RequestService extends DwaraService{
 					artifactForResponse.setSkipActionElements(request.getDetails().getSkipActionelements());
 					artifactForResponse.setStagedFilename(request.getDetails().getStagedFilename());
 					artifactForResponse.setStagedFilepath(request.getDetails().getStagedFilepath());
-
+					artifactForResponse.setSize(systemArtifact.getTotalSize());
 					//tag
 					if(systemArtifact instanceof Artifact1) {
 						Artifact1 a1 = (Artifact1) systemArtifact;
