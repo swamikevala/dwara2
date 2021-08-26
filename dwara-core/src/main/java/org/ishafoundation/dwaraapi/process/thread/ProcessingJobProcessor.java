@@ -36,6 +36,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -238,8 +239,9 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 				logger.info("Processing complete - " + logicalFile.getAbsolutePath());
 				endms = System.currentTimeMillis();
 
+				// UPDATE ARTIFACT and FILE tables
 				//synchronized (processingtaskResponse) { // A Synchronized block to ensure only one thread at a time updates... Handling it differently with extra checks..
-					if(outputArtifactName != null) {
+					if(outputArtifactName != null && systemGeneratedRequest.getActionId() == Action.ingest) {
 						
 						
 						String destinationDirPath = processContext.getOutputDestinationDirPath();
