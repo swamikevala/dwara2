@@ -42,7 +42,7 @@ done
 if [ $STOP -eq 1 ]; then
    echo ""
    echo "Please fix validation errors"
-   exit
+   #exit  #
 fi
 
 for ART in `ls -A "$SRC_DIR"`; do 
@@ -55,10 +55,12 @@ for ART in `ls -A "$SRC_DIR"`; do
    LEN=${#ART}
    if [ $LEN -gt 237 ]; then
       echo "Name: $ART has length > 237 characters. Invalid"
-      exit 1
+      #exit 1
+      continue   #Added by Sameer  - So that it continues to next iteration instead of exiting
    elif [[ ! "$ART" =~ ^[a-zA-Z0-9_-.]+$ ]]; then
       echo "Name: $ART has invalid characters."
-      exit 1
+      #exit 1
+      continue #Added by Sameer  - So that it continues to next iteration instead of exiting
    fi
 
    rm md5_*.tmp
@@ -99,8 +101,9 @@ for ART in `ls -A "$SRC_DIR"`; do
       printf "*******************************\n\n"
    else
       printf "$DEST_ART verification [Failed]\n"
-      printf "Exiting\n\n"
-      exit 1
+      #printf "Exiting\n\n"
+      #exit 1
+      continue #Added by Sameer  - So that it continues to next iteration instead of exiting
    fi
 
 done
