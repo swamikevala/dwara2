@@ -51,16 +51,18 @@ for ART in `ls -A "$SRC_DIR"`; do
       continue
    fi
 
+   # SET Dont copy to False .
+   DontCopy=False
    # Name validation checks
    LEN=${#ART}
    if [ $LEN -gt 237 ]; then
       echo "Name: $ART has length > 237 characters. Invalid"
       #exit 1
-      continue   #Added by Sameer  - So that it continues to next iteration instead of exiting
+      DontCopy=True   #Added by Sameer  - So that it continues to next iteration instead of exiting
    elif [[ ! "$ART" =~ ^[a-zA-Z0-9_-.]+$ ]]; then
       echo "Name: $ART has invalid characters."
       #exit 1
-      continue #Added by Sameer  - So that it continues to next iteration instead of exiting
+      DontCopy=True #Added by Sameer  - So that it continues to next iteration instead of exiting
    fi
 
    rm md5_*.tmp
@@ -78,7 +80,8 @@ for ART in `ls -A "$SRC_DIR"`; do
       printf "$DEST_ART [Delete existing]\n"
       rm -rf "$DEST_ART"
    fi
-
+   
+   if [ DontCopy -eq False ]; then
    printf "$SRC_ART [Copying]\n"
    cp -R "$SRC_ART" "$DEST_DIR"
 
@@ -105,7 +108,7 @@ for ART in `ls -A "$SRC_DIR"`; do
       #exit 1
       continue #Added by Sameer  - So that it continues to next iteration instead of exiting
    fi
-
+   fi #if dont copy is false then it will copy and do all the md5 business. Or else chill and go to the next iteration.
 done
 
 IFS=$SAVEIFS
