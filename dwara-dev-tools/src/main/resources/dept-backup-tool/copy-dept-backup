@@ -59,12 +59,16 @@ for ART in `ls -A "$SRC_DIR"`; do
       echo "Name: $ART has length > 237 characters. Invalid"
       #exit 1
       CopyThis=false   #Added by Sameer  - So that it continues to next iteration instead of exiting
+      echo "Will not copy this folder"
    elif [[ ! "$ART" =~ ^[a-zA-Z0-9_-.]+$ ]]; then
       echo "Name: $ART has invalid characters."
       #exit 1
       CopyThis=false #Added by Sameer  - So that it continues to next iteration instead of exiting
+      echo "Will not copy this folder"
    fi
-
+   echo "The copy status for this folder is $CopyThis"
+   
+ if [ "$CopyThis" ]; then
    rm md5_*.tmp
 
    SRC_ART="${SRC_DIR}/${ART}"
@@ -81,7 +85,7 @@ for ART in `ls -A "$SRC_DIR"`; do
       rm -rf "$DEST_ART"
    fi
    
-   if [ "$CopyThis" ]; then
+  
    printf "$SRC_ART [Copying]\n"
    cp -R "${SRC_ART}" "${DEST_DIR}"
 
