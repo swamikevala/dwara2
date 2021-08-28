@@ -25,25 +25,7 @@ printf "**************************\n"
 SAVEIFS=$IFS
 IFS=$(echo -en "\n\b")
 
-# Name validation checks
 
-STOP=0
-for ART in `ls -A "$SRC_DIR"`; do
-   LEN=${#ART}
-   if [ $LEN -gt 237 ]; then
-      echo "Name: $ART has length > 237 characters. Invalid"
-      STOP=1
-   elif [[ ! "$ART" =~ ^[a-zA-Z0-9_.\-]+$ ]]; then
-      echo "Name: $ART has invalid characters."
-      STOP=1
-   fi
-done
-
-if [ $STOP -eq 1 ]; then
-   echo ""
-   echo "Please fix validation errors"
-   #exit  #
-fi
 
 for ART in `ls -A "$SRC_DIR"`; do 
    
@@ -52,23 +34,22 @@ for ART in `ls -A "$SRC_DIR"`; do
    fi
 
    # SET Dont copy to False .
-   CopyThis=true
+   
+   COPYTHIS=1
    # Name validation checks
-   LEN=${#ART}
+    LEN=${#ART}
    if [ $LEN -gt 237 ]; then
       echo "Name: $ART has length > 237 characters. Invalid"
-      #exit 1
-      CopyThis=false   #Added by Sameer  - So that it continues to next iteration instead of exiting
-      echo "Will not copy this folder"
-   elif [[ ! "$ART" =~ ^[a-zA-Z0-9_-.]+$ ]]; then
+      COPYTHIS=0
+   elif [[ ! "$ART" =~ ^[a-zA-Z0-9_.\-]+$ ]]; then
       echo "Name: $ART has invalid characters."
-      #exit 1
-      CopyThis=false #Added by Sameer  - So that it continues to next iteration instead of exiting
-      echo "Will not copy this folder"
+      COPYTHIS=0
    fi
-   echo "The copy status for this folder is $CopyThis"
+    
    
- if [ "$CopyThis" ]; then
+ if [ $COPYTHIS -eq 1 ]; then
+ 
+ echo "Will start copy for $ART";
    rm md5_*.tmp
 
    SRC_ART="${SRC_DIR}/${ART}"
@@ -116,3 +97,4 @@ for ART in `ls -A "$SRC_DIR"`; do
 done
 
 IFS=$SAVEIFS
+
