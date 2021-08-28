@@ -81,7 +81,7 @@ for ART in `ls -A "$SRC_DIR"`; do
       rm -rf "$DEST_ART"
    fi
    
-   if [ DontCopy -eq False ]; then
+   if [ $DontCopy -eq False ]; then
    printf "$SRC_ART [Copying]\n"
    cp -R "$SRC_ART" "$DEST_DIR"
 
