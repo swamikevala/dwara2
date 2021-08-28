@@ -52,17 +52,17 @@ for ART in `ls -A "$SRC_DIR"`; do
    fi
 
    # SET Dont copy to False .
-   DontCopy=False
+   DontCopy=false
    # Name validation checks
    LEN=${#ART}
    if [ $LEN -gt 237 ]; then
       echo "Name: $ART has length > 237 characters. Invalid"
       #exit 1
-      DontCopy=True   #Added by Sameer  - So that it continues to next iteration instead of exiting
+      DontCopy=true   #Added by Sameer  - So that it continues to next iteration instead of exiting
    elif [[ ! "$ART" =~ ^[a-zA-Z0-9_-.]+$ ]]; then
       echo "Name: $ART has invalid characters."
       #exit 1
-      DontCopy=True #Added by Sameer  - So that it continues to next iteration instead of exiting
+      DontCopy=true #Added by Sameer  - So that it continues to next iteration instead of exiting
    fi
 
    rm md5_*.tmp
@@ -73,7 +73,7 @@ for ART in `ls -A "$SRC_DIR"`; do
    printf "$SRC_ART [Checksum generation]\n"
    SRC_DIR_LEN=${#SRC_DIR}
 
-   find "$SRC_ART" -type f -exec sh -c 'md5sum "$1" >>  md5_src.tmp' sh {} \;
+   find "$SRC_ART" -type f -exec sh -c 'md5sum "${1}" >>  md5_srcx.tmp' sh {} \;
    #find "$SRC_ART" -type f -exec sh -c 'md5sum $1 | tee -a md5_src.tmp' sh {} \;
 
    if [ -d "$DEST_ART" ]; then
@@ -81,19 +81,19 @@ for ART in `ls -A "$SRC_DIR"`; do
       rm -rf "$DEST_ART"
    fi
    
-   if [ $DontCopy -eq False ]; then
+   if [ "$DontCopy" -eq false ]; then
    printf "$SRC_ART [Copying]\n"
-   cp -R "$SRC_ART" "$DEST_DIR"
+   cp -R "${SRC_ART}" "${DEST_DIR}"
 
    printf "$DEST_ART [Checksum verification]\n"
 
-   find "$DEST_ART" -type f -exec sh -c 'md5sum "$1" >> md5_dest.tmp' sh {} \;
+   find "$DEST_ART" -type f -exec sh -c 'md5sum "${1}" >> md5_destx.tmp' sh {} \;
 
-   sed -r "s/(.{34}).{${#SRC_DIR}}(.*)/\1\2/" md5_src.tmp | sort > md5_src2.tmp
-   sed -r "s/(.{34}).{${#DEST_DIR}}(.*)/\1\2/" md5_dest.tmp | sort > md5_dest2.tmp
+   sed -r "s/(.{34}).{${#SRC_DIR}}(.*)/\1\2/" md5_srcx.tmp | sort > md5_src2x.tmp
+   sed -r "s/(.{34}).{${#DEST_DIR}}(.*)/\1\2/" md5_destx.tmp | sort > md5_dest2x.tmp
 
-   SRC_MD5=$(md5sum md5_src2.tmp | cut -d' ' -f1)
-   DEST_MD5=$(md5sum md5_dest2.tmp | cut -d' ' -f1)
+   SRC_MD5=$(md5sum md5_src2x.tmp | cut -d' ' -f1)
+   DEST_MD5=$(md5sum md5_dest2x.tmp | cut -d' ' -f1)
    if [ $SRC_MD5 == $DEST_MD5 ]; then
       printf "$DEST_ART successfully [Verified]\n"
       if ! [ -d "${SRC_DIR}/${DELETE_DIR}" ]; then
