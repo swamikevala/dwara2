@@ -1,10 +1,8 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.math.BigInteger;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,8 +22,10 @@ import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactCatalog;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -59,6 +59,9 @@ public class FileService extends DwaraService{
 	
 	@Autowired
 	private DomainUtil domainUtil;
+	
+	@Autowired
+	private TTFileJobDao ttFileJobDao;
 	
 	public List<File> list(List<Integer> fileIds){
 
@@ -376,26 +379,53 @@ public class FileService extends DwaraService{
 			}
 		}
     }
-    public void markCorrupted(int fileId , String notes){
+    public void markBad(int fileId , String reason , boolean dealWithJob) throws Exception{
     	Domain[] domains = Domain.values();
     	HashMap<String, Object> data = new HashMap<String, Object>();
     	
+    	
 		Request userRequest = null;
 		data.put("fileId", fileId);
-		data.put("corrupted", true);
-		data.put("remarks",notes);
+		data.put("bad", true);
+		data.put("reason",reason);
 		userRequest = createUserRequest(Action.mark_corrupted, data);
     	
     	for (Domain nthDomain : domains) {
 						
 			
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(nthDomain, fileId);
+			TTFileJob ttFileJob = null;
 			if(fileFromDB != null) {
-				fileFromDB.setCorrupted(true);
-				fileFromDB.setNotes(notes);
+				fileFromDB.setBad(true);
+				fileFromDB.setReason(reason);
 		    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(nthDomain);
 		    	domainSpecificFileRepository.save(fileFromDB);
-				break;
+				
+		    	if( dealWithJob) {
+		    	List<TTFileJob> ttFileJobs = ttFileJobDao.findAllByTTFileJobKeyFileId(fileFromDB.getId());
+				if(ttFileJobs.size()==1) {
+					ttFileJob = ttFileJobs.get(0);
+					ttFileJobDao.delete(ttFileJob);
+					int jobID = ttFileJob.getJob().getId();
+					List<TTFileJob> ttFileJobswithId = ttFileJobDao.findAllByJobId(jobID);
+					boolean delete = true;
+					for(TTFileJob ttfileJob : ttFileJobswithId ) {
+						if(ttfileJob.getStatus()!=Status.completed) {
+							delete=false;
+						}
+					}
+					if(delete ) {
+						ttFileJobDao.deleteAll(ttFileJobswithId);
+					}
+				}
+				
+				else {
+					
+					throw new Exception("Multiple jobs references the file "+fileId+". Not able to deal with t_file_job and job. Please do it manually");
+				}
+		    	
+		    	}
+		    	break;
 			}
 		}
     	

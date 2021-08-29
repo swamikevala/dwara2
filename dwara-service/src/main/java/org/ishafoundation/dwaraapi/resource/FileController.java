@@ -115,11 +115,11 @@ public class FileController {
 	
 	
 	@ApiOperation(value="Marks the file as corrupted in DB")
-	@PostMapping(value="/file/{fileId}/mark_corrupted")
-	public ResponseEntity<String> markCorrupted(@PathVariable("fileId") int fileId ,  @RequestBody (required=true) String notes){
+	@PostMapping(value="/file/{fileId}/mark_bad")
+	public ResponseEntity<String> markCorrupted(@PathVariable("fileId") int fileId ,  @RequestBody (required=true) String reason , @RequestParam boolean dealWithJob = false){
 		
 		logger.info(fileId+"");
-		fileService.markCorrupted(fileId,notes);
+		fileService.markBad(fileId,reason,dealWithJob);
 		return ResponseEntity.status(HttpStatus.OK).body("Done");
 		
 	}
