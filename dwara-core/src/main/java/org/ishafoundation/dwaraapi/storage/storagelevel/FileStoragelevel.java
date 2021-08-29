@@ -1,19 +1,10 @@
 package org.ishafoundation.dwaraapi.storage.storagelevel;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
@@ -23,12 +14,9 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
-import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
-import org.ishafoundation.dwaraapi.process.LogicalFile;
-import org.ishafoundation.dwaraapi.process.helpers.FiletypePathnameReqexVisitor;
 import org.ishafoundation.dwaraapi.process.helpers.LogicalFileHelper;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;

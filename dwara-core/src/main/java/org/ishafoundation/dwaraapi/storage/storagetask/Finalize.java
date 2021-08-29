@@ -5,8 +5,6 @@ import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +20,7 @@ public class Finalize extends AbstractStoragetaskAction{
 	@Autowired
 	private VolumeDao volumeDao;
 	
-	@Autowired
-	private DomainUtil domainUtil;	
+		
 	
     @Override
     public StorageJob buildStorageJob(Job job) throws Exception {
@@ -36,8 +33,9 @@ public class Finalize extends AbstractStoragetaskAction{
     	storageJob.setVolume(volume);
     	
 		// Domain
-		Domain domain = domainUtil.getDomain(request);
-		storageJob.setDomain(domain);
+		/*
+		 * Domain domain = domainUtil.getDomain(request); storageJob.setDomain(domain);
+		 */
 		
     	return storageJob;
     }

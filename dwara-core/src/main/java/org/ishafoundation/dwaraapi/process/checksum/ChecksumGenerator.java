@@ -6,19 +6,17 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.process.IProcessingTask;
-import org.ishafoundation.dwaraapi.process.LogicalFile;
-import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
-import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import src.main.java.org.ishafoundation.dwaraapi.process.IProcessingTask;
+import src.main.java.org.ishafoundation.dwaraapi.process.LogicalFile;
+import src.main.java.org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
+import src.main.java.org.ishafoundation.dwaraapi.process.request.ProcessContext;
 
 @Component("checksum-gen")
 public class ChecksumGenerator implements IProcessingTask {
@@ -28,18 +26,21 @@ public class ChecksumGenerator implements IProcessingTask {
 	@Autowired
 	private TFileDao tFileDao;
 	
-	@Autowired
-	private DomainUtil domainUtil;
+	//@Autowired
+	//private DomainUtil domainUtil;
 	
 	@Autowired
 	private Configuration configuration;
+	
+	@Autowired
+	private FileRepository fileRepository;
 
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
 		
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 		
-		Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
+		//Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		org.ishafoundation.dwaraapi.process.request.TFile tFile = processContext.getTFile();
 		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
@@ -71,12 +72,12 @@ public class ChecksumGenerator implements IProcessingTask {
 				}
 			
 				if(file != null) {
-					FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-					Optional<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileOptional = domainSpecificFileRepository.findById(file.getId());
+					//FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+					Optional<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileOptional = fileRepository.findById(file.getId());
 					if(fileOptional.isPresent()) { // Not all files are persisted anymore. For e.g., edited videos has only configured files...
 						org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileDBObj = fileOptional.get();
 						fileDBObj.setChecksum(checksum);
-				    	domainSpecificFileRepository.save(fileDBObj);
+				    	fileRepository.save(fileDBObj);
 					}
 				}
 			}

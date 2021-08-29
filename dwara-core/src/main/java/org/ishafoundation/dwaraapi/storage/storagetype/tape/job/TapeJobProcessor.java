@@ -12,14 +12,12 @@ import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -66,8 +64,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	@Autowired
 	private LabelManager labelManager;
 	
-	@Autowired
-    private FileEntityUtil fileEntityUtil;
+	
 	
 	@Autowired
 	private VolumeUtil volumeUtil;
@@ -76,7 +73,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	private ArtifactVolumeRepositoryUtil artifactVolumeRepositoryUtil;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private FileVolumeRepository fileVolumeRepository;
 	
 	@Autowired
 	private Configuration configuration;
@@ -205,7 +202,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		
 		Volume tapeToBeUsed = storageJob.getVolume();
 
-		ArtifactVolume lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(storageJob.getDomain(), tapeToBeUsed);
+		ArtifactVolume lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume( tapeToBeUsed);
 		int lastArtifactOnVolumeEndVolumeBlock = 0;
 		
 		if(lastArtifactOnVolume != null) {
@@ -265,7 +262,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 			// skip = ((archive_block + header_block) * archiveformatblocksize) + starttimecode's clusterpos - 1 byte[excluding the start byte]
 			//skip = ((12 + 3) * 512) + 5840030 - 1 = 5847709
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
-			Domain domain = storageJob.getDomain();
+			//Domain domain = storageJob.getDomain();
 			String path = storageJob.getArtifact().getArtifactclass().getPath();
 			logger.trace("path " + path);
 			String filePathname = path + File.separator + file.getPathname();
@@ -274,7 +271,8 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 			//CuesFileParser cfp = new CuesFileParser();
 			 // TODO move this method to CuesFileParser
 			
-			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, file.getId(), storageJob.getVolume().getId());
+			//FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, file.getId(), storageJob.getVolume().getId());
+			FileVolume fileVolume = fileVolumeRepository.findByIdFileIdAndIdVolumeId(file.getId(), storageJob.getVolume().getId());
 			int headerBlocks = fileVolume.getHeaderBlocks();
 			logger.trace("archive_block " + storageJob.getArchiveBlock());
 			logger.trace("archiveformatblocksize " + storageJob.getVolume().getArchiveformat().getBlocksize());
@@ -315,7 +313,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		int driveElementAddress = tapeJob.getTapedriveNo();
 		Volume tapeToBeUsed = tapeJob.getStorageJob().getVolume();
 
-		ArtifactVolume lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(tapeJob.getStorageJob().getDomain(), tapeToBeUsed);
+		ArtifactVolume lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume( tapeToBeUsed);
 		selectedStorageJob.setLastWrittenArtifactName(lastArtifactOnVolume.getName());
 
 		loadTapeAndCheckLabel(selectedStorageJob);
@@ -374,7 +372,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		String tapeBarcode = tapeToBeUsed.getId();
 		
 		// TODO - Try avoiding this call as 
-		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(tapeJob.getStorageJob().getDomain(), tapeToBeUsed);
+		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock( tapeToBeUsed);
 		
 		if(lastArtifactOnVolumeEndVolumeBlock == 0) {
 			logger.trace("Will be reading volume label - if need be");

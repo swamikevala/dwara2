@@ -138,7 +138,7 @@ public class StoragetypeJobDelegator {
 						if(storagetaskAction == Action.write) {
 							ArtifactVolume lastArtifactOnVolume = volume_LastArtifactOnVolume_Map.get(volume);
 							if(lastArtifactOnVolume == null) {
-								lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(storageJob.getDomain(), volume);
+								lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume( volume);
 								
 								if(lastArtifactOnVolume != null) {
 									volume_LastArtifactOnVolume_Map.put(volume, lastArtifactOnVolume);

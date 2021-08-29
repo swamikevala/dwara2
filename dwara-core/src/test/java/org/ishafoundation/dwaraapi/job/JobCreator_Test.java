@@ -10,7 +10,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,13 +58,12 @@ public class JobCreator_Test {
 		requestDao.save(request);
 	}
 	
-	private Domain getDomain(String userRequest) {
-		// to get domaindefault we might need a util... or a query...
-		Domain domain = null;// from user request
-		if (domain == null)
-			domain = Domain.ONE; // defaulting to the domain configured as default...
-		return domain;
-	}
+	/*
+	 * private Domain getDomain(String userRequest) { // to get domaindefault we
+	 * might need a util... or a query... Domain domain = null;// from user request
+	 * if (domain == null) domain = Domain.ONE; // defaulting to the domain
+	 * configured as default... return domain; }
+	 */
 
 	protected String fillPlaceHolders(String postBodyJson) {
 		// TODO Auto-generated method stub

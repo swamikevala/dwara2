@@ -5,14 +5,13 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +31,7 @@ public class Verify extends AbstractStoragetaskAction{
 	private ProcessingtaskDao processingtaskDao;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactRepository artifactRepo;
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
@@ -79,11 +78,12 @@ public class Verify extends AbstractStoragetaskAction{
 		}	
 		
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
-		Domain domain = artifactclass.getDomain();
-		storageJob.setDomain(domain);
+		/*
+		 * Domain domain = artifactclass.getDomain(); storageJob.setDomain(domain);
+		 */
 		
 		Integer inputArtifactId = job.getInputArtifactId();
-		Artifact artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);
+		Artifact artifact = artifactRepo.findById((int)inputArtifactId);
 		storageJob.setArtifact(artifact); // Needed for tape job selection			
 
 		/** lazy loading other details once the job is selected for processing - Refer AbstractStoragetypeJobProcessor.beforeVerify()**/

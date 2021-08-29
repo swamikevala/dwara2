@@ -7,19 +7,18 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.process.IProcessingTask;
-import org.ishafoundation.dwaraapi.process.LogicalFile;
-import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
-import org.ishafoundation.dwaraapi.process.request.Artifact;
-import org.ishafoundation.dwaraapi.process.request.Artifactclass;
-import org.ishafoundation.dwaraapi.process.request.ProcessContext;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import src.main.java.org.ishafoundation.dwaraapi.process.IProcessingTask;
+import src.main.java.org.ishafoundation.dwaraapi.process.LogicalFile;
+import src.main.java.org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
+import src.main.java.org.ishafoundation.dwaraapi.process.request.ProcessContext;
 
 @Component("file-delete")
 public class FileDeleter implements IProcessingTask {
@@ -29,8 +28,11 @@ public class FileDeleter implements IProcessingTask {
 	@Autowired
 	private TFileDao tFileDao;
 	
+	/*
+	 * @Autowired private DomainUtil domainUtil;
+	 */
 	@Autowired
-	private DomainUtil domainUtil;
+	private FileRepository fileRepository;
 	
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -43,10 +45,10 @@ public class FileDeleter implements IProcessingTask {
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		
 		// TODO - Remove hardcoding of domain...
-    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(Domain.valueOf(inputArtifactclass.getDomain()));
+    	//FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(Domain.valueOf(inputArtifactclass.getDomain()));
 
     	// deleting the logical file
-    	deleteFileFromFilesystemAndUpdateDB(logicalFile, domainSpecificFileRepository, pathPrefix);
+    	deleteFileFromFilesystemAndUpdateDB(logicalFile, fileRepository, pathPrefix);
 
     	// deleting all its side cars
 		HashMap<String, File> sidecarFileMap = logicalFile.getSidecarFiles();
@@ -55,7 +57,7 @@ public class FileDeleter implements IProcessingTask {
 			for (String nthSideCarExtn : sidecarFileSet) {
 				File nthSideCarFile = sidecarFileMap.get(nthSideCarExtn);
 				
-				deleteFileFromFilesystemAndUpdateDB(nthSideCarFile, domainSpecificFileRepository, pathPrefix);
+				deleteFileFromFilesystemAndUpdateDB(nthSideCarFile, fileRepository, pathPrefix);
 			}
 		}
 		

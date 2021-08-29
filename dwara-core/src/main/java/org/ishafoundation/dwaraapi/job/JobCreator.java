@@ -17,6 +17,7 @@ import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassF
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactEntityUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassFlow;
@@ -29,7 +30,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+//import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
@@ -69,8 +70,9 @@ public class JobCreator {
 	@Autowired
 	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
 	
-	@Autowired
-	private DomainUtil domainUtil;
+	/*
+	 * @Autowired private DomainUtil domainUtil;
+	 */
 	
 	@Autowired
 	private FlowelementUtil flowelementUtil;
@@ -92,6 +94,9 @@ public class JobCreator {
 	
 	@Autowired
 	private JobServiceRequeueHelper jobServiceRequeueHelper;
+	
+	@Autowired
+	private ArtifactRepository artifactRepository;
 
 	// only if action is async create job should be called...
 	public List<Job> createJobs(Request request, Artifact sourceArtifact){
@@ -200,8 +205,8 @@ public class JobCreator {
 		Integer dependentJobInputArtifactId = job.getOutputArtifactId() != null ? job.getOutputArtifactId() : job.getInputArtifactId();
 		Artifact dependentJobInputArtifact = null;
 		if(dependentJobInputArtifactId != null)
-			dependentJobInputArtifact = domainUtil.getDomainSpecificArtifact(dependentJobInputArtifactId);
-		
+			//dependentJobInputArtifact = domainUtil.getDomainSpecificArtifact(dependentJobInputArtifactId);
+			dependentJobInputArtifact = artifactRepository.findById((int)dependentJobInputArtifactId);
 		for (Flowelement nthDependentFlowelement : dependentFlowelementList) {
 			logger.trace("Now processing - " + nthDependentFlowelement);
 			String flowRefId = nthDependentFlowelement.getFlowRefId();

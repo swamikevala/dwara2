@@ -108,7 +108,7 @@ public class TapeJobSelector {
 			}
 			
 			long projectedArtifactSize = volumeUtil.getProjectedArtifactSize(tapeJob.getArtifactSize(), tapeJob.getVolume());
-			if(volumeUtil.getVolumeUnusedCapacity(tapeJob.getDomain(), tapeJob.getVolume()) <= projectedArtifactSize) {
+			if(volumeUtil.getVolumeUnusedCapacity( tapeJob.getVolume()) <= projectedArtifactSize) {
 				logger.debug("Selected job " + tapeJob.getJob().getId() + " volume " + tapeJob.getVolume().getId() + " doesnt have enough capacity to hold the artifact. Removing it from the list so it can be picked up in next schedule. Now re-selecting a job again");
 				tapeJobsList.remove(tapeJob);
 				tapeJob = selectJob(tapeJobsList, driveDetails);

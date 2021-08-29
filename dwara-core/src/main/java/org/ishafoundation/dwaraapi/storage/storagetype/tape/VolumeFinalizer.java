@@ -9,11 +9,8 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
@@ -37,7 +34,7 @@ public class VolumeFinalizer {
 	private UserDao userDao;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactVolumeRepository artifactVolumeRepository;
 	
 	@Autowired
 	private JobCreator jobCreator;
@@ -78,17 +75,15 @@ public class VolumeFinalizer {
 			RequestDetails systemrequestDetails = new RequestDetails();
 			systemrequestDetails.setVolumeId(volumeId);
 			
-		   	Domain[] domains = Domain.values();
-		   	Domain domain = null;
-    		for (Domain nthDomain : domains) {
-			    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(nthDomain);
-			    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(volumeId);
-    			if(artifactVolumeCount > 0) {
-    				domain = nthDomain;
-    				break;
-    			}
-			}
-    		systemrequestDetails.setDomainId(domainUtil.getDomainId(domain));	
+			/*
+			 * Domain[] domains = Domain.values(); Domain domain = null; for (Domain
+			 * nthDomain : domains) { // ArtifactVolumeRepository<ArtifactVolume>
+			 * domainSpecificArtifactVolumeRepository =
+			 * domainUtil.getDomainSpecificArtifactVolumeRepository(nthDomain); int
+			 * artifactVolumeCount = artifactVolumeRepository.countByIdVolumeId(volumeId);
+			 * if(artifactVolumeCount > 0) { domain = nthDomain; break; } }
+			 */
+    		//systemrequestDetails.setDomainId(domainUtil.getDomainId(domain));	
 			systemrequest.setDetails(systemrequestDetails);
 			
 			systemrequest = requestDao.save(systemrequest);

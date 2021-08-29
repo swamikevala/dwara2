@@ -9,17 +9,16 @@ import java.util.Optional;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.process.IProcessingTask;
-import org.ishafoundation.dwaraapi.process.LogicalFile;
-import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
-import org.ishafoundation.dwaraapi.process.request.Artifact;
-import org.ishafoundation.dwaraapi.process.request.ProcessContext;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import src.main.java.org.ishafoundation.dwaraapi.process.IProcessingTask;
+import src.main.java.org.ishafoundation.dwaraapi.process.LogicalFile;
+import src.main.java.org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
+import src.main.java.org.ishafoundation.dwaraapi.process.request.ProcessContext;
 
 @Component("file-ignore")
 public class FileIgnorer implements IProcessingTask {
@@ -29,8 +28,11 @@ public class FileIgnorer implements IProcessingTask {
 	@Autowired
 	private Configuration config;
 	
+	/*
+	 * @Autowired private DomainUtil domainUtil;
+	 */
 	@Autowired
-	private DomainUtil domainUtil;
+	private FileRepository fileRepository;
 	
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -40,12 +42,12 @@ public class FileIgnorer implements IProcessingTask {
 		
 		LogicalFile logicalFile = processContext.getLogicalFile();
 
-    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(Domain.ONE);
-    	Optional<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileOptional = domainSpecificFileRepository.findById(processContext.getFile().getId());
+    	//FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(Domain.ONE);
+    	Optional<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileOptional = fileRepository.findById(processContext.getFile().getId());
     	if(fileOptional.isPresent()) {
 	    	org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = fileOptional.get();
 	    	fileFromDB.setDeleted(true);
-	    	domainSpecificFileRepository.save(fileFromDB);
+	    	fileRepository.save(fileFromDB);
     	}
     	
     	// move the File to junk

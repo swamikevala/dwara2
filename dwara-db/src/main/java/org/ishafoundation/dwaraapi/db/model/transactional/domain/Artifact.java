@@ -9,6 +9,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToOne;
 
@@ -64,6 +65,10 @@ public class Artifact {
 
 	@ManyToMany(mappedBy = "artifacts")
 	Set<Tag> tags;
+	
+	@ManyToOne
+	@JoinColumn(name="artifact_ref_id")
+	private Artifact artifactRef;
 
 	public Artifact() {
 
@@ -188,6 +193,19 @@ public class Artifact {
 		}
 	}
 	
+	@JsonIgnore
+	public Artifact getArtifactRef() {
+		return artifactRef;
+	}
+
+	@JsonIgnore
+	public void setArtifactRef(Artifact artifactRef) {
+		this.artifactRef = artifactRef;
+	}
+
+	public int getArtifactRefId() {
+		return this.artifactRef != null ? this.artifactRef.getId() : 0;
+	}
 
 
 	/* @Override

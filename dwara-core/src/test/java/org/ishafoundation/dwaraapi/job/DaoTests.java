@@ -8,8 +8,6 @@ import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.FlowelementDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -32,8 +30,6 @@ public class DaoTests{
 	@Autowired
 	private JobDao jobDao;
 	
-	@Autowired
-	private DomainUtil domainUtil;
 	
 	@Autowired
 	private FlowelementDao flowelementDao;

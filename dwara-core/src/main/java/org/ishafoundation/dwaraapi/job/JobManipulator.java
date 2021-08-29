@@ -18,12 +18,10 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+//import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
-import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,11 +51,15 @@ public class JobManipulator {
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
 
-	@Autowired
-	private DomainUtil domainUtil;
+	/*
+	 * @Autowired private DomainUtil domainUtil;
+	 */
 	
 	@Autowired
 	private FlowelementUtil flowelementUtil;
+	
+	@Autowired
+	private ArtifactRepository artifactRepository;
 	
 	public List<Job> getJobs(Request request){
 		Action requestedBusinessAction = request.getActionId();
@@ -71,16 +73,17 @@ public class JobManipulator {
 			logger.trace("Complex action");
 
 			List<Artifact> artifactList = null;
-			Domain[] domains = Domain.values();
-			for (Domain nthDomain : domains) {
-				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(nthDomain);
+			artifactList = artifactRepository.findAllByWriteRequestId(request.getId());
 
-				artifactList = artifactRepository.findAllByWriteRequestId(request.getId());
-				
-				if(artifactList != null && artifactList.size() > 0) {
-					break;
-				}
-			}
+			/*
+			 * Domain[] domains = Domain.values(); for (Domain nthDomain : domains) {
+			 * //ArtifactRepository<Artifact> artifactRepository =
+			 * domainUtil.getDomainSpecificArtifactRepository(nthDomain);
+			 * 
+			 * artifactList = artifactRepository.findAllByWriteRequestId(request.getId());
+			 * 
+			 * if(artifactList != null && artifactList.size() > 0) { break; } }
+			 */
 			
 			List<ActionArtifactclassFlow> actionArtifactclassFlowList = null;
 			String sourceArtifactclassId = null;

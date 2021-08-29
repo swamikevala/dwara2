@@ -1,17 +1,15 @@
 package org.ishafoundation.dwaraapi.process.thread;
 
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.process.request.File;
-import org.ishafoundation.dwaraapi.process.request.TFile;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.springframework.stereotype.Component;
 
 @Component
 public class FileEntityToFileForProcessConverter {
 	
-	@Autowired
-	private FileEntityUtil fileEntityUtil;
+	/*
+	 * @Autowired private FileEntityUtil fileEntityUtil;
+	 */
 
 	TFile getTFileForProcess(org.ishafoundation.dwaraapi.db.model.transactional.TFile tfileEntity) throws Exception{
 		if(tfileEntity == null)
@@ -33,7 +31,7 @@ public class FileEntityToFileForProcessConverter {
 	}
 
 	
-	File getFileForProcess(org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileEntity, Domain domain) throws Exception{
+	File getFileForProcess(org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileEntity) throws Exception{
 		if(fileEntity == null)
 			return null;
 		
@@ -49,7 +47,7 @@ public class FileEntityToFileForProcessConverter {
 
 		fileForProcess.setDeleted(fileEntity.isDeleted());
 		
-		fileForProcess.setFileRef(getFileForProcess(fileEntityUtil.getFileRef(fileEntity, domain), domain));
+		fileForProcess.setFileRef(getFileForProcess((org.ishafoundation.dwaraapi.db.model.transactional.domain.File)fileEntity.getFileRef()));
 		
 		return fileForProcess;
 	}

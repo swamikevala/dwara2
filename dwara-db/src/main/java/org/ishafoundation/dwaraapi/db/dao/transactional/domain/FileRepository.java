@@ -1,6 +1,9 @@
 package org.ishafoundation.dwaraapi.db.dao.transactional.domain;
 
+import java.util.List;
+
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 
@@ -12,4 +15,11 @@ public interface FileRepository<T extends File> extends CrudRepository<T,Integer
 	public static final String FIND_ALL_BY_ARTIFACT_ID = "findAllBy<<DOMAIN_SPECIFIC_ARTIFACT>>Id";
 	
 	File findByPathname(String pathname);
+
+	File findById(int id);
+	
+	List<File> findAllByArtifactId(int ArtifactId);
+	
+	//@Query("SELECT * FROM dwara_dev.file where deleted = true;")
+	List<File> findAllByArtifactIdAndDeletedFalse(int ArtifactId);
 }

@@ -19,6 +19,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TTFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
@@ -34,17 +35,12 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
-import org.ishafoundation.dwaraapi.process.IProcessingTask;
-import org.ishafoundation.dwaraapi.process.LogicalFile;
-import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +49,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import src.main.java.org.ishafoundation.dwaraapi.process.IProcessingTask;
+import src.main.java.org.ishafoundation.dwaraapi.process.LogicalFile;
+import src.main.java.org.ishafoundation.dwaraapi.process.request.ProcessContext;
 
 @Component
 @Scope("prototype")
@@ -70,7 +70,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	private TTFileJobDao tFileJobDao;
 		
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactRepository artifactRepository;
 	
 	@Autowired
 	private ApplicationContext applicationContext;
@@ -211,19 +211,18 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 
 
 			
-			Domain domain = null;
-			Integer inputArtifactId = job.getInputArtifactId();
-			Artifact inputArtifact = null;
+			//Domain domain = null;
+			int inputArtifactId = job.getInputArtifactId();
+			Artifact inputArtifact = artifactRepository.findById(inputArtifactId);
 
-	    	Domain[] domains = Domain.values();
-	   		
-    		for (Domain nthDomain : domains) {
-    			inputArtifact = domainUtil.getDomainSpecificArtifact(nthDomain, inputArtifactId);
-    			if(inputArtifact != null) {
-    				domain = nthDomain;
-    				break;
-    			}
-			}
+			/*
+			 * Domain[] domains = Domain.values();
+			 * 
+			 * for (Domain nthDomain : domains) { //inputArtifact =
+			 * domainUtil.getDomainSpecificArtifact(nthDomain, inputArtifactId);
+			 * inputArtifact = artifactRepository.findById(inputArtifactId);
+			 * if(inputArtifact != null) { domain = nthDomain; break; } }
+			 */
 			
 			String inputArtifactName = inputArtifact.getName();
 			Artifactclass inputArtifactclass = inputArtifact.getArtifactclass();
@@ -268,7 +267,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			logger.trace("outputArtifactPathname " + outputArtifactPathname); 	// null OR 
 																				// /data/transcoded/public/VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
 			
-			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, inputArtifact);
+			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj( inputArtifact);
 			
 			HashMap<String, TFile> filePathToTFileObj = getFilePathToTFileObj(inputArtifactId);
 			
@@ -290,7 +289,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				inputArtifactclassForProcess.setSource(inputArtifact.getArtifactclass().getSource());
 				inputArtifactclassForProcess.setPathPrefix(inputArtifact.getArtifactclass().getPathPrefix());
 				inputArtifactclassForProcess.setCategory(inputArtifact.getArtifactclass().getCategory());
-				inputArtifactclassForProcess.setDomain(domain.name());
+				//inputArtifactclassForProcess.setDomain(domain.name());
 				if(jobForProcess.getOutputArtifact() != null)
 					jobForProcess.getOutputArtifact().setName(outputArtifactName);
 
@@ -404,7 +403,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 						ProcessContext processContext = new ProcessContext();
 						processContext.setInputDirPath(inputArtifactPathname);
 						processContext.setJob(jobForProcess);
-						processContext.setFile(fileEntityToFileForProcessConverter.getFileForProcess(file, domain));
+						processContext.setFile(fileEntityToFileForProcessConverter.getFileForProcess(file));
 						processContext.setTFile(fileEntityToFileForProcessConverter.getTFileForProcess(tFile));
 						processContext.setLogicalFile(logicalFile);
 						processContext.setOutputDestinationDirPath(outputFilePath);

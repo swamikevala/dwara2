@@ -3,8 +3,6 @@ package org.ishafoundation.dwaraapi.db.dao.transactional.domain;
 import java.lang.reflect.Method;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

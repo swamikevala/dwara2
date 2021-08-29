@@ -2,12 +2,9 @@ package org.ishafoundation.dwaraapi.hotfixes;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.service.ArtifactService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,21 +18,24 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin
 @RestController
 public class Artifactclass_Fixer {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(Artifactclass_Fixer.class);
-	
+
 	@Autowired
 	private ArtifactService artifactService;
-	
+
 	@Autowired
-	private DomainUtil domainUtil;
-	
+	private ArtifactRepository artifactRepository;
+
 	@PostMapping(value = "/fixArtifactclass", produces = "application/json")
-	public ResponseEntity<String> fixArtifactclass(){
-		
-		// Refer the list from Artifactclass_Fixer.csv -- The first four in the file need to be manually done and the below collection is the remaing to be automated
+	public ResponseEntity<String> fixArtifactclass() {
+
+		// Refer the list from Artifactclass_Fixer.csv -- The first four in the file
+		// need to be manually done and the below collection is the remaing to be
+		// automated
 		List<String> artifactListToBeChanged = new ArrayList<String>();
-		//artifactListToBeChanged.add("Prev Seq Code,Artifact Id,Current ArtifactClass,New Artifactclass");
+		// artifactListToBeChanged.add("Prev Seq Code,Artifact Id,Current
+		// ArtifactClass,New Artifactclass");
 
 		// Added for testing
 //		artifactListToBeChanged.add("K1000,13284,video-digi-2020-priv2,video-digi-2020-pub");
@@ -122,7 +122,7 @@ public class Artifactclass_Fixer {
 		artifactListToBeChanged.add("X7,25718,video-digi-2020-edit-priv1,video-digi-2020-priv1");
 		artifactListToBeChanged.add("X8,25715,video-digi-2020-edit-pub,video-digi-2020-pub");
 		artifactListToBeChanged.add("X9,25720,video-digi-2020-edit-pub,video-digi-2020-pub");
-		
+
 		String status = "Done";
 		for (String nthArtifact : artifactListToBeChanged) {
 			String[] fields = nthArtifact.split(",");
@@ -134,28 +134,32 @@ public class Artifactclass_Fixer {
 				logger.info("Updating - " + prevSeqCode);
 				artifactService.changeArtifactclass(Integer.parseInt(artifactId), newArtifactClass, true);
 				logger.info("Completed Updating - " + prevSeqCode);
-				
+
 				ArtifactRepository<Artifact> artifactRepository = null;
 				Artifact requestedArtifact = null; // get the artifact details from DB
-				Domain[] domains = Domain.values();
-				for (Domain nthDomain : domains) {
-					artifactRepository = domainUtil.getDomainSpecificArtifactRepository(nthDomain);
-					Optional<Artifact> artifactEntity = artifactRepository.findById(Integer.parseInt(artifactId));
-					if(artifactEntity.isPresent()) {
-						requestedArtifact = artifactEntity.get();
-						break;
-					}
-				}
+				requestedArtifact = artifactRepository.findById(Integer.parseInt(artifactId));
+				/*
+				 * Domain[] domains = Domain.values();
+				 * 
+				 * for (Domain nthDomain : domains) { //artifactRepository =
+				 * domainUtil.getDomainSpecificArtifactRepository(nthDomain); requestedArtifact
+				 * = artifactRepository.findById(Integer.parseInt(artifactId));
+				 * 
+				 * if(artifactEntity != null) { requestedArtifact = artifactEntity.get(); break;
+				 * }
+				 * 
+				 * }
+				 */
 				requestedArtifact.setPrevSequenceCode(prevSeqCode); // prevSeqCode was not set
 				artifactRepository.save(requestedArtifact);
 
 				logger.info(prevSeqCode + " set in " + artifactId);
-			}catch (Exception e) {
+			} catch (Exception e) {
 				logger.error("Unable to change Artifactclass " + artifactId + " : " + e.getMessage());
 				status = "Check app logs";
 			}
 
-		} 
+		}
 		return ResponseEntity.status(HttpStatus.OK).body(status);
-	}	
+	}
 }

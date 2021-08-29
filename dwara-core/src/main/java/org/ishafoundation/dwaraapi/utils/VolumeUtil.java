@@ -6,7 +6,6 @@ import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
 import org.ishafoundation.dwaraapi.enumreferences.VolumeLifecyclestage;
@@ -36,9 +35,9 @@ public class VolumeUtil {
 	@Value("${volumeCapacity.watermarkHigh}")
 	private float watermarkHigh;
 	
-	public long getVolumeUsedCapacity(Domain domain, Volume volume){ 
+	public long getVolumeUsedCapacity( Volume volume){ 
 		// works only for blocks - TODO need to address other storagelevels...
-		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(domain, volume);
+		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock( volume);
 		logger.trace("lastArtifactOnVolumeEndVolumeBlock " + lastArtifactOnVolumeEndVolumeBlock);
 		int volumeBlocksize = volume.getDetails().getBlocksize();
 		logger.trace("volumeBlocksize " + volumeBlocksize);
@@ -55,7 +54,7 @@ public class VolumeUtil {
 	}
 
 	// returns - in bytes...
-	public long getVolumeUsableCapacity(Domain domain, Volume volume){
+	public long getVolumeUsableCapacity( Volume volume){
 		long capacity = volume.getCapacity(); // something like 6TB
 		logger.trace("capacity " + capacity);
 		// but we dont use the full capacity but only till high water mark...
@@ -63,19 +62,19 @@ public class VolumeUtil {
 	}
 	
 	// returns - in bytes...
-	public long getVolumeUnusedCapacity(Domain domain, Volume volume){
-		long useableCapacity = getVolumeUsableCapacity(domain, volume);
+	public long getVolumeUnusedCapacity( Volume volume){
+		long useableCapacity = getVolumeUsableCapacity( volume);
 		logger.trace("useableCapacity " + useableCapacity);
-		long usedCapacity = getVolumeUsedCapacity(domain, volume);
+		long usedCapacity = getVolumeUsedCapacity( volume);
 		long volumeUnUsedCapacity = useableCapacity - usedCapacity;
 		logger.trace("volumeUnUsedCapacity " + volumeUnUsedCapacity);
 		return volumeUnUsedCapacity;
 	}
 		
-	public boolean isVolumeNeedToBeFinalized(Domain domain, Volume volume, long usedCapacity){
+	public boolean isVolumeNeedToBeFinalized( Volume volume, long usedCapacity){
 		boolean isReadyToBeFinalized = false;
 //		long usedCapacity = 
-				getVolumeUsedCapacity(domain, volume);
+				getVolumeUsedCapacity( volume);
 		
 		long capacity = volume.getCapacity(); // something like 6TB
 		long volumeWatermarkLow = (long) (capacity * watermarkLow);
@@ -88,13 +87,13 @@ public class VolumeUtil {
 		return isReadyToBeFinalized;
 	}
 	
-	public Volume getToBeUsedPhysicalVolume(Domain domain, String volumegroupId, long artifactSize) {
+	public Volume getToBeUsedPhysicalVolume( String volumegroupId, long artifactSize) {
 		Volume toBeUsedVolume = null;
 		List<Volume> physicalVolumesList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndHealthstatusAndLifecyclestageOrderByIdAsc(volumegroupId, VolumeHealthStatus.normal, VolumeLifecyclestage.active);
 		for (Volume nthPhysicalVolume : physicalVolumesList) {
 
 			long projectedArtifactSize = getProjectedArtifactSize(artifactSize, nthPhysicalVolume);
-			long volumeUnusedCapacity = getVolumeUnusedCapacity(domain, nthPhysicalVolume);
+			long volumeUnusedCapacity = getVolumeUnusedCapacity( nthPhysicalVolume);
 			
 			// The chosen volume may not have enough space because of queued write jobs using it and so we may have to get the volume again just before write(job selection)...
 			if(volumeUnusedCapacity > projectedArtifactSize) {

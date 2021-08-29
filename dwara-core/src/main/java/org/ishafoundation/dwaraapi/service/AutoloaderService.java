@@ -8,12 +8,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.AutoloaderResponse;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.Drive;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.DriveStatus;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.Element;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -21,11 +15,8 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.Artifa
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
@@ -42,6 +33,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import src.main.java.org.ishafoundation.dwaraapi.api.resp.autoloader.AutoloaderResponse;
+import src.main.java.org.ishafoundation.dwaraapi.api.resp.autoloader.Drive;
+import src.main.java.org.ishafoundation.dwaraapi.api.resp.autoloader.DriveStatus;
+import src.main.java.org.ishafoundation.dwaraapi.api.resp.autoloader.Element;
+import src.main.java.org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
+import src.main.java.org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 
 @Component
 public class AutoloaderService{
@@ -61,7 +59,7 @@ public class AutoloaderService{
 	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactVolumeRepository artifactVolumeRepository;
 	
 	@Autowired
 	private TapeDeviceUtil tapeDeviceUtil;
@@ -253,16 +251,16 @@ public class AutoloaderService{
 	}
 	
 	private boolean hasAnyArtifactOnVolume(Volume volume){
-		boolean hasAnyArtifactOnVolume = false;
-	   	Domain[] domains = Domain.values();
-		for (Domain nthDomain : domains) {
-		    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(nthDomain);
-		    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(volume.getId());
-			if(artifactVolumeCount > 0) {
-				hasAnyArtifactOnVolume = true;
-				break;
-			}
-		}
+		boolean hasAnyArtifactOnVolume = artifactVolumeRepository.countByIdVolumeId(volume.getId())>0 ? true:false;
+		/*
+		 * Domain[] domains = Domain.values(); for (Domain nthDomain : domains) { //
+		 * ArtifactVolumeRepository<ArtifactVolume>
+		 * domainSpecificArtifactVolumeRepository =
+		 * domainUtil.getDomainSpecificArtifactVolumeRepository(nthDomain); int
+		 * artifactVolumeCount =
+		 * artifactVolumeRepository.countByIdVolumeId(volume.getId());
+		 * if(artifactVolumeCount > 0) { hasAnyArtifactOnVolume = true; break; } }
+		 */
 		return hasAnyArtifactOnVolume;
 	}
 	

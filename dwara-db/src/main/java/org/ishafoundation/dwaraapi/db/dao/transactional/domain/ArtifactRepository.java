@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.db.dao.transactional.domain;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.springframework.data.repository.CrudRepository;
@@ -18,4 +19,6 @@ public interface ArtifactRepository<T extends Artifact> extends CrudRepository<T
 	List<Artifact> findAllByTotalSizeAndDeletedIsFalse(long totalSize);
 	
 	List<Artifact> findAllByPrevSequenceCode(String prevSequenceCode);
+	
+	Artifact findById(int  id);
 }

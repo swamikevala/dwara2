@@ -3,7 +3,6 @@ package org.ishafoundation.dwaraapi.storage.model;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 
 /**
  * Wraps the Job with more Storagetask related info like volume to be used, artifact/file, block details etc., 
@@ -15,7 +14,7 @@ public class StorageJob {
 	private Job job; 
 	private Volume volume; // Archive Operation determines choosing the volume - For Ingest a volume from pool of volumes fitting library size - Restore based on fileId and copyNumber...
 
-	private Domain domain;
+	
 
 	private boolean encrypted;
 	
@@ -58,13 +57,11 @@ public class StorageJob {
 		this.volume = volume;
 	}
 
-	public Domain getDomain() {
-		return domain;
-	}
-
-	public void setDomain(Domain domain) {
-		this.domain = domain;
-	}
+	/*
+	 * public Domain getDomain() { return domain; }
+	 * 
+	 * public void setDomain(Domain domain) { this.domain = domain; }
+	 */
 
 	public boolean isEncrypted() {
 		return encrypted;

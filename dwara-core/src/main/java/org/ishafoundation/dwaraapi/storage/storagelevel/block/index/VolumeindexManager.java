@@ -24,8 +24,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
@@ -50,7 +48,11 @@ public class VolumeindexManager {
 	private TFileVolumeDao tFileVolumeDao;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactRepository artifactRepository;
+	
+	@Autowired
+	private ArtifactVolumeRepository artifactVolumeRepository;
+	
 	
 	@Autowired
 	private RetriableCommandLineExecutorImpl retriableCommandLineExecutorImpl;
@@ -62,9 +64,9 @@ public class VolumeindexManager {
 		boolean isSuccess = false;
 		StorageJob storageJob = storagetypeJob.getStorageJob();
 		Volume volume = storageJob.getVolume();
-		Domain domain = storageJob.getDomain();
+		//Domain domain = storageJob.getDomain();
 		
-		String xmlFromJava = createVolumeindex(volume, domain);
+		String xmlFromJava = createVolumeindex(volume);
 		logger.trace(xmlFromJava);
 		java.io.File file = new java.io.File(filesystemTemporarylocation + java.io.File.separator + volume.getId() + "_index.gz");
 		try (GzipCompressorOutputStream out = new GzipCompressorOutputStream(new FileOutputStream(file))){
@@ -91,7 +93,7 @@ public class VolumeindexManager {
 		return isSuccess;
 	}
 	
-	public String createVolumeindex(Volume volume, Domain domain) throws Exception {
+	public String createVolumeindex(Volume volume) throws Exception {
 		Volumeinfo volumeinfo = new Volumeinfo();
 		volumeinfo.setVolumeuid(volume.getId());
 		volumeinfo.setVolumeblocksize(volume.getDetails().getBlocksize());
@@ -106,11 +108,11 @@ public class VolumeindexManager {
 		//TODO : How to get this info for a volume??? volumeinfo.setArtifactclassuid(artifactclassuid);
 		
 		
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+		//ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 //		FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-		ArtifactRepository artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+		//ArtifactRepository artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 		
-		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeId(volume.getId());
+		List<ArtifactVolume> artifactVolumeList = artifactVolumeRepository.findAllByIdVolumeId(volume.getId());
 		List<Artifact> artifactList = new ArrayList<Artifact>();
 		for (ArtifactVolume artifactVolume : artifactVolumeList) {
 			try {
@@ -122,7 +124,7 @@ public class VolumeindexManager {
 				artifact.setStartblock(artifactVolume.getDetails().getStartVolumeBlock());
 				artifact.setEndblock(artifactVolume.getDetails().getEndVolumeBlock());
 				int artifactId = artifactVolume.getId().getArtifactId();
-				org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) artifactRepository.findById(artifactId).get();
+				org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) artifactRepository.findById(artifactId);
 				//org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = domainUtil.getDomainSpecificArtifact(domain, artifactId);
 				
 				artifact.setArtifactclassuid(artifactDbObj.getArtifactclass().getId());

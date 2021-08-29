@@ -22,14 +22,14 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.helpers.FiletypePathnameReqexVisitor;
 import org.ishafoundation.dwaraapi.process.helpers.LogicalFileHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import src.main.java.org.ishafoundation.dwaraapi.process.LogicalFile;
 
 @Component
 public class ProcessingJobHelper {
@@ -60,10 +60,10 @@ public class ProcessingJobHelper {
 		return filePathToTFileObj;
 	}
 	
-	protected HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getFilePathToFileObj(Domain domain, Artifact artifactDbObj) throws Exception{
+	protected HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getFilePathToFileObj( Artifact artifactDbObj) throws Exception{
 		HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathTofileObj = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
 		
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactDbObj, domain);
+		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactDbObj);
 		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
 			filePathTofileObj.put(nthFile.getPathname(), nthFile);
 		}

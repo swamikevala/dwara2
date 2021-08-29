@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileVolumeFactory;
+//import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileVolumeFactory;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 
 /*
@@ -21,7 +21,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 public class File1Volume extends FileVolume{
     static {
 //    	DomainSpecificFileVolumeFactory.register(File.TABLE_NAME_PREFIX + "1" + "_volume", File1Volume.class);
-    	DomainSpecificFileVolumeFactory.register(TABLE_NAME.replace("<<DOMAIN>>", "1"), File1Volume.class);
+    	//DomainSpecificFileVolumeFactory.register(TABLE_NAME.replace("<<DOMAIN>>", "1"), File1Volume.class);
     }
 	
 //

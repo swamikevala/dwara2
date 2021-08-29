@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-		
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 //		has dependent tasks?
 //			means outputartifactclass is needed
 			
@@ -90,13 +90,15 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	private JobUtil jobUtil;	
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactRepository artifactRepository;
+	
+	@Autowired
+	private FileRepository fileRepository;
+
 
 	@Autowired
 	private ArtifactEntityUtil artifactEntityUtil;
 	
-	@Autowired
-	private FileEntityUtil fileEntityUtil;
 	
 	@Autowired
 	private Configuration configuration;
@@ -177,7 +179,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 //				return;
 //			}
 //		}
-		Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
+		//Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		String outputArtifactName = processContext.getJob().getOutputArtifact().getName();
 		
@@ -309,13 +311,14 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 						}					
 
 						
-						ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+						//ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 						Artifact outputArtifact = artifactRepository.findByName(outputArtifactName); 
 						if(outputArtifact == null) {// not already created.
-						    outputArtifact = domainUtil.getDomainSpecificArtifactInstance(domain);
+						   // outputArtifact = domainUtil.getDomainSpecificArtifactInstance(domain);
+							outputArtifact = new Artifact();
 							
-						    artifactEntityUtil.setDomainSpecificArtifactRef(outputArtifact, inputArtifact);
-
+						   // artifactEntityUtil.setDomainSpecificArtifactRef(outputArtifact, inputArtifact);
+							outputArtifact.setArtifactRef(inputArtifact);
 						    //outputArtifact.setFileStructureMd5("not needed");
 						    outputArtifact.setArtifactclass(outputArtifactclass);
 						    outputArtifact.setName(outputArtifactName);
@@ -360,20 +363,20 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 						// Output Artifact as a file record
 						String artifactFileAbsolutePathName = outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName;
 						HashMap<String, TFile> filePathToTFileObj = getFilePathToTFileObj(outputArtifact.getId());
-						HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, outputArtifact);
+						HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj( outputArtifact);
 						
 						org.ishafoundation.dwaraapi.db.model.transactional.TFile artifactTFile = filePathToTFileObj.get(outputArtifactName);
 						
 						if(artifactTFile == null) // only if not already created... 
 							artifactTFile = createTFile(artifactFileAbsolutePathName, outputArtifact);	
 							
-						FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+						//FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 //						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
 						
 						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = filePathToFileObj.get(outputArtifactName);
 						
 						if(artifactFile == null) { // only if not already created... 
-							artifactFile = createFile(artifactFileAbsolutePathName, outputArtifact, domainSpecificFileRepository, domain, artifactTFile);	
+							artifactFile = createFile(artifactFileAbsolutePathName, outputArtifact, fileRepository,  artifactTFile);	
 //						}else {
 //							// if artifactFile already exists - need to recalculate the size for i/p = o/p artifact class scenarios which will change the dynamics of the folder completely
 //							if(outputArtifactName.equals(inputArtifact.getName())){
@@ -422,7 +425,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 								}
 								if(addFileRecords) {
 									logger.trace("Now creating file record for - " + filepathName);
-									createFile(fullFilepathname, outputArtifact, domainSpecificFileRepository, domain, nthTFile);
+									createFile(fullFilepathname, outputArtifact, fileRepository,  nthTFile);
 								}
 							}
 						}
@@ -521,13 +524,13 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		return savedTFile;
 	}
 
-	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository, Domain domain, org.ishafoundation.dwaraapi.db.model.transactional.TFile tFileDBObj) throws Exception {
-	    org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
-		
-	    fileEntityUtil.setDomainSpecificFileRef(nthFileRowToBeInserted, file);
-	    
-	    fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, outputArtifact);
-	    
+	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository, org.ishafoundation.dwaraapi.db.model.transactional.TFile tFileDBObj) throws Exception {
+	    //org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
+		org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFileRowToBeInserted = new org.ishafoundation.dwaraapi.db.model.transactional.domain.File();
+	    //fileEntityUtil.setDomainSpecificFileRef(nthFileRowToBeInserted, file);
+	    nthFileRowToBeInserted.setFileRef(file); 
+	    //fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, outputArtifact);
+	    nthFileRowToBeInserted.setArtifact(outputArtifact);
 	    String filePathname = tFileDBObj.getPathname();
 	    nthFileRowToBeInserted.setPathname(filePathname);
 	    byte[] filePathChecksum = ChecksumUtil.getChecksum(filePathname);

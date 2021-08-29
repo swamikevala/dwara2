@@ -20,7 +20,7 @@ import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
@@ -38,10 +38,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
@@ -83,13 +81,23 @@ public abstract class AbstractStoragetypeJobProcessor {
 	private Map<String, IStoragelevel> storagelevelMap;
 		
 	@Autowired
-	private DomainUtil domainUtil;
+	private FileVolumeRepository fileVolumeRepo;
+	
+	@Autowired
+	private ArtifactVolumeRepository artifactVolumeRepository;
+	
+	@Autowired
+	private ArtifactRepository artifactRepo;
+	
+	@Autowired
+	private FileRepository fileRepo;
 	
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
 	
-	@Autowired
-	private FileEntityUtil fileEntityUtil;
+	/*
+	 * @Autowired private FileEntityUtil fileEntityUtil;
+	 */
 	
 	@Autowired
 	private VolumeUtil volumeUtil;
@@ -193,7 +201,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		Volume volume = storagejob.getVolume();
 		
-		Domain domain = storagejob.getDomain();
+		//Domain domain = storagejob.getDomain();
 		
 		// Get a map of Paths and their File object
 		HashMap<String, ArchivedFile> filePathNameHexToArchivedFileObj = new LinkedHashMap<String, ArchivedFile>();
@@ -240,7 +248,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    	logger.info("TFileVolume records created successfully");
 	    }
 		
-		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
+		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact);
 		HashMap<String, File> filePathNameToFileObj = new LinkedHashMap<String, File>();
 		for (File file : artifactFileList) {
 			filePathNameToFileObj.put(file.getPathname(), file);
@@ -261,8 +269,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 //				nthFile.setChecksum(Md5Util.getChecksum(file, volume.getChecksumtype()));
 //			}
 			
-			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolumeInstance(nthFile.getId(), volume, domain);// lets just let users use the util consistently
-			
+			//FileVolume fileVolume = domainUtil.getDomainSpecificFileVolumeInstance(nthFile.getId(), volume, domain);// lets just let users use the util consistently
+			FileVolume fileVolume = fileVolumeRepo.findByIdFileIdAndIdVolumeId(nthFile.getId(),volume.getId());
 			// TODO
 			//fileVolume.setVerifiedAt(verifiedAt);
 			//fileVolume.setEncrypted(encrypted);
@@ -289,12 +297,13 @@ public abstract class AbstractStoragetypeJobProcessor {
 		}
 		
 	    if(toBeAddedFileVolumeTableEntries.size() > 0) {
-	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-	    	domainSpecificFileVolumeRepository.saveAll(toBeAddedFileVolumeTableEntries);
+	    	//FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
+	    	fileVolumeRepo.saveAll(toBeAddedFileVolumeTableEntries);
 	    	logger.info("FileVolume records created successfully");
 	    }
 	    
-	    ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolumeInstance(artifact.getId(), volume, domain); // lets just let users use the util consistently
+	    //ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolumeInstance(artifact.getId(), volume, domain); // lets just let users use the util consistently
+	    ArtifactVolume artifactVolume = artifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifact.getId(), volume.getId());
 	    artifactVolume.setName(artifact.getName());
 	    artifactVolume.setJob(storagejob.getJob());
 	    artifactVolume.setStatus(ArtifactVolumeStatus.current);
@@ -311,8 +320,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 		    
 		    artifactVolume.setDetails(artifactVolumeDetails);
 	    }
-	    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-	    artifactVolume = domainSpecificArtifactVolumeRepository.save(artifactVolume);
+	   // ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+	    artifactVolume = (ArtifactVolume) artifactVolumeRepository.save(artifactVolume);
 	    
 		selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStartVolumeBlock());
 		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEndVolumeBlock());
@@ -328,7 +337,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		labelManager.writeArtifactLabel(selectedStorageJob);
 
-    	boolean isVolumeNeedToBeFinalized = volumeUtil.isVolumeNeedToBeFinalized(domain, volume, usedCapacity);
+    	boolean isVolumeNeedToBeFinalized = volumeUtil.isVolumeNeedToBeFinalized( volume, usedCapacity);
     	if(isVolumeNeedToBeFinalized) {
     		logger.info("Triggering a finalization request for volume - " + volume.getId());
     		
@@ -343,7 +352,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 		
 		Volume volume = storageJob.getVolume();
-		Domain domain = storageJob.getDomain();
+		//Domain domain = storageJob.getDomain();
 		List<FileVolume> toBeAddedFileVolumeTableEntries = new ArrayList<FileVolume>();
 		
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileToBeRestored = selectedStorageJob.getFile();
@@ -351,8 +360,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 		for (File nthFile : fileList) {
 			String filePathname = nthFile.getPathname();
 			if(filePathname.startsWith(fileToBeRestored.getPathname())) {
-				FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());
-
+				//FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());
+				FileVolume fileVolume = fileVolumeRepo.findByIdFileIdAndIdVolumeId( nthFile.getId(), volume.getId());
 				//if(requestedAction == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(request.getDetails().getFlowName())) // called during normal restore with verify option
 					//fileVolume.setVerifiedAt(LocalDateTime.now());
 				
@@ -368,8 +377,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 			}
 		}
 	    if(toBeAddedFileVolumeTableEntries.size() > 0) {
-	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-	    	domainSpecificFileVolumeRepository.saveAll(toBeAddedFileVolumeTableEntries);
+	    	//FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
+	    	fileVolumeRepo.saveAll(toBeAddedFileVolumeTableEntries);
 	    	logger.info("FileVolume records updated with headerblock details successfully");
 	    }
 	}
@@ -419,11 +428,11 @@ public abstract class AbstractStoragetypeJobProcessor {
     protected void beforeRestore(SelectedStorageJob selectedStorageJob) throws Exception {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
     	//storageJob.setTargetLocationPath(storageJob.getTargetLocationPath() + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier());
-    	Domain domain = storageJob.getDomain();
+    	//Domain domain = storageJob.getDomain();
     	int fileIdToBeRestored = storageJob.getFileId();
 		
-		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainSpecificFileRepository.findById(fileIdToBeRestored).get();
+		//FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = fileRepo.findById(fileIdToBeRestored);
 		selectedStorageJob.setFile(file);
 		
 		// TODO : Not sure if we need to pass the destination id or path -- Destination destination = configurationTablesUtil.getDestination(storageJob.getDestination());
@@ -433,17 +442,18 @@ public abstract class AbstractStoragetypeJobProcessor {
 			selectedStorageJob.setUseBuffering(destination.isUseBuffering());
 		}
 		
-    	Artifact artifact = fileEntityUtil.getArtifact(file, domain); 
+    	Artifact artifact = file.getArtifact(); 
     	storageJob.getJob().setInputArtifactId(artifact.getId());
 		storageJob.setArtifact(artifact);
 		
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
+		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact);
 		selectedStorageJob.setArtifactFileList(fileList);
 		selectedStorageJob.setFilePathNameToChecksum(getSourceFilesChecksum(fileList));
 
 		Volume volume = storageJob.getVolume();
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
+		//ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+		//ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
+		ArtifactVolume artifactVolume = artifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifact.getId(), volume.getId());
 		selectedStorageJob.setArtifactVolume(artifactVolume);
 
 		String filePathNameToBeRestored = file.getPathname();

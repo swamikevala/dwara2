@@ -13,15 +13,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
@@ -97,10 +95,8 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 	private static final Logger logger = LoggerFactory.getLogger(AbstractTarArchiver.class);
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private FileVolumeRepository fileVolumeRepository; 
 	
-	@Autowired
-	private FileEntityUtil fileEntityUtil;
 	
 	@Autowired
 	private Configuration configuration;
@@ -198,10 +194,10 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 
 	// Get the last/most recent artifact_volume records' end volume block + TapeMarkblock and + 1(+1 because next archive starts afresh)
 	private int getArtifactStartVolumeBlock(SelectedStorageJob storagetypeJob) {
-		Domain domain = storagetypeJob.getStorageJob().getDomain();
+		//Domain domain = storagetypeJob.getStorageJob().getDomain();
 		Volume volume = storagetypeJob.getStorageJob().getVolume();
 		
-		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(domain, volume);
+		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock( volume);
 	
 		int artifactStartVolumeBlock = TarBlockCalculatorUtil.FIRSTARCHIVE_START_BLOCK; 
 		if(lastArtifactOnVolumeEndVolumeBlock > 0)
@@ -314,8 +310,8 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			FileUtils.forceMkdir(new java.io.File(targetLocationPath + java.io.File.separator + parentDir));
 			String partialFileFromTapeOutputFilePathName = filePathNameToBeRestored.replace(PfrConstants.MKV_EXTN, "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + PfrConstants.RESTORED_FROM_TAPE_BIN);
 			
-			Domain domain = storageJob.getDomain();
-			String path = fileEntityUtil.getArtifact(file, domain).getArtifactclass().getPath();
+			//Domain domain = storageJob.getDomain();
+			String path = file.getArtifact().getArtifactclass().getPath();
 			logger.trace("path " + path);
 			String filePathname = path + java.io.File.separator + file.getPathname();
 			logger.trace("filePathname " + filePathname);
@@ -348,7 +344,8 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 
 			int fileId = storageJob.getFileId();
 			Volume volume = storageJob.getVolume();
-			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, fileId, volume.getId());// lets just let users use the util consistently
+			//FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, fileId, volume.getId());// lets just let users use the util consistently
+			FileVolume fileVolume = fileVolumeRepository.findByIdFileIdAndIdVolumeId(fileId, volume.getId());
 			Integer headerBlocks = fileVolume.getHeaderBlocks();
 
 			if(headerBlocks == null)
@@ -510,7 +507,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 
 		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
-    	Domain domain = storageJob.getDomain();
+    	//Domain domain = storageJob.getDomain();
     	int fileIdToBeRestored = storageJob.getFileId();
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
 		Artifact artifact = storageJob.getArtifact();
@@ -537,7 +534,8 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 				for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : fileList) {
 					String nthArtifactFilePathname = nthFile.getPathname();//FilenameUtils.separatorsToUnix(nthArtifactFile.getPathname());
 					if(nthArtifactFilePathname.startsWith(filePathname)) {
-						FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());// lets just let users use the util consistently
+						//FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());// lets just let users use the util consistently
+						FileVolume fileVolume = fileVolumeRepository.findByIdFileIdAndIdVolumeId(nthFile.getId(), volume.getId());
 						Integer filevolumeBlock = fileVolume.getVolumeBlock();
 						Long filearchiveBlock = fileVolume.getArchiveBlock();
 						Integer headerBlocks = fileVolume.getHeaderBlocks();
@@ -559,7 +557,9 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 //			int fileEndArchiveBlock = TarBlockCalculatorUtil.getFileArchiveBlocksCount(fileSize, archiveBlocksize);
 //			noOfBlocksToBeRead = TarBlockCalculatorUtil.getFileVolumeBlocksCount(fileEndArchiveBlock, blockingFactor);
 
-			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, fileIdToBeRestored, volume.getId());// lets just let users use the util consistently
+			//FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, fileIdToBeRestored, volume.getId());// lets just let users use the util consistently
+			FileVolume fileVolume = fileVolumeRepository.findByIdFileIdAndIdVolumeId(fileIdToBeRestored, volume.getId());
+
 			Long filearchiveBlock = fileVolume.getArchiveBlock();
 			Integer headerBlocks = fileVolume.getHeaderBlocks();
 			noOfBlocksToBeRead = artifactVolume.getDetails().getStartVolumeBlock() + TarBlockCalculatorUtil.getFileVolumeEndBlock(filearchiveBlock, headerBlocks, fileSize, archiveformatBlocksize, blockingFactor) - seekedVolumeBlock;

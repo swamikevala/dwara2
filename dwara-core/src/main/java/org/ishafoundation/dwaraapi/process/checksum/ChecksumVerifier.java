@@ -7,21 +7,21 @@ import java.util.List;
 import org.apache.commons.codec.binary.Hex;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.process.IProcessingTask;
-import org.ishafoundation.dwaraapi.process.LogicalFile;
-import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
-import org.ishafoundation.dwaraapi.process.request.TFile;
-import org.ishafoundation.dwaraapi.process.request.Job;
-import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import src.main.java.org.ishafoundation.dwaraapi.process.IProcessingTask;
+import src.main.java.org.ishafoundation.dwaraapi.process.LogicalFile;
+import src.main.java.org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
+import src.main.java.org.ishafoundation.dwaraapi.process.request.ProcessContext;
 
 @Component("checksum-verify")
 public class ChecksumVerifier implements IProcessingTask {
@@ -30,11 +30,15 @@ public class ChecksumVerifier implements IProcessingTask {
 	
 	public static final String CHECKSUM_VERIFIER_COMPONENT_NAME = "checksum-verify";
 	
-	@Autowired
-	private DomainUtil domainUtil;
+	/*
+	 * @Autowired private DomainUtil domainUtil;
+	 */
 	
 	@Autowired
 	private Configuration configuration;
+	
+	@Autowired
+	private FileVolumeRepository fileVolumeRepository;
 	
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -58,7 +62,7 @@ public class ChecksumVerifier implements IProcessingTask {
 			
 			if (Arrays.equals(originalChecksum, checksumToBeVerified)) {
 				logger.trace("originalChecksum = checksumToBeVerified. All good");	
-				Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
+				//Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
 				String volumeId = null;
 				List<Job> jobDependencies = processContext.getJob().getDependencies();
 				for (Job nthJobDependency : jobDependencies) {
@@ -67,10 +71,10 @@ public class ChecksumVerifier implements IProcessingTask {
 				}
 				 
 				if(file != null) {
-			    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-			    	FileVolume fileVolume = domainSpecificFileVolumeRepository.findByIdFileIdAndIdVolumeId(file.getId(), volumeId);
+			    	//FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
+			    	FileVolume fileVolume = fileVolumeRepository.findByIdFileIdAndIdVolumeId(file.getId(), volumeId);
 			    	fileVolume.setVerifiedAt(LocalDateTime.now());
-			    	domainSpecificFileVolumeRepository.save(fileVolume);
+			    	fileVolumeRepository.save(fileVolume);
 		    	}
 			}
 			else {

@@ -8,6 +8,7 @@ import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
@@ -16,10 +17,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
@@ -35,7 +34,7 @@ public class Write extends AbstractStoragetaskAction{
     private static final Logger logger = LoggerFactory.getLogger(Write.class);
     
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactRepository artifactRepository;
 	
 	@Autowired
 	private JobDao jobDao;
@@ -69,7 +68,7 @@ public class Write extends AbstractStoragetaskAction{
 		String pathPrefix = null;
 		String volumegroupId = null;
 		Volume volume = null;
-		Domain domain = null;
+		//Domain domain = null;
 		long artifactSize = 0L;
 		int priority = 0;
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.ingest) {
@@ -99,30 +98,29 @@ public class Write extends AbstractStoragetaskAction{
 			logger.trace("artifactclassId for getting domain - " + artifactclassId);
 			
 			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
-			domain = artifactclass.getDomain();
+			//domain = artifactclass.getDomain();
 			pathPrefix = artifactclass.getPath();
 			
 			Integer inputArtifactId = job.getInputArtifactId();
-			artifact = domainUtil.getDomainSpecificArtifact(domain, inputArtifactId);
+			artifact = artifactRepository.findById((int)inputArtifactId);
 			artifactName = artifact.getName();			
 
 			volumegroupId = job.getGroupVolume().getId(); 
 			
 			//String artifactpathToBeCopied = pathPrefix + java.io.File.separator + artifactName;
 			artifactSize = artifact.getTotalSize();//FileUtils.sizeOf(new java.io.File(artifactpathToBeCopied)); 
-			volume = volumeUtil.getToBeUsedPhysicalVolume(domain, volumegroupId, artifactSize);
+			volume = volumeUtil.getToBeUsedPhysicalVolume( volumegroupId, artifactSize);
 		}else if(requestedAction == Action.rewrite || requestedAction == Action.migrate) {
 			
 			Integer inputArtifactId = job.getInputArtifactId();
-			Domain[] domains = Domain.values();
-   		
-    		for (Domain nthDomain : domains) {
-    			artifact = domainUtil.getDomainSpecificArtifact(nthDomain, inputArtifactId);
-    			if(artifact != null) {
-    				domain = nthDomain;
-    				break;
-    			}
-			}
+			/*
+			 * Domain[] domains = Domain.values();
+			 * 
+			 * for (Domain nthDomain : domains) { artifact =
+			 * domainUtil.getDomainSpecificArtifact(nthDomain, inputArtifactId); if(artifact
+			 * != null) { domain = nthDomain; break; } }
+			 */
+			artifact= artifactRepository.findById((int)inputArtifactId);
 			artifactName = artifact.getName();			
 
 			Integer rewriteCopy = job.getRequest().getDetails().getRewriteCopy();
@@ -155,7 +153,7 @@ public class Write extends AbstractStoragetaskAction{
 			}
 			
 			artifactSize = artifact.getTotalSize(); 
-			volume = volumeUtil.getToBeUsedPhysicalVolume(domain, volumegroupId, artifactSize);
+			volume = volumeUtil.getToBeUsedPhysicalVolume( volumegroupId, artifactSize);
 		
 			// get write job's storage dependency - can't be anything but restore, but looping for making the code generic giving some flexibility
 			Job restoreJob = getGoodCopyRestoreJob(job);
@@ -165,7 +163,7 @@ public class Write extends AbstractStoragetaskAction{
 		
 		StorageJob storageJob = new StorageJob();
 		storageJob.setJob(job);
-		storageJob.setDomain(domain);
+		//storageJob.setDomain(domain);
 		storageJob.setConcurrentCopies(artifact.getArtifactclass().isConcurrentVolumeCopies());
 		// what needs to be ingested
 		storageJob.setArtifact(artifact);

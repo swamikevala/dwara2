@@ -5,12 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
-import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
@@ -23,7 +17,6 @@ import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,8 +24,7 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractBruArchiver.class);
 
-	@Autowired
-	private DomainUtil domainUtil;
+
 
 	@Override
 	public ArchiveResponse write(ArchiveformatJob archiveformatJob) throws Exception {

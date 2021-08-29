@@ -34,9 +34,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Extension;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.slf4j.Logger;
@@ -59,7 +57,7 @@ public class StagedFileEvaluator {
 	private Configuration config;
 
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactRepository artifactRepository;
 
 	@Autowired
 	private SequenceUtil sequenceUtil;
@@ -97,7 +95,7 @@ public class StagedFileEvaluator {
 		editedTrSeriesFlowelementTaskconfigPathnameRegex = flowelement.getTaskconfig().getPathnameRegex();
 	}
 	
-	public StagedFileDetails evaluateAndGetDetails(Domain domain, Sequence sequence, String sourcePath, File nthIngestableFile){
+	public StagedFileDetails evaluateAndGetDetails( Sequence sequence, String sourcePath, File nthIngestableFile){
 		long size = 0;
 		int fileCount = 0;
 		
@@ -194,8 +192,8 @@ public class StagedFileEvaluator {
 		};
 
 		// 4- dupe check on size against existing artifact
-		ArtifactRepository<Artifact> domainSpecificArtifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-		List<Artifact> alreadyExistingArtifacts = domainSpecificArtifactRepository.findAllByTotalSizeAndDeletedIsFalse(size);
+		//ArtifactRepository<Artifact> domainSpecificArtifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+		List<Artifact> alreadyExistingArtifacts = artifactRepository.findAllByTotalSizeAndDeletedIsFalse(size);
 
 		if(alreadyExistingArtifacts.size() > 0) {
 			Error error = new Error();
@@ -212,7 +210,7 @@ public class StagedFileEvaluator {
 		//if(FilenameUtils.getBaseName(sourcePath).startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX)) {
 		String prevSequenceCode = sequenceUtil.getExtractedCode(sequence, fileName);
 		
-		List<Artifact> alreadyExistingArtifactList = domainSpecificArtifactRepository.findAllByPrevSequenceCode(prevSequenceCode);
+		List<Artifact> alreadyExistingArtifactList = artifactRepository.findAllByPrevSequenceCode(prevSequenceCode);
 		if(alreadyExistingArtifactList.size() > 0) {
 			for (Artifact artifact : alreadyExistingArtifactList) {
 				if(!artifact.isDeleted() && artifact.getWriteRequest().getDetails().getStagedFilename().equals(fileName) && artifact.getWriteRequest().getStatus() != Status.cancelled){ 
