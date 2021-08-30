@@ -116,7 +116,7 @@ public class FileController {
 	
 	@ApiOperation(value="Marks the file as corrupted in DB")
 	@PostMapping(value="/file/{fileId}/mark_bad")
-	public ResponseEntity<String> markCorrupted(@PathVariable("fileId") int fileId ,  @RequestBody (required=true) String reason , @RequestParam boolean dealWithJob = false){
+	public ResponseEntity<String> markCorrupted(@PathVariable("fileId") int fileId ,  @RequestBody (required=true) String reason , @RequestParam(defaultValue = "false") boolean dealWithJob ) throws Exception{
 		
 		logger.info(fileId+"");
 		fileService.markBad(fileId,reason,dealWithJob);
