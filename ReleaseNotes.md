@@ -1,3 +1,39 @@
+# Dwara App Version - 2.1.27 (31st Aug 2021)
+### New features
+
+1) Support for IT infra dept backup
+
+2) listFile api - For preview links to work please do the following in mam server(24)
+
+> cd /var/www and create a sym link 
+>> ln -s /data/proxies mam
+
+> See if http://172.18.1.24/mam works - if it still didnt work check the logs /var/log/httpd/error_log - if it shows permission denied error change context like mentioned here https://serverfault.com/questions/396036/apache-httpd-permissions - 
+>> ls -la --context /var/www/html
+
+>> chcon -R unconfined_u:object_r:httpd_sys_content_t:s0 /data/proxies-test
+
+> application.properties to have 
+>> catdv.proxiesRootLocationSoftLinkName=mam
+
+3) mkv2mov support for HDV too - With this mkv2mov is complete
+
+
+### Enhancements
+
+1) Artifact.size in Request API
+
+
+### Bug Fixes
+
+1) Tape UI - Fix for just added tapes to library misleadingly shows in restore remove column
+
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_17.sql)
+
+
 # Dwara App Version - 2.1.26 (16th Aug 2021)
 ### New features
 
