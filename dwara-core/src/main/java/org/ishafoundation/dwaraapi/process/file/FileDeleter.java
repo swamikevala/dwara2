@@ -15,10 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import src.main.java.org.ishafoundation.dwaraapi.process.IProcessingTask;
-import src.main.java.org.ishafoundation.dwaraapi.process.LogicalFile;
-import src.main.java.org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
-import src.main.java.org.ishafoundation.dwaraapi.process.request.ProcessContext;
+
 
 @Component("file-delete")
 public class FileDeleter implements IProcessingTask {

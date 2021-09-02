@@ -32,11 +32,9 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -88,9 +86,19 @@ public class JobService extends DwaraService{
 	
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
-
+	
 	@Autowired
-	private DomainUtil domainUtil;
+	 private ArtifactVolumeRepository artifactVolumeRepository;
+	
+	@Autowired
+	private FileVolumeRepository fileVolumeRepository;
+	
+	@Autowired 
+	ArtifactRepository<Artifact> artifactRepository;
+
+	/*
+	 * @Autowired private DomainUtil domainUtil;
+	 */
 	
 	public List<JobResponse> getJobs(Integer systemRequestId, List<Status> statusList) {
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
@@ -379,40 +387,41 @@ public class JobService extends DwaraService{
 	}
 	
 	private void delete_Artifact_File_TFile_PhysicalEntityRecords(int artifactId, Volume groupVolume) throws Exception {
-		Domain domain = Domain.ONE; // TODO Hardcoded domain...
+		//Domain domain = Domain.ONE; // TODO Hardcoded domain...
 		
 		Volume volumeInvolved = null;
 		// Deleting the artifactvolume record
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain); // artifact.getArtifactclass().getDomain());
-		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
+		//ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain); // artifact.getArtifactclass().getDomain());
+		List<ArtifactVolume> artifactVolumeList = artifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
 		if(artifactVolumeList == null || artifactVolumeList.size() == 0)
-			artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, null);
+			artifactVolumeList = artifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, null);
 		for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
 			
 			if(nthArtifactVolume.getVolume().getGroupRef().getId() ==  groupVolume.getId()) {
 				volumeInvolved = nthArtifactVolume.getVolume();	
 				nthArtifactVolume.setStatus(ArtifactVolumeStatus.deleted);	
-				domainSpecificArtifactVolumeRepository.save(nthArtifactVolume);
+				artifactVolumeRepository.save(nthArtifactVolume);
 				break;
 			}
 		}		
 
 	    // Now deleting the file/tfilevolume records
 		// softDelete Filevolume entries
-		ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(Domain.ONE);
-		Artifact artifact = artifactRepository.findById(artifactId).get();
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
+		//ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(Domain.ONE);
+		Artifact artifact = artifactRepository.findById(artifactId);
+		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact);
 		List<FileVolume> toBeUpdatedFileVolumeTableEntries = new ArrayList<FileVolume>();
 		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
-			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volumeInvolved.getId());
+			//FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volumeInvolved.getId());
+			FileVolume fileVolume = fileVolumeRepository.findByIdFileIdAndIdVolumeId(nthFile.getId(), volumeInvolved.getId());
 			if(fileVolume != null) {
 				fileVolume.setDeleted(true);
 				toBeUpdatedFileVolumeTableEntries.add(fileVolume);
 			}
 		}
 	    if(toBeUpdatedFileVolumeTableEntries.size() > 0) {
-	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-	    	domainSpecificFileVolumeRepository.saveAll(toBeUpdatedFileVolumeTableEntries);
+	    	//FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
+	    	fileVolumeRepository.saveAll(toBeUpdatedFileVolumeTableEntries);
 	    	logger.info("All FileVolume records for " + artifact.getName() + " [" + artifactId + "] in volume " + volumeInvolved.getId() + " flagged deleted successfully");
 	    }
 	    

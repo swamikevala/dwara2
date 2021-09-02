@@ -2,7 +2,6 @@ package org.ishafoundation.dwaraapi.service.digi;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,9 +17,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.resource.mapper.MiscObjectMapper;
 import org.ishafoundation.dwaraapi.service.DwaraService;
@@ -42,13 +39,19 @@ public class OnHoldArtifactRenameService extends DwaraService{
 	private TFileDao tFileDao;
 
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactRepository<Artifact> artifactRepository;
 
 	@Autowired
 	private MiscObjectMapper miscObjectMapper; 
 
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
+	
+	@Autowired
+	private ArtifactVolumeRepository<ArtifactVolume> artifactVolumeRepository;
+	
+	@Autowired
+	private FileRepository<File> fileRepository;
 
 	// Artifact rename function to rename artifacts - 1) Soft rename 2) hard rename for held jobs (renames the folder also)
 	public ArtifactResponse hardSoftrenameArtifact(int artifactId, String newName) throws Exception {	
@@ -59,19 +62,18 @@ public class OnHoldArtifactRenameService extends DwaraService{
 		
 		
 		// 2. Change the artifact name in the artifact folder and artifact table/ file table entry for the artifact
-		ArtifactRepository<Artifact> artifactRepository = null;
-		Artifact artifactToRenameActualRow = null; // get the artifact details from DB
-		Domain domain = null; 
-		Domain[] domains = Domain.values();
-		for (Domain nthDomain : domains) {
-			artifactRepository = domainUtil.getDomainSpecificArtifactRepository(nthDomain);
-			Optional<Artifact> artifactEntity = artifactRepository.findById(artifactId);
-			if(artifactEntity.isPresent()) {
-				artifactToRenameActualRow = artifactEntity.get();
-				domain = nthDomain;
-				break;
-			}
-		}
+		//ArtifactRepository<Artifact> artifactRepository = null;
+		Artifact artifactToRenameActualRow = artifactRepository.findById(artifactId); // get the artifact details from DB
+		//Artifact artifactEntity = artifactRepository.findById(artifactId);
+		
+		/*
+		 * Domain domain = null; Domain[] domains = Domain.values(); for (Domain
+		 * nthDomain : domains) { artifactRepository =
+		 * domainUtil.getDomainSpecificArtifactRepository(nthDomain); Optional<Artifact>
+		 * artifactEntity = artifactRepository.findById(artifactId);
+		 * if(artifactEntity.isPresent()) { artifactToRenameActualRow =
+		 * artifactEntity.get(); domain = nthDomain; break; } }
+		 */
 
 		// 2 (a) ------ Artifact level change
 		// Check if the artifact id exists 
@@ -90,8 +92,8 @@ public class OnHoldArtifactRenameService extends DwaraService{
 		}
 		
 		// Check if any write has already happened... 
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(artifactId);
+		//ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+		List<ArtifactVolume> artifactVolumeList = artifactVolumeRepository.findAllByIdArtifactId(artifactId);
 		
 		if(artifactVolumeList.size() > 0)
 			throw new Exception("Artifact already written to tape. Rename on hold not supported for already written artifacts...");
@@ -120,8 +122,8 @@ public class OnHoldArtifactRenameService extends DwaraService{
 			// 2 (a) (ii) Change the File Table entries and the file names 
 			// Step 4 - Flag all the file entries as soft-deleted
 			String parentFolderReplaceRegex = "^"+artifactName; 
-			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifact, domain);			
-			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileListForRollback = fileRepositoryUtil.getAllArtifactFileList(artifact, domain);			
+			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifact);			
+			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileListForRollback = fileRepositoryUtil.getAllArtifactFileList(artifact);			
 			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File eachfile : artifactFileList) { 
 				// Getting the filename
 				String filepath = eachfile.getPathname() ;
@@ -153,10 +155,10 @@ public class OnHoldArtifactRenameService extends DwaraService{
 				throw new Exception("Artifact Table rename failed "+e.getMessage());
 			}
 			
-			FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+			//FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 			// Update the file table
 			try {
-				domainSpecificFileRepository.saveAll(artifactFileList);
+				fileRepository.saveAll(artifactFileList);
 				tFileDao.saveAll(artifactTFileList);
 			}
 			catch (Exception e) {
@@ -177,7 +179,7 @@ public class OnHoldArtifactRenameService extends DwaraService{
 				artifact.setName(artifactName);
 				artifactRepository.save(artifact);
 				
-				domainSpecificFileRepository.saveAll(artifactFileListForRollback);
+				fileRepository.saveAll(artifactFileListForRollback);
 				userRequest.setStatus(Status.failed);
 				requestDao.save(userRequest);
 				throw new Exception("Rename failed on folder level!");

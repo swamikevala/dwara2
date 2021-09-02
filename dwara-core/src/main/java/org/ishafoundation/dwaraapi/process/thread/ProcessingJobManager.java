@@ -50,9 +50,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import src.main.java.org.ishafoundation.dwaraapi.process.IProcessingTask;
-import src.main.java.org.ishafoundation.dwaraapi.process.LogicalFile;
-import src.main.java.org.ishafoundation.dwaraapi.process.request.ProcessContext;
+
 
 @Component
 @Scope("prototype")

@@ -13,7 +13,6 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +39,7 @@ public class SourceDirScanner {
 	public List<StagedFileDetails> scanSourceDir(Artifactclass artifactclass, List<String> scanFolderBasePathList) {
 		//int artifactclassId = artifactclass.getId();
     	String artifactclassName = artifactclass.getId();
-    	Domain domain = artifactclass.getDomain();
+    	//Domain domain = artifactclass.getDomain();
         String sequenceId = artifactclass.getSequenceId(); // getting the primary key of the Sequence table which holds the lastsequencenumber for this group...
         Sequence sequence = configurationTablesUtil.getSequence(sequenceId);
         if(sequence == null) {
@@ -58,7 +57,7 @@ public class SourceDirScanner {
 			FileFilter allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(notCancelledFolderFilter, notDeletedFolderFilter);//FileFilterUtils.and(dirFilter, notCancelledFolderFilter, notDeletedFolderFilter);
 	    	File[] ingestableFiles = new File(sourcePath).listFiles(allFilesExcludingCancelledAndDeletedDirectoryFilter);
 	    	if(ingestableFiles != null) {
-	    		List<StagedFileDetails> nthScanFolderBaseIngestDirectoryList = scanForIngestableFiles(domain, sequence, sourcePath, ingestableFiles);
+	    		List<StagedFileDetails> nthScanFolderBaseIngestDirectoryList = scanForIngestableFiles( sequence, sourcePath, ingestableFiles);
 	    		ingestReadyFileList.addAll(nthScanFolderBaseIngestDirectoryList);
 	    	}
 	    	
@@ -66,7 +65,7 @@ public class SourceDirScanner {
 	    	String cancelledOriginSourceDir = sourcePath + File.separator + Status.cancelled.toString();
 	    	File[] cancelledIngestableFiles = new File(cancelledOriginSourceDir).listFiles();
 	    	if(cancelledIngestableFiles != null) {
-	    		List<StagedFileDetails> nthScanFolderBaseCancelledDirectoryIngestFileList = scanForIngestableFiles(domain, sequence, cancelledOriginSourceDir, cancelledIngestableFiles);
+	    		List<StagedFileDetails> nthScanFolderBaseCancelledDirectoryIngestFileList = scanForIngestableFiles( sequence, cancelledOriginSourceDir, cancelledIngestableFiles);
 	    		ingestReadyFileList.addAll(nthScanFolderBaseCancelledDirectoryIngestFileList);
 	    	}	
 	    	
@@ -74,7 +73,7 @@ public class SourceDirScanner {
 	    	String deletedOriginSourceDir = sourcePath + File.separator + DELETED;
 	    	File[] deletedIngestableFiles = new File(deletedOriginSourceDir).listFiles();
 	    	if(deletedIngestableFiles != null) {
-	    		List<StagedFileDetails> nthScanFolderBaseDeletedDirectoryIngestFileList = scanForIngestableFiles(domain, sequence, deletedOriginSourceDir, deletedIngestableFiles);
+	    		List<StagedFileDetails> nthScanFolderBaseDeletedDirectoryIngestFileList = scanForIngestableFiles( sequence, deletedOriginSourceDir, deletedIngestableFiles);
 	    		ingestReadyFileList.addAll(nthScanFolderBaseDeletedDirectoryIngestFileList);
 	    	}		    	
 		}
@@ -82,12 +81,12 @@ public class SourceDirScanner {
 		return ingestReadyFileList;
 	}
 	
-	private List<StagedFileDetails> scanForIngestableFiles(Domain domain, Sequence sequence, String sourcePath, File[] ingestableFiles) {
+	private List<StagedFileDetails> scanForIngestableFiles( Sequence sequence, String sourcePath, File[] ingestableFiles) {
 		
 		List<StagedFileDetails> ingestFileList = new ArrayList<StagedFileDetails>();
     	for (int i = 0; i < ingestableFiles.length; i++) {
 			File nthIngestableFile = ingestableFiles[i];
-			StagedFileDetails nthIngestFile = stagedFileEvaluator.evaluateAndGetDetails(domain, sequence, sourcePath, nthIngestableFile);
+			StagedFileDetails nthIngestFile = stagedFileEvaluator.evaluateAndGetDetails( sequence, sourcePath, nthIngestableFile);
 			ingestFileList.add(nthIngestFile);
 		}
     	return ingestFileList;

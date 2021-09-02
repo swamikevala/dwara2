@@ -40,7 +40,7 @@ import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassU
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
@@ -55,10 +55,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -114,10 +112,10 @@ public class StagedService extends DwaraService{
 	private MiscObjectMapper miscObjectMapper; 
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactRepository artifactRepository;
 	
 	@Autowired
-	private FileEntityUtil fileEntityUtil;
+	private FileRepository fileRepository;	
 
 	@Autowired
 	private ExtensionsUtil extensionsUtil;
@@ -311,7 +309,7 @@ public class StagedService extends DwaraService{
 		    	for (StagedFile stagedFile : stagedFileList) {
 					String artifactclassId = stagedFile.getArtifactclass();
 					Artifactclass artifactclass = id_artifactclassMap.get(artifactclassId);
-					Domain domain = artifactclass.getDomain();
+					//Domain domain = artifactclass.getDomain();
 					Sequence sequence = artifactclass.getSequence();
 					
 					String artifactName = stagedFile.getName();
@@ -326,7 +324,7 @@ public class StagedService extends DwaraService{
 						logger.error(nthIngestableFile.getAbsolutePath() + "does not exist");
 					}
 					else {
-						StagedFileDetails sfd = stagedFileEvaluator.evaluateAndGetDetails(domain, sequence, path, nthIngestableFile);
+						StagedFileDetails sfd = stagedFileEvaluator.evaluateAndGetDetails( sequence, path, nthIngestableFile);
 						List<Error> errorList = sfd.getErrors();
 						for (Error nthError : errorList) {
 							if(nthError.getType() == Errortype.Error)
@@ -511,7 +509,7 @@ public class StagedService extends DwaraService{
 					String artifactclassId = stagedFile.getArtifactclass();
 					Artifactclass artifactclass = id_artifactclassMap.get(artifactclassId);
 					String readyToIngestPath =  artifactclass.getPathPrefix();
-					Domain domain = artifactclass.getDomain();
+					//Domain domain = artifactclass.getDomain();
 					Sequence sequence = artifactclass.getSequence();
 					String stagedFileName = stagedFile.getName();
 	
@@ -574,7 +572,8 @@ public class StagedService extends DwaraService{
 					systemrequest = requestDao.save(systemrequest);
 					logger.info(DwaraConstants.SYSTEM_REQUEST + systemrequest.getId());
 	
-					Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
+					//Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
+					Artifact artifact = new Artifact();
 					artifact.setWriteRequest(systemrequest);
 					artifact.setqLatestRequest(systemrequest);
 					artifact.setName(toBeArtifactName);
@@ -583,7 +582,7 @@ public class StagedService extends DwaraService{
 					artifact.setTotalSize(size);
 					artifact.setSequenceCode(sequenceCode);
 					artifact.setPrevSequenceCode(prevSeqCode);
-					artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
+					artifact = (Artifact) artifactRepository.save(artifact);
 
 					// TODO : Talk to Dong anna and clean this up - Attach tags to the artifact object so that it can be used downstream - for eg, in jobcreation via flowelement.taskconfig.inc/exc on tags 
 					//Tag
@@ -596,7 +595,7 @@ public class StagedService extends DwaraService{
 					
 					logger.info(artifact.getClass().getSimpleName() + " - " + artifact.getId());
 					
-			        createFilesAndExtensions(readyToIngestPath, domain, artifact, size, stagedFileInAppReadyToIngest, junkFilesStagedDirName);
+			        createFilesAndExtensions(readyToIngestPath, artifact, size, stagedFileInAppReadyToIngest, junkFilesStagedDirName);
 					
 					jobCreator.createJobs(systemrequest, artifact);
 					
@@ -649,7 +648,7 @@ public class StagedService extends DwaraService{
 	}
     
     // made public so tests can access it...
-	public void createFilesAndExtensions(String pathPrefix, Domain domain, Artifact artifact, long artifactSize, java.io.File stagedFileInAppReadyToIngest, String junkFilesStagedDirName) throws Exception {
+	public void createFilesAndExtensions(String pathPrefix, Artifact artifact, long artifactSize, java.io.File stagedFileInAppReadyToIngest, String junkFilesStagedDirName) throws Exception {
 		
 		boolean hasSymbolicLink = false; // Has the artifactclass got any symlink to it
     	Collection<java.io.File> libraryFileAndDirsList = getTFileTableEntries(stagedFileInAppReadyToIngest, junkFilesStagedDirName);
@@ -741,7 +740,7 @@ public class StagedService extends DwaraService{
 			filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); // just holding the file path from the artifact folder and not the absolute path.
 			logger.trace("filePath - " + filePath);
 			byte[] filePathChecksum = ChecksumUtil.getChecksum(filePath);
-			File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
+			File nthFileRowToBeInserted = new File();
 			if(file.isDirectory())
 				nthFileRowToBeInserted.setDirectory(true);
 			else {
@@ -758,8 +757,8 @@ public class StagedService extends DwaraService{
 			}
 			nthFileRowToBeInserted.setPathname(filePath);
 			nthFileRowToBeInserted.setPathnameChecksum(filePathChecksum);
-			fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, artifact);
-
+			//fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, artifact);
+			nthFileRowToBeInserted.setArtifact(artifact);
 			if(fileName.equals(artifact.getName())) { // if file is the artifact file itself, set the artifact size calculated upfront...
 				nthFileRowToBeInserted.setSize(artifactSize);
 				logger.trace(filePath + ":" + artifactSize);
@@ -774,8 +773,8 @@ public class StagedService extends DwaraService{
 		}
 		
 	    if(toBeAddedFileTableEntries.size() > 0) {
-	    	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-	    	domainSpecificFileRepository.saveAll(toBeAddedFileTableEntries);
+	    	//FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+	    	fileRepository.saveAll(toBeAddedFileTableEntries);
 	    	logger.info("File records created successfully");
 	    }
 		
@@ -783,7 +782,7 @@ public class StagedService extends DwaraService{
 	    	toBeAddedFileTableEntries.clear();
 	    	
 		    /* Updating the symlink details here - we dont know the DB file id to be referenced in above update hence had to do it here */
-			List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
+			List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact);
 			HashMap<String, File> filePathNameToFileObj = new LinkedHashMap<String, File>();
 			for (File file : artifactFileList) {
 				filePathNameToFileObj.put(file.getPathname(), file);
@@ -808,8 +807,8 @@ public class StagedService extends DwaraService{
 			}
 			
 		    if(toBeAddedFileTableEntries.size() > 0) {
-		    	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-		    	domainSpecificFileRepository.saveAll(toBeAddedFileTableEntries);
+		    	//FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+		    	fileRepository.saveAll(toBeAddedFileTableEntries);
 		    	logger.info("File records updated with symlinks successfully");
 		    }
 	    }

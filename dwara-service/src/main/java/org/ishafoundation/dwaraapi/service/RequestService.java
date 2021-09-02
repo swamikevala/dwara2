@@ -17,17 +17,15 @@ import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.JobDetailsType;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -50,7 +48,10 @@ public class RequestService extends DwaraService{
 	private JobDao jobDao;
 
 	@Autowired
-	private DomainUtil domainUtil;
+	ArtifactRepository artifactRepository;
+	
+	@Autowired
+	FileRepository fileRepository;
 
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
@@ -211,10 +212,10 @@ public class RequestService extends DwaraService{
 			
 			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 			
-			Domain domain = artifactclass.getDomain();
-			ArtifactRepository artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+			//Domain domain = artifactclass.getDomain();
+			//ArtifactRepository artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 			
-			artifactDeleter.cleanUp(userRequest, requestToBeCancelled, domain, artifactRepository);
+			artifactDeleter.cleanUp(userRequest, requestToBeCancelled, artifactRepository);
 
 			requestToBeCancelled.setStatus(Status.cancelled);
 	    	requestDao.save(requestToBeCancelled);
@@ -363,8 +364,8 @@ public class RequestService extends DwaraService{
 		if(requestType == RequestType.system) {		
 			if(requestAction == Action.ingest) {
 				String artifactclassId = request.getDetails().getArtifactclassId();
-				Domain domain = domainUtil.getDomain(artifactclassId);
-				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+				//Domain domain = domainUtil.getDomain(artifactclassId);
+				//ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
 
 				Artifact systemArtifact = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(requestId); // TODO use Artifactclass().isSource() instead of orderBy
 				if(systemArtifact != null) {
@@ -382,17 +383,21 @@ public class RequestService extends DwaraService{
 					artifactForResponse.setStagedFilepath(request.getDetails().getStagedFilepath());
 
 					//tag
-					if(systemArtifact instanceof Artifact1) {
-						Artifact1 a1 = (Artifact1) systemArtifact;
-						List<Tag> tags = new ArrayList<Tag>();
-						if(a1.getTags() != null)
-							tags = new ArrayList<Tag>(a1.getTags());
-						List<String> listTags = new ArrayList<String>();
-						for (Tag tag : tags) {
-							listTags.add(tag.getTag());
-						}
-						artifactForResponse.setTags(listTags);
+					List<Tag> tags = new ArrayList<Tag>();
+					if(systemArtifact.getTags() != null)
+						tags = new ArrayList<Tag>(systemArtifact.getTags());
+					List<String> listTags = new ArrayList<String>();
+					for (Tag tag : tags) {
+						listTags.add(tag.getTag());
 					}
+					artifactForResponse.setTags(listTags);
+					/*
+					 * if(systemArtifact instanceof Artifact1) { Artifact1 a1 = (Artifact1)
+					 * systemArtifact; List<Tag> tags = new ArrayList<Tag>(); if(a1.getTags() !=
+					 * null) tags = new ArrayList<Tag>(a1.getTags()); List<String> listTags = new
+					 * ArrayList<String>(); for (Tag tag : tags) { listTags.add(tag.getTag()); }
+					 * artifactForResponse.setTags(listTags); }
+					 */
 
 					requestResponse.setArtifact(artifactForResponse);
 				}
@@ -426,11 +431,12 @@ public class RequestService extends DwaraService{
 				}
 			} 
 			else if(requestAction == Action.restore || requestAction == Action.restore_process) {
-				Domain domain = domainUtil.getDomain(request);
-				if(domain == null)
-					domain = domainUtil.getDefaultDomain();
+				/*
+				 * Domain domain = domainUtil.getDomain(request); if(domain == null) domain =
+				 * domainUtil.getDefaultDomain();
+				 */
 				
-				org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(domain, request.getDetails().getFileId());
+				org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = fileRepository.findById((int) request.getDetails().getFileId());
 			
 				File fileForRestoreResponse = new File();
 				byte[] checksum = fileFromDB.getChecksum();

@@ -5,10 +5,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.db.dao.master.TagDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.Artifact1Dao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -23,9 +21,9 @@ public class TagService extends DwaraService{
             t = new Tag(tag);
         }
 
-        Artifact1 r = t.getArtifactById(artifactId);
+        Artifact r = t.getArtifactById(artifactId);
         if(r == null) {
-            r = new Artifact1(artifactId);
+            r = new Artifact(artifactId);
             t.addArtifact(r);
         }
 
@@ -38,7 +36,7 @@ public class TagService extends DwaraService{
         if(t == null) {
             t = new Tag(tag);
         }
-        Artifact1 r = t.getArtifactById(artifactId);
+        Artifact r = t.getArtifactById(artifactId);
         if(r != null) {
             t.deleteArtifact(r);
         }
@@ -46,9 +44,9 @@ public class TagService extends DwaraService{
         addTag(t);
     }
 
-    public List<Artifact1> getAllArtifactsByTag(String tag) {
+    public List<Artifact> getAllArtifactsByTag(String tag) {
         Tag t = tagDao.findById(tag).get();
-        return new ArrayList<Artifact1>(t.getArtifacts());
+        return new ArrayList<Artifact>(t.getArtifacts());
     }
 
     public List<String> getAllTagsByArtifactId(int artifactId) {

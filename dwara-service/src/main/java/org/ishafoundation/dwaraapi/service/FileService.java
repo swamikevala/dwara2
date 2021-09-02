@@ -24,9 +24,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -53,16 +51,20 @@ public class FileService extends DwaraService{
 	
 	@Autowired
 	private JobCreator jobCreator;
-	
+
 	@Autowired
-	private DomainUtil domainUtil;
+	private FileRepository fileRepository;
+	
+	/*
+	 * @Autowired private DomainUtil domainUtil;
+	 */
 	
 	public List<File> list(List<Integer> fileIds){
 
 
     	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
-    	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
-    	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
+    	//Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
+    	validate(fileIds, fileId_FileObj_Map);
     	
 		List<File> fileList = new ArrayList<File>();
 		int counter = 1;
@@ -139,8 +141,8 @@ public class FileService extends DwaraService{
     	if(fileIds.size() == 0)
     		throw new Exception("Invalid request. No File Id passed");
     	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
-    	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
-    	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
+    	//Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
+    	validate(fileIds, fileId_FileObj_Map);
     	
 //		Request userRequest = new Request();
 //    	userRequest.setType(RequestType.user);
@@ -185,7 +187,7 @@ public class FileService extends DwaraService{
     		systemrequestDetails.setCopyId(copyNumber);
 			systemrequestDetails.setOutputFolder(outputFolder);
 			systemrequestDetails.setDestinationPath(destinationPath);
-			systemrequestDetails.setDomainId(domainUtil.getDomainId(fileId_Domain_Map.get(nthFileId)));
+			//systemrequestDetails.setDomainId(domainUtil.getDomainId(fileId_Domain_Map.get(nthFileId)));
 			systemrequestDetails.setFlowId(flow);
 			systemRequest.setDetails(systemrequestDetails);
 			systemRequest = requestDao.save(systemRequest);
@@ -232,8 +234,8 @@ public class FileService extends DwaraService{
 			fileIds.add(nthFileDetails.getFileId());
 		}
     	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
-    	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
-    	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
+    	//Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
+    	validate(fileIds, fileId_FileObj_Map);
     	
 //		Request userRequest = new Request();
 //    	userRequest.setType(RequestType.user);
@@ -279,7 +281,7 @@ public class FileService extends DwaraService{
     		systemrequestDetails.setCopyId(copyNumber);
 			systemrequestDetails.setOutputFolder(outputFolder);
 			systemrequestDetails.setDestinationPath(destinationPath);
-			systemrequestDetails.setDomainId(domainUtil.getDomainId(fileId_Domain_Map.get(nthFileId)));
+			//systemrequestDetails.setDomainId(domainUtil.getDomainId(fileId_Domain_Map.get(nthFileId)));
 			systemrequestDetails.setTimecodeStart(nthFileDetails.getTimecodeStart());
 			systemrequestDetails.setTimecodeEnd(nthFileDetails.getTimecodeEnd());
 			
@@ -319,24 +321,22 @@ public class FileService extends DwaraService{
     }
 
 
-    private void validate(List<Integer> fileIds, Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map, Map<Integer, Domain> fileId_Domain_Map) {
-    	Domain[] domains = Domain.values();
+    private void validate(List<Integer> fileIds, Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map) {
+    	//Domain[] domains = Domain.values();
     	List<String> requestedDirectoriesPathNameList = new ArrayList<String>();
     	List<String> errorFileList = new ArrayList<String>();
     	boolean hasErrors = false;
     	
     	// if any requested file is a directory and if any other file or directory requested has the same conflicting path throw error... 
     	for (Integer nthFileId : fileIds) {
-    		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = null;
-    		
-    		for (Domain nthDomain : domains) {
-    			fileFromDB = domainUtil.getDomainSpecificFile(nthDomain, nthFileId);
-    			if(fileFromDB != null) {
-    				fileId_FileObj_Map.put(nthFileId, fileFromDB);
-    				fileId_Domain_Map.put(nthFileId, nthDomain);
-    				break;
-    			}
-			}
+    		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = fileRepository.findById((int)nthFileId);
+    		fileId_FileObj_Map.put(nthFileId, fileFromDB);
+			/*
+			 * for (Domain nthDomain : domains) { fileFromDB =
+			 * domainUtil.getDomainSpecificFile(nthDomain, nthFileId); if(fileFromDB !=
+			 * null) { fileId_FileObj_Map.put(nthFileId, fileFromDB);
+			 * fileId_Domain_Map.put(nthFileId, nthDomain); break; } }
+			 */
     		
     		if(fileFromDB == null) {
     			errorFileList.add(nthFileId + " is invalid");
@@ -364,16 +364,20 @@ public class FileService extends DwaraService{
     }
     
     public void deleteFile(int fileId){
-    	Domain[] domains = Domain.values();
-		for (Domain nthDomain : domains) {
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(nthDomain, fileId);
-			if(fileFromDB != null) {
-				fileFromDB.setDeleted(true);
-		    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(nthDomain);
-		    	domainSpecificFileRepository.save(fileFromDB);
-				break;
-			}
-		}
+    	//Domain[] domains = Domain.values();
+    	org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = fileRepository.findById(fileId);
+    	fileFromDB.setDeleted(true);
+    	fileRepository.save(fileFromDB);
+		/*
+		 * for (Domain nthDomain : domains) {
+		 * org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB =
+		 * domainUtil.getDomainSpecificFile(nthDomain, fileId); if(fileFromDB != null) {
+		 * fileFromDB.setDeleted(true);
+		 * FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.
+		 * File> domainSpecificFileRepository =
+		 * domainUtil.getDomainSpecificFileRepository(nthDomain);
+		 * domainSpecificFileRepository.save(fileFromDB); break; } }
+		 */
     }
 }
 

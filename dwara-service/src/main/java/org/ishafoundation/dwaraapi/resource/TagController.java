@@ -6,11 +6,11 @@ import java.util.List;
 import org.ishafoundation.dwaraapi.api.req.tag.TagArtifact;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.Artifact1Dao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
+//import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.RequestService;
 import org.ishafoundation.dwaraapi.service.TagService;
@@ -39,7 +39,7 @@ public class TagController {
     RequestDao requestDao;
 
     @Autowired
-    Artifact1Dao artifact1Dao;
+    ArtifactRepository artifactRepository;
 
     @Autowired
     RequestService requestService;
@@ -134,7 +134,7 @@ public class TagController {
     public ResponseEntity<List<String>> getTagsByRequestId(@PathVariable int artifactId) {
         List<String> listTags = new ArrayList<String>();
         try {
-            Artifact1 r = artifact1Dao.findById(artifactId).get();
+            Artifact r = artifactRepository.findById(artifactId);
             if(r != null) {
                 List<Tag> l = new ArrayList<Tag>(r.getTags());
                 for (Tag tag : l) {
