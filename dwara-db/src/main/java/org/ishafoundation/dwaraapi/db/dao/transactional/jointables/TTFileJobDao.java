@@ -10,5 +10,7 @@ public interface TTFileJobDao extends CrudRepository<TTFileJob,TTFileJobKey> {
 	
 	List<TTFileJob> findAllByJobId(int jobId);
 	List<TTFileJob> findAllByIdFileId( int fileId);
+	
+	
 
 }
