@@ -402,7 +402,7 @@ public class FileService extends DwaraService{
 		    	domainSpecificFileRepository.save(fileFromDB);
 				
 		    	if( dealWithJob) {
-		    	List<TTFileJob> ttFileJobs = ttFileJobDao.findAllByTTFileJobKeyFileId(fileFromDB.getId());
+		    	List<TTFileJob> ttFileJobs = ttFileJobDao.findAllByIdFileId(fileFromDB.getId());
 				if(ttFileJobs.size()==1) {
 					ttFileJob = ttFileJobs.get(0);
 					int jobID = ttFileJob.getJob().getId();
