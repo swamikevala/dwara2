@@ -405,8 +405,9 @@ public class FileService extends DwaraService{
 		    	List<TTFileJob> ttFileJobs = ttFileJobDao.findAllByTTFileJobKeyFileId(fileFromDB.getId());
 				if(ttFileJobs.size()==1) {
 					ttFileJob = ttFileJobs.get(0);
-					ttFileJobDao.delete(ttFileJob);
 					int jobID = ttFileJob.getJob().getId();
+					ttFileJobDao.delete(ttFileJob);
+					
 					List<TTFileJob> ttFileJobswithId = ttFileJobDao.findAllByJobId(jobID);
 					boolean delete = true;
 					for(TTFileJob ttfileJob : ttFileJobswithId ) {
