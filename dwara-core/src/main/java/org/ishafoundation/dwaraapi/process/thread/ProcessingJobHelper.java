@@ -22,6 +22,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.helpers.FiletypePathnameReqexVisitor;
 import org.ishafoundation.dwaraapi.process.helpers.LogicalFileHelper;
 import org.slf4j.Logger;
