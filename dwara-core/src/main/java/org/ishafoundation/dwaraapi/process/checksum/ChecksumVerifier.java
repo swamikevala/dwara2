@@ -11,17 +11,13 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import src.main.java.org.ishafoundation.dwaraapi.process.IProcessingTask;
-import src.main.java.org.ishafoundation.dwaraapi.process.LogicalFile;
-import src.main.java.org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
-import src.main.java.org.ishafoundation.dwaraapi.process.request.ProcessContext;
 
 @Component("checksum-verify")
 public class ChecksumVerifier implements IProcessingTask {

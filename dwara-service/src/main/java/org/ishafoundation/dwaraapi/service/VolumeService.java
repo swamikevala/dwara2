@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.RewriteRequest;
+import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
 import org.ishafoundation.dwaraapi.api.req.volume.MarkVolumeStatusRequest;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.Details;

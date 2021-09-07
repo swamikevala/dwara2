@@ -8,6 +8,12 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.AutoloaderResponse;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.Drive;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.DriveStatus;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.Element;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -34,12 +40,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import src.main.java.org.ishafoundation.dwaraapi.api.resp.autoloader.AutoloaderResponse;
-import src.main.java.org.ishafoundation.dwaraapi.api.resp.autoloader.Drive;
-import src.main.java.org.ishafoundation.dwaraapi.api.resp.autoloader.DriveStatus;
-import src.main.java.org.ishafoundation.dwaraapi.api.resp.autoloader.Element;
-import src.main.java.org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
-import src.main.java.org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
+
 
 @Component
 public class AutoloaderService{

@@ -11,8 +11,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepositor
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.ArtifactService;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.label.InterArtifactlabel;
@@ -47,7 +45,11 @@ public class ArtifactController {
 	private LabelManagerImpl labelManager;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactRepository artifactRepository;	
+	
+	@Autowired
+	private ArtifactVolumeRepository artifactVolumeRepository;
+	
 	
 	@Value("${filesystem.temporarylocation}")
 	private String filesystemTemporarylocation;
@@ -121,11 +123,11 @@ public class ArtifactController {
 	@PostMapping(value="/generateArtifactLabel", produces = "application/json")
     public ResponseEntity<String> generateArtifactLabel(@RequestParam int artifactId, @RequestParam String volumeId, @RequestParam String fileName) throws Exception{
 		// TODO - Hardcoded Domain - To support all domains
-		ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(Domain.ONE);
-		Artifact artifact = artifactRepository.findById(artifactId).get();
+		//ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(Domain.ONE);
+		Artifact artifact = artifactRepository.findById(artifactId);
 		
-	    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(Domain.ONE);
-	    ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
+	   // ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(Domain.ONE);
+	    ArtifactVolume artifactVolume = artifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
 
 		
 	    InterArtifactlabel artifactlabel = labelManager.generateArtifactLabel(artifact, artifactVolume.getVolume(), artifactVolume.getDetails().getStartVolumeBlock(), artifactVolume.getDetails().getEndVolumeBlock());

@@ -24,7 +24,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.TFileVolumeDeleter;
@@ -222,7 +221,7 @@ public class ArtifactDeleter {
 				Artifact artifact = artifactId_Artifact.get(artifactId);
 				
 				if(storagetaskAction != null && storagetaskAction == Action.write) {
-					tFileVolumeDeleter.softDeleteTFileVolumeEntries(Domain.ONE, artifactFileList, artifactTFileList, artifact, nthJob.getVolume().getId());
+					tFileVolumeDeleter.softDeleteTFileVolumeEntries( artifactFileList, artifactTFileList, artifact, nthJob.getVolume().getId());
 				}
 				else if(processingtaskId != null) {
 					// TODO - Need to call processingTask specific delete method here 

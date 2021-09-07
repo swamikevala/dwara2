@@ -19,7 +19,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
+//import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TTFileJobKey;
@@ -34,16 +34,10 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
-import org.ishafoundation.dwaraapi.process.IProcessingTask;
-import org.ishafoundation.dwaraapi.process.LogicalFile;
-import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
-import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
@@ -51,9 +45,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
-//		has dependent tasks?
-//			means outputartifactclass is needed
 			
 //		has a prerequisite task?
 //			means ouputartifact of the prerequisite task is the input of the task

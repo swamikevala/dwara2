@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.resp.artifactclass.ArtifactclassResponse;
-import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.DomainAttributeConverter;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.slf4j.Logger;
@@ -21,8 +20,9 @@ public class ArtifactclassService {
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
 	
-	@Autowired
-	private DomainAttributeConverter domainAttributeConverter;
+	/*
+	 * @Autowired private DomainAttributeConverter domainAttributeConverter;
+	 */
 	
 	public List<ArtifactclassResponse> getAllArtifactClasses(){
 		/*
