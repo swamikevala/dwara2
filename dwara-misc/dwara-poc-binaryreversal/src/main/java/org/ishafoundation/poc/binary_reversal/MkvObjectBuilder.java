@@ -1,21 +1,17 @@
 package org.ishafoundation.poc.binary_reversal;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.input.CountingInputStream;
+import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
+import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.ishafoundation.poc.binary_reversal.Timecode.Type;
 
 import com.google.code.ebmlviewer.core.EbmlDecoder;
@@ -31,8 +27,18 @@ public class MkvObjectBuilder {
 	// TODO : Identify which track is which? Segment.Tracks.TrackEntry[1].Video
 	static HashMap<Integer, String> trackId_Type = new HashMap<Integer, String>();
 	
-	static Mkv mkvObj = new Mkv();
-
+	//static Mkv mkvObj = new Mkv();
+	
+	private static String TEMPLATE_CONTENT = null;
+	private static Timecode BASE_TIMECODE = null;
+	private static String BINARY_REVERSED_MXF_FILEPATHNAME = null;
+	private static int COUNTER = 0;
+	private static boolean INCREMENT_TIMECODE = false;
+	private static String AUDIOTRACK_TMPL_PAL = "060E2B34010201010D0103011604010<<AUDIO_TRACK_INDEX>>83001680<<AUDIO_DATA>>";
+	private static String AUDIOTRACK_TMPL_NTSC = "060E2B34010201010D0103011604010<<AUDIO_TRACK_INDEX>>830012<<AUDIO_SIZE>><<AUDIO_DATA>>060E2B34010101020301021001000000830000<<AUDIO_SIZE_SUFFIXER>>"; // based on size either 00 or 030000 gets replaced
+	
+	private static Type VIDEO_TYPE = Type.TYPE_VIDEO_PAL;
+	
 	static HashMap<Integer, String> identifyTracks(EbmlFileEntry ebmlFileEntry){
 		trackId_Type.put(1, "Video");
 		trackId_Type.put(2, "Audio");
@@ -76,12 +82,13 @@ public class MkvObjectBuilder {
 				break;
 		}
 		System.out.println("baseTimecode : " + baseTimecode);
-		mkvObj.setBaseTimecode(baseTimecode);
+		BASE_TIMECODE = new Timecode(baseTimecode, VIDEO_TYPE);
+		//mkvObj.setBaseTimecode(baseTimecode);
 		return baseTimecode;
 	}
 	
-	static void handleCluster(EbmlFileEntry ebmlFileEntry, InputStream is) throws Exception{
-		System.out.println("**********  " + clusterCnt + "  **********");
+	static void handleCluster(EbmlFileEntry ebmlFileEntry) throws Exception{
+		System.out.println("**********  " + CLUSTER_CNT + "  **********");
 
 //		if(clusterCnt > 10)
 //			return;
@@ -112,8 +119,10 @@ public class MkvObjectBuilder {
 						frame.setVideoTrack((VideoTrack) track);
 					}
 					else {
+						VariableLengthInteger size = clusterChild.getSize();
 						AudioTrack at = new AudioTrack();
 						at.setId(sbCnt - 1);
+						at.setSize(size);
 						track = at;
 						frame.getAudioTracks().add((AudioTrack) track);
 					}
@@ -124,12 +133,42 @@ public class MkvObjectBuilder {
 				}
 			}			
 		}
-		mkvObj.getFrames().add(frame);
+		
+		COUNTER++;
+		String frameContent = TEMPLATE_CONTENT;
+		if(INCREMENT_TIMECODE) {
+			System.out.println(COUNTER + ":::" + frame.getTimecode());
+			if(COUNTER > 1)
+				BASE_TIMECODE.addFrame();
+			System.out.println(BASE_TIMECODE);
+			System.out.println(BASE_TIMECODE.getCode());
+		}
+		frameContent = frameContent.replace("<<REVERSED_TIMECODE>>", new String(Hex.encodeHex(Hex.decodeHex(getReversedTimeCode(BASE_TIMECODE.getCode())+"00000000"))));
+		frameContent = frameContent.replace("<<V_DATA>>", frame.getVideoTrack().getData());
+		List<AudioTrack> audioTracks = frame.getAudioTracks();
+		for (AudioTrack nthAudioTrack : audioTracks) {
+			
+			String audioTrack = null; 
+			if(VIDEO_TYPE == Type.TYPE_VIDEO_NTSC) {
+				audioTrack = AUDIOTRACK_TMPL_NTSC;
+				if(nthAudioTrack.getSize().getPlainValue() == 4807)
+					audioTrack = audioTrack.replace("<<AUDIO_SIZE>>", "C3").replace("<<AUDIO_SIZE_SUFFIXER>>", "03000000"); 
+				else
+					audioTrack = audioTrack.replace("<<AUDIO_SIZE>>", "C6").replace("<<AUDIO_SIZE_SUFFIXER>>", "00"); 
+			}
+			else if(VIDEO_TYPE == Type.TYPE_VIDEO_PAL)
+				audioTrack = AUDIOTRACK_TMPL_PAL;
+			frameContent = frameContent + audioTrack.replace("<<AUDIO_TRACK_INDEX>>", (nthAudioTrack.getId() - 1) + "").replace("<<AUDIO_DATA>>", nthAudioTrack.getData());
+		}
+		flushData(frameContent);
+
+		
+		//mkvObj.getFrames().add(frame);
 	}
 
-	static void handleTimecode(EbmlFileEntry ebmlFileEntry) throws Exception{
-		System.out.println("tc : " + getData(ebmlFileEntry));
-	}
+//	static void handleTimecode(EbmlFileEntry ebmlFileEntry) throws Exception{
+//		System.out.println("tc : " + getData(ebmlFileEntry));
+//	}
 
 	static String getData(EbmlFileEntry entry) throws Exception{
 		String valueText = null;
@@ -179,7 +218,7 @@ public class MkvObjectBuilder {
 				// BufferUnderflowException
 				// CharacterCodingException
 				//e.printStackTrace();
-				System.err.println("Error during gettingData in " + entry);
+				System.out.println("[ERROR] during gettingData in " + entry);
 			}
 
 		}
@@ -193,50 +232,12 @@ public class MkvObjectBuilder {
 		return Hex.encodeHexString(bb);
 	}
 	
-	static void handleSimpleBlock_Opt1(EbmlFileEntry ebmlFileEntry, int sbCnt) throws Exception {
-		int len = (int) ebmlFileEntry.getSize().getPlainValue();
-		System.out.println("len : " + len);
-		//byte[] bb = new byte[len];
-		ByteBuffer bb = ByteBuffer.allocate(len);
-		ebmlFileEntry.read(bb);
-
-		if(trackId_Type.get(sbCnt) == null)
-			System.out.println("sbCnt not mapped" + sbCnt + ":" + ebmlFileEntry);
-		else {
-			if(trackId_Type.get(sbCnt).equals("Video"))
-				System.out.println("v.data " + Hex.encodeHexString(bb));
-			else
-				System.out.println("a.data " + Hex.encodeHexString(bb));
-		}
-	}
-
-	static void handleSimpleBlock_Opt2(EbmlFileEntry ebmlFileEntry, InputStream is, int sbCnt) throws Exception {
-		CountingInputStream cis = (CountingInputStream) is;
-		System.out.println("dp : " +  ebmlFileEntry.getDataPosition());
-		System.out.println("bc : " +  cis.getByteCount());
-		long skipCnt = ebmlFileEntry.getDataPosition() - cis.getByteCount();
-		System.out.println("sc : " + skipCnt);
-		cis.skip(skipCnt);
-		int len = (int) ebmlFileEntry.getSize().getPlainValue();
-		System.out.println("len : " + len);
-		byte[] sb = new byte[len];
-		cis.read(sb, 0, len);
-		if(trackId_Type.get(sbCnt) == null)
-			System.out.println("sbCnt not mapped" + sbCnt + ":" + ebmlFileEntry);
-		else {
-			if(trackId_Type.get(sbCnt).equals("Video"))
-				System.out.println("v.data " + Hex.encodeHexString(sb));
-			else
-				System.out.println("a.data " + Hex.encodeHexString(sb));
-		}
-	}
-
 	static String getName(EbmlFileEntry ebmlFileEntry) {
 		return dMap.get(ebmlFileEntry.getIdentifier()) != null ? dMap.get(ebmlFileEntry.getIdentifier()).getName() : "N/A";
 	}
 
-	static int clusterCnt = 0;
-	static void call(List<EbmlFileEntry> efel, InputStream is, String tab) throws Exception {
+	static int CLUSTER_CNT = 0;
+	static void call(List<EbmlFileEntry> efel, String tab, boolean handleCluster) throws Exception {
 
 		for (EbmlFileEntry ebmlFileEntry : efel) {
 			String name = getName(ebmlFileEntry);
@@ -246,9 +247,9 @@ public class MkvObjectBuilder {
 				getBaseTimecode(ebmlFileEntry);
 			else if(name.equals("Tracks"))
 				identifyTracks(ebmlFileEntry);
-			else if(name.equals("Cluster")) {
-				clusterCnt++;
-				handleCluster(ebmlFileEntry, is);
+			else if(handleCluster && name.equals("Cluster")) {
+				CLUSTER_CNT++;
+				handleCluster(ebmlFileEntry);
 			}
 			else {
 				System.out.println(tab + "--" + name + "-" + 
@@ -261,11 +262,11 @@ public class MkvObjectBuilder {
 				try {
 					efelChild = ebmlFileEntry.getEntries();
 					if(efelChild.size() > 0)
-						call(efelChild, is, tab + "\\t");
+						call(efelChild, tab + "\\t", handleCluster);
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
 					//e1.printStackTrace();
-					System.err.println("Error in " + ebmlFileEntry);
+					System.out.println("[ERROR] in " + ebmlFileEntry);
 					//System.out.println("Skipping this " + efelChild.toString() + ":" + e1.getMessage());
 				}
 			}
@@ -274,65 +275,73 @@ public class MkvObjectBuilder {
 
 	static Map<VariableLengthInteger, ElementDescriptor> dMap = ElementDescriptors.getDefaultDescriptors();
 
+
+	
+	static void usage() {
+		// java /data/staged/ABC.v210_mkv /home/pgurumurthy/MxfFrameTemplate.tmpl true /data/staged/mxf/ABC.hdr /data/staged/mxf/ABC.ftr  /data/staged/ABC_gen.v210_mkv /data/transcoded-testing/ABC.MXF_md5  
+		System.err.println("usage: java MkvObjectBuilder <v210-mkv-filepathname> <video-type> <mxf-frame-template-filepathname> <increment-timecode> <extracted-header-from-mxf> <extracted-footer-from-mxf> <binary-reversed-mxf-filepathname> <orig-mxf-md5-filepathname>");
+		System.exit(-1);
+	}
+
 	public static void main(String[] args) throws Exception {
+		if (args.length != 8)
+			usage();
+		
+		String v210MkvFilepathname = args[0];
+		VIDEO_TYPE = args[1].equals("PAL") ? Type.TYPE_VIDEO_PAL : Type.TYPE_VIDEO_NTSC;
+		String mxfFrameTemplateFilepathname = args[2];
+		INCREMENT_TIMECODE = Boolean.parseBoolean(args[3]);
+		String extractedMxfHeader = args[4];
+		String extractedMxfFooter = args[5];
+		BINARY_REVERSED_MXF_FILEPATHNAME = args[6];
+		String originalMxfMd5Filepathname = args[7];
+		
+		
 		int bufferSize = 524288;
 		//String sourceFilePathname = "C:\\Users\\prakash\\sample-ntsc_tmp.mkv";
-		String sourceFilePathname = "C:\\Users\\prakash\\P22267_sample-v210-mkvmergedForAlignment.mkv";
-		EbmlFile ef = new EbmlFile(sourceFilePathname);
-		InputStream is = new CountingInputStream(new BufferedInputStream(new FileInputStream(sourceFilePathname), bufferSize));
+//		String sourceFilePathname = "C:\\Users\\prakash\\P22267_sample-v210-mkvmergedForAlignment.mkv";
 
-		List<EbmlFileEntry> efel = ef.getEntries();
-
-		call(efel,is,"\\t");
 		
-		buildMxf();
-	}
-	
-	private static void buildMxf() throws Exception {
-		String templateFilePathname = "C:\\Users\\prakash\\MxfFrameTemplate.tmpl";
-		String templateContent = FileUtils.readFileToString(new File(templateFilePathname));
+		
+		TEMPLATE_CONTENT = FileUtils.readFileToString(new File(mxfFrameTemplateFilepathname));
 		//Hex.decodeHex(templateContent);
 
-		String headerFilePathname = "C:\\Users\\prakash\\P22267_sample_mxf.hdr";
-		byte[] headerByteArray = FileUtils.readFileToByteArray(new File(headerFilePathname));
+		
+		byte[] headerByteArray = FileUtils.readFileToByteArray(new File(extractedMxfHeader));
 		String headerContent = new String(Hex.encodeHex(headerByteArray));
 		
-		String footerFilePathname = "C:\\Users\\prakash\\P22267_sample.ftr";
-		byte[] footerByteArray = FileUtils.readFileToByteArray(new File(footerFilePathname));
+		
+		byte[] footerByteArray = FileUtils.readFileToByteArray(new File(extractedMxfFooter));
 		String footerContent = new String(Hex.encodeHex(footerByteArray));
 		
-		StringBuilder sb =  new StringBuilder();
-		sb.append(headerContent);
+		flushData(headerContent, false);
+
+		EbmlFile ef = new EbmlFile(v210MkvFilepathname);
+		//InputStream is = new CountingInputStream(new BufferedInputStream(new FileInputStream(v210MkvFilepathname), bufferSize));
+		List<EbmlFileEntry> efel = ef.getEntries();
+		call(efel, "\\t", false);
 		
+		System.out.println("**************************Calling efel second time**********************");
+
+		CLUSTER_CNT = 0;
+		ef = new EbmlFile(v210MkvFilepathname);
+		//is= new CountingInputStream(new BufferedInputStream(new FileInputStream(v210MkvFilepathname), bufferSize));
+		efel = ef.getEntries();
+
+		call(efel, "\\t", true);
 		//System.out.println(mkvObj.getBaseTimecode());
-		Timecode baseTimecode = new Timecode(mkvObj.getBaseTimecode(), Type.TYPE_VIDEO_PAL);
-		List<Frame> frames = mkvObj.getFrames();
-		int cnt = 0;
-		for (Frame frame : frames) {
-			cnt++;
-			String frameContent = templateContent;
-			System.out.println(cnt + ":::" + frame.getTimecode());
-			if(cnt > 1)
-				baseTimecode.addFrame();
-			System.out.println(baseTimecode);
-			System.out.println(baseTimecode.getCode());
-			frameContent = frameContent.replace("<<REVERSED_TIMECODE>>", new String(Hex.encodeHex(Hex.decodeHex(getReversedTimeCode(baseTimecode.getCode())+"00000000"))));
-			frameContent = frameContent.replace("<<V_DATA>>", frame.getVideoTrack().getData());
-			List<AudioTrack> audioTracks = frame.getAudioTracks();
-			for (AudioTrack nthAudioTrack : audioTracks) {
-				frameContent = frameContent.replace("<<A" + nthAudioTrack.getId() + "_DATA>>", nthAudioTrack.getData());
-			}
-			sb.append(frameContent);
-		}
-		sb.append(footerContent);
+		//Timecode baseTimecode = new Timecode(mkvObj.getBaseTimecode(), Type.TYPE_VIDEO_PAL);
+
+		//List<Frame> frames = mkvObj.getFrames();
 		
-		byte[] origMxfByteArray = FileUtils.readFileToByteArray(new File("C:\\Users\\prakash\\P22267_sample.mxf"));
-		System.out.println("orig : " + getChecksum(origMxfByteArray));
+		flushData(footerContent);
 		
+//		byte[] origMxfDigest =  ChecksumUtil.getChecksum(new File(originalMxfMd5Filepathname), Checksumtype.md5);
+//		System.out.println("orig : " + DatatypeConverter.printHexBinary(origMxfDigest).toUpperCase());
+		System.out.println("orig : " + FileUtils.readFileToString(new File(originalMxfMd5Filepathname)));
 		
-		byte[] generatedMxfByteArray = Hex.decodeHex(sb.toString().toUpperCase());
-		FileUtils.writeByteArrayToFile(new File("C:\\Users\\prakash\\P22267_sample_reverse_generated.mxf"), generatedMxfByteArray);
-		System.out.println("gen : " + getChecksum(generatedMxfByteArray));
+		byte[] revBinariedMxfDigest =  ChecksumUtil.getChecksum(new File(BINARY_REVERSED_MXF_FILEPATHNAME), Checksumtype.md5);
+		System.out.println("gen : " + DatatypeConverter.printHexBinary(revBinariedMxfDigest).toUpperCase());
 
 //		FileUtils.writeStringToFile(new File("C:\\Users\\prakash\\P22267_sample-string.mxf"), new String(Hex.encodeHex(origMxfByteArray)).toUpperCase());
 //		FileUtils.writeStringToFile(new File("C:\\Users\\prakash\\P22267_sample_reverse_generated-string.mxf"), sb.toString().toUpperCase());
@@ -340,25 +349,34 @@ public class MkvObjectBuilder {
 		System.out.println("Done");
 		
 	}
-	
-	public static String getChecksum(byte[] byteArray){
-		DigestInputStream digestInputStream=null ;
-		StringBuffer sb = new StringBuffer();
-		try {
-			MessageDigest messageDigest=MessageDigest.getInstance("MD5") ;
-			digestInputStream=new DigestInputStream(new ByteArrayInputStream(byteArray), messageDigest);
-		    while(digestInputStream.read()>=0);
-		    
-		    for(byte b: messageDigest.digest())
-		    	sb.append(String.format("%02x",b));
-		    
-		} catch(IOException | NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		} finally {
-			if(digestInputStream!=null) try {digestInputStream.close();} catch (IOException e) {}
-		}
-		return sb.toString();
+
+	private static void flushData(String content, boolean append) throws Exception {
+		byte[] generatedMxfByteArray = Hex.decodeHex(content.toUpperCase());
+		FileUtils.writeByteArrayToFile(new File(BINARY_REVERSED_MXF_FILEPATHNAME), generatedMxfByteArray, append);
 	}
+	
+	private static void flushData(String content) throws Exception {
+		flushData(content, true);
+	}
+	
+//	public static String getChecksum(byte[] byteArray){
+//		DigestInputStream digestInputStream=null ;
+//		StringBuffer sb = new StringBuffer();
+//		try {
+//			MessageDigest messageDigest=MessageDigest.getInstance("MD5") ;
+//			digestInputStream=new DigestInputStream(new ByteArrayInputStream(byteArray), messageDigest);
+//		    while(digestInputStream.read()>=0);
+//		    
+//		    for(byte b: messageDigest.digest())
+//		    	sb.append(String.format("%02x",b));
+//		    
+//		} catch(IOException | NoSuchAlgorithmException e) {
+//			e.printStackTrace();
+//		} finally {
+//			if(digestInputStream!=null) try {digestInputStream.close();} catch (IOException e) {}
+//		}
+//		return sb.toString();
+//	}
 	
 	private static String getReversedTimeCode(String timecode){	
 		
