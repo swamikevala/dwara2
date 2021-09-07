@@ -8,6 +8,10 @@ DELETE FROM `file1` WHERE `id` in (
 select id from (select id from file1 where pathname like '/data/dwara/restored%' or pathname like '/mnt/san%' 
 ) as a);
 
+DELETE FROM `t_file` WHERE `id` in (
+select id from (select id from t_file where pathname like '/data/dwara/restored%' or pathname like '/mnt/san%' 
+) as a);
+
 -- *** Already done - end ***
 
 -- some artifacts had filecount and size not set properly - Queries to fix and verify 
