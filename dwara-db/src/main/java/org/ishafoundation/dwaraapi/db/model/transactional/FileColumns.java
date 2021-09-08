@@ -93,7 +93,7 @@ public class FileColumns {
 		return directory;
 	}
 
-	public void setDirectory(Boolean directory) {
+	public void setDirectory(boolean directory) {
 		this.directory = directory;
 	}
 
