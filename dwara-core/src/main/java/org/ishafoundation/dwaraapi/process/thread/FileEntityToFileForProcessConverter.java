@@ -15,7 +15,7 @@ public class FileEntityToFileForProcessConverter {
 		if(tfileEntity == null)
 			return null;
 		
-		TFile fileForProcess = new TFile();
+		org.ishafoundation.dwaraapi.process.request.TFile fileForProcess = new TFile();
 		
 		fileForProcess.setId(tfileEntity.getId());
 		
@@ -35,7 +35,7 @@ public class FileEntityToFileForProcessConverter {
 		if(fileEntity == null)
 			return null;
 		
-		File fileForProcess = new File();
+		org.ishafoundation.dwaraapi.process.request.File fileForProcess = new File();
 		
 		fileForProcess.setId(fileEntity.getId());
 		

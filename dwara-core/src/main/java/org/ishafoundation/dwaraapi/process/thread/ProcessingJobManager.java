@@ -334,7 +334,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 							outputFilePath = outputArtifactPathname;
 					}
 					else {
-						String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPathname + java.io.java.io.File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
+						String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPathname + java.io.File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
 						artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPathname + java.io.File.separator, inputArtifactName + java.io.File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
 						
 						if(outputArtifactPathname != null) {
