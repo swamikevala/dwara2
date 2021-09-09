@@ -47,7 +47,7 @@ public class ChecksumVerifier implements IProcessingTask {
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 		
 		LogicalFile logicalFile = processContext.getLogicalFile();
-		org.ishafoundation.dwaraapi.db.model.transactional.request.File file = processContext.getFile();
+		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
 		TFile tFile = processContext.getTFile();
 		if(logicalFile.isFile()) {
 			logger.info("Verifying checksum for - " + tFile.getId() + ":" + logicalFile.getAbsolutePath());

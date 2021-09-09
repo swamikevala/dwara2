@@ -233,7 +233,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			String inputPath = getInputPath(job); 
 			if(inputPath == null)
 				inputPath = inputArtifactclass.getPath();
-			String inputArtifactPathname =  inputPath + File.separator + inputArtifactName;
+			String inputArtifactPathname =  inputPath + java.io.File.separator + inputArtifactName;
 			
 	
 			String outputArtifactName = null;
@@ -272,7 +272,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			
 			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File> filePathToFileObj = getFilePathToFileObj( inputArtifact);
 			
-			HashMap<String, TFile> filePathToTFileObj = getFilePathToTFileObj(inputArtifactId);
+			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.TFile> filePathToTFileObj = getFilePathToTFileObj(inputArtifactId);
 			
 			Flowelement flowelement = flowelementUtil.findById(job.getFlowelementId());
 			Taskconfig taskconfig = flowelement.getTaskconfig();
@@ -285,7 +285,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			boolean anyFileSentForProcessing = false;
 			if(filesToBeProcessedCount > 0) {
 				org.ishafoundation.dwaraapi.process.request.Job jobForProcess = jobEntityToJobForProcessConverter.getJobForProcess(job);
-				org.ishafoundation.dwaraapi.db.model.transactional.request.Artifact inputArtifactForProcess = jobForProcess.getInputArtifact();
+				org.ishafoundation.dwaraapi.process.request.Artifact inputArtifactForProcess = jobForProcess.getInputArtifact();
 				inputArtifactForProcess.setName(inputArtifactName);
 				org.ishafoundation.dwaraapi.process.request.Artifactclass inputArtifactclassForProcess = inputArtifactForProcess.getArtifactclass();
 				inputArtifactclassForProcess.setId(inputArtifactclassId);
@@ -334,18 +334,18 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 							outputFilePath = outputArtifactPathname;
 					}
 					else {
-						String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPathname + File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
-						artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPathname + File.separator, inputArtifactName + File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
+						String filePathnameWithoutArtifactNamePrefixed = logicalFilePath.replace(inputArtifactPathname + java.io.java.io.File.separator, ""); // would hold 1 CD\00018.MTS or just 00019.MTS
+						artifactNamePrefixedFilePathname = logicalFilePath.replace(inputArtifactPathname + java.io.File.separator, inputArtifactName + java.io.File.separator); // would hold 14715_Shivanga-Gents_Sharing_Tamil_Avinashi_10-Dec-2017_Panasonic-AG90A\1 CD\00018.MTS
 						
 						if(outputArtifactPathname != null) {
 							if(outputPathSuffix != null) {
-								outputFilePath = FilenameUtils.normalizeNoEndSeparator(outputArtifactPathname + File.separator + outputPathSuffix);
+								outputFilePath = FilenameUtils.normalizeNoEndSeparator(outputArtifactPathname + java.io.File.separator + outputPathSuffix);
 							}else {
 								String suffixPath = FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
 								if(StringUtils.isBlank(suffixPath))
 									outputFilePath = outputArtifactPathname;
 								else
-									outputFilePath = outputArtifactPathname + File.separator + FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
+									outputFilePath = outputArtifactPathname + java.io.File.separator + FilenameUtils.getFullPathNoEndSeparator(filePathnameWithoutArtifactNamePrefixed);
 							}
 						}
 						else if(configuredDestinationPath != null) {
@@ -354,7 +354,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					}
 					logger.trace("outputFilePath - " + outputFilePath);
 					//logger.info("Now processing - " + path);
-					TFile tFile = null;
+					org.ishafoundation.dwaraapi.db.model.transactional.TFile tFile = null;
 					org.ishafoundation.dwaraapi.db.model.transactional.File file = null;
 					if(filePathToTFileObj.containsKey(artifactNamePrefixedFilePathname))
 						tFile = filePathToTFileObj.get(artifactNamePrefixedFilePathname);

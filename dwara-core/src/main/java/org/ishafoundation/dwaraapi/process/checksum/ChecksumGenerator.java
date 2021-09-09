@@ -44,7 +44,7 @@ public class ChecksumGenerator implements IProcessingTask {
 		//Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		org.ishafoundation.dwaraapi.process.request.TFile tFile = processContext.getTFile();
-		org.ishafoundation.dwaraapi.db.model.transactional.request.File file = processContext.getFile();
+		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
 		if(logicalFile.isFile()) {
 			boolean generateChecksum = false;
 

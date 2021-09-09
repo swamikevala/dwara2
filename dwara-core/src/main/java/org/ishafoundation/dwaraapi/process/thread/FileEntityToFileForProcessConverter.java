@@ -11,7 +11,7 @@ public class FileEntityToFileForProcessConverter {
 	 * @Autowired private FileEntityUtil fileEntityUtil;
 	 */
 
-	TFile getTFileForProcess(org.ishafoundation.dwaraapi.db.model.transactional.TFile tfileEntity) throws Exception{
+	org.ishafoundation.dwaraapi.process.request.TFile getTFileForProcess(org.ishafoundation.dwaraapi.db.model.transactional.TFile tfileEntity) throws Exception{
 		if(tfileEntity == null)
 			return null;
 		
@@ -31,7 +31,7 @@ public class FileEntityToFileForProcessConverter {
 	}
 
 	
-	File getFileForProcess(org.ishafoundation.dwaraapi.db.model.transactional.File fileEntity) throws Exception{
+	org.ishafoundation.dwaraapi.process.request.File getFileForProcess(org.ishafoundation.dwaraapi.db.model.transactional.File fileEntity) throws Exception{
 		if(fileEntity == null)
 			return null;
 		

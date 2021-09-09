@@ -41,7 +41,7 @@ public class FileDeleter implements IProcessingTask {
 		
 		Artifact inputArtifact = processContext.getJob().getInputArtifact();
 		String inputArtifactName = inputArtifact.getName();
-		Artifactclass inputArtifactclass = inputArtifact.getArtifactclass();
+		org.ishafoundation.dwaraapi.process.request.Artifactclass inputArtifactclass = inputArtifact.getArtifactclass();
 		String pathPrefix = inputArtifactclass.getPath();
 		
 		LogicalFile logicalFile = processContext.getLogicalFile();
