@@ -18,25 +18,25 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
@@ -355,8 +355,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 		//Domain domain = storageJob.getDomain();
 		List<FileVolume> toBeAddedFileVolumeTableEntries = new ArrayList<FileVolume>();
 		
-		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileToBeRestored = selectedStorageJob.getFile();
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = selectedStorageJob.getArtifactFileList();
+		org.ishafoundation.dwaraapi.db.model.transactional.File fileToBeRestored = selectedStorageJob.getFile();
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> fileList = selectedStorageJob.getArtifactFileList();
 		for (File nthFile : fileList) {
 			String filePathname = nthFile.getPathname();
 			if(filePathname.startsWith(fileToBeRestored.getPathname())) {
@@ -432,7 +432,7 @@ public abstract class AbstractStoragetypeJobProcessor {
     	int fileIdToBeRestored = storageJob.getFileId();
 		
 		//FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = fileRepo.findById(fileIdToBeRestored);
+		org.ishafoundation.dwaraapi.db.model.transactional.File file = fileRepo.findById(fileIdToBeRestored);
 		selectedStorageJob.setFile(file);
 		
 		// TODO : Not sure if we need to pass the destination id or path -- Destination destination = configurationTablesUtil.getDestination(storageJob.getDestination());
@@ -446,7 +446,7 @@ public abstract class AbstractStoragetypeJobProcessor {
     	storageJob.getJob().setInputArtifactId(artifact.getId());
 		storageJob.setArtifact(artifact);
 		
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact);
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact);
 		selectedStorageJob.setArtifactFileList(fileList);
 		selectedStorageJob.setFilePathNameToChecksum(getSourceFilesChecksum(fileList));
 
@@ -467,10 +467,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 		selectedStorageJob.setFilePathNameToBeRestored(filePathNameToBeRestored);
     }
     
-	private HashMap<String, byte[]> getSourceFilesChecksum(List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList){
+	private HashMap<String, byte[]> getSourceFilesChecksum(List<org.ishafoundation.dwaraapi.db.model.transactional.File> fileList){
 		// caching the source file' checksum...
 		HashMap<String, byte[]> filePathNameToChecksumObj = new LinkedHashMap<String, byte[]>();
-		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : fileList) {
+		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : fileList) {
 			String filePathName = nthFile.getPathname();
 			byte[] checksum = nthFile.getChecksum();
 			filePathNameToChecksumObj.put(filePathName, checksum);
@@ -506,7 +506,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		if(requestedAction == Action.restore || (requestedAction == Action.restore_process && (jobCreator.hasDependentJobsToBeCreated(storageJob.getJob()).size() == 0)) || requestedAction == Action.rewrite) { // for ingest and restore_process this happens in the scheduler... 
 			// upon completion moving the file to the original requested dest path		
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
+			org.ishafoundation.dwaraapi.db.model.transactional.File file = selectedStorageJob.getFile();
 			
 			// NOTE : The variable names take a swap here - Dont be confused and tempted to change it
 			String restoredFilePathName = selectedStorageJob.getFilePathNameToBeRestored(); // After restore we need to swap the names of soft renamed entries. 

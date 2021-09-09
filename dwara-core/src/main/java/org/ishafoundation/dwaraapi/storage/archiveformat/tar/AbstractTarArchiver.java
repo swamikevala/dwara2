@@ -13,12 +13,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
@@ -264,7 +264,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 		logger.trace("Creating the directory " + targetLocationPath + ", if not already present");
 		FileUtils.forceMkdir(new java.io.File(targetLocationPath));
 		
-		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
+		org.ishafoundation.dwaraapi.db.model.transactional.File file = selectedStorageJob.getFile();
 		long fileSize = file.getSize();
 		if(!pfr) {
 			List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, selectedStorageJob.isUseBuffering(), fileSize, targetLocationPath, noOfTapeBlocksToBeRead);
@@ -509,7 +509,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
     	//Domain domain = storageJob.getDomain();
     	int fileIdToBeRestored = storageJob.getFileId();
-		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
+		org.ishafoundation.dwaraapi.db.model.transactional.File file = selectedStorageJob.getFile();
 		Artifact artifact = storageJob.getArtifact();
 		Volume volume = storageJob.getVolume();
     	
@@ -530,8 +530,8 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 				int firstFileVolumeBlock = 0;
 				long lastFileArchiveBlock = 0;
 				int lastFileEndVolumeBlock = 0;
-				List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = selectedStorageJob.getArtifactFileList();
-				for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : fileList) {
+				List<org.ishafoundation.dwaraapi.db.model.transactional.File> fileList = selectedStorageJob.getArtifactFileList();
+				for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : fileList) {
 					String nthArtifactFilePathname = nthFile.getPathname();//FilenameUtils.separatorsToUnix(nthArtifactFile.getPathname());
 					if(nthArtifactFilePathname.startsWith(filePathname)) {
 						//FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());// lets just let users use the util consistently
