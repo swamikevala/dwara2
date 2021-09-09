@@ -6,17 +6,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ishafoundation.dwaraapi.api.resp.artifact.ArtifactResponse;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.resource.mapper.MiscObjectMapper;
@@ -122,9 +122,9 @@ public class OnHoldArtifactRenameService extends DwaraService{
 			// 2 (a) (ii) Change the File Table entries and the file names 
 			// Step 4 - Flag all the file entries as soft-deleted
 			String parentFolderReplaceRegex = "^"+artifactName; 
-			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifact);			
-			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileListForRollback = fileRepositoryUtil.getAllArtifactFileList(artifact);			
-			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File eachfile : artifactFileList) { 
+			List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifact);			
+			List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileListForRollback = fileRepositoryUtil.getAllArtifactFileList(artifact);			
+			for (org.ishafoundation.dwaraapi.db.model.transactional.File eachfile : artifactFileList) { 
 				// Getting the filename
 				String filepath = eachfile.getPathname() ;
 				// Change the parent folder name by replacing the older artifact name by newer name

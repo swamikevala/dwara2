@@ -6,15 +6,17 @@ import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
-import org.ishafoundation.dwaraapi.db.model.transactional.Job;
-import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeRepository;
+//import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+//import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
+import org.ishafoundation.dwaraapi.process.request.Job;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
+import org.ishafoundation.dwaraapi.process.request.TFile;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +47,7 @@ public class ChecksumVerifier implements IProcessingTask {
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 		
 		LogicalFile logicalFile = processContext.getLogicalFile();
-		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
+		org.ishafoundation.dwaraapi.db.model.transactional.request.File file = processContext.getFile();
 		TFile tFile = processContext.getTFile();
 		if(logicalFile.isFile()) {
 			logger.info("Verifying checksum for - " + tFile.getId() + ":" + logicalFile.getAbsolutePath());

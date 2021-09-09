@@ -1,6 +1,6 @@
 package org.ishafoundation.dwaraapi.process.thread;
 
-import java.io.File;
+//import java.io.File;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,8 +18,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TTFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
@@ -30,9 +30,9 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
-import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+//import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
@@ -43,7 +43,9 @@ import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
+import org.ishafoundation.dwaraapi.process.request.File;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
+import org.ishafoundation.dwaraapi.process.request.TFile;
 import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -268,7 +270,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			logger.trace("outputArtifactPathname " + outputArtifactPathname); 	// null OR 
 																				// /data/transcoded/public/VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
 			
-			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj( inputArtifact);
+			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File> filePathToFileObj = getFilePathToFileObj( inputArtifact);
 			
 			HashMap<String, TFile> filePathToTFileObj = getFilePathToTFileObj(inputArtifactId);
 			
@@ -283,7 +285,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			boolean anyFileSentForProcessing = false;
 			if(filesToBeProcessedCount > 0) {
 				org.ishafoundation.dwaraapi.process.request.Job jobForProcess = jobEntityToJobForProcessConverter.getJobForProcess(job);
-				org.ishafoundation.dwaraapi.process.request.Artifact inputArtifactForProcess = jobForProcess.getInputArtifact();
+				org.ishafoundation.dwaraapi.db.model.transactional.request.Artifact inputArtifactForProcess = jobForProcess.getInputArtifact();
 				inputArtifactForProcess.setName(inputArtifactName);
 				org.ishafoundation.dwaraapi.process.request.Artifactclass inputArtifactclassForProcess = inputArtifactForProcess.getArtifactclass();
 				inputArtifactclassForProcess.setId(inputArtifactclassId);
@@ -353,7 +355,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					logger.trace("outputFilePath - " + outputFilePath);
 					//logger.info("Now processing - " + path);
 					TFile tFile = null;
-					org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
+					org.ishafoundation.dwaraapi.db.model.transactional.File file = null;
 					if(filePathToTFileObj.containsKey(artifactNamePrefixedFilePathname))
 						tFile = filePathToTFileObj.get(artifactNamePrefixedFilePathname);
 					

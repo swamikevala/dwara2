@@ -10,18 +10,18 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -112,7 +112,7 @@ public class ArtifactDeleter {
     
 	public void cleanUp(Request userRequest, Request requestToBeActioned, ArtifactRepository artifactRepository) throws Exception{	
 		int requestId = requestToBeActioned.getId();
-		HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>> artifactId_ArtifactFileList = new HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>>();
+		HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.File>> artifactId_ArtifactFileList = new HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.File>>();
 		HashMap<Integer, List<TFile>> artifactId_ArtifactTFileList = new HashMap<Integer, List<TFile>>();
 		HashMap<Integer, Artifact> artifactId_Artifact = new HashMap<Integer, Artifact>();
 		
@@ -126,11 +126,11 @@ public class ArtifactDeleter {
 			
 	    	// Step 4 - Flag all the file entries as softdeleted
 			//List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(nthArtifact, domain);
-			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepository.findAllByArtifactId(nthArtifact.getId());
+			List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = fileRepository.findAllByArtifactId(nthArtifact.getId());
 
 			artifactId_ArtifactFileList.put(nthArtifact.getId(), artifactFileList);
 			
-			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
+			for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : artifactFileList) {
 				nthFile.setDeleted(true);
 			}
 			
@@ -212,7 +212,7 @@ public class ArtifactDeleter {
     	List<Job> jobList = jobDao.findAllByRequestId(requestId);
 		for (Job nthJob : jobList) {
 			if(nthJob.getStatus() != Status.cancelled) {
-				List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = artifactId_ArtifactFileList.get(nthJob.getInputArtifactId());
+				List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = artifactId_ArtifactFileList.get(nthJob.getInputArtifactId());
 				List<TFile> artifactTFileList = artifactId_ArtifactTFileList.get(nthJob.getInputArtifactId());
 				
 				Action storagetaskAction = nthJob.getStoragetaskActionId();

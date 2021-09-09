@@ -11,7 +11,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 
 @Entity
 @Table(name="label")

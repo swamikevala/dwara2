@@ -2,12 +2,12 @@ package org.ishafoundation.dwaraapi.job.creation;
 
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.service.StagedService;

@@ -6,7 +6,7 @@ import java.util.HashMap;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;

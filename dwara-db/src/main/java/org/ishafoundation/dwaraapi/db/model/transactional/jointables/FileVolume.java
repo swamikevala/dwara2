@@ -1,17 +1,19 @@
-package org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain;
+package org.ishafoundation.dwaraapi.db.model.transactional.jointables;
 		
 import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.MapsId;
+import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.keys.domain.FileVolumeKey;
+import org.ishafoundation.dwaraapi.db.keys.FileVolumeKey;
+import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 
 /*
  * 
@@ -22,7 +24,9 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
  * 
  * 
 */
-@MappedSuperclass
+@Entity
+
+@Table(name="file_volume")
 public class FileVolume {
 	
 	public static final String TABLE_NAME = File.TABLE_NAME_PREFIX +"<<DOMAIN>>_volume";

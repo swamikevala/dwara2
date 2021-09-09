@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;

@@ -3,8 +3,8 @@ package org.ishafoundation.dwaraapi.hotfixes;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.service.ArtifactService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,8 +1,8 @@
-package org.ishafoundation.dwaraapi.db.dao.transactional.domain;
+package org.ishafoundation.dwaraapi.db.dao.transactional;
 
 import java.lang.reflect.Method;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

@@ -5,14 +5,15 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+//import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
+import org.ishafoundation.dwaraapi.process.request.Artifact;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,10 +73,10 @@ public class FileDeleter implements IProcessingTask {
 		return processingtaskResponse;
 	}
 	
-	private void deleteFileFromFilesystemAndUpdateDB(File fileToBeDeleted, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository, String pathPrefix){
+	private void deleteFileFromFilesystemAndUpdateDB(File fileToBeDeleted, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.File> domainSpecificFileRepository, String pathPrefix){
 		// flag it deleted in the DB
 		String pathname = StringUtils.substringAfter(fileToBeDeleted.getAbsolutePath(), pathPrefix + File.separator);
-    	org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainSpecificFileRepository.findByPathname(pathname);
+    	org.ishafoundation.dwaraapi.db.model.transactional.File fileFromDB = domainSpecificFileRepository.findByPathname(pathname);
     	fileFromDB.setDeleted(true);
     	domainSpecificFileRepository.save(fileFromDB);
     	

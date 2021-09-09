@@ -1,8 +1,8 @@
 package org.ishafoundation.dwaraapi.storage.model;
 
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 
 /**
  * Wraps the Job with more Storagetask related info like volume to be used, artifact/file, block details etc., 

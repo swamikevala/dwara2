@@ -3,8 +3,8 @@ package org.ishafoundation.dwaraapi.process.checksum;
 import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
@@ -44,7 +44,7 @@ public class ChecksumGenerator implements IProcessingTask {
 		//Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		org.ishafoundation.dwaraapi.process.request.TFile tFile = processContext.getTFile();
-		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
+		org.ishafoundation.dwaraapi.db.model.transactional.request.File file = processContext.getFile();
 		if(logicalFile.isFile()) {
 			boolean generateChecksum = false;
 
@@ -74,9 +74,9 @@ public class ChecksumGenerator implements IProcessingTask {
 			
 				if(file != null) {
 					//FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-					Optional<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileOptional = fileRepository.findById(file.getId());
-					if(fileOptional.isPresent()) { // Not all files are persisted anymore. For e.g., edited videos has only configured files...
-						org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileDBObj = fileOptional.get();
+					org.ishafoundation.dwaraapi.db.model.transactional.File fileDBObj = fileRepository.findById(file.getId());
+					if(fileDBObj!=null) { // Not all files are persisted anymore. For e.g., edited videos has only configured files...
+						
 						fileDBObj.setChecksum(checksum);
 				    	fileRepository.save(fileDBObj);
 					}

@@ -5,17 +5,17 @@ import java.io.File;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
@@ -96,7 +96,7 @@ public class Restore extends AbstractStoragetaskAction{
 			//storageJob.setDomain(domain);
 
 			//FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = fileRepository.findByPathname(artifact.getName());
+			org.ishafoundation.dwaraapi.db.model.transactional.File artifactFile = fileRepository.findByPathname(artifact.getName());
 
 			// what need to be restored
 			int fileIdToBeRestored = artifactFile.getId();
@@ -158,7 +158,7 @@ public class Restore extends AbstractStoragetaskAction{
 			
 			
 			//FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = fileRepository.findByPathname(artifact.getName());
+			org.ishafoundation.dwaraapi.db.model.transactional.File artifactFile = fileRepository.findByPathname(artifact.getName());
 
 			// what need to be restored
 			int fileIdToBeRestored = artifactFile.getId();
@@ -252,7 +252,7 @@ public class Restore extends AbstractStoragetaskAction{
     	FileVolume fileVolume = null;
     	if(fileVolumeList.size() > 1) {
     		//FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-    		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = fileRepository.findById(fileIdToBeRestored);
+    		org.ishafoundation.dwaraapi.db.model.transactional.File file = fileRepository.findById(fileIdToBeRestored);
     		//Artifact artifact = fileEntityUtil.getArtifact(file, domain);
 			Artifact artifact = file.getArtifact();
     		

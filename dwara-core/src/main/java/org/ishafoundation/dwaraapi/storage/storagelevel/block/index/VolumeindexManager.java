@@ -16,14 +16,14 @@ import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.commandline.local.RetriableCommandLineExecutorImpl;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
@@ -124,7 +124,7 @@ public class VolumeindexManager {
 				artifact.setStartblock(artifactVolume.getDetails().getStartVolumeBlock());
 				artifact.setEndblock(artifactVolume.getDetails().getEndVolumeBlock());
 				int artifactId = artifactVolume.getId().getArtifactId();
-				org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) artifactRepository.findById(artifactId);
+				org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifactDbObj = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactRepository.findById(artifactId);
 				//org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = domainUtil.getDomainSpecificArtifact(domain, artifactId);
 				
 				artifact.setArtifactclassuid(artifactDbObj.getArtifactclass().getId());

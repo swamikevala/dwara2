@@ -1,20 +1,24 @@
-package org.ishafoundation.dwaraapi.db.model.transactional.domain;
+package org.ishafoundation.dwaraapi.db.model.transactional;
 		
 import java.util.Objects;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.FileColumns;
-
-@MappedSuperclass
+//@MappedSuperclass
+@Entity(name="File")
+ @SequenceGenerator(initialValue = 1, name = "file_sequence", allocationSize =1)
+ 
+ @Table(name="File")
 public class File extends FileColumns{
 
 	public static final String TABLE_NAME_PREFIX = "file";

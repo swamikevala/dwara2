@@ -5,6 +5,7 @@ import javax.persistence.Table;
 
 //import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificFileVolumeFactory;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 
 /*
  * 

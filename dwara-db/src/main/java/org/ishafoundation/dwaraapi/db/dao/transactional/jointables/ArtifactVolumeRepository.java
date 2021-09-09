@@ -1,8 +1,8 @@
-package org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain;
+package org.ishafoundation.dwaraapi.db.dao.transactional.jointables;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;

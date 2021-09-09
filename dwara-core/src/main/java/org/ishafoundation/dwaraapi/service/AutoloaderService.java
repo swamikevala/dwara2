@@ -17,7 +17,7 @@ import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;

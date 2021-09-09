@@ -1,7 +1,7 @@
 package org.ishafoundation.dwaraapi.process.thread;
 
+import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,7 +31,7 @@ public class FileEntityToFileForProcessConverter {
 	}
 
 	
-	File getFileForProcess(org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileEntity) throws Exception{
+	File getFileForProcess(org.ishafoundation.dwaraapi.db.model.transactional.File fileEntity) throws Exception{
 		if(fileEntity == null)
 			return null;
 		
@@ -47,7 +47,7 @@ public class FileEntityToFileForProcessConverter {
 
 		fileForProcess.setDeleted(fileEntity.isDeleted());
 		
-		fileForProcess.setFileRef(getFileForProcess((org.ishafoundation.dwaraapi.db.model.transactional.domain.File)fileEntity.getFileRef()));
+		fileForProcess.setFileRef(getFileForProcess((org.ishafoundation.dwaraapi.db.model.transactional.File)fileEntity.getFileRef()));
 		
 		return fileForProcess;
 	}

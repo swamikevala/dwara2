@@ -9,29 +9,29 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.job.GroupedJobResponse;
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.JobRunDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.keys.JobRunKey;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.JobRun;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
@@ -409,9 +409,9 @@ public class JobService extends DwaraService{
 		// softDelete Filevolume entries
 		//ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(Domain.ONE);
 		Artifact artifact = artifactRepository.findById(artifactId);
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact);
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact);
 		List<FileVolume> toBeUpdatedFileVolumeTableEntries = new ArrayList<FileVolume>();
-		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
+		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : artifactFileList) {
 			//FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volumeInvolved.getId());
 			FileVolume fileVolume = fileVolumeRepository.findByIdFileIdAndIdVolumeId(nthFile.getId(), volumeInvolved.getId());
 			if(fileVolume != null) {

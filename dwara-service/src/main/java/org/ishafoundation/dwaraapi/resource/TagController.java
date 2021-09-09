@@ -5,11 +5,11 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.tag.TagArtifact;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 //import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.RequestService;

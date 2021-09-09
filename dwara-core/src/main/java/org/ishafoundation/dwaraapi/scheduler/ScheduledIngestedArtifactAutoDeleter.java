@@ -7,8 +7,8 @@ import java.time.temporal.ChronoUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

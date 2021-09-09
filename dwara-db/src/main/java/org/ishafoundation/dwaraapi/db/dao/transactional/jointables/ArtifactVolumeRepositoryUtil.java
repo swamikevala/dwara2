@@ -1,9 +1,9 @@
-package org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain;
+package org.ishafoundation.dwaraapi.db.dao.transactional.jointables;
 
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

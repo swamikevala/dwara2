@@ -3,9 +3,8 @@ package org.ishafoundation.dwaraapi.db.model.transactional.jointables;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.keys.domain.FileVolumeKey;
+import org.ishafoundation.dwaraapi.db.keys.FileVolumeKey;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 
 /*
  * 

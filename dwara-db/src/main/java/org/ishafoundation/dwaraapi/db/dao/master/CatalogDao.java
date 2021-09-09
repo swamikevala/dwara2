@@ -1,6 +1,6 @@
 package org.ishafoundation.dwaraapi.db.dao.master;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.springframework.data.repository.CrudRepository;
 
 public interface CatalogDao extends CrudRepository<Artifact, Integer> {

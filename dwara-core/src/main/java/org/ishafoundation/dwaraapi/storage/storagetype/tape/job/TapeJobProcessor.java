@@ -12,11 +12,11 @@ import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
@@ -261,7 +261,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		if(timeCodeStart != null) { // pfr = true;
 			// skip = ((archive_block + header_block) * archiveformatblocksize) + starttimecode's clusterpos - 1 byte[excluding the start byte]
 			//skip = ((12 + 3) * 512) + 5840030 - 1 = 5847709
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
+			org.ishafoundation.dwaraapi.db.model.transactional.File file = selectedStorageJob.getFile();
 			//Domain domain = storageJob.getDomain();
 			String path = storageJob.getArtifact().getArtifactclass().getPath();
 			logger.trace("path " + path);

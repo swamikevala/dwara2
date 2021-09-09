@@ -3,12 +3,12 @@ package org.ishafoundation.dwaraapi.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +25,10 @@ public class TFileVolumeDeleter {
 	@Autowired
 	private FileVolumeRepository fileVolumeRepository;
 	
-	public void softDeleteTFileVolumeEntries( List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList, List<TFile> artifactTFileList, Artifact artifact, String volumeId){
+	public void softDeleteTFileVolumeEntries( List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList, List<TFile> artifactTFileList, Artifact artifact, String volumeId){
 		// softDelete Filevolume entries
 		List<FileVolume> toBeUpdatedFileVolumeTableEntries = new ArrayList<FileVolume>();
-		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
+		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : artifactFileList) {
 			//FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volumeId);
 			FileVolume fileVolume = fileVolumeRepository.findByIdFileIdAndIdVolumeId(nthFile.getId(), volumeId);
 

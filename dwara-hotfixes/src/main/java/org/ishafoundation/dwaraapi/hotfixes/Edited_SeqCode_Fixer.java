@@ -5,15 +5,15 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
@@ -146,8 +146,8 @@ public class Edited_SeqCode_Fixer {
 			// 2 (a) (ii) Change the File Table entries and the file names 
 			// Step 4 - Flag all the file entries as soft-deleted
 			String parentFolderReplaceRegex = "^"+artifactName; 
-			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepository.findAllByArtifactId(artifact.getId());			
-			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File eachfile : artifactFileList) { 
+			List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = fileRepository.findAllByArtifactId(artifact.getId());			
+			for (org.ishafoundation.dwaraapi.db.model.transactional.File eachfile : artifactFileList) { 
 				// Each file will now be renamed and the DB entry changed subsequently like butter through knife...
 				String eachFilePath = eachfile.getPathname();
 				// Getting the filename

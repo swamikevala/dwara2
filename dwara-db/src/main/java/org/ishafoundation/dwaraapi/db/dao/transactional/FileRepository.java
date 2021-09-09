@@ -1,8 +1,8 @@
-package org.ishafoundation.dwaraapi.db.dao.transactional.domain;
+package org.ishafoundation.dwaraapi.db.dao.transactional;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;

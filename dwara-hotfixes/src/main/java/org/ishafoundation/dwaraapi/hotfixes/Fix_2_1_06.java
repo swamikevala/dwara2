@@ -11,15 +11,15 @@ import java.util.List;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -57,7 +57,7 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 	
 	private boolean dryRun = true;
 	TFile tFileRef = null;
-	org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileRef = null;
+	org.ishafoundation.dwaraapi.db.model.transactional.File fileRef = null;
 	
 	@PostMapping(value="/fix_2_1_06", produces = "application/json")
     public ResponseEntity<String> executeFix_2_1_06(@RequestParam(defaultValue="true") boolean dryRun){
@@ -97,10 +97,10 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 				String outputArtifactPathname = outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName;
 				
 				HashMap<String, TFile> inputFilePathToTFileObj = getFilePathToTFileObj(inputArtifactId);
-				HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> inputFilePathToFileObj = getFilePathToFileObj( inputArtifact);
+				HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File> inputFilePathToFileObj = getFilePathToFileObj( inputArtifact);
 				
 				HashMap<String, TFile> outputFilePathToTFileObj = getFilePathToTFileObj(outputArtifact.getId());
-				HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> outputFilePathToFileObj = getFilePathToFileObj( outputArtifact);
+				HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File> outputFilePathToFileObj = getFilePathToFileObj( outputArtifact);
 				
 				org.ishafoundation.dwaraapi.db.model.transactional.TFile artifactTFile = outputFilePathToTFileObj.get(outputArtifactName);
 				
@@ -117,7 +117,7 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 				//FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 //				org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
 				
-				org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = outputFilePathToFileObj.get(outputArtifactName);
+				org.ishafoundation.dwaraapi.db.model.transactional.File artifactFile = outputFilePathToFileObj.get(outputArtifactName);
 				
 				fileRef = inputFilePathToFileObj.get(inputArtifactName + File.separator + mkvFile.getName());
 				if(artifactFile == null) { // only if not already created... 
@@ -139,7 +139,7 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 						logger.trace("Now creating T file record for - " + filepathName);
 						nthTFile = createTFile(fileAbsolutePathName, outputArtifact);	
 					}							
-					org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = outputFilePathToFileObj.get(filepathName);
+					org.ishafoundation.dwaraapi.db.model.transactional.File nthFile = outputFilePathToFileObj.get(filepathName);
 					//org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = domainSpecificFileRepository.findByPathname(filepathName);
 					if(nthFile == null) { // only if not already created... 
 						logger.trace("Now creating file record for - " + filepathName);
@@ -214,8 +214,8 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 		return nthTFileRowToBeInserted;
 	}
 
-	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository,  org.ishafoundation.dwaraapi.db.model.transactional.TFile tFileDBObj) throws Exception {
-	    org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFileRowToBeInserted =new org.ishafoundation.dwaraapi.db.model.transactional.domain.File();
+	private org.ishafoundation.dwaraapi.db.model.transactional.File createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.File> domainSpecificFileRepository,  org.ishafoundation.dwaraapi.db.model.transactional.TFile tFileDBObj) throws Exception {
+	    org.ishafoundation.dwaraapi.db.model.transactional.File nthFileRowToBeInserted =new org.ishafoundation.dwaraapi.db.model.transactional.File();
 		
 	   // fileEntityUtil.setDomainSpecificFileRef(nthFileRowToBeInserted, fileRef);
 	    nthFileRowToBeInserted.setFileRef(fileRef);
@@ -230,7 +230,7 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 	    nthFileRowToBeInserted.setDirectory(tFileDBObj.isDirectory());
 	    nthFileRowToBeInserted.setSize(tFileDBObj.getSize());
 
-	    org.ishafoundation.dwaraapi.db.model.transactional.domain.File savedFile = null;
+	    org.ishafoundation.dwaraapi.db.model.transactional.File savedFile = null;
 	    
 
 	    logger.info("File Pathname " + nthFileRowToBeInserted.getPathname() + " Size " + nthFileRowToBeInserted.getSize() + " fileRef " + fileRef.getId() + " outputArtifact " + outputArtifact.getId() 

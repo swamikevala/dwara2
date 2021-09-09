@@ -14,16 +14,16 @@ import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.JobDetailsType;
@@ -436,7 +436,7 @@ public class RequestService extends DwaraService{
 				 * domainUtil.getDefaultDomain();
 				 */
 				
-				org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = fileRepository.findById((int) request.getDetails().getFileId());
+				org.ishafoundation.dwaraapi.db.model.transactional.File fileFromDB = fileRepository.findById((int) request.getDetails().getFileId());
 			
 				File fileForRestoreResponse = new File();
 				byte[] checksum = fileFromDB.getChecksum();

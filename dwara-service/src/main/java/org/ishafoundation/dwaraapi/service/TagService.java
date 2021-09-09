@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.db.dao.master.TagDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

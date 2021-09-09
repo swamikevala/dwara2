@@ -4,12 +4,12 @@ package org.ishafoundation.dwaraapi.storage.storagetask;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;

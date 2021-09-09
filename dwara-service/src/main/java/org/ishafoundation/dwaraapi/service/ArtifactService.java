@@ -12,22 +12,22 @@ import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.artifact.ArtifactResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactEntityUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactEntityUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
@@ -226,8 +226,8 @@ public class ArtifactService extends DwaraService{
 			// 2 (a) (ii) Change the File Table entries and the file names 
 			// Step 4 - Flag all the file entries as soft-deleted
 			String parentFolderReplaceRegex = "^"+artifactName; 
-			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepository.findAllByArtifactId(artifact.getId());			
-			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File eachfile : artifactFileList) { 
+			List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = fileRepository.findAllByArtifactId(artifact.getId());			
+			for (org.ishafoundation.dwaraapi.db.model.transactional.File eachfile : artifactFileList) { 
 				// Getting the filename
 				String filepath = eachfile.getPathname();
 				// Change the parent folder name by replacing the older artifact name by newer name
@@ -453,8 +453,8 @@ public class ArtifactService extends DwaraService{
 				logger.info("Artifact table updated");
 				
 				String parentFolderReplaceRegex = "^"+artifactName; 
-				List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepository.findAllByArtifactId(nthArtifact.getId());			
-				for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File eachfile : artifactFileList) { 
+				List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = fileRepository.findAllByArtifactId(nthArtifact.getId());			
+				for (org.ishafoundation.dwaraapi.db.model.transactional.File eachfile : artifactFileList) { 
 					// Getting the filename
 					String filepath = eachfile.getPathname();
 					// Change the parent folder name by replacing the older artifact name by newer name
