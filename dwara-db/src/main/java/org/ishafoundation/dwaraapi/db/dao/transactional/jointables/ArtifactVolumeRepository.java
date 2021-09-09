@@ -7,7 +7,7 @@ import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 
-@NoRepositoryBean
+
 public interface ArtifactVolumeRepository<T extends ArtifactVolume> extends CrudRepository<T,Integer> {
 	
 	ArtifactVolume findByIdArtifactIdAndIdVolumeId(int artifactId, String volumeId);

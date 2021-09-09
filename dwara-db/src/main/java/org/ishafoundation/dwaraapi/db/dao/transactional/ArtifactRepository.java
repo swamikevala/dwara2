@@ -7,7 +7,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 
-@NoRepositoryBean
+
 public interface ArtifactRepository<T extends Artifact> extends CrudRepository<T,Integer> {
 
 	List<Artifact> findAllByWriteRequestId(int ingestRequestId);
