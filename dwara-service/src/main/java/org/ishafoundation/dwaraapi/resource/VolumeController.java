@@ -173,7 +173,7 @@ public class VolumeController {
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
 	}
 	
-	@ApiOperation(value = "Rewrite the volume. To find the src copy volumes needed in library use something like where R39805L7 is the defective volume and R198% is the sourceCopy group - select distinct(volume_id) from artifact1_volume where artifact_id in (select artifact_id from artifact1_volume where volume_id= 'R39805L7') and volume_id like 'R198%';")
+	@ApiOperation(value = "Rewrite the volume. To find the src copy volumes needed in library use something like where R39805L7 is the defective volume and R198% is the sourceCopy group - select distinct(volume_id) from artifact_volume where artifact_id in (select artifact_id from artifact_volume where volume_id= 'R39805L7') and volume_id like 'R198%';")
 	@ApiResponses(value = { 
 			@ApiResponse(code = 200, message = "Ok")
 	})

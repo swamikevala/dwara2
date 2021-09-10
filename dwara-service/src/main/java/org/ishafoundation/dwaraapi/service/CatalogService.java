@@ -92,7 +92,7 @@ public class CatalogService extends DwaraService{
     }
 
     public void updateUsedSpace() {
-        String query = "select volume_id, max(json_extract(details, '$.end_volume_block')) from dwara.artifact1_volume group by volume_id;";
+        String query = "select volume_id, max(json_extract(details, '$.end_volume_block')) from dwara.artifact_volume group by volume_id;";
         Query q = entityManager.createNativeQuery(query);
         List<Object[]> results = q.getResultList();
         results.forEach((record) -> {
@@ -248,12 +248,12 @@ public class CatalogService extends DwaraService{
             condition += ")";
         }
         String query = "select distinct a.id" 
-        + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
+        + " from artifact a join artifact_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.artifact_ref_id is null and a.deleted=0"
         + condition;
 
         String query2 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
-        + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
+        + " from artifact a join artifact_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and a.deleted=0"
         + " and a.id in (" + query + ")"
         + " group by a.id order by completed_at desc";
@@ -268,7 +268,7 @@ public class CatalogService extends DwaraService{
 
         //Query proxy
         String query3 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
-        + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
+        + " from artifact a join artifact_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and a.deleted=0"
         + " and a.artifact_ref_id in (" + query + ")"
         + " group by a.id order by completed_at desc";
@@ -332,12 +332,12 @@ public class CatalogService extends DwaraService{
             condition += " and a.name != b.name";
         }
         String query = "select distinct a.id" 
-        + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
+        + " from artifact a join artifact_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.artifact_ref_id is null and a.deleted=" + deleted
         + condition;
 
         String query2 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
-        + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
+        + " from artifact a join artifact_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id"
         + " and a.id in (" + query + ")"
         + " group by a.id order by completed_at desc";
@@ -352,7 +352,7 @@ public class CatalogService extends DwaraService{
 
         //Query proxy
         String query3 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName, group_concat(f.status order by b.volume_id separator ',') as proxyStatus" 
-        + " from artifact1 a join artifact1_volume b join volume c join request d join user e join job f"
+        + " from artifact a join artifact_volume b join volume c join request d join user e join job f"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and f.input_artifact_id=a.artifact_ref_id and f.output_artifact_id=a.id and f.processingtask_id='video-proxy-low-gen'"
         + " and a.artifact_ref_id in (" + query + ")"
         + " group by a.id order by completed_at desc";
