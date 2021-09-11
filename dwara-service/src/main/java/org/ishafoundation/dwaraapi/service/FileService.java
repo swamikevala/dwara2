@@ -115,7 +115,7 @@ public class FileService extends DwaraService{
 		}
 		
 
-		String query="select file.id, file.pathname, file.size, artifact.id as artifactId from artifact join file1 on artifact.id = file.artifact_id where " + sb.toString() + " and artifact.artifactclass_id not like '%proxy-low' and file.pathname = artifact.name";
+		String query="select file.id, file.pathname, file.size, artifact.id as artifactId from artifact join file on artifact.id = file.artifact_id where " + sb.toString() + " and artifact.artifactclass_id not like '%proxy-low' and file.pathname = artifact.name";
 
         Query q = entityManager.createNativeQuery(query);
         List<Object[]> results = q.getResultList();
