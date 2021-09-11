@@ -43,6 +43,19 @@ public class FileRepositoryUtil {
 		//List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = (List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>) fileDaoFindAllBy.invoke(fileRepository, artifact.getId());
 		return fileList;
     }
-    
+    public List<org.ishafoundation.dwaraapi.db.model.transactional.File> getAllDerivedFiles(org.ishafoundation.dwaraapi.db.model.transactional.File file) throws Exception {
+		String domainSpecificFileTableName = file.getClass().getSimpleName();
+		String separator = "$";
+		if(domainSpecificFileTableName.contains(separator)) {
+			logger.warn("class name has $ separator : " + domainSpecificFileTableName);
+			domainSpecificFileTableName = StringUtils.substringBefore(domainSpecificFileTableName, separator);
+		}
+		//FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+		//Method fileDaoFindAllBy = fileRepository.getClass().getMethod(FileRepository.FIND_ALL_BY_FILE_REF_ID.replace("<<DOMAIN_SPECIFIC_FILE>>", domainSpecificFileTableName), int.class);
+		//List<org.ishafoundation.dwaraapi.db.model.transactional.File> fileList = (List<org.ishafoundation.dwaraapi.db.model.transactional.File>) fileDaoFindAllBy.invoke(fileRepository, file.getId());
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> fileList = (List<org.ishafoundation.dwaraapi.db.model.transactional.File>) fileRepository.findAllByFileRefId(file.getId());
+
+		return fileList;
+    }
     
 }

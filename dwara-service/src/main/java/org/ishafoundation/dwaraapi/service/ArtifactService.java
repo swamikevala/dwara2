@@ -24,6 +24,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolum
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
@@ -540,12 +541,11 @@ public class ArtifactService extends DwaraService{
 
 	public List<org.ishafoundation.dwaraapi.api.resp.restore.File> listFiles(int artifactId, boolean includeProxyPreviewURL) throws Exception {
 		List<org.ishafoundation.dwaraapi.api.resp.restore.File> fileList = new ArrayList<org.ishafoundation.dwaraapi.api.resp.restore.File>();
-		Domain domain = Domain.ONE;
-		ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-		Artifact artifact = null;
-		Optional<Artifact> artifactEntity = artifactRepository.findById(artifactId);
-		if(artifactEntity.isPresent())
-			artifact = artifactEntity.get();
+		//Domain domain = Domain.ONE;
+		//ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+		Artifact artifact = artifactRepository.findById(artifactId);
+		
+		
 
 		if(artifact == null)
 			throw new Exception(artifactId + " artifact doesnt exist");
@@ -555,7 +555,7 @@ public class ArtifactService extends DwaraService{
     	String protocol =  isSecured ? "https" : "http";
     	String hostname = catDVConfiguration.getHost(); 
     	
-		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
+		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact);
 
 		for (File file : artifactFileList) {
 			org.ishafoundation.dwaraapi.api.resp.restore.File nthFile = new org.ishafoundation.dwaraapi.api.resp.restore.File();
@@ -564,7 +564,7 @@ public class ArtifactService extends DwaraService{
 			nthFile.setSize(file.getSize());
 			nthFile.setDirectory(file.isDirectory());
 			
-			List<File> derivedFiles = fileRepositoryUtil.getAllDerivedFiles(file, Domain.ONE);
+			List<File> derivedFiles = fileRepositoryUtil.getAllDerivedFiles(file);
 			if(derivedFiles != null && derivedFiles.size() > 0) {
 				for (File nthDerivedFile : derivedFiles) {
 					if(nthDerivedFile.getPathname().endsWith(".mp4"))
