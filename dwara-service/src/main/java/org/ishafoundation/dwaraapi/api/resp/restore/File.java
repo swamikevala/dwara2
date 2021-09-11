@@ -6,12 +6,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class File {
 	private int id;
 	private Integer systemRequestId;
-	private int priority;
+	private Integer priority;
+	private Integer artifactId;
 	private String artifactclass;
 	private String pathname;
 	private long size;
 	private String checksum;
 	private String checksumType;
+	private String previewProxyUrl;
+	private Boolean directory;
 	
 	public int getId() {
 		return id;
@@ -25,11 +28,17 @@ public class File {
 	public void setSystemRequestId(Integer systemRequestId) {
 		this.systemRequestId = systemRequestId;
 	}
-	public int getPriority() {
+	public Integer getPriority() {
 		return priority;
 	}
-	public void setPriority(int priority) {
+	public void setPriority(Integer priority) {
 		this.priority = priority;
+	}
+	public Integer getArtifactId() {
+		return artifactId;
+	}
+	public void setArtifactId(Integer artifactId) {
+		this.artifactId = artifactId;
 	}
 	public String getArtifactclass() {
 		return artifactclass;
@@ -60,5 +69,17 @@ public class File {
 	}
 	public void setChecksumType(String checksumType) {
 		this.checksumType = checksumType;
+	}
+	public String getPreviewProxyUrl() {
+		return previewProxyUrl;
+	}
+	public void setPreviewProxyUrl(String previewProxyUrl) {
+		this.previewProxyUrl = previewProxyUrl;
+	}
+	public Boolean getDirectory() {
+		return directory;
+	}
+	public void setDirectory(Boolean directory) {
+		this.directory = directory;
 	}
 }

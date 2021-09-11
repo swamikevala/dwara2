@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,7 @@ import org.ishafoundation.dwaraapi.service.common.ArtifactDeleter;
 import org.ishafoundation.dwaraapi.staged.scan.Error;
 import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
+import org.ishafoundation.videopub.mam.CatDVConfiguration;
 import org.ishafoundation.videopub.mam.MamUpdateTaskExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +87,7 @@ public class ArtifactService extends DwaraService{
 
 	@Autowired
 	private FileRepositoryUtil fileRepositoryUtil;
-	
+		
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
 
@@ -100,6 +102,9 @@ public class ArtifactService extends DwaraService{
 	
 	@Autowired
 	private JobCreator jobCreator;
+	
+	@Autowired
+	private CatDVConfiguration catDVConfiguration;
 
 	public ArtifactResponse deleteArtifact(int artifactId, String reason) throws Exception{
 		//ArtifactRepository<Artifact> artifactRepository = null;
@@ -531,5 +536,44 @@ public class ArtifactService extends DwaraService{
 		dr.setRequestedBy(userRequest.getRequestedBy().getName());
 
 		return dr;
+	}
+
+	public List<org.ishafoundation.dwaraapi.api.resp.restore.File> listFiles(int artifactId, boolean includeProxyPreviewURL) throws Exception {
+		List<org.ishafoundation.dwaraapi.api.resp.restore.File> fileList = new ArrayList<org.ishafoundation.dwaraapi.api.resp.restore.File>();
+		Domain domain = Domain.ONE;
+		ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
+		Artifact artifact = null;
+		Optional<Artifact> artifactEntity = artifactRepository.findById(artifactId);
+		if(artifactEntity.isPresent())
+			artifact = artifactEntity.get();
+
+		if(artifact == null)
+			throw new Exception(artifactId + " artifact doesnt exist");
+		
+		String category = artifact.getArtifactclass().getCategory();
+    	boolean isSecured = catDVConfiguration.isSecured();
+    	String protocol =  isSecured ? "https" : "http";
+    	String hostname = catDVConfiguration.getHost(); 
+    	
+		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
+
+		for (File file : artifactFileList) {
+			org.ishafoundation.dwaraapi.api.resp.restore.File nthFile = new org.ishafoundation.dwaraapi.api.resp.restore.File();
+			nthFile.setId(file.getId());
+			nthFile.setPathname(file.getPathname());
+			nthFile.setSize(file.getSize());
+			nthFile.setDirectory(file.isDirectory());
+			
+			List<File> derivedFiles = fileRepositoryUtil.getAllDerivedFiles(file, Domain.ONE);
+			if(derivedFiles != null && derivedFiles.size() > 0) {
+				for (File nthDerivedFile : derivedFiles) {
+					if(nthDerivedFile.getPathname().endsWith(".mp4"))
+						nthFile.setPreviewProxyUrl(protocol + "://" + hostname + "/" + catDVConfiguration.getProxiesRootLocationSoftLinkName() + "/" + category + "/" + nthDerivedFile.getPathname());
+				}
+				
+			}
+			fileList.add(nthFile);
+		}
+		return fileList;
 	}
 }

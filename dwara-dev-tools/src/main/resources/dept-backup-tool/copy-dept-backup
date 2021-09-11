@@ -1,0 +1,100 @@
+#!/bin/bash
+
+# Copy dept backup script
+SRC_ROOT=/mnt/dept-backup
+DEST_ROOT=/data/dwara/user
+DELETE_DIR=copied-to-archives-server
+
+SRC_DIR="${SRC_ROOT}/${DEPT}/${ART_CLASS}"
+DEST_DIR="${DEST_ROOT}/${USER}/ingest/${ART_CLASS}"
+
+if ! [ -d "$SRC_DIR" ]; then
+   echo "Source directory: $SRC_DIR does not exist"
+   exit 1
+fi
+
+if ! [ -d "$DEST_DIR" ]; then
+   echo "Destination directory: $DEST_DIR does not exist"
+   exit 1
+fi
+
+# du -BG "$SRC_DIR"
+
+printf "**************************\n"
+
+SAVEIFS=$IFS
+IFS=$(echo -en "\n\b")
+
+
+
+for ART in `ls -A "$SRC_DIR"`; do 
+   
+   if [ "$ART" == "$DELETE_DIR" ]; then
+      continue
+   fi
+
+   # SET Dont copy to False .
+   
+   COPYTHIS=1
+   # Name validation checks
+    LEN=${#ART}
+   if [ $LEN -gt 237 ]; then
+      echo "Name: $ART has length > 237 characters. Invalid"
+      COPYTHIS=0
+   elif [[ ! "$ART" =~ ^[a-zA-Z0-9_.\-]+$ ]]; then
+      echo "Name: $ART has invalid characters."
+      COPYTHIS=0
+   fi
+    
+   
+ if [ $COPYTHIS -eq 1 ]; then
+ 
+ echo "Will start copy for $ART";
+   rm md5_*.tmp
+
+   SRC_ART="${SRC_DIR}/${ART}"
+   DEST_ART="${DEST_DIR}/${ART}"
+
+   printf "$SRC_ART [Checksum generation]\n"
+   SRC_DIR_LEN=${#SRC_DIR}
+
+   find "$SRC_ART" -type f -exec sh -c 'md5sum "${1}" >>  md5_src.tmp' sh {} \;
+   #find "$SRC_ART" -type f -exec sh -c 'md5sum $1 | tee -a md5_src.tmp' sh {} \;
+
+   if [ -d "$DEST_ART" ]; then
+      printf "$DEST_ART [Delete existing]\n"
+      rm -rf "$DEST_ART"
+   fi
+   
+  
+   printf "$SRC_ART [Copying]\n"
+   cp -R "${SRC_ART}" "${DEST_DIR}"
+
+   printf "$DEST_ART [Checksum verification]\n"
+
+   find "$DEST_ART" -type f -exec sh -c 'md5sum "${1}" >> md5_dest.tmp' sh {} \;
+
+   sed -r "s/(.{34}).{${#SRC_DIR}}(.*)/\1\2/" md5_src.tmp | sort > md5_src2.tmp
+   sed -r "s/(.{34}).{${#DEST_DIR}}(.*)/\1\2/" md5_dest.tmp | sort > md5_dest2.tmp
+
+   SRC_MD5=$(md5sum md5_src2.tmp | cut -d' ' -f1)
+   DEST_MD5=$(md5sum md5_dest2.tmp | cut -d' ' -f1)
+   if [ $SRC_MD5 == $DEST_MD5 ]; then
+      printf "$DEST_ART successfully [Verified]\n"
+      if ! [ -d "${SRC_DIR}/${DELETE_DIR}" ]; then
+         mkdir "${SRC_DIR}/${DELETE_DIR}"
+      fi
+      mv $SRC_ART ${SRC_DIR}/${DELETE_DIR}
+      printf "$SRC_ART scheduled for deletion\n"
+      printf "*******************************\n\n"
+   else
+      printf "$DEST_ART verification [Failed]\n"
+      #printf "Exiting\n\n"
+      #exit 1
+      continue #Added by Sameer  - So that it continues to next iteration instead of exiting
+   fi
+   fi #if CopyThis is true then it will copy and do all the md5 business. Or else chill and go to the next iteration.
+done
+
+IFS=$SAVEIFS
+

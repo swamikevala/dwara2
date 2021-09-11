@@ -13,9 +13,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.ApplicationStatus;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactEntityUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -48,6 +45,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+		
+//		has dependent tasks?
+//			means outputartifactclass is needed
 			
 //		has a prerequisite task?
 //			means ouputartifact of the prerequisite task is the input of the task
@@ -234,8 +234,9 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 				logger.info("Processing complete - " + logicalFile.getAbsolutePath());
 				endms = System.currentTimeMillis();
 
+				// UPDATE ARTIFACT and FILE tables
 				//synchronized (processingtaskResponse) { // A Synchronized block to ensure only one thread at a time updates... Handling it differently with extra checks..
-					if(outputArtifactName != null) {
+					if(outputArtifactName != null && systemGeneratedRequest.getActionId() == Action.ingest) {
 						
 						
 						String destinationDirPath = processContext.getOutputDestinationDirPath();

@@ -19,6 +19,7 @@ public interface FileRepository<T extends File> extends CrudRepository<T,Integer
 	File findById(int id);
 	
 	List<File> findAllByArtifactId(int ArtifactId);
+	List<File> findAllByFileRefId(int fileId);
 	
 	//@Query("SELECT * FROM dwara_dev.file where deleted = true;")
 	List<File> findAllByArtifactIdAndDeletedFalse(int ArtifactId);

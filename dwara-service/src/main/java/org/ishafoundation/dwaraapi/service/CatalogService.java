@@ -206,7 +206,9 @@ public class CatalogService extends DwaraService{
             boolean _isImported = (boolean)record[6];
             boolean _isFinalized = (boolean)record[7];
             String volumeHealthStatusAsString = (String) record[8];
-            VolumeHealthStatus volumeHealthStatus = VolumeHealthStatus.valueOf(volumeHealthStatusAsString);
+            VolumeHealthStatus volumeHealthStatus = VolumeHealthStatus.normal;
+            if(volumeHealthStatusAsString != null)
+                volumeHealthStatus = VolumeHealthStatus.valueOf(volumeHealthStatusAsString);
             boolean _isSuspect = (volumeHealthStatus == VolumeHealthStatus.suspect ? true : false);
             String _finalizedAt = "";
             if(record[9] != null)
@@ -247,18 +249,24 @@ public class CatalogService extends DwaraService{
             condition = condition.substring(0, condition.length() -1);
             condition += ")";
         }
-        String query = "select distinct a.id" 
+
+        String queryForId = "select distinct a.id" 
         + " from artifact a join artifact_volume b join volume c join request d join user e"
+
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and d.completed_at is not null and a.artifact_ref_id is null and a.deleted=0"
         + condition;
 
-        String query2 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
+
+        String queryWithCommonCondition = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
         + " from artifact a join artifact_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and a.deleted=0"
-        + " and a.id in (" + query + ")"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and a.deleted=0";
+
+        String query2 = queryWithCommonCondition
+        + " and a.id in (" + queryForId + ")"
+
         + " group by a.id order by completed_at desc";
         Query q = entityManager.createNativeQuery(query2);
-        logger.info("artifact query: " + query2);
+        // logger.info("artifact query: " + query2);
         List<Object[]> results = q.getResultList();
         List<ArtifactCatalog> list = new ArrayList<ArtifactCatalog>();
         results.stream().forEach((record) -> {
@@ -267,13 +275,12 @@ public class CatalogService extends DwaraService{
         // logger.info("list size: " + list.size());
 
         //Query proxy
-        String query3 = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.completed_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
-        + " from artifact a join artifact_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and a.deleted=0"
-        + " and a.artifact_ref_id in (" + query + ")"
+
+        String query3 = queryWithCommonCondition
+        + " and a.artifact_ref_id in (" + queryForId + ")"
         + " group by a.id order by completed_at desc";
         Query qProxy = entityManager.createNativeQuery(query3);
-        logger.info("proxy query: " + query3);
+        // logger.info("proxy query: " + query3);
         List<Object[]> results2 = qProxy.getResultList();
         List<ArtifactCatalog> listProxy = new ArrayList<ArtifactCatalog>();
         results2.stream().forEach((record) -> {
@@ -342,7 +349,7 @@ public class CatalogService extends DwaraService{
         + " and a.id in (" + query + ")"
         + " group by a.id order by completed_at desc";
         Query q = entityManager.createNativeQuery(query2);
-        logger.info("artifact query: " + query2);
+        // logger.info("artifact query: " + query2);
         List<Object[]> results = q.getResultList();
         List<ArtifactCatalog> list = new ArrayList<ArtifactCatalog>();
         results.stream().forEach((record) -> {
@@ -357,7 +364,7 @@ public class CatalogService extends DwaraService{
         + " and a.artifact_ref_id in (" + query + ")"
         + " group by a.id order by completed_at desc";
         Query qProxy = entityManager.createNativeQuery(query3);
-        logger.info("proxy query: " + query3);
+        // logger.info("proxy query: " + query3);
         List<Object[]> results2 = qProxy.getResultList();
         List<ArtifactCatalog> listProxy = new ArrayList<ArtifactCatalog>();
         results2.stream().forEach((record) -> {

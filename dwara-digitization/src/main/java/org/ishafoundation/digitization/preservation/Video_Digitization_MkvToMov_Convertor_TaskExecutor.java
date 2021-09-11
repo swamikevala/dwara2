@@ -69,17 +69,8 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		String videoType = null;
 		if(typeDeterminationCommandLineExecutionResponse.isComplete()) {
 			String response = typeDeterminationCommandLineExecutionResponse.getStdOutResponse().trim();
-			/*
-				hdv - 1920x1080
-				dv-pal - 720x608
-				dv-ntsc - 720x512
-	 		*/
-			if(response.equals("1920x1080"))
-				videoType = "hdv";
-			else if(response.equals("720x608"))
-				videoType = "dv-pal";
-			else if(response.equals("720x512"))
-				videoType = "dv-ntsc";
+			
+			videoType = getVideoType(response);
 			
 			if(videoType == null)
 				throw new Exception("Unable to determine video type for dimension " + response);
@@ -89,9 +80,6 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		else
 			throw new Exception("Unable to determine video type");
 
-
-		if(videoType.equals("hdv"))
-			throw new Exception("hdv is not supported for mov conversion yet");
 				
 		/*************** CONVERSION ***************/
 		String outputFileTargetLocation = destinationDirPath + File.separator + fileName + PfrConstants.MOV_EXTN ;// TODO How do we know if it should be mkv or mxf or what not???
@@ -116,6 +104,23 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		return processingtaskResponse;
 	}
 
+	private String getVideoType(String response) {
+		String videoType = null;
+		
+		/*
+		hdv - 1920x1080
+		dv-pal - 720x608
+		dv-ntsc - 720x512
+		*/
+		if(response.equals("1920x1080"))
+			videoType = "hdv";
+		else if(response.equals("720x608"))
+			videoType = "dv-pal";
+		else if(response.equals("720x512"))
+			videoType = "dv-ntsc";
+		
+		return videoType;
+	}
 	// ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 A1353.mkv
 	// ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 <<sourceFilePathname>>
 	private List<String> getTypeDeterminationCommand(String sourceFilePathname) {
@@ -137,27 +142,45 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 
 	
 	/*
-		pal
-			ffmpeg -y -i E221.mkv -acodec copy -pix_fmt yuv422p -r 25 -c:v dvvideo -vf "crop=720:576:0:32" -b:v 50M E221-crop.mov
-			ffmpeg -y -i E221.mkv -map 0:v:0 -map 0:a:0? -map 0:a:1? -acodec copy -pix_fmt yuv422p -r 25 -c:v dvvideo -vf crop=720:576:0:32,setdar=4/3 -b:v 50M E221-v3.mov
+	 * 
+		hdv
+		 	ffmpeg -y -i A1353.mkv -map 0:v:0 -map 0:a:0? -map 0:a:1? -acodec copy -pix_fmt yuv422p10le -r 25 -c:v prores_ks -profile:v 3 -b:v 122M A1353-v6-prores.mov
+		 	
+		dv-pal
+			// V1 - ffmpeg -y -i E221.mkv -acodec copy -pix_fmt yuv422p -r 25 -c:v dvvideo -vf "crop=720:576:0:32" -b:v 50M E221-crop.mov
+			// V2 - ffmpeg -y -i E221.mkv -map 0:v:0 -map 0:a:0? -map 0:a:1? -acodec copy -pix_fmt yuv422p -r 25 -c:v dvvideo -vf crop=720:576:0:32,setdar=4/3 -b:v 50M E221-v3.mov
+			ffmpeg -y -i E221.mkv -map 0:v:0 -map 0:a:0? -map 0:a:1? -acodec copy -pix_fmt yuv422p10le -r 25 -c:v prores_ks -profile:v 3 -vf crop=720:576:0:32,setdar=4/3 -b:v 61M E221-v6-prores-2.mov
 			
-		ntsc
-			ffmpeg -y -i N880.mkv -acodec copy -pix_fmt yuv411p -r 30000/1001 -c:v dvvideo -vf "crop=720:480:0:32" -b:v 50M N880-11-crop.mov
-			ffmpeg -y -i N880.mkv -map 0:v:0 -map 0:a:0? -map 0:a:1? -acodec copy -pix_fmt yuv422p -r 30000/1001 -c:v dvvideo -vf crop=720:480:0:32,setdar=4/3 -b:v 50M N880-11-v3.mov
+		dv-ntsc
+			// V1 - ffmpeg -y -i N880.mkv -acodec copy -pix_fmt yuv411p -r 30000/1001 -c:v dvvideo -vf "crop=720:480:0:32" -b:v 50M N880-11-crop.mov
+			TODO - NOTE Here -pix_fmt yuv411p became yuv422p - Swami to confirm
+			// V2 - ffmpeg -y -i N880.mkv -map 0:v:0 -map 0:a:0? -map 0:a:1? -acodec copy -pix_fmt yuv422p -r 30000/1001 -c:v dvvideo -vf crop=720:480:0:32,setdar=4/3 -b:v 50M N880-11-v3.mov
+			ffmpeg -y -i N880.mkv -map 0:v:0 -map 0:a:0? -map 0:a:1? -acodec copy -pix_fmt yuv422p10le -r 30000/1001 -c:v prores_ks -profile:v 3 -vf crop=720:480:0:32,setdar=4/3 -b:v 61M N880-v6-prores-2.mov
 	*/
-	
-	// ffmpeg -y -i <<sourceFilePathname>> -acodec copy -pix_fmt <<pixFmt>> -r <<r>> -c:v dvvideo -vf "crop=<<dimension>>" -b:v 50M <<outputFileTargetLocation>>
+	// ffmpeg -y -i <<sourceFilePathname>> -map 0:v:0 -map 0:a:0? -map 0:a:1? -acodec copy -pix_fmt <<pixFmt>> -r <<r>> -c:v prores_ks -profile:v 3 -vf "crop=<<dimension>>" -b:v 61M <<outputFileTargetLocation>>
 	private List<String> getConversionCommand(String sourceFilePathname, String outputFileTargetLocation, String videoType) {
 		
 		// by default set it to pal
-		String pixFmt = "yuv422p";
-		String r = "25";
-		String cropDimension = "720:576:0:32";
-
-		if(videoType.equals("dv-ntsc")) {
-			pixFmt = "yuv411p";
+		String pixFmt = "yuv422p10le";
+		String r = null;
+		String cropDimension = null;
+		String x = null;
+		
+		if(videoType.equals("dv-pal")) {
+			// pixFmt = "yuv411p";
+			r = "25";
+			cropDimension = "720:576:0:32";
+			x = "61M";
+		}
+		else if(videoType.equals("dv-ntsc")) {
+			// pixFmt = "yuv411p";
 			r = "30000/1001";
 			cropDimension = "720:480:0:32";
+			x = "61M";
+		}
+		else if(videoType.equals("hdv")) {
+			r = "25";
+			x = "122M";
 		}
 
 		
@@ -180,12 +203,16 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		compressionCommandParamsList.add("-r");
 		compressionCommandParamsList.add(r);
 		compressionCommandParamsList.add("-c:v");
-		compressionCommandParamsList.add("dvvideo");
-		compressionCommandParamsList.add("-vf");
-		compressionCommandParamsList.add("crop=" + cropDimension + ",setdar=4/3");
+		compressionCommandParamsList.add("prores_ks");
+		compressionCommandParamsList.add("-profile:v");
+		compressionCommandParamsList.add("3");
+		if(cropDimension != null) {
+			compressionCommandParamsList.add("-vf");
+			compressionCommandParamsList.add("crop=" + cropDimension + ",setdar=4/3");
+		}
 		//compressionCommandParamsList.add("[in]crop=" + cropDimension + ",setdar=4/3[cropped]");
 		compressionCommandParamsList.add("-b:v");
-		compressionCommandParamsList.add("50M");
+		compressionCommandParamsList.add(x);
 		compressionCommandParamsList.add(outputFileTargetLocation);
 	
 		return compressionCommandParamsList;

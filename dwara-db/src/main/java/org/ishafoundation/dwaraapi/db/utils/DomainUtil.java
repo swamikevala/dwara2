@@ -6,12 +6,11 @@
  * import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.
  * DomainAttributeConverter; import
  * org.ishafoundation.dwaraapi.db.dao.master.DomainDao; import
- * org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
- * import
- * org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
- * import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.
+ * org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactRepository; import
+ * org.ishafoundation.dwaraapi.db.dao.transactional.FileRepository; import
+ * org.ishafoundation.dwaraapi.db.dao.transactional.jointables.
  * ArtifactVolumeRepository; import
- * org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.
+ * org.ishafoundation.dwaraapi.db.dao.transactional.jointables.
  * FileVolumeRepository; import
  * org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactFactory;
  * import org.ishafoundation.dwaraapi.db.domain.factory.
@@ -20,14 +19,14 @@
  * import org.ishafoundation.dwaraapi.db.domain.factory.
  * DomainSpecificFileVolumeFactory; import
  * org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
- * import org.ishafoundation.dwaraapi.db.model.transactional.Request; import
+ * import org.ishafoundation.dwaraapi.db.model.transactional.Artifact; import
+ * org.ishafoundation.dwaraapi.db.model.transactional.File; import
+ * org.ishafoundation.dwaraapi.db.model.transactional.Request; import
  * org.ishafoundation.dwaraapi.db.model.transactional.Volume; import
- * org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact; import
- * org.ishafoundation.dwaraapi.db.model.transactional.domain.File; import
- * org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.
- * ArtifactVolume; import
- * org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.
- * FileVolume; import org.ishafoundation.dwaraapi.enumreferences.Domain; import
+ * org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
+ * import
+ * org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
+ * import org.ishafoundation.dwaraapi.enumreferences.Domain; import
  * org.springframework.beans.factory.annotation.Autowired; import
  * org.springframework.stereotype.Component;
  * 
@@ -60,6 +59,7 @@
  * 
  *//*** Artifact ***/
 /*
+ * 
  * public Artifact getDomainSpecificArtifactInstance(Domain domain) { return
  * DomainSpecificArtifactFactory.getInstance(domain); }
  * 
@@ -85,6 +85,7 @@
  * 
  *//*** File ***/
 /*
+ * 
  * public File getDomainSpecificFileInstance(Domain domain) { return
  * DomainSpecificFileFactory.getInstance(domain); }
  * 
@@ -102,6 +103,7 @@
  * 
  *//*** ArtifactVolume ***/
 /*
+ * 
  * public ArtifactVolume getDomainSpecificArtifactVolumeInstance(int artifactId,
  * Volume volume, Domain domain) { // Domain is 3rd param in method signature so
  * that getDomainSpecificArtifactVolume and

@@ -39,6 +39,7 @@ public class Artifact {
     private String prevSequenceCode;
     @JsonProperty("sequenceCode")
     private String sequenceCode;
+    private long size;
     @JsonProperty("tags")
 	private List<String> tags;
     
@@ -144,6 +145,14 @@ public class Artifact {
         this.prevSequenceCode = prevSequenceCode;
     }
     
+	public long getSize() {
+		return size;
+	}
+
+	public void setSize(long size) {
+		this.size = size;
+	}
+
 	public List<String> getTags() {
 		return tags;
 	}
