@@ -242,7 +242,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 			}
 			toBeAddedTFileVolumeTableEntries.add(tfileVolume); // Should we add null entries...
 		}
-		
+		logger.info(toBeAddedTFileVolumeTableEntries.get(0).getId().getVolumeId());
 	    if(toBeAddedTFileVolumeTableEntries.size() > 0) {
 	    	tFileVolumeDao.saveAll(toBeAddedTFileVolumeTableEntries);
 	    	logger.info("TFileVolume records created successfully");
@@ -272,7 +272,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 			//FileVolume fileVolume = domainUtil.getDomainSpecificFileVolumeInstance(nthFile.getId(), volume, domain);// lets just let users use the util consistently
 			logger.info(nthFile.getId()+ "  " +volume.getId());
 			FileVolume fileVolume = fileVolumeRepo.findByIdFileIdAndIdVolumeId(nthFile.getId(),volume.getId());
-			logger.info(fileVolume.toString());
+			//logger.info(fileVolume.toString());
 			// TODO
 			//fileVolume.setVerifiedAt(verifiedAt);
 			//fileVolume.setEncrypted(encrypted);
