@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -183,41 +184,48 @@ public class CatalogService extends DwaraService{
             condition += " and a.finalized_at >= '" + startDate + "'";
         if(endDate != "")
             condition += " and a.finalized_at <= '" + endDate + "'";
-        String query = "select a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.healthstatus, a.finalized_at, a.used_capacity" 
-        + " from volume a"
-        + " where a.initialized_at is not null"
+        String query = "select group_concat(distinct c.artifactclass_id order by c.artifactclass_id separator ','), a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.healthstatus, a.finalized_at, a.used_capacity" 
+        + " from volume a join artifact1_volume b join artifact1 c"
+        + " where a.id = b.volume_id and b.artifact_id = c.id and a.initialized_at is not null"
         + condition
+        + " group by a.id"
         + " order by a.finalized_at desc";
         Query q = entityManager.createNativeQuery(query);
         // logger.info("mysql query: " + query);
         List<Object[]> results = q.getResultList();
         List<TapeCatalog> list = new ArrayList<TapeCatalog>();
         results.stream().forEach((record) -> {
-            String _volumeGroup = (String) record[0];
-            String _volumeId = (String) record[1];
-            String _format = (String) record[2];
-            String _location = (String) record[3];
+            int i = 0;
+            String _artifactClass = (String) record[i++];
+            String _volumeGroup = (String) record[i++];
+            String _volumeId = (String) record[i++];
+            String _format = (String) record[i++];
+            String _location = (String) record[i++];
             String _initializedAt = "";
-            if(record[4] != null)
-                _initializedAt = ((Timestamp) record[4]).toLocalDateTime().toString();
+            if(record[i] != null)
+                _initializedAt = ((Timestamp) record[i]).toLocalDateTime().toString();
+            i++;
             long _capacity = 0;
-            if(record[5] != null)
-                _capacity = ((BigInteger)record[5]).longValue();
-            boolean _isImported = (boolean)record[6];
-            boolean _isFinalized = (boolean)record[7];
-            String volumeHealthStatusAsString = (String) record[8];
+            if(record[i] != null)
+                _capacity = ((BigInteger)record[i]).longValue();
+            i++;
+            boolean _isImported = (boolean)record[i++];
+            boolean _isFinalized = (boolean)record[i++];
+            String volumeHealthStatusAsString = (String) record[i++];
             VolumeHealthStatus volumeHealthStatus = VolumeHealthStatus.normal;
             if(volumeHealthStatusAsString != null)
                 volumeHealthStatus = VolumeHealthStatus.valueOf(volumeHealthStatusAsString);
             boolean _isSuspect = (volumeHealthStatus == VolumeHealthStatus.suspect ? true : false);
             String _finalizedAt = "";
-            if(record[9] != null)
-                _finalizedAt = ((Timestamp) record[9]).toLocalDateTime().toString();
+            if(record[i] != null)
+                _finalizedAt = ((Timestamp) record[i]).toLocalDateTime().toString();
+            i++;
             long _usedCapacity = 0;
-            if(record[10] != null)
-                _usedCapacity = ((BigInteger)record[10]).longValue();
+            if(record[i] != null)
+                _usedCapacity = ((BigInteger)record[i]).longValue();
+            i++;
             boolean _isDefective = (volumeHealthStatus == VolumeHealthStatus.defective ? true : false);
-            List<String> _artifactClass = map.get(_volumeGroup);
+            List<String> artifactClass = Arrays.asList(_artifactClass.split(","));
 
             String status = "";
             if(_isImported)
@@ -233,7 +241,7 @@ public class CatalogService extends DwaraService{
                 
             
             list.add(new TapeCatalog(_volumeId, _volumeGroup, _format, _location, status, _initializedAt,
-                _finalizedAt, _usedCapacity, _capacity, _artifactClass, _isSuspect, _isDefective));
+                _finalizedAt, _usedCapacity, _capacity, artifactClass, _isSuspect, _isDefective));
         });
         // logger.info("list size: " + list.size());
         return list;
