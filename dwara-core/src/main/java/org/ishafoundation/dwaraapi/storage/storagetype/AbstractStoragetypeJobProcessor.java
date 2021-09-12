@@ -200,7 +200,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		int artifactId = artifact.getId();
 		
 		Volume volume = storagejob.getVolume();
-		
+		logger.info(volume.getId());
 		//Domain domain = storagejob.getDomain();
 		
 		// Get a map of Paths and their File object
