@@ -272,7 +272,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 			
 			//FileVolume fileVolume = domainUtil.getDomainSpecificFileVolumeInstance(nthFile.getId(), volume, domain);// lets just let users use the util consistently
 			logger.info(nthFile.getId()+ "  " +volume.getId());
-			FileVolume fileVolume = fileVolumeRepo.findByIdFileIdAndIdVolumeId(nthFile.getId(),volume.getId());
+			FileVolume fileVolume = new FileVolume(nthFile.getId(),volume);
 			//logger.info(fileVolume.toString());
 			// TODO
 			//fileVolume.setVerifiedAt(verifiedAt);
