@@ -306,7 +306,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    }
 	    
 	    //ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolumeInstance(artifact.getId(), volume, domain); // lets just let users use the util consistently
-	    ArtifactVolume artifactVolume = artifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifact.getId(), volume.getId());
+	    ArtifactVolume artifactVolume = new ArtifactVolume(artifact.getId() , volume);
 	    artifactVolume.setName(artifact.getName());
 	    artifactVolume.setJob(storagejob.getJob());
 	    artifactVolume.setStatus(ArtifactVolumeStatus.current);
