@@ -41,26 +41,31 @@ public class BruArchiver extends AbstractBruArchiver {
 	
 	@Override
 	protected String executeRestoreCommand(List<String> restoreCommandParamsList) throws Exception {
-		String mtStatusResponse = null;
-		CommandLineExecutionResponse cler = null;
-		try {
-			cler = retriableCommandLineExecutorImpl.executeCommandWithRetriesOnSpecificError(restoreCommandParamsList, DwaraConstants.DRIVE_BUSY_ERROR, false);
-			if(cler.isComplete())
-				mtStatusResponse = cler.getStdOutResponse();
-		}
-		catch (Exception e) {
-			String errorMsg = e.getMessage();
-			/* Something like
-					bru: [W042] "V25155_25155_12290_In-The-Lap-Of-The-Master_Day1-Evening_Q-And-A-Session_AYA-IYC_07-Jul-2017_Cam6_Osmo_B-Rolls": warning - error setting owner/group: errno = 1, Operation not permitted
-					^Min @ 78.0 MiB/s, out @ 60.8 MiB/s, 67.0 MiB total, buffer   2% fullbru: [W042] "V25155_25155_12290_In-The-Lap-Of-The-Master_Day1-Evening_Q-And-A-Session_AYA-IYC_07-Jul-2017_Cam6_Osmo_B-Rolls/DJI_0129.MOV": warning - error setting owner/group: errno = 1, Operation not permitted
-					mbuffer: error: outputThread: error writing to <stdout> at offset 0x4310000: Broken pipe
-			 */
-			if(errorMsg.contains("bru: [E"))
-				throw e;
-			else
-				mtStatusResponse = errorMsg;
-		}
-		return mtStatusResponse;
+		return executeCommand(restoreCommandParamsList);
+//		String mtStatusResponse = null;
+//		CommandLineExecutionResponse cler = null;
+//		try {
+//			cler = retriableCommandLineExecutorImpl.executeCommandWithRetriesOnSpecificError(restoreCommandParamsList, DwaraConstants.DRIVE_BUSY_ERROR, false);
+//			if(cler.isComplete())
+//				mtStatusResponse = cler.getStdOutResponse();
+//			else {
+//				logger.error("Bru command execution failed " + cler.getFailureReason());
+//				throw new Exception("Unable to execute bru command successfully");
+//			}
+//		}
+//		catch (Exception e) {
+//			String errorMsg = e.getMessage();
+//			/* Something like
+//					bru: [W042] "V25155_25155_12290_In-The-Lap-Of-The-Master_Day1-Evening_Q-And-A-Session_AYA-IYC_07-Jul-2017_Cam6_Osmo_B-Rolls": warning - error setting owner/group: errno = 1, Operation not permitted
+//					^Min @ 78.0 MiB/s, out @ 60.8 MiB/s, 67.0 MiB total, buffer   2% fullbru: [W042] "V25155_25155_12290_In-The-Lap-Of-The-Master_Day1-Evening_Q-And-A-Session_AYA-IYC_07-Jul-2017_Cam6_Osmo_B-Rolls/DJI_0129.MOV": warning - error setting owner/group: errno = 1, Operation not permitted
+//					mbuffer: error: outputThread: error writing to <stdout> at offset 0x4310000: Broken pipe
+//			 */
+//			if(errorMsg.contains("bru: [E"))
+//				throw e;
+//			else
+//				mtStatusResponse = errorMsg;
+//		}
+//		return mtStatusResponse;
 	}
 
 }

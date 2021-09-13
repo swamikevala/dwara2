@@ -127,7 +127,6 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		int storageElementSNo = tapeLibraryManager.locateTape(volume.getId(), mtxStatus);
 		List<DataTransferElement> dataTransferElementList = mtxStatus.getDteList();
 		
-		int count = 0;
 		DataTransferElement usedDataTransferElement = null; 
 		boolean status = false;
 		for (DataTransferElement nthDataTransferElement : dataTransferElementList) {
@@ -136,14 +135,13 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 				tapeLibraryManager.load(tapeLibraryName, storageElementSNo, dteSNo);
 				usedDataTransferElement = nthDataTransferElement;
 			}catch (Exception e) {
-				logger.debug("Potentially a unsupported generation drive. Try with another one"); // if we try to load a LTO7 into LTO6 drive....
-				count += 1;
+				logger.warn("Unable to load from slot " + storageElementSNo + " to drive " + dteSNo + ". Potentially an unsupported generation drive. Try with another one"); // if we try to load a LTO7 into LTO6 drive....
 				continue;
 			}
 			
 			DriveDetails usedDriveDetails = null;
 			for (DriveDetails nthDriveDetails : preparedDriveDetailsList) {
-				String driveId = nthDriveDetails.getDriveId();
+				//String driveId = nthDriveDetails.getDriveId();
 				String driveName = nthDriveDetails.getDriveName();
 				logger.trace("Checking if " + driveName + " has got the tape loaded");
 				DriveDetails driveStatusDetails = tapeDriveManager.getDriveDetails(driveName);
@@ -157,10 +155,10 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 			
 			String dataTransferElementName = usedDriveDetails.getDriveName();
 
-			if(!tapeJob.getStorageJob().isForce() && count == 0) { // if its not a forced format check if tape is blank and proceed // count == 0 check because 
+			if(!tapeJob.getStorageJob().isForce()) { // if its not a forced format check if tape is blank and proceed 
 				logger.trace("Checking if tape is blank");
 				if(!tapeDriveManager.isTapeBlank(dataTransferElementName)) // if tape is not blank throw error and dont continue...
-					throw new Exception("Tape not blank to be initialized. If you still want to initialize use the \"force\" option...");
+					throw new Exception("Tape to be initialized " + volume.getId() + " is not blank. If you still want to initialize use the \"force\" option...");
 			}
 			
 			logger.trace("Now positioning tape head for initialize");
@@ -239,19 +237,19 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	}
 
 	
-	@Override
-	protected void beforeVerify(SelectedStorageJob selectedStorageJob) throws Exception {
-		super.beforeVerify(selectedStorageJob);
-		TapeJob tapeJob = (TapeJob) selectedStorageJob;
-		String tapeLibraryName = tapeJob.getTapeLibraryName();
-		int driveElementAddress = tapeJob.getTapedriveNo();
-		int blockNumberToSeek = tapeJob.getArtifactStartVolumeBlock();
-		
-		loadTape(selectedStorageJob);
-
-		tapeDriveManager.setTapeHeadPositionForReading(tapeJob.getDeviceWwnId(), blockNumberToSeek);
-		logger.info("Tape Head positioned for verifying "+ tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
-	}
+//	@Override
+//	protected void beforeVerify(SelectedStorageJob selectedStorageJob) throws Exception {
+//		super.beforeVerify(selectedStorageJob);
+//		TapeJob tapeJob = (TapeJob) selectedStorageJob;
+//		String tapeLibraryName = tapeJob.getTapeLibraryName();
+//		int driveElementAddress = tapeJob.getTapedriveNo();
+//		int blockNumberToSeek = tapeJob.getArtifactStartVolumeBlock();
+//		
+//		loadTape(selectedStorageJob);
+//
+//		tapeDriveManager.setTapeHeadPositionForReading(tapeJob.getDeviceWwnId(), blockNumberToSeek);
+//		logger.info("Tape Head positioned for verifying "+ tapeLibraryName + ":" + tapeJob.getDeviceWwnId()+"("+driveElementAddress+")"  + ":" + blockNumberToSeek);
+//	}
 
 	@Override
 	protected void beforeRestore(SelectedStorageJob selectedStorageJob) throws Exception {

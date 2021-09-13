@@ -30,17 +30,17 @@ public class TarBlockCalculatorUtil {
 //		return fileHeaderBlocks;	
 //	}
 	
-	public static int getFileVolumeBlock(int artifactStartVolumeBlock, int archiveBlock, int blockingFactor) {
-		return artifactStartVolumeBlock + archiveBlock/blockingFactor; // Not ceiling the value as we need to -1 anyway because of 0 start
+	public static int getFileVolumeBlock(int artifactStartVolumeBlock, long archiveBlock, int blockingFactor) {
+		return (int) (artifactStartVolumeBlock + archiveBlock/blockingFactor); // Not ceiling the value as we need to -1 anyway because of 0 start
 	}
 	
 	// calculates a file's Volume END  block - using the running archiveblock of each file... where archiveBlock is the starting block of the file archive...
-	public static int getFileVolumeEndBlock(String fileName, int fileArchiveBlock, int fileHeaderBlocks, Long fileSize, double archiveformatBlocksize, double blockingFactor){
+	public static int getFileVolumeEndBlock(long fileArchiveBlock, int fileHeaderBlocks, Long fileSize, double archiveformatBlocksize, double blockingFactor){
 		//int fileHeaderBlocks = getFileHeaderBlocks(fileName);
 		
 		// Total no. of archive blocks used by the file...
 		int fileArchiveBlocksCount = (int) Math.ceil(fileSize/archiveformatBlocksize);
-		int file_Archive_EndBlock = fileArchiveBlock + fileHeaderBlocks + fileArchiveBlocksCount;
+		long file_Archive_EndBlock = fileArchiveBlock + fileHeaderBlocks + fileArchiveBlocksCount;
 		
 		int fileVolumeBlocksCount = (int) Math.ceil(file_Archive_EndBlock/blockingFactor);
 		return fileVolumeBlocksCount;
@@ -49,9 +49,9 @@ public class TarBlockCalculatorUtil {
 	// useful when executing the restore
 	//block 136638: -rwxrwxrwx aravindhpr/aravindhpr 1638625295 2020-04-16 12:08 Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoProApr6/DCIM/104GOPRO/GOPR6925.MP4
 	// 136638 + 3 - (133 * 1024)
-	public static int getSkipByteCount(String fileName, int fileArchiveBlock, int archiveformatBlockize, int blockingFactor) {
+	public static int getSkipByteCount(long fileArchiveBlock, int archiveformatBlockize, int blockingFactor) {
 		//return (fileArchiveBlock + TarBlockCalculatorUtil.getFileHeaderBlocks(fileName)  - ((fileArchiveBlock/blockingFactor)  * blockingFactor)) * archiveformatBlockize;
-		return (fileArchiveBlock - ((fileArchiveBlock/blockingFactor)  * blockingFactor)) * archiveformatBlockize;
+		return (int) ((fileArchiveBlock - ((fileArchiveBlock/blockingFactor)  * blockingFactor)) * archiveformatBlockize);
 	}
 
 }

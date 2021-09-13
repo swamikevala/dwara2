@@ -33,9 +33,8 @@ public class User {//implements Cacheable{
 	@ManyToOne
 	private Priorityband priorityband;
 	
-	@Column(name="email")
+	@Column(name="email", unique=true)
 	private String email;
-
 	
 //    @OneToMany(mappedBy = "user",
 //            cascade = CascadeType.MERGE,

@@ -4,6 +4,8 @@ import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
@@ -17,6 +19,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
 
@@ -46,6 +49,10 @@ public class ArtifactVolume {
 	private Job job;
 	
 	private String name; // artifact name on volume
+	
+	@Enumerated(EnumType.STRING)
+	@Column(name="status")
+	private ArtifactVolumeStatus status;
 	
 	@Type(type = "json")
 	@Column(name="details", columnDefinition = "json")
@@ -91,6 +98,14 @@ public class ArtifactVolume {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public ArtifactVolumeStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(ArtifactVolumeStatus status) {
+		this.status = status;
 	}
 
 	public ArtifactVolumeDetails getDetails() {

@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.storage.storagetype;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,11 +11,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
+import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
@@ -25,6 +27,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDa
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
@@ -37,8 +40,10 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.File
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
+import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
@@ -61,6 +66,9 @@ public abstract class AbstractStoragetypeJobProcessor {
 
 	@Autowired
 	private VolumeDao volumeDao;
+
+	@Autowired
+	private SequenceDao sequenceDao;
 	
 	@Autowired
 	private DestinationDao destinationDao;
@@ -95,6 +103,9 @@ public abstract class AbstractStoragetypeJobProcessor {
 	@Autowired
 	private LabelManager labelManager;
 	
+	@Autowired
+	private JobCreator jobCreator;
+	
 	public AbstractStoragetypeJobProcessor() {
 		logger.debug(this.getClass().getName());
 	}
@@ -111,9 +122,9 @@ public abstract class AbstractStoragetypeJobProcessor {
     	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
     	storageResponse = iStoragelevel.initialize(selectedStorageJob);
     	
-    	afterInitialize(selectedStorageJob);
-    	return storageResponse; 
-   	
+		afterInitialize(selectedStorageJob);
+
+		return storageResponse; 
     }
 	
 	protected void afterInitialize(SelectedStorageJob selectedStorageJob) {
@@ -123,6 +134,11 @@ public abstract class AbstractStoragetypeJobProcessor {
 		Volume volume = storageJob.getVolume();
 		volume = volumeDao.save(volume);
 		logger.trace("Volume " + volume.getId() + " attached to dwara succesfully");
+
+		Sequence sequence = volume.getGroupRef().getSequence(); 
+		sequence.incrementCurrentNumber(); //setCurrrentNumber(sequence.getCurrrentNumber() + 1);
+		Sequence updatedSequence = sequenceDao.save(sequence);
+		logger.trace(sequence.getId() + " currentNumber updated to " + updatedSequence.getCurrrentNumber());
 		
 		Job job = storageJob.getJob();
 		job.setVolume(volume);
@@ -132,7 +148,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 	}
 
 	
-    protected void beforeWrite(SelectedStorageJob selectedStorageJob) throws Exception {}
+    protected void beforeWrite(SelectedStorageJob selectedStorageJob) throws Exception {
+    	
+    	labelManager.writeArtifactLabelTemporarilyOnDisk(selectedStorageJob);
+    }
     
     public StorageResponse write(SelectedStorageJob selectedStorageJob) throws Throwable{
     	logger.info("Writing job " + selectedStorageJob.getStorageJob().getJob().getId());
@@ -145,6 +164,24 @@ public abstract class AbstractStoragetypeJobProcessor {
     	afterWrite(selectedStorageJob, storageResponse);
     	return storageResponse; 
     }
+    
+	private static String getHexString(String filepathName) {
+		StringBuffer filepathNameHexSB = new StringBuffer();
+		for(int i = 0; i < filepathName.length(); i++){
+			char nthChar = filepathName.charAt(i);
+			char[] dst = new char[3];
+			String hexString = null;
+			if(String.valueOf(nthChar).equals("\\")) {
+				filepathName.getChars(i+1, i+4, dst, 0);
+				hexString = Integer.toHexString(Integer.parseInt(String.valueOf(dst),8));
+				i = i +3;
+			}else {
+				hexString = Integer.toHexString(nthChar);
+			}
+			filepathNameHexSB.append(hexString);
+		}
+		return filepathNameHexSB.toString();
+	}
     
     protected void afterWrite(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception {
 		List<ArchivedFile> archivedFileList = null;
@@ -159,40 +196,55 @@ public abstract class AbstractStoragetypeJobProcessor {
 		Domain domain = storagejob.getDomain();
 		
 		// Get a map of Paths and their File object
-		HashMap<String, ArchivedFile> filePathNameToArchivedFileObj = new LinkedHashMap<String, ArchivedFile>();
+		HashMap<String, ArchivedFile> filePathNameHexToArchivedFileObj = new LinkedHashMap<String, ArchivedFile>();
 		if(volume.getStoragelevel() == Storagelevel.block) { //could use if(storageResponse != null && storageResponse.getArchiveResponse() != null) { but archive and block are NOT mutually exclusive
 			archivedFileList = storageResponse.getArchiveResponse().getArchivedFileList();
 			for (Iterator<ArchivedFile> iterator = archivedFileList.iterator(); iterator.hasNext();) {
 				ArchivedFile archivedFile = (ArchivedFile) iterator.next();
 				String filePathName = archivedFile.getFilePathName();
-				filePathNameToArchivedFileObj.put(filePathName, archivedFile);
+				String filePathNameHex = getHexString(filePathName);
+				logger.trace("AFList - " + filePathName + ":" + filePathNameHex);
+				filePathNameHexToArchivedFileObj.put(filePathNameHex, archivedFile);
 			}
 		}
 		
 		List<TFile> artifactTFileList = tFileDao.findAllByArtifactIdAndDeletedIsFalse(artifact.getId());
+		HashMap<String, TFile> filePathNameToTFileObj = new LinkedHashMap<String, TFile>();
+		for (TFile tFile : artifactTFileList) {
+			filePathNameToTFileObj.put(tFile.getPathname(), tFile);
+		}
 		List<TFileVolume> toBeAddedTFileVolumeTableEntries = new ArrayList<TFileVolume>();
 		for (Iterator<TFile> iterator = artifactTFileList.iterator(); iterator.hasNext();) {
-			TFile nthFile = iterator.next();
-			String filePathname = FilenameUtils.separatorsToUnix(nthFile.getPathname());
-			
-			TFileVolume tfileVolume = new TFileVolume(nthFile.getId(), volume);
-			
-			ArchivedFile archivedFile = filePathNameToArchivedFileObj.get(filePathname);
+			TFile nthTFile = iterator.next();
+			String filePathname = FilenameUtils.separatorsToUnix(nthTFile.getPathname());
+			String filePathNameHex = Hex.encodeHexString(filePathname.getBytes());
+			logger.trace("Tfile - " + filePathname + ":" + filePathNameHex);
+			TFileVolume tfileVolume = new TFileVolume(nthTFile.getId(), volume);
+			ArchivedFile archivedFile = filePathNameHexToArchivedFileObj.get(filePathNameHex);
+			//logger.info(archivedFile.toString());
 			if(archivedFile != null) { // if(volume.getStoragelevel() == Storagelevel.block) { - need to check if the file is archived anyway even if its block, so going with the archivedFile check alone
 				Integer volumeBlock = archivedFile.getVolumeBlock();
 				tfileVolume.setVolumeBlock(volumeBlock);
 				tfileVolume.setArchiveBlock(archivedFile.getArchiveBlock());
+				if(archivedFile.getLinkName() != null && (nthTFile.getSymlinkPath() == null && nthTFile.getSymlinkFileId() == null)) { // only hard links and no soft links
+					TFile tFile = filePathNameToTFileObj.get(archivedFile.getLinkName());
+					if(tFile != null) // if a link is internally referencing link
+						tfileVolume.setHardlinkFileId(tFile.getId());
+				}
 			}
 			toBeAddedTFileVolumeTableEntries.add(tfileVolume); // Should we add null entries...
 		}
 		
 	    if(toBeAddedTFileVolumeTableEntries.size() > 0) {
 	    	tFileVolumeDao.saveAll(toBeAddedTFileVolumeTableEntries);
-	    	logger.info("FileVolume records created successfully");
+	    	logger.info("TFileVolume records created successfully");
 	    }
 		
 		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
-
+		HashMap<String, File> filePathNameToFileObj = new LinkedHashMap<String, File>();
+		for (File file : artifactFileList) {
+			filePathNameToFileObj.put(file.getPathname(), file);
+		}
 		// NOTE: We need filevolume entries even when response from storage layer is null(Only archiveformats return the file breakup storage details... Other non archive writes dont...)
 		// So we need to iterate on the files than on the archived file response...
 		// OBSERVATION: The written file order on volume and the listed file varies...
@@ -201,6 +253,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 		for (Iterator<File> iterator = artifactFileList.iterator(); iterator.hasNext();) {
 			File nthFile = iterator.next();
 			String filePathname = FilenameUtils.separatorsToUnix(nthFile.getPathname());
+			String filePathNameHex = Hex.encodeHexString(filePathname.getBytes());
+			logger.trace("File - " + filePathname + ":" + filePathNameHex);
 //			if(nthFile.getChecksum() != null && StringUtils.isNotBlank(FilenameUtils.getExtension(filePathname))) { //if file is not folder
 //				String readyToIngestPath =  "C:\\data\\ingested"; // TODO Hardcoded
 //				java.io.File file = new java.io.File(readyToIngestPath + java.io.File.separator + nthFile.getPathname());
@@ -213,7 +267,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 			//fileVolume.setVerifiedAt(verifiedAt);
 			//fileVolume.setEncrypted(encrypted);
 
-			ArchivedFile archivedFile = filePathNameToArchivedFileObj.get(filePathname);
+			ArchivedFile archivedFile = filePathNameHexToArchivedFileObj.get(filePathNameHex);
 			if(archivedFile != null) { // if(volume.getStoragelevel() == Storagelevel.block) { - need to check if the file is archived anyway even if its block, so going with the archivedFile check alone
 				Integer volumeBlock = archivedFile.getVolumeBlock();
 				if(volumeBlock == null) {
@@ -224,6 +278,11 @@ public abstract class AbstractStoragetypeJobProcessor {
 				}
 				fileVolume.setVolumeBlock(volumeBlock);
 				fileVolume.setArchiveBlock(archivedFile.getArchiveBlock());
+				if(archivedFile.getLinkName() != null && (nthFile.getSymlinkPath() == null && nthFile.getSymlinkFileId() == null)) { // only hard links and no soft links
+					File file = filePathNameToFileObj.get(archivedFile.getLinkName());
+					if(file != null) // if a link is internally referencing link
+						fileVolume.setHardlinkFileId(file.getId());
+				}
 			}
 			toBeAddedFileVolumeTableEntries.add(fileVolume); // Should we add null entries...
 			// TODO Should we report if archivedFile == null, file not archived...
@@ -238,6 +297,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolumeInstance(artifact.getId(), volume, domain); // lets just let users use the util consistently
 	    artifactVolume.setName(artifact.getName());
 	    artifactVolume.setJob(storagejob.getJob());
+	    artifactVolume.setStatus(ArtifactVolumeStatus.current);
 	    if(volume.getStoragelevel() == Storagelevel.block) {
 		    ArtifactVolumeDetails artifactVolumeDetails = new ArtifactVolumeDetails();
 		    
@@ -257,14 +317,17 @@ public abstract class AbstractStoragetypeJobProcessor {
 		selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStartVolumeBlock());
 		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEndVolumeBlock());
 		
-		labelManager.writeArtifactLabel(selectedStorageJob);
-
-    	logger.info("ArtifactVolume - " + artifactVolume.getId().getArtifactId() + " " + artifactVolume.getName() + " " + artifactVolume.getId().getVolumeId() + " " + artifactVolume.getDetails().getStartVolumeBlock() + " " + artifactVolume.getDetails().getEndVolumeBlock());
+		logger.info("ArtifactVolume - " + artifactVolume.getId().getArtifactId() + " " + artifactVolume.getName() + " " + artifactVolume.getId().getVolumeId() + " " + artifactVolume.getDetails().getStartVolumeBlock() + " " + artifactVolume.getDetails().getEndVolumeBlock());
     	int lastArtifactOnVolumeEndVolumeBlock = artifactVolume.getDetails().getEndVolumeBlock();
     	logger.trace("lastArtifactOnVolumeEndVolumeBlock " + lastArtifactOnVolumeEndVolumeBlock);
     	logger.trace("volume.getDetails().getBlocksize() - " + volume.getDetails().getBlocksize());
     	long usedCapacity = (long) volume.getDetails().getBlocksize() * lastArtifactOnVolumeEndVolumeBlock;
     	logger.trace("usedCapacity - " + usedCapacity);
+		volume.setUsedCapacity(usedCapacity);
+		volumeDao.save(volume);
+		
+		labelManager.writeArtifactLabel(selectedStorageJob);
+
     	boolean isVolumeNeedToBeFinalized = volumeUtil.isVolumeNeedToBeFinalized(domain, volume, usedCapacity);
     	if(isVolumeNeedToBeFinalized) {
     		logger.info("Triggering a finalization request for volume - " + volume.getId());
@@ -272,71 +335,8 @@ public abstract class AbstractStoragetypeJobProcessor {
     		volumeFinalizer.finalize(volume.getId(), DwaraConstants.SYSTEM_USER_NAME);
     	}
     }
-    
-    protected void beforeVerify(SelectedStorageJob selectedStorageJob) throws Exception {
-    	StorageJob storageJob = selectedStorageJob.getStorageJob();
-		
-		Volume volume = storageJob.getVolume();
-		
-		Domain domain = storageJob.getDomain();
-		Artifact artifact = storageJob.getArtifact();
 
-		
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
-		
-		selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStartVolumeBlock());
-		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEndVolumeBlock());
-		selectedStorageJob.setLastWrittenArtifactName(artifactVolume.getName());
-		
-		// to where
-		String targetLocationPath = configuration.getRestoreTmpLocationForVerification();
-		storageJob.setTargetLocationPath(targetLocationPath);
-		
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
-		selectedStorageJob.setArtifactFileList(fileList);
-		selectedStorageJob.setFilePathNameToChecksum(getSourceFilesChecksum(fileList));
-
-		for (File nthFile : fileList) {
-			if(nthFile.getPathname().equals(artifact.getName())) {
-				selectedStorageJob.setFile(nthFile);
-				break;
-			}
-		}
-    }
-    
-	public StorageResponse verify(SelectedStorageJob selectedStorageJob) throws Throwable{
-		logger.info("Verifying job " + selectedStorageJob.getStorageJob().getJob().getId());
-		StorageResponse storageResponse = null;
-    	beforeVerify(selectedStorageJob);
-    	
-    	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
-    	storageResponse = iStoragelevel.verify(selectedStorageJob);
-
-    	afterVerify(selectedStorageJob, storageResponse);
-    	return storageResponse; 
-   	
-    }
-	
-	protected void afterVerify(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) throws Exception{
-		// update the verified date here...
-		updateFileVolumeTable(selectedStorageJob, storageResponse);
-		
-		StorageJob storageJob = selectedStorageJob.getStorageJob();
-		String fileNameToBeVerified = storageJob.getArtifact().getName();
-		String filePathNameToBeVerified = storageJob.getTargetLocationPath() + java.io.File.separator + fileNameToBeVerified;
-		logger.trace("filePathNameToBeVerified " + filePathNameToBeVerified);
-		java.io.File fileToBeVerified = new java.io.File(filePathNameToBeVerified);
-		if(fileToBeVerified.isDirectory())
-			FileUtils.deleteDirectory(fileToBeVerified);
-		else 
-			fileToBeVerified.delete();
-		
-		logger.trace(filePathNameToBeVerified + " deleted");
-			
-	}
-
-	private void updateFileVolumeTable(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) {
+    private void updateFileVolumeTable(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
 	
 		Request request = storageJob.getJob().getRequest();
@@ -370,7 +370,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    if(toBeAddedFileVolumeTableEntries.size() > 0) {
 	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
 	    	domainSpecificFileVolumeRepository.saveAll(toBeAddedFileVolumeTableEntries);
-	    	logger.info("FileVolume records updated with verifiedat successfully");
+	    	logger.info("FileVolume records updated with headerblock details successfully");
 	    }
 	}
 	
@@ -390,6 +390,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	protected void afterFinalize(SelectedStorageJob selectedStorageJob) {
 		Volume volume = selectedStorageJob.getStorageJob().getVolume();
 		volume.setFinalized(true);
+		volume.setFinalizedAt(LocalDateTime.now());
 		volumeDao.save(volume);
 		logger.trace("Volume " + volume.getId() + " finalized succesfully");
 		
@@ -439,6 +440,21 @@ public abstract class AbstractStoragetypeJobProcessor {
 		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
 		selectedStorageJob.setArtifactFileList(fileList);
 		selectedStorageJob.setFilePathNameToChecksum(getSourceFilesChecksum(fileList));
+
+		Volume volume = storageJob.getVolume();
+		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
+		selectedStorageJob.setArtifactVolume(artifactVolume);
+
+		String filePathNameToBeRestored = file.getPathname();
+		
+		// If artifactName is renamed then use the artifactNameOnTape (from artifactVolume.getName()) rather than the artifactName on file.getPathname();
+		String artifactName = artifact.getName();
+		String artifactNameOnVolume = artifactVolume.getName();
+		if(!artifactNameOnVolume.equals(artifactName)) {
+			filePathNameToBeRestored = filePathNameToBeRestored.replace(artifactName, artifactNameOnVolume);
+		}
+		selectedStorageJob.setFilePathNameToBeRestored(filePathNameToBeRestored);
     }
     
 	private HashMap<String, byte[]> getSourceFilesChecksum(List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList){
@@ -474,17 +490,19 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 		//if(requestedAction == Action.ingest || (requestedAction == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(request.getDetails().getFlowName())))
 		if(requestedAction == Action.ingest)
-			updateFileVolumeTable(selectedStorageJob, storageResponse); // update the verified date here...
+			updateFileVolumeTable(selectedStorageJob, storageResponse); // update the headerblocks
 		
 		
 		
-		if(requestedAction == Action.restore) { // for ingest and restore_process this happens in the scheduler... 
+		if(requestedAction == Action.restore || requestedAction == Action.restore_process || requestedAction == Action.rewrite) { // for ingest and restore_process with dependent jobs this happens in the scheduler... 
 			// upon completion moving the file to the original requested dest path		
 			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
-			String restoredFilePathName = file.getPathname();
+			
+			// NOTE : The variable names take a swap here - Dont be confused and tempted to change it
+			String restoredFilePathName = selectedStorageJob.getFilePathNameToBeRestored(); // After restore we need to swap the names of soft renamed entries. 
+			String filePathNameToBeRestored = file.getPathname();
 			
 			String srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName;
-			
 			
 			String timeCodeStart = storageJob.getTimecodeStart();
 			String timeCodeEnd = storageJob.getTimecodeEnd();
@@ -495,31 +513,40 @@ public abstract class AbstractStoragetypeJobProcessor {
 			if(pfr)
 				//srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
 				srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".mxf");
+
+			String destPath = srcPath.replace(restoredFilePathName,filePathNameToBeRestored);
 			
-			String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");	
-			logger.trace("src " + srcPath);
-			logger.trace("dest " + destPath);
+			if(requestedAction != Action.restore_process) // we still dont know for restore_process if there is a dependent job to be created or not. Even to determine if a job need to be created or not the restored artifact with its correct name is needed 
+				destPath = destPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");
+
+			move(srcPath, destPath);
 			
-			java.io.File srcFile = new java.io.File(srcPath);
-			java.io.File destFile = new java.io.File(destPath);
-	
-			if(srcFile.isFile())
-				Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
-			else
-				Files.createDirectories(Paths.get(destPath));
-	
-			Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
-			logger.info("Moved restored files from " + srcPath + " to " + destPath);
+			// Had to do this in 2 steps for restore_process because we need the renamed artifact to determine if dependent jobs need to be created or not
+			if(requestedAction == Action.restore_process && (jobCreator.hasDependentJobsToBeCreated(storageJob.getJob()).size() == 0)) { // if no dependent jobs then move it out of the temp folder... 
+				move(destPath, destPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), ""));
+			}
 		}
+	}
+	
+	private void move(String srcPath, String destPath) throws Exception {
+		logger.trace("src " + srcPath);
+		logger.trace("dest " + destPath);
+		
+		java.io.File srcFile = new java.io.File(srcPath);
+		java.io.File destFile = new java.io.File(destPath);
+
+		if(srcFile.isFile())
+			Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
+		else
+			Files.createDirectories(Paths.get(destPath));
+
+		Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+		logger.info("Moved restored files from " + srcPath + " to " + destPath);
 	}
 	
 	private IStoragelevel getStoragelevelImpl(SelectedStorageJob selectedStorageJob){
 		Storagelevel storagelevel = selectedStorageJob.getStorageJob().getVolume().getStoragelevel();
 		return storagelevelMap.get(storagelevel.name()+DwaraConstants.STORAGELEVEL_SUFFIX);//+"Storagelevel");
 	}
-	
-//	protected abstract void afterRestore(StorageTypeJob selectedStorageJob);
-//
-//	protected abstract void beforeRestore(StorageTypeJob selectedStorageJob);
 
 }

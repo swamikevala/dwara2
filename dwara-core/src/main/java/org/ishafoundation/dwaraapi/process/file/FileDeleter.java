@@ -43,7 +43,7 @@ public class FileDeleter implements IProcessingTask {
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		
 		// TODO - Remove hardcoding of domain...
-    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(Domain.ONE);
+    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(Domain.valueOf(inputArtifactclass.getDomain()));
 
     	// deleting the logical file
     	deleteFileFromFilesystemAndUpdateDB(logicalFile, domainSpecificFileRepository, pathPrefix);
@@ -58,6 +58,11 @@ public class FileDeleter implements IProcessingTask {
 				deleteFileFromFilesystemAndUpdateDB(nthSideCarFile, domainSpecificFileRepository, pathPrefix);
 			}
 		}
+		
+		File parentFile = logicalFile.getParentFile();
+		if(parentFile != null && parentFile.isDirectory() && parentFile.list().length == 0)
+			parentFile.delete();
+		
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 		processingtaskResponse.setIsComplete(true);
 

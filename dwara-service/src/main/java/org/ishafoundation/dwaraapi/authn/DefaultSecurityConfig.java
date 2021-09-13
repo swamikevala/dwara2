@@ -1,5 +1,10 @@
 package org.ishafoundation.dwaraapi.authn;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,12 +14,13 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import io.swagger.models.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -22,6 +28,9 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
 	
     @Autowired
     private AuthenticationEntryPoint authEntryPoint;
+
+    @Autowired 
+    private MyPasswordEncoder myPasswordEncoder;
     
     @Autowired
     private DataSource dataSource;
@@ -42,7 +51,7 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
     	auth.jdbcAuthentication().dataSource(dataSource)
     	.usersByUsernameQuery("select name, hash, true " + " from user where name=?")
     	.authoritiesByUsernameQuery("select name, 'ROLE_ADMIN' from user where name=?")
-    	.passwordEncoder(new BCryptPasswordEncoder());
+    	.passwordEncoder(myPasswordEncoder);
     }
     
     @Override
@@ -69,6 +78,7 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .csrf().disable()
                 .authorizeRequests().antMatchers("/login").permitAll()
+                // .and().authorizeRequests().antMatchers("/googleLogin").permitAll()
                 .and().authorizeRequests().antMatchers("/clearAndReload").permitAll()
                 //.and().authorizeRequests().antMatchers("/v2/api-docs", "/configuration/**", "/swagger*/**", "/webjars/**").permitAll()
                 .and().authorizeRequests().antMatchers("/register").permitAll()
@@ -88,7 +98,10 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     CorsConfigurationSource corsConfigurationSource()
     {
-	    CorsConfiguration configuration = new CorsConfiguration();
+        CorsConfiguration configuration = new CorsConfiguration();
+        List<String> allowedMethod = Collections.unmodifiableList(
+			Arrays.asList(HttpMethod.GET.name(), HttpMethod.HEAD.name(), HttpMethod.POST.name(), HttpMethod.DELETE.name()));
+        configuration.setAllowedMethods(allowedMethod);
 	    configuration.applyPermitDefaultValues();
 	    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 	    source.registerCorsConfiguration("/**", configuration);

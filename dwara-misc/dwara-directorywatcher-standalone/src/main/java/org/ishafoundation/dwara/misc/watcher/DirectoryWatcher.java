@@ -1,9 +1,6 @@
 package org.ishafoundation.dwara.misc.watcher;
 
 
-import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
@@ -22,27 +19,28 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwara.misc.common.Constants;
+import org.ishafoundation.dwara.misc.common.Status;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuterImpl;
-import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
-import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
-import org.ishafoundation.dwaraapi.utils.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,25 +49,29 @@ import org.slf4j.LoggerFactory;
  * This class is responsible for watching for files copied in prasadcorp workspace and when completed moves the file to dwara's user specific artifactclass location and calls the ingest 
  */
 
-public class DirectoryWatcher {
+public class DirectoryWatcher implements Runnable{
 
 	private static Logger logger = LoggerFactory.getLogger(DirectoryWatcher.class);
-	
+
 	private final WatchService watchService;
-	private final Path watchedDir;
+	private final Path watchedDirPath;
+	private final Path csvDirPath;
+	private final List<String> hdvTapeNames;
 	private final Map<WatchKey,Path> keys;
 	private final Map<Path, Long> expirationTimes = new HashMap<Path, Long>();
 	private Long newFileWait = 10000L;
-	private static Path rootIngestLoc = null;
+	private boolean isChecksumVerificationNeeded = false;
 	private static Executor executor = null;
-	private static String ingestEndpointUrl = null;
-
-	private static Pattern categoryNamePrefixPattern = Pattern.compile("^([A-Z]{1,2})\\d+");
 	
-//	{"A","B","D","E","F","M","P","Q","R","AD","AG","AH","AK","AN","AZ","BD"}
-//	{"W","X","Y"}
-//	{"C","G","H","I","J","K","L","N","S","T","U","V","AA","AB","AC","AE","AF","AI","AJ","AL","AM","AR","AS","AW","AX","AY","BB","BC","BE","BG","BJ","TV","Z"}
-
+	private Set<Path> copyingArtifacts = new TreeSet<Path>();
+	private Set<Path> verifyPendingArtifacts = new TreeSet<Path>();
+	private Path miscDirPath = null;
+	private Path validatedDirPath = null;
+	private Path failedDirPath = null;
+	private Path copiedDirPath = null;
+	private Path copyFailedDirPath = null;
+	private Map<Path, Integer> artifact_Retrycount_Map = new HashMap<Path, Integer>();
+		
 	@SuppressWarnings("unchecked")
 	static <T> WatchEvent<T> cast(WatchEvent<?> event) {
 		return (WatchEvent<T>)event;
@@ -78,70 +80,65 @@ public class DirectoryWatcher {
 	/**
 	 * Creates a WatchService and registers the given directory
 	 */
-	DirectoryWatcher(Path dir, Long waitTime) throws IOException {
+	DirectoryWatcher(Path watchedDir,  Long waitTime, boolean isChecksumVerificationNeeded, Path systemDir, Path csvDir, Path hdvTapeListFile) throws IOException {
 		this.watchService = FileSystems.getDefault().newWatchService();
-		this.watchedDir = dir;
+		this.watchedDirPath = watchedDir;
+		
+		this.csvDirPath = csvDir;
+		this.hdvTapeNames = FileUtils.readLines(hdvTapeListFile.toFile());
 		this.newFileWait = waitTime;
 		this.keys = new HashMap<WatchKey,Path>();
-
-		logger.info(String.format("Scanning %s ...\n", dir));
-		registerAll(dir);
-	}
-
-	/**
-	 * Register the given directory, and all its sub-directories, with the
-	 * WatchService.
-	 */
-	private void registerAll(final Path start) throws IOException {
-		// register directory and sub-directories
-		Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
-			@Override
-			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
-					throws IOException
-			{
-				if(!dir.toString().equals(watchedDir.toString())) {
-					expirationTimes.put(dir, System.currentTimeMillis()+newFileWait);
-				}
-				register(dir);
-				
-				if(!dir.toString().equals(watchedDir.toString())) {// if there were folders already copied to the watch folder trigger a modify event so that we handleexpiredtimes 
-					CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
-					try {
-						if(!dir.toString().endsWith("mxf"))
-							updateStatus(dir, Status.copying);
-						clei.executeCommand("chmod -R 777 " + dir.toString(), false);
-					} catch (Exception e) {
-						logger.error(e.getMessage(), e);
-					}
-				}
-				return FileVisitResult.CONTINUE;
-			}
-		});
+		this.isChecksumVerificationNeeded = isChecksumVerificationNeeded;
+		this.miscDirPath = Paths.get(watchedDir.toString(), Constants.miscDirName);
+		this.failedDirPath = Paths.get(watchedDir.toString(), Constants.failedDirName);
+		
+		this.validatedDirPath = Paths.get(systemDir.toString(), Constants.validatedDirName);
+		this.copiedDirPath = Paths.get(systemDir.toString(), Constants.copiedDirName);
+		this.copyFailedDirPath = Paths.get(systemDir.toString(), Constants.copyFailedDirName);
 	}
 
 	/**
 	 * Register the given directory with the WatchService
 	 */
-	private void register(Path dir) throws IOException {
-		WatchKey key = dir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+	private void register(Path artifactDirPath) throws IOException {
+		copyingArtifacts.add(artifactDirPath);
+		expirationTimes.put(artifactDirPath, System.currentTimeMillis()+newFileWait);
 		
+		WatchKey key = artifactDirPath.register(watchService, ENTRY_MODIFY);
+
 		if (logger.isTraceEnabled()) {
 			Path prev = keys.get(key);
 			if (prev == null) {
-				logger.info(String.format("register: %s\n", dir));
+				logger.info(String.format("register: %s\n", artifactDirPath));
 			} else {
-				if (!dir.equals(prev)) {
-					logger.info(String.format("update: %s -> %s\n", prev, dir));
+				if (!artifactDirPath.equals(prev)) {
+					logger.info(String.format("update: %s -> %s\n", prev, artifactDirPath));
 				}
 			}
 		}
-		keys.put(key, dir);
+		keys.put(key, artifactDirPath);
+		
+		// if there are folders with no events pending, trigger a modify event so that we handleExpiredTimes 
+		CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
+		try {
+			if(!(artifactDirPath.toString().endsWith("mxf") || artifactDirPath.toString().endsWith("mov")))
+				updateStatus(artifactDirPath, Status.copying);
+
+			List<String> setFilePermissionsCommandParamsList = new ArrayList<String>();
+			setFilePermissionsCommandParamsList.add("chmod");
+			setFilePermissionsCommandParamsList.add("-R");
+			setFilePermissionsCommandParamsList.add("777");
+			setFilePermissionsCommandParamsList.add(artifactDirPath.toString());
+			clei.executeCommand(setFilePermissionsCommandParamsList, false);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
 	}
 
 	/**
 	 * Process all events for keys queued to the watchService
 	 */
-	void processEvents() throws Exception{
+	public void run(){
 		for (;;) { //infinite loop
 
 			// wait for key to be signalled
@@ -153,345 +150,362 @@ public class DirectoryWatcher {
 			}
 
 			for(;;) { // infinite loop for timed polling to find if any pending events are not and check on expiry...
-				long currentTime = System.currentTimeMillis();
-
-				if(key != null) { // if events are still pending...
-
-					Path dir = keys.get(key);
-					if (dir == null) {
-						logger.error("WatchKey not recognized!!");
-						continue;
-					}
-
-					for (WatchEvent<?> event: key.pollEvents()) {
-						Kind<?> kind = event.kind();
-
-						if (kind == OVERFLOW) {
+				try {
+					long currentTime = System.currentTimeMillis();
+	
+					if(key != null) { // if events are still pending...
+	
+						Path registeredDirPath = keys.get(key);
+						if (registeredDirPath == null) {
+							logger.error("WatchKey not recognized!!");
 							continue;
 						}
-
-						// Context for directory entry event is the file name of entry
-						WatchEvent<Path> ev = cast(event);
-						Path name = ev.context();
-						Path child = dir.resolve(name);
-
-						// print out event
-						if (logger.isTraceEnabled())
-							logger.trace(String.format("%s: %s\n", event.kind().name(), child));
-
-						// if directory is created, and watching recursively, then
-						// register it and its sub-directories
-						if (kind == ENTRY_CREATE || kind == ENTRY_MODIFY) {
-							if (kind == ENTRY_CREATE) {
-								try {
-									//updateStatus(child, Status.copying);
+						
+						for (WatchEvent<?> event: key.pollEvents()) {
+							Kind<?> kind = event.kind();
 	
-									if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
-										registerAll(child);
-									}
+							if (kind == OVERFLOW) {
+								continue;
+							}
 	
-								} catch (IOException x) {
-									// ignore to keep sample readbale
-								}
-							}
-
-							// Update modified time
-							BasicFileAttributes attrs = null;
-							try {
-								attrs = Files.readAttributes(child, BasicFileAttributes.class, NOFOLLOW_LINKS);
-							} catch (IOException e) {
-								continue; // Happens when copy complete, but permissions set by stagedservice triggered this event but by then the stagedservice thread moved this file to /data/staged...
-							}
-							FileTime lastModified = attrs.lastModifiedTime();
+							// Context for directory entry event is the file name of entry
+							WatchEvent<Path> ev = cast(event);
+							Path name = ev.context();
+							Path child = registeredDirPath.resolve(name);
+	
+							// print out event
 							if (logger.isTraceEnabled())
-								System.out.println(child + " lastModified " + lastModified);
-							expirationTimes.put(child, lastModified.toMillis()+newFileWait);
+								logger.trace(String.format("%s: %s\n", event.kind().name(), child));
+	
+							if(expirationTimes.get(child.getParent()) != null)
+								expirationTimes.put(child.getParent(), System.currentTimeMillis()+newFileWait);
+						}
+
+						// reset key and remove from set if directory no longer accessible
+						boolean valid = key.reset();
+						if (!valid) {
+							if (logger.isTraceEnabled()) {
+								logger.trace(key + " not valid");
+								logger.trace("Will be removing " + keys.get(key) + " from key list");
+							}
+							keys.remove(key);
+	
+							// all directories are inaccessible
+							if (keys.isEmpty()) {
+								break;
+							}
 						}
 					}
-
-					// reset key and remove from set if directory no longer accessible
-					boolean valid = key.reset();
-					if (!valid) {
-						if (logger.isTraceEnabled()) {
-							logger.trace(key + " not valid");
-							logger.trace("Will be removing " + keys.get(key) + " from key list");
-						}
-						keys.remove(key);
-
-						// all directories are inaccessible
-						if (keys.isEmpty()) {
-							break;
-						}
+					else {
+						if (logger.isTraceEnabled())
+							logger.trace("No pending events");
 					}
-				}
-				else {
+	
+					handleExpiredWaitTimes(currentTime);
+	
+					// If there are no files left stop polling and block on .take()
+					if(expirationTimes.isEmpty())
+						break;
+	
+					long minExpiration = Collections.min(expirationTimes.values());
+					long timeout = minExpiration - currentTime;
 					if (logger.isTraceEnabled())
-						logger.trace("No pending events");
+						logger.trace("timeout: "+timeout);
+					key = watchService.poll(timeout, TimeUnit.MILLISECONDS);
+				}catch (Exception e) {
+					logger.error(e.getMessage(), e);
 				}
-
-				handleExpiredWaitTimes(key, currentTime);
-
-				// If there are no files left stop polling and block on .take()
-				if(expirationTimes.isEmpty())
-					break;
-
-				long minExpiration = Collections.min(expirationTimes.values());
-				long timeout = minExpiration - currentTime;
-				if (logger.isTraceEnabled())
-					logger.trace("timeout: "+timeout);
-				key = watchService.poll(timeout, TimeUnit.MILLISECONDS);
 			}
 		}
 	}
 
-	private Path getArtifactPath(Path child){
-		String artifactName = getArtifactName(child);
-		if (logger.isTraceEnabled())
-			logger.trace("artifactName " + artifactName);
-		return Paths.get(watchedDir.toString(), artifactName); 
-	}
-
 	private String getArtifactName(Path child){
-		String filePathMinusWatchDirPrefix = child.toString().replace(watchedDir.toString() + File.separator, "");
+		String filePathMinusWatchDirPrefix = child.toString().replace(watchedDirPath.toString() + File.separator, "");
 		String artifactName = StringUtils.substringBefore(filePathMinusWatchDirPrefix, File.separator);
 		return artifactName;
 	}
-	
-	private void handleExpiredWaitTimes(WatchKey watchKey, Long currentTime) throws Exception {
+
+	private void handleExpiredWaitTimes(Long currentTime) throws Exception {
 		// Start import for files for which the expirationtime has passed
 		Iterator<Entry<Path, Long>> it = expirationTimes.entrySet().iterator();
 		while (it.hasNext())
 		{
 			Entry<Path, Long> item = (Entry<Path, Long>) it.next();
 			Long expiryTime = (Long) item.getValue();
-			Path filePath = item.getKey();
+			Path artifactPath = item.getKey();
 			
 			if(expiryTime <= currentTime) {
-				if(filePath.getFileName().toString().endsWith(".mxf")) {
-					updateStatus(filePath, Status.copy_complete);
-					verifyChecksumAndMoveToOpsArea(watchKey, filePath);
-				}
+				updateStatus(artifactPath, Status.copy_complete);
+				createTaskAndExecute(artifactPath);
 				it.remove();
 			}
 		}
 	}
 
-    private void verifyChecksumAndMoveToOpsArea(WatchKey watchKey, Path path) throws Exception{
-		VerifyChecksumAndMoveToOpsAreaTask checksumTask = new VerifyChecksumAndMoveToOpsAreaTask();//applicationContext.getBean(TapeTask.class); 
-		checksumTask.setWatchKey(watchKey);
-		checksumTask.setMxfFilePath(path);
-		executor.execute(checksumTask);
-    }
-    
-	public class VerifyChecksumAndMoveToOpsAreaTask implements Runnable{
-		
-		private Path mxfFilePathname; // will have something like /data/prasad-staging/H122/H122.mxf
-		
-		private WatchKey watchKey;
-		
-		public void setMxfFilePath(Path mxfFilePathname) {
-			this.mxfFilePathname = mxfFilePathname; 
+	private void createTaskAndExecute(Path artifactPath) throws Exception{
+		Task task = new Task();
+		task.setArtifactPath(artifactPath);
+		verifyPendingArtifacts.add(artifactPath);
+		copyingArtifacts.remove(artifactPath);
+		executor.execute(task);
+	}
+
+	public class Task implements Runnable{
+
+		private Path artifactPath; // will have something like /data/prasad-staging/H122/H122.mxf
+
+		public void setArtifactPath(Path artifactPath) {
+			this.artifactPath = artifactPath; 
 		}
 		
-		public void setWatchKey(WatchKey watchKey) {
-			this.watchKey = watchKey;
-		}
-		
-		private String extns[] = {"qc","log", "md5", "mxf"};
-		
-		@Override
 		public void run() {
-			String expectedMd5 = null;
-			String actualMd5 = null;
-			Path artifactPath = mxfFilePathname.getParent(); 
 			File artifactFileObj = artifactPath.toFile();
-			
-			for (int i = 0; i < 60; i++) {
-				//logger.debug(mxfFilePathname + ":" + artifactPath);
+			try {
 				if(!artifactFileObj.isDirectory())
 					return;
-				Collection<File> files = FileUtils.listFiles(artifactFileObj, extns, false);
-
-				if(files.size() == 4) {
-					try {
-						//updateStatus(artifactPath, Status.copy_complete);
-						for (File file : files) {
-							String fileName = file.getName();
-							if(fileName.endsWith(".md5")) {
-								expectedMd5 = StringUtils.substringBefore(FileUtils.readFileToString(file), "  ").trim().toUpperCase();
-							}
-							else if(fileName.endsWith(".mxf")) {
-								updateStatus(artifactPath, Status.verifying);
-								
-							    byte[] digest =  ChecksumUtil.getChecksum(file, Checksumtype.md5);
-							    actualMd5 = DatatypeConverter.printHexBinary(digest).toUpperCase();
-							}
-						}
-						logger.info(artifactPath + " expectedMd5 " + expectedMd5 + " actualMd5 " + actualMd5);
-						if(expectedMd5.equals(actualMd5)) {
-							updateStatus(artifactPath, Status.verified);
-							Path destArtifactPath = moveFolderToOpsAreaAndOrganise(watchKey, artifactPath);
-							ingest(destArtifactPath);
-						}else {
-							logger.error(artifactPath + "MD5 expected != actual, Now what??? ");
-							updateStatus(artifactPath, Status.md5_mismatch);
-						}
-						return;
-					}catch (Exception e) {
-						logger.error("Unable to process " + artifactPath, e);
-						try {
-							updateStatus(artifactPath, Status.move_failed);
-							return;
-						} catch (Exception e1) {
-							logger.error(e1.getMessage(), e1);
-						}
+	
+				String artifactName = artifactFileObj.getName();
+			
+				ArtifactValidationResponse avr = ArtifactValidator.validateName(artifactName);
+				if(!avr.isValid()) { 
+					move(artifactPath, false, avr.getFailureReason());
+					return;
+				}
+				
+				avr = ArtifactValidator.validateFiles(artifactFileObj);
+				if(!avr.isValid()) { 
+					move(artifactPath, false, avr.getFailureReason());
+					return;
+				}
+				
+				boolean hdv = false;
+				for (String nthHdvTapeName : hdvTapeNames) {
+					if(nthHdvTapeName.equals(artifactName)) {
+						hdv = true; // if artifactName present in hdv list, its a hdv tape
+						break;
 					}
+				}
+				
+				Collection<File> recievedFiles = null;
+				if(!hdv) {
+					recievedFiles = FileUtils.listFiles(artifactFileObj, ArtifactValidator.neededExtns, false);
+					avr = ArtifactValidator.neededFilesPresent(artifactFileObj, ArtifactValidator.neededExtns, recievedFiles);
 				}
 				else {
-					try {
-						logger.debug(artifactPath + " waiting for mxf sidecar files. Retry count " + i);
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						logger.error(e.getMessage(), e);
-						return;
+					recievedFiles = FileUtils.listFiles(artifactFileObj, ArtifactValidator.neededExtns_HDV, false);
+					avr = ArtifactValidator.neededFilesPresent(artifactFileObj, ArtifactValidator.neededExtns_HDV, recievedFiles);
+				}
+				
+				
+				if(!avr.isValid())
+					retryOrMove(avr.getFailureReason());
+				else if(avr.isValid() && !isChecksumVerificationNeeded){
+					move(artifactPath, true);	// if checksum verify is not needed move it to valid folder from here...
+				}else if(isChecksumVerificationNeeded) {
+					boolean isChecksumValid = ArtifactValidator.validateChecksum(artifactPath, recievedFiles);
+					if(isChecksumValid){
+						move(artifactPath, true);		
+					}else {
+						retryOrMove("md5 mismatch");
 					}
 				}
 			}
-			logger.info("Giving up on " + artifactPath + ". Could be a networking issue... Please do it manually"); // Could be a networking issue...
+			catch (Exception e) {
+				logger.error("Unable to execute task for " + artifactPath + " : " + e.getMessage(), e);
+			}finally {
+				verifyPendingArtifacts.remove(artifactPath);
+			}
 		}
+
+		private void retryOrMove(String failureReason) throws Exception
+		{
+			Integer retrycount = artifact_Retrycount_Map.get(artifactPath);
+			if(retrycount == null) {
+				retrycount = 1;
+				artifact_Retrycount_Map.put(artifactPath, retrycount);
+			}
+			else
+				artifact_Retrycount_Map.put(artifactPath, retrycount = retrycount + 1);
 		
-		private Path moveFolderToOpsAreaAndOrganise(WatchKey watchKey, Path srcPath) throws Exception {
-			Path destArtifactPath = null;
-			try {
-				if(watchKey!=null)
-					watchKey.cancel();
-
-				String artifactName = getArtifactName(srcPath);
-				
-				String artifactNamePrefix = null;
-				Matcher m = categoryNamePrefixPattern.matcher(artifactName);  		
-				if(m.find())
-					artifactNamePrefix = m.group(1);
-
-				Categoryelement category = null;
-				
+			if(retrycount <= 3) {
 				try {
-					category = Categoryelement.valueOf(artifactNamePrefix);
+					logger.info("Could be because artifact is still not copied in full, but wait times expired[network latency etc.,]. Re-registering " + artifactPath + " - " + retrycount);
+					register(artifactPath);
+				}catch (Exception e) {
+					logger.error("Unable to re-register - " + e.getMessage(), e);
 				}
-				catch (Exception e) {
-					String msg = "Not able to categorize " + artifactNamePrefix + ":" + artifactName;
-					logger.error(msg);
-					throw new Exception(msg);
-				}
-				
-				String artifactClassFolderName = null;
-				if(category.getCategory().equals("Public"))
-					artifactClassFolderName = "video-digi-2020-pub";
-				else if(category.getCategory().equals("Private1"))
-					artifactClassFolderName = "video-digi-2020-priv1";
-				else if(category.getCategory().equals("Private2"))
-					artifactClassFolderName = "video-digi-2020-priv2";
-				
-				if(artifactClassFolderName == null) {
-					String msg = "Not able to categorize " + artifactNamePrefix + ":" + artifactName;
-					logger.error(msg);
-					throw new Exception(msg);
-				}
-				destArtifactPath = Paths.get(rootIngestLoc.toString(), artifactClassFolderName, artifactName);
-				final Path dest = Paths.get(destArtifactPath.toString(), "mxf");
-				Files.createDirectories(dest);
-				Files.walkFileTree(srcPath, new SimpleFileVisitor<Path>() {
-					@Override
-					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-						Files.move(file, Paths.get(dest.toString(), file.getFileName().toString()), StandardCopyOption.ATOMIC_MOVE);
-						return FileVisitResult.CONTINUE;
-					}
-				});
-				
-				logger.info(srcPath + " moved succesfully to " + destArtifactPath);
-				
-//				CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
-//				clei.executeCommand("chmod -R 777 " + dest.getParent().toString(), false);
-				
-				FileUtils.deleteDirectory(srcPath.toFile());
-			} catch (IOException e) {
-				logger.error(e.getMessage(), e);
-				updateStatus(srcPath, Status.move_failed);
+			}else {// inspite of retries if side car files missing means source folder missing the mandatory files or if checksum fails, move it to "FAILED" folder
+				move(artifactPath, false, failureReason);
 			}
-			return destArtifactPath;
 		}
-	}
-
-	public void ingest(Path path) {
-    	if(path.getNameCount() > 7) { // Expecting path = /data/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1
-    		System.err.println("File Path with more than 7 elements is not supported. Expected something like /data/dwara/user/pgurumurthy/ingest/prasad-pub/prasad-artifact-1 but actual is " + path);
-    	}
-    	else {
-	    	String artifactBasePath = path.getParent().toString();
-	    	String artifactName = path.getFileName().toString();
-	    	String artifactclass = path.getName(path.getNameCount() - 2).toString();
-
-	    	
-	    	String payload = "{\"artifactclass\":\"<<Artifactclass>>\",\"stagedFiles\":[{\"path\":\"<<Path>>\",\"name\":\"<<ArtifactName>>\"}]}";
-	    	payload = payload.replace("<<Artifactclass>>", artifactclass);
-	    	payload = payload.replace("<<Path>>", artifactBasePath);
-	    	payload = payload.replace("<<ArtifactName>>", artifactName);
-	    	logger.debug("payload "+ payload);
-
-			String response = null;
-			try {
-				response = HttpClientUtil.postIt(ingestEndpointUrl, null, payload);
-				updateStatus(path, Status.ingested);
-				logger.info(path + " Ingest response from dwara : " + response);
-			}catch (Exception e) {
-				logger.error("Error on invoking ingest endpoint - " + e.getMessage());
-			}
-    	}			
 	}
 	
-    private enum Status {
-    	copying,
-    	copy_complete,
-    	verifying,
-    	verified,
-    	md5_mismatch,
-    	moved,
-    	move_failed,
-    	ingested,
-    	failed;
-    }
-    
+	private void move(Path artifactPath, boolean completed) throws Exception{
+		move(artifactPath, completed, null);
+	}
+	
+	private void move(Path artifactPath, boolean completed, String failureReason) throws Exception{
+		String artifactName = getArtifactName(artifactPath);
+		String csvFileName = Constants.failedCsvName;
+		String destRootPath = failedDirPath.toString();
+		Status status = Status.moved_to_failed_dir;
+		// move it to completed folder
+		if(completed) {
+			destRootPath = validatedDirPath.toString();
+			status = Status.moved_to_validated_dir;
+			csvFileName = Constants.validatedCsvName;
+		}
+		Path destPath = Paths.get(destRootPath, artifactName);
+		Path csvFilePath = Paths.get(csvDirPath.toString(), csvFileName);
+		try {
+			Files.move(artifactPath, destPath, StandardCopyOption.ATOMIC_MOVE);
+			CommandLineExecuterImpl clei = new CommandLineExecuterImpl();
+			try {
+				List<String> setFileOwnershipCommandParamsList = new ArrayList<String>();
+				setFileOwnershipCommandParamsList.add("chown");
+				setFileOwnershipCommandParamsList.add("-R");
+				setFileOwnershipCommandParamsList.add("dwara:dwara");
+				setFileOwnershipCommandParamsList.add(destPath.toString());
+				clei.executeCommand(setFileOwnershipCommandParamsList, false);
+			} catch (Exception e) {
+				logger.error("Unable to change ownership " + e.getMessage(), e);
+			}
+			//MoveUtil.move(artifactPath, destPath);
+			updateStatus(artifactPath, status);
+			updateCSV(csvFilePath, artifactName, failureReason);
+		}catch (Exception e) {
+			logger.error("Unable to move " + artifactPath + " to " + destPath, e);
+			try {
+				updateStatus(artifactPath, Status.move_failed);
+				return;
+			} catch (Exception e1) {
+				logger.error(e1.getMessage(), e1);
+			}
+		}
+	}
+	
+	private void updateCSV(Path csvFilePath, String artifactName, String failureReason) {
+		StringBuilder sb = new StringBuilder();
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+		String timestamp = LocalDateTime.now().format(formatter);
+		sb.append(timestamp);
+		sb.append(",");
+		sb.append(artifactName);
+
+		if(failureReason != null) {
+			sb.append(",");
+			sb.append(failureReason);
+		}
+			
+		try {
+			FileUtils.write(csvFilePath.toFile(), sb.toString() + "\n", true);
+			logger.info(csvFilePath.getFileName() + " updated");
+		} catch (IOException e) {
+			logger.error("Unable to write csv " + csvFilePath +  " : " + e.getMessage(), e);
+		}
+	}
+
 	private void updateStatus(Path child, Status status) throws Exception {
 		logger.info(String.format("%s %s", child, status.name()));
 	}
 
 	static void usage() {
-		System.err.println("usage: java DirectoryWatcher [waitTimeInSecs] <dirToBeWatched(\"/data/prasad-staging\")> <rootIngestLocation(\"/data/dwara/user/prasadcorp/ingest\")> noOfThreadsForChecksumVerification <ingestEndpointUrl(\"http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest\")>");
+		System.err.println("usage: java -cp dwara-watcher-2.0.jar org.ishafoundation.dwara.misc.watcher.DirectoryWatcher "
+				+ "<dirToBeWatched(\"/data/prasad-staging\")> "
+				+ "folderAgeInSecs "
+				+ "folderAgePollingIntervalInSecs "
+				+ "watchEventExpiryWaitTimeInSecs "
+				+ "isChecksumVerificationNeeded "
+				+ "systemDirPath "
+				+ "csvsDirPath "
+				+ "noOfThreadsForChksumValidation"
+				+ "hdvTapeListFileLocation");
+		
+		
+		System.err.println("where,");
+		System.err.println("args[0] - dirToBeWatched - The directory where this service needs to watched for modify events on files");
+		System.err.println("args[1] - folderAgeInSecs - The wait period only after which the files are watched for events");
+		System.err.println("args[2] - folderAgePollingIntervalInSecs - The polling interval to check if there are directories in <dirToBeWatched> that are past <folderAgeInSecs>");
+		System.err.println("args[3] - watchEventExpiryWaitTimeInSecs - Timeout Interval for waiting on watching with no events");
+		System.err.println("args[4] - isChecksumVerificationNeeded - Boolean - Do we need to verify the checksum of the Mxf?");
+		System.err.println("args[5] - systemDirPath - The directory where sub directories needed by system like \"Validated\", \"Copied\", \"CopyFailed\" need to be");
+		System.err.println("args[6] - csvsDirPath - The directory in which csv files need to be created");
+		System.err.println("args[7] - noOfThreadsForParallelProcessing - no of parallel processing threads after copy is complete");
+		System.err.println("args[8] - hdvTapeListFileLocation - The exhaustive hdv tape list file location");
 		System.exit(-1);
 	}
 	
+	/**
+	 * 
+
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
 		// parse arguments
-		if (args.length == 0 || args.length > 5)
+		if (args.length != 9)
 			usage();
 
-		int dirArg = 0;
-		long waitTimes = 0L;
-		if (args.length == 5) {
-			waitTimes = Long.parseLong(args[0]) * 1000;
-			dirArg++;
-		}
-
 		// register directory and process its events
-		Path dir = Paths.get(args[dirArg]);
-
-		rootIngestLoc = Paths.get(args[dirArg + 1]);
+		final Path dirToBeWatched = Paths.get(args[0]);
+		final long folderAgeInSecs = Long.parseLong(args[1]) * 1000;
+		long folderAgePollingIntervalInSecs = Long.parseLong(args[2]) * 1000;
+		long waitTimes = Long.parseLong(args[3]) * 1000;
+		Boolean isChecksumVerificationNeeded = Boolean.parseBoolean(args[4]);
+		final Path systemDirLocation = Paths.get(args[5]);
+		final Path csvLocation = Paths.get(args[6]); 
+		int noOfThreadsForParallelProcessing = Integer.parseInt(args[7]);
+		final Path hdvTapeListFileLoc = Paths.get(args[8]);
 		
-		int noOfThreads = Integer.parseInt(args[dirArg + 2]);
-		executor = new ThreadPoolExecutor(noOfThreads, noOfThreads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
-
-		ingestEndpointUrl = args[dirArg + 3]; // "http://pgurumurthy:ShivaShambho@172.18.1.213:8080/api/staged/ingest";
+		Path validatedCSVFilePath = Paths.get(csvLocation.toString(), Constants.validatedCsvName);
+		validatedCSVFilePath.toFile().createNewFile();
+		Path failedCSVFilePath = Paths.get(csvLocation.toString(), Constants.failedCsvName);
+		failedCSVFilePath.toFile().createNewFile();
 		
-		new DirectoryWatcher(dir, waitTimes).processEvents();
+		final DirectoryWatcher dirwatcher = new DirectoryWatcher(dirToBeWatched, waitTimes, isChecksumVerificationNeeded, systemDirLocation, csvLocation, hdvTapeListFileLoc);
+		Thread thread = new Thread(dirwatcher);
+		thread.setDaemon(true);
+		thread.start();
+		
+		executor = new ThreadPoolExecutor(noOfThreadsForParallelProcessing, noOfThreadsForParallelProcessing, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+
+		for(;;) {
+			try {
+				if(dirToBeWatched.toFile().exists()) {
+					Files.walkFileTree(dirToBeWatched, new SimpleFileVisitor<Path>() {
+						@Override
+						public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs)
+								throws IOException
+						{
+							String dirPath = path.toString();
+							/* We shouldnt register for the following
+							 * 1) configured main watched dir itself
+							 * 2) predefined subfolders like MISC,Validated,ValFailed,Copied,CopyFailed
+							 * 3) already registered artifacts in the previous poll which are either getting copied or verified segments 
+							 * 4) folder inside a folder like H-BETACAM-541/H-BETACAM-543 - only H-BETACAM-541 should be registered which will fail validation as it has Files named other than H-BETACAM-541  
+							 * In other words we should only register artifact directories that are aged than configured folderAgeInMts and that too only once
+							*/ 
+							if(!dirPath.equals(dirToBeWatched.toString()) && // #1
+									!dirPath.startsWith(dirwatcher.miscDirPath.toString()) && !dirPath.startsWith(dirwatcher.failedDirPath.toString()) && !dirPath.startsWith(dirwatcher.validatedDirPath.toString()) && !dirPath.startsWith(dirwatcher.copiedDirPath.toString()) && !dirPath.startsWith(dirwatcher.copyFailedDirPath.toString()) && // #2 
+									!dirwatcher.verifyPendingArtifacts.contains(path) && !dirwatcher.copyingArtifacts.contains(path) && // #3
+									!(new File(dirPath).getParent().equals(dirToBeWatched.toString())) // #4
+									) { // Dont register the failed and completed dir...
+								FileTime lastModified = attrs.lastModifiedTime();
+								if(System.currentTimeMillis() > lastModified.toMillis() + folderAgeInSecs) {
+									dirwatcher.register(path);
+								}
+							}
+							return FileVisitResult.CONTINUE;
+						}
+					});
+				}else {
+					logger.warn(dirToBeWatched.toString() + " doesnt exist");
+				}
+				
+				Thread.sleep(folderAgePollingIntervalInSecs);
+			} catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
 	}
 }
+

@@ -29,6 +29,18 @@ public class FileColumns {
 	
 	@Column(name="directory")
 	private boolean directory;
+	
+	// type of the file - hardlink/symlink/sparse file etc.,
+//	@Enumerated(EnumType.STRING)
+//	@Column(name="type") 
+//	private FileType type;
+	
+	@Column(name="symlink_file_id")
+	private Integer symlinkFileId;
+	
+	@Column(length=4096, name="symlink_path") 
+	private String symlinkPath;
+	
 
 	public String getPathname() {
 		return pathname;
@@ -76,6 +88,30 @@ public class FileColumns {
 
 	public void setDirectory(boolean directory) {
 		this.directory = directory;
+	}
+
+//	public FileType getType() {
+//		return type;
+//	}
+//
+//	public void setType(FileType type) {
+//		this.type = type;
+//	}
+
+	public Integer getSymlinkFileId() {
+		return symlinkFileId;
+	}
+
+	public void setSymlinkFileId(Integer symlinkFileId) {
+		this.symlinkFileId = symlinkFileId;
+	}
+
+	public String getSymlinkPath() {
+		return symlinkPath;
+	}
+
+	public void setSymlinkPath(String symlinkPath) {
+		this.symlinkPath = symlinkPath;
 	}
 
 	@Override

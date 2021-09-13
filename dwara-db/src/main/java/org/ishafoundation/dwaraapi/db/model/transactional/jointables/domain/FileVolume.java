@@ -38,7 +38,7 @@ public class FileVolume {
 	private Integer volumeBlock; // volumeBlockStart
 
 	@Column(name="archive_block")
-	private Integer archiveBlock; // archiveBlockStart
+	private Long archiveBlock; // archiveBlockStart
 
 	@Column(name="header_blocks")
 	private Integer headerBlocks; // no. of HeaderBlocks consumed by the file...
@@ -52,6 +52,8 @@ public class FileVolume {
 	@Column(name="deleted")
 	private boolean deleted;
 	
+	@Column(name="hardlink_file_id")
+	private Integer hardlinkFileId;
 	
 	public FileVolume() {
 		
@@ -60,6 +62,14 @@ public class FileVolume {
 	public FileVolume(int fileId, Volume volume) {
 		this.volume = volume;
 		this.id = new FileVolumeKey(fileId, volume.getId());
+	}
+
+	public FileVolumeKey getId() {
+		return id;
+	}
+
+	public void setId(FileVolumeKey id) {
+		this.id = id;
 	}
 
 	public Volume getVolume() {
@@ -74,11 +84,11 @@ public class FileVolume {
 		this.volumeBlock = volumeBlock;
 	}
 
-	public Integer getArchiveBlock() {
+	public Long getArchiveBlock() {
 		return archiveBlock;
 	}
 
-	public void setArchiveBlock(Integer archiveBlock) {
+	public void setArchiveBlock(Long archiveBlock) {
 		this.archiveBlock = archiveBlock;
 	}
 
@@ -112,5 +122,13 @@ public class FileVolume {
 
 	public void setDeleted(boolean deleted) {
 		this.deleted = deleted;
+	}
+
+	public Integer getHardlinkFileId() {
+		return hardlinkFileId;
+	}
+
+	public void setHardlinkFileId(Integer hardlinkFileId) {
+		this.hardlinkFileId = hardlinkFileId;
 	}
 }

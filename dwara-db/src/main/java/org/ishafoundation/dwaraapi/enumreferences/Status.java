@@ -11,5 +11,6 @@ public enum Status {
 	on_hold,
 	cancelled,
 	failed,
-	marked_completed 
+	marked_completed,
+	marked_failed
 }

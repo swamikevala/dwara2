@@ -117,13 +117,22 @@ Read errors:            0 soft,  0 hard
 Checksum errors:        0
 
 */
+/*
+ * NOTE - Bru deals with Hardlinks like below...
+VL:c|0|1|52518231|47304|Z9009_Poem-Sadhguru-Poem-For-New-Year-2021-Timespace_English_01Min-07Secs_Unconsolidated/FOOTAGE/shooting_stars_in_the_night_sky_timelapse_by_Arthur_Cauty_Artgrid-HD_H264-HD.mp4
 
+VL:c|6430208|1|12288|59863|Z9009_Poem-Sadhguru-Poem-For-New-Year-2021-Timespace_English_01Min-07Secs_Unconsolidated/PROJECT/TIMESPACE.fcpbundle/TIMESPACE/Original Media
+VL:c|6430208|1|52518231|59863|Z9009_Poem-Sadhguru-Poem-For-New-Year-2021-Timespace_English_01Min-07Secs_Unconsolidated/PROJECT/TIMESPACE.fcpbundle/TIMESPACE/Original Media/shooting_stars_in_the_night_sky_timelapse_by_Arthur_Cauty_Artgrid-HD_H264-HD.mp4^@Z9009_Poem-Sadhguru-Poem-For-New-Year-2021-Timespace_English_01Min-07Secs_Unconsolidated/FOOTAGE/shooting_stars_in_the_night_sky_timelapse_by_Arthur_Cauty_Artgrid-HD_H264-HD.mp4
+VL:c|6430208|1|82650570|59863|Z9009_Poem-Sadhguru-Poem-For-New-Year-2021-Timespace_English_01Min-07Secs_Unconsolidated/PROJECT/TIMESPACE.fcpbundle/TIMESPACE/Original Media/northern_lights_over_a_flowing_river_in_winter_by_Alexander_Kuznetsov_Artgrid-HD_H264-HD.mp4^@Z9009_Poem-Sadhguru-Poem-For-New-Year-2021-Timespace_English_01Min-07Secs_Unconsolidated/FOOTAGE/northern_lights_over_a_flowing_river_in_winter_by_Alexander_Kuznetsov_Artgrid-HD_H264-HD.mp4
+*/
 
 public class BruResponseParser {
 	static final SimpleDateFormat formatWithSingleDigitDate = new SimpleDateFormat("EEE MMM  d HH:mm:ss yyyy"); // Mon Jan  6 16:03:56 2020
 	static final SimpleDateFormat formatWithDoubleDigitDate = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy"); // Mon Jan 13 15:01:43 2020
 	
 	static Logger logger = LoggerFactory.getLogger(BruResponseParser.class);
+	
+	private String bruLinkSeparator = Character.toString(Character.MIN_VALUE);
 	
 	public BruResponse parseBruResponse(String bruCommandResponse){
 		BruResponse bruResponse = new BruResponse();
@@ -207,7 +216,17 @@ public class BruResponseParser {
 				bruResponse.setOperationType(operationType);
 				org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components.File file = new org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components.File();
 
-				file.setFilePathName(fileAndAttributesRegExMatcher.group(6));
+				String filePathName = fileAndAttributesRegExMatcher.group(6);
+				String linkName = null;
+				if(filePathName.contains(bruLinkSeparator)) {
+					linkName = StringUtils.substringAfter(filePathName, bruLinkSeparator);
+					filePathName = StringUtils.substringBefore(filePathName, bruLinkSeparator);
+					
+					logger.trace("filePathName "+ filePathName);
+					logger.trace("linkName "+ linkName);
+				}
+				file.setFilePathName(filePathName);
+				file.setLinkName(linkName);
 				file.setArchiveRunningTotalDataInKB(Long.parseLong(fileAndAttributesRegExMatcher.group(2)));
 				file.setVolumeBlockOffset(Integer.parseInt(fileAndAttributesRegExMatcher.group(5)));
 				bruResponse.getFileList().add(file);

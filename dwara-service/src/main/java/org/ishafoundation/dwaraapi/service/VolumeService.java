@@ -1,39 +1,53 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.io.File;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.api.req.RewriteRequest;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
+import org.ishafoundation.dwaraapi.api.req.volume.MarkVolumeStatusRequest;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
-import org.ishafoundation.dwaraapi.api.resp.initialize.SystemRequestForInitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.Details;
+import org.ishafoundation.dwaraapi.api.resp.volume.MarkVolumeStatusResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
-import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
+import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeLifecyclestage;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.job.JobCreator;
-import org.ishafoundation.dwaraapi.resource.mapper.RequestToEntityObjectMapper;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.VolumeindexManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeFinalizer;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeInitializer;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -57,14 +71,22 @@ public class VolumeService extends DwaraService {
 	private ConfigurationTablesUtil configurationTablesUtil;
 	
 	@Autowired
-	private JobCreator jobCreator;
+	private VolumeInitializer volumeInitializer;
 
 	@Autowired
 	private VolumeFinalizer volumeFinalizer;
 	
 	@Autowired
-	private RequestToEntityObjectMapper requestToEntityObjectMapper; 
+	private JobCreator jobCreator;
+	
+	@Autowired
+	private VolumeindexManager volumeindexManager;
+	
+	@Value("${filesystem.temporarylocation}")
+	private String filesystemTemporarylocation;
 
+	private static DecimalFormat df = new DecimalFormat("0.00");
+	
 	public List<VolumeResponse> getVolumeByVolumetype(String volumetype){
 		List<VolumeResponse> volumeResponseList = null;
 			// validate
@@ -88,6 +110,12 @@ public class VolumeService extends DwaraService {
 	}
 	
 	private VolumeResponse getVolume_Internal(Volume volume) {
+		double GiB = 1073741824; // 1 GiB = 1073741824 bytes...
+		double TiB = 1099511627776.00;
+		double TB = 1000000000000.00;
+		String sizeUnit = "TB"; // "GiB"; 
+		double sizeUnitDivisor = TB;
+		
 		VolumeResponse volResp = new VolumeResponse();
 		volResp.setId(volume.getId());
 		volResp.setVolumetype(volume.getType().name());
@@ -108,7 +136,8 @@ public class VolumeService extends DwaraService {
 			long groupVolumeUnusedCapacity = 0L;
 			long groupVolumeUsedCapacity = 0L;
 			long maxPhysicalUnusedCapacity = 0L;
-			List<Volume> physicalVolumeList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndDefectiveIsFalseAndSuspectIsFalseOrderByIdAsc(volume.getId()); // get all not finalized physical volume in the group
+
+			List<Volume> physicalVolumeList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndHealthstatusAndLifecyclestageOrderByIdAsc(volume.getId(), VolumeHealthStatus.normal, VolumeLifecyclestage.active); // get all not finalized physical volume in the group
 			
 			for (Volume nthPhyscialVolume : physicalVolumeList) { // iterate all physical volume from the group and sum up for total/used/unused cap
 				logger.trace("Dashboard - " + nthPhyscialVolume.getId());
@@ -129,25 +158,25 @@ public class VolumeService extends DwaraService {
 //				long nthPhysicalVolumeUsedCapacity = volumeUtil.getVolumeUsedCapacity(domain, nthPhyscialVolume);
 				groupVolumeCapacity += volumeUtil.getVolumeUsableCapacity(domain, nthPhyscialVolume);//nthPhyscialVolume.getCapacity();
 				logger.trace("Dashboard -groupVolumeCapacity - " + groupVolumeCapacity);
-				logger.trace("Dashboard -groupVolumeCapacity in GiB - " + groupVolumeCapacity/1073741824);
+				logger.trace("Dashboard -groupVolumeCapacity in " + sizeUnit + " - " + groupVolumeCapacity/sizeUnitDivisor);
 				long nthPhysicalVolumeUnusedCapacity = volumeUtil.getVolumeUnusedCapacity(domain, nthPhyscialVolume);
 				groupVolumeUnusedCapacity += nthPhysicalVolumeUnusedCapacity;
 				logger.trace("Dashboard -groupVolumeUnusedCapacity - " + groupVolumeUnusedCapacity);
-				logger.trace("Dashboard -groupVolumeUnusedCapacity in GiB - " + groupVolumeUnusedCapacity/1073741824);
+				logger.trace("Dashboard -groupVolumeUnusedCapacity in " + sizeUnit + " - "  + groupVolumeUnusedCapacity/sizeUnitDivisor);
 				if(maxPhysicalUnusedCapacity < nthPhysicalVolumeUnusedCapacity)
 					maxPhysicalUnusedCapacity = nthPhysicalVolumeUnusedCapacity;
 				logger.trace("Dashboard -maxPhysicalUnusedCapacity - " + maxPhysicalUnusedCapacity);
-				logger.trace("Dashboard -maxPhysicalUnusedCapacity in GiB - " + maxPhysicalUnusedCapacity/1073741824);
+				logger.trace("Dashboard -maxPhysicalUnusedCapacity in " + sizeUnit + " - "  + maxPhysicalUnusedCapacity/sizeUnitDivisor);
 				groupVolumeUsedCapacity += volumeUtil.getVolumeUsedCapacity(domain, nthPhyscialVolume);
 				logger.trace("Dashboard -groupVolumeUsedCapacity - " + groupVolumeUsedCapacity);
-				logger.trace("Dashboard -groupVolumeUsedCapacity in GiB - " + groupVolumeUsedCapacity/1073741824);
+				logger.trace("Dashboard -groupVolumeUsedCapacity in " + sizeUnit + " - "  + groupVolumeUsedCapacity/sizeUnitDivisor);
 			}
 
-			volResp.setTotalCapacity(groupVolumeCapacity/1073741824);
-			volResp.setUsedCapacity(groupVolumeUsedCapacity/1073741824);
-			volResp.setUnusedCapacity(groupVolumeUnusedCapacity/1073741824);
-			volResp.setMaxPhysicalUnusedCapacity(maxPhysicalUnusedCapacity/1073741824);
-			volResp.setSizeUnit("GiB"); // 1 GiB = 1073741824 bytes...
+			volResp.setTotalCapacity(Float.valueOf(df.format(groupVolumeCapacity/sizeUnitDivisor)));
+			volResp.setUsedCapacity(Float.valueOf(df.format(groupVolumeUsedCapacity/sizeUnitDivisor)));
+			volResp.setUnusedCapacity(Float.valueOf(df.format(groupVolumeUnusedCapacity/sizeUnitDivisor)));
+			volResp.setMaxPhysicalUnusedCapacity(Float.valueOf(df.format(maxPhysicalUnusedCapacity/sizeUnitDivisor)));
+			volResp.setSizeUnit(sizeUnit); 
 		}
 		
 		if(volume.getLocation() != null)
@@ -158,97 +187,182 @@ public class VolumeService extends DwaraService {
 			Details details = new Details();
 			
 			//details.setBarcoded(volumeDetails.isBarcoded());
-			if(volumeDetails.getBlocksize() != null)
+			if(volumeDetails.getBlocksize() != null) {
 				details.setBlocksize(volumeDetails.getBlocksize()/1024);
-			details.setBlocksizeUnit("KiB");
-			
+				details.setBlocksizeUnit("KiB");
+			}
 			details.setStoragesubtype(volume.getStoragesubtype());
 			//details.setMountPoint(mountPoint);
 			//details.setProvider(provider);
 			//details.setRemoveAfterJob(removeAfterJob);
+			if(volume.getType() == Volumetype.group) {
+				if(volResp.getUnusedCapacity() < (volumeDetails.getMinimumFreeSpace()/sizeUnitDivisor))
+					details.setExpandCapacity(true);
+				details.setNextBarcode(volume.getSequence().getPrefix() + (volume.getSequence().getCurrrentNumber() + 1) + "L7"); // TODO - How to findout LTO Generation???
+			}
+			
 			volResp.setDetails(details);
 		}
 		return volResp;
-
 	}
+	
 	public InitializeResponse initialize(List<InitializeUserRequest> initializeRequestList) throws Exception{	
-		InitializeResponse initializeResponse = new InitializeResponse();
 		Action requestedBusinessAction = Action.initialize;
 		org.ishafoundation.dwaraapi.db.model.master.reference.Action action = configurationTablesUtil.getAction(requestedBusinessAction);
 		if(action == null)
 			throw new Exception("Action for " + requestedBusinessAction.name() + " not configured in DB properly. Please set it first");
 
-		
-//		Request request = new Request();
-//		request.setType(RequestType.user);
-//		request.setActionId(requestedBusinessAction);
-//		request.setStatus(Status.queued);
-//    	User user = getUserObjFromContext();
-//    	String requestedBy = user.getName();
-//
-//    	LocalDateTime requestedAt = LocalDateTime.now();
-//		request.setRequestedAt(requestedAt);
-//		request.setRequestedBy(user);
-//		RequestDetails details = new RequestDetails();
-//		JsonNode postBodyJson = getRequestDetails(initializeRequestList); 
-//		details.setBody(postBodyJson);
-//		request.setDetails(details);
-//
-//		request = requestDao.save(request);
-//		int requestId = request.getId();
-//		logger.info(DwaraConstants.USER_REQUEST + requestId);
-
-		Request userRequest = createUserRequest(requestedBusinessAction, initializeRequestList);
-    	int userRequestId = userRequest.getId();
-
-		List<SystemRequestForInitializeResponse> systemRequests = new ArrayList<SystemRequestForInitializeResponse>();
-		
-		for (InitializeUserRequest nthInitializeRequest : initializeRequestList) {
-			Request systemrequest = new Request();
-			systemrequest.setType(RequestType.system);
-			systemrequest.setRequestRef(userRequest);
-			systemrequest.setActionId(userRequest.getActionId());
-			systemrequest.setStatus(Status.queued);
-			systemrequest.setRequestedBy(userRequest.getRequestedBy());
-			systemrequest.setRequestedAt(LocalDateTime.now());
-
-			RequestDetails systemrequestDetails = requestToEntityObjectMapper.getRequestDetailsForInitialize(nthInitializeRequest);
-
-			systemrequest.setDetails(systemrequestDetails);
-			systemrequest = requestDao.save(systemrequest);
-			logger.info(DwaraConstants.SYSTEM_REQUEST + systemrequest.getId());
-
-			Job job = jobCreator.createJobs(systemrequest, null).get(0); // Initialize generates just one job
-			int jobId = job.getId();
-			Status status = job.getStatus();
-			
-//			The updated sequence no for a volume group in initialize is saved along with User Request...
-//			Volume volumeGroup = volumeDao.findById(nthInitializeRequest.getVolumeGroup());
-//			Sequence sequence = volumeGroup.getSequence();
-//			sequence.incrementCurrentNumber();
-//			sequenceDao.save(sequence);
-//			logger.info("Sequence for - " + volumeGroup.getId() + " updated to " + sequence.getCurrrentNumber());
-			
-			SystemRequestForInitializeResponse systemRequestForInitializeResponse = new SystemRequestForInitializeResponse();
-			systemRequestForInitializeResponse.setId(systemrequest.getId());
-			systemRequestForInitializeResponse.setJobId(jobId);
-			systemRequestForInitializeResponse.setStatus(status);
-			systemRequestForInitializeResponse.setVolume(nthInitializeRequest.getVolume());
-			
-			systemRequests.add(systemRequestForInitializeResponse);
-		}
-		
-		// Framing the response object here...
-		initializeResponse.setUserRequestId(userRequestId);
-		initializeResponse.setAction(userRequest.getActionId().name());
-		initializeResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
-		initializeResponse.setRequestedBy(userRequest.getRequestedBy().getName());
-		initializeResponse.setSystemRequests(systemRequests);
-		return initializeResponse;	
+		return volumeInitializer.initialize(getUserFromContext(), initializeRequestList);
 	}
 	
 	public String finalize(String volumeId) throws Exception{
 		return volumeFinalizer.finalize(volumeId, getUserFromContext());
+	}
+
+	public String generateVolumeindex(String volumeId) throws Exception {
+		Volume volume = volumeDao.findById(volumeId).get();
+		
+		String label = volumeindexManager.createVolumeindex(volume, Domain.ONE);
+		
+		File file = new File(filesystemTemporarylocation + File.separator + volumeId + "_index.xml");
+		FileUtils.writeStringToFile(file, label);
+		String response = file.getAbsolutePath() + " created"; 
+		logger.trace(response);
+		
+		return response;
+	}
+
+	public void rewriteVolume(String volumeId, RewriteRequest rewriteRequest) throws Exception {
+		//Optional<Volume> volumeEntity = volumeDao.findById(volumeId);
+		Volume volume = volumeDao.findById(volumeId).get();
+		if(volume.getHealthstatus() != VolumeHealthStatus.defective)
+			throw new Exception(volumeId + " not flagged as defective. Please double check and flag it first");
+			
+		// create user request
+		HashMap<String, Object> data = new HashMap<String, Object>();
+		data.put("volumeId", volumeId);
+		data.put("mode", rewriteRequest.getMode());
+		data.put("souceCopy", rewriteRequest.getSourceCopy());
+		Integer additionalCopy = rewriteRequest.getDestinationCopy();
+		if(additionalCopy != null)
+			data.put("destinationCopy", additionalCopy);
+		
+		Pattern artifactclassRegexPattern = null;
+		String artifactclassRegex = rewriteRequest.getArtifactclassRegex();
+		if(artifactclassRegex != null) {
+			artifactclassRegexPattern = Pattern.compile(artifactclassRegex);
+			data.put("artifactclassRegex", artifactclassRegex);
+		}
+		Request userRequest = createUserRequest(Action.rewrite, data);
+		Domain domain = Domain.ONE; // TODO Hardcoded domain
+
+		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeIdAndStatus(volumeId, ArtifactVolumeStatus.current); // only not deleted artifacts need to be rewritten
+		
+		// loop artifacts on volume
+		for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
+			int artifactId = nthArtifactVolume.getId().getArtifactId();
+			
+			Artifact artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).findById(artifactId).get(); // get the artifact details from DB
+ 
+			// filtering out artifacts that dont match specified artifactclass(es)
+			if(artifactclassRegexPattern != null) {
+				String artifactclassId = artifact.getArtifactclass().getId();
+				Matcher m = artifactclassRegexPattern.matcher(artifactclassId);
+				if(!m.matches()) { 
+					logger.info("Skipping " + artifact.getName() + "(" + artifactId + ") as " + artifactclassId + " doesnt match " + artifactclassRegex);
+					continue;
+				}
+			}
+
+			// Also System will skip any artifacts which already exist on the additional copy (e.g. if the config was changed to increase the number of copies from 3 to 4 while a tape was partially written - so the artifacts on the latter part of that tape would need to be skipped)
+			if(additionalCopy != null) {
+				boolean isCopyAlreadyWritten = false; 
+				List<ArtifactVolume> artifactVolumeList2 = domainSpecificArtifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
+				for (ArtifactVolume nthArtifactVolume2 : artifactVolumeList2) {
+					if(nthArtifactVolume2.getVolume().getGroupRef().getCopy().getId() == additionalCopy) {
+						isCopyAlreadyWritten = true;
+						break;
+					}
+				}
+				if(isCopyAlreadyWritten) {
+					logger.info("Skipping " + artifact.getName() + "(" + artifactId + ") as additional copy already written");
+					continue;
+				}
+			}
+			
+			//create system requests			
+			Request systemRequest = new Request();
+			systemRequest.setType(RequestType.system);
+			systemRequest.setRequestRef(userRequest);
+			systemRequest.setActionId(userRequest.getActionId());
+			systemRequest.setStatus(Status.queued);
+			systemRequest.setRequestedBy(userRequest.getRequestedBy());
+			systemRequest.setRequestedAt(LocalDateTime.now());
+		
+			RequestDetails systemrequestDetails = new RequestDetails();
+			systemrequestDetails.setArtifactId(artifactId);
+			systemrequestDetails.setVolumeId(volumeId);
+			systemrequestDetails.setMode(RewriteMode.valueOf(rewriteRequest.getMode()));
+			systemrequestDetails.setSourceCopy(rewriteRequest.getSourceCopy());
+			if(rewriteRequest.getDestinationCopy() != null)
+				systemrequestDetails.setDestinationCopy(rewriteRequest.getDestinationCopy());
+			if(rewriteRequest.getArtifactclassRegex() != null)
+				systemrequestDetails.setArtifactclassRegex(rewriteRequest.getArtifactclassRegex());
+			systemRequest.setDetails(systemrequestDetails);
+			systemRequest = requestDao.save(systemRequest);
+			
+			logger.info(DwaraConstants.SYSTEM_REQUEST + systemRequest.getId());
+			
+
+			//create jobs
+			jobCreator.createJobs(systemRequest, artifact);
+		}
+	}
+
+	public MarkVolumeStatusResponse markVolumeStatus(String volumeId, String status, MarkVolumeStatusRequest markVolumeStatusRequest) throws Exception {
+		MarkVolumeStatusResponse markVolumeStatusResponse = new MarkVolumeStatusResponse();
+		
+		Volume volume = volumeDao.findById(volumeId).get();
+		if(volume == null)
+			throw new Exception(volumeId + " not found");
+		
+		VolumeHealthStatus volumeStatus = null;
+		try {
+			volumeStatus = VolumeHealthStatus.valueOf(status);
+			if(volumeStatus == null)
+				throw new Exception(status + " not supported");
+				
+		}catch (Exception e) {
+			throw new Exception(status + " not supported");
+		}
+		
+		String reason = markVolumeStatusRequest.getReason();
+		// create user request
+		HashMap<String, Object> data = new HashMap<String, Object>();
+		data.put("volumeId", volumeId);
+		data.put("status", status);
+		data.put("reason", reason);
+		Request userRequest = createUserRequest(Action.mark_volume, data);
+		userRequest.setMessage(reason);
+		requestDao.save(userRequest);
+		
+		volume.setHealthstatus(volumeStatus);
+
+		volumeDao.save(volume);
+		
+		markVolumeStatusResponse.setRequestId(userRequest.getId());
+		markVolumeStatusResponse.setRequestedBy(userRequest.getRequestedBy().getName());
+		markVolumeStatusResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
+		
+		markVolumeStatusResponse.setVolumeId(volumeId);
+		markVolumeStatusResponse.setVolumeStatus(status);
+		
+		markVolumeStatusResponse.setAction(userRequest.getActionId().name());
+		markVolumeStatusResponse.setStatus(userRequest.getStatus().name());
+		markVolumeStatusResponse.setCompletedAt(getDateForUI(userRequest.getCompletedAt()));
+		
+		return markVolumeStatusResponse;
 	}
 }
 

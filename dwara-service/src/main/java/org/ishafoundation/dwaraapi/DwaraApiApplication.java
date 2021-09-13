@@ -8,7 +8,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.ishafoundation.dwaraapi.db.dao.master.VersionDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDaoQueryProps;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Version;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +47,7 @@ public class DwaraApiApplication {
 	@EventListener(ApplicationReadyEvent.class)
 	public void validateDbVersion() throws Exception {
 		Version version = versionDao.findTopByOrderByVersion();
-		String dbVersion = "2.1.0";
+		String dbVersion = "2.1.1";
 		if(version == null || !version.getVersion().equals(dbVersion))
 			throw new Exception("DB version mismatch. Upgrade DB to " + dbVersion);
 	}
@@ -55,13 +58,32 @@ public class DwaraApiApplication {
 	@EventListener(ApplicationReadyEvent.class)
 	public void createThreadPoolsForTask() throws Exception {
 		String globalProcessingtaskDefault = IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER;
-		IProcessingTask.taskName_executor_map.put(globalProcessingtaskDefault, createExecutor(globalProcessingtaskDefault, true));
+		Executor globalExecutorDefault = createExecutor(globalProcessingtaskDefault, true);
+		IProcessingTask.taskName_executor_map.put(globalProcessingtaskDefault, globalExecutorDefault);
 		
 		Set<String> processingtaskSet = processingtaskActionMap.keySet();
 		for (String processingtaskName : processingtaskSet) {
+			String identifier = null;
 			Executor executor = createExecutor(processingtaskName, false);
-			if(executor != null)
+			if(executor != null) {
 				IProcessingTask.taskName_executor_map.put(processingtaskName, executor);
+				identifier = processingtaskName;
+			}
+			else {
+				identifier = IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER;
+				executor = globalExecutorDefault;
+			}
+			
+			
+			JobDaoQueryProps jobDaoQueryProps = JobDao.executorName_queryProps_map.get(identifier);
+			if(jobDaoQueryProps == null) {
+				jobDaoQueryProps = new JobDaoQueryProps();
+			}
+			jobDaoQueryProps.getTaskNameList().add(processingtaskName);
+			ThreadPoolExecutor tpe = (ThreadPoolExecutor) executor;
+			jobDaoQueryProps.setLimit(tpe.getCorePoolSize() + 2);
+
+			JobDao.executorName_queryProps_map.put(identifier, jobDaoQueryProps);
 		}
 	}
 	
@@ -69,6 +91,7 @@ public class DwaraApiApplication {
 		String propertyNamePrefix = "threadpoolexecutor."+processingtaskName;	
 		String corePoolSizePropName = propertyNamePrefix + ".corePoolSize";
 		String maxPoolSizePropName = propertyNamePrefix + ".maxPoolSize";
+		String priorityPropName = propertyNamePrefix + ".priority";
 		
 		String configuredCorePoolSize = env.getProperty(corePoolSizePropName);
 		if(StringUtils.isBlank(configuredCorePoolSize)) {
@@ -84,8 +107,19 @@ public class DwaraApiApplication {
 		if(StringUtils.isBlank(configuredMaxPoolSize))
 			configuredMaxPoolSize = configuredCorePoolSize;
 		int maxPoolSize = Integer.parseInt(configuredMaxPoolSize);
+
 		
-		return new ThreadPoolExecutor(corePoolSize, maxPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+		String configuredPriority = env.getProperty(priorityPropName);
+		if(StringUtils.isBlank(configuredPriority))
+			configuredPriority = "0";
+		int priority = Integer.parseInt(configuredPriority);
+		
+		 BasicThreadFactory factory = new BasicThreadFactory.Builder()
+			     .namingPattern(processingtaskName + "-%d")
+			     .daemon(false)
+			     .priority(Thread.NORM_PRIORITY + priority)
+			     .build();
+		return new ThreadPoolExecutor(corePoolSize, maxPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(), factory);
 	}
 
 }

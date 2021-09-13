@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties
 public class Configuration {
 	
+	private String appMode;
+	
 	private String regexAllowedChrsInFileName;
 	
 	private boolean setArtifactFileSystemPermissions;
@@ -39,6 +41,21 @@ public class Configuration {
 	
 	private int allowedAutoRequeueAttemptsOnFailedStorageJobs;
 	
+	private String sshSystemUser;
+	
+	private boolean checksumRsync;
+	
+	private String bwLimitRsync;
+	
+	
+	public String getAppMode() {
+		return appMode;
+	}
+
+	public void setAppMode(String appMode) {
+		this.appMode = appMode;
+	}
+
 	public String getRegexAllowedChrsInFileName() {
 		return regexAllowedChrsInFileName;
 	}
@@ -167,4 +184,27 @@ public class Configuration {
 		this.allowedAutoRequeueAttemptsOnFailedStorageJobs = allowedAutoRequeueAttemptsOnFailedStorageJobs;
 	}
 
+	public String getSshSystemUser() {
+		return sshSystemUser;
+	}
+
+	public void setSshSystemUser(String sshSystemUser) {
+		this.sshSystemUser = sshSystemUser;
+	}
+	
+	public boolean isChecksumRsync() {
+		return checksumRsync;
+	}
+
+	public void setChecksumRsync(boolean checksumRsync) {
+		this.checksumRsync = checksumRsync;
+	}
+
+	public String getBwLimitRsync() {
+		return bwLimitRsync;
+	}
+
+	public void setBwLimitRsync(String bwLimitRsync) {
+		this.bwLimitRsync = bwLimitRsync;
+	}
 }

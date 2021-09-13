@@ -51,8 +51,8 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 	private Set<String> unSupportedExtns = new TreeSet<String>();
 	private Set<String> filePathNamesGt4096Chrs = new TreeSet<String>();
 	private Set<String> fileNamesWithNonUnicodeChrs = new TreeSet<String>();
-	
-
+	private Set<String> photoSeriesFileNameValidationFailedFileNames = new TreeSet<String>();
+	private static Pattern photoSeriesArtifactclassFileNamePattern = Pattern.compile("([0-9]{8})_[A-Z]{3}_[0-9]{4}(.)*"); // 20200101_CMM_0002.NEF or 20200101_CMM_0002-e.NEF (-e optional) or 20200105_CMM_9999_Ashram-Program-Volunteers-Meet-Tamil-Group-Photo-1.tif or 20200428_CMM_0030to0032-mp-e.jpg
 	StagedFileVisitor(String stagedFileName, String junkFilesStagedDirName, List<Pattern> excludedFileNamesRegexList, Set<String> supportedExtns) {
 		this.stagedFileName = stagedFileName;
 		this.junkFilesStagedDirName = junkFilesStagedDirName;
@@ -98,6 +98,9 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 		return fileNamesWithNonUnicodeChrs;
 	}	
 
+	public Set<String> getPhotoSeriesFileNameValidationFailedFileNames() {
+		return photoSeriesFileNameValidationFailedFileNames;
+	}
 
 	@Override
 	public FileVisitResult preVisitDirectory(Path dir,
@@ -146,10 +149,11 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 			// swallow it
 		}
 
+		boolean isSymbolicLink = false;
 		// unresolved links
 		//if(Files.isSymbolicLink(file) && file.getCanonicalPath() == null)
 		if(Files.isSymbolicLink(file)) {
-			
+			isSymbolicLink = true;
 			logger.trace("SymLink " + filePathName);
 			logger.trace("FileRealPath " + fileRealPath);
 			if(fileRealPath == null) {
@@ -169,8 +173,18 @@ public class StagedFileVisitor extends SimpleFileVisitor<Path> {
 			return CONTINUE;
 		}
 		
+		if(filePathName.contains("photo")) {
+			String fileName = file.getFileName().toString();
+			if(!file.toFile().isHidden()) { // ignore hidden files from validation - Refer Sailusha akka email on 19th May 2021 - Sub: Photo pub file name validations
+				Matcher m = photoSeriesArtifactclassFileNamePattern.matcher(fileName);
+				if(!m.find()) {
+					photoSeriesFileNameValidationFailedFileNames.add(fileName);
+				}
+			}
+		}
+		
 		fileCount++;
-		totalSize = totalSize + FileUtils.sizeOf(file.toFile());
+		totalSize = totalSize + (isSymbolicLink ? 0 : FileUtils.sizeOf(file.toFile()));
 
 		String fileName = file.getFileName().toString();
 		String fileExtn = FilenameUtils.getExtension(fileName);

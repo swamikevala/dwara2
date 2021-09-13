@@ -3,8 +3,9 @@ package org.ishafoundation.dwaraapi.storage.archiveformat.tar.response.component
 public class File {
 
 	private String filePathName;
+	private String linkName;
 	private Long fileSize;
-	private int archiveBlock;
+	private Long archiveBlock;
 //	private int volumeBlock;
 
 
@@ -14,16 +15,22 @@ public class File {
 	public void setFilePathName(String filePathName) {
 		this.filePathName = filePathName;
 	}
+	public String getLinkName() {
+		return linkName;
+	}
+	public void setLinkName(String linkName) {
+		this.linkName = linkName;
+	}
 	public Long getFileSize() {
 		return fileSize;
 	}
 	public void setFileSize(Long fileSize) {
 		this.fileSize = fileSize;
 	}
-	public int getArchiveBlock() {
+	public Long getArchiveBlock() {
 		return archiveBlock;
 	}
-	public void setArchiveBlock(int archiveBlock) {
+	public void setArchiveBlock(Long archiveBlock) {
 		this.archiveBlock = archiveBlock;
 	}
 //	public int getVolumeBlock() {

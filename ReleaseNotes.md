@@ -1,3 +1,482 @@
+# Dwara App Version - 2.1.27 (31st Aug 2021)
+### New features
+
+1) Support for IT infra dept backup
+
+2) listFile api - For preview links to work please do the following in mam server(24)
+
+> cd /var/www and create a sym link 
+>> ln -s /data/proxies mam
+
+> See if http://172.18.1.24/mam works - if it still didnt work check the logs /var/log/httpd/error_log - if it shows permission denied error change context like mentioned here https://serverfault.com/questions/396036/apache-httpd-permissions - 
+>> ls -la --context /var/www/html
+
+>> chcon -R unconfined_u:object_r:httpd_sys_content_t:s0 /data/proxies-test
+
+> application.properties to have 
+>> catdv.proxiesRootLocationSoftLinkName=mam
+
+3) mkv2mov support for HDV too - With this mkv2mov is complete
+
+
+### Enhancements
+
+1) Artifact.size in Request API
+
+
+### Bug Fixes
+
+1) Tape UI - Fix for just added tapes to library misleadingly shows in restore remove column
+
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_17.sql)
+
+
+# Dwara App Version - 2.1.26 (16th Aug 2021)
+### New features
+
+1) Tags support in process layer
+
+2) New mkv2mov converter
+
+3) Cancel/Delete API enhancement - reason capture
+
+4) Mark volume status API and volume table schema changes
+
+
+### Bug fixes
+
+1) Fix race condition in job management for defective tape rewrite - not 1 but top 2 storage jobs are now picked up for job selection
+
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_16.sql)
+
+1) mkv2mov story 
+ 
+ * tagging needs to happen for ntsc
+ 
+ * change vyom endpoint and postbody
+ 
+ * change pgururmurthy password and change user id in vyom
+
+# Dwara App Version - 2.1.25 (2nd Aug 2021)
+### New features
+1) Request API now supports single request
+
+2) Folder catalog changes
+
+
+### Bug fixes
+
+1) PROD Restore failures - Renamed artifacts move failures fixed and failed restores running in a loop
+
+2) Tape UI - avoid showing dupes, sort by slot id for removes, sort by barcode for adds   
+
+3) Rewrite need to flag *filevolume.deleted for the defective ones
+
+4) Handle "Unknown" tapes in UI view and autoinitialisation
+
+5) Extra guard while saving the job object in TapeJobManager to avoid concurrent request on it(eg., Cancel) causing jobs status to be overwritten
+
+6) Directory watcher - Dont register subfolders under watched dir - For eg.,  H-BETACAM-541/H-BETACAM-543 - H-BETACAM-543 should not be registered and only H-BETACAM-541 need to be registered which will fail validation
+
+  
+### Upgrade steps
+
+1) Tapes UI - sorting etc., - not tested ensure its working after rollout and fix if anything needed right there and roll it out again... 
+
+2) Rollout Directory watcher
+
+# Dwara App Version - 2.1.24 (12th Jul 2021)
+### New features
+1) Support for marked_failed functionality
+
+2) Request API - Enhanced to support artifactclass filter for Ingest summary
+
+3) Auto initializer as API endpoint
+
+### Bug fixes
+1) Bru restores - handle non 0 status appropriately
+
+
+# Dwara App Version - 2.1.23 (27th Jun 2021)
+### New features
+1) Proxy conversion command now includes audio channel 2 too
+
+### Bug fixes
+
+1) Some loglevel changes to avoid cluttering logs which is bothering Swami's eyes - Hopefully no more excuses not to look at app logs anymore
+
+
+2) Jobcreator prod bug fix - dependency jobs not getting created for processingtaskWithDependencyStoragetask for a specific scenario. Impacted requests sorted out. Verified using 
+
+> select * from file1_volume join file1 on file1.id = file_id where verified_at is null and directory = 0;
+
+
+3) Used the opportunity presented by above and fixed setting job.volume for update missed out usecase
+
+
+4) Fix for restores complete - but weirdly no files present in destination scenario
+
+
+5) Create dummy artifact label in disk with placeholder data to avoid write failures during no free disk space times.
+
+
+6) Fix for "Restore verify" requests throwing exception
+
+# Dwara App Version - 2.1.22 (16th Jun 2021)
+### New features 
+
+1) Emedia and impressions support
+
+
+2) JobManager improvements for rewrite scenario 
+
+
+3) Restore by artifactname
+
+
+4) Human readable tape size in dashboard
+
+
+5) User Roles support
+
+
+6) HDV support
+
+
+7) Job Inclusion/Exclusion based on Flowelement.taskconfig inc/exc props
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_13.sql)
+
+# Dwara App Version - 2.1.21 (19th May 2021)
+### New features 
+
+1) Photo pub file name validation change request
+
+
+# Dwara App Version - 2.1.20 (16th May 2021)
+### New features 
+
+1) Cancelling failed restore requests
+
+2) Job manager changes
+
+3) Ingester supporting Hi8
+
+### Bug fixes
+
+1) changeArtifactclass placeholderJob manipulation and logging fixed
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_12.sql)
+
+1) application.properties to have the below entry
+
+> wowo.useNewJobManagementLogic=true
+
+# Dwara App Version - 2.1.19 (9th May 2021)
+### New features
+
+1) Defective tape rewrite
+
+2) Request API enhancements(groupedPlaceholderJobs)
+
+3) Change artifactclass API 
+
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_11.sql)
+
+# Dwara App Version - 2.1.18 (25th Apr 2021)
+### Bug fix
+
+
+0) avoid clean up tapes during mapdrive and initialization
+
+1) Fixed restore for soft renamed artifacts
+
+2) Fixed handleTapes api removeAfterJob NPE 
+
+3) Added support for xcat on ingester
+
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_10_HotFix.sql)
+
+1) clean up drive -
+
+4) update ltowala sequence code for overlapping Zs
+
+279375 - hard shut down impacted job -- 
+
+rerun the failed VPUB restore jobs
+
+ingest the digi priv1(4) and pub(2) - ingester up app down(5), app not responding window(1)
+
+  
+
+# Dwara App Version - 2.1.17 (18th Apr 2021)
+### New features
+
+0) Edited (Translations) support - flowelement.pathnameregex processing layer changed - needs regression
+
+1) Support for scanning artifacts globally across artifactclasses
+
+2) Auto initialising blank tapes - Needs the application.properties entry mentioned in upgrade steps section
+
+3) Next barcode to be printed
+
+4) Support showing username and not path in scanned resultset
+
+5) Tapes Handling - load/unload tapes from library
+
+6) Support search on completed date range on /request API
+
+### Maintenance
+
+1) Soft rename artifacts with overlapping Sequence code - Call API end point from swagger: /fixSeqCodeForEdited 
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_10.sql)
+
+1) application.properties to have the below entry
+
+> scheduler.blankTapeAutoInitializer.cronExpression=0 0 * ? * *
+
+2) Update dwara-operations shell script
+
+# Dwara App Version - 2.1.16 (4th Apr 2021)
+### New features
+
+1) Support for photo pub
+
+2) Soft rename
+
+3) Mark completed action for a job
+
+### Bug fix
+
+1) Exclude deleted artifacts from dupe check
+
+2) Api updateUsedSpace to calculate tape free capacity
+
+3) Locations: default location LTO Room doesn't map to a copy
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_9.sql)
+
+1) Install ImageMagick ufraw exiv2
+
+2) create photo-proxy/.copying folders in MAM
+
+3) Call api end points from swagger: /catalog/updateUsedSpace
+
+4) Clean tape drive
+
+5) reminder to update props file with some junk additions
+
+# Dwara App Version - 2.1.15 (28th Mar 2021)
+### New features
+
+1) Bulk update locations
+
+2) Processing layer changes to support outputfiletype's extensionFiletype suffix;
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_8.sql)
+
+# Dwara App Version - 2.1.14 (21st Mar 2021)
+### New features
+
+1) Tape catalog searching
+
+2) Artifact catalog searching
+
+### Bug fix
+
+1) File name too long Mam update failures
+
+2) RemoteCmdLineExecuter tmp std channel file deletion
+
+3) Directory watcher changes on folder ownership
+
+4) Artifact dupe fix
+
+5) Resetting the system request status to queued on a job being requeued
+
+6) clean up Sql patches
+	dwara-db\src\data\sql\Z140.sql
+	dwara-db\src\data\sql\dwara_db_cleanUp_Mar_2021.sql
+	
+### Upgrade steps
+
+1) Call api end points from swagger: /catalog/updateFinalizedDate, /catalog/updateUsedSpace
+
+# Dwara App Version - 2.1.13 (11th Mar 2021)
+### Bug fix
+
+1) Artifact with Symbolic links not to be warned to the user as its of no consequence
+
+2) Fix for write restore holding on a tape indefinitely - corrected
+
+# Dwara App Version - 2.1.12 (10th Mar 2021)
+### New features
+
+1) Tagging support for Artifacts for quick search
+
+2) Catalog changes - 
+	
+> Artifact View - Search on Artifact results in list of tapes Artifact has been written
+	
+> Tape View - Search on specific Tape number lists all artifacts written on it
+	
+3) Support for hard and soft links
+	
+> Pending 1 - Icon? folder under Poem-Sadhguru-Poem-For-New-Year-2021-Timespace_English_01Min-07Secs_Unconsolidated/FOOTAGE/Neue World - Free for Personal Use 2/Icon? still missing block details
+	
+> Pending 2 - Volume index after finalization to have link details... Need to spec it out
+
+4) UI Enhancements
+
+> Show pools running out of space on top
+
+> Abilitiy to Sort Artifact by verified status(red/yellow/green thumbsup)
+
+### Bug fix
+
+1) Failed user request not reflecting status
+
+2) Set Job.Volume used for dependent processing tasks
+
+3) File path with space on mkvtoolnix
+
+4) Rsync bwlimit configurable for Filecopier
+
+5) Fix for write restore holding on a tape indefinitely
+
+6) Keep jobs queued that dont have needed Tape on Library
+
+
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_7.sql) to fix the file size discrepancies
+
+1) application.properties to have the below entry
+
+> bwLimitRsync=25000/30000
+
+> threadpoolexecutor.processingtask.core/maxPoolSize=4
+
+> threadpoolexecutor.video-proxy-low-gen.core/maxPoolSize=2
+
+
+2) AdminController to use payload like [{"task": "video-proxy-low-gen", "corePoolSize" : 5, "maxPoolSize" : 5, "priority" :3}]
+
+# Dwara App Version - 2.1.11 (14th Feb 2021)
+### Hot fix
+
+LIVE Incident
+
+Artifact sized > 1TB failed Tar writes because of archive block datatype was int and hence not able to hold the long value
+
+Fixed table and fixed code
+
+# Dwara App Version - 2.1.10 (Space [Control] - 7th Feb 2021)
+
+### New features
+
+1) Ability to control both Dwara and ffmpeg thread at runtime to facilitate optimising thread allocation. Runtime properties update using swagger.
+
+### Bug fix
+
+1) Maintenance mode - Ability to gracefully let already in_progress jobs to completion, but stop processing any further[Dont process queued jobs] - Fixed processing layer draining all jobs inspite of maintenance mode. Now app goes maintenance quickly 
+
+### Upgrade steps
+
+1) application.properties to have the below entry
+
+> appMode=online
+
+
+# Dwara App Version - 2.1.09 (Space - 31st Jan 2021 - Evening)
+### Live Incident 
+Introduced QC gen with a global pool backfired us with more qc gen jobs taken up parallely and with uncontrolled ffmpeg core threads increased the job completion of every process. So we want to control the ffmpeg threads and want it configurable. Hence the change   
+
+### Upgrade steps
+
+0 Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_4.sql)
+
+1 Follow the step by step instruction guide
+
+2 application.properties to have the following entries
+>ffmpeg.video-proxy-low-gen.threads=2
+
+>ffmpeg.video-digi-2020-preservation-gen.threads=2
+
+>ffmpeg.video-digi-2020-qc-gen.threads=2
+
+>scheduler.statusUpdater.fixedDelay=30000
+
+
+# Dwara App Version - 2.1.08 (Space - 31st Jan 2021)
+# Dwara DB Version - 2.1.1
+
+### New features
+1 DB schema changes replacing ArtifactclassTask 
+
+2 10g converter
+
+3 Existing File copier replaces New RsyncCopier
+
+4 Maintenance mode quick clear - clears already lined up jobs in Threadpoolexecuter queue when app enters maintenance mode.
+
+### Bug fixes
+
+1 Fix for hung File Descriptors 
+ 
+2 Avoid drive yielding for write jobs completing after scheduler prepares storagejoblist 
+
+3 Delete transcoded files after request completion
+
+4 fix for ltowala
+
+5 restore request - when tape not loaded shouldnt fail
+
+6 Finalize failure
+
+### checklist
+
+1 Restart ingest server
+
+2 Use different http port for pre-prod 
+
+3 Start directorywatcher with GC options
+
+### Upgrade steps
+
+0 Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_3.sql)
+
+1 Follow the step by step instruction guide
+
+2 Set up Rsync in remote server where 10G need to go. Create the configured destination directory and also a .copying directory under the destination directory 
+
+3 Ensure application.properties has the following entry
+
+> checksumRsync=true/false - used in configuring rsync with or without checksum verify
+
 # Dwara App Version - 2.1.07 (storage blocker fix - 19th Jan 2021)
 
 ### LIVE Incident
@@ -18,9 +497,7 @@
 
 4 Run the job.createdependents endpoint to create dependent jobs for the failed writes
 
-5 Unflag suspect on the volume
-
-4  
+5 Unflag suspect on the volume  
 
 # Dwara App Version - 2.1.06 (data porting hot fixer - 17th Jan 2021)
 
@@ -89,7 +566,7 @@ Now apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_1.sql)
 
 In DB version 2.1.0 we are moving from latin1 to unicode charset and to achieve this 
 
-* Following lines to be added to /etc/my.conf
+* Following lines to be added to /etc/my.cnf
 
 > innodb_file_format = Barracuda
 

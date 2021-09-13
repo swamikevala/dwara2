@@ -8,6 +8,8 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.Artifa
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeLifecyclestage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,7 +90,7 @@ public class VolumeUtil {
 	
 	public Volume getToBeUsedPhysicalVolume(Domain domain, String volumegroupId, long artifactSize) {
 		Volume toBeUsedVolume = null;
-		List<Volume> physicalVolumesList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndDefectiveIsFalseAndSuspectIsFalseOrderByIdAsc(volumegroupId);
+		List<Volume> physicalVolumesList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndHealthstatusAndLifecyclestageOrderByIdAsc(volumegroupId, VolumeHealthStatus.normal, VolumeLifecyclestage.active);
 		for (Volume nthPhysicalVolume : physicalVolumesList) {
 
 			long projectedArtifactSize = getProjectedArtifactSize(artifactSize, nthPhysicalVolume);
@@ -104,13 +106,13 @@ public class VolumeUtil {
 			}
 		}
 		if(toBeUsedVolume == null)
-			logger.warn(volumegroupId + " hasnt got enough capacity. Bump it");
+			logger.debug(volumegroupId + " hasnt got enough capacity. Bump it");
 		return toBeUsedVolume;		
 	}
 
 	public boolean isPhysicalVolumeGood(String physicalVolumeId) {
 		Volume toBeUsedVolume = volumeDao.findById(physicalVolumeId).get();
-		if(toBeUsedVolume.getSuspect())
+		if(toBeUsedVolume.getHealthstatus() != VolumeHealthStatus.normal)
 			return false;
 		return true;		
 	}
@@ -142,7 +144,7 @@ public class VolumeUtil {
 		if(jobInProgressCount > 0) {
 			tapeUsageStatus = TapeUsageStatus.job_in_progress;
 		}
-		else if(getQueuedJobOnVolume(volumeId)){
+		else if(isQueuedJobOnVolume(volumeId) || isQueuedJobOnGroupVolume(volumeDao.findById(volumeId).get().getGroupRef().getId())){ // for restores and writes respectively
 			// any group job queued up
 			tapeUsageStatus = TapeUsageStatus.job_queued;
 		}
@@ -153,9 +155,19 @@ public class VolumeUtil {
 		return tapeUsageStatus;
 	}
 	
-	private boolean getQueuedJobOnVolume(String volumeId){
+	// for writes
+	public boolean isQueuedJobOnGroupVolume(String volumeId){
 		boolean queuedJob = false;
 		long jobInQueueCount = jobDao.countByStoragetaskActionIdIsNotNullAndGroupVolumeIdAndStatus(volumeId, Status.queued);
+		if(jobInQueueCount > 0)
+			queuedJob = true;
+		return queuedJob; 
+	}
+	
+	// for restores
+	public boolean isQueuedJobOnVolume(String volumeId){
+		boolean queuedJob = false;
+		long jobInQueueCount = jobDao.countByStoragetaskActionIdIsNotNullAndVolumeIdAndStatus(volumeId, Status.queued);
 		if(jobInQueueCount > 0)
 			queuedJob = true;
 		return queuedJob; 

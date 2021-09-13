@@ -158,7 +158,7 @@ public class TarBlockCalculatorUtilTest {
 		int fileArchiveBlock = 136638;
 		String fileName = "Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoProApr6/DCIM/104GOPRO/GOPR6925.MP4";
 
-		int sbc = TarBlockCalculatorUtil.getSkipByteCount(fileName, fileArchiveBlock,  tarBlocksize, blockingFactor);
+		int sbc = TarBlockCalculatorUtil.getSkipByteCount(fileArchiveBlock,  tarBlocksize, blockingFactor);
 		System.out.println(sbc);
 		//assertEquals(449, sbc);
 		
@@ -167,14 +167,14 @@ public class TarBlockCalculatorUtilTest {
 		fileArchiveBlock = 25160;
 		fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9/2 CD/20190701_074810.mp4";
 
-		sbc = TarBlockCalculatorUtil.getSkipByteCount(fileName, fileArchiveBlock, tarBlocksize, blockingFactor);
+		sbc = TarBlockCalculatorUtil.getSkipByteCount(fileArchiveBlock, tarBlocksize, blockingFactor);
 		System.out.println(sbc);
 		//assertEquals(585, sbc);
 		
 		fileArchiveBlock = 3;
 		fileName = "Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9";
 
-		sbc = TarBlockCalculatorUtil.getSkipByteCount(fileName, fileArchiveBlock, tarBlocksize, blockingFactor);
+		sbc = TarBlockCalculatorUtil.getSkipByteCount(fileArchiveBlock, tarBlocksize, blockingFactor);
 		System.out.println(sbc);
 	}
 	 

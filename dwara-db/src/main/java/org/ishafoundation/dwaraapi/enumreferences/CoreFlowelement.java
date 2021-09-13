@@ -3,19 +3,37 @@ package org.ishafoundation.dwaraapi.enumreferences;
 import java.util.ArrayList;
 import java.util.List;
 
-public enum CoreFlowelement {
-	dep_archive_flow_checksum_gen("1", "archive-flow", null, "checksum-gen", null, null, 1, false, true),
-	dep_archive_flow_write("2", "archive-flow", "write", null, null, null, 2, false, true),
-	dep_archive_flow_checksum_verify("3", "archive-flow", "verify", null, new String[] {"1","2"}, null, 3, false, true),
-	
-	core_archive_flow_checksum_gen("C1", "archive-flow", null, "checksum-gen", null, null, 1, true, false),
-	core_archive_flow_write("C2", "archive-flow", "write", null, null, null, 2, true, false),
-	core_archive_flow_restore("C3", "archive-flow", "restore", null, new String[] {"C2"}, null, 3, true, false),
-	core_archive_flow_checksum_verify("C4", "archive-flow", null, "checksum-verify", new String[] {"C1","C3"}, null, 4, true, false),
-	
-	core_restore_verify_flow_restore("C11", "restore-verify-flow", "restore", null, null, null, 11, true, false),
-	core_restore_verify_flow_checksum_verify("C12", "restore-verify-flow", null, "checksum-verify", new String[] {"C11"}, null, 12, true, false);
+import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+public enum CoreFlowelement {
+	/**
+	 *  NOTE : if you add any extra param in here to reflect change in coreflowelement table - pls ensure FlowelementUtil.getFlowelement() is also attended
+	 */
+	dep_archive_flow_checksum_gen("1", "archive-flow", null, "checksum-gen", null, null, 1, false, true, null),
+	dep_archive_flow_write("2", "archive-flow", "write", null, null, null, 2, false, true, null),
+	dep_archive_flow_checksum_verify("3", "archive-flow", "verify", null, new String[] {"1","2"}, null, 3, false, true, null),
+	
+	core_archive_flow_checksum_gen("C1", "archive-flow", null, "checksum-gen", null, null, 1, true, false, null),
+	core_archive_flow_write("C2", "archive-flow", "write", null, null, null, 2, true, false, null),
+	core_archive_flow_restore("C3", "archive-flow", "restore", null, new String[] {"C2"}, null, 3, true, false, null),
+	core_archive_flow_checksum_verify("C4", "archive-flow", null, "checksum-verify", new String[] {"C1","C3"}, null, 4, true, false, null),
+	
+	core_restore_verify_flow_restore("C11", "restore-verify-flow", "restore", null, null, null, 11, true, false, null),
+	core_restore_verify_flow_checksum_verify("C12", "restore-verify-flow", null, "checksum-verify", new String[] {"C11"}, null, 12, true, false, null),
+
+	core_rewrite_flow_good_copy_restore("C21", "rewrite-flow", "restore", null, null, null, 21, true, false, null),
+	core_rewrite_flow_good_copy_checksum_verify("C22", "rewrite-flow", null, "checksum-verify", new String[] {"C21"}, null, 22, true, false, null),
+	core_rewrite_flow_write("C23", "rewrite-flow", "write", null, new String[] {"C22"}, null, 23, true, false, null),
+	core_rewrite_flow_restore("C24", "rewrite-flow", "restore", null, new String[] {"C23"}, null, 24, true, false, null),
+	core_rewrite_flow_checksum_verify("C25", "rewrite-flow", null, "checksum-verify", new String[] {"C24"}, null, 25, true, false, null),
+
+	core_restore_flow_restore("C31", "restore-flow", "restore", null, null, null, 31, true, false, null),
+	core_restore_flow_mkv_mov("C32", "restore-flow", null, "video-digi-2020-mkv-mov-gen", new String[] {"C31"}, null, 32, true, false, "{\"include_if\": {\"artifactclass_regex\": \"video-digi-2020.*\"}}");
+
+	
 	private String id;
 	private String flowId;
 	private String storagetaskActionId;
@@ -25,8 +43,9 @@ public enum CoreFlowelement {
 	private int displayOrder;
 	private boolean active;
 	private boolean deprecated;
+	private Taskconfig taskconfig;
 
-	CoreFlowelement(String id, String flowId, String storagetaskActionId, String processingtaskId, String[] dependencies, String flowRefId, int displayOrder, boolean active, boolean deprecated){
+	CoreFlowelement(String id, String flowId, String storagetaskActionId, String processingtaskId, String[] dependencies, String flowRefId, int displayOrder, boolean active, boolean deprecated, String taskconfigString){
 		this.id = id; 
 		this.flowId = flowId;
 		this.storagetaskActionId = storagetaskActionId;
@@ -36,6 +55,17 @@ public enum CoreFlowelement {
 		this.displayOrder = displayOrder;
 		this.active = active;
 		this.deprecated = deprecated;
+		Taskconfig taskConfig_mkv_mov = null;
+		if(taskconfigString != null) {
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				taskConfig_mkv_mov = mapper.readValue(taskconfigString, Taskconfig.class);
+			} catch (JsonProcessingException e) {
+				//System.err.println("Unable to map taskconfig for core flowelement id " + id + " : " + e.getMessage());
+				e.printStackTrace(); // how do we bubble up the exception 
+			}
+		}
+		this.taskconfig = taskConfig_mkv_mov;
 	}
 
 	public String getId() {
@@ -74,6 +104,10 @@ public enum CoreFlowelement {
 		return deprecated;
 	}
 	
+	public Taskconfig getTaskconfig() {
+		return taskconfig;
+	}
+
 	public static List<CoreFlowelement> findAllByFlowId(String flowId){
 		List<CoreFlowelement> coreFlowelementList = new ArrayList<CoreFlowelement>();
 	    for (CoreFlowelement nthCoreFlowelement : CoreFlowelement.values()) {

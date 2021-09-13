@@ -30,7 +30,20 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 	
 	@Value("${commandlineExecutor.errorResponseTemporaryLocation}")
 	private String commandlineExecutorErrorResponseTemporaryLocation;
-
+	
+	public Process createProcess(String command) throws Exception {
+		Process proc = null;
+		try {
+			logger.debug("start "+ command);
+			ProcessBuilder pb = new ProcessBuilder(command);
+			proc = pb.start();
+		}
+		catch (Exception ee) {
+			logger.error("Unable to create process " + command + " : " + ee.getMessage(), ee);
+			throw ee;
+		}
+		return proc;
+	}
 	
 	public Process createProcess(List<String> commandList) throws Exception {
 		Process proc = null;
@@ -70,12 +83,12 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 	public CommandLineExecutionResponse executeCommand(List<String> commandList, boolean extractLastLineAsFailureReason) throws Exception {
 		return executeCommand(commandList, createProcess(commandList), extractLastLineAsFailureReason);
 	}
-	
-	public CommandLineExecutionResponse executeCommand(List<String> commandList, Process proc) throws Exception {
-		return executeCommand(commandList, proc, true);
+
+	public CommandLineExecutionResponse executeCommand(String command, Process proc) throws Exception {
+		return executeCommand(command, proc, true);
 	}
 	
-	public CommandLineExecutionResponse executeCommand(List<String> commandList, Process proc, boolean extractLastLineAsFailureReason) throws Exception {
+	public CommandLineExecutionResponse executeCommand(String command, Process proc, boolean extractLastLineAsFailureReason) throws Exception {
 		boolean isComplete = false;
 		
 		CommandLineExecutionResponse commandLineExecutionResponse = new CommandLineExecutionResponse();
@@ -122,9 +135,11 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 			} else {
 				isComplete = false;
 				String stdErrResp = stdErrRespBuffer.toString();
-				String message = null;
+				String message = "Failed - no error message received";
 				if(extractLastLineAsFailureReason) {
 					message = getLastLine(stdErrResp);
+					if(message == null)
+						message = stdErrResp;
 				}else {
 					message = stdErrResp;
 				}
@@ -132,10 +147,10 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 			}
 			commandLineExecutionResponse.setIsComplete(isComplete);			
 
-			logger.debug("end "+ commandList);
+			logger.debug("end "+ command);
 		}
 		catch (Exception ee) {
-			logger.error(commandList + " execution failed : " + ee.getMessage(), ee);
+			logger.error(command + " execution failed : " + ee.getMessage(), ee);
 			commandLineExecutionResponse.setFailureReason(ee.getMessage());
 			throw ee;
 		}finally {
@@ -149,18 +164,25 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 				in.close();
 				err.close();
 			} catch (IOException e) {
-				logger.error("Unable to close opened Inputstreams " + commandList + " : " + e.getMessage() + " This might impact resources and cause FileDescriptor(Too many files open) problem. Check it out...", e);
+				logger.error("Unable to close opened Inputstreams " + command + " : " + e.getMessage() + " This might impact resources and cause FileDescriptor(Too many files open) problem. Check it out...", e);
 			}
 			
 		}
 		return commandLineExecutionResponse;
-		
+	}
+	
+	public CommandLineExecutionResponse executeCommand(List<String> commandList, Process proc) throws Exception {
+		return executeCommand(commandList, proc, true);
+	}
+	
+	public CommandLineExecutionResponse executeCommand(List<String> commandList, Process proc, boolean extractLastLineAsFailureReason) throws Exception {
+		return executeCommand(commandList.toString(), proc, extractLastLineAsFailureReason);
 	}
 
 	// Not sure how to get the last line string just by reading the stream without having to write it to a file...
 	private String getLastLine(String errorMessage){
 		String failureReason = null;
-		String filename = commandlineExecutorErrorResponseTemporaryLocation + File.separator + System.currentTimeMillis() + ".err";
+		String filename = commandlineExecutorErrorResponseTemporaryLocation + File.separator + Thread.currentThread().getName() + "_" + System.currentTimeMillis() + ".err";
 		try {
 			File tmpErrorFile = new File(filename);
 			FileUtils.write(tmpErrorFile, errorMessage);

@@ -1,5 +1,9 @@
 package org.ishafoundation.dwaraapi.process.request;
 
+import java.util.List;
+
+
+
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 
 public class ProcessContext {
@@ -15,6 +19,10 @@ public class ProcessContext {
 	private Job job;
 	
 	private String outputDestinationDirPath;
+	
+    private List<String> tags;
+	
+//	private Integer priority;
 
 	public String getInputDirPath() {
 		return inputDirPath;
@@ -63,4 +71,22 @@ public class ProcessContext {
 	public void setOutputDestinationDirPath(String outputDestinationDirPath) {
 		this.outputDestinationDirPath = outputDestinationDirPath;
 	}
+
+	public List<String> getTags() {
+		return tags;
+	}
+
+	public void setTags(List<String> tags) {
+		this.tags = tags;
+	}
+
+	/*
+	 * Wont be effective for the ProcessingJobProcessor object already created is sent to the executor queue and the threadpoolexecutor.*.priority updated dynamically
+	public Integer getPriority() {
+		return priority;
+	}
+
+	public void setPriority(Integer priority) {
+		this.priority = priority;
+	}*/
 }

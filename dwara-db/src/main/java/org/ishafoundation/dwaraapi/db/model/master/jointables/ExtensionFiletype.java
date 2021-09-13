@@ -40,7 +40,10 @@ public class ExtensionFiletype {
 	
 	@Column(name="sidecar")
 	private boolean sidecar;
-
+	
+	@Column(name="suffix")
+	private String suffix;
+	
 	public ExtensionFiletype() {
 		
 	}
@@ -83,7 +86,15 @@ public class ExtensionFiletype {
 		this.sidecar = sidecar;
 	}
 	
-    @Override
+    public String getSuffix() {
+		return suffix;
+	}
+
+	public void setSuffix(String suffix) {
+		this.suffix = suffix;
+	}
+
+	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
  

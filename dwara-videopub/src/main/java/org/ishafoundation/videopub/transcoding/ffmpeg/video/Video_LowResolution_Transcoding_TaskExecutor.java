@@ -3,10 +3,13 @@ package org.ishafoundation.videopub.transcoding.ffmpeg.video;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.configuration.FfmpegThreadConfiguration;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
@@ -28,6 +31,11 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
     
 	@Autowired
 	private M01XmlFileHandler m01xfh;	
+	
+	@Autowired
+	private FfmpegThreadConfiguration ffmpegThreadConfiguration;
+	
+	private String processingtaskName = "video-proxy-low-gen";
 
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -170,13 +178,32 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	
 		return metaDataExtractionCommandParamsList;
 	}
-	
+
 	private List<String> getProxyGenCommand(String sourceFilePathname, String reversedTimeCode, String proxyTargetLocation) {
 		List<String> proxyGenerationCommandParamsList = new ArrayList<String>();
+		
+		// HACK - processcontext.getpriority will not reflect for already queued processing jobs if the priority is changed dynamically... hence taking this route
+//		ThreadPoolExecutor executor = (ThreadPoolExecutor) IProcessingTask.taskName_executor_map.get(processingtaskName);
+//		BasicThreadFactory factory = (BasicThreadFactory) executor.getThreadFactory();
+//
+//		proxyGenerationCommandParamsList.add("nice");
+//		proxyGenerationCommandParamsList.add("-n");
+//		proxyGenerationCommandParamsList.add(factory.getPriority()+"");
 		proxyGenerationCommandParamsList.add("ffmpeg");
 		proxyGenerationCommandParamsList.add("-y");
 		proxyGenerationCommandParamsList.add("-i");
 		proxyGenerationCommandParamsList.add(sourceFilePathname);
+		proxyGenerationCommandParamsList.add("-map");
+		proxyGenerationCommandParamsList.add("0:v:0");
+		proxyGenerationCommandParamsList.add("-map");
+		proxyGenerationCommandParamsList.add("0:a:0?");
+		proxyGenerationCommandParamsList.add("-map");
+		proxyGenerationCommandParamsList.add("0:a:1?");
+		if(ffmpegThreadConfiguration.getVideoProxyLowGen().getThreads() > 0) {
+			proxyGenerationCommandParamsList.add("-threads");
+			String ffmpegThreads = ffmpegThreadConfiguration.getVideoProxyLowGen().getThreads() + "";
+			proxyGenerationCommandParamsList.add(ffmpegThreads);
+		}
 		proxyGenerationCommandParamsList.add("-preset");
 		proxyGenerationCommandParamsList.add("slow");
 		proxyGenerationCommandParamsList.add("-strict");
@@ -204,7 +231,7 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		proxyGenerationCommandParamsList.add("-b:a");
 		proxyGenerationCommandParamsList.add("80000");
 		proxyGenerationCommandParamsList.add("-ac");
-		proxyGenerationCommandParamsList.add("2");
+		proxyGenerationCommandParamsList.add("1");
 		proxyGenerationCommandParamsList.add(proxyTargetLocation);
 	
 		return proxyGenerationCommandParamsList;

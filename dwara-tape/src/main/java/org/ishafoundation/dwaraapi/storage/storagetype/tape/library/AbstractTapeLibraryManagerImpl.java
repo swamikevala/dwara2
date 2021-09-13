@@ -141,8 +141,9 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 		}
 
 		if(storageElementNo == -9) {
-			logger.error(toBeUsedTapeBarCode + " Tape not inside the library");
-			throw new Exception(toBeUsedTapeBarCode + " Tape not inside the library");
+			String msg = toBeUsedTapeBarCode + " Tape not inside the library slots";
+			logger.error(msg);
+			throw new Exception(msg);
 		}
 		logger.trace(toBeUsedTapeBarCode + " is in " +  storageElementNo);
 		return storageElementNo;

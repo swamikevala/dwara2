@@ -23,6 +23,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeLifecyclestage;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
@@ -72,6 +74,9 @@ public class Volume {
 	
 	@Column(name="initialized_at")
 	private LocalDateTime initializedAt;
+
+	@Column(name="finalized_at")
+	private LocalDateTime finalizedAt;
 	
 	@Column(name="finalized")
 	private boolean finalized;
@@ -79,17 +84,22 @@ public class Volume {
 	@Column(name="imported")
 	private boolean imported;
 
-	@Column(name="suspect")
-	private Boolean suspect = false; // Not on VolumeGroups
+	@Enumerated(EnumType.STRING)
+	@Column(name="healthstatus")
+	private VolumeHealthStatus healthstatus = VolumeHealthStatus.normal;
 
-	@Column(name="defective")
-	private Boolean defective = false; // Not on VolumeGroups
-
+	@Enumerated(EnumType.STRING)
+	@Column(name="lifecyclestage")
+	private VolumeLifecyclestage lifecyclestage = VolumeLifecyclestage.active;
+	
 	@OneToOne
 	private Archiveformat archiveformat;
 	
 	@Column(name="capacity")
 	private Long capacity;
+
+	@Column(name="used_capacity")
+	private Long usedCapacity;
 	
 	@OneToOne
 	private Location location;
@@ -195,20 +205,20 @@ public class Volume {
 		this.imported = imported;
 	}
 
-	public Boolean getSuspect() {
-		return suspect;
+	public VolumeHealthStatus getHealthstatus() {
+		return healthstatus;
 	}
 
-	public void setSuspect(Boolean suspect) {
-		this.suspect = suspect;
+	public void setHealthstatus(VolumeHealthStatus healthstatus) {
+		this.healthstatus = healthstatus;
 	}
 
-	public Boolean getDefective() {
-		return defective;
+	public VolumeLifecyclestage getLifecyclestage() {
+		return lifecyclestage;
 	}
 
-	public void setDefective(Boolean defective) {
-		this.defective = defective;
+	public void setLifecyclestage(VolumeLifecyclestage lifecyclestage) {
+		this.lifecyclestage = lifecyclestage;
 	}
 
 	public Archiveformat getArchiveformat() {
@@ -263,5 +273,21 @@ public class Volume {
     public int hashCode() {
         return Objects.hash(id);
     }
+
+	public LocalDateTime getFinalizedAt() {
+		return finalizedAt;
+	}
+
+	public void setFinalizedAt(LocalDateTime finalizedAt) {
+		this.finalizedAt = finalizedAt;
+	}
+
+	public Long getUsedCapacity() {
+		return usedCapacity;
+	}
+
+	public void setUsedCapacity(Long usedCapacity) {
+		this.usedCapacity = usedCapacity;
+	}
 
 }

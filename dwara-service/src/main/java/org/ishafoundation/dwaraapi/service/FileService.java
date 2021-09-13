@@ -1,10 +1,15 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FilenameUtils;
@@ -40,6 +45,9 @@ public class FileService extends DwaraService{
 
 	private static final Logger logger = LoggerFactory.getLogger(FileService.class);
 	
+    @PersistenceContext
+    private EntityManager entityManager;
+    
 	@Autowired
 	private RequestDao requestDao;
 	
@@ -76,12 +84,62 @@ public class FileService extends DwaraService{
 		return fileList;
 		
 	}
+
+	/**
+	 * join vs subquery
+	 * 
+	 * joins take longer to respond when there is more resultset
+	 * select file1.id, artifact1.name from artifact1 join file1 on artifact1.id = file1.artifact_id where artifact1.name like '%Sadhguru%Instagram%02-Apr-2021%' and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name;
+	 * when the order of the searchstr is expected to be haphazard
+	 * select file1.id, artifact1.name from artifact1 join file1 on artifact1.id = file1.artifact_id where artifact1.name like '%02-Apr-2021%' and artifact1.name like '%Sadhguru%' and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name;
+	 * 
+	 * subqueries take longer when the searchstr is complicated
+	 * select id, pathname from file1 where pathname in (select name from artifact1 where name like '%Sadhguru%Instagram%02-Apr-2021%' and artifactclass_id not like '%proxy-low');
+	 * 
+	 * No specific reason but will go for joins
+	 * 
+	 * @param spaceSeparatedArtifactSearchString - eg. something like '02-Apr-2021 Sadhguru Instagram'
+	 * @return
+	 */
+	public List<File> listV2(String spaceSeparatedArtifactSearchString){
+		String[] searchParts = spaceSeparatedArtifactSearchString.split(" ");
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < searchParts.length; i++) {
+			if(i > 0)
+				sb.append(" and ");
+			sb.append("artifact1.name like '%");
+			sb.append(searchParts[i]);
+			sb.append("%'");
+		}
+		
+		String query="select file1.id, file1.pathname, file1.size, artifact1.id as artifactId from artifact1 join file1 on artifact1.id = file1.artifact_id where " + sb.toString() + " and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name";
+        Query q = entityManager.createNativeQuery(query);
+        List<Object[]> results = q.getResultList();
+        List<File> list = new ArrayList<File>();
+        results.stream().forEach((record) -> {
+            int fileId = ((Integer) record[0]).intValue();
+            String artifactName = (String) record[1];
+            long size = ((BigInteger)record[2]).longValue();
+            int artifactId = ((Integer) record[3]).intValue();
+
+			File file = new File();
+			file.setId(fileId);
+			file.setPathname(artifactName);
+			file.setSize(size);
+			file.setArtifactId(artifactId);
+			list.add(file);
+        });
+		
+		return list;
+	}
 	
     public RestoreResponse restore(RestoreUserRequest restoreUserRequest, Action action, String flow) throws Exception{	
     	RestoreResponse restoreResponse = new RestoreResponse();
 
     	List<Integer> fileIds = restoreUserRequest.getFileIds();
 
+    	if(fileIds.size() == 0)
+    		throw new Exception("Invalid request. No File Id passed");
     	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
     	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
     	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);

@@ -11,7 +11,6 @@ import org.ishafoundation.dwaraapi.db.domain.factory.DomainSpecificArtifactFacto
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-
 @Entity
 @SequenceGenerator(initialValue = 1, name = "artifact_sequence", allocationSize = 1)
 @Table(name=Artifact.TABLE_NAME_PREFIX + "1", indexes = {@Index(columnList = "total_size")})
@@ -25,6 +24,15 @@ public class Artifact1 extends Artifact{
  	@ManyToOne
 	@JoinColumn(name="artifact_ref_id")
 	private Artifact1 artifact1Ref;
+
+
+	public Artifact1() {
+	
+	}
+
+	public Artifact1(int _id) {
+		super(_id);
+	}
     
 	@JsonIgnore
 	public Artifact1 getArtifact1Ref() {
@@ -39,7 +47,7 @@ public class Artifact1 extends Artifact{
 	public int getArtifact1RefId() {
 		return this.artifact1Ref != null ? this.artifact1Ref.getId() : 0;
 	}
-	
+
 //	@Override
 //    public boolean equals(Object o) {
 //        if (this == o) return true;

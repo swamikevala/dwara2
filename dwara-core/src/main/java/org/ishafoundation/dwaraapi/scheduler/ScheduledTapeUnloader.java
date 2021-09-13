@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDeviceUtil;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
@@ -43,6 +44,7 @@ public class ScheduledTapeUnloader {
 	@Scheduled(cron = "${scheduler.tapeUnloader.cronExpression}")
 	@PostMapping("/unloadIdleTapesFromDrive")
 	public void unloadIdleTapesFromDrive(){
+		logger.info("***** Unloading idle tapes from Drive now *****");
 		List<DriveDetails> availableDrivesDetails;
 		try {
 			availableDrivesDetails = tapeDeviceUtil.getAllAvailableDrivesDetails();
@@ -50,7 +52,7 @@ public class ScheduledTapeUnloader {
 				String tapeBarcode = nthAvailableDriveDetails.getDte().getVolumeTag();
 				if(tapeBarcode != null) { // means tape loaded in the drive
 					logger.trace(tapeBarcode + " is loaded in " + nthAvailableDriveDetails.getDriveId());
-					Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndCompletedAtIsNotNullOrderByCompletedAtDesc(tapeBarcode);
+					Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndStatusAndCompletedAtIsNotNullOrderByCompletedAtDesc(tapeBarcode, Status.completed);
 					
 					LocalDateTime lastJobCompletionTime = LocalDateTime.now();
 					boolean idleSittingTimePastThreshold = false;
@@ -69,7 +71,7 @@ public class ScheduledTapeUnloader {
 						 TapeUsageStatus tapeUsageStatus = volumeUtil.getTapeUsageStatus(tapeBarcode);
 						 if(tapeUsageStatus == TapeUsageStatus.no_job_queued) { // only when no queued or in progress job on the volume
 							// TODO : check mtstatus and tactive device table one last time before pulling the plug...
-							 logger.trace("No jobs lined up for " + tapeBarcode + ". Will be unloading it");
+							 logger.info("No jobs lined up for " + tapeBarcode + ". Will be unloading it");
 							 tapeLibraryManager.unload(nthAvailableDriveDetails.getTapelibraryName(), nthAvailableDriveDetails.getDte().getsNo());
 						 }
 					}

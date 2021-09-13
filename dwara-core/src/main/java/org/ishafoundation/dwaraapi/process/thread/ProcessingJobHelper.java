@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.process.thread;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -14,12 +15,10 @@ import java.util.TreeSet;
 import org.apache.commons.lang3.ArrayUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassTask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -42,10 +41,7 @@ public class ProcessingJobHelper {
 	
 	@Autowired
 	private FiletypeDao filetypeDao;
-	
-	@Autowired
-	private ArtifactclassTaskDao artifactclassTaskDao;
-	
+		
 	@Autowired
 	private TFileDao tFileDao;
 	
@@ -75,7 +71,7 @@ public class ProcessingJobHelper {
 		return filePathTofileObj;
 	}
 	
-	protected Collection<LogicalFile> getLogicalFileList(Filetype filetype, String inputArtifactPath, String artifactclassId, String processingtaskId){	
+	protected Collection<LogicalFile> getLogicalFileList(Filetype filetype, String inputArtifactPath, String pathnameRegex){	
 		Collection<LogicalFile> logicalFileCollection =  new ArrayList<LogicalFile>(); 
 		
 		List<String> extensions = null;
@@ -84,30 +80,28 @@ public class ProcessingJobHelper {
 		String[] sidecarExtensionsArray = null;
 		boolean includeSidecarFiles = false;
 		
+		Collection<File> filesToBeUsed = null;
 		Set<String> pathsToBeUsed = new TreeSet<String>();
-		String pathnameRegex = null;
-		if(artifactclassId != null && processingtaskId != null) {
-			ArtifactclassTask artifactclassTask = artifactclassTaskDao.findByArtifactclassIdAndProcessingtaskId(artifactclassId, processingtaskId);
-			pathnameRegex = artifactclassTask != null ? artifactclassTask.getConfig().getPathnameRegex() : null;
-		}
 		Set<String> extnsToBeUsed = null; 
-		if(pathnameRegex != null) { // if artifactclass_processingtask has a pathregex we need to only get the processable files from that folder path and not from the entire archives directory... e.g., video-pub-edit will have .mov files under output folder
-			FiletypePathnameReqexVisitor filetypePathnameReqexVisitor = new FiletypePathnameReqexVisitor(pathnameRegex);
+		if(pathnameRegex != null) { // if flowelement.task_config has pathnameregex configured - we need to only get the processable files that match the pattern and not from the entire archives directory... e.g., video-pub-edit will have .mov files under output folder
+			FiletypePathnameReqexVisitor filetypePathnameReqexVisitor = new FiletypePathnameReqexVisitor(inputArtifactPath, pathnameRegex);
 			try {
 				Files.walkFileTree(Paths.get(inputArtifactPath), filetypePathnameReqexVisitor);
 			} catch (IOException e) {
-				// swallow for now
+				logger.error("Unable to walkFileTree for " + inputArtifactPath + ":" + e.getMessage(), e);
 			}
 			if(filetypePathnameReqexVisitor != null) {
-				pathsToBeUsed.addAll(filetypePathnameReqexVisitor.getPaths());
+				filesToBeUsed = filetypePathnameReqexVisitor.getMatchedFiles();
 				if(filetypePathnameReqexVisitor.getExtns().size() > 0) { // if regex contains specific file extns we need to only use processable files with that extn only{
 					extnsToBeUsed = filetypePathnameReqexVisitor.getExtns();
 				}
+				logger.trace("filesToBeUsed - " + filesToBeUsed);
 			}
 		} else { // all processable files from the entire artifact directory
-			pathsToBeUsed.add(inputArtifactPath);	
+			pathsToBeUsed.add(inputArtifactPath);
+			logger.trace("pathsToBeUsed - " + pathsToBeUsed);
 		}
-		logger.trace("pathsToBeUsed - " + pathsToBeUsed);
+		
 		logger.trace("extnsToBeUsed - " + extnsToBeUsed);
 		
 		if(filetype != null) { // if filetype is null, extensions are set to null - which will get all the files listed - eg., process like checksum-gen
@@ -136,11 +130,15 @@ public class ProcessingJobHelper {
 				extensionsArray = ArrayUtils.toStringArray(extensions.toArray());
 			}
 		}
-		
-		logger.trace("extensionsArray - " + extensionsArray);
-		logger.trace("sidecarExtensionsArray - " + sidecarExtensionsArray);
-		for (String nthPathToBeUsed : pathsToBeUsed) {
-			logicalFileCollection.addAll(logicalFileHelper.getFiles(nthPathToBeUsed, extensionsArray, includeSidecarFiles, sidecarExtensionsArray));				
+	
+		if(pathnameRegex != null && filesToBeUsed != null) {
+			logicalFileCollection.addAll(logicalFileHelper.getFiles(filesToBeUsed, extensionsArray, includeSidecarFiles, sidecarExtensionsArray));
+		}else {
+			logger.trace("extensionsArray - " + extensions);
+			logger.trace("sidecarExtensionsArray - " + sidecarExtensions);
+			for (String nthPathToBeUsed : pathsToBeUsed) {
+				logicalFileCollection.addAll(logicalFileHelper.getFiles(nthPathToBeUsed, extensionsArray, includeSidecarFiles, sidecarExtensionsArray));				
+			}
 		}
 		
 		return logicalFileCollection;

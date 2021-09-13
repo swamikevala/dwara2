@@ -5,6 +5,12 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
@@ -17,13 +23,17 @@ import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public abstract class AbstractBruArchiver implements IArchiveformatter {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractBruArchiver.class);
-	
+
+	@Autowired
+	private DomainUtil domainUtil;
+
 	@Override
 	public ArchiveResponse write(ArchiveformatJob archiveformatJob) throws Exception {
 		String artifactSourcePath = archiveformatJob.getArtifactSourcePath();
@@ -93,6 +103,7 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 		
 			String filePathname = bruedFile.getFilePathName();
 			af.setFilePathName(filePathname);
+			af.setLinkName(bruedFile.getLinkName());
 			
 			// volumeBlockOffset starts with 0 and not -1
 			int volumeBlockOffset = bruedFile.getVolumeBlockOffset() + 1; // +1, because bru "copy" responds with -1 block for BOT, while bru "t - table of contents"/"x - extraction" shows the block as 0 for same. Also while seek +1 followed by t/x returns faster results...
@@ -105,7 +116,7 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 			//int archiveBlockOffset = archiveRunningTotalDataInKB/2;
 			
 			Long archiveRunningTotalDataInBytes = archiveRunningTotalDataInKB * 1024; // KB to bytes...
-			int archiveBlockOffset = (int) Math.ceil(archiveRunningTotalDataInBytes/archiveformatBlocksize);
+			Long archiveBlockOffset = (long) Math.ceil(archiveRunningTotalDataInBytes/archiveformatBlocksize);
 			if(archiveBlockOffset > 0)
 				archiveBlockOffset = archiveBlockOffset - 1; // - 1 because the first block starts with 0...
 			
@@ -153,7 +164,8 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 		String targetLocationPath = archiveformatJob.getTargetLocationPath();
 		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
 		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
-		String filePathNameToBeRestored = file.getPathname();
+		StorageJob storageJob = selectedStorageJob.getStorageJob();			
+		String filePathNameToBeRestored = selectedStorageJob.getFilePathNameToBeRestored();
 		long filesize = file.getSize();
 
 		logger.trace("Creating the directory " + targetLocationPath + ", if not already present");
@@ -163,7 +175,6 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 //		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
 			executeRestoreCommand(commandList);
 //		}
-		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		
 		if(storageJob.isRestoreVerify()) {
 			boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
@@ -175,7 +186,7 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 	}
 
 	private List<String> frameRestoreCommand(int volumeBlocksize, String deviceName, boolean useBuffering, long fileSize, String destinationPath, String filePathNameToBeRestored) {
-		String bruRestoreCommand = "bru -B -xvvvvvvvvv -QV -C -b " + volumeBlocksize + " -f " + deviceName + " " + filePathNameToBeRestored;
+		String bruRestoreCommand = "bru -xvvvvvvvvv -ua -B -QV -C -b " + volumeBlocksize + " -f " + deviceName + " " + filePathNameToBeRestored;
 
 		if(useBuffering) {
 			/*
@@ -196,7 +207,7 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 			int m = (int) Math.max(1, Math.round(fileSizeInGiB/16.0));
 			String mValue = m + "G";
 			
-			bruRestoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e  | bru -B -xvvvvvvvvv -QV -C -Pf -b " + volumeBlocksize + " -f /dev/stdin " + filePathNameToBeRestored;
+			bruRestoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e  | bru -xvvvvvvvvv -ua -B -QV -C -Pf -b " + volumeBlocksize + " -f /dev/stdin " + filePathNameToBeRestored;
 		}
 		logger.info("Bru restoring to " + destinationPath + " - " +  bruRestoreCommand);
 	

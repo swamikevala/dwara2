@@ -18,14 +18,12 @@ import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionRespons
 import org.ishafoundation.dwaraapi.commandline.local.RetriableCommandLineExecutorImpl;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
@@ -54,9 +52,6 @@ public class VolumeindexManager {
 	@Autowired
 	private DomainUtil domainUtil;
 	
-	@Autowired
-	private FileRepositoryUtil fileRepositoryUtil;
-
 	@Autowired
 	private RetriableCommandLineExecutorImpl retriableCommandLineExecutorImpl;
 
@@ -96,7 +91,7 @@ public class VolumeindexManager {
 		return isSuccess;
 	}
 	
-	private String createVolumeindex(Volume volume, Domain domain) throws Exception {
+	public String createVolumeindex(Volume volume, Domain domain) throws Exception {
 		Volumeinfo volumeinfo = new Volumeinfo();
 		volumeinfo.setVolumeuid(volume.getId());
 		volumeinfo.setVolumeblocksize(volume.getDetails().getBlocksize());
@@ -118,57 +113,54 @@ public class VolumeindexManager {
 		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeId(volume.getId());
 		List<Artifact> artifactList = new ArrayList<Artifact>();
 		for (ArtifactVolume artifactVolume : artifactVolumeList) {
-			Artifact artifact = new Artifact();
-			/* Not needed
-			if(artifactVolume.getDetails().getArchive_id() != null)
-				artifact.setArchivenumber(artifactVolume.getDetails().getArchive_id());
-			*/
-			artifact.setStartblock(artifactVolume.getDetails().getStartVolumeBlock());
-			artifact.setEndblock(artifactVolume.getDetails().getEndVolumeBlock());
-			int artifactId = artifactVolume.getId().getArtifactId();
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) artifactRepository.findById(artifactId).get();
-			//org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = domainUtil.getDomainSpecificArtifact(domain, artifactId);
-			
-			artifact.setArtifactclassuid(artifactDbObj.getArtifactclass().getId());
-			artifact.setSequencecode(artifactDbObj.getSequenceCode());
-			
-			List<File> fileList = new ArrayList<File>();
-			List<TFile> artifactTFileList = tFileDao.findAllByArtifactId(artifactId);
-			if(artifactTFileList != null && artifactTFileList.size() > 0) {
-				for (TFile nthFile : artifactTFileList) {
-					File file = new File();
-					file.setName(nthFile.getPathname());
-					file.setSize(nthFile.getSize());
-					byte[] checksum = nthFile.getChecksum();
-					if(checksum != null)
-						file.setChecksum(Hex.encodeHexString(checksum));
-					
-					TFileVolume fileVolume = tFileVolumeDao.findByIdFileIdAndIdVolumeId(nthFile.getId(), volume.getId());// lets just let users use the util consistently
-					file.setVolumeblock(fileVolume.getVolumeBlock());
-					file.setArchiveblock(fileVolume.getArchiveBlock());
-					file.setEncrypted(fileVolume.isEncrypted() ? true : null);
-					fileList.add(file);
+			try {
+				Artifact artifact = new Artifact();
+				/* Not needed
+				if(artifactVolume.getDetails().getArchive_id() != null)
+					artifact.setArchivenumber(artifactVolume.getDetails().getArchive_id());
+				*/
+				artifact.setStartblock(artifactVolume.getDetails().getStartVolumeBlock());
+				artifact.setEndblock(artifactVolume.getDetails().getEndVolumeBlock());
+				int artifactId = artifactVolume.getId().getArtifactId();
+				org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) artifactRepository.findById(artifactId).get();
+				//org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = domainUtil.getDomainSpecificArtifact(domain, artifactId);
+				
+				artifact.setArtifactclassuid(artifactDbObj.getArtifactclass().getId());
+				artifact.setSequencecode(artifactDbObj.getSequenceCode());
+				
+				List<File> fileList = new ArrayList<File>();
+				List<TFile> artifactTFileList = tFileDao.findAllByArtifactId(artifactId);
+				if(artifactTFileList != null && artifactTFileList.size() > 0) {
+					for (TFile nthFile : artifactTFileList) {
+						try {
+							File file = new File();
+							file.setName(nthFile.getPathname());
+							file.setSize(nthFile.getSize());
+							byte[] checksum = nthFile.getChecksum();
+							if(checksum != null)
+								file.setChecksum(Hex.encodeHexString(checksum));
+							
+							TFileVolume fileVolume = tFileVolumeDao.findByIdFileIdAndIdVolumeId(nthFile.getId(), volume.getId());
+							if(nthFile.isDeleted() && fileVolume == null)
+								continue; // dont add a deleted file that is not written into tape - Usecase MXF gets deleted even before its written to tape...
+							file.setVolumeblock(fileVolume.getVolumeBlock());
+							file.setArchiveblock(fileVolume.getArchiveBlock());
+							file.setEncrypted(fileVolume.isEncrypted() ? true : null);
+							fileList.add(file);
+						}
+						catch (Exception e) {
+							logger.error("Skipping Tfile from volume index " + nthFile.getId(), e);
+							throw e; // throwing so that we check why finalization not happening and correct data
+						}
+					}
 				}
+
+				artifact.setFile(fileList);
+				artifactList.add(artifact);
+			}catch (Exception e) {
+				logger.error("Skipping artifact from volume index " + artifactVolume.getId().getArtifactId());
+				throw e; // throwing so that we check why finalization not happening and correct data or identify rootcause and fix it..
 			}
-//			else { // For derived files use file table as we dont add tfile table entries
-//				List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifactDbObj, domain);
-//				for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
-//					File file = new File();
-//					file.setName(nthFile.getPathname());
-//					file.setSize(nthFile.getSize());
-//					byte[] checksum = nthFile.getChecksum();
-//					if(checksum != null)
-//						file.setChecksum(Hex.encodeHexString(checksum));
-//					
-//					FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());// lets just let users use the util consistently
-//					file.setVolumeblock(fileVolume.getVolumeBlock());
-//					file.setArchiveblock(fileVolume.getArchiveBlock());
-//					file.setEncrypted(fileVolume.isEncrypted() ? true : null);
-//					fileList.add(file);
-//				}
-//			}
-			artifact.setFile(fileList);
-			artifactList.add(artifact);
 		}
 	
 		Volumeindex volumeindex = new Volumeindex();
@@ -180,7 +172,7 @@ public class VolumeindexManager {
 	    XmlMapper xmlMapper = new XmlMapper();
 	    String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;
 	    xmlMapper.getFactory().getXMLOutputFactory().setProperty(propName, true);
-	    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true);
+	    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_1_1, true);
 	    xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
 		String xmlFromJava = xmlMapper.writeValueAsString(volumeindex);
 		return xmlFromJava;

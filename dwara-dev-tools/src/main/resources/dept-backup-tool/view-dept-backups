@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Script: Quick view of all folders to be backed up, across all depts
+
+ROOT="/mnt/dept-backup"
+DELETE_DIR=copied-to-archives-server
+
+for DEPT in `ls -A "$ROOT"`; do
+   if [ -d "$ROOT/$DEPT" ]; then
+      printf "$DEPT\n"
+      for CLASS in `ls -A "$ROOT/$DEPT"`; do
+         CLASSPATH="$ROOT/$DEPT/$CLASS"
+         if [ -d "$CLASSPATH" ]; then
+            #Account for deleted folder
+            COUNT_MINUS=0
+	    SIZE_MINUS=0	
+            if [ -d "$CLASSPATH/$DELETE_DIR" ]; then
+              COUNT_MINUS=1
+              SIZE_MINUS=$(du -BG -s "$CLASSPATH/$DELETE_DIR" | cut -d'G' -f1)
+            fi
+            COUNT=$(ls "$CLASSPATH" | wc -l)
+            REAL_COUNT=$(($COUNT - $COUNT_MINUS))
+            SIZE=$(du -BG -s "$CLASSPATH" | cut -d'G' -f1)
+            REAL_SIZE=$(($SIZE - $SIZE_MINUS))
+            printf "   $CLASS [%s] (%sG)\n" $REAL_COUNT $(($REAL_SIZE > -1 ? $REAL_SIZE : 0))
+         fi
+      done
+   fi
+done

@@ -2,12 +2,15 @@ package org.ishafoundation.dwaraapi.process.thread;
 
 import java.io.File;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -15,7 +18,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassTaskDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TTFileJobKey;
@@ -24,13 +26,16 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassTask;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
@@ -44,6 +49,7 @@ import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -61,9 +67,6 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	private JobDao jobDao;
 	
 	@Autowired
-	private ArtifactclassTaskDao artifactclassTaskDao;
-	
-	@Autowired
 	private TTFileJobDao tFileJobDao;
 		
 	@Autowired
@@ -79,6 +82,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	private SequenceUtil sequenceUtil;
 	
 	@Autowired
+	private FlowelementUtil flowelementUtil;
+	
+	@Autowired
 	private Configuration configuration;
 	
 	@Autowired
@@ -89,6 +95,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	
 	@Autowired
 	private FileEntityToFileForProcessConverter fileEntityToFileForProcessConverter;
+	
+	@Value("${wowo.useNewJobManagementLogic:true}")
+	private boolean useNewJobManagementLogic;
 
 	private Job job;
 
@@ -100,9 +109,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 		this.job = job;
 	}
 
-	public boolean isJobToBeCreated(String processingtaskId, String inputArtifactPath, Artifactclass inputArtifactclass) {
+	public boolean isJobToBeCreated(String processingtaskId, String inputArtifactPath, String pathnameRegex) {
 		
-		Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPath, inputArtifactclass);
+		Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPath, pathnameRegex);
 		int filesToBeProcessedCount = selectedFileList.size();
 		logger.trace("filesToBeProcessedCount " + filesToBeProcessedCount);
 		
@@ -119,12 +128,13 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 		return true;
 	}
 	
-	private Collection<LogicalFile> getFilesToBeProcessed(String processingtaskId, String inputArtifactPath, Artifactclass inputArtifactclass){
+	private Collection<LogicalFile> getFilesToBeProcessed(String processingtaskId, String inputArtifactPath, String pathnameRegex){
 		Processingtask processingtask = getProcessingtask(processingtaskId);
 		
 		Filetype ft = getInputFiletype(processingtask);
 			
-		return  getLogicalFileList(ft, inputArtifactPath, inputArtifactclass.getId(), processingtaskId);
+		return  getLogicalFileList(ft, inputArtifactPath, pathnameRegex);
+				
 	}
 
 	public String getInputPath(Job job) {
@@ -135,6 +145,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				Job nthDependentJob = jobDao.findById(nthDependentJobId).get();
 				if(nthDependentJob.getStoragetaskActionId() == Action.restore) {
 					inputPath = restoreStorageTask.getRestoreLocation(nthDependentJob);
+					break;
 				}
 			}
 		}
@@ -143,7 +154,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	
 	@Override
     public void run() {
-		logger.info("Managing processing job - " + job.getId());
+		logger.debug("Managing processing job - " + job.getId());
 		
 		// This check is because of the same file getting queued up for processing again...
 		// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
@@ -171,12 +182,33 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			if(processingtaskImpl == null)
 				throw new Exception(processingtaskId + " class is still not impl. Please refer IProcessingTask doc...");
 			
-			Executor executor = IProcessingTask.taskName_executor_map.get(processingtaskId.toLowerCase());
-			if(executor == null)
-				executor = IProcessingTask.taskName_executor_map.get(IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER);
+			
+			String executorName = processingtaskId.toLowerCase();
+			Executor executor = IProcessingTask.taskName_executor_map.get(executorName);
+			if(executor == null) {
+				executorName = IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER;
+				executor = IProcessingTask.taskName_executor_map.get(executorName);
+			}
 			// TODO Any check needed on the configured executor? 
+			// Checking if more than needed jobs are already queued to avoid too many files queued up on respective executors
+			ThreadPoolExecutor tpe = (ThreadPoolExecutor) executor;
+			Set<Integer> jobsOnQueueSet = new TreeSet<Integer>();
+			BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
+			for (Runnable runnable : runnableQueueList) {
+				ProcessingJobProcessor pjp = (ProcessingJobProcessor) runnable;
+				jobsOnQueueSet.add(pjp.getJob().getId());
+			}
+			logger.trace("---" + executorName + ":" + tpe.getCorePoolSize() + ":" + jobsOnQueueSet.size() + ":" + jobsOnQueueSet);
+			if(useNewJobManagementLogic && jobsOnQueueSet.size() >= (tpe.getCorePoolSize() + 2)) {
+				logger.debug("Already enough jobs(" + jobsOnQueueSet.size() + ")'s files are in " + executorName + " processing queue");
+				return;
+			} else
+				logger.info("Taking up processing job " + job.getId() + " for preprocessing and delegating it to PJP thread executor");
 			
 			Processingtask processingtask = getProcessingtask(processingtaskId);
+//			if(processingtask == null)
+//				throw new Exception(processingtask + " is not configured in DB. Please configure ProcessingTask table properly");
+
 
 			
 			Domain domain = null;
@@ -239,8 +271,12 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, inputArtifact);
 			
 			HashMap<String, TFile> filePathToTFileObj = getFilePathToTFileObj(inputArtifactId);
-	
-			Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPathname, inputArtifactclass);
+			
+			Flowelement flowelement = flowelementUtil.findById(job.getFlowelementId());
+			Taskconfig taskconfig = flowelement.getTaskconfig();
+			String pathnameRegex = taskconfig != null ? taskconfig.getPathnameRegex() : null;
+			
+			Collection<LogicalFile> selectedFileList = getFilesToBeProcessed(processingtaskId, inputArtifactPathname, pathnameRegex);
 			int filesToBeProcessedCount = selectedFileList.size();
 			logger.trace("filesToBeProcessedCount " + filesToBeProcessedCount);
 			
@@ -259,9 +295,11 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					jobForProcess.getOutputArtifact().setName(outputArtifactName);
 
 				String outputPathSuffix = null;
-				ArtifactclassTask artifactclassTask = artifactclassTaskDao.findByArtifactclassIdAndProcessingtaskId(inputArtifactclassId, processingtaskId);
-				String configuredOutputPath = artifactclassTask != null ? artifactclassTask.getConfig().getOutputPath() : null;
-				String configuredDestinationId = artifactclassTask != null ? artifactclassTask.getConfig().getDestinationId()  : null;
+
+				
+					
+				String configuredOutputPath = taskconfig != null ? taskconfig.getOutputPath() : null;
+				String configuredDestinationId = taskconfig != null ? taskconfig.getDestinationId()  : null;
 				String configuredDestinationPath = null;
 				if(configuredDestinationId != null) {
 					Destination destination = configurationTablesUtil.getDestination(configuredDestinationId);
@@ -339,13 +377,11 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					// This check is because of the same file getting queued up for processing again...
 					// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
 					// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
-					ThreadPoolExecutor tpe = (ThreadPoolExecutor) executor;
-					BlockingQueue<Runnable> runnableQueueList = tpe.getQueue();
 					boolean alreadyQueued = false;
 					for (Runnable runnable : runnableQueueList) {
 						ProcessingJobProcessor pjp = (ProcessingJobProcessor) runnable;
 						if(job.getId() == pjp.getJob().getId() && tFile.getId() == pjp.getTFile().getId()) {
-							logger.info("job-" + job.getId() + "-file-" + tFile.getId() + " already in ProcessingJobProcessor queue. Skipping it...");
+							logger.debug("job-" + job.getId() + "-file-" + tFile.getId() + " already in ProcessingJobProcessor queue. Skipping it...");
 							alreadyQueued = true;
 							break;
 						}
@@ -372,6 +408,20 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 						processContext.setTFile(fileEntityToFileForProcessConverter.getTFileForProcess(tFile));
 						processContext.setLogicalFile(logicalFile);
 						processContext.setOutputDestinationDirPath(outputFilePath);
+						Set<Tag> tagSet = inputArtifact.getTags();
+						
+						if(tagSet != null) {
+							List<String> tags = new ArrayList<String>();
+							for (Tag nthTag : tagSet) {
+								tags.add(nthTag.getTag());
+							}
+							processContext.setTags(tags);
+						}
+
+						/* Wont be effective once the ProcessingJobProcessor object is sent to the executor queue
+						BasicThreadFactory threadFactory =  (BasicThreadFactory) tpe.getThreadFactory();
+						processContext.setPriority(threadFactory.getPriority());
+						*/
 						processingJobProcessor.setProcessContext(processContext);
 						
 						processingJobProcessor.setJob(job);

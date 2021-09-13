@@ -10,6 +10,7 @@ import javax.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Type;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 
 @Entity(name = "Flowelement")
@@ -49,6 +50,10 @@ public class Flowelement {
 	@Column(name="\"deprecated\"")
 	private boolean deprecated;
 	
+	@Type(type = "json")
+	@Column(name="task_config", columnDefinition = "json")
+	private Taskconfig taskconfig;
+
 	@Transient
 	private Flowelement flowelementRef;
 	
@@ -151,7 +156,15 @@ public class Flowelement {
 	public void setDeprecated(boolean deprecated) {
 		this.deprecated = deprecated;
 	}
+	
+	public Taskconfig getTaskconfig() {
+		return taskconfig;
+	}
 
+	public void setTaskconfig(Taskconfig taskconfig) {
+		this.taskconfig = taskconfig;
+	}
+	
 	public Flowelement getFlowelementRef() {
 		return flowelementRef;
 	}

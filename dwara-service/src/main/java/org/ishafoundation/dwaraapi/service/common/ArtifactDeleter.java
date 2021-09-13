@@ -17,6 +17,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepositor
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -24,12 +25,15 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
+import org.ishafoundation.dwaraapi.service.TFileVolumeDeleter;
 import org.ishafoundation.videopub.mam.MamUpdateTaskExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +63,8 @@ public class ArtifactDeleter {
 	@Autowired
 	private MamUpdateTaskExecutor mamUpdateTaskExecutor;
 	
+	@Autowired
+	private TFileVolumeDeleter tFileVolumeDeleter;
 //	@Autowired
 //	private Map<String, IProcessingTask> processingtaskActionMap;
 
@@ -148,7 +154,18 @@ public class ArtifactDeleter {
 	    	logger.info("Artifact flagged Deleted");
 	    	
 	    	// Step 6 - Flag the artifactVolume deleted
-	    	// N/A
+			ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+			List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(nthArtifact.getId());
+
+			if(artifactVolumeList.size() > 0) {
+				for (ArtifactVolume artifactVolume : artifactVolumeList) {
+					artifactVolume.setStatus(ArtifactVolumeStatus.deleted);
+				}
+				
+				domainSpecificArtifactVolumeRepository.saveAll(artifactVolumeList);
+			}
+			
+			
 	    	
 	    	// Step 7 - Move/Delete the file system files
 	    	// TODO - should we delete or move the file system files???
@@ -202,47 +219,18 @@ public class ArtifactDeleter {
 				Artifact artifact = artifactId_Artifact.get(artifactId);
 				
 				if(storagetaskAction != null && storagetaskAction == Action.write) {
-					// softDelete Filevolume entries
-					List<FileVolume> toBeUpdatedFileVolumeTableEntries = new ArrayList<FileVolume>();
-					for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
-						FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), nthJob.getVolume().getId());
-						if(fileVolume != null) {
-							fileVolume.setDeleted(true);
-							toBeUpdatedFileVolumeTableEntries.add(fileVolume);
-						}
-					}
-				    if(toBeUpdatedFileVolumeTableEntries.size() > 0) {
-				    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-				    	domainSpecificFileVolumeRepository.saveAll(toBeUpdatedFileVolumeTableEntries);
-				    	logger.info("All FileVolume records for " + artifact.getName() + " [" + artifactId + "] in volume " + nthJob.getVolume().getId() + " flagged deleted successfully");
-				    }
-				    
-				    // softDelete TFileVolume entries
-					if(artifactTFileList != null) { // An artifact can be deleted even after the tape is finalized at that point no TFile entries will be there
-					    List<TFileVolume> toBeUpdatedTFileVolumeTableEntries = new ArrayList<TFileVolume>();
-					    for (TFile nthTFile : artifactTFileList) {
-					    	TFileVolume tFileVolume = tFileVolumeDao.findByIdFileIdAndIdVolumeId(nthTFile.getId(), nthJob.getVolume().getId());
-							if(tFileVolume != null) {
-								tFileVolume.setDeleted(true);
-								toBeUpdatedTFileVolumeTableEntries.add(tFileVolume);
-							}
-					    }
-					    if(toBeUpdatedTFileVolumeTableEntries.size() > 0) {
-					    	tFileVolumeDao.saveAll(toBeUpdatedTFileVolumeTableEntries);
-					    	logger.info("All TFileVolume records for " + artifact.getName() + " [" + artifactId + "] in volume " + nthJob.getVolume().getId() + " flagged deleted successfully");
-					    }
-					}
+					tFileVolumeDeleter.softDeleteTFileVolumeEntries(Domain.ONE, artifactFileList, artifactTFileList, artifact, nthJob.getVolume().getId());
 				}
 				else if(processingtaskId != null) {
 					// TODO - Need to call processingTask specific delete method here 
 					// Tentatively calling hardcoded
 					//processingtaskActionMap.get(processingtaskName)
 					if(processingtaskId.equals("video-mam-update")) {
-						mamUpdateTaskExecutor.cleanUp(artifact.getName(), artifact.getArtifactclass().getCategory());
+						mamUpdateTaskExecutor.cleanUp(nthJob.getId(), artifact.getName(), artifact.getArtifactclass().getCategory());
 					}
 				}
 			}
 		}
     }
-
 }
+

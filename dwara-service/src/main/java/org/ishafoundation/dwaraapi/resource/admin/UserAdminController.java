@@ -1,8 +1,11 @@
 package org.ishafoundation.dwaraapi.resource.admin;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.ishafoundation.dwaraapi.authn.MyPasswordEncoder;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.PrioritybandDao;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
@@ -19,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -46,6 +48,9 @@ public class UserAdminController {
 	
 	@Autowired
 	private Configuration configuration;
+
+	@Autowired 
+    private MyPasswordEncoder myPasswordEncoder;
 		
 	@RequestMapping(value = "/user/createUserAndAddUserToArtifactclassAndCreateDir", method = RequestMethod.POST)
 	public ResponseEntity<String> createUserAndAddUserToArtifactclassAndCreateDir(@RequestParam String username, @RequestParam String password, @RequestParam String artifactclassId, @RequestParam String action) {
@@ -92,7 +97,7 @@ public class UserAdminController {
 
 	@RequestMapping(value = "/user/register", method = RequestMethod.POST)
 	public ResponseEntity<String> register(@RequestParam String username, @RequestParam String password) {
-		password = new BCryptPasswordEncoder().encode(password);
+		password = myPasswordEncoder.encode(password);
 		
 		User user = new User();
 		
@@ -112,13 +117,22 @@ public class UserAdminController {
 	
 	@RequestMapping(value = "/user/setpassword", method = RequestMethod.POST)
 	public ResponseEntity<String> setpassword(@RequestParam String username, @RequestParam String password) {
-		password = new BCryptPasswordEncoder().encode(password);
+		password = myPasswordEncoder.encode(password);
 		
 		User user = userDao.findByName(username);
 		user.setHash(password);
 
 		userDao.save(user);
 		return ResponseEntity.status(HttpStatus.OK).body("Done");
+	}
+
+	@RequestMapping(value = "/users", method = RequestMethod.GET)
+	public ResponseEntity<List<String>> findAllUserName() {
+		List<String> listUserName = new ArrayList<String>();
+		userDao.findAll().forEach(user -> {
+			listUserName.add(user.getName());
+		});
+		return ResponseEntity.status(HttpStatus.OK).body(listUserName);
 	}
 
 	

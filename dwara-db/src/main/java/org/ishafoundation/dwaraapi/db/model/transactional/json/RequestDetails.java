@@ -2,6 +2,8 @@ package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
@@ -80,12 +82,22 @@ public class RequestDetails {
 	private Integer domainId;
 	
 	// rewrite stuff
-	private Integer artifact_id;// artifact_id or name???
+	@JsonProperty("artifact_id")
+	private Integer artifactId;
+
+	@JsonProperty("rewrite_copy")
+	private Integer rewriteCopy;
+
+	@JsonProperty("source_copy")
+	private Integer sourceCopy;
+
+	private RewriteMode mode;
 	
-	private String from_volume_uid;
+	@JsonProperty("artifactclass_regex")
+	private String artifactclassRegex;
 	
-	private String to_volume_uid;
-	
+	@JsonProperty("destination_copy")
+	private Integer destinationCopy;
 
 	public JsonNode getBody() {
 		return body;
@@ -294,30 +306,54 @@ public class RequestDetails {
 
 	/********************  REWRITE  ********************/
 	
-	public Integer getArtifact_id() {
-		return artifact_id;
+	public Integer getArtifactId() {
+		return artifactId;
 	}
 
-	public void setArtifact_id(Integer artifact_id) {
-		this.artifact_id = artifact_id;
+	public void setArtifactId(Integer artifactId) {
+		this.artifactId = artifactId;
 	}
 
-	public String getFrom_volume_uid() {
-		return from_volume_uid;
+	public Integer getRewriteCopy() {
+		return rewriteCopy;
 	}
 
-	public void setFrom_volume_uid(String from_volume_uid) {
-		this.from_volume_uid = from_volume_uid;
+	public void setRewriteCopy(Integer rewriteCopy) {
+		this.rewriteCopy = rewriteCopy;
 	}
 
-	public String getTo_volume_uid() {
-		return to_volume_uid;
+	public Integer getSourceCopy() {
+		return sourceCopy;
 	}
 
-	public void setTo_volume_uid(String to_volume_uid) {
-		this.to_volume_uid = to_volume_uid;
+	public void setSourceCopy(Integer sourceCopy) {
+		this.sourceCopy = sourceCopy;
 	}
-	
+
+	public RewriteMode getMode() {
+		return mode;
+	}
+
+	public void setMode(RewriteMode mode) {
+		this.mode = mode;
+	}
+
+	public String getArtifactclassRegex() {
+		return artifactclassRegex;
+	}
+
+	public void setArtifactclassRegex(String artifactclassRegex) {
+		this.artifactclassRegex = artifactclassRegex;
+	}
+
+	public Integer getDestinationCopy() {
+		return destinationCopy;
+	}
+
+	public void setDestinationCopy(Integer destinationCopy) {
+		this.destinationCopy = destinationCopy;
+	}
+
 	// TODO : equals and hashCode
 //	@Override
 //    public boolean equals(Object o) {

@@ -53,9 +53,11 @@ public class SequenceUtil {
 					// generating the sequence
 			    	synchronized (artifactName) {
 			    		Integer incrementedCurrentNumber = null;
-			    		if(sequence.getSequenceRef() != null) {
-			    			incrementedCurrentNumber = sequence.getSequenceRef().incrementCurrentNumber();
-			    			sequenceDao.save(sequence.getSequenceRef());
+			    		Sequence sequenceRef = sequence.getSequenceRef();
+			    		if(sequenceRef != null) {
+			    			sequenceRef = sequenceDao.findById(sequenceRef.getId()).get();
+			    			incrementedCurrentNumber = sequenceRef.incrementCurrentNumber();
+			    			sequenceDao.save(sequenceRef);
 			    		}
 			    		else {
 			    			incrementedCurrentNumber = sequence.incrementCurrentNumber();

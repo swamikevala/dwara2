@@ -10,7 +10,7 @@ public class File {
 	@JacksonXmlProperty(isAttribute=true, localName="volumeBlock")
 	private Integer volumeblock; // volume start block
 	@JacksonXmlProperty(isAttribute=true, localName="archiveBlock")
-	private Integer archiveblock; // archive start block
+	private Long archiveblock; // archive start block
 	@JacksonXmlProperty(isAttribute=true, localName="size") 
 	private Long size;
 	@JacksonXmlProperty(isAttribute=true, localName="checksum")
@@ -27,10 +27,10 @@ public class File {
 	public void setVolumeblock(Integer volumeblock) {
 		this.volumeblock = volumeblock;
 	}
-	public Integer getArchiveblock() {
+	public Long getArchiveblock() {
 		return archiveblock;
 	}
-	public void setArchiveblock(Integer archiveblock) {
+	public void setArchiveblock(Long archiveblock) {
 		this.archiveblock = archiveblock;
 	}
 	public Long getSize() {

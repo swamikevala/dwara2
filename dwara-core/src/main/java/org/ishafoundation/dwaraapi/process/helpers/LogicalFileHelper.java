@@ -32,7 +32,7 @@ public class LogicalFileHelper {
 		logger.trace("needSidecarFiles " + needSidecarFiles);
 		logger.trace("sidecarExtensions " + Arrays.toString(sidecarExtensions));
 		
-		List<LogicalFile> outputList = new ArrayList<LogicalFile>();
+		
 		
 		String[] sourceExtensions = null;
 		if(extensions != null) {
@@ -56,62 +56,42 @@ public class LogicalFileHelper {
 		else
 			sourceFilesList = FileUtils.listFiles(new File(artifactPath), sourceExtensions, true);
 		
+		return getFiles(sourceFilesList, sourceExtensions, needSidecarFiles, sidecarExtensions);
+	}
+
+	public Collection<LogicalFile> getFiles(Collection<File> sourceFilesList, String[] extensions, boolean needSidecarFiles, String[] sidecarExtensions){
+		List<LogicalFile> outputList = new ArrayList<LogicalFile>();
+		
 		if(needSidecarFiles) {		
-			HashMap<String, LogicalFile> name_To_File = new HashMap<String, LogicalFile>();
-	
-			for (Iterator<File> iterator = sourceFilesList.iterator(); iterator.hasNext();) {
-				File file = (File) iterator.next();
-				String filepathname = file.getAbsolutePath();
-				
-				String fullPath = FilenameUtils.getFullPath(filepathname);
-				String baseName = FilenameUtils.getBaseName(filepathname);
-				String keyName = fullPath + baseName;
-	
-				LogicalFile logicalFile = new LogicalFile(filepathname);
-				name_To_File.put(keyName, logicalFile);
-			}	
-	
 			List<String> sidecarExtensionsList = new ArrayList<String>();
 			for (int i = 0; i < sidecarExtensions.length; i++) {
 				sidecarExtensionsList.add(sidecarExtensions[i].toUpperCase());
 				sidecarExtensionsList.add(sidecarExtensions[i].toLowerCase());
 			}
 			
-			Collection<File> allSidecarFilesList = FileUtils.listFiles(new File(artifactPath),  ArrayUtils.toStringArray(sidecarExtensionsList.toArray()), true);
-				
-			for (Iterator<File> iterator = allSidecarFilesList.iterator(); iterator.hasNext();) {
+			for (Iterator<File> iterator = sourceFilesList.iterator(); iterator.hasNext();) {
 				File file = (File) iterator.next();
-				
-				if(sourceFilesList.contains(file))
-					continue;
-				
 				String filepathname = file.getAbsolutePath();
-
+				
 				String fullPath = FilenameUtils.getFullPath(filepathname);
 				String baseName = FilenameUtils.getBaseName(filepathname);
-				String keyName = fullPath + baseName;
-
-				LogicalFile logicalFile = name_To_File.get(keyName);
-				String extnName = FilenameUtils.getExtension(filepathname);
-				if(logicalFile != null) {
-					HashMap<String, File> existingSidecarMap = logicalFile.getSidecarFiles();
-					if(existingSidecarMap != null) {
-						existingSidecarMap.put(extnName, file); 
-					}else {
-						HashMap<String, File> newSidecarMap = new HashMap<String, File>();
-						newSidecarMap.put(extnName, file);
-						logicalFile.setSidecarFiles(newSidecarMap);
-					}
-				}else {
-					//logger.trace("something wrong");
-				}
-			}			
-			
-			Set<String> name_To_FileKeyset = name_To_File.keySet();
-			for (Iterator<String> iterator2 = name_To_FileKeyset.iterator(); iterator2.hasNext();) {
-				String key = (String) iterator2.next();
+	
+				LogicalFile logicalFile = new LogicalFile(filepathname);
 				
-				LogicalFile logicalFile = name_To_File.get(key);
+				for (String sidecarExtension : sidecarExtensionsList) {
+					String sidecarFilePathname = fullPath + baseName + "." + sidecarExtension;
+					File sidecarFile = new File(sidecarFilePathname);
+					if(sidecarFile.exists()) {
+						HashMap<String, File> existingSidecarMap = logicalFile.getSidecarFiles();
+						if(existingSidecarMap != null) {
+							existingSidecarMap.put(sidecarExtension, sidecarFile); 
+						}else {
+							HashMap<String, File> newSidecarMap = new HashMap<String, File>();
+							newSidecarMap.put(sidecarExtension, sidecarFile);
+							logicalFile.setSidecarFiles(newSidecarMap);
+						}
+					}
+				}
 				outputList.add(logicalFile);
 			}
 		} else {
@@ -122,7 +102,7 @@ public class LogicalFileHelper {
 			}
 		}
 		return outputList;
-		
+
 	}
 	
 	public static void main(String[] args) {

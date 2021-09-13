@@ -3,13 +3,16 @@ package org.ishafoundation.dwaraapi.process.thread;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.ApplicationStatus;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -21,6 +24,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TTFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.ArtifactclassConfig;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
@@ -32,6 +36,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -40,6 +45,7 @@ import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
+import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +82,9 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	private TTFileJobDao tFileJobDao;
 	
 	@Autowired
+    private StagedFileEvaluator stagedFileEvaluator;
+	
+	@Autowired
 	private Map<String, IProcessingTask> processingtaskActionMap;
 
 	@Autowired
@@ -89,6 +98,9 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	
 	@Autowired
 	private FileEntityUtil fileEntityUtil;
+	
+	@Autowired
+	private Configuration configuration;
 	
 	private ProcessContext processContext;
 
@@ -173,7 +185,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		ThreadNameHelper threadNameHelper = new ThreadNameHelper();
 		threadNameHelper.setThreadName(job.getRequest().getId(), job.getId(), tFile.getId());
 		logger.debug("Will be processing - " + logicalFile.getAbsolutePath());
-		Status staus = Status.in_progress;
+		Status status = Status.in_progress;
 		String failureReason = null;
 		long startms = 0;
 		long endms = 0;
@@ -192,6 +204,10 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			job = jobDao.findById(job.getId()).get();
 			if(job.getStatus() == Status.on_hold || job.getStatus() == Status.cancelled) {
 				logger.warn("Job " + job.getStatus() + " - not processing it now");
+				return;
+			}
+			if(job.getStatus() == Status.queued && ApplicationStatus.valueOf(configuration.getAppMode()) == ApplicationStatus.maintenance) {
+				logger.warn("App in maintenance - Job " + job.getId() + " is in " + job.getStatus() + " - so not processing it now");
 				return;
 			}
 			job = checkAndUpdateStatusToInProgress(job, systemGeneratedRequest); // synchronous method so only one thread can access this at a time
@@ -223,8 +239,9 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 				logger.info("Processing complete - " + logicalFile.getAbsolutePath());
 				endms = System.currentTimeMillis();
 
+				// UPDATE ARTIFACT and FILE tables
 				//synchronized (processingtaskResponse) { // A Synchronized block to ensure only one thread at a time updates... Handling it differently with extra checks..
-					if(outputArtifactName != null) {
+					if(outputArtifactName != null && systemGeneratedRequest.getActionId() == Action.ingest) {
 						
 						
 						String destinationDirPath = processContext.getOutputDestinationDirPath();
@@ -236,24 +253,44 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 
 						// get all the processed files and check if all the filetype extensions are returned...
 						//String processedFilePathName = processingtaskResponse.getDestinationPathname(); 
-						String srcFileBaseName = FilenameUtils.getBaseName(logicalFile.getAbsolutePath());
 						
-				        FilenameFilter fileNameFilter = new FilenameFilter() {
-				            @Override
-				            public boolean accept(File dir, String name) {
-				            	if(FilenameUtils.getBaseName(name).equals(srcFileBaseName))
-				            		return true;
-				               
-				               return false;
-				            }
-				         };
-						String[] processedFileNames = new File(destinationDirPath).list(fileNameFilter);
+						
+						String srcFileBaseName = FilenameUtils.getBaseName(logicalFile.getAbsolutePath());
+						ArrayList<String> processedFileNames = new ArrayList<String>();
+						if(processingtask != null && processingtask.getOutputFiletypeId() != null) {
+							Filetype filetype = getFiletype(processingtask.getOutputFiletypeId());
+							List<ExtensionFiletype> extn_Filetype_List = filetype.getExtensions(); //extensionFiletypeDao.findAllByFiletypeId(filetype.getId());
+							for (ExtensionFiletype extensionFiletype : extn_Filetype_List) {
+								String suffix = extensionFiletype.getSuffix();
+								String fileName = srcFileBaseName;
+								if(suffix != null)
+									fileName = srcFileBaseName + suffix;
+								fileName = fileName + "." + extensionFiletype.getExtension().getId().toLowerCase();
+								
+								File nthProcessedFile = new File(destinationDirPath + File.separator + fileName);
+								if(nthProcessedFile.exists()) {
+									processedFileNames.add(fileName);
+								}
+							}	
+						}else { // processingtask == null (core PTs like checksum-gen/verify) && processingtask.getOutputFiletypeId() == null (user PTs like mam-update)
+					        FilenameFilter fileNameFilter = new FilenameFilter() {
+					            @Override
+					            public boolean accept(File dir, String name) {
+					            	if(FilenameUtils.getBaseName(name).equals(srcFileBaseName))
+					            		return true;
+					               
+					               return false;
+					            }
+					         };
+							String[] processedFileNamesArray = new File(destinationDirPath).list(fileNameFilter);
+							processedFileNames.addAll(Arrays.asList(processedFileNamesArray));
+						}
 
 						//Validating if all files needed are generated
 						String outputFiletypeId = processingtask != null ? processingtask.getOutputFiletypeId() : null;
 						// TODO we will be using same artifactclass from 2 different processing tasks and so not all extns for the filetypes are available. so commenting this to out until we design it well 
-						boolean isCommentedOut = false;
-						if(isCommentedOut) {
+						boolean isCommentedOut = true;
+						if(!isCommentedOut) {
 						// if(outputFiletypeId != null) { // commenting out this validation to accomodate the last minute idx file extraction change
 							Filetype filetype = getFiletype(outputFiletypeId);
 							List<ExtensionFiletype> extn_Filetype_List = filetype.getExtensions(); //extensionFiletypeDao.findAllByFiletypeId(filetype.getId());
@@ -374,8 +411,21 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 							org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = filePathToFileObj.get(filepathName);
 							//org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = domainSpecificFileRepository.findByPathname(filepathName);
 							if(nthFile == null) { // only if not already created... 
-								logger.trace("Now creating file record for - " + filepathName);
-								createFile(outputArtifact.getArtifactclass().getPath() + File.separator + filepathName, outputArtifact, domainSpecificFileRepository, domain, nthTFile);	
+								String fullFilepathname =  outputArtifact.getArtifactclass().getPath() + File.separator + filepathName;
+								boolean addFileRecords = true;
+								
+								ArtifactclassConfig artifactclassConfig = outputArtifact.getArtifactclass().getConfig();
+								if(artifactclassConfig != null) {
+									String pathnameRegex = artifactclassConfig.getPathnameRegex();
+									if(!fullFilepathname.matches(pathnameRegex)) {
+										logger.trace("Doesnt match " + pathnameRegex + " regex for " + fullFilepathname);
+										addFileRecords = false;
+									}
+								}
+								if(addFileRecords) {
+									logger.trace("Now creating file record for - " + filepathName);
+									createFile(fullFilepathname, outputArtifact, domainSpecificFileRepository, domain, nthTFile);
+								}
 							}
 						}
 						
@@ -395,12 +445,15 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 //						}
 					}
 				//}
-				staus = Status.completed;
+				status = Status.completed;
 				//logger.info("Proxy for " + containerName + " created successfully in " + ((proxyEndTime - proxyStartTime)/1000) + " seconds - " +  generatedProxyFilePathname);
 				logger.debug("Processing Completed in " + ((endms - startms)/1000) + " seconds");
+			}else {
+				status = Status.failed;
+				throw new Exception(processingtaskResponse.getFailureReason());
 			}
 		} catch (Exception e) {
-			staus = Status.failed;
+			status = Status.failed;
 			failureReason = "Unable to complete " + processingtaskName + " for " + tFile.getId() + " :: " + e.getMessage();
 			logger.error(failureReason, e);
 			
@@ -418,8 +471,8 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		}
 		finally {
 			if(tFileJob != null) {
-				tFileJob.setStatus(staus);
-				logger.debug("DB TFileJob Updation - status to " + staus.toString());
+				tFileJob.setStatus(status);
+				logger.debug("DB TFileJob Updation - status to " + status.toString());
 				tFileJobDao.save(tFileJob);
 				logger.debug("DB TFileJob Updation - Success");
 			}
@@ -445,16 +498,29 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			nthTFileRowToBeInserted.setDirectory(true);
 		
 		if(file.exists()) {
-			try {
-				logger.trace("Calc size of " + filePathname);
-				nthTFileRowToBeInserted.setSize(FileUtils.sizeOf(file));
-			}catch (Exception e) {
-				logger.warn("Weird. File exists but fileutils unable to calculate size. Skipping setting size");
-			}
+			org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails afd = stagedFileEvaluator.getDetails(file);
+			nthTFileRowToBeInserted.setSize(afd.getTotalSize());
 		}
 		
-		tFileDao.save(nthTFileRowToBeInserted);
-		return nthTFileRowToBeInserted;
+		org.ishafoundation.dwaraapi.db.model.transactional.TFile savedTFile = null;
+		logger.debug("DB TFile Creation");
+		try {
+			savedTFile = tFileDao.save(nthTFileRowToBeInserted);
+		}
+		catch (Exception e) {
+			nthTFileRowToBeInserted = tFileDao.findByPathname(filePathname);
+			// This check is because of the same file getting queued up for processing again...
+			// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
+			// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
+			if(nthTFileRowToBeInserted != null) {
+				logger.trace("TFile details possibly updated by another thread already");
+				return nthTFileRowToBeInserted;
+			}
+			else
+				throw e;
+		}
+		logger.debug("DB TFile Creation - Success");
+		return savedTFile;
 	}
 
 	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository, Domain domain, org.ishafoundation.dwaraapi.db.model.transactional.TFile tFileDBObj) throws Exception {

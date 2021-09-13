@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-@Component("file-copy")
+@Component("file-copy-old")
 public class FileCopier implements IProcessingTask {
     
     private static final Logger logger = LoggerFactory.getLogger(FileCopier.class);

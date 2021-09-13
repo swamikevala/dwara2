@@ -6,16 +6,20 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -37,6 +41,9 @@ public class Restore extends AbstractStoragetaskAction{
 	private DomainUtil domainUtil;
 	
 	@Autowired
+	private FileEntityUtil fileEntityUtil;
+	
+	@Autowired
 	private Configuration configuration;
 	
 	public String getRestoreLocation(Job job) {
@@ -45,12 +52,12 @@ public class Restore extends AbstractStoragetaskAction{
 		Request request = job.getRequest();
 		RequestDetails requestDetails = request.getDetails();
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
-		if(requestedAction == Action.restore || (requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId()))){
+		if(requestedAction == Action.restore || requestedAction == Action.restore_process){
 			String destinationPath = requestDetails.getDestinationPath();//requested destination path
 			String outputFolder = requestDetails.getOutputFolder();
 			restoreLocation = destinationPath + java.io.File.separator + outputFolder + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier();
 		}
-		else if(requestedAction == Action.ingest || requestedAction == Action.restore_process)
+		else if(requestedAction == Action.ingest || requestedAction == Action.rewrite)
 			restoreLocation = configuration.getRestoreTmpLocationForVerification() + File.separator + "job-" + job.getId();
 		
 		return restoreLocation;
@@ -64,7 +71,50 @@ public class Restore extends AbstractStoragetaskAction{
 		StorageJob storageJob = new StorageJob();
 		storageJob.setJob(job);
 		
-		if(requestedAction == Action.ingest) {
+		if(requestedAction == Action.rewrite && job.getDependencies() == null) {
+			Integer inputArtifactId = job.getInputArtifactId();
+			// Domain
+			Domain domain = null;
+			Artifact artifact = null;
+	    	Domain[] domains = Domain.values();
+   		
+    		for (Domain nthDomain : domains) {
+    			artifact = domainUtil.getDomainSpecificArtifact(nthDomain, inputArtifactId);
+    			if(artifact != null) {
+    				domain = nthDomain;
+    				break;
+    			}
+			}
+			storageJob.setDomain(domain);
+
+			FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(artifact.getName());
+
+			// what need to be restored
+			int fileIdToBeRestored = artifactFile.getId();
+			storageJob.setFileId(fileIdToBeRestored);
+			
+			FileVolume fileVolume = null;
+			Integer goodCopy = request.getDetails().getSourceCopy(); // artifact rewrite or defective_volume has this
+			if(goodCopy != null)
+				fileVolume = getFileVolume(domain, fileIdToBeRestored, goodCopy);
+			else //if(request.getDetails().getPurpose() == RewritePurpose.volume_migration || request.getDetails().getPurpose() == RewritePurpose.additonal_copy)
+				fileVolume = getFileVolume(domain, fileIdToBeRestored, request.getDetails().getVolumeId());
+	
+			if(fileVolume == null)
+				throw new Exception("Not able to retrieve filevolume record for domain " + domain + " filedId " + fileIdToBeRestored + " volumeId " + fileVolume.getVolume().getId());
+	
+			storageJob.setVolume(fileVolume.getVolume());
+			
+			storageJob.setVolumeBlock(fileVolume.getVolumeBlock()); 
+			storageJob.setArchiveBlock(fileVolume.getArchiveBlock());
+			
+			// to where
+			String targetLocationPath = getRestoreLocation(job);
+			storageJob.setTargetLocationPath(targetLocationPath);					
+			
+		}
+		else if(requestedAction == Action.ingest || (requestedAction == Action.rewrite && job.getDependencies() != null)) {
 			// From where - get the volume
 			// get restore job's dependency - can't be anything but write, but looping for making the code generic giving some flexibility
 			List<Integer> dependencies = job.getDependencies();
@@ -84,9 +134,6 @@ public class Restore extends AbstractStoragetaskAction{
 			Volume volume = writeJob.getVolume();
 			String volumeId = volume.getId();
 			storageJob.setVolume(volume);
-			
-			
-			// TODO - Need to take this out storageJob.setRestoreVerify(verify);
 			
 			Integer inputArtifactId = job.getInputArtifactId();
 			// Domain
@@ -123,7 +170,6 @@ public class Restore extends AbstractStoragetaskAction{
 			storageJob.setTargetLocationPath(targetLocationPath);
 		}
 		else {
-		
 			// Domain
 			Domain domain = domainUtil.getDomain(request);
 			storageJob.setDomain(domain);
@@ -166,7 +212,7 @@ public class Restore extends AbstractStoragetaskAction{
 //				verify = volume.getArchiveformat().isRestoreVerify();
 //			storageJob.setRestoreVerify(verify);
 
-			if(requestedAction == Action.restore || (requestedAction == Action.restore_process && CoreFlow.core_restore_checksumverify_flow.getFlowName().equals(request.getDetails().getFlowId()))){
+			if(requestedAction == Action.restore || requestedAction == Action.restore_process){
 //			if(requestedAction == Action.restore && !storageJob.isRestoreVerify()) {
 				String destinationPath = requestDetails.getDestinationPath();//requested destination path
 				storageJob.setDestinationPath(destinationPath);
@@ -175,10 +221,10 @@ public class Restore extends AbstractStoragetaskAction{
 				String targetLocationPath = getRestoreLocation(job);
 				storageJob.setTargetLocationPath(targetLocationPath);
 			}
-			else if(requestedAction == Action.restore_process) {
-				String targetLocationPath = getRestoreLocation(job);
-				storageJob.setTargetLocationPath(targetLocationPath);
-			}
+//			else if(requestedAction == Action.restore_process) {
+//				String targetLocationPath = getRestoreLocation(job);
+//				storageJob.setTargetLocationPath(targetLocationPath);
+//			}
 		}
 		
 		
@@ -192,10 +238,28 @@ public class Restore extends AbstractStoragetaskAction{
 //    	return domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeLocationId(fileIdToBeRestored, locationId);
 //	}
 	
-	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, int copyNumber) {
+	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, int copyNumber) throws Exception {
     	@SuppressWarnings("unchecked")
 		FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-    	return domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeGroupRefCopyId(fileIdToBeRestored, copyNumber);
+    	List<FileVolume> fileVolumeList = domainSpecificFileVolumeRepository.findAllByIdFileIdAndVolumeGroupRefCopyId(fileIdToBeRestored, copyNumber);
+    	FileVolume fileVolume = null;
+    	if(fileVolumeList.size() > 1) {
+    		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+    		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainSpecificFileRepository.findById(fileIdToBeRestored).get();
+    		Artifact artifact = fileEntityUtil.getArtifact(file, domain);
+			ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);	    	
+	    	for (FileVolume nthFileVolume : fileVolumeList) {
+				ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifact.getId(), nthFileVolume.getId().getVolumeId());
+				if(artifactVolume.getStatus() == ArtifactVolumeStatus.current || artifactVolume.getStatus() == null) {
+					fileVolume = nthFileVolume;
+					break;
+				}
+			}
+    	}
+    	else {
+    		fileVolume = fileVolumeList.get(0);
+    	}
+    	return fileVolume;
 	}
 	
 	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, String volumeId) {

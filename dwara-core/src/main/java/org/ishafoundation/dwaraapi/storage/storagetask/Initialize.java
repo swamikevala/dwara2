@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
@@ -68,13 +69,11 @@ public class Initialize extends AbstractStoragetaskAction{
 			volumeGroupId = StringUtils.substring(volumeBarcode, 0, 2);
 		}
 			
-		Volume volumeGroup = volumeDao.findById(volumeGroupId).get();
-		
-		
 		volume.setId(volumeBarcode);
 		volume.setUuid(UUID.randomUUID().toString());
 		volume.setType(Volumetype.physical);
-		
+
+		Volume volumeGroup = volumeDao.findById(volumeGroupId).get();
 		volume.setGroupRef(volumeGroup);
 
 		String checksumalgorithm = configuration.getChecksumType();

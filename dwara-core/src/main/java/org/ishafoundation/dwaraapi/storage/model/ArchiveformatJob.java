@@ -18,8 +18,6 @@ public class ArchiveformatJob {
 	// TAR
 	private int noOfBlocksToBeRead;
 	private int skipByteCount;
-	// BRU
-	private String filePathNameToBeRestored;
 	
 
 	// Verify
@@ -80,10 +78,4 @@ public class ArchiveformatJob {
 	public void setSkipByteCount(int skipByteCount) {
 		this.skipByteCount = skipByteCount;
 	}
-	public String getFilePathNameToBeRestored() {
-		return filePathNameToBeRestored;
-	}
-	public void setFilePathNameToBeRestored(String filePathNameToBeRestored) {
-		this.filePathNameToBeRestored = filePathNameToBeRestored;
-	}	
 }
