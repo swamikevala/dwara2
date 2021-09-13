@@ -525,7 +525,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 		int blockingFactor = TarBlockCalculatorUtil.getBlockingFactor(archiveformatBlocksize, archiveformatJob.getVolumeBlocksize()); 
 		
 		int seekedVolumeBlock = storageJob.getVolumeBlock();
-		if(StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) { //if file is folder
+		if(file.isDirectory()) { //if file is folder
 			if(artifact.getName().equals(filePathname)) {// if file is entire artifact
 				noOfBlocksToBeRead = getNoOfTapeBlocksToBeReadForArtifact(artifactVolume.getDetails().getStartVolumeBlock(), artifactVolume.getDetails().getEndVolumeBlock());
 				skipByteCount = 0; // bang on artifact
