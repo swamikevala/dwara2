@@ -243,7 +243,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 			toBeAddedTFileVolumeTableEntries.add(tfileVolume); // Should we add null entries...
 		}
 		logger.info(toBeAddedTFileVolumeTableEntries.size()>0 ? "yes": "no");
-		logger.info(toBeAddedTFileVolumeTableEntries.get(0).getId().getVolumeId());
+		logger.info(String.valueOf(toBeAddedTFileVolumeTableEntries.get(0).getId().getFileId()));
 	    if(toBeAddedTFileVolumeTableEntries.size() > 0) {
 	    	tFileVolumeDao.saveAll(toBeAddedTFileVolumeTableEntries);
 	    	logger.info("TFileVolume records created successfully");
