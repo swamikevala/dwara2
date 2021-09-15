@@ -249,7 +249,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    	logger.info("TFileVolume records created successfully");
 	    	List<TFileVolume> tFileVolumes= tFileVolumeDao.findAllByIdFileId(toBeAddedTFileVolumeTableEntries.get(0).getId().getFileId());
 	    	logger.info(String.valueOf(tFileVolumes.size()==0));
-	    }
+	    	logger.info(String.valueOf(tFileVolumes.get(0).getId())+ " "+ tFileVolumes.get(0).getId().getVolumeId());   }
 		
 		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact);
 		HashMap<String, File> filePathNameToFileObj = new LinkedHashMap<String, File>();
