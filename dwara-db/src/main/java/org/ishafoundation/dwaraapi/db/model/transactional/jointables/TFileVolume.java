@@ -18,7 +18,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
  * 
 */
 @Entity
-@Polymorphism(type = PolymorphismType.EXPLICIT)
+//@Polymorphism(type = PolymorphismType.EXPLICIT)
 @Table(name="t_file_volume")
 public class TFileVolume extends FileVolume{
 	public TFileVolume() {

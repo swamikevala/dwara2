@@ -27,7 +27,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
  * 
 */
 @Entity
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+//@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @Table(name="file_volume")
 public class FileVolume {
 	
