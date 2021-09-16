@@ -181,9 +181,9 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		String outputArtifactName = processContext.getJob().getOutputArtifact().getName();
-		
+		int fileId = tFile != null ? tFile.getId() : file.getId();
 		ThreadNameHelper threadNameHelper = new ThreadNameHelper();
-		threadNameHelper.setThreadName(job.getRequest().getId(), job.getId(), tFile.getId());
+		threadNameHelper.setThreadName(job.getRequest().getId(), job.getId(), fileId);
 		logger.debug("Will be processing - " + logicalFile.getAbsolutePath());
 		Status status = Status.in_progress;
 		String failureReason = null;
@@ -197,7 +197,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		String processingtaskName = null;
 		Processingtask processingtask = null;
 		try {
-			logger.trace("fileId - " + tFile.getId());
+			logger.trace("fileId - " + fileId);
 			// if the current status of the job is queued - update it to inprogress and do so with the artifact status and request status...
 			Request systemGeneratedRequest = job.getRequest();
 			//Request request = systemGeneratedRequest.getRequest();
@@ -220,10 +220,10 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			
 			processingtask = getProcessingtask(processingtaskName);
 			
-			tFileJob = tFileJobDao.findById(new TTFileJobKey(tFile.getId(), job.getId())).get();
+			tFileJob = tFileJobDao.findById(new TTFileJobKey(fileId, job.getId())).get();
 			tFileJob.setStatus(Status.in_progress);
 			tFileJob.setStartedAt(LocalDateTime.now());
-			logger.debug("DB TFileJob Updation for file " + tFile.getId());
+			logger.debug("DB TFileJob Updation for file " + fileId);
 			tFileJobDao.save(tFileJob);
 			logger.debug("DB TFileJob Updation - Success");
 			
@@ -454,7 +454,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			}
 		} catch (Exception e) {
 			status = Status.failed;
-			failureReason = "Unable to complete " + processingtaskName + " for " + tFile.getId() + " :: " + e.getMessage();
+			failureReason = "Unable to complete " + processingtaskName + " for " + fileId + " :: " + e.getMessage();
 			logger.error(failureReason, e);
 			
 			int maxErrorsAllowed = processingtask != null ? processingtask.getMaxErrors() : 1;
@@ -464,7 +464,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			if(noOfFailuresLogged < maxErrorsAllowed) {
 				// TODO how to ensure the failures logged in are Only unique???
 				logger.debug("DB Failure Creation");
-				ProcessingFailure failure = new ProcessingFailure(tFile.getId(), job, e.getMessage());
+				ProcessingFailure failure = new ProcessingFailure(fileId, job, e.getMessage());
 				failure = failureDao.save(failure);	
 				logger.debug("DB Failure Creation - " + failure.getId());
 			}

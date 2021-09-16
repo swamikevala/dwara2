@@ -351,26 +351,36 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 						}
 					}
 					logger.trace("outputFilePath - " + outputFilePath);
+					
 					//logger.info("Now processing - " + path);
 					TFile tFile = null;
-					org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
-					if(filePathToTFileObj.containsKey(artifactNamePrefixedFilePathname))
-						tFile = filePathToTFileObj.get(artifactNamePrefixedFilePathname);
-					
-					if(tFile == null) {
-						logger.warn(artifactNamePrefixedFilePathname + " not in DB. Skipping it");
-						continue;
+			
+					if(job.getRequest().getActionId() == Action.ingest) {
+						if(filePathToTFileObj.containsKey(artifactNamePrefixedFilePathname))
+							tFile = filePathToTFileObj.get(artifactNamePrefixedFilePathname);
+						
+						if(tFile == null) {
+							logger.warn(artifactNamePrefixedFilePathname + " not in DB. Skipping it");
+							continue;
+						}
 					}
 					
+					org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
 					if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
 						file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
 
-					logger.debug("Delegating for processing -job-" + job.getId() + "-file-" + tFile.getId());
+					if(file == null) {
+						logger.warn(artifactNamePrefixedFilePathname + " not in DB. Skipping it");
+						continue;
+					}
+
+					int fileId = tFile != null ? tFile.getId() : file.getId();
+					logger.debug("Delegating for processing -job-" + job.getId() + "-file-" + fileId);
 	
 					// Requeue scenario - Only failed files are to be continued...
-					Optional<TTFileJob> tFileJobDB = tFileJobDao.findById(new TTFileJobKey(tFile.getId(), job.getId()));
+					Optional<TTFileJob> tFileJobDB = tFileJobDao.findById(new TTFileJobKey(fileId, job.getId()));
 					if(tFileJobDB.isPresent() && (tFileJobDB.get().getStatus() == Status.in_progress || tFileJobDB.get().getStatus() == Status.completed)) {
-						logger.info("job-" + job.getId() + "-file-" + tFile.getId() + " already Inprogress/completed. Skipping it...");
+						logger.info("job-" + job.getId() + "-file-" + fileId + " already Inprogress/completed. Skipping it...");
 						continue;
 					}
 					
@@ -380,8 +390,8 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					boolean alreadyQueued = false;
 					for (Runnable runnable : runnableQueueList) {
 						ProcessingJobProcessor pjp = (ProcessingJobProcessor) runnable;
-						if(job.getId() == pjp.getJob().getId() && tFile.getId() == pjp.getTFile().getId()) {
-							logger.debug("job-" + job.getId() + "-file-" + tFile.getId() + " already in ProcessingJobProcessor queue. Skipping it...");
+						if(job.getId() == pjp.getJob().getId() && fileId == (tFile != null ? pjp.getTFile().getId() : pjp.getFile().getId())) {
+							logger.debug("job-" + job.getId() + "-file-" + fileId + " already in ProcessingJobProcessor queue. Skipping it...");
 							alreadyQueued = true;
 							break;
 						}
@@ -390,11 +400,11 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
 						if(!tFileJobDB.isPresent()) {
 							TTFileJob tFileJob = new TTFileJob();
-							tFileJob.setId(new TTFileJobKey(tFile.getId(), job.getId()));
+							tFileJob.setId(new TTFileJobKey(fileId, job.getId()));
 							tFileJob.setJob(job);
 							tFileJob.setArtifactId(inputArtifactId);
 							tFileJob.setStatus(Status.queued);
-							logger.debug("DB TFileJob Creation for file " + tFile.getId());
+							logger.debug("DB TFileJob Creation for file " + fileId);
 							tFileJobDao.save(tFileJob);
 							logger.debug("DB TFileJob Creation - Success");
 						}
