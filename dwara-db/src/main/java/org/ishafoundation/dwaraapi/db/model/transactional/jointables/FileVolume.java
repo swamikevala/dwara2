@@ -31,6 +31,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 @Table(name="file_volume")
 public class FileVolume {
 	
+	
 	public static final String TABLE_NAME = File.TABLE_NAME_PREFIX +"<<DOMAIN>>_volume";
 	
 	@EmbeddedId
