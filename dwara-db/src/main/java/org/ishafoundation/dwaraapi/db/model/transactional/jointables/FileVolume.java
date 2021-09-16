@@ -6,8 +6,10 @@ import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+//import javax.persistence.Inheritanc;
 import javax.persistence.ManyToOne;
-import javax.persistence.MappedSuperclass;
 import javax.persistence.MapsId;
 import javax.persistence.Table;
 
@@ -25,7 +27,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
  * 
 */
 @Entity
-
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @Table(name="file_volume")
 public class FileVolume {
 	

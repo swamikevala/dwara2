@@ -3,6 +3,8 @@ package org.ishafoundation.dwaraapi.db.model.transactional.jointables;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Polymorphism;
+import org.hibernate.annotations.PolymorphismType;
 import org.ishafoundation.dwaraapi.db.keys.FileVolumeKey;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 
@@ -16,6 +18,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
  * 
 */
 @Entity
+@Polymorphism(type = PolymorphismType.EXPLICIT)
 @Table(name="t_file_volume")
 public class TFileVolume extends FileVolume{
 	public TFileVolume() {
