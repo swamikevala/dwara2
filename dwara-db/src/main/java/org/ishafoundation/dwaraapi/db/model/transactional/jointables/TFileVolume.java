@@ -33,14 +33,29 @@ public class TFileVolume extends FileVolumeColumns{
 	
 	
 	public TFileVolume() {
-		super();
+		
 	}
-	
 	
 	public TFileVolume(int tfileId, Volume volume) {
 		this.volume = volume;
 		this.id = new FileVolumeKey(tfileId, volume.getId());
 	}
+	
+	
+	public Volume getVolume() {
+		return volume;
+	}
+
+
+	
+
+
+	public void setId(FileVolumeKey id) {
+		this.id = id;
+	}
+
+
+	
 
 	public FileVolumeKey getId() {
 		return id;

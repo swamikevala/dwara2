@@ -31,7 +31,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 public class FileVolume  extends FileVolumeColumns{
 	
 	
-	public static final String TABLE_NAME = File.TABLE_NAME_PREFIX +"<<DOMAIN>>_volume";
+	
 	
 	@EmbeddedId
 	protected FileVolumeKey id;
