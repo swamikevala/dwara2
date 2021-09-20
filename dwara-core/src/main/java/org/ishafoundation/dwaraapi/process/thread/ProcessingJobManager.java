@@ -360,7 +360,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 							tFile = filePathToTFileObj.get(artifactNamePrefixedFilePathname);
 						
 						if(tFile == null) {
-							logger.warn(artifactNamePrefixedFilePathname + " not in DB. Skipping it");
+							logger.warn(artifactNamePrefixedFilePathname + " not in t_file table. Skipping it");
 							continue;
 						}
 					}
@@ -368,11 +368,6 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
 					if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
 						file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
-
-					if(file == null) {
-						logger.warn(artifactNamePrefixedFilePathname + " not in DB. Skipping it");
-						continue;
-					}
 
 					int fileId = tFile != null ? tFile.getId() : file.getId();
 					logger.debug("Delegating for processing -job-" + job.getId() + "-file-" + fileId);
