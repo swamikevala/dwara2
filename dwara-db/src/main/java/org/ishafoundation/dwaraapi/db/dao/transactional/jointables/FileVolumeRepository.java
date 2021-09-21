@@ -7,7 +7,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 
 
-public interface FileVolumeRepository<T extends FileVolume> extends CrudRepository<T,Integer> {
+public interface FileVolumeRepository extends CrudRepository<FileVolume,Integer> {
 	
 	List<FileVolume> findAllByIdFileIdAndVolumeGroupRefCopyId(int fileId, int copyNumber);
 	
