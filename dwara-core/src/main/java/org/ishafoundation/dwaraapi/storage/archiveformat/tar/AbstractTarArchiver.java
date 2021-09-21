@@ -538,7 +538,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 					String nthArtifactFilePathname = nthFile.getPathname();//FilenameUtils.separatorsToUnix(nthArtifactFile.getPathname());
 					if(nthArtifactFilePathname.startsWith(filePathname)) {
 						FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());// lets just let users use the util consistently
-						Integer filevolumeBlock = fileVolume.getVolumeBlock();
+						Integer filevolumeBlock = fileVolume.getVolumeStartBlock();
 						Long filearchiveBlock = fileVolume.getArchiveBlock();
 						Integer headerBlocks = fileVolume.getHeaderBlocks();
 						if(nthArtifactFilePathname.equals(filePathname)) { // first file

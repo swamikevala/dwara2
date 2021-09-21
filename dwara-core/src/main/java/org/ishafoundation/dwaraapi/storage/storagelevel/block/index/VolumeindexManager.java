@@ -143,7 +143,7 @@ public class VolumeindexManager {
 							TFileVolume fileVolume = tFileVolumeDao.findByIdFileIdAndIdVolumeId(nthFile.getId(), volume.getId());
 							if(nthFile.isDeleted() && fileVolume == null)
 								continue; // dont add a deleted file that is not written into tape - Usecase MXF gets deleted even before its written to tape...
-							file.setVolumeblock(fileVolume.getVolumeBlock());
+							file.setVolumeblock(fileVolume.getVolumeStartBlock());
 							file.setArchiveblock(fileVolume.getArchiveBlock());
 							file.setEncrypted(fileVolume.isEncrypted() ? true : null);
 							fileList.add(file);
