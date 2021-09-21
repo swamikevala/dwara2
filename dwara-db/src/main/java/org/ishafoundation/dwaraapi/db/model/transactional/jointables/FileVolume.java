@@ -33,8 +33,7 @@ public class FileVolume  extends FileVolumeColumns{
 	
 	
 	
-	@EmbeddedId
-	protected FileVolumeKey id;
+	
 	
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("volumeId")

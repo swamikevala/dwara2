@@ -24,8 +24,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 @Entity
 @Table(name="t_file_volume")
 public class TFileVolume extends FileVolumeColumns{
-	@EmbeddedId
-	protected FileVolumeKey id;
+	
 	
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("volumeId")

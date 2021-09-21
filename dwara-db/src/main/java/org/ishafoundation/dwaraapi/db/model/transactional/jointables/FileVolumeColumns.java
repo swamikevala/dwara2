@@ -3,10 +3,16 @@ package org.ishafoundation.dwaraapi.db.model.transactional.jointables;
 import java.time.LocalDateTime;
 
 import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
 import javax.persistence.MappedSuperclass;
+
+import org.ishafoundation.dwaraapi.db.keys.FileVolumeKey;
 
 @MappedSuperclass
 public class FileVolumeColumns {
+	
+	@EmbeddedId
+	protected FileVolumeKey id;
 	
 	@Column(name="volume_block")
 	private Integer volumeBlock; // volumeBlockStart
