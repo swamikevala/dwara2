@@ -13,8 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.sql.Types.NULL;
@@ -35,32 +34,26 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
 
         FileVolumeRepository<FileVolume> fileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domainUtil.getDefaultDomain());
         List<FileVolume> fileVolumeBlockList;
-        List<Volume> volumeGroupList = null;
-        Iterator<Volume> fileVolumeIterator;
+        List<Volume> volumeGroupList = new ArrayList<>();
         int endBlock;
         if(!StringUtils.isEmpty(volumeId)) {
-            Volume volume = new Volume();
-            volume.setId(volumeId);
-            volumeGroupList.set(0, volume);
-
-            fileVolumeIterator = volumeGroupList.stream().collect(Collectors.toList()).iterator();
-
+            Optional<Volume> volume = volumeDao.findById(volumeId);
+            volumeGroupList.add(volume.get());
         } else {
             volumeGroupList = (List<Volume>) volumeDao.findAll();
-            fileVolumeIterator = volumeGroupList.stream().collect(Collectors.toList()).iterator();
         }
-
 
         FileRepository<File> fileRepository = domainUtil.getDomainSpecificFileRepository(domainUtil.getDefaultDomain());
 
         List<File> fileList = (List<File>) fileRepository.findAll();
 
-        while (fileVolumeIterator.hasNext()) {
-            fileVolumeBlockList = fileVolumeRepository.findAllByIdVolumeIdOrderByVolumeStartBlockAsc(fileVolumeIterator.next().getId()).stream().collect(Collectors.toList());
+        for (Volume fileVolumeIterator: volumeGroupList) {
+
+            fileVolumeBlockList = fileVolumeRepository.findAllByIdVolumeIdOrderByVolumeStartBlockAsc(fileVolumeIterator.getId()).stream().collect(Collectors.toList());
             for (int i = 0; i < fileVolumeBlockList.size(); i++) {
 
                 if (i == fileVolumeBlockList.size()) {
-                    long fileBlockSize = fileList.get(fileList.size()).getId() / fileVolumeIterator.next().getDetails().getBlocksize();
+                    long fileBlockSize = fileList.get(fileList.size()).getId() / fileVolumeIterator.getDetails().getBlocksize();
                     FileVolume fileVolume = fileVolumeBlockList.get(i);
                     endBlock = (int) (fileVolume.getVolumeStartBlock() + fileBlockSize);
                     fileVolume.setVolumeEndBlock(endBlock == NULL ? NULL : endBlock);
@@ -78,9 +71,9 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
                         if (endBlock != fileVolume.getVolumeStartBlock()) {
                             for (File file : fileList) {
                                 if (file.getId() == fileVolume.getId().getFileId()) {
-                                    long fileBlockSize = file.getSize() / fileVolumeIterator.next().getDetails().getBlocksize();
+                                    long fileBlockSize = file.getSize() / fileVolumeIterator.getDetails().getBlocksize();
                                     if (fileBlockSize == (endBlock - fileVolume.getVolumeStartBlock())) {
-                                        logger.info("File Id : {" + fileVolume.getId().getFileId() + "} -- End Block and FileBlocksize is equal.");
+                                        //logger.info("File Id : {" + fileVolume.getId().getFileId() + "} -- End Block and File Block size is equal.");
                                     } else if (fileBlockSize != (endBlock - fileVolume.getVolumeStartBlock()) + 1) {
                                         endBlock = NULL;
                                         logger.error("File Id : {" + fileVolume.getId().getFileId() + "} -- End Block is not done properly.");
