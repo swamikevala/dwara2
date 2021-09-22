@@ -2,10 +2,12 @@ package org.ishafoundation.dwaraapi.service;
 
 import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.File1Dao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.File1;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.slf4j.Logger;
@@ -72,11 +74,11 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
                             for (File file : fileList) {
                                 if (file.getId() == fileVolume.getId().getFileId()) {
                                     long fileBlockSize = file.getSize() / fileVolumeIterator.getDetails().getBlocksize();
-                                    if (fileBlockSize == (endBlock - fileVolume.getVolumeStartBlock())) {
+                                    if (fileBlockSize == (endBlock - fileVolume.getVolumeStartBlock()) - 3 || fileBlockSize == (endBlock - fileVolume.getVolumeStartBlock())) {
                                         //logger.info("File Id : {" + fileVolume.getId().getFileId() + "} -- End Block and File Block size is equal.");
                                     } else if (fileBlockSize != (endBlock - fileVolume.getVolumeStartBlock()) + 1) {
+                                        logger.error("File Id : {" + fileVolume.getId().getFileId() +"} -- End Block is not done -- where -- End block difference with Start Block = {" + (endBlock - fileVolume.getVolumeStartBlock()) + "} -- and -- File Block Size = {" + fileBlockSize + "}");
                                         endBlock = NULL;
-                                        logger.error("File Id : {" + fileVolume.getId().getFileId() + "} -- End Block is not done properly.");
                                     }
                                     break;
                                 }
