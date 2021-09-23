@@ -525,16 +525,21 @@ public class ScheduledStatusUpdater {
 			int userRequestId = nthUserRequest.getId();
 			List<Request> systemRequestList = requestDao.findAllByRequestRefId(userRequestId);
 			
-			List<Status> systemRequestStatusList = new ArrayList<Status>();
-			for (Request nthSystemRequest : systemRequestList) {
-				Status nthSystemRequestStatus = nthSystemRequest.getStatus();
-				systemRequestStatusList.add(nthSystemRequestStatus);
-			}	
-		
-			Status status = StatusUtil.getStatus(systemRequestStatusList);
+			Status status = null;
+			if(systemRequestList == null || systemRequestList.size() == 0) {
+				continue;
+			}
+			else {
+				List<Status> systemRequestStatusList = new ArrayList<Status>();
+				for (Request nthSystemRequest : systemRequestList) {
+					Status nthSystemRequestStatus = nthSystemRequest.getStatus();
+					systemRequestStatusList.add(nthSystemRequestStatus);
+				}	
 			
-			logger.trace("User request status - " + nthUserRequest.getId() + " ::: " + status);
-			
+				status = StatusUtil.getStatus(systemRequestStatusList);
+				
+				logger.trace("User request status - " + nthUserRequest.getId() + " ::: " + status);
+			}
 			// For completed restore jobs the .restoring folder is cleaned up...
 			if((nthUserRequest.getActionId() == Action.restore || nthUserRequest.getActionId() == Action.restore_process) && status == Status.completed) {
 				JsonNode jsonNode = nthUserRequest.getDetails().getBody();
