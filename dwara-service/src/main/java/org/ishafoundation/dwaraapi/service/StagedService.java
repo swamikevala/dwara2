@@ -258,8 +258,9 @@ public class StagedService extends DwaraService{
     
     public IngestResponse ingest(IngestUserRequest ingestUserRequest){	
     	IngestResponse ingestResponse = new IngestResponse();
+    	Request userRequest = null;
     	try{
-			Request userRequest = createUserRequest(Action.ingest, ingestUserRequest);
+    		userRequest = createUserRequest(Action.ingest, ingestUserRequest);
 	    	int userRequestId = userRequest.getId();
 
 			List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
@@ -626,6 +627,10 @@ public class StagedService extends DwaraService{
 	    	
     	}
     	catch (Exception e) {
+    		if(userRequest != null) {
+	    		userRequest.setStatus(Status.failed);
+	    		requestDao.save(userRequest);
+    		}
     		logger.error(e.getMessage(), e);
 			throw new DwaraException("Unable to ingest - " + e.getMessage(), null);
 		}
