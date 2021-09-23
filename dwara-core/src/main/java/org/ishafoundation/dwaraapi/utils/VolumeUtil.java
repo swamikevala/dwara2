@@ -1,11 +1,13 @@
 package org.ishafoundation.dwaraapi.utils;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
@@ -139,12 +141,15 @@ public class VolumeUtil {
 	
 	public TapeUsageStatus getTapeUsageStatus(String volumeId) {
 		TapeUsageStatus tapeUsageStatus = null;
-		long jobInProgressCount = jobDao.countByStoragetaskActionIdIsNotNullAndVolumeIdAndStatus(volumeId, Status.in_progress);
-		
+		long jobInProgressCount = jobDao.countByVolumeIdAndStatusAndStoragetaskActionIdIsNotNull(volumeId, Status.in_progress);
+		Volume volume = null;
+		Optional<Volume> optVolume = volumeDao.findById(volumeId);
+		if(optVolume.isPresent())
+			volume = optVolume.get();
 		if(jobInProgressCount > 0) {
 			tapeUsageStatus = TapeUsageStatus.job_in_progress;
 		}
-		else if(isQueuedJobOnVolume(volumeId) || isQueuedJobOnGroupVolume(volumeDao.findById(volumeId).get().getGroupRef().getId())){ // for restores and writes respectively
+		else if(isQueuedJobOnVolume(volumeId) || (volume != null && !volume.isFinalized() && isQueuedIngestJobOnGroupVolume(volume.getGroupRef().getId()))){ // for non-writes and writes respectively
 			// any group job queued up
 			tapeUsageStatus = TapeUsageStatus.job_queued;
 		}
@@ -155,19 +160,28 @@ public class VolumeUtil {
 		return tapeUsageStatus;
 	}
 	
-	// for writes
+	// For both writes and restores... Used in tape job management
 	public boolean isQueuedJobOnGroupVolume(String volumeId){
 		boolean queuedJob = false;
-		long jobInQueueCount = jobDao.countByStoragetaskActionIdIsNotNullAndGroupVolumeIdAndStatus(volumeId, Status.queued);
+		long jobInQueueCount = jobDao.countByGroupVolumeIdAndStatusAndStoragetaskActionIdIsNotNull(volumeId, Status.queued);
 		if(jobInQueueCount > 0)
 			queuedJob = true;
 		return queuedJob; 
 	}
 	
-	// for restores
-	public boolean isQueuedJobOnVolume(String volumeId){
+	// for writes
+	private boolean isQueuedIngestJobOnGroupVolume(String volumeId){
 		boolean queuedJob = false;
-		long jobInQueueCount = jobDao.countByStoragetaskActionIdIsNotNullAndVolumeIdAndStatus(volumeId, Status.queued);
+		long jobInQueueCount = jobDao.countByGroupVolumeIdAndStatusAndStoragetaskActionIdIsNotNullAndRequestActionId(volumeId, Status.queued, Action.ingest);
+		if(jobInQueueCount > 0)
+			queuedJob = true;
+		return queuedJob; 
+	}
+	
+	// for all but writes
+	private boolean isQueuedJobOnVolume(String volumeId){
+		boolean queuedJob = false;
+		long jobInQueueCount = jobDao.countByVolumeIdAndStatusAndStoragetaskActionIdIsNotNull(volumeId, Status.queued);
 		if(jobInQueueCount > 0)
 			queuedJob = true;
 		return queuedJob; 
