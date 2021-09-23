@@ -55,7 +55,7 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
             for (int i = 0; i < fileVolumeBlockList.size(); i++) {
 
                 if (i == fileVolumeBlockList.size()) {
-                    long fileBlockSize = Math.round((double)fileList.get(fileList.size()).getId() / fileVolumeIterator.getDetails().getBlocksize()) ;
+                    long fileBlockSize = (long) Math.ceil((double)fileList.get(fileList.size()).getId() / fileVolumeIterator.getDetails().getBlocksize());
                     FileVolume fileVolume = fileVolumeBlockList.get(i);
                     endBlock = (int) (fileVolume.getVolumeStartBlock() + fileBlockSize);
                     fileVolume.setVolumeEndBlock(endBlock == NULL ? NULL : endBlock);
@@ -73,10 +73,10 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
                         if (endBlock != fileVolume.getVolumeStartBlock()) {
                             for (File file : fileList) {
                                 if (file.getId() == fileVolume.getId().getFileId()) {
-                                    long fileBlockSize = Math.round((double)file.getSize() / fileVolumeIterator.getDetails().getBlocksize());
-                                    if (fileBlockSize == (endBlock - fileVolume.getVolumeStartBlock()) - 3 || fileBlockSize == (endBlock - fileVolume.getVolumeStartBlock())) {
+                                    long fileBlockSize = (long) Math.ceil((double)file.getSize() / fileVolumeIterator.getDetails().getBlocksize());
+                                    if (fileBlockSize == (endBlock - fileVolume.getVolumeStartBlock()) - 3 || fileBlockSize == (endBlock - fileVolume.getVolumeStartBlock()) - 2 || fileBlockSize == (endBlock - fileVolume.getVolumeStartBlock()) + 1 || fileBlockSize == (endBlock - fileVolume.getVolumeStartBlock())) {
                                         //logger.info("File Id : {" + fileVolume.getId().getFileId() + "} -- End Block and File Block size is equal.");
-                                    } else if (fileBlockSize != (endBlock - fileVolume.getVolumeStartBlock()) + 1) {
+                                    } else if (fileBlockSize != (endBlock - fileVolume.getVolumeStartBlock()) + 2) {
                                         logger.error("File Id : {" + fileVolume.getId().getFileId() +"} -- End Block is not done -- where -- End block difference with Start Block = {" + (endBlock - fileVolume.getVolumeStartBlock()) + "} -- and -- File Block Size = {" + fileBlockSize + "}");
                                         endBlock = NULL;
                                     }
@@ -99,5 +99,6 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
         }
 
     }
+
 }
 
