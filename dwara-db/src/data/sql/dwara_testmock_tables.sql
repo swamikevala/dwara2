@@ -107,6 +107,31 @@ INSERT INTO `zmock_storage_element` VALUES (1,'/dev/tape/by-id/scsi-1IBM_03584L3
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
+INSERT INTO `zmock_mt_status` (`id`, `block_number`, `busy`, `file_number`, `is_write_protected`, `ready`, `soft_error_count`, `status_code`) VALUES ('1', '-1', 0, '-1', 0, 0, NULL, '1');
+INSERT INTO `zmock_mt_status` (`id`, `block_number`, `busy`, `file_number`, `is_write_protected`, `ready`, `soft_error_count`, `status_code`) VALUES ('2', '-1', 0, '-1', 0, 0, NULL, '1');
+INSERT INTO `zmock_mt_status` (`id`, `block_number`, `busy`, `file_number`, `is_write_protected`, `ready`, `soft_error_count`, `status_code`) VALUES ('3', '-1', 0, '-1', 0, 0, NULL, '1');
+
+
+INSERT INTO `zmock_data_transfer_element` (`id`, `empty`, `s_num`, `storage_element_no`, `tapedrive_uid`, `tapelibrary_uid`, `volume_tag`, `mock_mt_status_id`) VALUES ('1', 1, '0', NULL, '/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1497199456-nst', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', NULL, '1');
+INSERT INTO `zmock_data_transfer_element` (`id`, `empty`, `s_num`, `storage_element_no`, `tapedrive_uid`, `tapelibrary_uid`, `volume_tag`, `mock_mt_status_id`) VALUES ('2', 1, '1', NULL, '/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1684087499-nst', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', NULL, '2');
+INSERT INTO `zmock_data_transfer_element` (`id`, `empty`, `s_num`, `storage_element_no`, `tapedrive_uid`, `tapelibrary_uid`, `volume_tag`, `mock_mt_status_id`) VALUES ('3', 1, '2', NULL, '/dev/tape/by-id/scsi-1IBM_ULT3580-TD5_1970448833-nst', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', NULL, '3');
+
+
+INSERT INTO `zmock_storage_element` (`id`, `empty`, `import_export`, `s_no`, `tapelibrary_uid`, `volume_tag`) VALUES ('1', 0, 0, '1', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', 'V5A001');
+INSERT INTO `zmock_storage_element` (`id`, `empty`, `import_export`, `s_no`, `tapelibrary_uid`, `volume_tag`) VALUES ('2', 0, 0, '2', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', 'V5A002');
+INSERT INTO `zmock_storage_element` (`id`, `empty`, `import_export`, `s_no`, `tapelibrary_uid`, `volume_tag`) VALUES ('3', 0, 0, '3', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', 'V5A003');
+INSERT INTO `zmock_storage_element` (`id`, `empty`, `import_export`, `s_no`, `tapelibrary_uid`, `volume_tag`) VALUES ('4', 0, 0, '4', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', 'V5B003');
+INSERT INTO `zmock_storage_element` (`id`, `empty`, `import_export`, `s_no`, `tapelibrary_uid`, `volume_tag`) VALUES ('5', 0, 0, '5', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', 'V5C003');
+INSERT INTO `zmock_storage_element` (`id`, `empty`, `import_export`, `s_no`, `tapelibrary_uid`, `volume_tag`) VALUES ('6', 0, 0, '6', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', 'VLA003');
+INSERT INTO `zmock_storage_element` (`id`, `empty`, `import_export`, `s_no`, `tapelibrary_uid`, `volume_tag`) VALUES ('7', 0, 0, '7', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', 'V4A002');
+INSERT INTO `zmock_storage_element` (`id`, `empty`, `import_export`, `s_no`, `tapelibrary_uid`, `volume_tag`) VALUES ('8', 0, 0, '8', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', 'V5A004');
+INSERT INTO `zmock_storage_element` (`id`, `empty`, `import_export`, `s_no`, `tapelibrary_uid`, `volume_tag`) VALUES ('9', 0, 0, '9', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', 'V5A999L7');
+INSERT INTO `zmock_storage_element` (`id`, `empty`, `import_export`, `s_no`, `tapelibrary_uid`, `volume_tag`) VALUES ('10', 0, 0, '10', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', 'V5B001');
+INSERT INTO `zmock_storage_element` (`id`, `empty`, `import_export`, `s_no`, `tapelibrary_uid`, `volume_tag`) VALUES ('11', 0, 0, '11', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', 'N10001');
+INSERT INTO `zmock_storage_element` (`id`, `empty`, `import_export`, `s_no`, `tapelibrary_uid`, `volume_tag`) VALUES ('12', 0, 0, '12', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', 'N20001L7');
+INSERT INTO `zmock_storage_element` (`id`, `empty`, `import_export`, `s_no`, `tapelibrary_uid`, `volume_tag`) VALUES ('13', 0, 0, '13', '/dev/tape/by-id/scsi-1IBM_03584L32_0000079313020400', 'N20002L7');
+
+
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
