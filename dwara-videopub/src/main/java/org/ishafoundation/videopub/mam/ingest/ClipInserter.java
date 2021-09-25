@@ -24,12 +24,12 @@ public class ClipInserter extends CatDVInteractor {
 	Logger logger = LoggerFactory.getLogger(ClipInserter.class);
 	// E.g.,
 	// http://35.244.61.125:8080/catdv/api/8/clips?jsessionid=EA590416FFC36EBD993201F97032CD52 - POST
-	public String insertClip(String jsessionId, int fileId, int catalogId, String metaDataJson, String highResFilePath) throws Exception {
+	public String insertClip(String jsessionId, int fileId, int catalogId, String metaDataJson, String lowResFilePath) throws Exception {
     	String endpointUrl = getURLPrefix() + "/catdv/api/8/clips";
 
         BasicClientCookie cookie = getCookie(jsessionId);
         
-    	String bodyPayload = frameCreateClipPayloadFromTemplate(fileId, catalogId, metaDataJson, highResFilePath);
+    	String bodyPayload = frameCreateClipPayloadFromTemplate(fileId, catalogId, metaDataJson, lowResFilePath);
     	
     	String response = null;
 		try {
@@ -43,7 +43,7 @@ public class ClipInserter extends CatDVInteractor {
 		return response;    	
 	}
 	
-	private String frameCreateClipPayloadFromTemplate(int fileId, int catalogId, String metaDataJson, String highResFilePath) throws Exception {
+	private String frameCreateClipPayloadFromTemplate(int fileId, int catalogId, String metaDataJson, String lowResFilePath) throws Exception {
 
 		String templateFile = "/catdv/InsertClipPayloadTemplate.json";
 		String jsonDataSourceString = null;
@@ -164,7 +164,7 @@ public class ClipInserter extends CatDVInteractor {
 		
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "catalog.ID", catalogId);
 		
-		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "media.filePath", highResFilePath);
+		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "media.filePath", lowResFilePath);
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "media.fileSize", mediaSize);// TODO need customisation
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "media.videoFormat", catDVStyleVideoFormat);
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "media.audioFormat", catDVStyleAudioFormat);

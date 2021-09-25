@@ -1,3 +1,44 @@
+# Dwara App Version - 2.1.31 (28th Sep 2021)
+### Bugs
+
+1) Support CR in filepathnames - dept-impressions
+
+2) Tape Management fixes
+
+3) scheduler kicks in and updates UR status even before SRs are created.
+
+4) UR Status updation as Failed for exception scenarios
+
+5) Fix for catdv responding with data too long
+
+
+# Dwara App Version - 2.1.30 (20th Sep 2021)
+### Super Hot fix - Broke edited ingest with previous change and processing layer was failing
+
+1) Processinglayer to use TFile only for ingest - Proper fix
+
+# Dwara App Version - 2.1.29 (16th Sep 2021)
+### Hot fix - T120 Mov conversion restores were
+
+1) Processinglayer to use TFile only for ingest - During processing tasks for restore_process action like mov conversion processinglayer shouldnt use TFile tables but should use File tables only.  
+
+### TODO
+
+1) Need to update missed out TFile records.
+
+2) Restore verify for edited would break as we are using File table instead of TFile. Need to Fix this in Dwara 3. (D3-Fix)
+
+# Dwara App Version - 2.1.28 (14th Sep 2021)
+### Hot fix - Restores were blocked.
+
+1) PROD Fix for artifact name with file extn/period causing restores to break
+
+### others
+
+1) Tape UI - remove tape fix
+
+2) DU-615 - Tape Initialisation - Handling of error on tape pool level 
+
 # Dwara App Version - 2.1.27 (31st Aug 2021)
 ### New features
 

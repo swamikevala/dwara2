@@ -43,9 +43,13 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	Job findByStoragetaskActionIdIsNotNullAndVolumeIdAndStatus(String volumeId, Status status); // we need to pass only inprogress status here...
 	
 	// Used in determining tapeusageStatus
-	long countByStoragetaskActionIdIsNotNullAndVolumeIdAndStatus(String volumeId, Status status);
+	long countByVolumeIdAndStatusAndStoragetaskActionIdIsNotNull(String volumeId, Status status);
+
+	long countByGroupVolumeIdAndStatusAndStoragetaskActionIdIsNotNull(String volumeId, Status status);
 	
-	long countByStoragetaskActionIdIsNotNullAndGroupVolumeIdAndStatus(String groupVolumeId, Status status);
+	long countByVolumeIdAndStatusAndStoragetaskActionIdIsNotNullAndRequestActionId(String volumeId, Status status, Action action);
+	
+	long countByGroupVolumeIdAndStatusAndStoragetaskActionIdIsNotNullAndRequestActionId(String groupVolumeId, Status status, Action action);
 	
 //	List<Job> findAllBySubrequestIdOrderById(int subrequestId);
 //	
