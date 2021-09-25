@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @CrossOrigin
 @RestController
 public class CaptureFileEndBlockController {
@@ -22,7 +24,7 @@ public class CaptureFileEndBlockController {
 
 	@ApiOperation(value = "Capture the End Block for files in the File_Volume Table")
 	@PostMapping("/file/capture/endblock")
-	public ResponseEntity<String> captureEndBlock(@RequestParam(value = "id", required = false) String volumeId) {
+	public ResponseEntity<String> captureEndBlock(@RequestParam(value = "id", required = false) List<String> volumeId) {
 		try {
 			fileEndBlockService.fileVolumeEndBlock(volumeId);
 		}catch (Exception e) {
