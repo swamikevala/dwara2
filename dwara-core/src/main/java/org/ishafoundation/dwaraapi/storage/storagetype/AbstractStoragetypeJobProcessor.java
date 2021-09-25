@@ -165,16 +165,37 @@ public abstract class AbstractStoragetypeJobProcessor {
     	return storageResponse; 
     }
     
-	private static String getHexString(String filepathName) {
+    /**
+     * We had to convert filePathName String to Hex while comparing tarResponse vs DB.filePathname to support non-ascii characters like emojis, carriage return(\r char) etc.
+     * Assuming when non-ascii characters 
+     * 1) like emoji are used in the filename that the characters are output in octal (escaped by a "\") - for eg., tar responds with \360\237\231\217 for folded hands/namaskar emoji
+     * 2) like carriage return - tar responds with \r
+     * @param filepathName
+     * @return
+     */
+	private static String getHexString(String filepathName) throws Exception {
 		StringBuffer filepathNameHexSB = new StringBuffer();
 		for(int i = 0; i < filepathName.length(); i++){
 			char nthChar = filepathName.charAt(i);
-			char[] dst = new char[3];
 			String hexString = null;
 			if(String.valueOf(nthChar).equals("\\")) {
-				filepathName.getChars(i+1, i+4, dst, 0);
-				hexString = Integer.toHexString(Integer.parseInt(String.valueOf(dst),8));
-				i = i +3;
+				try {
+					char[] dst = new char[3];	
+					filepathName.getChars(i+1, i+4, dst, 0);
+					hexString = Integer.toHexString(Integer.parseInt(String.valueOf(dst),8));
+					i = i +3;
+				}catch (Exception e) {
+					char[] dst = new char[2];	
+					filepathName.getChars(i, i+2, dst, 0);
+					String cntrlChar = String.valueOf(dst);
+					if(cntrlChar.equals("\\r"))
+						hexString = "0D".toLowerCase();
+					else if(cntrlChar.equals("\\n"))
+						hexString = "0A".toLowerCase();
+					else 
+						throw new Exception("Control char " + cntrlChar + " not supported - " + filepathName);
+					i = i +1;
+				}
 			}else {
 				hexString = Integer.toHexString(nthChar);
 			}
@@ -202,7 +223,13 @@ public abstract class AbstractStoragetypeJobProcessor {
 			for (Iterator<ArchivedFile> iterator = archivedFileList.iterator(); iterator.hasNext();) {
 				ArchivedFile archivedFile = (ArchivedFile) iterator.next();
 				String filePathName = archivedFile.getFilePathName();
-				String filePathNameHex = getHexString(filePathName);
+				String filePathNameHex = null;
+				try {
+					filePathNameHex = getHexString(filePathName);
+				}catch (Exception e) {
+					logger.error("Not able to hex " + filePathName, e);
+					throw e;
+				}
 				logger.trace("AFList - " + filePathName + ":" + filePathNameHex);
 				filePathNameHexToArchivedFileObj.put(filePathNameHex, archivedFile);
 			}

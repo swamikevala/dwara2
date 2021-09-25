@@ -212,7 +212,7 @@ public class MamUpdateTaskExecutor implements IProcessingTask {
 				
 				logger.info("Successfully inserted thumbnail - " + insertedThumbnailID);
 				// update clip with thumbnail as poster
-				String updatedClipResp = cu.updateClip(jsessionId, insertedClipJsonResp, insertedThumbnailID);
+				String updatedClipResp = cu.updateClip(jsessionId, insertedClipJsonResp, insertedThumbnailID, metaDataJson, videoFilePath);
 				String updatedClipStatus = JsonPathUtil.getValue(updatedClipResp, "status");
 				if("OK".equals(updatedClipStatus))				
 					logger.info("Successfully updated clip " + insertedClipID + " with thumbnail " + insertedThumbnailID);

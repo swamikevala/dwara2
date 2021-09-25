@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
@@ -47,6 +48,7 @@ public class ScheduledBlankTapeAutoInitializer {
 		logger.info("***** Auto initializing blank Tapes *****");
 
 		try {
+			Map<String, List<InitializeUserRequest>> volumeGroupId_InitializeUserRequest_Map = new HashMap<String, List<InitializeUserRequest>>();
 			List<Device> autoloaderDevices = deviceDao.findAllByType(Devicetype.tape_autoloader);
 			
 			List<Volume> volumeGroupList = volumeDao.findAllByType(Volumetype.group); 
@@ -57,7 +59,7 @@ public class ScheduledBlankTapeAutoInitializer {
 
 			
 			for (Device autoloaderDevice : autoloaderDevices) {
-				List<InitializeUserRequest> initializeUserRequestList = new ArrayList<InitializeUserRequest>(); 
+				
 				List<Tape> blankTapesList = autoloaderService.getLoadedTapesInLibrary(autoloaderDevice, true); // get only blank tapes from library
 				for (Tape tape : blankTapesList) {
 					String barcode = tape.getBarcode();
@@ -77,16 +79,28 @@ public class ScheduledBlankTapeAutoInitializer {
 					initializeUserRequest.setVolume(barcode);
 					// Not needed initializeUserRequest.setVolumeBlocksize(524288);
 					initializeUserRequest.setVolumeGroup(volumeGroupId);
+					
+					List<InitializeUserRequest> initializeUserRequestList = volumeGroupId_InitializeUserRequest_Map.get(volumeGroupId);
+					if(initializeUserRequestList == null)
+						initializeUserRequestList = new ArrayList<InitializeUserRequest>(); 
 					initializeUserRequestList.add(initializeUserRequest);
+					
+					volumeGroupId_InitializeUserRequest_Map.put(volumeGroupId, initializeUserRequestList);
 				}
 				
-				volumeInitializer.validateInitializeUserRequest(initializeUserRequestList);
-				
-				volumeInitializer.initialize(DwaraConstants.SYSTEM_USER_NAME, initializeUserRequestList);
+				Set<String> volumeGroupSet = volumeGroupId_InitializeUserRequest_Map.keySet();
+				for (String nthVolumeGroup : volumeGroupSet) {
+					try {
+						List<InitializeUserRequest> initializeUserRequestList = volumeGroupId_InitializeUserRequest_Map.get(nthVolumeGroup);
+						volumeInitializer.validateInitializeUserRequest(initializeUserRequestList);
+						volumeInitializer.initialize(DwaraConstants.SYSTEM_USER_NAME, initializeUserRequestList);
+					}catch (Exception e) {
+						logger.error("Unable to auto initialize blank tapes for " + nthVolumeGroup, e);
+					}
+				} 
 			}
-			
 		} catch (Exception e) {
-			logger.error("Unable to auto initializing blank Tapes", e);
+			logger.error("Unable to auto initialize blank Tapes", e);
 		}
 	}
 }
