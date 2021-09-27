@@ -21,8 +21,12 @@ import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -56,6 +60,13 @@ public class FileService extends DwaraService{
 	
 	@Autowired
 	private DomainUtil domainUtil;
+	
+	@Autowired
+	private TTFileJobDao ttFileJobDao;
+	
+	@Autowired
+	private TFileDao tfileDao; 
+
 	
 	public List<File> list(List<Integer> fileIds){
 
@@ -112,8 +123,9 @@ public class FileService extends DwaraService{
 			sb.append("%'");
 		}
 		
+		//String query="select file1.id, file1.pathname, file1.size from artifact1 join file1 on artifact1.id = file1.artifact_id where " + sb.toString() + " and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name";
 		String query="select file1.id, file1.pathname, file1.size, artifact1.id as artifactId from artifact1 join file1 on artifact1.id = file1.artifact_id where " + sb.toString() + " and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name";
-        Query q = entityManager.createNativeQuery(query);
+		Query q = entityManager.createNativeQuery(query);
         List<Object[]> results = q.getResultList();
         List<File> list = new ArrayList<File>();
         results.stream().forEach((record) -> {
@@ -121,7 +133,6 @@ public class FileService extends DwaraService{
             String artifactName = (String) record[1];
             long size = ((BigInteger)record[2]).longValue();
             int artifactId = ((Integer) record[3]).intValue();
-
 			File file = new File();
 			file.setId(fileId);
 			file.setPathname(artifactName);
@@ -137,9 +148,8 @@ public class FileService extends DwaraService{
     	RestoreResponse restoreResponse = new RestoreResponse();
 
     	List<Integer> fileIds = restoreUserRequest.getFileIds();
-
     	if(fileIds.size() == 0)
-    		throw new Exception("Invalid request. No File Id passed");
+    		   		throw new Exception("Invalid request.  No File Id passed");
     	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
     	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
     	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
@@ -377,5 +387,70 @@ public class FileService extends DwaraService{
 			}
 		}
     }
+    public void markBad(int fileId , String reason , boolean dealWithJob) throws Exception{
+    	Domain[] domains = Domain.values();
+    	HashMap<String, Object> data = new HashMap<String, Object>();
+    	
+    	
+		Request userRequest = null;
+		data.put("fileId", fileId);
+		data.put("bad", true);
+		data.put("reason",reason);
+		userRequest = createUserRequest(Action.mark_corrupted, data);
+		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = null;
+		TTFileJob ttFileJob = null;
+		Domain domain = null;
+
+    	
+    	for (Domain nthDomain : domains) {
+						
+			
+			 fileFromDB = domainUtil.getDomainSpecificFile(nthDomain, fileId);
+			if(fileFromDB != null) {
+				domain=nthDomain;
+		    	break;
+			}
+		}
+
+		fileFromDB.setBad(true);
+		fileFromDB.setReason(reason);
+		TFile tfile =  tfileDao.findById(fileId).get();
+		tfile.setBad(true);
+		tfile.setReason(reason);
+		tfileDao.save(tfile);
+    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+    	domainSpecificFileRepository.save(fileFromDB);
+		
+    	if( dealWithJob) {
+    	List<TTFileJob> ttFileJobs = ttFileJobDao.findAllByIdFileId(fileId);
+		if(ttFileJobs.size()==1) {
+			ttFileJob = ttFileJobs.get(0);
+			int jobID = ttFileJob.getJob().getId();
+			ttFileJobDao.delete(ttFileJob);
+			
+			List<TTFileJob> ttFileJobswithId = ttFileJobDao.findAllByJobId(jobID);
+			boolean delete = true;
+			for(TTFileJob ttfileJob : ttFileJobswithId ) {
+				if(ttfileJob.getStatus()!=Status.completed) {
+					delete=false;
+				}
+			}
+			if(delete ) {
+				ttFileJobDao.deleteAll(ttFileJobswithId);
+			}
+		}
+		
+		else {
+			
+			throw new Exception("Multiple jobs references the file "+fileId+". Not able to deal with t_file_job and job. Please do it manually");
+		}
+    	
+    	}
+	
+    	
+    	userRequest.setStatus(Status.completed);
+		userRequest = requestDao.save(userRequest);
+    }
+
 }
 

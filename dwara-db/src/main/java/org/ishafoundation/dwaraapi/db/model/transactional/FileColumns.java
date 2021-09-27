@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.db.model.transactional;
 import java.util.Objects;
 
 import javax.persistence.Column;
+import javax.persistence.Lob;
 import javax.persistence.MappedSuperclass;
 
 import org.hibernate.annotations.Type;
@@ -41,6 +42,12 @@ public class FileColumns {
 	@Column(length=4096, name="symlink_path") 
 	private String symlinkPath;
 	
+	@Column(name="bad")
+	private Boolean bad= false;
+	
+	@Lob
+	@Column( name ="reason") 
+	 private String reason;
 
 	public String getPathname() {
 		return pathname;
@@ -113,7 +120,26 @@ public class FileColumns {
 	public void setSymlinkPath(String symlinkPath) {
 		this.symlinkPath = symlinkPath;
 	}
-
+	
+	public void setBad(boolean bad) 
+	{
+		this.bad=bad;
+	}
+	
+	public void setReason(String reason) 
+	{
+		this.reason=reason;
+	}
+	
+	public Boolean getBad() 
+	{
+		return bad;
+	}
+	
+	public String getReason() 
+	{
+		return reason;
+	}
 	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
