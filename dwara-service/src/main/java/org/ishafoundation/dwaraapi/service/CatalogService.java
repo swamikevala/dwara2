@@ -127,7 +127,7 @@ public class CatalogService extends DwaraService{
     }
 
     public List<TapeCatalog> findTapesCatalog(String volumeId, String[] volumeGroup, String[] copyNumber, String[] format, String[] location, String startDate, String endDate) {
-        Query q2 = entityManager.createNativeQuery("select artifactclass_id, volume_id from artifactclass_volume where active=1");
+        /* Query q2 = entityManager.createNativeQuery("select artifactclass_id, volume_id from artifactclass_volume where active=1");
         List<Object[]> results2 = q2.getResultList();
         HashMap<String, List<String>> map = new HashMap<String, List<String>>();
         results2.stream().forEach((record) -> {
@@ -141,7 +141,7 @@ public class CatalogService extends DwaraService{
                 l.add(_artifactClassId);
                 map.put(_groupId, l);
             }
-        });
+        }); */
 
         String condition = "";
         if(volumeId != "") {
