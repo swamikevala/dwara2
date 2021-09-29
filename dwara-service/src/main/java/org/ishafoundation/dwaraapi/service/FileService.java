@@ -414,7 +414,8 @@ public class FileService extends DwaraService{
 
 		fileFromDB.setBad(true);
 		fileFromDB.setReason(reason);
-		TFile tfile =  tfileDao.findById(fileId).get();
+		String filePath = fileFromDB.getPathname();
+		TFile tfile =  tfileDao.findByPathname(filePath);
 		tfile.setBad(true);
 		tfile.setReason(reason);
 		tfileDao.save(tfile);
