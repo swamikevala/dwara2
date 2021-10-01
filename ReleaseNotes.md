@@ -11,6 +11,11 @@
 
 5) Fix for catdv responding with data too long
 
+### Upgrade steps
+
+0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_19.sql)
+
+1) Clean all 4 XL80 drives
 
 # Dwara App Version - 2.1.30 (20th Sep 2021)
 ### Super Hot fix - Broke edited ingest with previous change and processing layer was failing
