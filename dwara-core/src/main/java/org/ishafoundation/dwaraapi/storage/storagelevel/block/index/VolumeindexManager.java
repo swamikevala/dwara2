@@ -124,9 +124,10 @@ public class VolumeindexManager {
 		Writer fileWriter = new FileWriter(filePath);
 		//Create XMLStreamWriter object from xmlOutputFactory.
 		XMLStreamWriter xmlStreamWriter = xmlOutputFactory.createXMLStreamWriter(fileWriter);
-		xmlOutputFactory.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, true);
-		xmlOutputFactory.setProperty(WstxInputProperties.P_RETURN_NULL_FOR_DEFAULT_NAMESPACE, true);
-
+		/*
+			xmlOutputFactory.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, true);
+			xmlOutputFactory.setProperty(WstxInputProperties.P_RETURN_NULL_FOR_DEFAULT_NAMESPACE, true);
+		*/
 	    xmlMapper.writeValue(xmlStreamWriter, volumeindex);
 		
 		volumeindex = null; // Forced quick cleanup rather waiting for GC to clean it up.
