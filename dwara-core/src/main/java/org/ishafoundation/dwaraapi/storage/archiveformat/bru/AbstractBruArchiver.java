@@ -55,13 +55,13 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 //		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
 			logger.info("Bru write " +  bruCopyCommand);
 			commandOutput = executeWriteCommand(commandList, artifactNameToBeWritten, volumeBlocksize);
-			
+			logger.info("Bru write complete");
 //		}
 		logger.trace("Before parsing bru response - " + commandOutput);
 		BruResponseParser bruResponseParser = new BruResponseParser();
 		BruResponse bruResponse = bruResponseParser.parseBruResponse(commandOutput);
 		logger.trace("Parsed bru response object - " + bruResponse);
-		logger.info("Bru write complete - " +  bruResponse.getArchiveId());
+		logger.info("Bru archive id - " +  bruResponse.getArchiveId());
 		return convertBruResponseToArchiveResponse(bruResponse, artifactNameToBeWritten, volumeBlocksize, archiveformatBlocksize);
 	}
 
