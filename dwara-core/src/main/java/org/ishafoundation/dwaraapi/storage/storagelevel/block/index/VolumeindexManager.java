@@ -111,21 +111,20 @@ public class VolumeindexManager {
 
 		Volumeindex volumeindex = generateVolumeindex(volume, domain);
 		
-		//Create FileWriter object.
-		Writer fileWriter = new FileWriter(filePath);
-	
-		//Get XMLOutputFactory instance.
-		XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
-	
-		//Create XMLStreamWriter object from xmlOutputFactory.
-		XMLStreamWriter xmlStreamWriter = xmlOutputFactory.createXMLStreamWriter(fileWriter);
-		
 	    XmlMapper xmlMapper = new XmlMapper();
+		//Get XMLOutputFactory instance.
+		XMLOutputFactory xmlOutputFactory = xmlMapper.getFactory().getXMLOutputFactory();
 	    String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;
-	    xmlMapper.getFactory().getXMLOutputFactory().setProperty(propName, true);
+	    xmlOutputFactory.setProperty(propName, true);
 	    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_1_1, true);
 	    xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
-		xmlMapper.writeValue(xmlStreamWriter, volumeindex);
+
+		//Create FileWriter object.
+		Writer fileWriter = new FileWriter(filePath);
+		//Create XMLStreamWriter object from xmlOutputFactory.
+		XMLStreamWriter xmlStreamWriter = xmlOutputFactory.createXMLStreamWriter(fileWriter);
+
+	    xmlMapper.writeValue(xmlStreamWriter, volumeindex);
 		
 		volumeindex = null; // Forced quick cleanup rather waiting for GC to clean it up.
 		logger.info(filePath + "succesfully created");
