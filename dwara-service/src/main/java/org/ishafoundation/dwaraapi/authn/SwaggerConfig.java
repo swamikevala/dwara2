@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.authn;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.ApiInfoBuilder;
@@ -26,6 +27,7 @@ import static springfox.documentation.builders.PathSelectors.regex;
  */
 @Configuration
 @EnableSwagger2
+@ConditionalOnProperty(name = "dwara.keycloak.enabled", havingValue = "true", matchIfMissing = false)
 public class SwaggerConfig {
 
     @Value("${keycloak.auth-server-url}")
