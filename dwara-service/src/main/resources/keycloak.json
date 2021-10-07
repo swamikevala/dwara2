@@ -1,0 +1,10 @@
+{
+  "realm": "archives",
+  "auth-server-url": "http://172.18.1.222:8020/auth/",
+  "ssl-required": "external",
+  "resource": "dwara",
+  "credentials": {
+    "secret": "763c8899-df7b-46e0-b128-58fd08b0be8e"
+  },
+  "confidential-port": 0
+}

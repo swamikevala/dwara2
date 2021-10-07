@@ -22,6 +22,22 @@
 
 	<dependencies>
 		<dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-spring-security-adapter</artifactId>
+            <version>11.0.2</version>
+        </dependency>
+		<dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>2.9.2</version>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>2.9.2</version>
+        </dependency>
+
+		<dependency>
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-core</artifactId>
 			<version>${dwara-core.version}</version>

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
@@ -15,9 +16,14 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.keycloak.KeycloakPrincipal;
+import org.keycloak.representations.AccessToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,14 +39,54 @@ public class DwaraService {
 	@Autowired
 	protected RequestDao requestDao;
 
-	protected String getUserFromContext() {
-		return SecurityContextHolder.getContext().getAuthentication().getName();
+	@Value("${dwara.keycloak.enabled}")
+    private boolean KEYCLOAK_ENABLED;
+
+	public String getUserFromContext() {
+		if(KEYCLOAK_ENABLED) {
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			if (!(authentication instanceof AnonymousAuthenticationToken)) {
+				KeycloakPrincipal principal = (KeycloakPrincipal)authentication.getPrincipal();
+				AccessToken token = principal.getKeycloakSecurityContext().getToken();
+				String userName = token.getPreferredUsername();
+				return userName;
+			}
+			return null;
+		}
+		else {
+			return SecurityContextHolder.getContext().getAuthentication().getName();
+		}
 	}
 	
-	protected User getUserObjFromContext() {
-		String requestedBy = getUserFromContext();
-		User user = userDao.findByName(requestedBy);
-		return user;
+	public User getUserObjFromContext() {
+		if(KEYCLOAK_ENABLED) {
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			if (!(authentication instanceof AnonymousAuthenticationToken)) {
+				User uInfo = new User();
+				KeycloakPrincipal principal = (KeycloakPrincipal)authentication.getPrincipal();
+				AccessToken token = principal.getKeycloakSecurityContext().getToken();
+				String userName = token.getPreferredUsername();
+				// String userId = token.getId();
+				String email = token.getEmail();
+				// String displayName = token.getName();
+				Map<String, Object> customClaims = token.getOtherClaims();
+				int dwaraUserId = -1;
+				if (customClaims.containsKey("dwaraUserId")) {
+					dwaraUserId = Integer.parseInt(String.valueOf(customClaims.get("dwaraUserId")));
+				}
+
+				uInfo.setName(userName);
+				uInfo.setId(dwaraUserId);
+				uInfo.setEmail(email);
+				return uInfo;
+			}
+			return null;
+		}
+		else {
+			String requestedBy = getUserFromContext();
+			User user = userDao.findByName(requestedBy);
+			return user;
+		}
 	}
 
 	protected JsonNode getRequestDetails(Object payload) {

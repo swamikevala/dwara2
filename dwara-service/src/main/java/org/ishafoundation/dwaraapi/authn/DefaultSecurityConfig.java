@@ -8,6 +8,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -22,8 +23,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import io.swagger.models.HttpMethod;
 
+//turn off basic authentication
 @Configuration
 @EnableWebSecurity
+@ConditionalOnProperty(name = "dwara.keycloak.enabled", havingValue = "false", matchIfMissing = true)
 public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
 	
     @Autowired
