@@ -196,6 +196,7 @@ public class VolumeService extends DwaraService {
 			//details.setProvider(provider);
 			//details.setRemoveAfterJob(removeAfterJob);
 			if(volume.getType() == Volumetype.group) {
+				logger.info(volume.getId() + ":" +  volResp.getUnusedCapacity() + ":" + (volumeDetails.getMinimumFreeSpace()/sizeUnitDivisor));
 				if(volResp.getUnusedCapacity() < (volumeDetails.getMinimumFreeSpace()/sizeUnitDivisor))
 					details.setExpandCapacity(true);
 				details.setNextBarcode(volume.getSequence().getPrefix() + (volume.getSequence().getCurrrentNumber() + 1) + "L7"); // TODO - How to findout LTO Generation???
@@ -222,11 +223,10 @@ public class VolumeService extends DwaraService {
 	public String generateVolumeindex(String volumeId) throws Exception {
 		Volume volume = volumeDao.findById(volumeId).get();
 		
-		String label = volumeindexManager.createVolumeindex(volume, Domain.ONE);
+		String tmpXmlFilepathname = filesystemTemporarylocation + File.separator + volumeId + "_index.xml";
+		volumeindexManager.createVolumeindexXml(volume, Domain.ONE, tmpXmlFilepathname);
 		
-		File file = new File(filesystemTemporarylocation + File.separator + volumeId + "_index.xml");
-		FileUtils.writeStringToFile(file, label);
-		String response = file.getAbsolutePath() + " created"; 
+		String response = tmpXmlFilepathname + " created"; 
 		logger.trace(response);
 		
 		return response;
@@ -343,7 +343,7 @@ public class VolumeService extends DwaraService {
 		data.put("volumeId", volumeId);
 		data.put("status", status);
 		data.put("reason", reason);
-		Request userRequest = createUserRequest(Action.mark_volume, data);
+		Request userRequest = createUserRequest(Action.mark_volume, Status.completed, data);
 		userRequest.setMessage(reason);
 		requestDao.save(userRequest);
 		

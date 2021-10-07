@@ -2,12 +2,19 @@ package org.ishafoundation.dwaraapi.storage.storagelevel.block.index;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamWriter;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
@@ -34,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.ctc.wstx.api.WstxInputProperties;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
@@ -58,17 +66,22 @@ public class VolumeindexManager {
 	@Value("${filesystem.temporarylocation}")
 	private String filesystemTemporarylocation;
 	
+	private String gzFilenameSuffix = "_index.gz";
+	
+	private String xmlFilenameSuffix = "_index.xml";
+	
 	public boolean writeVolumeindex(SelectedStorageJob storagetypeJob) throws Exception {
 		boolean isSuccess = false;
 		StorageJob storageJob = storagetypeJob.getStorageJob();
 		Volume volume = storageJob.getVolume();
 		Domain domain = storageJob.getDomain();
 		
-		String xmlFromJava = createVolumeindex(volume, domain);
-		logger.trace(xmlFromJava);
-		java.io.File file = new java.io.File(filesystemTemporarylocation + java.io.File.separator + volume.getId() + "_index.gz");
+		String tmpXmlFilepathname = filesystemTemporarylocation + java.io.File.separator + volume.getId() + xmlFilenameSuffix;
+		createVolumeindexXml(volume, domain, tmpXmlFilepathname);
+		java.io.File file = new java.io.File(filesystemTemporarylocation + java.io.File.separator + volume.getId() + gzFilenameSuffix);
 		try (GzipCompressorOutputStream out = new GzipCompressorOutputStream(new FileOutputStream(file))){
-            IOUtils.copy(new ByteArrayInputStream(xmlFromJava.getBytes()), out);
+			Files.copy(Paths.get(tmpXmlFilepathname), out);
+			// Files.copy(new BufferedInputStream(new FileInputStream(filesystemTemporarylocation + java.io.File.separator + volume.getId() + xmlFilenameSuffix)), out);
         }
 	
 		logger.trace(file.getAbsolutePath() + " created ");
@@ -84,6 +97,9 @@ public class VolumeindexManager {
 			FileUtils.forceDelete(file);
 			logger.trace(file.getAbsolutePath() + " deleted ok.");
 			
+			FileUtils.forceDelete(new java.io.File(tmpXmlFilepathname));
+			logger.trace(tmpXmlFilepathname + " deleted ok.");
+			
 			if(cler.isComplete()) 
 				isSuccess = true;
 //		}
@@ -91,7 +107,34 @@ public class VolumeindexManager {
 		return isSuccess;
 	}
 	
-	public String createVolumeindex(Volume volume, Domain domain) throws Exception {
+
+	public void createVolumeindexXml(Volume volume, Domain domain, String filePath) throws Exception {
+
+		Volumeindex volumeindex = generateVolumeindex(volume, domain);
+		
+	    XmlMapper xmlMapper = new XmlMapper();
+		//Get XMLOutputFactory instance.
+		XMLOutputFactory xmlOutputFactory = xmlMapper.getFactory().getXMLOutputFactory();
+	    String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;
+	    xmlOutputFactory.setProperty(propName, true);
+	    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_1_1, true);
+	    xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+		//Create FileWriter object.
+		Writer fileWriter = new FileWriter(filePath);
+		//Create XMLStreamWriter object from xmlOutputFactory.
+		XMLStreamWriter xmlStreamWriter = xmlOutputFactory.createXMLStreamWriter(fileWriter);
+		/*
+			xmlOutputFactory.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, true);
+			xmlOutputFactory.setProperty(WstxInputProperties.P_RETURN_NULL_FOR_DEFAULT_NAMESPACE, true);
+		*/
+	    xmlMapper.writeValue(xmlStreamWriter, volumeindex);
+		
+		volumeindex = null; // Forced quick cleanup rather waiting for GC to clean it up.
+		logger.info(filePath + "succesfully created");
+	}
+	
+	private Volumeindex generateVolumeindex(Volume volume, Domain domain) throws Exception {
 		Volumeinfo volumeinfo = new Volumeinfo();
 		volumeinfo.setVolumeuid(volume.getId());
 		volumeinfo.setVolumeblocksize(volume.getDetails().getBlocksize());
@@ -168,14 +211,6 @@ public class VolumeindexManager {
 		volumeindex.setVolumeinfo(volumeinfo);
 		volumeindex.setArtifact(artifactList);
 
-		
-	    XmlMapper xmlMapper = new XmlMapper();
-	    String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;
-	    xmlMapper.getFactory().getXMLOutputFactory().setProperty(propName, true);
-	    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_1_1, true);
-	    xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
-		String xmlFromJava = xmlMapper.writeValueAsString(volumeindex);
-		return xmlFromJava;
-
+		return volumeindex;
 	}
 }
