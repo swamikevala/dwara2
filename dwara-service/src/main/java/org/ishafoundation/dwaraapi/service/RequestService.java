@@ -75,9 +75,9 @@ public class RequestService extends DwaraService{
 		return frameRequestResponse(request, requestType, requestType == RequestType.user ? request.getId() : request.getRequestRef().getId(), null);
 	}
 
-	public List<RequestResponse> getRequests(RequestType requestType, List<Action> action, List<Status> statusList, List<User> requestedByList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName, List<String> artifactclassList, JobDetailsType jobDetailsType){
+	public List<RequestResponse> getRequests(RequestType requestType, List<Action> actionList, List<Status> statusList, List<User> requestedByList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName, List<String> artifactclassList, JobDetailsType jobDetailsType){
 		List<RequestResponse> requestResponseList = new ArrayList<RequestResponse>();
-		logger.info("Retrieving requests " + (requestType != null ? requestType.name() : null) + ":" + action + ":" + statusList);
+		logger.info("Retrieving requests " + (requestType != null ? requestType.name() : null) + ":" + actionList + ":" + statusList);
 
 		LocalDateTime requestedAtStart = requestedFrom != null ? requestedFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
 		LocalDateTime requestedAtEnd = requestedTo != null ? requestedTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
@@ -100,7 +100,7 @@ public class RequestService extends DwaraService{
 		int pageNumber = 0;
 		int pageSize = 0;
 
-		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, action, statusList, requestedByList, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, artifactclassList, pageNumber, pageSize);
+		List<Request> requestList = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, actionList, statusList, requestedByList, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, artifactName, artifactclassList, pageNumber, pageSize);
 		for (Request request : requestList) {
 			logger.trace("Now processing " + request.getId());
 			RequestResponse requestResponse = frameRequestResponse(request, requestType, requestType == RequestType.user ? request.getId() : request.getRequestRef().getId(), jobDetailsType);
@@ -350,7 +350,7 @@ public class RequestService extends DwaraService{
 		Action requestAction = request.getActionId();
 		requestResponse.setAction(requestAction.name());
 		if(requestType == RequestType.user) {
-			if(requestAction == Action.ingest) {
+			if(requestAction == Action.ingest || requestAction == Action.restore || requestAction == Action.restore_process) {
 				List<RequestResponse> systemRequestResponseList = new ArrayList<RequestResponse>();
 				List<Request> systemRequestList = requestDao.findAllByRequestRefId(requestId);
 
