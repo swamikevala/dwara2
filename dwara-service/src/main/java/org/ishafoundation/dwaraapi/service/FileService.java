@@ -124,7 +124,7 @@ public class FileService extends DwaraService{
 		}
 		
 		//String query="select file1.id, file1.pathname, file1.size from artifact1 join file1 on artifact1.id = file1.artifact_id where " + sb.toString() + " and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name";
-		String query="select file1.id, file1.pathname, file1.size, artifact1.id as artifactId from artifact1 join file1 on artifact1.id = file1.artifact_id where " + sb.toString() + " and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name";
+		String query="select file1.id, file1.pathname, file1.size, artifact1.id as artifactId, artifact1.artifactclass_id from artifact1 join file1 on artifact1.id = file1.artifact_id where " + sb.toString() + " and artifact1.artifactclass_id not like '%proxy-low' and file1.pathname = artifact1.name";
 		Query q = entityManager.createNativeQuery(query);
         List<Object[]> results = q.getResultList();
         List<File> list = new ArrayList<File>();
@@ -133,11 +133,13 @@ public class FileService extends DwaraService{
             String artifactName = (String) record[1];
             long size = ((BigInteger)record[2]).longValue();
             int artifactId = ((Integer) record[3]).intValue();
+            String artifactclass = (String) record[4];
 			File file = new File();
 			file.setId(fileId);
 			file.setPathname(artifactName);
 			file.setSize(size);
 			file.setArtifactId(artifactId);
+			file.setArtifactclass(artifactclass);
 			list.add(file);
         });
 		
