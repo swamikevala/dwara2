@@ -46,8 +46,8 @@ public class ReportService extends DwaraService {
         + " FROM artifact1 a join request r on a.write_request_id=r.id join user u on r.requested_by_id=u.id"
         + " where r.status='completed' and a.artifactclass_id not like '%proxy%'"
         + condition
-        + " group by a.artifactclass_id, timeStone"
-        + " order by a.artifactclass_id asc, timeStone asc;";
+        + " group by timeStone, a.artifactclass_id"
+        + " order by timeStone asc, a.artifactclass_id asc;";
 
         // System.out.println("query: " + query);
         Query q = entityManager.createNativeQuery(query);
