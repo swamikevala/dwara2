@@ -1,3 +1,8 @@
+
+application.properties changed for keycloak
+
+2.20 sql update
+
 # Dwara App Version - 2.1.31 (28th Sep 2021)
 ### Bugs
 
