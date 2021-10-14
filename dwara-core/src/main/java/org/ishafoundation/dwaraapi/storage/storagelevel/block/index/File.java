@@ -7,12 +7,16 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 @JacksonXmlRootElement(localName="File")
 public class File {
 	
-	@JacksonXmlProperty(isAttribute=true, localName="volumeBlock")
+	@JacksonXmlProperty(isAttribute=true, localName="volumeStartBlock")
 	private Integer volumeblock; // volume start block
+	@JacksonXmlProperty(isAttribute=true, localName="volumeEndBlock")
+	private Integer volumeEndBlock; // volume start block
 	@JacksonXmlProperty(isAttribute=true, localName="archiveBlock")
 	private Long archiveblock; // archive start block
 	@JacksonXmlProperty(isAttribute=true, localName="size") 
 	private Long size;
+	@JacksonXmlProperty(isAttribute=true, localName="directory")
+	private Boolean directory;
 	@JacksonXmlProperty(isAttribute=true, localName="checksum")
 	private String checksum;
 	@JacksonXmlProperty(isAttribute=true, localName="encrypted")
@@ -27,6 +31,12 @@ public class File {
 	public void setVolumeblock(Integer volumeblock) {
 		this.volumeblock = volumeblock;
 	}
+	public Integer getVolumeEndBlock() {
+		return volumeEndBlock;
+	}
+	public void setVolumeEndBlock(Integer volumeEndBlock) {
+		this.volumeEndBlock = volumeEndBlock;
+	}
 	public Long getArchiveblock() {
 		return archiveblock;
 	}
@@ -38,6 +48,12 @@ public class File {
 	}
 	public void setSize(Long size) {
 		this.size = size;
+	}
+	public Boolean getDirectory() {
+		return directory;
+	}
+	public void setDirectory(Boolean directory) {
+		this.directory = directory;
 	}
 	public String getChecksum() {
 		return checksum;
