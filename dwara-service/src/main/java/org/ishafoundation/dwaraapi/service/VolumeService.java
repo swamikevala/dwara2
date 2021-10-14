@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.RewriteRequest;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
@@ -137,7 +136,7 @@ public class VolumeService extends DwaraService {
 			long groupVolumeUsedCapacity = 0L;
 			long maxPhysicalUnusedCapacity = 0L;
 
-			List<Volume> physicalVolumeList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndHealthstatusAndLifecyclestageOrderByIdAsc(volume.getId(), VolumeHealthStatus.normal, VolumeLifecyclestage.active); // get all not finalized physical volume in the group
+			List<Volume> physicalVolumeList = volumeDao.findAllByGroupRefIdAndImportedIsFalseAndFinalizedIsFalseAndHealthstatusAndLifecyclestageOrderByIdAsc(volume.getId(), VolumeHealthStatus.normal, VolumeLifecyclestage.active); // get all not finalized physical volume in the group
 			
 			for (Volume nthPhyscialVolume : physicalVolumeList) { // iterate all physical volume from the group and sum up for total/used/unused cap
 				logger.trace("Dashboard - " + nthPhyscialVolume.getId());
