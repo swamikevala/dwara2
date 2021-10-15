@@ -53,18 +53,19 @@ public class UserAdminController {
     private MyPasswordEncoder myPasswordEncoder;
 		
 	@RequestMapping(value = "/user/createUserAndAddUserToArtifactclassAndCreateDir", method = RequestMethod.POST)
-	public ResponseEntity<String> createUserAndAddUserToArtifactclassAndCreateDir(@RequestParam String username, @RequestParam String password, @RequestParam String artifactclassId, @RequestParam String action) {
+	public ResponseEntity<String> createUserAndAddUserToArtifactclassAndCreateDir(@RequestParam String username, @RequestParam String password, @RequestParam String artifactclassId, @RequestParam String action) throws Exception {
 		try {
 			register(username, password);
 			addUserToArtifactclassAndCreateDir(username, artifactclassId, action);
 		}catch (Exception e) {
 			logger.error("unable to createUserAndAddUserToArtifactclassAndCreateDir" ,e);
+			throw e;
 		}
 		return ResponseEntity.status(HttpStatus.OK).body("Done");
 	}
 	
 	@RequestMapping(value = "/user/addUserToArtifactclassAndCreateDir", method = RequestMethod.POST)
-	public ResponseEntity<String> addUserToArtifactclassAndCreateDir(@RequestParam String username, @RequestParam String artifactclassId, @RequestParam String action) {
+	public ResponseEntity<String> addUserToArtifactclassAndCreateDir(@RequestParam String username, @RequestParam String artifactclassId, @RequestParam String action) throws Exception {
 		try {
 			addUserToArtifactclass(username, artifactclassId, action);
 			
@@ -76,6 +77,7 @@ public class UserAdminController {
 			logger.trace(userSpecificIngestContentGroupDirPath.getAbsolutePath() + " permissions set");
 		}catch (Exception e) {
 			logger.error("unable to addUserToArtifactclassAndCreateDir" ,e);
+			throw e;
 		}
 		return ResponseEntity.status(HttpStatus.OK).body("Done");
 	}
@@ -91,6 +93,7 @@ public class UserAdminController {
 			logger.trace("artifactclassActionUser created");
 		}catch (Exception e) {
 			logger.error("unable to addUserToArtifactclass" ,e);
+			throw e;
 		}
 		return ResponseEntity.status(HttpStatus.OK).body("Done");
 	}

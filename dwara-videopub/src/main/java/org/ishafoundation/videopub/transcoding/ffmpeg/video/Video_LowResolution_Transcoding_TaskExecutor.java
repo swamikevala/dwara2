@@ -179,6 +179,8 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		return metaDataExtractionCommandParamsList;
 	}
 
+	// ffmpeg -y -i <<sourceFilePathname>> -map 0:v:0 -map 0:a:0? -map 0:a:1? -preset slow -strict -2 -f mp4 -timecode <<reversedTimeCode>> -vcodec libx264 -b:v 520000 -r 25.0 -pix_fmt yuv420p -crf 18 -vf [in]scale=640x360[scaled] -acodec aac -ar 16000 -b:a 80000 -ac 1 <<proxyTargetLocation>> 
+	// ffmpeg -y -i "Tel Dub.mp4" -map 0:v:0 -map 0:a:0? -map 0:a:1? -preset slow -strict -2 -f mp4 -timecode <<reversedTimeCode>> -vcodec libx264 -b:v 520000 -r 25.0 -pix_fmt yuv420p -crf 18 -vf [in]scale=640x360[scaled] -acodec aac -ar 16000 -b:a 80000 -ac 1 "output/Tel Dub.mp4" 
 	private List<String> getProxyGenCommand(String sourceFilePathname, String reversedTimeCode, String proxyTargetLocation) {
 		List<String> proxyGenerationCommandParamsList = new ArrayList<String>();
 		

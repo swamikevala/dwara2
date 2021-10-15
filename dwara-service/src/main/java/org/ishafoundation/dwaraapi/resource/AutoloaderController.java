@@ -243,10 +243,10 @@ public class AutoloaderController {
 					Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndStatusAndCompletedAtIsNotNullOrderByCompletedAtDesc(nthTapeOnLibrary.getBarcode(), Status.completed);
 					Request request = lastJobOnTape.getRequest();
 					Action requestedAction = request.getActionId();
-					if(requestedAction == Action.ingest)
-						nthTapeOnLibrary.setAction("write");
-					else
+					if(requestedAction == Action.restore_process || requestedAction == Action.restore)
 						nthTapeOnLibrary.setAction("restore");
+					else
+						nthTapeOnLibrary.setAction("write");
 					handleTapeList.add(nthTapeOnLibrary);
 				}
 				
