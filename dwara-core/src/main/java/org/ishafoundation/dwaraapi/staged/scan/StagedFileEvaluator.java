@@ -208,7 +208,7 @@ public class StagedFileEvaluator {
 			errorList.add(error);
 		}
 		
-		// 4b- For digi artifacts - dupe check on prev-seq-code against existing artifact
+		// 4b- For digi artifacts - dupe check on prev-seq-code against existing artifact - there could be multiple artifacts (PART) with same prev seq
 		//if(FilenameUtils.getBaseName(sourcePath).startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX)) {
 		String prevSequenceCode = sequenceUtil.getExtractedCode(sequence, fileName);
 		
