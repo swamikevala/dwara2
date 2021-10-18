@@ -1,5 +1,9 @@
 package org.ishafoundation.dwaraapi.api.resp._import;
 
+import java.util.List;
+
+import org.ishafoundation.dwaraapi.staged.scan.Error;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -8,6 +12,8 @@ public class ImportResponse {
 	private String action;
 	private String requestedBy;
 	private String requestedAt;
+	private List<Artifact> artifacts;
+	private List<Error> errors;
 	
 	public int getUserRequestId() {
 		return userRequestId;
@@ -32,5 +38,17 @@ public class ImportResponse {
 	}
 	public void setRequestedAt(String requestedAt) {
 		this.requestedAt = requestedAt;
+	}
+	public List<Artifact> getArtifacts() {
+		return artifacts;
+	}
+	public void setArtifacts(List<Artifact> artifacts) {
+		this.artifacts = artifacts;
+	}
+	public List<Error> getErrors() {
+		return errors;
+	}
+	public void setErrors(List<Error> errors) {
+		this.errors = errors;
 	}
 }
