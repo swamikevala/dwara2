@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
@@ -190,7 +191,7 @@ public class ArtifactDeleter {
 				if(destRootLocation != null) {
 					try {
 						java.io.File srcFile = FileUtils.getFile(nthArtifact.getArtifactclass().getPath(), nthArtifact.getName());
-						java.io.File destFile = FileUtils.getFile(destRootLocation, Status.cancelled.name(), nthArtifact.getName());
+						java.io.File destFile = FileUtils.getFile(destRootLocation, Status.cancelled.name(), StringUtils.substringAfter(nthArtifact.getName(), "_"));
 	
 						if(srcFile.isFile())
 							Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destFile.getAbsolutePath())));		
@@ -198,6 +199,7 @@ public class ArtifactDeleter {
 							Files.createDirectories(destFile.toPath());
 		
 						Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+						logger.info(srcFile.toPath() + " moved successfully to " + destFile.toPath());
 					}
 					catch (Exception e) {
 						logger.error("Unable to move file "  + e.getMessage());
