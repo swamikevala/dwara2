@@ -2,8 +2,8 @@ package org.ishafoundation.dwaraapi.resource;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.api.req.report.RequestReportIngestSize;
-import org.ishafoundation.dwaraapi.api.resp.report.RespondReportIngestSize;
+import org.ishafoundation.dwaraapi.api.req.report.RequestReportSize;
+import org.ishafoundation.dwaraapi.api.resp.report.RespondReportSize;
 import org.ishafoundation.dwaraapi.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,8 +21,14 @@ public class ReportController {
     ReportService reportService;
     
     @PostMapping(value="/report/ingestSize", produces = "application/json")
-    public ResponseEntity<List<RespondReportIngestSize>> getArtifactclass(@RequestBody RequestReportIngestSize requestReportIngestSize){
-        List<RespondReportIngestSize> list = reportService.getReportIngestSize(requestReportIngestSize);
+    public ResponseEntity<List<RespondReportSize>> getReportIngestSize(@RequestBody RequestReportSize requestReportIngestSize){
+        List<RespondReportSize> list = reportService.getReportIngestSize(requestReportIngestSize);
+        return ResponseEntity.status(HttpStatus.OK).body(list);
+    }
+
+    @PostMapping(value="/report/restoreSize", produces = "application/json")
+    public ResponseEntity<List<RespondReportSize>> getReportRestoreSize(@RequestBody RequestReportSize requestReportIngestSize){
+        List<RespondReportSize> list = reportService.getReportRestoreSize(requestReportIngestSize);
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
 }

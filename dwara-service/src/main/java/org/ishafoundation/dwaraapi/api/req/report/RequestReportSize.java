@@ -1,6 +1,6 @@
 package org.ishafoundation.dwaraapi.api.req.report;
 
-public class RequestReportIngestSize {
+public class RequestReportSize {
     public String startDate;
     public String endDate;
     public String formatDate;
