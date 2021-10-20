@@ -1,7 +1,13 @@
+# Dwara App Version - 2.1.32 (19th Oct 2021)
+### New features
 
-application.properties changed for keycloak
+1) Restore request page
+2) Authentication and authorazation with Keycloak
+3) Show just initialized tapes in Tapes for Writing
 
-2.20 sql update
+### Fix bug:
+1) Remove proxy related columns, show only searched tape in download tape catalog
+
 
 # Dwara App Version - 2.1.31 (28th Sep 2021)
 ### Bugs
