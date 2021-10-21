@@ -19,7 +19,7 @@ UPDATE `sequence` SET `prefix`='BN' WHERE `id`='dept-it-infra';
 INSERT INTO `sequence` (`id`, `current_number`, `ending_number`, `force_match`, `group`, `keep_code`, `prefix`, `starting_number`, `type`) VALUES ('dept-it-infra-1', '10000', '19999', 0, 0, 0, 'N', '10001', 'volume');
 
 -- new tape pool for IT Infra
-INSERT INTO `volume` (`id`, `checksumtype`, `defective`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `suspect`, `type`, `archiveformat_id`, `copy_id`, `sequence_id`) VALUES ('N1', 'sha256', 0, '{\"blocksize\": 262144, \"minimum_free_space\": 2199023255552}', 0, 0, 'block', 'tape', 0, 'group', 'tar', '1', 'dept-it-infra-1');
+INSERT INTO `volume` (`id`, `checksumtype`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `type`, `archiveformat_id`, `copy_id`, `sequence_id`) VALUES ('N1', 'sha256', '{\"blocksize\": 262144, \"minimum_free_space\": 2199023255552}', 0, 0, 'block', 'tape', 'group', 'tar', '1', 'dept-it-infra-1');
 
 -- ARTIFACTCLASS_VOLUME (just 1 copy and not 3 as planned before) --
 UPDATE `artifactclass_volume` SET `volume_id`='N1' WHERE `artifactclass_id`='dept-it-infra' and`volume_id`='E1';
