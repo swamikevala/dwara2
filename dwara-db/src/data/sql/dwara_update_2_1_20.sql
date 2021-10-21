@@ -15,6 +15,7 @@ UPDATE `volume` SET `details`='{\"blocksize\": 262144, \"remove_after_job\": tru
 
 -- IT Infra modifications
 -- new tape pool for IT Infra - so new volume sequence
+UPDATE `sequence` SET `prefix`='BN' WHERE `id`='dept-it-infra';
 INSERT INTO `sequence` (`id`, `current_number`, `ending_number`, `force_match`, `group`, `keep_code`, `prefix`, `starting_number`, `type`) VALUES ('it-infra-1', '10000', '19999', 0, 0, 0, 'N', '10001', 'volume');
 
 -- new tape pool for IT Infra
