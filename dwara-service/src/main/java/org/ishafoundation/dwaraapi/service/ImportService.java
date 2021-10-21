@@ -49,7 +49,6 @@ import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
-import org.ishafoundation.dwaraapi.enumreferences.TapeStoragesubtype;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.staged.scan.Error;
@@ -128,13 +127,21 @@ public class ImportService extends DwaraService {
 
 		
 	    // validate barcode
-		String regEx = "(C|P)([0-9]*)L[0-9]";
+		String regEx = "(C|P)([A-Z])?([0-9]*)L[0-9]";
 		Pattern regExPattern = Pattern.compile(regEx);
 		String volumeBarcode = volumeinfo.getVolumeuid();
 		Matcher regExMatcher = regExPattern.matcher(volumeBarcode);
 		if(!regExMatcher.matches()) {
-			throw new DwaraException("Volume barcode should be in (C|P)([0-9]*)L[0-9] format");
+			throw new DwaraException("Volume barcode should be in " + regEx + " format");
 		}
+		
+		String volumeGroupId = StringUtils.substring(volumeBarcode, 0, 2); 
+		Optional<Volume> volOptional = volumeDao.findById(volumeGroupId);
+		
+		if(!volOptional.isPresent()) {
+			throw new DwaraException("Volume Group " + volumeGroupId + " not supported. Either add the volume group in DB or fix the barcode in xml");
+		}
+
 	    
 	    // validate artifactclass in all artifacts - get size too
 		List<Artifact> artifactList = volumeindex.getArtifact();
@@ -443,11 +450,8 @@ public class ImportService extends DwaraService {
 						// If already an entry for this pool/group is available (eg. 68*[C16805L6] is migration of 4*[C14023L4]) for this artifact - retire the oldest generation
 						ArtifactVolume alreadyExistingArtifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndVolumeGroupRefCopyIdAndArtifactVolumeStatus(artifact1.getId(), volume.getGroupRef().getCopy().getId(), ArtifactVolumeStatus.current);
 						if(alreadyExistingArtifactVolume != null) {
-							TapeStoragesubtype tapeStoragesubtype = TapeStoragesubtype.valueOf(alreadyExistingArtifactVolume.getVolume().getStoragesubtype());
-							
-							int alreadyExistingArtifactVolumeGen = Integer.parseInt(StringUtils.substringAfter(tapeStoragesubtype.getJavaStyleStoragesubtype(), "-"));
-							
-							int currentVolumeGen =  Integer.parseInt(StringUtils.substringAfter(TapeStoragesubtype.valueOf(volume.getStoragesubtype()).getJavaStyleStoragesubtype(), "-"));
+							int alreadyExistingArtifactVolumeGen = Integer.parseInt(StringUtils.substringAfter(alreadyExistingArtifactVolume.getVolume().getStoragesubtype(), "-"));
+							int currentVolumeGen =  Integer.parseInt(StringUtils.substringAfter(volume.getStoragesubtype(), "-"));
 
 							// check out the latest generation and use the most latest
 							if(currentVolumeGen > alreadyExistingArtifactVolumeGen) { // if current volume is the latest delete the oldest generation
@@ -490,6 +494,10 @@ public class ImportService extends DwaraService {
 			ir.setUserRequestId(request.getId());
 			ir.setArtifacts(artifacts);
 
+		}
+		catch (DwaraException e) {
+			logger.error("Unable to import xml " + e.getMessage(), e);
+			throw e; // handled in controller
 		}
 		catch (Exception e) {
 			logger.error("Unable to import xml " + e.getMessage(), e);
@@ -541,8 +549,14 @@ public class ImportService extends DwaraService {
 		volume.setUuid(UUID.randomUUID().toString());
 		volume.setType(Volumetype.physical);
 		String volumeGroupId = StringUtils.substring(volumeBarcode, 0, 2); 
-		Volume volumeGroup = volumeDao.findById(volumeGroupId).get();
-		volume.setGroupRef(volumeGroup);
+		Optional<Volume> volOptional = volumeDao.findById(volumeGroupId);
+		
+		if(volOptional.isPresent()) {
+			Volume volumeGroup = volOptional.get();
+			volume.setGroupRef(volumeGroup);
+		}else {
+			throw new Exception("Volume Group " + volumeGroupId + " not supported. Either add the volume group in DB or fix the barcode in xml");
+		}
 /*
 		String checksumalgorithm = configuration.getChecksumType();
 

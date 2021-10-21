@@ -215,7 +215,7 @@ public class StagedFileEvaluator {
 		List<Artifact> alreadyExistingArtifactList = domainSpecificArtifactRepository.findAllByPrevSequenceCode(prevSequenceCode);
 		if(alreadyExistingArtifactList.size() > 0) {
 			for (Artifact artifact : alreadyExistingArtifactList) {
-				if(!artifact.isDeleted() && artifact.getWriteRequest().getDetails().getStagedFilename().equals(fileName) && artifact.getWriteRequest().getStatus() != Status.cancelled){ 
+				if(!artifact.isDeleted() && artifact.getWriteRequest() != null && artifact.getWriteRequest().getDetails().getStagedFilename().equals(fileName) && artifact.getWriteRequest().getStatus() != Status.cancelled){ 
 					Error error = new Error();
 					error.setType(Errortype.Warning);
 					StringBuffer sb = new StringBuffer();
