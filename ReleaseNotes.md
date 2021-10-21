@@ -1,4 +1,4 @@
-# Dwara App Version - 2.1.32 (19th Oct 2021)
+# Dwara App Version - 2.1.32 (22nd Oct 2021)
 ### New features
 
 1) Restore request page
@@ -7,15 +7,19 @@
 
 3) Show just initialized tapes in Tapes for Writing
 
+4) Report ingested size, restored size
+
 ### Bug fixes
 
 1) Remove proxy related columns, show only searched tape in download tape catalog
 
 ### Upgrade steps
 
-0) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_20.sql)
+1) Apply a sql script to index file_id in request table (/dwara-db/src/data/sql/index_file_id_in_request_table.sql)
 
-1) application.properties for keycloak 
+2) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_20.sql)
+
+3) application.properties for keycloak 
 
 # Dwara App Version - 2.1.31 (28th Sep 2021)
 ### Bugs
