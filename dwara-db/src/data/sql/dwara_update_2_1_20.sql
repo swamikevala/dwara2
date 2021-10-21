@@ -1,4 +1,4 @@
-SET foreign_key_checks = 0;
+-- SET foreign_key_checks = 0;
 
 -- resetting the minimum_free_space to 2TB rather than 10
 UPDATE `volume` SET `details`='{\"blocksize\": 262144, \"minimum_free_space\": 2199023255552}' WHERE `id`='E1';
