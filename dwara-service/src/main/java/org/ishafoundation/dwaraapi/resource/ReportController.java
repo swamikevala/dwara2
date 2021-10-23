@@ -25,8 +25,8 @@ public class ReportController {
     ReportService reportService;
 
     @GetMapping(value = "/report/pipeline", produces = "application/json")
-	public ResponseEntity<RespondPipelineReport> getPipelineReport(@RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedTo){
-        RespondPipelineReport report = reportService.getPipelineReport(requestedFrom.toString(), requestedTo.toString());
+	public ResponseEntity<RespondPipelineReport> getPipelineReport(@RequestParam(required=false) String requestedFrom,  @RequestParam(required=false) String requestedTo){
+        RespondPipelineReport report = reportService.getPipelineReport(requestedFrom, requestedTo);
         return ResponseEntity.status(HttpStatus.OK).body(report);
     }
     
