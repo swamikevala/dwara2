@@ -108,7 +108,7 @@ public class DwaraHoverService extends DwaraService {
 				}
 			}
 		}
-		
+
 		totalCount = (int) getTotalCountOfQuery(searchWords, offset, category, searchWordsBuilder, categoryBuilderFile1, categoryBuilderFile2);
 		List<Object[]> results = getSearchQuery(searchWords, offset, limit, category, searchWordsBuilder, categoryBuilderFile1, categoryBuilderFile2);
 
@@ -169,7 +169,7 @@ public class DwaraHoverService extends DwaraService {
 			} else if (category.equalsIgnoreCase("file")) {
 				queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
 						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
-						"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND file1.directory=0";
+						"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND file1.directory=0";
 			} else if (category.equalsIgnoreCase("folder")) {
 				queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
 						"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%')";
@@ -189,7 +189,7 @@ public class DwaraHoverService extends DwaraService {
 			} else if (category.equalsIgnoreCase("file")) {
 				queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
 						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
-						"WHERE (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND file1.directory=0";
+						"WHERE (artifact1.artifactclass_id NOT LIKE '%proxy%') AND file1.directory=0";
 			} else if (category.equalsIgnoreCase("folder")) {
 				queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
 						"WHERE (artifact1.artifactclass_id NOT LIKE '%proxy%') AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%')";
