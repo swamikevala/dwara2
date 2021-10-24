@@ -1,14 +1,12 @@
 package org.ishafoundation.dwaraapi.resource;
 
-import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.report.RequestReportSize;
-import org.ishafoundation.dwaraapi.api.resp.report.RespondPipelineReport;
 import org.ishafoundation.dwaraapi.api.resp.report.RespondReportSize;
 import org.ishafoundation.dwaraapi.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -25,8 +23,8 @@ public class ReportController {
     ReportService reportService;
 
     @GetMapping(value = "/report/pipeline", produces = "application/json")
-	public ResponseEntity<RespondPipelineReport> getPipelineReport(@RequestParam(required=false) String requestedFrom,  @RequestParam(required=false) String requestedTo){
-        RespondPipelineReport report = reportService.getPipelineReport(requestedFrom, requestedTo);
+	public ResponseEntity<HashMap<String, List<String>>> getPipelineReport(@RequestParam(required=false) String requestedFrom,  @RequestParam(required=false) String requestedTo){
+        HashMap<String, List<String>> report = reportService.getPipelineReport(requestedFrom, requestedTo);
         return ResponseEntity.status(HttpStatus.OK).body(report);
     }
     
