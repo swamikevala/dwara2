@@ -31,6 +31,9 @@ public class DwaraHoverController {
 		if (StringUtils.isEmpty(category)) {
 			category = "folder";
 		}
+		if(limit > 1000) {
+			limit = 1000;
+		}
 
 		List dwaraHoverFileLists = dwaraHoverService.getSearchData(searchWords, type, category, offset, limit);
 

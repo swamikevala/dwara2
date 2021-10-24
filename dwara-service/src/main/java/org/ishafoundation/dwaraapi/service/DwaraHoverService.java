@@ -1,5 +1,8 @@
 package org.ishafoundation.dwaraapi.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.dwarahover.DwaraHoverFileList;
 import org.ishafoundation.dwaraapi.api.resp.dwarahover.DwaraHoverFileListCount;
@@ -7,6 +10,8 @@ import org.ishafoundation.dwaraapi.api.resp.dwarahover.DwaraHoverFileListDTO;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ExtensionFiletypeDao;
 import org.ishafoundation.dwaraapi.db.keys.ExtensionFiletypeKey;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
+import org.ishafoundation.dwaraapi.exception.DwaraException;
+import org.ishafoundation.dwaraapi.exception.ExceptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +36,8 @@ public class DwaraHoverService extends DwaraService {
 
 	@Autowired
 	ExtensionFiletypeDao extensionFiletypeDao;
+
+	ObjectMapper objectMapper = new ObjectMapper();
 
 	/**
 	 * Get the Data based on the given Search Criteria
@@ -110,6 +117,16 @@ public class DwaraHoverService extends DwaraService {
 		}
 
 		totalCount = (int) getTotalCountOfQuery(searchWords, offset, category, searchWordsBuilder, categoryBuilderFile1, categoryBuilderFile2);
+		if(totalCount < offset) {
+			String json = "{ \"offset\" : \"" + offset + "\", \"totalCount\" : \"" + totalCount + "\" } ";
+
+			try {
+				JsonNode jsonNode = objectMapper.readTree(json);
+				throw new DwaraException("The total count of search criteria is less than the given offset", ExceptionType.error, jsonNode);
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
+		}
 		List<Object[]> results = getSearchQuery(searchWords, offset, limit, category, searchWordsBuilder, categoryBuilderFile1, categoryBuilderFile2);
 
 		List<DwaraHoverFileListDTO> fileResults = new ArrayList<>();
@@ -146,8 +163,10 @@ public class DwaraHoverService extends DwaraService {
 
 		if (offset == 0) {
 			if (dwaraHoverFileLists.isPresent()) {
-				Optional<List<DwaraHoverFileListCount>> dwaraHoverFileListCounts = DwaraHoverFileListCount.build(dwaraHoverFileLists.get(), totalCount);
-				return dwaraHoverFileListCounts.get();
+				if(offset == 0) {
+					Optional<List<DwaraHoverFileListCount>> dwaraHoverFileListCounts = DwaraHoverFileListCount.build(dwaraHoverFileLists.get(), totalCount);
+					return dwaraHoverFileListCounts.get();
+				}
 			}
 		} else {
 			if (dwaraHoverFileLists.isPresent()) {
@@ -161,7 +180,7 @@ public class DwaraHoverService extends DwaraService {
 	private long getTotalCountOfQuery(List searchWords, int offset, String category, StringBuilder searchWordsBuilder, StringBuilder categoryBuilderFile1, StringBuilder categoryBuilderFile2) {
 		String queryCount = null;
 		int totalCount = 0;
-		if (offset == 0 && !searchWords.isEmpty()) {
+		if (!searchWords.isEmpty()) {
 			if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
 				queryCount = "SELECT Count(*) FROM file1 join artifact1 ON file1.artifact_id = artifact1.id " +
 						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ")" +
@@ -181,7 +200,7 @@ public class DwaraHoverService extends DwaraService {
 			Query qCount = entityManager.createNativeQuery(queryCount);
 			totalCount = ((BigInteger) qCount.getResultList().get(0)).intValue();
 
-		} else if (offset == 0) {
+		} else {
 			if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
 				queryCount = "SELECT COUNT(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
 						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ")" +
