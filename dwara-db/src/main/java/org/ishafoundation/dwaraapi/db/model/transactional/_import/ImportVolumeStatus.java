@@ -1,25 +1,28 @@
-package org.ishafoundation.dwaraapi.db.model.transactional;
+package org.ishafoundation.dwaraapi.db.model.transactional._import;
 		
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Lob;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.TypeDef;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
 
 
 
 @Entity
-@Table(name="importrequestpayload")
+@Table(name="importvolumestatus")
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-public class ImportRequestPayload {
+public class ImportVolumeStatus {
 
 	
 	/*
@@ -39,14 +42,19 @@ public class ImportRequestPayload {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private int id;
-	
+
+    @Column(name = "volume_id")
+    private String volumeId;
+
+    @Column(name = "run_id")
+    private int runId;
+    
 	@OneToOne(fetch = FetchType.LAZY)
     private Request request;
 	
-    @Lob
-    @Column(name = "payload", columnDefinition="BLOB")
-    private byte[] payload;
-    
+	@Enumerated(EnumType.STRING)
+	@Column(name="status")
+	private Status status;
 
 	public int getId() {
 		return id;
@@ -54,6 +62,22 @@ public class ImportRequestPayload {
 
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	public String getVolumeId() {
+		return volumeId;
+	}
+
+	public void setVolumeId(String volumeId) {
+		this.volumeId = volumeId;
+	}
+
+	public int getRunId() {
+		return runId;
+	}
+
+	public void setRunId(int runId) {
+		this.runId = runId;
 	}
 
 	public Request getRequest() {
@@ -64,11 +88,11 @@ public class ImportRequestPayload {
 		this.request = request;
 	}
 
-	public byte[] getPayload() {
-		return payload;
+	public Status getStatus() {
+		return status;
 	}
 
-	public void setPayload(byte[] payload) {
-		this.payload = payload;
+	public void setStatus(Status status) {
+		this.status = status;
 	}
 }

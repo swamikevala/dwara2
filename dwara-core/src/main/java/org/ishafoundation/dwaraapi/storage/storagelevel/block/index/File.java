@@ -7,10 +7,12 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 @JacksonXmlRootElement(localName="File")
 public class File {
 	
+	@JacksonXmlProperty(isAttribute=true, localName="volumeBlock")
+	private Integer volumeblock; // volume start block	
 	@JacksonXmlProperty(isAttribute=true, localName="volumeStartBlock")
-	private Integer volumeblock; // volume start block
+	private Integer volumeStartBlock; // volume start block
 	@JacksonXmlProperty(isAttribute=true, localName="volumeEndBlock")
-	private Integer volumeEndBlock; // volume start block
+	private Integer volumeEndBlock; // volume end block
 	@JacksonXmlProperty(isAttribute=true, localName="archiveBlock")
 	private Long archiveblock; // archive start block
 	@JacksonXmlProperty(isAttribute=true, localName="size") 
@@ -24,12 +26,17 @@ public class File {
 	@JacksonXmlText
 	private String name;
 	
-	
 	public Integer getVolumeblock() {
 		return volumeblock;
 	}
 	public void setVolumeblock(Integer volumeblock) {
 		this.volumeblock = volumeblock;
+	}
+	public Integer getVolumeStartBlock() {
+		return volumeStartBlock;
+	}
+	public void setVolumeStartBlock(Integer volumeStartBlock) {
+		this.volumeStartBlock = volumeStartBlock;
 	}
 	public Integer getVolumeEndBlock() {
 		return volumeEndBlock;

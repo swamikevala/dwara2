@@ -32,7 +32,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
-import org.ishafoundation.dwaraapi.db.model.transactional.ImportRequestPayload;
+import org.ishafoundation.dwaraapi.db.model.transactional._import.ImportRequestPayload;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
@@ -95,7 +95,9 @@ public class ImportService extends DwaraService {
 
 	@Autowired
 	private FileEntityUtil fileEntityUtil;
-
+	
+	private String bruLinkSeparator = Character.toString(Character.MIN_VALUE);
+	
 	private Map<String, Artifactclass> id_artifactclassMap = new HashMap<String, Artifactclass>();
 	private List<Error> errorList = new ArrayList<Error>();
 	private List<org.ishafoundation.dwaraapi.api.resp._import.Artifact> artifacts = new ArrayList<org.ishafoundation.dwaraapi.api.resp._import.Artifact>();
@@ -356,6 +358,14 @@ public class ImportService extends DwaraService {
 				    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = artifact.getFile();
 					for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
 						String filePathname = nthFile.getName().replace(artifactName, toBeArtifactName);
+						String linkName = null;
+						if(filePathname.contains(bruLinkSeparator)) {
+							linkName = StringUtils.substringAfter(filePathname, bruLinkSeparator);
+							filePathname = StringUtils.substringBefore(filePathname, bruLinkSeparator);
+							
+							logger.trace("filePathName "+ filePathname);
+							logger.trace("linkName "+ linkName);
+						}
 						
 						String pathnameRegex = artifactclass.getConfig().getPathnameRegex();
 						if(!filePathname.matches(pathnameRegex)) {
@@ -389,6 +399,8 @@ public class ImportService extends DwaraService {
 							file.setPathname(filePathname);
 							file.setPathnameChecksum(filePathnameChecksum);
 							file.setSize(nthFile.getSize());
+							//file.setSymlinkFileId();
+							file.setSymlinkPath(linkName);
 							fileEntityUtil.setDomainSpecificFileArtifact(file, artifact1);
 							if(nthFile.getDirectory()) {// if(StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) {  // TODO - change it to - if(nthFile.isDirectory()) 
 								file.setDirectory(true);
@@ -426,11 +438,11 @@ public class ImportService extends DwaraService {
 							 */
 							fileVolume = domainUtil.getDomainSpecificFileVolumeInstance(file.getId(), volume, domain);// lets just let users use the util consistently
 							fileVolume.setArchiveBlock(nthFile.getArchiveblock());
-							fileVolume.setVolumeBlock(nthFile.getVolumeblock());
-							//fileVolume.setEndVolumeBlock(nthFile.getVolumeblock());
+							fileVolume.setVolumeBlock(nthFile.getVolumeStartBlock());
+							//fileVolume.setEndVolumeBlock(nthFile.getVolumeEndBlock());
 			
 							//fileVolume.setHardlinkFileId(file.getId());
-			
+							
 					    	domainSpecificFileVolumeRepository.save(fileVolume);
 					    	fileVolumeImportStatus = ImportStatus.completed;
 					    	logger.debug("FileVolume records created successfully");
