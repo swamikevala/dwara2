@@ -256,6 +256,6 @@ public class RequestController {
 		restoreResponses=requestService.restoreRequest();
 		
 		
-		return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
+		return ResponseEntity.status(HttpStatus.OK).body(restoreResponses);
 	}
 }
