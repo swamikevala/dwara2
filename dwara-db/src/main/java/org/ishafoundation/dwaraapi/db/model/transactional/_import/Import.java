@@ -8,6 +8,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
@@ -20,9 +21,9 @@ import com.vladmihalcea.hibernate.type.json.JsonStringType;
 
 
 @Entity
-@Table(name="importvolumestatus")
+@Table(name="import")
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-public class ImportVolumeStatus {
+public class Import {
 
 	
 	/*
@@ -42,19 +43,24 @@ public class ImportVolumeStatus {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private int id;
-
+	
+	@OneToOne(fetch = FetchType.LAZY)
+    private Request request;
+	
     @Column(name = "volume_id")
     private String volumeId;
 
     @Column(name = "run_id")
     private int runId;
-    
-	@OneToOne(fetch = FetchType.LAZY)
-    private Request request;
 	
+    @Lob
+    @Column(name = "payload", columnDefinition="BLOB")
+    private byte[] payload;
+    
 	@Enumerated(EnumType.STRING)
 	@Column(name="status")
 	private Status status;
+    
 
 	public int getId() {
 		return id;
@@ -62,6 +68,14 @@ public class ImportVolumeStatus {
 
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	public Request getRequest() {
+		return request;
+	}
+
+	public void setRequest(Request request) {
+		this.request = request;
 	}
 
 	public String getVolumeId() {
@@ -80,13 +94,14 @@ public class ImportVolumeStatus {
 		this.runId = runId;
 	}
 
-	public Request getRequest() {
-		return request;
+	public byte[] getPayload() {
+		return payload;
 	}
 
-	public void setRequest(Request request) {
-		this.request = request;
+	public void setPayload(byte[] payload) {
+		this.payload = payload;
 	}
+
 
 	public Status getStatus() {
 		return status;
