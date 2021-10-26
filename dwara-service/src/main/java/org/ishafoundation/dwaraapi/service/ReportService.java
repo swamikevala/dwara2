@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.ishafoundation.dwaraapi.api.req.report.RequestReportSize;
+import org.ishafoundation.dwaraapi.api.resp.report.RespondReportRestoreTime;
 import org.ishafoundation.dwaraapi.api.resp.report.RespondReportSize;
 import org.springframework.stereotype.Component;
 
@@ -193,5 +195,38 @@ public class ReportService extends DwaraService {
         }
         pipelineReport.put("In Staged > 3Days", inStaged3Days);
         return pipelineReport;
+    }
+
+    public List<RespondReportRestoreTime> getReportRestoreSize(String requestedFrom, String requestedTo) {
+        String condition = "";
+        if(requestedFrom != "")
+            condition += " and r.requested_at >= '" + requestedFrom + "'";
+        if(requestedTo != "")
+            condition += " and r.requested_at <= '" + requestedTo + "'";
+        
+        String query = "select f.pathname, f.size, date_format(r.requested_at, '%Y-%m-%d %T'), date_format(j.started_at, '%Y-%m-%d %T'), date_format(r.completed_at, '%Y-%m-%d %T'), time_to_sec(timediff(r.completed_at, j.started_at)) as time_taken, time_to_sec(timediff(r.completed_at, r.requested_at)) as total_time"
+        + " from request r join file1 f on r.file_id = f.id join job j on j.request_id = r.id"
+        + " where r.action_id = 'restore' and r.status = 'completed' and r.type='system' and j.storagetask_action_id='restore'"
+        + condition;
+        Query q = entityManager.createNativeQuery(query);
+        List<Object[]> results = q.getResultList();
+        List<RespondReportRestoreTime> list = new ArrayList<RespondReportRestoreTime>();
+        results.stream().forEach((record) -> {
+            int i = 0;
+            String pathName = (String) record[i++];
+            long size = 0;
+            if(record[i] != null)
+                size = ((BigInteger)record[i]).longValue();
+            i++;
+            String requestedAt = (String)record[i++];
+            String startedAt = (String)record[i++];
+            String completedAt = (String)record[i++];
+            long timeTaken = ((BigInteger)record[i++]).longValue();
+            long totalTime = ((BigInteger)record[i++]).longValue();
+
+            RespondReportRestoreTime report = new RespondReportRestoreTime(pathName, size, requestedAt, startedAt, completedAt, timeTaken, totalTime);
+            list.add(report);
+        });
+        return list;
     }
 }

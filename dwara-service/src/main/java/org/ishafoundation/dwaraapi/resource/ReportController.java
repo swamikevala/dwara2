@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.report.RequestReportSize;
 import org.ishafoundation.dwaraapi.api.resp.report.RespondReportSize;
+import org.ishafoundation.dwaraapi.api.resp.report.RespondReportRestoreTime;
 import org.ishafoundation.dwaraapi.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReportController {
     @Autowired
     ReportService reportService;
+
+    @GetMapping(value = "/report/restoreTime", produces = "application/json")
+    public ResponseEntity<List<RespondReportRestoreTime>> getReportRestoreSize(@RequestParam(required=false) String requestedFrom,  @RequestParam(required=false) String requestedTo){
+        List<RespondReportRestoreTime> report = reportService.getReportRestoreSize(requestedFrom, requestedTo);
+        return ResponseEntity.status(HttpStatus.OK).body(report);
+    }
 
     @GetMapping(value = "/report/pipeline", produces = "application/json")
 	public ResponseEntity<HashMap<String, List<String>>> getPipelineReport(@RequestParam(required=false) String requestedFrom,  @RequestParam(required=false) String requestedTo){
