@@ -12,7 +12,7 @@ public interface ArtifactVolumeRepository<T extends ArtifactVolume> extends Crud
 	
 	ArtifactVolume findByIdArtifactIdAndIdVolumeId(int artifactId, String volumeId);
 	
-	ArtifactVolume findByIdArtifactIdAndVolumeGroupRefCopyIdAndArtifactVolumeStatus(int artifactId, int copyNumber, ArtifactVolumeStatus artifactVolumeStatus);
+	ArtifactVolume findByIdArtifactIdAndVolumeGroupRefCopyIdAndStatus(int artifactId, int copyNumber, ArtifactVolumeStatus artifactVolumeStatus);
 	
 	List<ArtifactVolume> findAllByIdVolumeId(String volumeId);
 	
