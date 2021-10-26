@@ -3,16 +3,20 @@ package org.ishafoundation.dwaraapi.service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
+import org.ishafoundation.dwaraapi.api.resp.request.RestoreFile;
+import org.ishafoundation.dwaraapi.api.resp.request.RestoreResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -454,5 +458,149 @@ public class RequestService extends DwaraService{
 		return requestResponse;
 	}
 
+	public List<RestoreResponse> restoreRequest() {
+		List<RestoreResponse> restoreResponses = new ArrayList<>();
+		List<Status> statusList = new ArrayList<>();
+		statusList.add(Status.queued);
+		statusList.add(Status.in_progress);
+		statusList.add(Status.failed);
+		
+		
+		List<Request> userRequests = requestDao.findAllByActionIdAndStatusInAndType(Action.restore, statusList, RequestType.user );
+		for(Request request: userRequests) {
+			
+			RestoreResponse restoreResponse = new RestoreResponse();
+			restoreResponse.setName(request.getDetails().getOutputFolder());
+			restoreResponse.setDestinationPath(request.getDetails().getDestinationPath());
+			restoreResponse.setRequestedAt(request.getRequestedAt());
+			restoreResponse.setRequestedBy(request.getRequestedBy().getName());
+			restoreResponse.setStatus(String.valueOf(request.getStatus()));
+			//restoreResponse.setVpTicket(request.getDetails().get);
+			List<Job> jobs = jobDao.findAllByRequestId(request.getId());
+			//Do we need to find the max of all priorties
+			/*
+			 * int max=0; 
+			 * for(Job job : jobs) { 
+			 * if(job.getPrioitiy>max)
+			 * max=job.getPrioirity; 
+			 * }
+			 */
+			//restoreResponse.setPriority(jobs.get(0).getPriority);
+			restoreResponse.setPriority(1);
+			List<String> tapeIds = new ArrayList<>();
+			for(Job job: jobs) {
+				tapeIds.add(job.getVolume().getId());
+			}
+		List<RestoreFile> files = new ArrayList(); 	
+		List<Request> systemRequests = requestDao.findAllByRequestRefId(request.getId());
+		long size =0;
+		long movConversionRate = 79; // For MOV
+		long restorationRate = 10; // FOR RESTORATION 
+		for(Request systemRequest :systemRequests) {
+			RestoreFile file = new RestoreFile();
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(Domain.ONE, systemRequest.getDetails().getFileId());
+			file.setName(fileFromDB.getPathname());
+			List<Job> fileJobs = jobDao.findAllByRequestId(systemRequest.getId());
+			file.setStatus(String.valueOf(systemRequest.getStatus()));
+			long startTime=0;
+			long restoreETA = 0;
+			long postProcessETA = 0;
+			for(Job job: fileJobs) {
+				if(job.getVolume().getId()!= null && job.getStoragetaskActionId() == Action.restore) {
+					//If the task is restore task
+					file.setTape(String.valueOf(job.getVolume()));
+				if (job.getStatus().equals(Status.in_progress)) {
+					startTime = job.getStartedAt().getSecond();
+					restoreETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"restore");
+				}
+				else if (!job.getStatus().equals(Status.completed)) {
+					restoreETA = 0;
+					break;
+				} 
+					
+				}
+				else if (job.getProcessingtaskId() == "video-digi-2020-mkv-mov-gen") {
+					// If its inprogress calculate based on mov size. If its queued calculate based on estimated speed 79seconds for 1GB conversion.
+					// If its completed. Do nothing.  
+					if (job.getStatus().equals(Status.in_progress)) {
+						// Get the .mov path from the target folder 
+						postProcessETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"video-digi-2020-mkv-mov-gen");
+					
+					}
+					else if (job.getStatus().equals(Status.queued)) {
+						postProcessETA = ((file.getSize() / 1073741824) * restorationRate );
+					}
+				}
+					
+				 
+					startTime = job.getStartedAt().getSecond();
+					
+					//if (job.getStatus()!=Status.in_progress && job.getStatus()!=Status.completed)
+				
+			}
+			file.setSize(fileFromDB.getSize());
+			//how to get startTime
+			//Just add the restoreETA and postPRocess ETA at the end
+			long totalETA = restoreETA + postProcessETA ;
+			file.setEta( totalETA);
+			//file.setEta(getUserFromContext());
+			if(file.getStatus()!=String.valueOf(Status.cancelled))
+				size+=fileFromDB.getSize();
+		}
+		restoreResponse.setSize(size);
+		restoreResponse.setRestoreFiles(files);
+		//restoreResponse.setEta(getUserFromContext())
+		}
+		return restoreResponses;
+		
+		
+		
+	}
+	
+	private long fileETARestoreCalculator(String outputFolder , String destinationPath, RestoreFile file , long startTime, String taskType) {
+		
+		String path = destinationPath+"/"+outputFolder+"/"+".restoring/"+file.getName(); 		 
+		java.io.File targetFile= new java.io.File(path);  
+		long movConversionRate = 79; // For MOV
+		long restorationRate = 10; // FOR RESTORATION 
+		// EG:V27033_Ashram-Ambience-Shots_Dhyanalinga-IYC_28-Aug-2020_Drone/DCIM/100MEDIA/DJI_0018.MOV
+		if (taskType == "video-digi-2020-mkv-mov-gen") {
+			boolean foundMovFile = false;
+			// Loop through the folder destinationPath+"/"+outputFolder+"/"+".restoring/"+file.getName().parentfolder
+			//VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/I030.mkv  BHi hei parey
+			//VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/  Hei parey
+			//VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/I030.mov  Darkaar
+			if (!targetFile.isDirectory()) {
+				targetFile = new java.io.File(targetFile.getParent());
+			}
+				// Find the mov in the directory and seet it as a path
+				 List<java.io.File> searchTheseFiles = Arrays.asList(targetFile.listFiles());
+				 for(java.io.File goteyFile:searchTheseFiles) {
+					 if (goteyFile.getPath().endsWith(".mov")) {
+						 // Set this as the file path 
+						 targetFile = goteyFile;
+						 foundMovFile = true;
+					 }
+						
+				 }			
+			
+			if (!foundMovFile) {
+				return ((file.getSize() / 1073741824) * movConversionRate );
+			}
+		} // Mov gen completes here 
+		else if (taskType == "restore") {
+			if (!targetFile.exists()) {
+				return ((file.getSize() / 1073741824) * restorationRate );
+			}
+		}
+		
+		long targetSize=0 ; 		
+		targetSize= FileUtils.sizeOf(targetFile);
+		long eta = ((System.currentTimeMillis()/1000)-startTime)*(file.getSize()-targetSize)/targetSize;
+		return eta;
+	}
+
 }
+
+ 
 

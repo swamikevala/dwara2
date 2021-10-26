@@ -249,4 +249,12 @@ public class RequestController {
 		}
     	return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
     }
+	@GetMapping("/request/restoreStatus")
+	public ResponseEntity<List<RestoreResponse>> getRestoreStatus() {
+		List<RestoreResponse> restoreResponses= new ArrayList<>();
+		restoreResponses=requestService.restoreRequest();
+		
+		
+		return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
+	}
 }
