@@ -149,31 +149,23 @@ public class DwaraHoverService extends DwaraService {
 				dwaraHoverFileListDTO.setProxyPathName(proxyPathName);
 			}
 
-
 			dwaraHoverFileListDTO.setId(id);
 			dwaraHoverFileListDTO.setSize(size);
 			dwaraHoverFileListDTO.setPathName(pathName);
 			dwaraHoverFileListDTO.setArtifactClass_id(artifactClassId);
-
 
 			fileResults.add(dwaraHoverFileListDTO);
 		});
 
 		Optional<List<DwaraHoverFileList>> dwaraHoverFileLists = DwaraHoverFileList.build(fileResults);
 
-		if (offset == 0) {
+		Optional<List<DwaraHoverFileListCount>> dwaraHoverFileListCounts = null;
 			if (dwaraHoverFileLists.isPresent()) {
-				if(offset == 0) {
-					Optional<List<DwaraHoverFileListCount>> dwaraHoverFileListCounts = DwaraHoverFileListCount.build(dwaraHoverFileLists.get(), totalCount);
+					dwaraHoverFileListCounts = DwaraHoverFileListCount.build(dwaraHoverFileLists.get(), totalCount);
 					return dwaraHoverFileListCounts.get();
-				}
 			}
-		} else {
-			if (dwaraHoverFileLists.isPresent()) {
-				return dwaraHoverFileLists.get();
-			}
-		}
-		return dwaraHoverFileLists.get();
+		 
+		return dwaraHoverFileListCounts.get();
 	}
 
 

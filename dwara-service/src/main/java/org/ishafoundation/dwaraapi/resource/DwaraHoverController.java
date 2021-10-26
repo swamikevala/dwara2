@@ -24,7 +24,7 @@ public class DwaraHoverController {
 
 	@ApiOperation(value = "List of Files as per the given Search Criteria")
 	@GetMapping("/search")
-	public ResponseEntity<List> list(@RequestParam(value = "search", required = true) List<String> searchWords, @RequestParam(value = "require", required = false) String type, @RequestParam(value = "category", required = false) String category, @RequestParam(value = "offset", required = false, defaultValue = "0") int offset, @RequestParam(value = "limit", required = false, defaultValue = "10") int limit) {
+	public ResponseEntity<List> list(@RequestParam(value = "items", required = true) List<String> searchWords, @RequestParam(value = "require", required = false) String type, @RequestParam(value = "category", required = false) String category, @RequestParam(value = "offset", required = false, defaultValue = "0") int offset, @RequestParam(value = "limit", required = false, defaultValue = "10") int limit) {
 		if (StringUtils.isEmpty(type)) {
 			type = "all";
 		}
