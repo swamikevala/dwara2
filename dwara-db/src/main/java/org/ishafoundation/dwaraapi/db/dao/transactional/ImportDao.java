@@ -7,6 +7,6 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface ImportDao extends CrudRepository<Import, Integer> {
 	
-	List<Import> findAllByVolumeId(String volumeId);
+	List<Import> findAllByIdVolumeId(String volumeId);
 
 }

@@ -9,9 +9,9 @@ import javax.persistence.Embeddable;
 @Embeddable
 public class ImportVolumeArtifactKey implements Serializable {
 
-	private static final long serialVersionUID = 3094076589216752917L;
+	private static final long serialVersionUID = 397632917957707570L;
 
-    @Column(name = "volume_id")
+	@Column(name = "volume_id")
     private String volumeId;
     
     @Column(name = "artifact_name")
