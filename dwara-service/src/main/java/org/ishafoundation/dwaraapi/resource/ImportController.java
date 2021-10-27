@@ -33,6 +33,7 @@ public class ImportController {
 	})
 	@PostMapping(value = "/import", produces = "application/json")
 	public ResponseEntity<ImportResponse> importCatalog(@RequestBody ImportRequest importRequest) throws Exception {
+		logger.info("/import " + importRequest.getXmlPathname());
 		ImportResponse importResponse = null;
 		try {
 			importResponse = importService.importCatalog(importRequest);
@@ -46,6 +47,6 @@ public class ImportController {
 				throw new DwaraException(errorMsg, null);
 		}
 		
-		return ResponseEntity.status(HttpStatus.ACCEPTED).body(importResponse);
+		return ResponseEntity.status(HttpStatus.OK).body(importResponse);
 	}
 }

@@ -54,7 +54,7 @@ public class Import {
     private int runId;
 	
     @Lob
-    @Column(name = "payload", columnDefinition="BLOB")
+    @Column(name = "payload", columnDefinition="LONGBLOB")
     private byte[] payload;
     
 	@Enumerated(EnumType.STRING)

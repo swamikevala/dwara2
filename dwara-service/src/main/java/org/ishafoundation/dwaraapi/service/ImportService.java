@@ -41,6 +41,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional._import.jointables.Imp
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
@@ -66,6 +67,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
@@ -204,6 +206,14 @@ public class ImportService extends DwaraService {
 	    	LocalDateTime requestedAt = LocalDateTime.now();
 			request.setRequestedAt(requestedAt);
 			request.setRequestedBy(user);
+			
+			HashMap<String, Object> data = new HashMap<String, Object>();
+			data.put("xmlPathname", importRequest.getXmlPathname());		
+			RequestDetails details = new RequestDetails();
+			JsonNode postBodyJson = getRequestDetails(data); 
+			details.setBody(postBodyJson);
+			request.setDetails(details);
+
 			request = requestDao.save(request);
 			logger.info(DwaraConstants.USER_REQUEST + request.getId());
 	
@@ -283,7 +293,12 @@ public class ImportService extends DwaraService {
 					else
 						sequence = artifactclass.getSequence();
 					
+					
 					String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactName);
+					Boolean isForceMatch = sequence.getForceMatch();
+					if(Boolean.TRUE.equals(isForceMatch) && extractedCode == null) {
+						throw new Exception("Missing expected PreviousSeqCode " + artifactName);
+					}
 					String sequenceCode = null;
 					String prevSeqCode = null;
 					String toBeArtifactName = null;
@@ -401,12 +416,13 @@ public class ImportService extends DwaraService {
 							logger.trace("linkName "+ linkName);
 						}
 						
-						String pathnameRegex = artifactclass.getConfig().getPathnameRegex();
-						if(!filePathname.matches(pathnameRegex)) {
-							logger.trace("Doesnt match " + pathnameRegex + " regex for " + filePathname);
-							continue;
+						if(artifactclass.getConfig() != null) {
+							String pathnameRegex = artifactclass.getConfig().getPathnameRegex();
+							if(!filePathname.matches(pathnameRegex)) {
+								logger.trace("Doesnt match " + pathnameRegex + " regex for " + filePathname);
+								continue;
+							}
 						}
-	
 						
 						byte[] filePathnameChecksum = ChecksumUtil.getChecksum(filePathname);
 						org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
@@ -436,7 +452,7 @@ public class ImportService extends DwaraService {
 							//file.setSymlinkFileId();
 							file.setSymlinkPath(linkName);
 							fileEntityUtil.setDomainSpecificFileArtifact(file, artifact1);
-							if(nthFile.getDirectory()) {// if(StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) {  // TODO - change it to - if(nthFile.isDirectory()) 
+							if(Boolean.TRUE.equals(nthFile.getDirectory())) {// if(StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) {  // TODO - change it to - if(nthFile.isDirectory()) 
 								file.setDirectory(true);
 							}else {
 								fileCount++;
