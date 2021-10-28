@@ -34,8 +34,11 @@ public class FileVolume {
     @MapsId("volumeId")
 	private Volume volume;
 		
-	@Column(name="volume_block")
-	private Integer volumeBlock; // volumeBlockStart
+	@Column(name="volume_start_block")
+	private Integer volumeStartBlock; // volumeBlockStart
+
+	@Column(name="volume_end_block")
+	private Long volumeEndBlock; // volumeBlockStart
 
 	@Column(name="archive_block")
 	private Long archiveBlock; // archiveBlockStart
@@ -76,12 +79,20 @@ public class FileVolume {
 		return volume;
 	}
 
-	public Integer getVolumeBlock() {
-		return volumeBlock;
+	public Integer getVolumeStartBlock() {
+		return volumeStartBlock;
 	}
 
-	public void setVolumeBlock(Integer volumeBlock) {
-		this.volumeBlock = volumeBlock;
+	public Long getVolumeEndBlock() {
+		return volumeEndBlock;
+	}
+
+	public void setVolumeStartBlock(Integer volumeStartBlock) {
+		this.volumeStartBlock = volumeStartBlock;
+	}
+
+	public void setVolumeEndBlock(Long volumeEndBlock) {
+		this.volumeEndBlock = volumeEndBlock;
 	}
 
 	public Long getArchiveBlock() {
