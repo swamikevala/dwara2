@@ -36,7 +36,7 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
         FileVolumeRepository<FileVolume> fileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domainUtil.getDefaultDomain());
         List<FileVolume> fileVolumeBlockList;
         List<Volume> volumeGroupList = new ArrayList<>();
-        long endBlock;
+        int endBlock;
 
         if(volumeId.size() > 0) {
           for (String id : volumeId) {
@@ -58,7 +58,7 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
             for (int i = 0; i < fileVolumeBlockList.size(); i++) {
 
                 if (i == fileVolumeBlockList.size() - 1) {
-                    long fileBlockSize = (long) Math.ceil((double)fileList.get(fileVolumeBlockList.get(i).getId().getFileId()).getSize() / fileVolumeIterator.getDetails().getBlocksize());
+                    int fileBlockSize = (int) Math.ceil((double)fileList.get(fileVolumeBlockList.get(i).getId().getFileId()).getSize() / fileVolumeIterator.getDetails().getBlocksize());
                     FileVolume fileVolume = fileVolumeBlockList.get(i);
                     endBlock = fileVolume.getVolumeStartBlock() + (fileBlockSize - 1);
                     fileVolume.setVolumeEndBlock(endBlock == NULL ? NULL : endBlock);

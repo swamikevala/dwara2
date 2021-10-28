@@ -38,7 +38,7 @@ public class FileVolume {
 	private Integer volumeStartBlock; // volumeBlockStart
 
 	@Column(name="volume_end_block")
-	private Long volumeEndBlock; // volumeBlockStart
+	private Integer volumeEndBlock; // volumeBlockStart
 
 	@Column(name="archive_block")
 	private Long archiveBlock; // archiveBlockStart
@@ -83,15 +83,15 @@ public class FileVolume {
 		return volumeStartBlock;
 	}
 
-	public Long getVolumeEndBlock() {
-		return volumeEndBlock;
-	}
-
 	public void setVolumeStartBlock(Integer volumeStartBlock) {
 		this.volumeStartBlock = volumeStartBlock;
 	}
 
-	public void setVolumeEndBlock(Long volumeEndBlock) {
+	public Integer getVolumeEndBlock() {
+		return volumeEndBlock;
+	}
+	
+	public void setVolumeEndBlock(Integer volumeEndBlock) {
 		this.volumeEndBlock = volumeEndBlock;
 	}
 

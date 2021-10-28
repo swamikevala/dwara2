@@ -1,6 +1,10 @@
 -- SET foreign_key_checks = 0;
 
 -- import appends
+
+ALTER TABLE `file1_volume` CHANGE COLUMN `volume_block` `volume_start_block` INT(11) NULL DEFAULT NULL ;
+ALTER TABLE `file2_volume` CHANGE COLUMN `volume_block` `volume_start_block` INT(11) NULL DEFAULT NULL ;
+
 -- Artifact sequences
 -- INSERT INTO `sequence` (`id`, `current_number`, `ending_number`, `force_match`, `group`, `keep_code`, `starting_number`, `type`) VALUES ('video-imported-grp', '0', '-1', 0, 1, 0, '1', 'artifact');
 

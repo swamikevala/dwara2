@@ -1,16 +1,21 @@
 package org.ishafoundation.dwaraapi.storage.storagelevel.block.index;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JacksonXmlRootElement(localName="File")
 public class File {
 	
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	@JacksonXmlProperty(isAttribute=true, localName="volumeBlock")
-	private Integer volumeblock; // volume start block	
+	private Integer volumeblock; // volume start block
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	@JacksonXmlProperty(isAttribute=true, localName="volumeStartBlock")
 	private Integer volumeStartBlock; // volume start block
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	@JacksonXmlProperty(isAttribute=true, localName="volumeEndBlock")
 	private Integer volumeEndBlock; // volume end block
 	@JacksonXmlProperty(isAttribute=true, localName="archiveBlock")

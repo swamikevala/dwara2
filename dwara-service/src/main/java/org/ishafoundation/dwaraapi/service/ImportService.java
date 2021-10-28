@@ -506,8 +506,8 @@ public class ImportService extends DwaraService {
 								 */
 								fileVolume = domainUtil.getDomainSpecificFileVolumeInstance(file.getId(), volume, domain);// lets just let users use the util consistently
 								fileVolume.setArchiveBlock(nthFile.getArchiveblock());
-								fileVolume.setVolumeBlock(nthFile.getVolumeStartBlock());
-								//fileVolume.setEndVolumeBlock(nthFile.getVolumeEndBlock());
+								fileVolume.setVolumeStartBlock(nthFile.getVolumeStartBlock());
+								fileVolume.setVolumeEndBlock(nthFile.getVolumeEndBlock());
 				
 								//fileVolume.setHardlinkFileId(file.getId());
 								
