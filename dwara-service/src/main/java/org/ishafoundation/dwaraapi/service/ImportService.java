@@ -198,13 +198,19 @@ public class ImportService extends DwaraService {
 			// TODO - move this to validateAndGetVolumeindex method
 			List<Import> importList = importDao.findAllByIdVolumeId(volumeId);
 			for (Import import1 : importList) {
-				if(import1.getStatus() == Status.completed)
-					throw new Exception(volumeId + " already imported successfully");
+				if(import1.getStatus() == Status.completed) {
+					String msg = volumeId + " already imported successfully";
+					Error err = new Error();
+					err.setType(Errortype.Error);
+					err.setMessage(msg);
+					errorList.add(err);
+					throw new DwaraException(msg);
+				}
 			}
 			
 			request = new Request();
 			request.setType(RequestType.user);
-			request.setActionId(Action.import_);
+			request.setActionId(Action._import);
 			request.setStatus(Status.queued);
 	    	User user = getUserObjFromContext();
 	

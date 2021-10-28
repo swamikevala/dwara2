@@ -25,7 +25,7 @@ public enum Action {
 	restore_process,
 	initialize,
 	finalize,
-	import_,
+	_import,
 	map_tapedrives,
 	diagnostics,
 	requeue,

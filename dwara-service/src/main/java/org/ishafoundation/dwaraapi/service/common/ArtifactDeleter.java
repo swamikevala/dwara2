@@ -80,8 +80,8 @@ public class ArtifactDeleter {
     }
     
 	public void validateRequest(Request request){
-    	if(request.getActionId() != Action.ingest) {
-    		String errorMsg = "Right now Cancel/Delete is only supported for " + Action.ingest;
+    	if(request.getActionId() != Action.ingest && request.getActionId() != Action._import) {
+    		String errorMsg = "Right now Cancel/Delete is only supported for " + Action.ingest + " and " + Action._import;
 	    	logger.error(errorMsg);
 	    	throw new DwaraException(errorMsg); 
 	    }
