@@ -107,9 +107,9 @@ public class ImportService extends DwaraService {
 	
 	private String bruLinkSeparator = Character.toString(Character.MIN_VALUE);
 	
-	private Map<String, Artifactclass> id_artifactclassMap = new HashMap<String, Artifactclass>();
-	private List<Error> errorList = new ArrayList<Error>();
-	private List<org.ishafoundation.dwaraapi.api.resp._import.Artifact> artifacts = new ArrayList<org.ishafoundation.dwaraapi.api.resp._import.Artifact>();
+	private Map<String, Artifactclass> id_artifactclassMap = null;
+	private List<Error> errorList = null;
+	private List<org.ishafoundation.dwaraapi.api.resp._import.Artifact> artifacts = null;
 	
 	private Volumeindex validateAndGetVolumeindex(File xmlFile) throws Exception{
 		XmlMapper xmlMapper = new XmlMapper();
@@ -124,7 +124,7 @@ public class ImportService extends DwaraService {
 	    	volumeindex = xmlMapper.readValue(xmlFile, Volumeindex.class);
 		} catch (Exception e) {
 			logger.error(xmlFile.getAbsolutePath() + " not a valid xml", e);
-			throw new DwaraException(xmlFile.getAbsolutePath() + " not a valid xml");
+			throw new DwaraException(xmlFile.getAbsolutePath() + " not a valid xml. " + e.getMessage());
 		}
 	    
 	    // More validation on values...
@@ -181,6 +181,10 @@ public class ImportService extends DwaraService {
 	 * rerun
 	 */
 	public ImportResponse importCatalog(ImportRequest importRequest) throws Exception{	
+		id_artifactclassMap = new HashMap<String, Artifactclass>();
+		errorList = new ArrayList<Error>();
+		artifacts = new ArrayList<org.ishafoundation.dwaraapi.api.resp._import.Artifact>();
+		
 		ImportResponse ir = new ImportResponse();
 		Request request = null;
 		try {
@@ -323,14 +327,14 @@ public class ImportService extends DwaraService {
 						if(artifact1 == null) {
 							artifactAlreadyExists = false;
 							if(sequenceCode == null) {
-								String overrideSequenceRefId = null;
-								if(artifactclass.getId().startsWith("video") && !artifactclass.getId().startsWith("video-digi")) {
-				    				Sequence importSequenceGrp = sequenceDao.findById("video-imported-grp").get();
-									if(importSequenceGrp.getCurrrentNumber() <= 27000) 
-										overrideSequenceRefId = "video-imported-grp";
-								}
-								sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactName, overrideSequenceRefId);	
-								
+//								String overrideSequenceRefId = null;
+//								if(artifactclass.getId().startsWith("video") && !artifactclass.getId().startsWith("video-digi")) {
+//				    				Sequence importSequenceGrp = sequenceDao.findById("video-imported-grp").get();
+//									if(importSequenceGrp.getCurrrentNumber() <= 27000) 
+//										overrideSequenceRefId = "video-imported-grp";
+//								}
+//								sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactName, overrideSequenceRefId);	
+								sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactName);
 								if(extractedCode != null && sequence.isReplaceCode())
 									toBeArtifactName = artifactName.replace(extractedCode, sequenceCode);
 								else
@@ -369,6 +373,7 @@ public class ImportService extends DwaraService {
 							artifactImportStatus = ImportStatus.completed;
 							logger.info("Artifact " + artifact1.getId() + " imported to dwara succesfully");
 						}else {
+							toBeArtifactName = artifact1.getName();
 							artifactImportStatus = ImportStatus.skipped;
 							logger.info("Artifact " + artifact1.getId() + " already exists, so skipping updating DB");  // artifact nth copy / rerun scenario
 						}
