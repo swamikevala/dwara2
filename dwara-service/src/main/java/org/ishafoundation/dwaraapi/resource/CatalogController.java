@@ -86,7 +86,7 @@ public class CatalogController {
     @PostMapping(value="/catalog/tapes", produces = "application/json")
     public ResponseEntity<List<TapeCatalog>> loadTapesCatalog(@RequestBody TapeCatalogRequest tapeCatalogRequest) {
         List<TapeCatalog> list = catalogService.findTapesCatalog(tapeCatalogRequest.volumeId, tapeCatalogRequest.volumeGroup, tapeCatalogRequest.copyNumber,
-            tapeCatalogRequest.format, tapeCatalogRequest.location, tapeCatalogRequest.startDate, tapeCatalogRequest.endDate);
+            tapeCatalogRequest.format, tapeCatalogRequest.location, tapeCatalogRequest.startDate, tapeCatalogRequest.endDate, tapeCatalogRequest.healthStatus);
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
 }
