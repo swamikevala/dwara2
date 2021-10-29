@@ -206,7 +206,7 @@ public class ReportService extends DwaraService {
         
         String query = "select f.pathname, f.size, date_format(r.requested_at, '%Y-%m-%d %T'), date_format(j.started_at, '%Y-%m-%d %T'), date_format(r.completed_at, '%Y-%m-%d %T'), time_to_sec(timediff(r.completed_at, j.started_at)) as time_taken, time_to_sec(timediff(r.completed_at, r.requested_at)) as total_time"
         + " from request r join file1 f on r.file_id = f.id join job j on j.request_id = r.id"
-        + " where r.action_id = 'restore' and r.status = 'completed' and r.type='system' and j.storagetask_action_id='restore'"
+        + " where r.action_id like 'restore%' and r.status = 'completed' and r.type='system' and j.storagetask_action_id='restore'"
         + condition;
         Query q = entityManager.createNativeQuery(query);
         List<Object[]> results = q.getResultList();
