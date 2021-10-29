@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import javax.xml.stream.XMLOutputFactory;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
@@ -436,9 +437,16 @@ public class ImportService extends DwaraService {
 							
 							if(artifactclass.getConfig() != null) {
 								String pathnameRegex = artifactclass.getConfig().getPathnameRegex();
-								if(!filePathname.matches(pathnameRegex)) {
-									logger.trace("Doesnt match " + pathnameRegex + " regex for " + filePathname);
-									continue;
+								
+								String filePathnameMinusArtifactName = filePathname.replace(toBeArtifactName, "");
+								if(StringUtils.isNotBlank(filePathnameMinusArtifactName)) { // artifact folder needed to be added - hence the notblank condition
+									if(filePathnameMinusArtifactName.startsWith(FilenameUtils.separatorsToUnix(File.separator))) {
+										filePathnameMinusArtifactName = filePathnameMinusArtifactName.substring(1);
+									}
+									if(!filePathnameMinusArtifactName.matches(pathnameRegex)) {
+										logger.trace("Doesnt match " + pathnameRegex + " regex for " + filePathnameMinusArtifactName);
+										continue;
+									}
 								}
 							}
 							
@@ -584,6 +592,7 @@ public class ImportService extends DwaraService {
 			_import = importDao.save(_import);
 			
 			request.setStatus(Status.completed);
+			request.setCompletedAt(LocalDateTime.now());
 			requestDao.save(request);
 		
 			ir.setUserRequestId(request.getId());
