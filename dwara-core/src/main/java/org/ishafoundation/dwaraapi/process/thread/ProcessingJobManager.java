@@ -369,6 +369,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
 						file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
 
+					if(tFile == null && file == null)
+						throw new Exception("File/TFile record missing in DB for " + artifactNamePrefixedFilePathname); // Edited/Backup scenario will bomb if files that are not part of File table are to be verified outside ingest - say during rewrite or restore_verify - as tFile records are purged after finalisation
+					
 					int fileId = tFile != null ? tFile.getId() : file.getId();
 					logger.debug("Delegating for processing -job-" + job.getId() + "-file-" + fileId);
 	

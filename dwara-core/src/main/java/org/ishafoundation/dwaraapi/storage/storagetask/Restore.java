@@ -20,7 +20,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
-import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
@@ -106,7 +105,7 @@ public class Restore extends AbstractStoragetaskAction{
 	
 			storageJob.setVolume(fileVolume.getVolume());
 			
-			storageJob.setVolumeBlock(fileVolume.getVolumeBlock()); 
+			storageJob.setVolumeBlock(fileVolume.getVolumeStartBlock());
 			storageJob.setArchiveBlock(fileVolume.getArchiveBlock());
 			
 			// to where
@@ -162,7 +161,7 @@ public class Restore extends AbstractStoragetaskAction{
 			if(fileVolume == null)
 				throw new Exception("Not able to retrieve filevolume record for domain " + domain + " filedId " + fileIdToBeRestored + " volumeId " + volumeId);
 	
-			storageJob.setVolumeBlock(fileVolume.getVolumeBlock()); 
+			storageJob.setVolumeBlock(fileVolume.getVolumeStartBlock());
 			storageJob.setArchiveBlock(fileVolume.getArchiveBlock());
 			
 			// to where
@@ -201,7 +200,7 @@ public class Restore extends AbstractStoragetaskAction{
 	//		if(fileVolume == null)
 	//			throw new Exception("Not able to retrieve filevolume record for domain " + domain + " filedId " + fileIdToBeRestored + " location " + locationId);
 			
-			storageJob.setVolumeBlock(fileVolume.getVolumeBlock()); 
+			storageJob.setVolumeBlock(fileVolume.getVolumeStartBlock());
 			storageJob.setArchiveBlock(fileVolume.getArchiveBlock());
 			
 			Volume volume = fileVolume.getVolume(); // need the volume for job selection

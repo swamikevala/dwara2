@@ -8,4 +8,5 @@ public class TapeCatalogRequest {
     public String[] location;
     public String startDate;
     public String endDate;
+    public String[] healthStatus;
 }

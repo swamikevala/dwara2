@@ -10,14 +10,15 @@ import java.util.Set;
 
 import org.ishafoundation.dwaraapi.api.resp.autoloader.AutoloaderResponse;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
-import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeListSorterUsingSlot;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeListSorterUsingBarcode;
+import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeListSorterUsingSlot;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.ToLoadTape;
 import org.ishafoundation.dwaraapi.api.resp.mapdrives.MapDrivesResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -25,6 +26,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
+import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -55,6 +57,9 @@ public class AutoloaderController {
 
 	@Autowired
 	private DeviceDao deviceDao;
+	
+	@Autowired
+	private RequestDao requestDao;
 
 	@Autowired
 	private JobDao jobDao;
@@ -153,14 +158,21 @@ public class AutoloaderController {
 				}
 			}
 			
-//			List<Status> statusList = new ArrayList<Status>();
-//			statusList.add(Status.queued);
-//			statusList.add(Status.in_progress);
-//			
-//			List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusInOrderById(statusList);
+			// Add tapes - for queued jobs not in tape library 
+			List<Job> jobList = null;
 			
-			// Add tapes - for queued jobs not in tape library 			
-			List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued);
+			List<Status> statusList = new ArrayList<Status>();
+			statusList.add(Status.queued);
+			statusList.add(Status.in_progress);
+			
+			List<Request> rewriteSystemRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.rewrite, statusList, RequestType.system);
+			if(rewriteSystemRequestList.size() > 0) { // if there are any rewrite request pending, dont add all its jobs to the queue
+				jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndRequestActionIdIsNotAndStatusOrderById(Action.rewrite, Status.queued);
+				jobList.addAll(jobDao.findTop2ByStoragetaskActionIdIsNotNullAndRequestActionIdAndStatusOrderByRequestId(Action.rewrite, Status.queued)); // add only two rewrite specific job to the collection
+			}
+			else
+				jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued); 
+			
 			if(jobList.size() == 0)
 				logger.info("No storage jobs in queue");
 			else {
@@ -277,7 +289,21 @@ public class AutoloaderController {
 		
 		Set<ToLoadTape> toLoadTapeList = new HashSet<ToLoadTape>();
 		try {
-			List<Job> queuedJobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued); // job has volume group for ingest
+			List<Job> queuedJobList = null;
+			
+			List<Status> statusList = new ArrayList<Status>();
+			statusList.add(Status.queued);
+			statusList.add(Status.in_progress);
+			
+			List<Request> rewriteSystemRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.rewrite, statusList, RequestType.system);
+			if(rewriteSystemRequestList.size() > 0) { // if there are any rewrite request pending, dont add all its jobs to the queue
+				queuedJobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndRequestActionIdIsNotAndStatusOrderById(Action.rewrite, Status.queued);
+				queuedJobList.addAll(jobDao.findTop2ByStoragetaskActionIdIsNotNullAndRequestActionIdAndStatusOrderByRequestId(Action.rewrite, Status.queued)); // add only one rewrite specific job to the collection
+			}
+			else
+				queuedJobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued); // Irrespective of the tapedrivemapping or format request non storage jobs can still be dequeued, hence we are querying it all...
+
+			// job has volume group for ingest
 			if(queuedJobList.size() == 0)
 				logger.info("No storage jobs in queue");
 			else {

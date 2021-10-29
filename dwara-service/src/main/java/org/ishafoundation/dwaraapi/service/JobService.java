@@ -235,54 +235,32 @@ public class JobService extends DwaraService{
 	    	data.put("jobId", jobId);
 			
 			userRequest = createUserRequest(Action.marked_completed, data);
-//			userRequest = new Request();
-//	    	userRequest.setType(RequestType.user);
-//			userRequest.setActionId(Action.marked_completed);
-//
-//			User requestedByUser = userDao.findByName(userName);
-//	    	userRequest.setRequestedBy(requestedByUser);
-//			userRequest.setRequestedAt(LocalDateTime.now());
-//			userRequest.setCompletedAt(LocalDateTime.now());
-//			RequestDetails details = new RequestDetails();
-//			ObjectMapper mapper = new ObjectMapper();
-//	
-//			HashMap<String, Object> data = new HashMap<String, Object>();
-//	    	data.put("jobId", jobId);
-//	    	
-//	    	String jsonAsString = mapper.writeValueAsString(data);
-//			JsonNode postBodyJson = mapper.readValue(jsonAsString, JsonNode.class);
-//			details.setBody(postBodyJson);
-//			userRequest.setDetails(details);
-//			
-//	    	userRequest = requestDao.save(userRequest);
-//	    	int userRequestId = userRequest.getId();
-//	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
 
 			createJobRunRecord(job, reason);
-	    	
-	    	if(job.getProcessingtaskId() != null) {
-				List<ProcessingFailure> processingFailureList = processingFailureDao.findAllByJobId(jobId);
-				processingFailureDao.deleteAll(processingFailureList);
-		    	logger.debug("Processing failure records cleaned up " + jobId);
-	    	}
-			
+
 			job.setMessage(reason);
 			job.setStatus(Status.marked_completed);
 			job.setStartedAt(LocalDateTime.now());
 			job.setCompletedAt(LocalDateTime.now());
 			job = jobDao.save(job);
 			logger.info("Job marked as completed successfully " + jobId);
+
+	    	if(job.getProcessingtaskId() != null) {
+				List<ProcessingFailure> processingFailureList = processingFailureDao.findAllByJobId(jobId);
+				processingFailureDao.deleteAll(processingFailureList);
+		    	logger.debug("Processing failure records cleaned up " + jobId);
+		    	
+				List<TTFileJob> jobFileList = tFileJobDao.findAllByJobId(jobId); 
+				if(jobFileList != null && jobFileList.size() > 0)
+					tFileJobDao.deleteAll(jobFileList);
+	    	}
 			
 			Request jobSystemRequest = job.getRequest();
-			jobSystemRequest.setStatus(Status.marked_completed);
+			jobSystemRequest.setStatus(Status.in_progress); // NOTE: Dont be tempted to update this to marked_completed - Let the scheduler do it...
 			requestDao.save(jobSystemRequest);
 			
 			userRequest.setStatus(Status.completed);
 			userRequest = requestDao.save(userRequest);
-
-			List<TTFileJob> jobFileList = tFileJobDao.findAllByJobId(jobId); 
-			if(jobFileList != null && jobFileList.size() > 0)
-				tFileJobDao.deleteAll(jobFileList);
 		} catch (Exception e) {
 			if(userRequest != null && userRequest.getId() != 0) {
 				userRequest.setStatus(Status.failed);

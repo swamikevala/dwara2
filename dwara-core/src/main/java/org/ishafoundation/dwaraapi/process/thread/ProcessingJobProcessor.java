@@ -202,7 +202,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 			Request systemGeneratedRequest = job.getRequest();
 			//Request request = systemGeneratedRequest.getRequest();
 			job = jobDao.findById(job.getId()).get();
-			if(job.getStatus() == Status.on_hold || job.getStatus() == Status.cancelled) {
+			if(job.getStatus() == Status.failed || job.getStatus() == Status.on_hold || job.getStatus() == Status.cancelled) {
 				logger.warn("Job " + job.getStatus() + " - not processing it now");
 				return;
 			}

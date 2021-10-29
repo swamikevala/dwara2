@@ -43,7 +43,13 @@ public class ChecksumVerifier implements IProcessingTask {
 		
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
-		TFile tFile = processContext.getTFile();
+		TFile tFile = processContext.getTFile() != null ? processContext.getTFile() : processContext.getFile();
+		if(tFile == null) {
+			String msg = "No tFile/File record for " + logicalFile.getAbsolutePath(); // Edited/Backup scenario will bomb if files that are not part of File table are to be verified outside ingest - say during rewrite or restore_verify - as tFile records are purged after finalisation
+			logger.error(msg);
+			throw new Exception(msg);
+		}
+			
 		if(logicalFile.isFile()) {
 			logger.info("Verifying checksum for - " + tFile.getId() + ":" + logicalFile.getAbsolutePath());
 			byte[] originalChecksum = tFile.getChecksum();

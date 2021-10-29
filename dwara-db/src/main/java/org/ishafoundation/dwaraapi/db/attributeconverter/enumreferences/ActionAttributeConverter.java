@@ -16,7 +16,7 @@ public class ActionAttributeConverter implements AttributeConverter<Action, Stri
 			return null;
 
 		switch (attribute) {
-		case import_:
+		case _import:
 			return "import";
 		
 		/*
@@ -74,7 +74,7 @@ public class ActionAttributeConverter implements AttributeConverter<Action, Stri
 
 		switch (dbData) {
 		case "import":
-			return Action.import_;
+			return Action._import;
 			
 			/*
 		case 1:

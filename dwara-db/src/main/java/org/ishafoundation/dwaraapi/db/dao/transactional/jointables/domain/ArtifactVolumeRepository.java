@@ -12,6 +12,8 @@ public interface ArtifactVolumeRepository<T extends ArtifactVolume> extends Crud
 	
 	ArtifactVolume findByIdArtifactIdAndIdVolumeId(int artifactId, String volumeId);
 	
+	ArtifactVolume findByIdArtifactIdAndVolumeGroupRefCopyIdAndStatus(int artifactId, int copyNumber, ArtifactVolumeStatus artifactVolumeStatus);
+	
 	List<ArtifactVolume> findAllByIdVolumeId(String volumeId);
 	
 	List<ArtifactVolume> findAllByIdVolumeIdAndStatus(String volumeId, ArtifactVolumeStatus current);

@@ -120,8 +120,8 @@ public class ArtifactService extends DwaraService{
 
 		artifactDeleter.validateArtifactclass(artifact.getArtifactclass().getId());
 
-		Request request = artifact.getWriteRequest();//artifact.getqLatestRequest();
-
+		Request request = artifact.getWriteRequest();
+		request = request != null ? request : artifact.getqLatestRequest();
 		artifactDeleter.validateRequest(request);
 
 		artifactDeleter.validateJobsAndUpdateStatus(request);

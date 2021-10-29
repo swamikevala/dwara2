@@ -58,6 +58,9 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 	@Column(name="concurrent_volume_copies")
 	private Boolean concurrentVolumeCopies;
 	
+	@Column(name="auto_ingest")
+	private Boolean autoIngest;
+	
 	@Column(name="display_order")
 	private Integer displayOrder;
 	
@@ -112,12 +115,20 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 		this.importOnly = importOnly;
 	}
 
-	public Boolean getConcurrentVolumeCopies() {
+	public Boolean isConcurrentVolumeCopies() {
 		return concurrentVolumeCopies;
 	}
 
 	public void setConcurrentVolumeCopies(Boolean concurrentVolumeCopies) {
 		this.concurrentVolumeCopies = concurrentVolumeCopies;
+	}
+
+	public Boolean getAutoIngest() {
+		return autoIngest;
+	}
+
+	public void setAutoIngest(Boolean autoIngest) {
+		this.autoIngest = autoIngest;
 	}
 
 	public Boolean getSource() {
@@ -131,8 +142,6 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 	public void setDomain(org.ishafoundation.dwaraapi.enumreferences.Domain domain) {
 		this.domain = domain;
 	}
-	
-
 	
 	public String getPathPrefix() {
 		return pathPrefix;
@@ -164,14 +173,7 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 	public void setSource(Boolean source) {
 		this.source = source;
 	}
-	
-	public boolean isConcurrentVolumeCopies() {
-		return concurrentVolumeCopies;
-	}
 
-	public void setConcurrentVolumeCopies(boolean concurrentVolumeCopies) {
-		this.concurrentVolumeCopies = concurrentVolumeCopies;
-	}
 
 	public Integer getDisplayOrder() {
 		return displayOrder;
