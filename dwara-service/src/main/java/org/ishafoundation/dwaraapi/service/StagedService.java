@@ -342,61 +342,6 @@ public class StagedService extends DwaraService{
 							stagedFileDetailsList.add(sfd);
 						}
 					}
-//			        long size = 0;
-//			        int fileCount = 0;
-//	
-//			        org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails fd = stagedFileEvaluator.getDetails(nthIngestableFile);
-//			        size = fd.getTotalSize();
-//			        fileCount = fd.getCount();
-			        
-	//		        if(nthIngestableFile.isDirectory()) {
-	//			        ArtifactFileDetails fd = junkFilesDealer.getJunkFilesExcludedFileDetails(nthIngestableFile.getAbsolutePath());
-	//			        // added to try catch for the test api not to throw an error when looking for a non-existing folder
-	//			        try {
-	//			        	size = fd.getTotalSize();
-	//			        }catch (Exception e) {
-	//						// swallowing it...
-	//			        	logger.trace("Unable to calculate size for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
-	//					}
-	//		        
-	//		            try {
-	//		            	fileCount = fd.getCount();
-	//		            }catch (Exception e) {
-	//						// swallowing it...
-	//		            	logger.trace("Unable to list files for " + nthIngestableFile.getAbsolutePath(), e.getMessage());
-	//					}
-	//		        }else {
-	//		        	size = FileUtils.sizeOf(nthIngestableFile);
-	//		        	fileCount = 1;
-	//		        }
-			        
-//			        if(fileCount == 0 || size == 0) {
-//			        	isLevel1Pass = false;
-//						StagedFileDetails sfd = new StagedFileDetails();
-//						
-//						sfd.setPath(path);
-//						sfd.setName(artifactName);
-//	
-//			        	
-//			        
-//			        	if(size == 0) {
-//							Error error = new Error();
-//							error.setType(Errortype.Error);
-//							error.setMessage(artifactName + " size is 0");
-//							errorList.add(error);
-//			        	}
-//			        	
-//			        	if(fileCount == 0) {
-//							Error error = new Error();
-//							error.setType(Errortype.Error);
-//							error.setMessage(artifactName + " has no files inside");
-//							errorList.add(error);
-//				        }
-//						
-//			        	sfd.setErrors(errorList);
-//						
-//						stagedFileDetailsList.add(sfd);
-//			        }
 		    	}
 	    	}
 	    	

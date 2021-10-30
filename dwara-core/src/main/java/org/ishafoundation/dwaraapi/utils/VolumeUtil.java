@@ -92,7 +92,7 @@ public class VolumeUtil {
 	
 	public Volume getToBeUsedPhysicalVolume(Domain domain, String volumegroupId, long artifactSize) {
 		Volume toBeUsedVolume = null;
-		List<Volume> physicalVolumesList = volumeDao.findAllByGroupRefIdAndFinalizedIsFalseAndHealthstatusAndLifecyclestageOrderByIdAsc(volumegroupId, VolumeHealthStatus.normal, VolumeLifecyclestage.active);
+		List<Volume> physicalVolumesList = volumeDao.findAllByGroupRefIdAndImportedIsFalseAndFinalizedIsFalseAndHealthstatusAndLifecyclestageOrderByIdAsc(volumegroupId, VolumeHealthStatus.normal, VolumeLifecyclestage.active);
 		for (Volume nthPhysicalVolume : physicalVolumesList) {
 
 			long projectedArtifactSize = getProjectedArtifactSize(artifactSize, nthPhysicalVolume);

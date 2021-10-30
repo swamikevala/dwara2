@@ -12,4 +12,6 @@ public interface FileVolumeRepository<T extends FileVolume> extends CrudReposito
 	List<FileVolume> findAllByIdFileIdAndVolumeGroupRefCopyId(int fileId, int copyNumber);
 	
 	FileVolume findByIdFileIdAndIdVolumeId(int fileId, String volumeId);
+
+    List<FileVolume> findAllByIdVolumeIdOrderByVolumeStartBlockAsc(String volumeId);
 }

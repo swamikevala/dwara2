@@ -82,11 +82,11 @@ public class StoragetypeJobDelegator {
 		for (Job job : jobsList) {
 			Action storagetaskAction = job.getStoragetaskActionId();
 			
-			if(storagetaskAction == Action.import_) {
-				ImportStoragetaskAction importStoragetaskAction = applicationContext.getBean(ImportStoragetaskAction.class);
-				importStoragetaskAction.setJob(job);
-				importStoragetaskSingleThreadExecutor.getExecutor().execute(importStoragetaskAction);
-			}
+//			if(storagetaskAction == Action._import) {
+//				ImportStoragetaskAction importStoragetaskAction = applicationContext.getBean(ImportStoragetaskAction.class);
+//				importStoragetaskAction.setJob(job);
+//				importStoragetaskSingleThreadExecutor.getExecutor().execute(importStoragetaskAction);
+//			}
 			
 			StorageJob storageJob = storageJobUtil.wrapJobWithStorageInfo(job);
 			if(storageJob == null)

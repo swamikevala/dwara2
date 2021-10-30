@@ -36,6 +36,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
+import org.ishafoundation.dwaraapi.process.checksum.ChecksumVerifier;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.service.JobServiceRequeueHelper;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
@@ -507,10 +508,12 @@ public class JobCreator {
 			}
 			
 			job.setProcessingtaskId(processingtaskId);
-			if(groupVolume != null)
-				job.setGroupVolume(groupVolume);
-			if(volume != null)
-				job.setVolume(volume);
+			if(processingtaskId.equals(ChecksumVerifier.CHECKSUM_VERIFIER_COMPONENT_NAME)) { // only updating this for checksum-verify jobs which are sort of connected to tape even though its a processing job.  Used to flag tape as suspect for checksum failures
+				if(groupVolume != null)
+					job.setGroupVolume(groupVolume);
+				if(volume != null)
+					job.setVolume(volume);
+			}
 			job = saveJob(job, dryRun);
 			return job;
 		}
