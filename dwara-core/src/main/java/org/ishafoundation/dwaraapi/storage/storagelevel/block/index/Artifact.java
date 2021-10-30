@@ -8,7 +8,9 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
 @JacksonXmlRootElement(localName="Artifact")
 public class Artifact {
-	
+
+	@JacksonXmlProperty(isAttribute = true, localName="name")
+	private String name;
 	@JacksonXmlProperty(isAttribute=true, localName="startBlock")
 	private int startblock; // archive start block
 	@JacksonXmlProperty(isAttribute=true, localName="endBlock")
@@ -23,6 +25,14 @@ public class Artifact {
 	@JacksonXmlElementWrapper(useWrapping = false)
 	private List<File> file;
 	
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
 
 	public int getStartblock() {
 		return startblock;

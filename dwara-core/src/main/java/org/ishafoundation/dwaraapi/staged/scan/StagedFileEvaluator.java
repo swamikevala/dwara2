@@ -208,14 +208,14 @@ public class StagedFileEvaluator {
 			errorList.add(error);
 		}
 		
-		// 4b- For digi artifacts - dupe check on prev-seq-code against existing artifact
+		// 4b- For digi artifacts - dupe check on prev-seq-code against existing artifact - there could be multiple artifacts (PART) with same prev seq
 		//if(FilenameUtils.getBaseName(sourcePath).startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX)) {
 		String prevSequenceCode = sequenceUtil.getExtractedCode(sequence, fileName);
 		
 		List<Artifact> alreadyExistingArtifactList = domainSpecificArtifactRepository.findAllByPrevSequenceCode(prevSequenceCode);
 		if(alreadyExistingArtifactList.size() > 0) {
 			for (Artifact artifact : alreadyExistingArtifactList) {
-				if(!artifact.isDeleted() && artifact.getWriteRequest().getDetails().getStagedFilename().equals(fileName) && artifact.getWriteRequest().getStatus() != Status.cancelled){ 
+				if(!artifact.isDeleted() && artifact.getWriteRequest() != null && artifact.getWriteRequest().getDetails().getStagedFilename().equals(fileName) && artifact.getWriteRequest().getStatus() != Status.cancelled){ 
 					Error error = new Error();
 					error.setType(Errortype.Warning);
 					StringBuffer sb = new StringBuffer();

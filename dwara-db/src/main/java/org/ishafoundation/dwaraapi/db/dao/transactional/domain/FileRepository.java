@@ -13,5 +13,7 @@ public interface FileRepository<T extends File> extends CrudRepository<T,Integer
 	
 	public static final String FIND_ALL_BY_FILE_REF_ID = "findAllBy<<DOMAIN_SPECIFIC_FILE>>RefId";
 	
+	File findByPathnameChecksum(byte[] filePathnameChecksum);
+	
 	File findByPathname(String pathname);
 }

@@ -17,5 +17,9 @@ public interface ArtifactRepository<T extends Artifact> extends CrudRepository<T
 	
 	List<Artifact> findAllByTotalSizeAndDeletedIsFalse(long totalSize);
 	
-	List<Artifact> findAllByPrevSequenceCode(String prevSequenceCode);
+	List<Artifact> findAllByPrevSequenceCode(String prevSequenceCode); // Used in digi to accomodate PART
+	
+	Artifact findByPrevSequenceCodeAndDeletedIsFalse(String prevSequenceCode);
+	
+	Artifact findBySequenceCodeAndDeletedIsFalse(String sequenceCode); // sequenceCode is running but extracted code used as sequence code could have been deleted too - So the Deleted check
 }

@@ -126,7 +126,7 @@ public class CatalogService extends DwaraService{
         });
     }
 
-    public List<TapeCatalog> findTapesCatalog(String volumeId, String[] volumeGroup, String[] copyNumber, String[] format, String[] location, String startDate, String endDate) {
+    public List<TapeCatalog> findTapesCatalog(String volumeId, String[] volumeGroup, String[] copyNumber, String[] format, String[] location, String startDate, String endDate, String[] healthStatus) {
         /* Query q2 = entityManager.createNativeQuery("select artifactclass_id, volume_id from artifactclass_volume where active=1");
         List<Object[]> results2 = q2.getResultList();
         HashMap<String, List<String>> map = new HashMap<String, List<String>>();
@@ -180,11 +180,19 @@ public class CatalogService extends DwaraService{
             condition = condition.substring(0, condition.length() -1);
             condition += ")";
         }
+        if(healthStatus != null && healthStatus.length >=1 && !healthStatus[0].equals("all")){
+            condition += " and a.healthStatus in (";
+            for(String a: healthStatus) {
+                condition += "'" + a + "',";
+            }
+            condition = condition.substring(0, condition.length() -1);
+            condition += ")";
+        }
         if(startDate != "")
             condition += " and a.finalized_at >= '" + startDate + "'";
         if(endDate != "")
             condition += " and a.finalized_at <= '" + endDate + "'";
-        String query = "select group_concat(distinct c.artifactclass_id order by c.artifactclass_id separator ','), a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.healthstatus, a.finalized_at, a.used_capacity" 
+        String query = "select group_concat(distinct c.artifactclass_id order by c.artifactclass_id separator ','), a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.healthstatus, a.lifecyclestage, a.finalized_at, a.used_capacity" 
         + " from volume a join artifact1_volume b join artifact1 c"
         + " where a.id = b.volume_id and b.artifact_id = c.id and a.initialized_at is not null"
         + condition
@@ -211,11 +219,8 @@ public class CatalogService extends DwaraService{
             i++;
             boolean _isImported = (boolean)record[i++];
             boolean _isFinalized = (boolean)record[i++];
-            String volumeHealthStatusAsString = (String) record[i++];
-            VolumeHealthStatus volumeHealthStatus = VolumeHealthStatus.normal;
-            if(volumeHealthStatusAsString != null)
-                volumeHealthStatus = VolumeHealthStatus.valueOf(volumeHealthStatusAsString);
-            boolean _isSuspect = (volumeHealthStatus == VolumeHealthStatus.suspect ? true : false);
+            String _volumeHealthStatus = (String) record[i++];
+            String _volumeLifecycleStage = (String) record[i++];
             String _finalizedAt = "";
             if(record[i] != null)
                 _finalizedAt = ((Timestamp) record[i]).toLocalDateTime().toString();
@@ -224,7 +229,6 @@ public class CatalogService extends DwaraService{
             if(record[i] != null)
                 _usedCapacity = ((BigInteger)record[i]).longValue();
             i++;
-            boolean _isDefective = (volumeHealthStatus == VolumeHealthStatus.defective ? true : false);
             List<String> artifactClass = Arrays.asList(_artifactClass.split(","));
 
             String status = "";
@@ -241,7 +245,7 @@ public class CatalogService extends DwaraService{
                 
             
             list.add(new TapeCatalog(_volumeId, _volumeGroup, _format, _location, status, _initializedAt,
-                _finalizedAt, _usedCapacity, _capacity, artifactClass, _isSuspect, _isDefective));
+                _finalizedAt, _usedCapacity, _capacity, artifactClass, _volumeHealthStatus, _volumeLifecycleStage));
         });
         // logger.info("list size: " + list.size());
         return list;

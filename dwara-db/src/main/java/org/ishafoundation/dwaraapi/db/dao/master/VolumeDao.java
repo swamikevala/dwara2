@@ -11,7 +11,7 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface VolumeDao extends CrudRepository<Volume,String> {
 
-	List<Volume> findAllByGroupRefIdAndFinalizedIsFalseAndHealthstatusAndLifecyclestageOrderByIdAsc(String volumerefId, VolumeHealthStatus volumeHealthstatus, VolumeLifecyclestage volumeLifecyclestage);
+	List<Volume> findAllByGroupRefIdAndImportedIsFalseAndFinalizedIsFalseAndHealthstatusAndLifecyclestageOrderByIdAsc(String volumerefId, VolumeHealthStatus volumeHealthstatus, VolumeLifecyclestage volumeLifecyclestage);
 		
 	List<Volume> findAllByType(Volumetype volumetype);
 	
