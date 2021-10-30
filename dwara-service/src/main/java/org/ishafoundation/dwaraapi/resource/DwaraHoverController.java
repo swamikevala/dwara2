@@ -24,18 +24,12 @@ public class DwaraHoverController {
 
 	@ApiOperation(value = "List of Files as per the given Search Criteria")
 	@GetMapping("/search")
-	public ResponseEntity<List> list(@RequestParam(value = "items", required = true) List<String> searchWords, @RequestParam(value = "require", required = false) String type, @RequestParam(value = "category", required = false) String category, @RequestParam(value = "offset", required = false, defaultValue = "0") int offset, @RequestParam(value = "limit", required = false, defaultValue = "10") int limit) {
-		if (StringUtils.isEmpty(type)) {
-			type = "all";
-		}
-		if (StringUtils.isEmpty(category)) {
-			category = "folder";
-		}
+	public ResponseEntity<List> list(@RequestParam(value = "items", required = true) List<String> searchWords, @RequestParam(value = "require", required = true, defaultValue = "all") String type, @RequestParam(value = "category", required = false, defaultValue = "folder") String category, @RequestParam(value = "contentType", required = false, defaultValue = "all") String contentType, @RequestParam(value = "offset", required = false, defaultValue = "0") int offset, @RequestParam(value = "limit", required = false, defaultValue = "10") int limit) {
 		if(limit > 1000) {
 			limit = 1000;
 		}
 
-		List dwaraHoverFileLists = dwaraHoverService.getSearchData(searchWords, type, category, offset, limit);
+		List dwaraHoverFileLists = dwaraHoverService.getSearchData(searchWords, type, category, contentType, offset, limit);
 
 		return ResponseEntity.ok().body(dwaraHoverFileLists);
 	}

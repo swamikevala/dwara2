@@ -45,15 +45,16 @@ public class DwaraHoverService extends DwaraService {
 	 * @param searchWords
 	 * @param type
 	 * @param category
+	 * @param contentType
 	 * @param offset
 	 * @param limit
 	 * @return List
 	 */
-
-	public List getSearchData(List<String> searchWords, String type, String category, int offset, int limit) {
+	public List getSearchData(List<String> searchWords, String type, String category, String contentType, int offset, int limit) {
 		String[] extensions;
 		String[] docExtensions = {"doc", "xls", "xml"};
 		String[] fileExtensions = {"mp4", "mp3"};
+		String queryMode = null;
 		int totalCount = 0;
 		StringBuilder searchWordsBuilder = new StringBuilder();
 		StringBuilder categoryBuilderFile1 = new StringBuilder();
@@ -83,7 +84,17 @@ public class DwaraHoverService extends DwaraService {
 				}
 			}
 
-		} else if (category.equalsIgnoreCase("document")) {
+		} else if (category.equalsIgnoreCase("image")) {
+			extensions = extensionFiletypeDao.findAllByFiletypeId(category.toLowerCase()).stream().map(ExtensionFiletype::getId).map(ExtensionFiletypeKey::getExtensionId).toArray(String[]::new);
+			for (int i = 0; i < extensions.length; i++) {
+				if (i != 0) {
+					categoryBuilderFile1.append(" OR ");
+				}
+				categoryBuilderFile1.append("file1.pathname LIKE '%.").append(extensions[i]).append("'");
+			}
+
+		}
+		else if (category.equalsIgnoreCase("document")) {
 			for (int i = 0; i < docExtensions.length; i++) {
 				if (i != 0) {
 					categoryBuilderFile1.append(" OR ");
@@ -116,7 +127,13 @@ public class DwaraHoverService extends DwaraService {
 			}
 		}
 
-		totalCount = (int) getTotalCountOfQuery(searchWords, offset, category, searchWordsBuilder, categoryBuilderFile1, categoryBuilderFile2);
+		if(contentType.equalsIgnoreCase("raw")) {
+			queryMode = "artifact1.artifactclass_id NOT LIKE '%edit%'";
+		} else if (contentType.equalsIgnoreCase("edit")) {
+			queryMode = "artifact1.artifactclass_id LIKE '%edit%'";
+		}
+
+		totalCount = (int) getTotalCountOfQuery(category, queryMode, searchWordsBuilder, categoryBuilderFile1, categoryBuilderFile2);
 		if(totalCount < offset) {
 			String json = "{ \"offset\" : \"" + offset + "\", \"totalCount\" : \"" + totalCount + "\" } ";
 
@@ -127,17 +144,21 @@ public class DwaraHoverService extends DwaraService {
 				e.printStackTrace();
 			}
 		}
-		List<Object[]> results = getSearchQuery(searchWords, offset, limit, category, searchWordsBuilder, categoryBuilderFile1, categoryBuilderFile2);
+		List<Object[]> results = getSearchQuery(offset, limit, category, queryMode, searchWordsBuilder, categoryBuilderFile1, categoryBuilderFile2);
 
 		List<DwaraHoverFileListDTO> fileResults = new ArrayList<>();
 		results.forEach(entry -> {
 			DwaraHoverFileListDTO dwaraHoverFileListDTO = new DwaraHoverFileListDTO();
+			List<String> proxyFilesForFolderQuery = new ArrayList<>();
 			String pathName = (String) entry[0];
 			long size = ((BigInteger) entry[1]).longValue();
 			int id = (Integer) entry[2];
-			String artifactClassId = (String) entry[3];
+			int artifact_id;
+			String artifactClassId;
+			String proxyPathName = null;
 			if (!category.equalsIgnoreCase("folder")) {
-				String proxyPathName = (String) entry[4];
+				artifactClassId = (String) entry[3];
+				proxyPathName = (String) entry[4];
 
 				if (!StringUtils.isEmpty(proxyPathName)) {
 					if (StringUtils.contains(artifactClassId, "priv")) {
@@ -145,10 +166,30 @@ public class DwaraHoverService extends DwaraService {
 					} else {
 						proxyPathName = "http://172.18.1.24/mam/public/" + proxyPathName;
 					}
+					proxyFilesForFolderQuery.add(proxyPathName);
 				}
-				dwaraHoverFileListDTO.setProxyPathName(proxyPathName);
+
+			} else {
+				artifact_id = (Integer) entry[3];
+				artifactClassId = (String) entry[4];
+				String proxyForFolderQuery = "SELECT file1.pathname,artifact1.artifactclass_id FROM artifact1 JOIN file1 ON file1.artifact_id=artifact1.id WHERE artifact_ref_id=" + artifact_id + " AND file1.pathname LIKE '%.mp4'";
+				Query q = entityManager.createNativeQuery(proxyForFolderQuery);
+				List<Object[]> folderQueryResults =  q.getResultList();
+
+				folderQueryResults.forEach(file-> {
+					String proxyName;
+						if (StringUtils.contains((String) file[1], "priv")) {
+							proxyName = "http://172.18.1.24/mam/private/" + file[0];
+						} else {
+							proxyName = "http://172.18.1.24/mam/public/" + file[0];
+						}
+					proxyFilesForFolderQuery.add(proxyName);
+
+				});
+
 			}
 
+			dwaraHoverFileListDTO.setProxyPathName(proxyFilesForFolderQuery);
 			dwaraHoverFileListDTO.setId(id);
 			dwaraHoverFileListDTO.setSize(size);
 			dwaraHoverFileListDTO.setPathName(pathName);
@@ -169,102 +210,97 @@ public class DwaraHoverService extends DwaraService {
 	}
 
 
-	private long getTotalCountOfQuery(List searchWords, int offset, String category, StringBuilder searchWordsBuilder, StringBuilder categoryBuilderFile1, StringBuilder categoryBuilderFile2) {
-		String queryCount = null;
+	private long getTotalCountOfQuery(String category, String queryMode, StringBuilder searchWordsBuilder, StringBuilder categoryBuilderFile1, StringBuilder categoryBuilderFile2) {
+		String queryCount;
 		int totalCount = 0;
-		if (!searchWords.isEmpty()) {
-			if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
-				queryCount = "SELECT Count(*) FROM file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ")" +
-						"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')";
-			} else if (category.equalsIgnoreCase("file")) {
-				queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
-						"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND file1.directory=0";
-			} else if (category.equalsIgnoreCase("folder")) {
-				queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%')";
+			if(!StringUtils.isEmpty(queryMode) ) {
+				if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
+					queryCount = "SELECT Count(*) FROM file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ")" +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND (" + queryMode + ")";
+				} else if (category.equalsIgnoreCase("file")) {
+					queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ") AND file1.directory=0";
+				} else if (category.equalsIgnoreCase("folder")) {
+					queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ") AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%')";
+				} else {
+					queryCount = "SELECT Count(*) FROM file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ")";
+				}
 			} else {
-				queryCount = "SELECT Count(*) FROM file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
-						"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')";
+				if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
+					queryCount = "SELECT Count(*) FROM file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ")" +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')";
+				} else if (category.equalsIgnoreCase("file")) {
+					queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND file1.directory=0";
+				} else if (category.equalsIgnoreCase("folder")) {
+					queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%')";
+				} else {
+					queryCount = "SELECT Count(*) FROM file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')";
+				}
 			}
+
 			Query qCount = entityManager.createNativeQuery(queryCount);
 			totalCount = ((BigInteger) qCount.getResultList().get(0)).intValue();
-
-		} else {
-			if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
-				queryCount = "SELECT COUNT(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ")" +
-						"WHERE (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')";
-			} else if (category.equalsIgnoreCase("file")) {
-				queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
-						"WHERE (artifact1.artifactclass_id NOT LIKE '%proxy%') AND file1.directory=0";
-			} else if (category.equalsIgnoreCase("folder")) {
-				queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"WHERE (artifact1.artifactclass_id NOT LIKE '%proxy%') AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%')";
-			} else {
-				queryCount = "SELECT COUNT(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
-						"WHERE (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')";
-			}
-			Query qCount = entityManager.createNativeQuery(queryCount);
-			totalCount = ((BigInteger) qCount.getResultList().get(0)).intValue();
-
-		}
-
 
 		return totalCount;
 	}
 
-	private List getSearchQuery(List searchWords, int offset, int limit, String category, StringBuilder searchWordsBuilder, StringBuilder categoryBuilderFile1, StringBuilder categoryBuilderFile2) {
+	private List getSearchQuery(int offset, int limit, String category, String queryMode, StringBuilder searchWordsBuilder, StringBuilder categoryBuilderFile1, StringBuilder categoryBuilderFile2) {
 		String query;
-		if (!searchWords.isEmpty()) {
-			if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
-				query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ") " +
-						"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') " +
-						"LIMIT " + offset + ", " + limit;
-			} else if (category.equalsIgnoreCase("file")) {
-				query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
-						"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND file1.directory=0 " +
-						"LIMIT " + offset + ", " + limit;
-			} else if (category.equalsIgnoreCase("folder")) {
-				query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%') " +
-						"LIMIT " + offset + ", " + limit;
+			if(!StringUtils.isEmpty(queryMode) ) {
+				if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
+					query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ") " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ") " +
+							"LIMIT " + offset + ", " + limit;
+				} else if (category.equalsIgnoreCase("file")) {
+					query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ") AND file1.directory=0 " +
+							"LIMIT " + offset + ", " + limit;
+				} else if (category.equalsIgnoreCase("folder")) {
+					query = "SELECT file1.pathname,file1.size,file1.id,file1.artifact_id,artifact1.artifactclass_id AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ") AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%') " +
+							"LIMIT " + offset + ", " + limit;
+				} else {
+					query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ") " +
+							"LIMIT " + offset + ", " + limit;
+				}
 			} else {
-				query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
-						"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') " +
-						"LIMIT " + offset + ", " + limit;
+				if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
+					query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ") " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') " +
+							"LIMIT " + offset + ", " + limit;
+				} else if (category.equalsIgnoreCase("file")) {
+					query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND file1.directory=0 " +
+							"LIMIT " + offset + ", " + limit;
+				} else if (category.equalsIgnoreCase("folder")) {
+					query = "SELECT file1.pathname,file1.size,file1.id,file1.artifact_id,artifact1.artifactclass_id AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%') " +
+							"LIMIT " + offset + ", " + limit;
+				} else {
+					query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
+							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') " +
+							"LIMIT " + offset + ", " + limit;
+				}
 			}
 
-
-		} else {
-			if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
-				query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
-						"WHERE (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') " +
-						"LIMIT " + offset + ", " + limit;
-			} else if (category.equalsIgnoreCase("file")) {
-				query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
-						"WHERE (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND file1.directory=0 " +
-						"LIMIT " + offset + ", " + limit;
-			} else if (category.equalsIgnoreCase("folder")) {
-				query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"WHERE (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%') " +
-						"LIMIT " + offset + ", " + limit;
-			} else {
-				query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-						"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
-						"WHERE (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') " +
-						"LIMIT " + offset + ", " + limit;
-			}
-		}
 		Query q = entityManager.createNativeQuery(query);
 		return q.getResultList();
 	}

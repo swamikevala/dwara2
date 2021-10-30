@@ -22,7 +22,7 @@ public class DwaraHoverFileList {
 	private Long size;
 	private String size_in;
 	private String artifact_class_id;
-	private String proxy_path_name;
+	private List<String> proxy_path_name;
 
 
 	public static Optional<List<DwaraHoverFileList>> build(List<DwaraHoverFileListDTO> gotResponse) {
