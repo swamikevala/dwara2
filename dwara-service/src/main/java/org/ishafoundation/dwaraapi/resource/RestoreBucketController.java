@@ -34,4 +34,10 @@ public class RestoreBucketController {
         TRestoreBucket tRestoreBucket= restoreBucketService.updateBucket(files,id,create);
         return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucket);
     }
+    
+    @PutMapping("/buckets/proxyPaths/{id}")
+    public ResponseEntity<TRestoreBucket> updateFiles(@PathVariable String id ,@RequestBody List<String> proxyPaths){
+        TRestoreBucket tRestoreBucket= restoreBucketService.getFileList(id,proxyPaths);
+        return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucket);
+    }
 }

@@ -35,4 +35,35 @@ public class RestoreBucketService {
             tRestoreBucketFromDb.setDetails(null);
         return tRestoreBucketFromDb;
 
-}}
+}
+    public TRestoreBucket getFileList(String id , List<String> proxyPaths){
+        TRestoreBucket tRestoreBucketFromDb = tRestoreBucketDao.findById(id).get();
+        List<RestoreBucketFile> presentFiles =tRestoreBucketFromDb.getDetails();
+        List<Integer> presentIds = new ArrayList<>();
+        for (RestoreBucketFile file : presentFiles) {
+                    presentIds.add(file.getFileID());
+        }
+        List<File1> proxyFiles= file1Dao.findByPathNameIn(proxyPaths);
+        //List<RestoreBucketFile> ogFiles =new ArrayList<>();
+        for (File1 file : proxyFiles) {
+                if(!presentIds.contains(file.getId())){
+                File ogFile =file.getFile1Ref();
+
+                RestoreBucketFile restoreBucketFile = new RestoreBucketFile();
+                restoreBucketFile.setFileID(ogFile.getId());
+                restoreBucketFile.setFileSize(String.valueOf(ogFile.getSize()));
+                restoreBucketFile.setFilePathName(ogFile.getPathname());
+                List<String> previewProxyPaths = new ArrayList<>();
+            previewProxyPaths.add(proxyPaths.get(proxyFiles.indexOf(file)));
+                restoreBucketFile.setPreviewProxyPath(previewProxyPaths);
+                restoreBucketFile.setArtifactId(file.getArtifact1().getId());
+                restoreBucketFile.setArtifactClass(file.getArtifact1().getArtifactclass().getId());
+                presentFiles.add(restoreBucketFile);
+        }}
+        tRestoreBucketFromDb.setDetails(presentFiles);
+        tRestoreBucketDao.save(tRestoreBucketFromDb);
+        return tRestoreBucketFromDb;
+
+    }    
+
+}
