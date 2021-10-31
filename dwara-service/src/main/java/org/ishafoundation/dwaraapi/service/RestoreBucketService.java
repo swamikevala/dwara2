@@ -49,7 +49,7 @@ public class RestoreBucketService {
         for (RestoreBucketFile file : presentFiles) {
                     presentIds.add(file.getFileID());
         }
-        List<File1> proxyFiles= file1Dao.findByPathNameIn(proxyPaths);
+        List<File1> proxyFiles= file1Dao.findByPathnameIn(proxyPaths);
         //List<RestoreBucketFile> ogFiles =new ArrayList<>();
         for (File1 file : proxyFiles) {
                 if(!presentIds.contains(file.getId())){
