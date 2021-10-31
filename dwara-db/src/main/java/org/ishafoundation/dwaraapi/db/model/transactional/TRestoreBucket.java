@@ -1,9 +1,9 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import org.hibernate.annotations.Type;
+
+import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -20,8 +20,9 @@ public class TRestoreBucket {
     String createdBy;
     @Column(name="createdAt")
     Date createdAt;
-    @Column(name="details")
-    List<RestoreBucketFile> details;
+    //@Column(name="details")
+    @ElementCollection
+    List<RestoreBucketFile> details = new ArrayList<RestoreBucketFile>();
 
     public String getRequestedBy() {
         return requestedBy;

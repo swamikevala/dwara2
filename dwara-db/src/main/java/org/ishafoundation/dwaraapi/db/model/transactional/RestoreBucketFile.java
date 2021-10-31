@@ -1,7 +1,9 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 
+import javax.persistence.Embeddable;
 import java.util.List;
 
+@Embeddable
 public class RestoreBucketFile {
 
     int artifactId;
