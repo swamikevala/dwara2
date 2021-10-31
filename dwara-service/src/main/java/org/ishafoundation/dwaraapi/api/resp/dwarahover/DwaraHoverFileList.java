@@ -23,6 +23,7 @@ public class DwaraHoverFileList {
 	private String size_in;
 	private String artifact_class_id;
 	private List<String> proxy_path_name;
+	private List<DwaraHoverTranscriptListDTO> transcripts;
 
 
 	public static Optional<List<DwaraHoverFileList>> build(List<DwaraHoverFileListDTO> gotResponse) {
@@ -41,6 +42,7 @@ public class DwaraHoverFileList {
 					.size_in(hoverList.getSize() >= (1024 * 1024 * 1024) ? "GB" : "MB")
 					.artifact_class_id(hoverList.getArtifactClass_id())
 					.proxy_path_name(hoverList.getProxyPathName())
+					.transcripts(hoverList.getTranscripts())
 					.build();
 
 

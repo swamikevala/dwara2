@@ -16,5 +16,6 @@ public class DwaraHoverFileListDTO {
 	private int id;
 	private String artifactClass_id;
 	private List<String> proxyPathName;
+	private List<DwaraHoverTranscriptListDTO> transcripts;
 
 }

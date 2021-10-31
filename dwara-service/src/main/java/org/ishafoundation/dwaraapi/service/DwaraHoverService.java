@@ -3,15 +3,21 @@ package org.ishafoundation.dwaraapi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.resp.dwarahover.DwaraHoverFileList;
 import org.ishafoundation.dwaraapi.api.resp.dwarahover.DwaraHoverFileListCount;
 import org.ishafoundation.dwaraapi.api.resp.dwarahover.DwaraHoverFileListDTO;
+import org.ishafoundation.dwaraapi.api.resp.dwarahover.DwaraHoverTranscriptListDTO;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ExtensionFiletypeDao;
 import org.ishafoundation.dwaraapi.db.keys.ExtensionFiletypeKey;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.exception.ExceptionType;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +28,11 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Component
@@ -38,6 +47,8 @@ public class DwaraHoverService extends DwaraService {
 	ExtensionFiletypeDao extensionFiletypeDao;
 
 	ObjectMapper objectMapper = new ObjectMapper();
+
+
 
 	/**
 	 * Get the Data based on the given Search Criteria
@@ -188,12 +199,13 @@ public class DwaraHoverService extends DwaraService {
 				});
 
 			}
-
+			List<DwaraHoverTranscriptListDTO> transcriptsByPathName = getTranscriptsByPathName(pathName);
 			dwaraHoverFileListDTO.setProxyPathName(proxyFilesForFolderQuery);
 			dwaraHoverFileListDTO.setId(id);
 			dwaraHoverFileListDTO.setSize(size);
 			dwaraHoverFileListDTO.setPathName(pathName);
 			dwaraHoverFileListDTO.setArtifactClass_id(artifactClassId);
+			dwaraHoverFileListDTO.setTranscripts(transcriptsByPathName);
 
 			fileResults.add(dwaraHoverFileListDTO);
 		});
@@ -303,6 +315,45 @@ public class DwaraHoverService extends DwaraService {
 
 		Query q = entityManager.createNativeQuery(query);
 		return q.getResultList();
+	}
+
+	public List<DwaraHoverTranscriptListDTO> getTranscriptsByPathName(String filename) {
+
+		final String transcriptTitleURL = "http://172.18.1.22:8090/rest/api/content/search?cql=(type=page%20and%20title~'";
+		final int transcriptTitleLimit = 100;
+		final String transcriptURLAuthorization = "Basic c2FtZWVyLmRhc2g6aG9seQ==";
+		final String transcriptLinkURL = "http://art.iyc.ishafoundation.org";
+
+		List<DwaraHoverTranscriptListDTO> output = new ArrayList<>();
+		Pattern pattern = Pattern.compile("(\\d{1,2}-[a-zA-Z]{3}-\\d{2,4})");
+		Matcher matcher = pattern.matcher(filename);
+		String title;
+		if (matcher.find()) {
+			title = matcher.group(1);
+		} else {
+			return Collections.emptyList();
+		}
+
+		try {
+			Unirest.setTimeouts(0, 0);
+			HttpResponse<com.mashape.unirest.http.JsonNode>	response = Unirest.get(transcriptTitleURL + title + "')&limit=" + transcriptTitleLimit)
+					.header("Authorization", transcriptURLAuthorization).asJson();
+
+			JSONArray dataArray = (JSONArray) response.getBody().getObject().get("results");
+			for (Object data : dataArray) {
+				JSONObject jsonObject = (JSONObject) data;
+				String transcriptTitle = jsonObject.get("title").toString();
+				String transcriptURL = transcriptLinkURL + jsonObject.getJSONObject("_links").get("webui").toString();
+
+				DwaraHoverTranscriptListDTO dwaraHoverTranscriptListDTO = new DwaraHoverTranscriptListDTO();
+				dwaraHoverTranscriptListDTO.setTitle(transcriptTitle);
+				dwaraHoverTranscriptListDTO.setLink(transcriptURL);
+				output.add(dwaraHoverTranscriptListDTO);
+			}
+		} catch (UnirestException e) {
+			e.printStackTrace();
+		}
+		return output;
 	}
 
 }
