@@ -31,11 +31,11 @@ public class ExtensionFiletype {
 	private ExtensionFiletypeKey id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("extensionId")
+    @MapsId("extension_id")
 	private Extension extension;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("filetypeId")
+    @MapsId("filetype_id")
 	private Filetype filetype;
 	
 	@Column(name="sidecar")
