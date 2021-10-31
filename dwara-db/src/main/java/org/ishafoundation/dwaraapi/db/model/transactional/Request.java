@@ -92,7 +92,7 @@ public class Request {
 
 	@Enumerated(EnumType.STRING)
 	@Column(name="priority")
-	private Priority priority;
+	private Priority priority = Priority.normal;
 	
 	@Type(type = "json")
 	@Column(name="details", columnDefinition = "json")

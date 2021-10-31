@@ -322,6 +322,10 @@ public class RequestService extends DwaraService{
 			throw new Exception(requestId + " already completed. Changing priority doesnt make sense");
 		
 		Priority oldPriority = request.getPriority();
+		
+		if(oldPriority != null & oldPriority == priority)
+			throw new Exception(requestId + " hasnt got priority changed. Old priority = New - " + priority);
+		
 		request.setPriority(priority);
 		requestDao.save(request);
 		
