@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -17,7 +18,9 @@ public class TRestoreBucket {
     String approver;
     String requestedBy;
     String createdBy;
+    @Column(name="createdAt")
     Date createdAt;
+    @Column(name="details")
     List<RestoreBucketFile> details;
 
     public String getRequestedBy() {
