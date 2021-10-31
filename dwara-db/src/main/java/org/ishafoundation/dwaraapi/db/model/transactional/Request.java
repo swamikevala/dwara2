@@ -21,6 +21,7 @@ import org.hibernate.annotations.TypeDef;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 
@@ -88,6 +89,10 @@ public class Request {
 	
 	@Column(name="external_ref")
 	private String externalRef;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name="priority")
+	private Priority priority = Priority.normal;
 	
 	@Type(type = "json")
 	@Column(name="details", columnDefinition = "json")
@@ -179,6 +184,14 @@ public class Request {
 
 	public void setExternalRef(String externalRef) {
 		this.externalRef = externalRef;
+	}
+
+	public Priority getPriority() {
+		return priority;
+	}
+
+	public void setPriority(Priority priority) {
+		this.priority = priority;
 	}
 
 	public RequestDetails getDetails() {

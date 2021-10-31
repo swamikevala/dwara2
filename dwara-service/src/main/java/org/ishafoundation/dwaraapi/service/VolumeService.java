@@ -319,7 +319,7 @@ public class VolumeService extends DwaraService {
 		}
 	}
 
-	public MarkVolumeStatusResponse markVolumeStatus(String volumeId, String status, MarkVolumeStatusRequest markVolumeStatusRequest) throws Exception {
+	public MarkVolumeStatusResponse markVolumeHealthstatus(String volumeId, String healthstatus, MarkVolumeStatusRequest markVolumeStatusRequest) throws Exception {
 		MarkVolumeStatusResponse markVolumeStatusResponse = new MarkVolumeStatusResponse();
 		
 		Volume volume = volumeDao.findById(volumeId).get();
@@ -328,19 +328,19 @@ public class VolumeService extends DwaraService {
 		
 		VolumeHealthStatus volumeStatus = null;
 		try {
-			volumeStatus = VolumeHealthStatus.valueOf(status);
+			volumeStatus = VolumeHealthStatus.valueOf(healthstatus);
 			if(volumeStatus == null)
-				throw new Exception(status + " not supported");
+				throw new Exception(healthstatus + " not supported");
 				
 		}catch (Exception e) {
-			throw new Exception(status + " not supported");
+			throw new Exception(healthstatus + " not supported");
 		}
 		
 		String reason = markVolumeStatusRequest.getReason();
 		// create user request
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		data.put("volumeId", volumeId);
-		data.put("status", status);
+		data.put("healthstatus", healthstatus);
 		data.put("reason", reason);
 		Request userRequest = createUserRequest(Action.mark_volume, Status.completed, data);
 		userRequest.setMessage(reason);
@@ -355,7 +355,52 @@ public class VolumeService extends DwaraService {
 		markVolumeStatusResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
 		
 		markVolumeStatusResponse.setVolumeId(volumeId);
-		markVolumeStatusResponse.setVolumeStatus(status);
+		markVolumeStatusResponse.setVolumeStatus(healthstatus);
+		
+		markVolumeStatusResponse.setAction(userRequest.getActionId().name());
+		markVolumeStatusResponse.setStatus(userRequest.getStatus().name());
+		markVolumeStatusResponse.setCompletedAt(getDateForUI(userRequest.getCompletedAt()));
+		
+		return markVolumeStatusResponse;
+	}
+	
+	public MarkVolumeStatusResponse markVolumeLifecyclestage(String volumeId, String lifecyclestage, MarkVolumeStatusRequest markVolumeStatusRequest) throws Exception {
+		MarkVolumeStatusResponse markVolumeStatusResponse = new MarkVolumeStatusResponse();
+		
+		Volume volume = volumeDao.findById(volumeId).get();
+		if(volume == null)
+			throw new Exception(volumeId + " not found");
+		
+		VolumeLifecyclestage volumeStatus = null;
+		try {
+			volumeStatus = VolumeLifecyclestage.valueOf(lifecyclestage);
+			if(volumeStatus == null)
+				throw new Exception(lifecyclestage + " not supported");
+				
+		}catch (Exception e) {
+			throw new Exception(lifecyclestage + " not supported");
+		}
+		
+		String reason = markVolumeStatusRequest.getReason();
+		// create user request
+		HashMap<String, Object> data = new HashMap<String, Object>();
+		data.put("volumeId", volumeId);
+		data.put("lifecyclestage", lifecyclestage);
+		data.put("reason", reason);
+		Request userRequest = createUserRequest(Action.mark_volume, Status.completed, data);
+		userRequest.setMessage(reason);
+		requestDao.save(userRequest);
+		
+		volume.setLifecyclestage(volumeStatus);
+
+		volumeDao.save(volume);
+		
+		markVolumeStatusResponse.setRequestId(userRequest.getId());
+		markVolumeStatusResponse.setRequestedBy(userRequest.getRequestedBy().getName());
+		markVolumeStatusResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
+		
+		markVolumeStatusResponse.setVolumeId(volumeId);
+		markVolumeStatusResponse.setVolumeStatus(lifecyclestage);
 		
 		markVolumeStatusResponse.setAction(userRequest.getActionId().name());
 		markVolumeStatusResponse.setStatus(userRequest.getStatus().name());

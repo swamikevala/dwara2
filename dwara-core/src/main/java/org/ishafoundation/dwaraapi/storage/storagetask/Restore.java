@@ -21,6 +21,7 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -219,6 +220,10 @@ public class Restore extends AbstractStoragetaskAction{
 				storageJob.setOutputFolder(outputFolder);
 				String targetLocationPath = getRestoreLocation(job);
 				storageJob.setTargetLocationPath(targetLocationPath);
+				
+				Priority requestPriority = request.getPriority();
+				if(requestPriority != null)
+					storageJob.setPriority(requestPriority.getPriorityValue());
 			}
 //			else if(requestedAction == Action.restore_process) {
 //				String targetLocationPath = getRestoreLocation(job);
