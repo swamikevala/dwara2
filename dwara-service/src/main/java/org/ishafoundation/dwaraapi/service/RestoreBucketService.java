@@ -1,11 +1,15 @@
 package org.ishafoundation.dwaraapi.service;
 
 import org.ishafoundation.dwaraapi.db.dao.transactional.TRestoreBucketDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.File1Dao;
 import org.ishafoundation.dwaraapi.db.model.transactional.RestoreBucketFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.File1;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +18,8 @@ import java.util.Optional;
 public class RestoreBucketService {
     @Autowired
     TRestoreBucketDao tRestoreBucketDao;
+    @Autowired
+    File1Dao file1Dao;
 
     public TRestoreBucket createBucket(String id , String createdBy){
         TRestoreBucket tRestoreBucket = new TRestoreBucket( id,createdBy , new Date());
