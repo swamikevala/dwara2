@@ -1,6 +1,8 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 
+import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -9,6 +11,7 @@ import java.util.List;
 
 @Entity
 @Table(name="t_restorebucket")
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 public class TRestoreBucket {
     @Id
     String id;
@@ -21,8 +24,9 @@ public class TRestoreBucket {
     @Column(name="createdAt")
     Date createdAt;
     //@Column(name="details")
-    @ElementCollection
-    List<RestoreBucketFile> details = new ArrayList<RestoreBucketFile>();
+    @Type(type = "json")
+    @Column(name="details", columnDefinition = "json")
+    List<RestoreBucketFile> details ;
 
     public String getRequestedBy() {
         return requestedBy;

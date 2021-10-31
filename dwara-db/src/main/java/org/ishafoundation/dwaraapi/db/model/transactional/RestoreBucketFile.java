@@ -1,16 +1,28 @@
 package org.ishafoundation.dwaraapi.db.model.transactional;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import javax.persistence.Embeddable;
 import java.util.List;
 
-@Embeddable
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RestoreBucketFile {
-
+    @JsonUnwrapped
+    private JsonNode body;
+    @JsonProperty("id")
     int artifactId;
+    @JsonProperty("artifact_class")
     String artifactClass;
+    @JsonProperty("fileId")
     int fileID;
+    @JsonProperty("filePathName")
     String filePathName;
+    @JsonProperty("fileSize")
     String fileSize;
+    @JsonProperty("previewProxyPath")
     List<String> previewProxyPath;
     public int getArtifactId() {
         return artifactId;
