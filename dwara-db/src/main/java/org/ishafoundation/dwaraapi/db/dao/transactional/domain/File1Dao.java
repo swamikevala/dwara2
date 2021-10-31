@@ -14,5 +14,5 @@ public interface File1Dao extends FileRepository<File1> {
 	List<File1> findAllByFile1RefId(int file1Id);
 
 	List<File1> findAllByArtifact1IdAndPathNameContains(int id , String extensions);
-	List<File1> findByPathNameIn(List<String> pathnameList);
+	List<File1> findByPathnameIn(List<String> pathnameList);
 }
