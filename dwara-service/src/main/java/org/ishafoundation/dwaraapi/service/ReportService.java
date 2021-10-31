@@ -156,25 +156,25 @@ public class ReportService extends DwaraService {
         + condition;
         pipelineReport.put("Ingest Completed", entityManager.createNativeQuery(completedQuery).getResultList());
 
-        String copy1WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id where j.storagetask_action_id='write' and j.group_volume_id like '%1' and j.status='failed'"
+        String copy1WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.storagetask_action_id='write' and j.group_volume_id like '%1' and j.status='failed'"
         + condition;
         pipelineReport.put("Copy1 Write Failed", entityManager.createNativeQuery(copy1WriteFailedQuery).getResultList());
 
-        String copy2WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id where j.storagetask_action_id='write' and j.group_volume_id like '%2' and j.status='failed'"
+        String copy2WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.storagetask_action_id='write' and j.group_volume_id like '%2' and j.status='failed'"
         + condition;
         pipelineReport.put("Copy2 Write Failed", entityManager.createNativeQuery(copy2WriteFailedQuery).getResultList());
 
-        String copy3WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id where j.storagetask_action_id='write' and j.group_volume_id like '%3' and j.status='failed'"
+        String copy3WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.storagetask_action_id='write' and j.group_volume_id like '%3' and j.status='failed'"
         + condition;
         pipelineReport.put("Copy3 Write Failed", entityManager.createNativeQuery(copy3WriteFailedQuery).getResultList());
 
-        String proxyGenFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id where j.processingtask_id='video-proxy-low-gen' and j.status='failed'"
+        String proxyGenFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.processingtask_id='video-proxy-low-gen' and j.status='failed'"
         + condition;
         pipelineReport.put("Proxy Gen Failed", entityManager.createNativeQuery(proxyGenFailedQuery).getResultList());
 
-        String mamUpdateFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id where j.processingtask_id='video-mam-update' and j.status='failed'"
+        String mamUpdateFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.processingtask_id='video-mam-update' and j.status='failed'"
         + condition;
-        pipelineReport.put("Map Update Failed", entityManager.createNativeQuery(mamUpdateFailedQuery).getResultList());
+        pipelineReport.put("Mam Update Failed", entityManager.createNativeQuery(mamUpdateFailedQuery).getResultList());
 
         List<String> inStaged3Days = new ArrayList<String>();
         File stagedFile = new File("/data/dwara/staged");
