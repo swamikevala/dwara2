@@ -50,7 +50,8 @@ public class RestoreBucketService {
         }
         else {
             List<RestoreBucketFile> restoreBucketFiles = tRestoreBucketFromDb.getDetails();
-            for (RestoreBucketFile file: restoreBucketFiles
+            List<RestoreBucketFile> temp = restoreBucketFiles;
+            for (RestoreBucketFile file: temp
                  ) {
                 if(fileIds.contains(file.getFileID()))
                     restoreBucketFiles.remove(file);
