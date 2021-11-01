@@ -390,16 +390,16 @@ public class DwaraHoverService extends DwaraService {
 	}
 
 	private List<DwaraHoverTranscriptListDTO> searchInTranscripts(List<String> searchWords, String type, int offset, int limit) {
-		final String transcriptTitleURL = "http://172.18.1.22:8090/rest/api/content/search?cql=(type=page%20and%20space=PUB%20and%20";
+		final String transcriptTitleURL = "http://172.18.1.22:8090/rest/api/content/search?cql=(type=page%20and%20space=PUB%20and";
 		final String transcriptURLAuthorization = "Basic c2FtZWVyLmRhc2g6aG9seQ==";
 		final String transcriptLinkURL = "http://art.iyc.ishafoundation.org";
 		List<DwaraHoverTranscriptListDTO> output = new ArrayList<>();
 		StringBuilder searchItemBuilder = new StringBuilder();
 		String searchOperator;
 		if (type.equalsIgnoreCase("all")) {
-			searchOperator = " AND ";
+			searchOperator = "AND";
 		} else {
-			searchOperator = " OR ";
+			searchOperator = "OR";
 		}
 
 		// Separate terms based on spaces
@@ -410,12 +410,12 @@ public class DwaraHoverService extends DwaraService {
 				if (searchItemBuilder.toString().equals("%20(")) {
 					searchItemBuilder.append("text~").append(searchItem);
 				} else {
-					searchItemBuilder.append("%20").append(searchOperator).append("%20text~'").append(searchItem).append("'");
+					searchItemBuilder.append("%20").append(searchOperator).append("%20text~").append(searchItem).append("");
 				}
 			}
 			searchItemBuilder.append(")");
 		} else {
-			searchItemBuilder.append("%20text~").append(searchWords);
+			searchItemBuilder.append("%20text~").append(searchWords.get(0));
 		}
 
 		HttpResponse<com.mashape.unirest.http.JsonNode> response = null;
