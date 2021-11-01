@@ -21,7 +21,7 @@ public class DwaraHoverFileListCount {
 		}
 
 		List<DwaraHoverFileListCount> dwaraHoverFileLists = new ArrayList<>();
-		DwaraHoverFileListCount response = DwaraHoverFileListCount.builder().TotalCount(totalCount).DwaraHoverFileList(gotResponse).build();
+		DwaraHoverFileListCount response = DwaraHoverFileListCount.builder().TotalCount(totalCount !=0 ? totalCount : 0).DwaraHoverFileList(gotResponse).build();
 
 		dwaraHoverFileLists.add(response);
 
