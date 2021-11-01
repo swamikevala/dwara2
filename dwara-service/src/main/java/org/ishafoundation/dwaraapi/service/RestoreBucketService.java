@@ -20,7 +20,7 @@ import java.util.Optional;
 
 @Service
 public class RestoreBucketService {
-    private static final Logger logger = LoggerFactory.getLogger(RequestService.class);
+    private static final Logger logger = LoggerFactory.getLogger(RestoreBucketService.class);
     @Autowired
     TRestoreBucketDao tRestoreBucketDao;
     @Autowired
