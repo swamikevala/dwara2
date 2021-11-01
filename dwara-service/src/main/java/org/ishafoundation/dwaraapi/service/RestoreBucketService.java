@@ -54,15 +54,13 @@ public class RestoreBucketService {
         else {
             List<RestoreBucketFile> restoreBucketFiles = tRestoreBucketFromDb.getDetails();
             List<RestoreBucketFile> temp = new ArrayList<>();
-            for (RestoreBucketFile file: temp
-                 ) {
-                logger.trace(String.valueOf(file.getFileID()));
+            for (RestoreBucketFile file: restoreBucketFiles) {
+
                 if(fileIds.contains(file.getFileID()))
                     temp.add(file);
             }
             restoreBucketFiles.removeAll(temp);
-            logger.trace(restoreBucketFiles.toString());
-            logger.trace(temp.toString());
+
             tRestoreBucketFromDb.setDetails(restoreBucketFiles);
         }
         tRestoreBucketDao.save(tRestoreBucketFromDb);
