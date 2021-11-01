@@ -93,7 +93,7 @@ public class RestoreBucketService {
         File1 ogFile= file1Dao.findById(id).get();
         //Artifact artifact = artifact1Dao.findByName(ogFile.getPathname());
         List<RestoreBucketFile> restoreBucketFiles = new ArrayList<>();
-        if(artifact1Dao.existsByPathname(ogFile.getPathname())){
+        if(artifact1Dao.existsByName(ogFile.getPathname())){
             Artifact artifact = artifact1Dao.findByName(ogFile.getPathname());
             Artifact proxyArtifact = artifact1Dao.findByartifact1Ref(ogFile.getId());
             List<File1> proxyVideos = file1Dao.findAllByArtifact1IdAndPathnameEndsWith(proxyArtifact.getId(), ".mp4");
