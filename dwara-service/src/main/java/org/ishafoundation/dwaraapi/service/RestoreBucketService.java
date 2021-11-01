@@ -8,6 +8,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File1;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,7 @@ import java.util.Optional;
 
 @Service
 public class RestoreBucketService {
+    private static final Logger logger = LoggerFactory.getLogger(RequestService.class);
     @Autowired
     TRestoreBucketDao tRestoreBucketDao;
     @Autowired
@@ -53,13 +56,13 @@ public class RestoreBucketService {
             List<RestoreBucketFile> temp = new ArrayList<>();
             for (RestoreBucketFile file: temp
                  ) {
-                System.out.println(file.getFileID());
+                logger.trace(String.valueOf(file.getFileID()));
                 if(fileIds.contains(file.getFileID()))
                     temp.add(file);
             }
             restoreBucketFiles.removeAll(temp);
-            System.out.println(restoreBucketFiles);
-            System.out.println(temp);
+            logger.trace(restoreBucketFiles.toString());
+            logger.trace(temp.toString());
             tRestoreBucketFromDb.setDetails(restoreBucketFiles);
         }
         tRestoreBucketDao.save(tRestoreBucketFromDb);
