@@ -6,7 +6,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.File1Dao;
 import org.ishafoundation.dwaraapi.db.model.transactional.RestoreBucketFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File1;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,14 +96,14 @@ public class RestoreBucketService {
         if(artifact1Dao.existsByPathname(ogFile.getPathname())){
             Artifact artifact = artifact1Dao.findByName(ogFile.getPathname());
             Artifact proxyArtifact = artifact1Dao.findByartifact1Ref(ogFile.getId());
-            List<File1> proxyVideos = file1Dao.findAllByArtifact1IdAndPathnameContains(proxyArtifact.getId(), ".mp4");
+            List<File1> proxyVideos = file1Dao.findAllByArtifact1IdAndPathnameEndsWith(proxyArtifact.getId(), ".mp4");
             for (File1 file1 : proxyVideos) {
                 RestoreBucketFile restoreBucketFile = new RestoreBucketFile();
                 restoreBucketFile.setFileID(file1.getId());
                 restoreBucketFile.setFileSize(String.valueOf(file1.getSize()));
                 restoreBucketFile.setFilePathName(file1.getPathname());
                 List<String> previewProxyPaths = new ArrayList<>();
-                List<File1> proxyFiles = file1Dao.findAllByFile1RefId(file1.getId());
+                List<File1> proxyFiles = file1Dao.findAllByFile1RefIdAndPathnameEndsWith(file1.getId(),".mp4");
                 for (File1 file : proxyFiles
                 ) {
                     previewProxyPaths.add(file.getPathname());
