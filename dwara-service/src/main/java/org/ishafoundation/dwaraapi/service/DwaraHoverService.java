@@ -492,7 +492,7 @@ public class DwaraHoverService extends DwaraService {
 		}
 		// Split the queryname into array by _ and -
 		String[] queryArray = removedDateBeforeAfter.replaceAll("\\s+"," ").replace(" ", "-").replace("_","-").split("-");
-		List<String> queryList = Arrays.asList(queryArray);
+		List<String> queryList = new ArrayList<String>(Arrays.asList(queryArray));
 		queryList.removeAll(Arrays.asList("", null));
 
 		queryArray = queryList.toArray(new String[] {});
