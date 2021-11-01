@@ -13,5 +13,7 @@ public class DwaraHoverTranscriptListDTO {
 
 	private String title;
 	private String link;
+	private String searchQuery;
+
 
 }

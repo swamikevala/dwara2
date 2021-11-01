@@ -35,12 +35,12 @@ public class DwaraHoverFileList {
 
 		gotResponse.forEach(hoverList -> {
 			DwaraHoverFileList response = DwaraHoverFileList.builder()
-					.id(hoverList.getId())
+					.id(hoverList.getId() == 0 ? 0 : hoverList.getId())
 					.path_name(hoverList.getPathName())
 					.short_path_name(hoverList.getPathName().contains("/") ? StringUtils.substringBefore(hoverList.getPathName(), "/") + "..." + hoverList.getPathName().substring(hoverList.getPathName().length() - 10) : StringUtils.substring(hoverList.getPathName(), 0, 40) + "..." + hoverList.getPathName().substring(hoverList.getPathName().length() - 10))
 					.size(hoverList.getSize() >= (1024 * 1024 * 1024) ? hoverList.getSize() / (1024 * 1024 * 1024) : hoverList.getSize() / (1024 * 1024))
-					.size_in(hoverList.getSize() >= (1024 * 1024 * 1024) ? "GB" : "MB")
-					.artifact_class_id(hoverList.getArtifactClass_id())
+					.size_in(hoverList.getSize() == 0 ? null : hoverList.getSize() >= (1024 * 1024 * 1024) ? "GB" : "MB")
+					.artifact_class_id(!StringUtils.isEmpty(hoverList.getArtifactClass_id()) ? hoverList.getArtifactClass_id() : null)
 					.proxy_path_name(hoverList.getProxyPathName())
 					.transcripts(hoverList.getTranscripts())
 					.build();
