@@ -42,6 +42,8 @@ public class DwaraHoverService extends DwaraService {
 
 	ObjectMapper objectMapper = new ObjectMapper();
 
+	int totalSizeTranscripts;
+
 
 
 	/**
@@ -208,7 +210,7 @@ public class DwaraHoverService extends DwaraService {
 
 		} else {
 			List<DwaraHoverTranscriptListDTO> dwaraHoverTranscriptListDTOS = searchInTranscripts(searchWords, type, offset, limit);
-			totalCount = dwaraHoverTranscriptListDTOS.size();
+			totalCount = totalSizeTranscripts;
 			for(DwaraHoverTranscriptListDTO dwaraHoverTranscriptListDTO : dwaraHoverTranscriptListDTOS) {
 				DwaraHoverFileListDTO dwaraHoverFileListDTO = new DwaraHoverFileListDTO();
 				List<String> proxyFilesForFolderQuery = new ArrayList<>();
@@ -426,7 +428,7 @@ public class DwaraHoverService extends DwaraService {
 		}
 
 		JSONArray dataArray = (JSONArray) response.getBody().getObject().get("results");
-
+		totalSizeTranscripts = (int) response.getBody().getObject().get("totalSize");
 
 		for (Object data : dataArray) {
 			String transcriptQuery;
