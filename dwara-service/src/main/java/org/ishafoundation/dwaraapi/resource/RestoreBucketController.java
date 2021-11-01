@@ -33,7 +33,13 @@ public class RestoreBucketController {
 
     @PutMapping("/buckets/{id}")
     public ResponseEntity<TRestoreBucket> updateBucket(@PathVariable String id ,@RequestParam String updateParam ,@RequestBody List<Integer> fileIds){
-        boolean create = updateParam.equals("add");
+        boolean create =true;
+        if(updateParam.equals("delete"))
+            create =false;
+        else if (updateParam.equals("add"))
+            create=true;
+        else
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         TRestoreBucket tRestoreBucket= restoreBucketService.updateBucket(fileIds,id,create);
         return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucket);
     }
