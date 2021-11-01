@@ -17,6 +17,12 @@ import java.util.Map;
 public class RestoreBucketController {
     @Autowired
     RestoreBucketService restoreBucketService;
+    @Autowired
+    TRestoreBucketDao tRestoreBucketDao;
+    @GetMapping("/buckets")
+    public ResponseEntity<List<TRestoreBucket>> getAllBuckets(){
+        return ResponseEntity.status(HttpStatus.OK).body((List<TRestoreBucket>) tRestoreBucketDao.findAll());
+    }
 
     @PostMapping("/buckets")
     public ResponseEntity<TRestoreBucket> createBucket(@RequestBody Map<String,String> map){
