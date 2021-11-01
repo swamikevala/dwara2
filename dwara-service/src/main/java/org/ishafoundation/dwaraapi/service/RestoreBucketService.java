@@ -94,45 +94,36 @@ public class RestoreBucketService {
         File1 ogFile= file1Dao.findById(id).get();
         //Artifact artifact = artifact1Dao.findByName(ogFile.getPathname());
         List<RestoreBucketFile> restoreBucketFiles = new ArrayList<>();
+        RestoreBucketFile restoreBucketFile = new RestoreBucketFile();
+        restoreBucketFile.setFileID(ogFile.getId());
+        restoreBucketFile.setFileSize(String.valueOf(ogFile.getSize()));
+        restoreBucketFile.setFilePathName(ogFile.getPathname());
+        restoreBucketFile.setArtifactId(ogFile.getArtifact1().getId());
+        restoreBucketFile.setArtifactClass(ogFile.getArtifact1().getArtifactclass().getId());
+        List<String> previewProxyPaths = new ArrayList<>();
         if(artifact1Dao.existsByName(ogFile.getPathname())){
             Artifact artifact = artifact1Dao.findByName(ogFile.getPathname());
             Artifact proxyArtifact = artifact1Dao.findByartifact1Ref(ogFile.getId());
             List<File1> proxyVideos = file1Dao.findAllByArtifact1IdAndPathnameEndsWith(proxyArtifact.getId(), ".mp4");
-            for (File1 file1 : proxyVideos) {
-                RestoreBucketFile restoreBucketFile = new RestoreBucketFile();
-                restoreBucketFile.setFileID(file1.getId());
-                restoreBucketFile.setFileSize(String.valueOf(file1.getSize()));
-                restoreBucketFile.setFilePathName(file1.getPathname());
-                List<String> previewProxyPaths = new ArrayList<>();
-                List<File1> proxyFiles = file1Dao.findAllByFile1RefIdAndPathnameEndsWith(file1.getId(),".mp4");
-                for (File1 file : proxyFiles
+
+            for (File1 file : proxyVideos
                 ) {
                     previewProxyPaths.add(file.getPathname());
                 }
-                restoreBucketFile.setPreviewProxyPath(previewProxyPaths);
-                restoreBucketFile.setArtifactId(file1.getArtifact1().getId());
-                restoreBucketFile.setArtifactClass(file1.getArtifact1().getArtifactclass().getId());
-            restoreBucketFiles.add(restoreBucketFile);
+
             }
 
-        }
+
     else {
-            File1 file1 = file1Dao.findAllByFile1RefId(id).get(0);
-            RestoreBucketFile restoreBucketFile = new RestoreBucketFile();
-            restoreBucketFile.setFileID(file1.getId());
-            restoreBucketFile.setFileSize(String.valueOf(file1.getSize()));
-            restoreBucketFile.setFilePathName(file1.getPathname());
-            List<String> previewProxyPaths = new ArrayList<>();
-            List<File1> proxyFiles = file1Dao.findAllByFile1RefId(file1.getId());
-            for (File1 file : proxyFiles
-            ) {
+            List<File1> proxyFiles = file1Dao.findAllByFile1RefIdAndPathnameEndsWith(ogFile.getId(),".mp4");
+            for (File1 file : proxyFiles) {
                 previewProxyPaths.add(file.getPathname());
             }
-            restoreBucketFile.setPreviewProxyPath(previewProxyPaths);
-            restoreBucketFile.setArtifactId(file1.getArtifact1().getId());
-            restoreBucketFile.setArtifactClass(file1.getArtifact1().getArtifactclass().getId());
-            restoreBucketFiles.add(restoreBucketFile);
+
     }
+    restoreBucketFile.setPreviewProxyPath(previewProxyPaths);
+
+            restoreBucketFiles.add(restoreBucketFile);
         return restoreBucketFiles;
 
     }

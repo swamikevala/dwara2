@@ -12,15 +12,15 @@ import java.util.List;
 public class RestoreBucketFile {
     @JsonUnwrapped
     private JsonNode body;
-    @JsonProperty("id")
+    @JsonProperty("artifactId")
     int artifactId;
-    @JsonProperty("artifact_class")
+    @JsonProperty("artifactClass")
     String artifactClass;
     @JsonProperty("fileId")
     int fileID;
-    @JsonProperty("filePathName")
+    @JsonProperty("pathname")
     String filePathName;
-    @JsonProperty("fileSize")
+    @JsonProperty("size")
     String fileSize;
     @JsonProperty("previewProxyPath")
     List<String> previewProxyPath;
