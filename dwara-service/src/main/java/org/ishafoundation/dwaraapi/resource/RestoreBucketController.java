@@ -25,9 +25,12 @@ public class RestoreBucketController {
     }
 
     @DeleteMapping("/buckets/{id}")
-    public void deleteBucket(@PathVariable String id){
+    public ResponseEntity deleteBucket(@PathVariable String id){
         restoreBucketService.deleteBucket(id);
+        return ResponseEntity.noContent().build();
     }
+
+
     @PutMapping("/buckets/{id}")
     public ResponseEntity<TRestoreBucket> updateBucket(@PathVariable String id ,@RequestParam String updateParam ,@RequestBody List<Integer> fileIds){
         boolean create = updateParam.equals("add");

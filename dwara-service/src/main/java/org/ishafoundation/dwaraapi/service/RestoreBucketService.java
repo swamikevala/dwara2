@@ -57,7 +57,8 @@ public class RestoreBucketService {
             }
             tRestoreBucketFromDb.setDetails(restoreBucketFiles);
         }
-            return tRestoreBucketFromDb;
+        tRestoreBucketDao.save(tRestoreBucketFromDb);
+        return tRestoreBucketFromDb;
 
 }
     public TRestoreBucket getFileList(String id , List<String> proxyPaths){
