@@ -249,4 +249,23 @@ public class RequestController {
 		}
     	return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
     }
+	
+	@PostMapping(value = "/request/{requestId}/changePriority/{priority}", produces = "application/json")
+    public ResponseEntity<RequestResponse> changePriority(@PathVariable("requestId") int requestId, @PathVariable("priority") String priority) {
+    	logger.info("/request/" + requestId + "/changePriority/" + priority);
+    	RequestResponse requestResponse = null;
+    	try {
+    		requestResponse = requestService.changePriority(requestId, priority);	
+		}catch (Exception e) {
+			String errorMsg = "Unable to change priority for request - " + requestId + " : " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+    	return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
+    }
+
 }

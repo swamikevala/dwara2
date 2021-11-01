@@ -5,6 +5,26 @@
 
 2) "Import" catalog from legacy system
  
+### Bug fixes
+
+1) Fix for Huge size Impressions artifact causing bru write failures
+
+2) Fix for filtering the Rewrite jobs when Tape view is refreshed   
+ 
+### Upgrade steps
+ 
+1) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_21.sql)
+
+2) application.properties to have 
+
+> scheduler.autoIngester.cronExpression=0 0 10 ? * *
+
+### After rollout follow-up
+
+1) Re-queue impressions job - 492808
+
+4) Put back on_hold rewrite jobs to queued[Refer upgrade sql script]
+ 
 
 # Dwara App Version - 2.1.32 (22nd Oct 2021)
 ### New features

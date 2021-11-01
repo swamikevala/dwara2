@@ -52,7 +52,7 @@ public class ScheduledAutoIngester {
 		
 		List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
 		for (Artifactclass nthArtifactclass : artifactclassList) {
-			if(!nthArtifactclass.getAutoIngest())
+			if(Boolean.FALSE.equals(nthArtifactclass.getAutoIngest()))
 				continue;
 			
 			String artifactclassId = nthArtifactclass.getId();

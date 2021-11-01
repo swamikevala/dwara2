@@ -29,6 +29,7 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.JobDetailsType;
+import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -298,6 +299,49 @@ public class RequestService extends DwaraService{
 			}
 			throw e;
 		}
+	}
+	
+	public RequestResponse changePriority(int requestId, String reqPriority) throws Exception{
+		
+		Priority priority = null;
+		try {
+			priority = Priority.valueOf(reqPriority);
+			if(priority == null)
+				throw new Exception(reqPriority + " not supported");
+				
+		}catch (Exception e) {
+			throw new Exception(reqPriority + " not supported");
+		}
+		
+		Optional<Request> requestOptional = requestDao.findById(requestId);
+		if(!requestOptional.isPresent())
+			throw new Exception(requestId + " not in system");
+		
+		Request request = requestOptional.get();
+		if(request.getStatus() == Status.completed)
+			throw new Exception(requestId + " already completed. Changing priority doesnt make sense");
+		
+		Priority oldPriority = request.getPriority();
+		
+		if(oldPriority != null & oldPriority == priority)
+			throw new Exception(requestId + " hasnt got priority changed. Old priority = New - " + priority);
+		
+		request.setPriority(priority);
+		requestDao.save(request);
+		
+		if(request.getType() == RequestType.user) {
+			List<Request> systemRequestList = requestDao.findAllByRequestRefId(requestId);
+
+			for (Request nthSystemRequest : systemRequestList) {
+				nthSystemRequest.setPriority(priority);
+			}
+			
+			if(systemRequestList.size() > 0)
+				requestDao.saveAll(systemRequestList);
+		}
+
+		logger.info(requestId + " priority changed from " + oldPriority + " to " + priority);
+		return frameRequestResponse(request, request.getType());
 	}
 	
 	private void validateReleaseRequest(int requestId){

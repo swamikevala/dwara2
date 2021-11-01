@@ -196,19 +196,44 @@ public class VolumeController {
 		return ResponseEntity.status(HttpStatus.OK).body("Done");
 	}
 	
-	@ApiOperation(value = "Marks a volume suspect|defective|normal")
+	@ApiOperation(value = "Marks a volume's healthstatus suspect|defective|normal")
 	@ApiResponses(value = { 
 			@ApiResponse(code = 200, message = "Ok")
 	})
 	@PostMapping(value = "/volume/{volumeId}/healthstatus/{status}", produces = "application/json")
-	public ResponseEntity<MarkVolumeStatusResponse> markVolumeStatus(@RequestBody MarkVolumeStatusRequest markVolumeStatusRequest, @PathVariable("volumeId") String volumeId, @PathVariable("status") String status) {
-		logger.info("/volume/" + volumeId + "/healthstatus/" + status);
+	public ResponseEntity<MarkVolumeStatusResponse> markVolumeHealthstatus(@RequestBody MarkVolumeStatusRequest markVolumeStatusRequest, @PathVariable("volumeId") String volumeId, @PathVariable("healthstatus") String healthstatus) {
+		logger.info("/volume/" + volumeId + "/healthstatus/" + healthstatus);
 		
 		MarkVolumeStatusResponse markVolumeStatusResponse = null;
 		try {
-			markVolumeStatusResponse = volumeService.markVolumeStatus(volumeId, status, markVolumeStatusRequest);
+			markVolumeStatusResponse = volumeService.markVolumeHealthstatus(volumeId, healthstatus, markVolumeStatusRequest);
 		}catch (Exception e) {
-			String errorMsg = "Unable to mark volume status - " + e.getMessage();
+			String errorMsg = "Unable to mark volume healthstatus - " + e.getMessage();
+			logger.error(errorMsg, e);
+
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(markVolumeStatusResponse);
+		
+	}
+	
+	@ApiOperation(value = "Marks a volume's lifecyclestage active|retired|purged")
+	@ApiResponses(value = { 
+			@ApiResponse(code = 200, message = "Ok")
+	})
+	@PostMapping(value = "/volume/{volumeId}/lifecyclestage/{status}", produces = "application/json")
+	public ResponseEntity<MarkVolumeStatusResponse> markVolumeLifecyclestage(@RequestBody MarkVolumeStatusRequest markVolumeStatusRequest, @PathVariable("volumeId") String volumeId, @PathVariable("lifecyclestage") String lifecyclestage) {
+		logger.info("/volume/" + volumeId + "/lifecyclestage/" + lifecyclestage);
+		
+		MarkVolumeStatusResponse markVolumeStatusResponse = null;
+		try {
+			markVolumeStatusResponse = volumeService.markVolumeLifecyclestage(volumeId, lifecyclestage, markVolumeStatusRequest);
+		}catch (Exception e) {
+			String errorMsg = "Unable to mark volume lifecyclestage - " + e.getMessage();
 			logger.error(errorMsg, e);
 
 			if(e instanceof DwaraException)
