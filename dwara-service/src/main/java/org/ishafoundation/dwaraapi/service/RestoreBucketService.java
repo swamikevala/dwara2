@@ -50,8 +50,10 @@ public class RestoreBucketService {
                 restoreBucketFiles.addAll(restoreBucketFile);
 
             }
-
+            if(tRestoreBucketFromDb.getDetails()!=null)
             tRestoreBucketFromDb.addDetails(restoreBucketFiles);
+            else
+            tRestoreBucketFromDb.setDetails(restoreBucketFiles);
         }
         else {
             List<RestoreBucketFile> restoreBucketFiles = tRestoreBucketFromDb.getDetails();
