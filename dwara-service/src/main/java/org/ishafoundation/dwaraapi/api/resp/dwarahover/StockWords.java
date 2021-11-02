@@ -363,6 +363,7 @@ public class StockWords {
             "fr",
             "free",
             "from",
+            "From",
             "front",
             "full",
             "fully",

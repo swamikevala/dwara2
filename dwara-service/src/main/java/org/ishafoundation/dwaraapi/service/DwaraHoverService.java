@@ -42,6 +42,8 @@ public class DwaraHoverService extends DwaraService {
 
 	ObjectMapper objectMapper = new ObjectMapper();
 
+	int totalSizeTranscripts;
+
 
 
 	/**
@@ -208,7 +210,7 @@ public class DwaraHoverService extends DwaraService {
 
 		} else {
 			List<DwaraHoverTranscriptListDTO> dwaraHoverTranscriptListDTOS = searchInTranscripts(searchWords, type, offset, limit);
-			totalCount = dwaraHoverTranscriptListDTOS.size();
+			totalCount = totalSizeTranscripts;
 			for(DwaraHoverTranscriptListDTO dwaraHoverTranscriptListDTO : dwaraHoverTranscriptListDTOS) {
 				DwaraHoverFileListDTO dwaraHoverFileListDTO = new DwaraHoverFileListDTO();
 				List<String> proxyFilesForFolderQuery = new ArrayList<>();
@@ -390,16 +392,16 @@ public class DwaraHoverService extends DwaraService {
 	}
 
 	private List<DwaraHoverTranscriptListDTO> searchInTranscripts(List<String> searchWords, String type, int offset, int limit) {
-		final String transcriptTitleURL = "http://172.18.1.22:8090/rest/api/content/search?cql=(type=page%20and%20space=PUB%20and%20";
+		final String transcriptTitleURL = "http://172.18.1.22:8090/rest/api/content/search?cql=(type=page%20and%20space=PUB%20and";
 		final String transcriptURLAuthorization = "Basic c2FtZWVyLmRhc2g6aG9seQ==";
 		final String transcriptLinkURL = "http://art.iyc.ishafoundation.org";
 		List<DwaraHoverTranscriptListDTO> output = new ArrayList<>();
 		StringBuilder searchItemBuilder = new StringBuilder();
 		String searchOperator;
 		if (type.equalsIgnoreCase("all")) {
-			searchOperator = " AND ";
+			searchOperator = "AND";
 		} else {
-			searchOperator = " OR ";
+			searchOperator = "OR";
 		}
 
 		// Separate terms based on spaces
@@ -410,12 +412,12 @@ public class DwaraHoverService extends DwaraService {
 				if (searchItemBuilder.toString().equals("%20(")) {
 					searchItemBuilder.append("text~").append(searchItem);
 				} else {
-					searchItemBuilder.append("%20").append(searchOperator).append("%20text~'").append(searchItem).append("'");
+					searchItemBuilder.append("%20").append(searchOperator).append("%20text~").append(searchItem).append("");
 				}
 			}
 			searchItemBuilder.append(")");
 		} else {
-			searchItemBuilder.append("%20text~").append(searchWords);
+			searchItemBuilder.append("%20text~").append(searchWords.get(0));
 		}
 
 		HttpResponse<com.mashape.unirest.http.JsonNode> response = null;
@@ -426,7 +428,7 @@ public class DwaraHoverService extends DwaraService {
 		}
 
 		JSONArray dataArray = (JSONArray) response.getBody().getObject().get("results");
-
+		totalSizeTranscripts = (int) response.getBody().getObject().get("totalSize");
 
 		for (Object data : dataArray) {
 			String transcriptQuery;
@@ -492,7 +494,7 @@ public class DwaraHoverService extends DwaraService {
 		}
 		// Split the queryname into array by _ and -
 		String[] queryArray = removedDateBeforeAfter.replaceAll("\\s+"," ").replace(" ", "-").replace("_","-").split("-");
-		List<String> queryList = Arrays.asList(queryArray);
+		List<String> queryList = new ArrayList<String>(Arrays.asList(queryArray));
 		queryList.removeAll(Arrays.asList("", null));
 
 		queryArray = queryList.toArray(new String[] {});
