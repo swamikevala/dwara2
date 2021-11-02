@@ -128,7 +128,10 @@ public class RestoreBucketService {
             }
 
     }
+    if(restoreBucketFile.getPreviewProxyPath()==null)
     restoreBucketFile.setPreviewProxyPath(previewProxyPaths);
+    else
+        restoreBucketFile.addPreviewProxyPath(previewProxyPaths);
 
             restoreBucketFiles.add(restoreBucketFile);
         return restoreBucketFiles;
