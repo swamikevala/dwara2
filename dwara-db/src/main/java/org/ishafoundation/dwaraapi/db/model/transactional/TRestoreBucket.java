@@ -105,6 +105,9 @@ public class TRestoreBucket {
     }
 
     public void setDetails(List<RestoreBucketFile> details) {
+        if(this.details!=null)
+            this.details.addAll(details);
+        else
         this.details = details;
     }
 
