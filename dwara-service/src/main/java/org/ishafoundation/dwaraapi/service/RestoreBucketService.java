@@ -6,6 +6,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.domain.File1Dao;
 import org.ishafoundation.dwaraapi.db.model.transactional.RestoreBucketFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.File1;
 import org.slf4j.Logger;
@@ -109,7 +110,7 @@ public class RestoreBucketService {
         List<String> previewProxyPaths = new ArrayList<>();
         if(artifact1Dao.existsByName(ogFile.getPathname())){
             Artifact artifact = artifact1Dao.findByName(ogFile.getPathname());
-            Artifact proxyArtifact = artifact1Dao.findByartifact1Ref(ogFile.getId());
+            Artifact1 proxyArtifact = (Artifact1) artifact1Dao.findByartifact1Ref(ogFile.getId());
             List<File1> proxyVideos = file1Dao.findAllByArtifact1IdAndPathnameEndsWith(proxyArtifact.getId(), ".mp4");
 
             for (File1 file : proxyVideos
