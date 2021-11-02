@@ -107,10 +107,12 @@ public class TRestoreBucket {
     }
 
     public void setDetails(List<RestoreBucketFile> details) {
-        if(this.details!=null)
-            this.details.addAll(details);
-        else
+
         this.details = details;
+    }
+
+    public void addDetails(List<RestoreBucketFile> details){
+        this.details.addAll(details);
     }
 
     public TRestoreBucket(String id, String createdBy, Date createdAt) {

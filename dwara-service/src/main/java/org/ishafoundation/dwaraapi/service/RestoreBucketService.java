@@ -51,7 +51,7 @@ public class RestoreBucketService {
 
             }
 
-            tRestoreBucketFromDb.setDetails(restoreBucketFiles);
+            tRestoreBucketFromDb.addDetails(restoreBucketFiles);
         }
         else {
             List<RestoreBucketFile> restoreBucketFiles = tRestoreBucketFromDb.getDetails();
@@ -133,7 +133,7 @@ public class RestoreBucketService {
     restoreBucketFile.setPreviewProxyPath(previewProxyPaths);
 
 
-            restoreBucketFiles.add(restoreBucketFile);
+           restoreBucketFiles.add(restoreBucketFile);
         return restoreBucketFiles;
 
     }
