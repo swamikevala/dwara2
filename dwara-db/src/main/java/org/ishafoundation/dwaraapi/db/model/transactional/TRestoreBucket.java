@@ -24,7 +24,7 @@ public class TRestoreBucket {
     @Column(name="createdAt")
     Date createdAt;
     //@Column(name="details")
-    @Type(type = "jsonb")
+    @Lob
     @Column(name="details", columnDefinition = "json")
 
     List<RestoreBucketFile> details ;
