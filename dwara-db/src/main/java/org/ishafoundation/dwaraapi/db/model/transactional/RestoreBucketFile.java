@@ -69,7 +69,8 @@ public class RestoreBucketFile {
     }
 
     public void setPreviewProxyPath(List<String> previewProxyPath) {
-        this.previewProxyPath = previewProxyPath;
+
+        this.previewProxyPath.addAll(previewProxyPath);
     }
 
 
