@@ -14,10 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class RestoreBucketService {
@@ -82,19 +79,26 @@ public class RestoreBucketService {
         //List<RestoreBucketFile> ogFiles =new ArrayList<>();
         for (File1 file : proxyFiles) {
                 if(!presentIds.contains(file.getId())){
-                File ogFile =file.getFile1Ref();
+                File1 ogFile =file.getFile1Ref();
 
                 RestoreBucketFile restoreBucketFile = new RestoreBucketFile();
                 restoreBucketFile.setFileID(ogFile.getId());
                 restoreBucketFile.setFileSize(String.valueOf(ogFile.getSize()));
                 restoreBucketFile.setFilePathName(ogFile.getPathname());
-                List<String> previewProxyPaths = new ArrayList<>();
+                List< String> previewProxyPaths = new ArrayList<>();
             previewProxyPaths.add(proxyPaths.get(proxyFiles.indexOf(file)));
                 restoreBucketFile.setPreviewProxyPath(previewProxyPaths);
-                restoreBucketFile.setArtifactId(file.getArtifact1().getId());
-                restoreBucketFile.setArtifactClass(file.getArtifact1().getArtifactclass().getId());
+                restoreBucketFile.setArtifactId(ogFile.getArtifact1().getId());
+                restoreBucketFile.setArtifactClass(ogFile.getArtifact1().getArtifactclass().getId());
                 presentFiles.add(restoreBucketFile);
-        }}
+        }
+        else{
+             return new TRestoreBucket();
+
+
+                }
+
+        }
         tRestoreBucketFromDb.setDetails(presentFiles);
         tRestoreBucketDao.save(tRestoreBucketFromDb);
         return tRestoreBucketFromDb;
