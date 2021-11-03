@@ -86,8 +86,12 @@ public class RestoreBucketService {
                 restoreBucketFile.setFileSize(String.valueOf(ogFile.getSize()));
                 restoreBucketFile.setFilePathName(ogFile.getPathname());
                 List< String> previewProxyPaths = new ArrayList<>();
+
             previewProxyPaths.add(proxyPaths.get(proxyFiles.indexOf(file)));
-                restoreBucketFile.setPreviewProxyPath(previewProxyPaths);
+            if(restoreBucketFile.getPreviewProxyPath()!=null)
+                restoreBucketFile.addPreviewProxyPath(previewProxyPaths);
+            else
+            restoreBucketFile.setPreviewProxyPath(previewProxyPaths);
                 restoreBucketFile.setArtifactId(ogFile.getArtifact1().getId());
                 restoreBucketFile.setArtifactClass(ogFile.getArtifact1().getArtifactclass().getId());
                 presentFiles.add(restoreBucketFile);
