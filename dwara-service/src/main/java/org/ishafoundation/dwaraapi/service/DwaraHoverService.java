@@ -217,40 +217,55 @@ public class DwaraHoverService extends DwaraService {
 		} else {
 			List<DwaraHoverTranscriptListDTO> dwaraHoverTranscriptListDTOS = searchInTranscripts(searchWords, type, offset, limit);
 			totalCount = totalSizeTranscripts;
-			dwaraHoverTranscriptListDTOS.stream().forEach(dwaraHoverTranscriptListDTO-> {
-				DwaraHoverFileListDTO dwaraHoverFileListDTO = new DwaraHoverFileListDTO();
-				List<String> proxyFilesForFolderQuery = new ArrayList<>();
-				String proxyForFolderQuery = dwaraHoverTranscriptListDTO.getSearchQuery();
-				Query q = entityManager.createNativeQuery(proxyForFolderQuery);
-				List<Object[]> folderQueryResults =  q.getResultList();
 
-				folderQueryResults.forEach(file-> {
-					String proxyName;
-					if (StringUtils.contains((String) file[1], "priv")) {
-						proxyName = "http://172.18.1.24/mam/private/" + file[0];
-					} else {
-						proxyName = "http://172.18.1.24/mam/public/" + file[0];
-					}
-					proxyFilesForFolderQuery.add(proxyName);
 
-				});
+			ExecutorService executor = Executors.newFixedThreadPool(10);
 
-				DwaraHoverTranscriptListDTO transcriptsByPathName = new DwaraHoverTranscriptListDTO();
-				transcriptsByPathName.setTitle(dwaraHoverTranscriptListDTO.getTitle());
-				transcriptsByPathName.setLink(dwaraHoverTranscriptListDTO.getLink());
+			List<Future<?>> futures = IntStream.range(0, dwaraHoverTranscriptListDTOS.size())
+					.mapToObj(i -> executor.submit(() -> {
+						DwaraHoverFileListDTO dwaraHoverFileListDTO = new DwaraHoverFileListDTO();
+						List<String> proxyFilesForFolderQuery = new ArrayList<>();
+						String proxyForFolderQuery = dwaraHoverTranscriptListDTOS.get(i).getSearchQuery();
+						Query q = entityManager.createNativeQuery(proxyForFolderQuery);
+						List<Object[]> folderQueryResults =  q.getResultList();
 
-				dwaraHoverFileListDTO.setProxyPathName(proxyFilesForFolderQuery);
-				dwaraHoverFileListDTO.setPathName(transcriptsByPathName.getTitle());
-				dwaraHoverFileListDTO.setTranscripts(Arrays.asList(transcriptsByPathName));
-				dwaraHoverFileListDTO.setSize(0);
-				dwaraHoverFileListDTO.setId(0);
+						folderQueryResults.forEach(file-> {
+							String proxyName;
+							if (StringUtils.contains((String) file[1], "priv")) {
+								proxyName = "http://172.18.1.24/mam/private/" + file[0];
+							} else {
+								proxyName = "http://172.18.1.24/mam/public/" + file[0];
+							}
+							proxyFilesForFolderQuery.add(proxyName);
 
-				fileResults.add(dwaraHoverFileListDTO);
-			});
+						});
+
+						DwaraHoverTranscriptListDTO transcriptsByPathName = new DwaraHoverTranscriptListDTO();
+						transcriptsByPathName.setTitle(dwaraHoverTranscriptListDTOS.get(i).getTitle());
+						transcriptsByPathName.setLink(dwaraHoverTranscriptListDTOS.get(i).getLink());
+
+						dwaraHoverFileListDTO.setProxyPathName(proxyFilesForFolderQuery);
+						dwaraHoverFileListDTO.setPathName(transcriptsByPathName.getTitle());
+						dwaraHoverFileListDTO.setTranscripts(Arrays.asList(transcriptsByPathName));
+						dwaraHoverFileListDTO.setSize(0);
+						dwaraHoverFileListDTO.setId(0);
+
+						return dwaraHoverFileListDTO;
+					})).collect(Collectors.toList());
+
+			executor.shutdown();
+
+			for (Future<?> future : futures) {
+				try {
+					fileResults.add((DwaraHoverFileListDTO) future.get());
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					e.printStackTrace();
+				}
+			}
 
 		}
-
-
 
 		Optional<List<DwaraHoverFileList>> dwaraHoverFileLists = DwaraHoverFileList.build(fileResults);
 
