@@ -544,7 +544,7 @@ public class RequestService extends DwaraService{
 				long restoreETA = 0;
 				long postProcessETA = 0;
 				for(Job job: fileJobs) {
-					if(job.getVolume().getId()!= null && job.getStoragetaskActionId() == Action.restore) {
+					if(job.getVolume()!= null && job.getStoragetaskActionId() == Action.restore) {
 						//If the task is restore task
 						file.setTape(String.valueOf(job.getVolume()));
 						if (job.getStatus().equals(Status.in_progress)) {

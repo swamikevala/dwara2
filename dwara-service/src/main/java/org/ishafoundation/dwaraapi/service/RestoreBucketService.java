@@ -68,7 +68,7 @@ public class RestoreBucketService {
         return tRestoreBucketFromDb;
 
 }
-    public TRestoreBucket getFileList(String id , List<String> proxyPaths){
+    public TRestoreBucket getFileList(String id , List<String> proxyPaths) throws Exception {
         TRestoreBucket tRestoreBucketFromDb = tRestoreBucketDao.findById(id).get();
         List<RestoreBucketFile> presentFiles =tRestoreBucketFromDb.getDetails();
         List<Integer> presentIds = new ArrayList<>();
@@ -76,6 +76,7 @@ public class RestoreBucketService {
                     presentIds.add(file.getFileID());
         }
         List<File1> proxyFiles= file1Dao.findByPathnameIn(proxyPaths);
+        if(presentFiles!=null){
         //List<RestoreBucketFile> ogFiles =new ArrayList<>();
         for (File1 file : proxyFiles) {
                 if(!presentIds.contains(file.getId())){
@@ -102,7 +103,10 @@ public class RestoreBucketService {
 
                 }
 
-        }
+        }}
+
+        else
+            throw new Exception("file not present");
         tRestoreBucketFromDb.setDetails(presentFiles);
         tRestoreBucketDao.save(tRestoreBucketFromDb);
         return tRestoreBucketFromDb;

@@ -52,7 +52,7 @@ public class RestoreBucketController {
     }
     
     @PutMapping("/buckets/proxyPaths/{id}")
-    public ResponseEntity<TRestoreBucket> updateFiles(@PathVariable String id ,@RequestBody List<String> proxyPaths){
+    public ResponseEntity<TRestoreBucket> updateFiles(@PathVariable String id ,@RequestBody List<String> proxyPaths) throws Exception {
         TRestoreBucket tRestoreBucket= restoreBucketService.getFileList(id,proxyPaths);
         return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucket);
     }
