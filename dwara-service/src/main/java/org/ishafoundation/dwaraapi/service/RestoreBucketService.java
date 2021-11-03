@@ -38,12 +38,12 @@ public class RestoreBucketService {
     tRestoreBucketDao.deleteById(id);
     }
 
-    public TRestoreBucket updateBucket(List<Integer> fileIds  , String id , boolean create){
+    public TRestoreBucket updateBucket(List<Integer> fileIds  , String id , boolean add){
 
         Optional<TRestoreBucket> result = tRestoreBucketDao.findById(id);
         TRestoreBucket tRestoreBucketFromDb = result.get();
 
-        if(create) {
+        if(add) {
             List<RestoreBucketFile> restoreBucketFiles = new ArrayList<>();
             for (int fileid : fileIds){
                 List<RestoreBucketFile> restoreBucketFile=createFile(fileid);
@@ -111,6 +111,12 @@ public class RestoreBucketService {
         restoreBucketFile.setArtifactId(ogFile.getArtifact1().getId());
         restoreBucketFile.setArtifactClass(ogFile.getArtifact1().getArtifactclass().getId());
         List<String> previewProxyPaths = new ArrayList<>();
+        String appendUrlTOProxy = "";
+        if(ogFile.getArtifact1().getArtifactclass().getId().contains("-priv")){
+            appendUrlTOProxy="http://172.18.1.24/mam/private/";
+        }
+        else
+            appendUrlTOProxy="http://172.18.1.24/mam/public/";
         //Artifact1 artifact = (Artifact1) artifact1Dao.findByName(ogFile.getPathname());
         if(artifact1Dao.existsByName(ogFile.getPathname())){
             Artifact1 artifact = (Artifact1) artifact1Dao.findByName(ogFile.getPathname());
@@ -119,7 +125,7 @@ public class RestoreBucketService {
 
             for (File1 file : proxyVideos
                 ) {
-                    previewProxyPaths.add(file.getPathname());
+                    previewProxyPaths.add(appendUrlTOProxy+file.getPathname());
                 }
 
             }
@@ -128,7 +134,7 @@ public class RestoreBucketService {
     else {
             List<File1> proxyFiles = file1Dao.findAllByFile1RefIdAndPathnameEndsWith(ogFile.getId(),".mp4");
             for (File1 file : proxyFiles) {
-                previewProxyPaths.add(file.getPathname());
+                previewProxyPaths.add(appendUrlTOProxy+file.getPathname());
             }
 
     }
