@@ -217,7 +217,7 @@ public class DwaraHoverService extends DwaraService {
 		} else {
 			List<DwaraHoverTranscriptListDTO> dwaraHoverTranscriptListDTOS = searchInTranscripts(searchWords, type, offset, limit);
 			totalCount = totalSizeTranscripts;
-			for(DwaraHoverTranscriptListDTO dwaraHoverTranscriptListDTO : dwaraHoverTranscriptListDTOS) {
+			dwaraHoverTranscriptListDTOS.stream().forEach(dwaraHoverTranscriptListDTO-> {
 				DwaraHoverFileListDTO dwaraHoverFileListDTO = new DwaraHoverFileListDTO();
 				List<String> proxyFilesForFolderQuery = new ArrayList<>();
 				String proxyForFolderQuery = dwaraHoverTranscriptListDTO.getSearchQuery();
@@ -246,7 +246,8 @@ public class DwaraHoverService extends DwaraService {
 				dwaraHoverFileListDTO.setId(0);
 
 				fileResults.add(dwaraHoverFileListDTO);
-			}
+			});
+
 		}
 
 
@@ -458,10 +459,9 @@ public class DwaraHoverService extends DwaraService {
 
 		executor.shutdown();
 
-		List<DwaraHoverTranscriptListDTO> dwaraHoverTranscriptListDTOList = new ArrayList<>();
 		for (Future<?> future : futures) {
 			try {
-				dwaraHoverTranscriptListDTOList.add((DwaraHoverTranscriptListDTO) future.get());
+				output.add((DwaraHoverTranscriptListDTO) future.get());
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (ExecutionException e) {
