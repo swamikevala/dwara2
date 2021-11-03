@@ -570,8 +570,8 @@ public class RequestService extends DwaraService{
 						}
 					}
 
-
-					startTime = job.getStartedAt().getSecond();
+					/*if()
+					startTime = job.getStartedAt().getSecond();*/
 
 					//if (job.getStatus()!=Status.in_progress && job.getStatus()!=Status.completed)
 
