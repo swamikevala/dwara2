@@ -25,8 +25,14 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 
 @Component
@@ -410,14 +416,14 @@ public class DwaraHoverService extends DwaraService {
 			// Split it based on space
 			for (String searchItem : searchWords) {
 				if (searchItemBuilder.toString().equals("%20(")) {
-					searchItemBuilder.append("text~").append(searchItem);
+					searchItemBuilder.append("text~").append("'").append(searchItem).append("'");
 				} else {
-					searchItemBuilder.append("%20").append(searchOperator).append("%20text~").append(searchItem).append("");
+					searchItemBuilder.append("%20").append(searchOperator).append("%20text~").append("'").append(searchItem).append("'");
 				}
 			}
 			searchItemBuilder.append(")");
 		} else {
-			searchItemBuilder.append("%20text~").append(searchWords.get(0));
+			searchItemBuilder.append("%20text~").append("'").append(searchWords.get(0)).append("'");
 		}
 
 		HttpResponse<com.mashape.unirest.http.JsonNode> response = null;
@@ -427,25 +433,40 @@ public class DwaraHoverService extends DwaraService {
 			e.printStackTrace();
 		}
 
+
 		JSONArray dataArray = (JSONArray) response.getBody().getObject().get("results");
 		totalSizeTranscripts = (int) response.getBody().getObject().get("totalSize");
 
-		for (Object data : dataArray) {
-			String transcriptQuery;
+		ExecutorService executor = Executors.newFixedThreadPool(10);
 
-			JSONObject jsonObject = (JSONObject) data;
-			String transcriptTitle = jsonObject.get("title").toString();
-			String transcriptURL = transcriptLinkURL + jsonObject.getJSONObject("_links").get("webui").toString();
+		List<Future<?>> futures = IntStream.range(0, dataArray.length())
+				.mapToObj(i -> executor.submit(() -> {
+					String transcriptQuery;
+					JSONObject jsonObject =  dataArray.getJSONObject(i);
+					String transcriptTitle = jsonObject.get("title").toString();
+					String transcriptURL = transcriptLinkURL + jsonObject.getJSONObject("_links").get("webui").toString();
 
-			DwaraHoverTranscriptListDTO dwaraHoverTranscriptListDTO = new DwaraHoverTranscriptListDTO();
-			dwaraHoverTranscriptListDTO.setTitle(transcriptTitle);
-			dwaraHoverTranscriptListDTO.setLink(transcriptURL);
+					DwaraHoverTranscriptListDTO dwaraHoverTranscriptListDTO = new DwaraHoverTranscriptListDTO();
+					dwaraHoverTranscriptListDTO.setTitle(transcriptTitle);
+					dwaraHoverTranscriptListDTO.setLink(transcriptURL);
 
-			transcriptQuery = getTranscriptSearchQuery(transcriptTitle);
+					transcriptQuery = getTranscriptSearchQuery(transcriptTitle);
 
-			dwaraHoverTranscriptListDTO.setSearchQuery(transcriptQuery);
-			output.add(dwaraHoverTranscriptListDTO);
+					dwaraHoverTranscriptListDTO.setSearchQuery(transcriptQuery);
+					return dwaraHoverTranscriptListDTO;
+				})).collect(Collectors.toList());
 
+		executor.shutdown();
+
+		List<DwaraHoverTranscriptListDTO> dwaraHoverTranscriptListDTOList = new ArrayList<>();
+		for (Future<?> future : futures) {
+			try {
+				dwaraHoverTranscriptListDTOList.add((DwaraHoverTranscriptListDTO) future.get());
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+			}
 		}
 
 		return output;
