@@ -68,19 +68,22 @@ public class RestoreBucketService {
         return tRestoreBucketFromDb;
 
 }
+    // only one file is added
     public TRestoreBucket getFileList(String id , List<String> proxyPaths) throws Exception {
+
         TRestoreBucket tRestoreBucketFromDb = tRestoreBucketDao.findById(id).get();
         List<RestoreBucketFile> presentFiles =tRestoreBucketFromDb.getDetails();
         List<Integer> presentIds = new ArrayList<>();
-       if(presentFiles!=null){
-        for (RestoreBucketFile file : presentFiles) {
-                    presentIds.add(file.getFileID());
-        }}
+
         List<File1> proxyFiles= file1Dao.findByPathnameIn(proxyPaths);
-        if(presentFiles!=null){
+        if(presentFiles==null){
+            presentFiles =new ArrayList<>();
+        }
         //List<RestoreBucketFile> ogFiles =new ArrayList<>();
         for (File1 file : proxyFiles) {
-                if(!presentIds.contains(file.getId())){
+                if(presentIds.contains(file.getId())){
+                    return new TRestoreBucket();
+                }
                 File1 ogFile =file.getFile1Ref();
 
                 RestoreBucketFile restoreBucketFile = new RestoreBucketFile();
@@ -98,16 +101,8 @@ public class RestoreBucketService {
                 restoreBucketFile.setArtifactClass(ogFile.getArtifact1().getArtifactclass().getId());
                 presentFiles.add(restoreBucketFile);
         }
-        else{
-             return new TRestoreBucket();
 
 
-                }
-
-        }}
-
-        else
-            throw new Exception("file not present");
         tRestoreBucketFromDb.setDetails(presentFiles);
         tRestoreBucketDao.save(tRestoreBucketFromDb);
         return tRestoreBucketFromDb;
