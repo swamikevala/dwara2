@@ -76,6 +76,7 @@ public class RestoreBucketService {
         List<Integer> presentIds = new ArrayList<>();
 
         List<File1> proxyFiles= file1Dao.findByPathnameIn(proxyPaths);
+
         if(presentFiles==null){
             presentFiles =new ArrayList<>();
         }
@@ -85,6 +86,12 @@ public class RestoreBucketService {
                     return new TRestoreBucket();
                 }
                 File1 ogFile =file.getFile1Ref();
+            String appendUrlTOProxy = "";
+            if(ogFile.getArtifact1().getArtifactclass().getId().contains("-priv")){
+                appendUrlTOProxy="http://172.18.1.24/mam/private/";
+            }
+            else
+                appendUrlTOProxy="http://172.18.1.24/mam/public/";
 
                 RestoreBucketFile restoreBucketFile = new RestoreBucketFile();
                 restoreBucketFile.setFileID(ogFile.getId());
@@ -92,7 +99,7 @@ public class RestoreBucketService {
                 restoreBucketFile.setFilePathName(ogFile.getPathname());
                 List< String> previewProxyPaths = new ArrayList<>();
 
-            previewProxyPaths.add(proxyPaths.get(proxyFiles.indexOf(file)));
+            previewProxyPaths.add(appendUrlTOProxy+proxyPaths.get(proxyFiles.indexOf(file)));
             if(restoreBucketFile.getPreviewProxyPath()!=null)
                 restoreBucketFile.addPreviewProxyPath(previewProxyPaths);
             else
