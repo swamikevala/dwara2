@@ -74,6 +74,9 @@ public class RestoreBucketService {
         TRestoreBucket tRestoreBucketFromDb = tRestoreBucketDao.findById(id).get();
         List<RestoreBucketFile> presentFiles =tRestoreBucketFromDb.getDetails();
         List<Integer> presentIds = new ArrayList<>();
+        for (RestoreBucketFile restoreBucketFile:presentFiles) {
+            presentIds.add(restoreBucketFile.getFileID());
+        }
 
         List<File1> proxyFiles= file1Dao.findByPathnameIn(proxyPaths);
 
