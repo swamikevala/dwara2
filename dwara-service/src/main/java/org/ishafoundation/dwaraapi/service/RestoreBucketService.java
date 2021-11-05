@@ -85,10 +85,11 @@ public class RestoreBucketService {
         }
         //List<RestoreBucketFile> ogFiles =new ArrayList<>();
         for (File1 file : proxyFiles) {
-                if(presentIds.contains(file.getId())){
-                    return new TRestoreBucket();
-                }
+
                 File1 ogFile =file.getFile1Ref();
+            if(presentIds.contains(ogFile.getId())){
+                return new TRestoreBucket();
+            }
             String appendUrlTOProxy = "";
             if(ogFile.getArtifact1().getArtifactclass().getId().contains("-priv")){
                 appendUrlTOProxy="http://172.18.1.24/mam/private/";
