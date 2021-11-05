@@ -130,8 +130,8 @@ public class ReportService extends DwaraService {
 
     }
 
-    public HashMap<String, List<String>> getPipelineReport(String requestedFrom, String requestedTo) {
-        HashMap<String, List<String>> pipelineReport = new HashMap<String, List<String>>();
+    public HashMap<String, HashMap<String, List<String>>> getPipelineReport(String requestedFrom, String requestedTo) {
+        HashMap<String, List<String>> ingestPipelineReport = new HashMap<String, List<String>>();
         String condition = "";
         if(requestedFrom != "")
             condition += " and r.requested_at >= '" + requestedFrom + "'";
@@ -140,41 +140,41 @@ public class ReportService extends DwaraService {
         
         String ingestedArtifactQuery = "select details->>'$.staged_filename' from request r where action_id = 'ingest' and type='system'"
         + condition;
-        pipelineReport.put("Ingested Artifacts", entityManager.createNativeQuery(ingestedArtifactQuery).getResultList());
+        ingestPipelineReport.put("Ingested Artifacts", entityManager.createNativeQuery(ingestedArtifactQuery).getResultList());
         // System.out.println("ingested query: " + ingestedArtifactQuery);
 
         String inProgressQuery = "select details->>'$.staged_filename' from request r where action_id = 'ingest' and status = 'in_progress' and type='system'"
         + condition;
-        pipelineReport.put("In Progress", entityManager.createNativeQuery(inProgressQuery).getResultList());
+        ingestPipelineReport.put("In Progress", entityManager.createNativeQuery(inProgressQuery).getResultList());
 
         String inProgressBeforeYesterdayQuery = "select details->>'$.staged_filename' from request r where action_id = 'ingest' and status = 'in_progress' and type='system'"
         + " and requested_at >= subdate(current_date,1)"
         + condition;
-        pipelineReport.put("In Progress > 24h", entityManager.createNativeQuery(inProgressBeforeYesterdayQuery).getResultList());
+        ingestPipelineReport.put("In Progress > 24h", entityManager.createNativeQuery(inProgressBeforeYesterdayQuery).getResultList());
 
         String completedQuery = "select details->>'$.staged_filename' from request r where action_id = 'ingest' and status = 'completed' and type='system'"
         + condition;
-        pipelineReport.put("Ingest Completed", entityManager.createNativeQuery(completedQuery).getResultList());
+        ingestPipelineReport.put("Ingest Completed", entityManager.createNativeQuery(completedQuery).getResultList());
 
         String copy1WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.storagetask_action_id='write' and j.group_volume_id like '%1' and j.status='failed'"
         + condition;
-        pipelineReport.put("Copy1 Write Failed", entityManager.createNativeQuery(copy1WriteFailedQuery).getResultList());
+        ingestPipelineReport.put("Copy1 Write Failed", entityManager.createNativeQuery(copy1WriteFailedQuery).getResultList());
 
         String copy2WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.storagetask_action_id='write' and j.group_volume_id like '%2' and j.status='failed'"
         + condition;
-        pipelineReport.put("Copy2 Write Failed", entityManager.createNativeQuery(copy2WriteFailedQuery).getResultList());
+        ingestPipelineReport.put("Copy2 Write Failed", entityManager.createNativeQuery(copy2WriteFailedQuery).getResultList());
 
         String copy3WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.storagetask_action_id='write' and j.group_volume_id like '%3' and j.status='failed'"
         + condition;
-        pipelineReport.put("Copy3 Write Failed", entityManager.createNativeQuery(copy3WriteFailedQuery).getResultList());
+        ingestPipelineReport.put("Copy3 Write Failed", entityManager.createNativeQuery(copy3WriteFailedQuery).getResultList());
 
         String proxyGenFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.processingtask_id='video-proxy-low-gen' and j.status='failed'"
         + condition;
-        pipelineReport.put("Proxy Gen Failed", entityManager.createNativeQuery(proxyGenFailedQuery).getResultList());
+        ingestPipelineReport.put("Proxy Gen Failed", entityManager.createNativeQuery(proxyGenFailedQuery).getResultList());
 
         String mamUpdateFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.processingtask_id='video-mam-update' and j.status='failed'"
         + condition;
-        pipelineReport.put("Mam Update Failed", entityManager.createNativeQuery(mamUpdateFailedQuery).getResultList());
+        ingestPipelineReport.put("Mam Update Failed", entityManager.createNativeQuery(mamUpdateFailedQuery).getResultList());
 
         List<String> inStaged3Days = new ArrayList<String>();
         File stagedFile = new File("/data/dwara/staged");
@@ -193,7 +193,33 @@ public class ReportService extends DwaraService {
                 e.printStackTrace();
             }
         }
-        pipelineReport.put("In Staged > 3Days", inStaged3Days);
+        ingestPipelineReport.put("In Staged > 3Days", inStaged3Days);
+
+        HashMap<String, List<String>> restorePipelineReport = new HashMap<String, List<String>>();
+        String restoreQuery = "select f.pathname from request r join file1 f on r.file_id=f.id where r.action_id like 'restore%' and r.type='system'"
+        + condition;
+        restorePipelineReport.put("Restore Request", entityManager.createNativeQuery(restoreQuery).getResultList());
+
+        String restoreInProgressQuery = "select f.pathname from request r join file1 f on r.file_id=f.id where r.action_id like 'restore%' and r.type='system' and r.status='in_progress'"
+        + condition;
+        restorePipelineReport.put("In Progress", entityManager.createNativeQuery(restoreInProgressQuery).getResultList());
+
+        String restoreCompletedQuery = "select f.pathname from request r join file1 f on r.file_id=f.id where r.action_id like 'restore%' and r.type='system' and r.status='completed'"
+        + condition;
+        restorePipelineReport.put("Restore Completed", entityManager.createNativeQuery(restoreCompletedQuery).getResultList());
+
+        String restoreFailedQuery = "select f.pathname from request r join file1 f on r.file_id=f.id where r.action_id like 'restore%' and r.type='system' and r.status='failed'"
+        + condition;
+        restorePipelineReport.put("Restore Failed", entityManager.createNativeQuery(restoreFailedQuery).getResultList());
+
+        String restoreMovConversionFailedQuery = "SELECT f.pathname FROM job j join request r on r.id = j.request_id join file1 f on r.file_id=f.id where j.processingtask_id = 'video-digi-2020-mkv-mov-gen' and j.status='failed'"
+        + condition;
+        restorePipelineReport.put("Mov Conversion Failed", entityManager.createNativeQuery(restoreMovConversionFailedQuery).getResultList());
+
+        HashMap<String, HashMap<String, List<String>>> pipelineReport = new HashMap<String, HashMap<String, List<String>>>();
+        pipelineReport.put("Ingest", ingestPipelineReport);
+        pipelineReport.put("Restore", restorePipelineReport);
+
         return pipelineReport;
     }
 
