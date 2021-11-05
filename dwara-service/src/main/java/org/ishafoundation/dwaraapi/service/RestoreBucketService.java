@@ -88,7 +88,7 @@ public class RestoreBucketService {
 
                 File1 ogFile =file.getFile1Ref();
             if(presentIds.contains(ogFile.getId())){
-                return new TRestoreBucket();
+                return null;
             }
             String appendUrlTOProxy = "";
             if(ogFile.getArtifact1().getArtifactclass().getId().contains("-priv")){
