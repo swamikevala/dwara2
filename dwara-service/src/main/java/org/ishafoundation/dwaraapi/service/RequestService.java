@@ -587,7 +587,7 @@ public class RequestService extends DwaraService{
 						Tape tape = new Tape();
 						tape.setId(file.getTape());
 						long timeElapsed =((System.currentTimeMillis()/1000)-job.getStartedAt().toEpochSecond(ZoneOffset.of("+05:30")));
-						if(job.getMessage().isEmpty() && timeElapsed>=120)
+						if(job.getMessage()==null && timeElapsed>=120)
 							tape.setLoaded(true);
 						else {
 							tape.setLoaded(false);
