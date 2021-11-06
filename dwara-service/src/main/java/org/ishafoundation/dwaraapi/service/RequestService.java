@@ -509,8 +509,10 @@ public class RequestService extends DwaraService{
 		statusList.add(Status.in_progress);
 		statusList.add(Status.failed);
 
-
-		List<Request> userRequests = requestDao.findAllByActionIdAndStatusInAndTypeAndRequestedByIdNotNull(Action.restore, statusList, RequestType.user );
+		List<Action> actionList =new ArrayList<>();
+		actionList.add(Action.restore);
+		actionList.add(Action.restore_process);
+		List<Request> userRequests = requestDao.findAllByActionIdInAndStatusInAndTypeAndRequestedByIdNotNull(actionList, statusList, RequestType.user );
 		System.out.println("User requests length before enthry: "+ userRequests.size());
 		for(Request request: userRequests) {
 			System.out.println("User requests length: "+ userRequests.size());
