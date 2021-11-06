@@ -586,7 +586,7 @@ public class RequestService extends DwaraService{
 						//set the tape details
 						Tape tape = new Tape();
 						tape.setId(file.getTape());
-						long timeElapsed =((System.currentTimeMillis()/1000)-job.getStartedAt().toEpochSecond(ZoneOffset.of("+05:30")));
+						long timeElapsed =((System.currentTimeMillis()/1000)-job.getCreatedAt().toEpochSecond(ZoneOffset.of("+05:30")));
 						if(job.getMessage()==null && timeElapsed>=120)
 							tape.setLoaded(true);
 						else {
@@ -634,9 +634,10 @@ public class RequestService extends DwaraService{
 			restoreResponse.setRestoreFiles(files);
 			restoreResponse.setTapes(tapes);
 			if(allTapesLoaded){
-				restoreResponse.setEta(userRequestEta);
+				//restoreResponse.setEta(userRequestEta);
 			}
-			//restoreResponse.setEta(getUserFromContext())
+			//change this asap uncomment above one
+			restoreResponse.setEta(userRequestEta);
 			restoreResponses.add(restoreResponse);
 		}
 		return restoreResponses;
