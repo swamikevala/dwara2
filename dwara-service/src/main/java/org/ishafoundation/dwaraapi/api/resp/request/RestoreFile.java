@@ -1,11 +1,23 @@
 package org.ishafoundation.dwaraapi.api.resp.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class RestoreFile {
 	String name;
 	long size;
 	long eta;
 	String status;
 	String tape;
+
+	int jobId;
+
+	public int getJobId() {
+		return jobId;
+	}
+
+	public void setJobId(int jobId) {
+		this.jobId = jobId;
+	}
 	public String getName() {
 		return name;
 	}

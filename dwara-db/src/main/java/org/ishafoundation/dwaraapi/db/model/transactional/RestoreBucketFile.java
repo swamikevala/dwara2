@@ -24,6 +24,8 @@ public class RestoreBucketFile {
     String fileSize;
     @JsonProperty("previewProxyPath")
     List<String> previewProxyPath;
+
+
     public int getArtifactId() {
         return artifactId;
     }

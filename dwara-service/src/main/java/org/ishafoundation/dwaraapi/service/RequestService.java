@@ -540,6 +540,7 @@ public class RequestService extends DwaraService{
 				long restoreETA = 0;
 				long postProcessETA = 0;
 				for(Job job: fileJobs) {
+					file.setJobId(job.getId());
 					if(job.getVolume()!= null && job.getStoragetaskActionId() == Action.restore) {
 						//If the task is restore task
 						file.setTape(String.valueOf(job.getVolume()));
