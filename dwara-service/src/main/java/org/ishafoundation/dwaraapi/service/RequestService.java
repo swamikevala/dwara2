@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -73,6 +74,11 @@ public class RequestService extends DwaraService{
     	Request request = requestRecord.get();
     	RequestType requestType = request.getType();
 		return frameRequestResponse(request, requestType, requestType == RequestType.user ? request.getId() : request.getRequestRef().getId(), null);
+	}
+
+	@Override
+	protected JsonNode getRequestDetails(Object payload) {
+		return super.getRequestDetails(payload);
 	}
 
 	public List<RequestResponse> getRequests(RequestType requestType, List<Action> actionList, List<Status> statusList, List<User> requestedByList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName, List<String> artifactclassList, JobDetailsType jobDetailsType){
@@ -504,31 +510,19 @@ public class RequestService extends DwaraService{
 		statusList.add(Status.failed);
 
 
-		List<Request> userRequests = requestDao.findAllByActionIdAndStatusInAndType(Action.restore, statusList, RequestType.user );
+		List<Request> userRequests = requestDao.findAllByActionIdAndStatusInAndTypeAndRequestedByIdNotNull(Action.restore, statusList, RequestType.user );
+		System.out.println("User requests length before enthry: "+ userRequests.size());
 		for(Request request: userRequests) {
-
+			System.out.println("User requests length: "+ userRequests.size());
 			RestoreResponse restoreResponse = new RestoreResponse();
-			restoreResponse.setName(request.getDetails().getOutputFolder());
+			restoreResponse.setName(request.getDetails().getBody().get("outputFolder").textValue());
+			System.out.println(request.getDetails().getBody().get("outputFolder"));
 			restoreResponse.setDestinationPath(request.getDetails().getDestinationPath());
 			restoreResponse.setRequestedAt(request.getRequestedAt());
 			restoreResponse.setRequestedBy(request.getRequestedBy().getName());
 			restoreResponse.setStatus(String.valueOf(request.getStatus()));
-			//restoreResponse.setVpTicket(request.getDetails().get);
-			List<Job> jobs = jobDao.findAllByRequestId(request.getId());
-			//Do we need to find the max of all priorties
-			/*
-			 * int max=0;
-			 * for(Job job : jobs) {
-			 * if(job.getPrioitiy>max)
-			 * max=job.getPrioirity;
-			 * }
-			 */
-			//restoreResponse.setPriority(jobs.get(0).getPriority);
-			restoreResponse.setPriority(1);
-			List<String> tapeIds = new ArrayList<>();
-			for(Job job: jobs) {
-				tapeIds.add(job.getVolume().getId());
-			}
+
+			restoreResponse.setPriority(1); // isko baad mein badlo
 			List<RestoreFile> files = new ArrayList();
 			List<Request> systemRequests = requestDao.findAllByRequestRefId(request.getId());
 			long size =0;
@@ -584,10 +578,13 @@ public class RequestService extends DwaraService{
 				//file.setEta(getUserFromContext());
 				if(file.getStatus()!=String.valueOf(Status.cancelled))
 					size+=fileFromDB.getSize();
+			files.add(file);
 			}
 			restoreResponse.setSize(size);
 			restoreResponse.setRestoreFiles(files);
+
 			//restoreResponse.setEta(getUserFromContext())
+			restoreResponses.add(restoreResponse);
 		}
 		return restoreResponses;
 
