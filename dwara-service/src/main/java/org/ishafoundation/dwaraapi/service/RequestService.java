@@ -17,7 +17,11 @@ import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.File1VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
@@ -25,16 +29,12 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.File1Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.enumreferences.JobDetailsType;
-import org.ishafoundation.dwaraapi.enumreferences.Priority;
-import org.ishafoundation.dwaraapi.enumreferences.RequestType;
-import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.enumreferences.*;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.common.ArtifactDeleter;
 import org.slf4j.Logger;
@@ -547,10 +547,12 @@ public class RequestService extends DwaraService{
 				long startTime=0;
 				long restoreETA = 0;
 				long postProcessETA = 0;
-				file.setTape(file1VolumeDao.findAllByIdFileIdAndVolumeGroupRefCopyId(fileFromDB.getId(),1).get(0).getId().getVolumeId());
-				logger.debug(file1VolumeDao.findAllByIdFileIdAndVolumeGroupRefCopyId(fileFromDB.getId(),1).get(0).getId().getVolumeId());
-				System.out.println(	file1VolumeDao.findAllByIdFileIdAndVolumeGroupRefCopyId(fileFromDB.getId(),1).get(0).getId().getVolumeId());
-
+				try {
+					file.setTape(getFileVolume(Domain.ONE, fileFromDB.getId(), 1).getVolume().getId());
+				}
+				catch (Exception e){
+				e.printStackTrace();
+				}
 
 
 
@@ -653,7 +655,29 @@ public class RequestService extends DwaraService{
 		long eta = ((System.currentTimeMillis()/1000)-startTime)*(file.getSize()-targetSize)/targetSize;
 		return eta;
 	}
-
+	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, int copyNumber) throws Exception {
+		FileEntityUtil fileEntityUtil =new FileEntityUtil();
+    	@SuppressWarnings("unchecked")
+		FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
+		List<FileVolume> fileVolumeList = domainSpecificFileVolumeRepository.findAllByIdFileIdAndVolumeGroupRefCopyId(fileIdToBeRestored, copyNumber);
+		FileVolume fileVolume = null;
+		if(fileVolumeList.size() > 1) {
+			FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainSpecificFileRepository.findById(fileIdToBeRestored).get();
+			Artifact artifact = fileEntityUtil.getArtifact(file, domain);
+			ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+			for (FileVolume nthFileVolume : fileVolumeList) {
+				ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifact.getId(), nthFileVolume.getId().getVolumeId());
+				if(artifactVolume.getStatus() == ArtifactVolumeStatus.current || artifactVolume.getStatus() == null) {
+					fileVolume = nthFileVolume;
+					break;
+				}
+			}
+		}
+		else {
+			fileVolume = fileVolumeList.get(0);
+		}
+		return fileVolume;
 }
 
 
