@@ -542,6 +542,7 @@ public class RequestService extends DwaraService{
 				RestoreFile file = new RestoreFile();
 				org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(Domain.ONE, systemRequest.getDetails().getFileId());
 				file.setName(fileFromDB.getPathname());
+				file.setSize(fileFromDB.getSize());
 				List<Job> fileJobs = jobDao.findAllByRequestId(systemRequest.getId());
 				file.setStatus(String.valueOf(systemRequest.getStatus()));
 				long startTime=0;
@@ -549,6 +550,7 @@ public class RequestService extends DwaraService{
 				long postProcessETA = 0;
 				try {
 					file.setTape(getFileVolume(Domain.ONE, fileFromDB.getId(), 1).getVolume().getId());
+
 				}
 				catch (Exception e){
 				e.printStackTrace();
@@ -591,7 +593,7 @@ public class RequestService extends DwaraService{
 					//if (job.getStatus()!=Status.in_progress && job.getStatus()!=Status.completed)
 
 				}
-				file.setSize(fileFromDB.getSize());
+
 				//how to get startTime
 				//Just add the restoreETA and postPRocess ETA at the end
 				long totalETA = restoreETA + postProcessETA ;
@@ -652,6 +654,7 @@ public class RequestService extends DwaraService{
 
 		long targetSize=0 ;
 		targetSize= FileUtils.sizeOf(targetFile);
+
 		long eta = ((System.currentTimeMillis()/1000)-startTime)*(file.getSize()-targetSize)/targetSize;
 		return eta;
 	}
