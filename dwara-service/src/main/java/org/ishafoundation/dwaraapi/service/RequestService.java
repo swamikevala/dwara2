@@ -25,6 +25,8 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.File1Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -68,6 +70,8 @@ public class RequestService extends DwaraService{
 
 	@Autowired
 	private File1VolumeDao file1VolumeDao;
+
+
 
 	
     public RequestResponse getRequest(int requestId) throws Exception{
@@ -543,7 +547,12 @@ public class RequestService extends DwaraService{
 				long startTime=0;
 				long restoreETA = 0;
 				long postProcessETA = 0;
-				file.setTape(file1VolumeDao.findByIdFileId(fileFromDB.getId()).getId().getVolumeId());
+				file.setTape(file1VolumeDao.findAllByIdFileIdAndVolumeGroupRefCopyId(fileFromDB.getId(),1).get(0).getId().getVolumeId());
+				logger.debug(file1VolumeDao.findAllByIdFileIdAndVolumeGroupRefCopyId(fileFromDB.getId(),1).get(0).getId().getVolumeId());
+				System.out.println(	file1VolumeDao.findAllByIdFileIdAndVolumeGroupRefCopyId(fileFromDB.getId(),1).get(0).getId().getVolumeId());
+
+
+
 
 				for(Job job: fileJobs) {
 					file.setJobId(job.getId());
