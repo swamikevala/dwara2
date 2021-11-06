@@ -655,7 +655,7 @@ public class RequestService extends DwaraService{
 		long targetSize=0 ;
 		targetSize= FileUtils.sizeOf(targetFile)/1073741824;
 		long fileSize = file.getSize()/1073741824;
-
+		logger.info(String.valueOf(startTime));
 		long eta = ((System.currentTimeMillis()/1000)-startTime)*(fileSize-targetSize)/(fileSize);
 		return eta;
 	}
