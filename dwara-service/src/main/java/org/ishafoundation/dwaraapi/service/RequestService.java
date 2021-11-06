@@ -654,8 +654,9 @@ public class RequestService extends DwaraService{
 
 		long targetSize=0 ;
 		targetSize= FileUtils.sizeOf(targetFile)/1073741824;
+		long fileSize = file.getSize()/1073741824;
 
-		long eta = ((System.currentTimeMillis()/1000)-startTime)*((file.getSize()/1073741824)-targetSize)/(file.getSize()/1073741824);
+		long eta = ((System.currentTimeMillis()/1000)-startTime)*(fileSize-targetSize)/(fileSize);
 		return eta;
 	}
 	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, int copyNumber) throws Exception {
