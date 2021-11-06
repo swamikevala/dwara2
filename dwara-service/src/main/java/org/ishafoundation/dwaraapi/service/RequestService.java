@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -565,7 +566,7 @@ public class RequestService extends DwaraService{
 						logger.debug("checking for file");
 
 						if (job.getStatus().equals(Status.in_progress)) {
-							startTime = job.getStartedAt().getSecond();
+							startTime = job.getStartedAt().toEpochSecond(ZoneOffset.of("+05:30"));
 							restoreETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"restore");
 						}
 						else if (!job.getStatus().equals(Status.completed)) {
