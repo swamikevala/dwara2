@@ -519,7 +519,7 @@ public class RequestService extends DwaraService{
 			RestoreResponse restoreResponse = new RestoreResponse();
 			restoreResponse.setName(request.getDetails().getBody().get("outputFolder").textValue());
 			System.out.println(request.getDetails().getBody().get("outputFolder"));
-			restoreResponse.setDestinationPath(request.getDetails().getDestinationPath());
+			restoreResponse.setDestinationPath(request.getDetails().getBody().get("destinationpath").textValue());
 			restoreResponse.setRequestedAt(request.getRequestedAt());
 			restoreResponse.setRequestedBy(request.getRequestedBy().getName());
 			restoreResponse.setStatus(String.valueOf(request.getStatus()));
