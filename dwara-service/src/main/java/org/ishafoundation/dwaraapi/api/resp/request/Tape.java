@@ -2,7 +2,7 @@ package org.ishafoundation.dwaraapi.api.resp.request;
 
 public class Tape {
 	String id;
-	boolean loaded;
+	boolean loaded = false;
 	public String getId() {
 		return id;
 	}

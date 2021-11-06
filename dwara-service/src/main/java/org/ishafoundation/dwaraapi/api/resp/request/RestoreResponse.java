@@ -11,7 +11,7 @@ private String status;
 private String destinationPath;
 private List<Tape> tapes ;
 private long size;
-private String eta;
+private long eta;
 private List<RestoreFile> files;
 private String vpTicket;
 private int priority;
@@ -69,10 +69,10 @@ public long getSize() {
 public void setSize(long size) {
 	this.size = size;
 }
-public String getEta() {
+public long getEta() {
 	return eta;
 }
-public void setEta(String eta) {
+public void setEta(long eta) {
 	this.eta = eta;
 }
 public List<RestoreFile> getRestoreFiles() {

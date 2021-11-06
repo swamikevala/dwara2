@@ -14,6 +14,7 @@ import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.api.resp.request.RestoreFile;
 import org.ishafoundation.dwaraapi.api.resp.request.RestoreResponse;
+import org.ishafoundation.dwaraapi.api.resp.request.Tape;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
@@ -524,6 +525,9 @@ public class RequestService extends DwaraService{
 		List<Request> userRequests = requestDao.findAllByActionIdInAndStatusInAndTypeAndRequestedByIdNotNull(actionList, statusList, RequestType.user );
 		System.out.println("User requests length before enthry: "+ userRequests.size());
 		for(Request request: userRequests) {
+			List<Tape> tapes = new ArrayList<>();
+			long userRequestEta = 0;
+			boolean allTapesLoaded =true;
 			System.out.println("User requests length: "+ userRequests.size());
 			RestoreResponse restoreResponse = new RestoreResponse();
 			restoreResponse.setName(request.getDetails().getBody().get("outputFolder").textValue());
@@ -568,11 +572,30 @@ public class RequestService extends DwaraService{
 						if (job.getStatus().equals(Status.in_progress)) {
 							startTime = job.getStartedAt().toEpochSecond(ZoneOffset.of("+05:30"));
 							restoreETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"restore");
+						userRequestEta+=restoreETA;
+						}
+						else if(job.getStatus().equals(Status.queued)){
+							long expectedRestoreETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"restore");
+							userRequestEta+=expectedRestoreETA;
 						}
 						else if (!job.getStatus().equals(Status.completed)) {
 							restoreETA = 0;
 							break;
 						}
+
+						//set the tape details
+						Tape tape = new Tape();
+						tape.setId(file.getTape());
+						long timeElapsed =((System.currentTimeMillis()/1000)-job.getStartedAt().toEpochSecond(ZoneOffset.of("+05:30")));
+						if(job.getMessage().isEmpty() && timeElapsed>=120)
+							tape.setLoaded(true);
+						else {
+							tape.setLoaded(false);
+						allTapesLoaded = false;
+						}
+						tapes.add(tape);
+
+
 
 					}
 					else if (job.getProcessingtaskId() == "video-digi-2020-mkv-mov-gen") {
@@ -581,11 +604,14 @@ public class RequestService extends DwaraService{
 						if (job.getStatus().equals(Status.in_progress)) {
 							// Get the .mov path from the target folder
 							postProcessETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"video-digi-2020-mkv-mov-gen");
-
+							userRequestEta+=postProcessETA;
 						}
 						else if (job.getStatus().equals(Status.queued)) {
 							postProcessETA = ((file.getSize() / 1073741824) * restorationRate );
+							userRequestEta+=postProcessETA;
+
 						}
+
 					}
 
 					/*if()
@@ -606,7 +632,10 @@ public class RequestService extends DwaraService{
 			}
 			restoreResponse.setSize(size);
 			restoreResponse.setRestoreFiles(files);
-
+			restoreResponse.setTapes(tapes);
+			if(allTapesLoaded){
+				restoreResponse.setEta(userRequestEta);
+			}
 			//restoreResponse.setEta(getUserFromContext())
 			restoreResponses.add(restoreResponse);
 		}
