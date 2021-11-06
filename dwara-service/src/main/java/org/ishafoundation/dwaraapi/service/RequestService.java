@@ -17,6 +17,7 @@ import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.File1VolumeDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
@@ -63,7 +64,10 @@ public class RequestService extends DwaraService{
 	private VolumeService volumeService;
 	
 	@Autowired
-	private ArtifactDeleter artifactDeleter; 
+	private ArtifactDeleter artifactDeleter;
+
+	@Autowired
+	private File1VolumeDao file1VolumeDao;
 
 	
     public RequestResponse getRequest(int requestId) throws Exception{
@@ -539,11 +543,14 @@ public class RequestService extends DwaraService{
 				long startTime=0;
 				long restoreETA = 0;
 				long postProcessETA = 0;
+				file.setTape(file1VolumeDao.findByIdFileId(fileFromDB.getId()).getId().getVolumeId());
+
 				for(Job job: fileJobs) {
 					file.setJobId(job.getId());
-					if(job.getVolume()!= null && job.getStoragetaskActionId() == Action.restore) {
+					if(job.getStoragetaskActionId() == Action.restore) {
 						//If the task is restore task
-						file.setTape(String.valueOf(job.getVolume()));
+						logger.debug("checking for file");
+
 						if (job.getStatus().equals(Status.in_progress)) {
 							startTime = job.getStartedAt().getSecond();
 							restoreETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"restore");
