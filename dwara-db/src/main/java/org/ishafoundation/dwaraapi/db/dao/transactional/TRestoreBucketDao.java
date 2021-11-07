@@ -7,5 +7,5 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 
 public interface TRestoreBucketDao extends CrudRepository<TRestoreBucket,String> {
-    List<TRestoreBucket> findByApprovalStatusNotNull();
+    List<TRestoreBucket> findByApprovalStatusNull();
 }
