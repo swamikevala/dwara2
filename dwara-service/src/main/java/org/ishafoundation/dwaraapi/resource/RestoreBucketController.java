@@ -100,6 +100,7 @@ public class RestoreBucketController {
         tRestoreBucketFromDb.setDestinationPath(tRestoreBucket.getDestinationPath());
         tRestoreBucketFromDb.setApprover(tRestoreBucket.getApprover());
         tRestoreBucketFromDb.setPriority(tRestoreBucket.getPriority());
+        tRestoreBucketFromDb.setApprovalStatus(tRestoreBucket.getApprovalStatus());
         tRestoreBucketDao.save(tRestoreBucketFromDb);
         return ResponseEntity.status(HttpStatus.OK).body("ho gaya bahut maza aya");
     }
