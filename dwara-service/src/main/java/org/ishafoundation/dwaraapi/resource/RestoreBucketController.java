@@ -93,4 +93,15 @@ public class RestoreBucketController {
         List<TRestoreBucket> tRestoreBuckets = restoreBucketService.getAprrovedNull();
         return ResponseEntity.status(HttpStatus.OK).body(tRestoreBuckets);
     }
+    @PutMapping("/bucket/approval")
+    public ResponseEntity<String> getApproval( @RequestBody TRestoreBucket tRestoreBucket){
+        TRestoreBucket tRestoreBucketFromDb = tRestoreBucketDao.findById(tRestoreBucket.getId()).get();
+        tRestoreBucketFromDb.setApproverEmail(tRestoreBucket.getApproverEmail());
+        tRestoreBucketFromDb.setDestinationPath(tRestoreBucket.getDestinationPath());
+        tRestoreBucketFromDb.setApprover(tRestoreBucket.getApprover());
+        tRestoreBucketFromDb.setPriority(tRestoreBucket.getPriority());
+        tRestoreBucketDao.save(tRestoreBucketFromDb);
+        return ResponseEntity.status(HttpStatus.OK).body("ho gaya bahut maza aya");
+    }
+
 }
