@@ -26,6 +26,8 @@ public interface RequestDao extends CrudRepository<Request,Integer>, RequestCust
 	List<Request> findAllByTypeAndStatusIn(RequestType type, Collection<Status> statusList);
 	
 	List<Request> findAllByActionIdAndStatusInAndType(Action action, Collection<Status> statusList, RequestType type);
-	
+	List<Request> findAllByActionIdInAndStatusInAndTypeAndRequestedByIdNotNull(Collection<Action> actionList, Collection<Status> statusList, RequestType type);
+
+
 	List<Request> findAllByCompletedAtBetweenAndActionIdAndStatusInAndType(LocalDateTime startDateTime, LocalDateTime endDateTime, Action action, Collection<Status> completedVariants, RequestType type);
 }

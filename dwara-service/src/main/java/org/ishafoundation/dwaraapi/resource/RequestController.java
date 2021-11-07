@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
+import org.ishafoundation.dwaraapi.api.resp.request.RestoreResponse;
 import org.ishafoundation.dwaraapi.db.attributeconverter.enumreferences.ActionAttributeConverter;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
@@ -267,5 +268,12 @@ public class RequestController {
 		}
     	return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
     }
+	@GetMapping("/request/restoreStatus")
+	public ResponseEntity<List<RestoreResponse>> getRestoreStatus() {
+		List<RestoreResponse> restoreResponses= new ArrayList<>();
+		restoreResponses=requestService.restoreRequest();
 
+
+		return ResponseEntity.status(HttpStatus.OK).body(restoreResponses);
+	}
 }

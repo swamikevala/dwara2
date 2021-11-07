@@ -8,5 +8,5 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface ExtensionFiletypeDao extends CrudRepository<ExtensionFiletype,ExtensionFiletypeKey> {
 	
-	List<ExtensionFiletype> findAllByFiletypeId(int filetypeId);
+	List<ExtensionFiletype> findAllByFiletypeId(String filetypeId);
 }

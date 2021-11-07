@@ -2,21 +2,28 @@ package org.ishafoundation.dwaraapi.service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.time.ZoneOffset;
+import java.util.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
+import org.ishafoundation.dwaraapi.api.resp.request.RestoreFile;
+import org.ishafoundation.dwaraapi.api.resp.request.RestoreResponse;
+import org.ishafoundation.dwaraapi.api.resp.request.Tape;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.File1VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
@@ -24,14 +31,12 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.File1Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
-import org.ishafoundation.dwaraapi.enumreferences.JobDetailsType;
-import org.ishafoundation.dwaraapi.enumreferences.Priority;
-import org.ishafoundation.dwaraapi.enumreferences.RequestType;
-import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.enumreferences.*;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.common.ArtifactDeleter;
 import org.slf4j.Logger;
@@ -63,7 +68,12 @@ public class RequestService extends DwaraService{
 	private VolumeService volumeService;
 	
 	@Autowired
-	private ArtifactDeleter artifactDeleter; 
+	private ArtifactDeleter artifactDeleter;
+
+	@Autowired
+	private File1VolumeDao file1VolumeDao;
+
+
 
 	
     public RequestResponse getRequest(int requestId) throws Exception{
@@ -74,6 +84,11 @@ public class RequestService extends DwaraService{
     	Request request = requestRecord.get();
     	RequestType requestType = request.getType();
 		return frameRequestResponse(request, requestType, requestType == RequestType.user ? request.getId() : request.getRequestRef().getId(), null);
+	}
+
+	@Override
+	protected JsonNode getRequestDetails(Object payload) {
+		return super.getRequestDetails(payload);
 	}
 
 	public List<RequestResponse> getRequests(RequestType requestType, List<Action> actionList, List<Status> statusList, List<User> requestedByList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo, String artifactName, List<String> artifactclassList, JobDetailsType jobDetailsType){
@@ -497,6 +512,219 @@ public class RequestService extends DwaraService{
 		}
 		return requestResponse;
 	}
+	public List<RestoreResponse> restoreRequest() {
+		List<RestoreResponse> restoreResponses = new ArrayList<>();
+		List<Status> statusList = new ArrayList<>();
+		statusList.add(Status.queued);
+		statusList.add(Status.in_progress);
+		statusList.add(Status.failed);
 
-}
+		List<Action> actionList =new ArrayList<>();
+		actionList.add(Action.restore);
+		actionList.add(Action.restore_process);
+		List<Request> userRequests = requestDao.findAllByActionIdInAndStatusInAndTypeAndRequestedByIdNotNull(actionList, statusList, RequestType.user );
+		System.out.println("User requests length before enthry: "+ userRequests.size());
+		for(Request request: userRequests) {
+			List<Tape> tapes = new ArrayList<>();
+			long userRequestEta = 0;
+			boolean allTapesLoaded =true;
+			System.out.println("User requests length: "+ userRequests.size());
+			RestoreResponse restoreResponse = new RestoreResponse();
+			restoreResponse.setName(request.getDetails().getBody().get("outputFolder").textValue());
+			restoreResponse.setUserRequestId(request.getId());
+			System.out.println(request.getDetails().getBody().get("destinationPath"));
+			restoreResponse.setDestinationPath(request.getDetails().getBody().get("destinationPath").textValue());
+			restoreResponse.setRequestedAt(request.getRequestedAt());
+			restoreResponse.setRequestedBy(request.getRequestedBy().getName());
+			restoreResponse.setStatus(String.valueOf(request.getStatus()));
+
+			restoreResponse.setPriority(1); // isko baad mein badlo
+			List<RestoreFile> files = new ArrayList();
+			List<Request> systemRequests = requestDao.findAllByRequestRefId(request.getId());
+			long size =0;
+			long movConversionRate = 79; // For MOV
+			long restorationRate = 10; // FOR RESTORATION
+			for(Request systemRequest :systemRequests) {
+				RestoreFile file = new RestoreFile();
+				file.setSystemRequestId(systemRequest.getId());
+
+				org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(Domain.ONE, systemRequest.getDetails().getFileId());
+				file.setName(fileFromDB.getPathname());
+				file.setSize(fileFromDB.getSize());
+				List<Job> fileJobs = jobDao.findAllByRequestId(systemRequest.getId());
+				file.setStatus(String.valueOf(systemRequest.getStatus()));
+				long startTime=0;
+				long restoreETA = 0;
+				long postProcessETA = 0;
+				try {
+					file.setTape(getFileVolume(Domain.ONE, fileFromDB.getId(), 1).getVolume().getId());
+
+				}
+				catch (Exception e){
+				e.printStackTrace();
+				}
+
+
+
+				for(Job job: fileJobs) {
+					file.setJobId(job.getId());
+					if(job.getStoragetaskActionId() == Action.restore) {
+						//If the task is restore task
+						logger.debug("checking for file");
+
+						if (job.getStatus().equals(Status.in_progress)) {
+							startTime = job.getStartedAt().toEpochSecond(ZoneOffset.of("+05:30"));
+							restoreETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"restore");
+						userRequestEta+=restoreETA;
+						}
+						else if(job.getStatus().equals(Status.queued)){
+							long expectedRestoreETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"restore");
+							userRequestEta+=expectedRestoreETA;
+						}
+						else if (!job.getStatus().equals(Status.completed)) {
+							restoreETA = 0;
+							break;
+						}
+
+						//set the tape details
+						Tape tape = new Tape();
+						tape.setId(file.getTape());
+						long timeElapsed =((System.currentTimeMillis()/1000)-job.getCreatedAt().toEpochSecond(ZoneOffset.of("+05:30")));
+						if(job.getMessage()==null && timeElapsed>=120)
+							tape.setLoaded(true);
+						else {
+							tape.setLoaded(false);
+						allTapesLoaded = false;
+						}
+						tapes.add(tape);
+
+
+
+					}
+					else if (job.getProcessingtaskId() == "video-digi-2020-mkv-mov-gen") {
+						// If its inprogress calculate based on mov size. If its queued calculate based on estimated speed 79seconds for 1GB conversion.
+						// If its completed. Do nothing.
+						if (job.getStatus().equals(Status.in_progress)) {
+							// Get the .mov path from the target folder
+							postProcessETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"video-digi-2020-mkv-mov-gen");
+							userRequestEta+=postProcessETA;
+						}
+						else if (job.getStatus().equals(Status.queued)) {
+							postProcessETA = ((file.getSize() / 1073741824) * restorationRate );
+							userRequestEta+=postProcessETA;
+
+						}
+
+					}
+
+					/*if()
+					startTime = job.getStartedAt().getSecond();*/
+
+					//if (job.getStatus()!=Status.in_progress && job.getStatus()!=Status.completed)
+
+				}
+
+				//how to get startTime
+				//Just add the restoreETA and postPRocess ETA at the end
+				long totalETA = restoreETA + postProcessETA ;
+				file.setEta( totalETA);
+				//file.setEta(getUserFromContext());
+				if(file.getStatus()!=String.valueOf(Status.cancelled))
+					size+=fileFromDB.getSize();
+			files.add(file);
+			}
+			restoreResponse.setSize(size);
+			restoreResponse.setRestoreFiles(files);
+			restoreResponse.setTapes(tapes);
+			if(allTapesLoaded){
+				//restoreResponse.setEta(userRequestEta);
+			}
+			//change this asap uncomment above one
+			restoreResponse.setEta(userRequestEta);
+			restoreResponses.add(restoreResponse);
+		}
+		return restoreResponses;
+
+
+
+	}
+
+	private long fileETARestoreCalculator(String outputFolder , String destinationPath, RestoreFile file , long startTime, String taskType) {
+
+		String path = destinationPath+"/"+outputFolder+"/"+".restoring/"+file.getName();
+		java.io.File targetFile= new java.io.File(path);
+		long movConversionRate = 79; // For MOV
+		long restorationRate = 10; // FOR RESTORATION
+		// EG:V27033_Ashram-Ambience-Shots_Dhyanalinga-IYC_28-Aug-2020_Drone/DCIM/100MEDIA/DJI_0018.MOV
+		if (taskType == "video-digi-2020-mkv-mov-gen") {
+			boolean foundMovFile = false;
+			// Loop through the folder destinationPath+"/"+outputFolder+"/"+".restoring/"+file.getName().parentfolder
+			//VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/I030.mkv  BHi hei parey
+			//VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/  Hei parey
+			//VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/I030.mov  Darkaar
+			if (!targetFile.isDirectory()) {
+				targetFile = new java.io.File(targetFile.getParent());
+			}
+			// Find the mov in the directory and seet it as a path
+			List<java.io.File> searchTheseFiles = Arrays.asList(targetFile.listFiles());
+			for(java.io.File goteyFile:searchTheseFiles) {
+				if (goteyFile.getPath().endsWith(".mov")) {
+					// Set this as the file path
+					targetFile = goteyFile;
+					foundMovFile = true;
+				}
+
+			}
+
+			if (!foundMovFile) {
+				return ((file.getSize() / 1073741824) * movConversionRate );
+			}
+		} // Mov gen completes here
+		else if (taskType == "restore") {
+			if (!targetFile.exists()) {
+				return ((file.getSize() / 1073741824) * restorationRate );
+			}
+		}
+
+		long targetSize=0 ;
+		targetSize= FileUtils.sizeOf(targetFile);
+		long fileSize = file.getSize();
+		logger.info(String.valueOf(targetSize));
+		logger.info(String.valueOf(startTime));
+		logger.info(String.valueOf(fileSize));
+		long remainingSize=(fileSize-targetSize)/(targetSize);
+		logger.info(String.valueOf(remainingSize));
+		logger.info(String.valueOf(System.currentTimeMillis()/1000));
+		long eta = ((System.currentTimeMillis()/1000)-startTime)*remainingSize;
+		return eta;
+	}
+	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, int copyNumber) throws Exception {
+		FileEntityUtil fileEntityUtil =new FileEntityUtil();
+    	@SuppressWarnings("unchecked")
+		FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
+		List<FileVolume> fileVolumeList = domainSpecificFileVolumeRepository.findAllByIdFileIdAndVolumeGroupRefCopyId(fileIdToBeRestored, copyNumber);
+		FileVolume fileVolume = null;
+		if(fileVolumeList.size() > 1) {
+			FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainSpecificFileRepository.findById(fileIdToBeRestored).get();
+			Artifact artifact = fileEntityUtil.getArtifact(file, domain);
+			ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+			for (FileVolume nthFileVolume : fileVolumeList) {
+				ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifact.getId(), nthFileVolume.getId().getVolumeId());
+				if(artifactVolume.getStatus() == ArtifactVolumeStatus.current || artifactVolume.getStatus() == null) {
+					fileVolume = nthFileVolume;
+					break;
+				}
+			}
+		}
+		else {
+			fileVolume = fileVolumeList.get(0);
+		}
+		return fileVolume;
+}}
+
+
+
+
+
 
