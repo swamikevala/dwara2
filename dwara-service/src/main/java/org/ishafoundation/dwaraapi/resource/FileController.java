@@ -34,20 +34,21 @@ public class FileController {
 	@Autowired
 	FileService fileService;
 
-	@ApiOperation(value = "List the requested files details")
-	@GetMapping("/file/list")
-	public ResponseEntity<List<File>> list(@RequestParam String ids){
-		List<String> fileIdsList = Arrays.asList(ids.split(","));
-		
-		List<Integer> fileIds = new ArrayList<Integer>();
-		for (String fileIdAsString : fileIdsList) {
-			int fileId = Integer.parseInt(fileIdAsString);
-		
-			fileIds.add(fileId);
-		}
-		List<File> fileList = fileService.list(fileIds);
-		return ResponseEntity.status(HttpStatus.OK).body(fileList);
-	}
+//	@Deprecated
+//	@ApiOperation(value = "List the requested files details")
+//	@GetMapping("/file/list")
+//	public ResponseEntity<List<File>> list(@RequestParam String ids){
+//		List<String> fileIdsList = Arrays.asList(ids.split(","));
+//		
+//		List<Integer> fileIds = new ArrayList<Integer>();
+//		for (String fileIdAsString : fileIdsList) {
+//			int fileId = Integer.parseInt(fileIdAsString);
+//		
+//			fileIds.add(fileId);
+//		}
+//		List<File> fileList = fileService.list(fileIds);
+//		return ResponseEntity.status(HttpStatus.OK).body(fileList);
+//	}
 
 	@ApiOperation(value = "Search and list the artifacts (and their file details) like the requested searchstr")
 	@GetMapping("/file/list/v2")
