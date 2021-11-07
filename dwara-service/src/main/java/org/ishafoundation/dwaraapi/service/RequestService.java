@@ -531,6 +531,7 @@ public class RequestService extends DwaraService{
 			System.out.println("User requests length: "+ userRequests.size());
 			RestoreResponse restoreResponse = new RestoreResponse();
 			restoreResponse.setName(request.getDetails().getBody().get("outputFolder").textValue());
+			restoreResponse.setUserRequestId(request.getId());
 			System.out.println(request.getDetails().getBody().get("destinationPath"));
 			restoreResponse.setDestinationPath(request.getDetails().getBody().get("destinationPath").textValue());
 			restoreResponse.setRequestedAt(request.getRequestedAt());
@@ -545,6 +546,8 @@ public class RequestService extends DwaraService{
 			long restorationRate = 10; // FOR RESTORATION
 			for(Request systemRequest :systemRequests) {
 				RestoreFile file = new RestoreFile();
+				file.setSystemRequestId(systemRequest.getId());
+
 				org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainUtil.getDomainSpecificFile(Domain.ONE, systemRequest.getDetails().getFileId());
 				file.setName(fileFromDB.getPathname());
 				file.setSize(fileFromDB.getSize());

@@ -11,6 +11,16 @@ public class RestoreFile {
 
 	int jobId;
 
+	public int getSystemRequestId() {
+		return systemRequestId;
+	}
+
+	public void setSystemRequestId(int systemRequestId) {
+		this.systemRequestId = systemRequestId;
+	}
+
+	int systemRequestId;
+
 	public int getJobId() {
 		return jobId;
 	}

@@ -15,7 +15,25 @@ private long eta;
 private List<RestoreFile> files;
 private String vpTicket;
 private int priority;
-public int getPriority() {
+private int userRequestId;
+
+	public List<RestoreFile> getFiles() {
+		return files;
+	}
+
+	public void setFiles(List<RestoreFile> files) {
+		this.files = files;
+	}
+
+	public int getUserRequestId() {
+		return userRequestId;
+	}
+
+	public void setUserRequestId(int userRequestId) {
+		this.userRequestId = userRequestId;
+	}
+
+	public int getPriority() {
 	return priority;
 }
 public void setPriority(int priority) {
