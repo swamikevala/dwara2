@@ -640,6 +640,7 @@ public class RequestService extends DwaraService{
 			}
 			restoreResponse.setSize(size);
 			long restoredPercentage=0;
+			logger.info(restoreResponse.getName());
 			logger.info(String.valueOf(restoredSize));
 
 			if(restoreResponse.getSize()>0){
