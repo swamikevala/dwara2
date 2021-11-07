@@ -4,6 +4,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.Priority;
 
 /**
  * Wraps the Job with more Storagetask related info like volume to be used, artifact/file, block details etc., 
@@ -40,7 +41,7 @@ public class StorageJob {
 	private Long archiveBlock;
 	private boolean restoreVerify;
 	
-	private int priority = 0;
+	private int priority = Priority.normal.getPriorityValue();
 
 	public Job getJob() {
 		return job;

@@ -20,6 +20,7 @@ import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
@@ -71,7 +72,7 @@ public class Write extends AbstractStoragetaskAction{
 		Volume volume = null;
 		Domain domain = null;
 		long artifactSize = 0L;
-		int priority = 0;
+		int priority = Priority.normal.getPriorityValue();
 		if(requestedAction == org.ishafoundation.dwaraapi.enumreferences.Action.ingest) {
 			String artifactclassId = request.getDetails().getArtifactclassId();
 			List<Integer> preReqJobIds = job.getDependencies();

@@ -1,9 +1,11 @@
 package org.ishafoundation.dwaraapi.enumreferences;
 
-public enum Priority {
-	critical(0),
-	high(1),
-	normal(2);
+public enum Priority { 
+	// Critical - High - Medium - Low ???
+	// A lower priority number means that the higher is the urgency
+	critical(1), 
+	high(2),
+	normal(3); // named normal instead of low - because its the default priority used normally... 
 	
 	private int priorityValue;
 	
