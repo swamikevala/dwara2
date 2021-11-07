@@ -56,4 +56,10 @@ public class RestoreBucketController {
         TRestoreBucket tRestoreBucket= restoreBucketService.getFileList(id,proxyPaths);
         return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucket);
     }
+
+    @GetMapping("/buckets/open")
+    public ResponseEntity<List<TRestoreBucket>> getOpenBuckets(){
+        List<TRestoreBucket> tRestoreBuckets = restoreBucketService.getAprrovedNull();
+        return ResponseEntity.status(HttpStatus.OK).body(tRestoreBuckets);
+    }
 }

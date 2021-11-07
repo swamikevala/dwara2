@@ -165,4 +165,8 @@ public class RestoreBucketService {
 
     }
 
+    public List<TRestoreBucket> getAprrovedNull(){
+        return tRestoreBucketDao.findByApprovalStatusNotNull();
+    }
+
 }
