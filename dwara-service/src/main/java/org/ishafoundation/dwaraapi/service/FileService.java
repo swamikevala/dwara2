@@ -12,8 +12,6 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.restore.FileDetails;
 import org.ishafoundation.dwaraapi.api.req.restore.PFRestoreUserRequest;
@@ -22,19 +20,25 @@ import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
+import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.job.JobCreator;
+import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,39 +66,46 @@ public class FileService extends DwaraService{
 	private DomainUtil domainUtil;
 	
 	@Autowired
+	private FileEntityUtil fileEntityUtil;
+	
+	@Autowired
 	private TTFileJobDao ttFileJobDao;
 	
 	@Autowired
 	private TFileDao tfileDao; 
+	
+	@Autowired
+	private Restore restoreStorageTask;
 
 	
-	public List<File> list(List<Integer> fileIds){
-
-
-    	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
-    	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
-    	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
-    	
-		List<File> fileList = new ArrayList<File>();
-		int counter = 1;
-		for (Integer nthFileId : fileIds) {
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = fileId_FileObj_Map.get(nthFileId);
-			
-			File file = new File();
-			byte[] checksum = fileFromDB.getChecksum();
-			if(checksum != null)
-				file.setChecksum(Hex.encodeHexString(checksum));
-			file.setId(fileFromDB.getId());
-			file.setPathname(fileFromDB.getPathname());
-			file.setPriority(counter);
-			file.setSize(fileFromDB.getSize());
-			fileList.add(file);
-			counter = counter + 1;
-		}
-		
-		return fileList;
-		
-	}
+	@Deprecated
+//	public List<File> list(List<Integer> fileIds){
+//
+//
+//    	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
+//    	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
+//    	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
+//    	
+//		List<File> fileList = new ArrayList<File>();
+//		int counter = 1;
+//		for (Integer nthFileId : fileIds) {
+//			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = fileId_FileObj_Map.get(nthFileId);
+//			
+//			File file = new File();
+//			byte[] checksum = fileFromDB.getChecksum();
+//			if(checksum != null)
+//				file.setChecksum(Hex.encodeHexString(checksum));
+//			file.setId(fileFromDB.getId());
+//			file.setPathname(fileFromDB.getPathname());
+//			file.setPriority(counter);
+//			file.setSize(fileFromDB.getSize());
+//			fileList.add(file);
+//			counter = counter + 1;
+//		}
+//		
+//		return fileList;
+//		
+//	}
 
 	/**
 	 * join vs subquery
@@ -150,11 +161,15 @@ public class FileService extends DwaraService{
     	RestoreResponse restoreResponse = new RestoreResponse();
 
     	List<Integer> fileIds = restoreUserRequest.getFileIds();
+    	Integer copyNumber = restoreUserRequest.getCopy();
+    	String outputFolder = restoreUserRequest.getOutputFolder();
+    	String destinationPath = restoreUserRequest.getDestinationPath();
+    	
     	if(fileIds.size() == 0)
     		   		throw new Exception("Invalid request.  No File Id passed");
     	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
     	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
-    	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
+    	validate(fileIds, copyNumber, destinationPath, outputFolder, fileId_FileObj_Map, fileId_Domain_Map);
     	
 //		Request userRequest = new Request();
 //    	userRequest.setType(RequestType.user);
@@ -174,10 +189,7 @@ public class FileService extends DwaraService{
 //    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
     	Request userRequest = createUserRequest(action, restoreUserRequest);
     	int userRequestId = userRequest.getId();
-	
-    	Integer copyNumber = restoreUserRequest.getCopy();
-    	String outputFolder = restoreUserRequest.getOutputFolder();
-    	String destinationPath = restoreUserRequest.getDestinationPath();
+
     	List<File> files = new ArrayList<File>();
     	
 
@@ -247,7 +259,7 @@ public class FileService extends DwaraService{
 		}
     	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
     	Map<Integer, Domain> fileId_Domain_Map = new HashMap<Integer, Domain>();
-    	validate(fileIds, fileId_FileObj_Map, fileId_Domain_Map);
+    	validate(fileIds, pfRestoreUserRequest.getCopy(), pfRestoreUserRequest.getDestinationPath(), pfRestoreUserRequest.getOutputFolder(), fileId_FileObj_Map, fileId_Domain_Map);
     	
 //		Request userRequest = new Request();
 //    	userRequest.setType(RequestType.user);
@@ -331,13 +343,14 @@ public class FileService extends DwaraService{
     	restoreResponse.setFiles(files);    	
     	return restoreResponse;
     }
-
-
-    private void validate(List<Integer> fileIds, Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map, Map<Integer, Domain> fileId_Domain_Map) {
+    
+    private void validate(List<Integer> fileIds, int copyNumber, String destinationPath, String outputFolder, Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileId_FileObj_Map, Map<Integer, Domain> fileId_Domain_Map) {
     	Domain[] domains = Domain.values();
     	List<String> requestedDirectoriesPathNameList = new ArrayList<String>();
     	List<String> errorFileList = new ArrayList<String>();
     	boolean hasErrors = false;
+    	
+    	ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(Domain.ONE);
     	
     	// if any requested file is a directory and if any other file or directory requested has the same conflicting path throw error... 
     	for (Integer nthFileId : fileIds) {
@@ -357,6 +370,26 @@ public class FileService extends DwaraService{
     			hasErrors = true;
     		} 
     		
+    		// Getting the artifactname from artifactvolume as the artifact could have been softRenamed...
+    		String artifactName = null;
+    		Artifact artifact;
+			try {
+				artifact = fileEntityUtil.getArtifact(fileFromDB, Domain.ONE);
+				ArtifactVolume alreadyExistingArtifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndVolumeGroupRefCopyIdAndStatus(artifact.getId(), copyNumber, ArtifactVolumeStatus.current);
+				if(alreadyExistingArtifactVolume != null)
+					artifactName = alreadyExistingArtifactVolume.getName();
+
+				String restoreLocation = destinationPath + java.io.File.separator + outputFolder + java.io.File.separator + artifactName;
+				java.io.File javaIO = new java.io.File(restoreLocation);
+				
+				if(javaIO.exists()) {
+					errorFileList.add(nthFileId + " is already restored in " + restoreLocation);
+					hasErrors = true;
+				}
+			} catch (Exception e) {
+				logger.warn("Unable to validate if artifact already restored or not " + nthFileId);
+			}
+			
     		String filePathname = fileFromDB.getPathname();
     		for (String alreadyRequestedDirectoriesPathName : requestedDirectoriesPathNameList) {
     			if(filePathname.startsWith(alreadyRequestedDirectoriesPathName)) {
@@ -365,7 +398,7 @@ public class FileService extends DwaraService{
     			}
 			}
     		
-    		if(StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) // if the file's is a directory - NOTE (checksum could be blank for files too if they are imported...)
+    		if(fileFromDB.isDirectory())// StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) // if the file's is a directory - NOTE (checksum could be blank for files too if they are imported...)
     			requestedDirectoriesPathNameList.add(filePathname);
     	}
     	
