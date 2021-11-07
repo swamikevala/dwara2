@@ -518,6 +518,7 @@ public class RequestService extends DwaraService{
 		statusList.add(Status.queued);
 		statusList.add(Status.in_progress);
 		statusList.add(Status.failed);
+		statusList.add(Status.cancelled);
 
 		List<Action> actionList =new ArrayList<>();
 		actionList.add(Action.restore);
@@ -542,6 +543,7 @@ public class RequestService extends DwaraService{
 			List<RestoreFile> files = new ArrayList();
 			List<Request> systemRequests = requestDao.findAllByRequestRefId(request.getId());
 			long size =0;
+			long restoredSize=0;
 			long movConversionRate = 79; // For MOV
 			long restorationRate = 10; // FOR RESTORATION
 			for(Request systemRequest :systemRequests) {
@@ -582,6 +584,7 @@ public class RequestService extends DwaraService{
 							userRequestEta+=expectedRestoreETA;
 						}
 						else if (!job.getStatus().equals(Status.completed)) {
+							restoredSize+=file.getSize();
 							restoreETA = 0;
 							break;
 						}
@@ -608,6 +611,7 @@ public class RequestService extends DwaraService{
 							// Get the .mov path from the target folder
 							postProcessETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"video-digi-2020-mkv-mov-gen");
 							userRequestEta+=postProcessETA;
+							restoredSize+=getTargetSize(restoreResponse.getName(),restoreResponse.getDestinationPath(),file);
 						}
 						else if (job.getStatus().equals(Status.queued)) {
 							postProcessETA = ((file.getSize() / 1073741824) * restorationRate );
@@ -627,6 +631,7 @@ public class RequestService extends DwaraService{
 				//how to get startTime
 				//Just add the restoreETA and postPRocess ETA at the end
 				long totalETA = restoreETA + postProcessETA ;
+
 				file.setEta( totalETA);
 				//file.setEta(getUserFromContext());
 				if(file.getStatus()!=String.valueOf(Status.cancelled))
@@ -634,6 +639,8 @@ public class RequestService extends DwaraService{
 			files.add(file);
 			}
 			restoreResponse.setSize(size);
+			long restoredPercentage = 100*restoredSize/restoreResponse.getSize();
+			restoreResponse.setPercentageRestored(restoredPercentage);
 			restoreResponse.setRestoreFiles(files);
 			restoreResponse.setTapes(tapes);
 			if(allTapesLoaded){
@@ -723,7 +730,15 @@ public class RequestService extends DwaraService{
 		return fileVolume;
 }
 
+private long getTargetSize(String outputFolder , String destinationPath, RestoreFile file ){
+	String path = destinationPath+"/"+outputFolder+"/"+".restoring/"+file.getName();
+	java.io.File targetFile= new java.io.File(path);
+	if (!targetFile.exists()) {
+		return FileUtils.sizeOf(targetFile)   ;
+	}
+    return 0;
 
+}
 
 }
 

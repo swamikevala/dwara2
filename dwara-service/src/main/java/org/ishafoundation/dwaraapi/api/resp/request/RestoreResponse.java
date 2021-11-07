@@ -16,6 +16,15 @@ private List<RestoreFile> files;
 private String vpTicket;
 private int priority;
 private int userRequestId;
+private long percentageRestored;
+
+	public long getPercentageRestored() {
+		return percentageRestored;
+	}
+
+	public void setPercentageRestored(long percentageRestored) {
+		this.percentageRestored = percentageRestored;
+	}
 
 	public List<RestoreFile> getFiles() {
 		return files;
