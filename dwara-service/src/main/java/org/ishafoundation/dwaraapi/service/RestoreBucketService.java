@@ -139,7 +139,10 @@ public class RestoreBucketService {
         //Artifact1 artifact = (Artifact1) artifact1Dao.findByName(ogFile.getPathname());
         if(artifact1Dao.existsByName(ogFile.getPathname())){
             Artifact1 artifact = (Artifact1) artifact1Dao.findByName(ogFile.getPathname());
-            Artifact1 proxyArtifact =  artifact1Dao.findByartifact1Ref(artifact);
+
+            List<Artifact1> proxyArtifacts =  artifact1Dao.findByartifact1Ref(artifact);
+            if(proxyArtifacts.size()>0){
+                Artifact1  proxyArtifact = proxyArtifacts.get(0);
             List<File1> proxyVideos = file1Dao.findAllByArtifact1IdAndPathnameEndsWith(proxyArtifact.getId(), ".mp4");
 
             for (File1 file : proxyVideos
@@ -147,7 +150,7 @@ public class RestoreBucketService {
                     previewProxyPaths.add(appendUrlTOProxy+file.getPathname());
                 }
 
-            }
+            }}
 
 
     else {
