@@ -640,9 +640,13 @@ public class RequestService extends DwaraService{
 			}
 			restoreResponse.setSize(size);
 			long restoredPercentage=0;
+			logger.info(String.valueOf(restoredSize));
+
 			if(restoreResponse.getSize()>0){
 			 restoredPercentage= 100*restoredSize/restoreResponse.getSize();
-			restoreResponse.setPercentageRestored(restoredPercentage);}
+			restoreResponse.setPercentageRestored(restoredPercentage);
+			logger.info(String.valueOf(restoredPercentage));
+			}
 
 			restoreResponse.setRestoreFiles(files);
 			restoreResponse.setTapes(tapes);
