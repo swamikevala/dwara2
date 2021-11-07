@@ -3,7 +3,6 @@ package org.ishafoundation.dwaraapi.resource;
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TRestoreBucketDao;
-import org.ishafoundation.dwaraapi.db.model.transactional.RestoreBucketFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -12,7 +11,6 @@ import org.ishafoundation.dwaraapi.service.RestoreBucketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -94,7 +92,7 @@ public class RestoreBucketController {
         return ResponseEntity.status(HttpStatus.OK).body(tRestoreBuckets);
     }
     @PutMapping("/bucket/approval")
-    public ResponseEntity<String> getApproval( @RequestBody TRestoreBucket tRestoreBucket){
+    public ResponseEntity<TRestoreBucket> getApproval(@RequestBody TRestoreBucket tRestoreBucket){
         TRestoreBucket tRestoreBucketFromDb = tRestoreBucketDao.findById(tRestoreBucket.getId()).get();
         tRestoreBucketFromDb.setApproverEmail(tRestoreBucket.getApproverEmail());
         tRestoreBucketFromDb.setDestinationPath(tRestoreBucket.getDestinationPath());
@@ -102,7 +100,7 @@ public class RestoreBucketController {
         tRestoreBucketFromDb.setPriority(tRestoreBucket.getPriority());
         tRestoreBucketFromDb.setApprovalStatus(tRestoreBucket.getApprovalStatus());
         tRestoreBucketDao.save(tRestoreBucketFromDb);
-        return ResponseEntity.status(HttpStatus.OK).body("ho gaya bahut maza aya");
+        return ResponseEntity.status(HttpStatus.OK).body(new TRestoreBucket());
     }
 
 }
