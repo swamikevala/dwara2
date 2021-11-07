@@ -578,15 +578,19 @@ public class RequestService extends DwaraService{
 							startTime = job.getStartedAt().toEpochSecond(ZoneOffset.of("+05:30"));
 							restoreETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"restore");
 						userRequestEta+=restoreETA;
+							restoredSize+=getTargetSize(restoreResponse.getName(),restoreResponse.getDestinationPath(),file);
 						}
 						else if(job.getStatus().equals(Status.queued)){
 							long expectedRestoreETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"restore");
 							userRequestEta+=expectedRestoreETA;
 						}
 						else if (!job.getStatus().equals(Status.completed)) {
-							restoredSize+=file.getSize();
+
 							restoreETA = 0;
 							break;
+						}
+						else if(job.getStatus().equals(Status.completed)){
+							restoredSize+=file.getSize();
 						}
 
 						//set the tape details
@@ -611,7 +615,7 @@ public class RequestService extends DwaraService{
 							// Get the .mov path from the target folder
 							postProcessETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"video-digi-2020-mkv-mov-gen");
 							userRequestEta+=postProcessETA;
-							restoredSize+=getTargetSize(restoreResponse.getName(),restoreResponse.getDestinationPath(),file);
+
 						}
 						else if (job.getStatus().equals(Status.queued)) {
 							postProcessETA = ((file.getSize() / 1073741824) * restorationRate );
@@ -645,7 +649,7 @@ public class RequestService extends DwaraService{
 
 			if(restoreResponse.getSize()>0){
 			 restoredPercentage= 100*restoredSize/restoreResponse.getSize();
-			restoreResponse.setPercentageRestored(restoredPercentage);
+			restoreResponse.setPercentageRestored(restoredPercentage-3);
 			logger.info(String.valueOf(restoredPercentage));
 			}
 
