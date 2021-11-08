@@ -539,7 +539,7 @@ public class RequestService extends DwaraService{
 			restoreResponse.setRequestedBy(request.getRequestedBy().getName());
 			restoreResponse.setStatus(String.valueOf(request.getStatus()));
 
-			restoreResponse.setPriority(1); // isko baad mein badlo
+			restoreResponse.setPriority(String.valueOf(request.getPriority())); // isko baad mein badlo
 			List<RestoreFile> files = new ArrayList();
 			List<Request> systemRequests = requestDao.findAllByRequestRefId(request.getId());
 			long size =0;

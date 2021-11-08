@@ -14,7 +14,7 @@ private long size;
 private long eta;
 private List<RestoreFile> files;
 private String vpTicket;
-private int priority;
+private String priority;
 private int userRequestId;
 private long percentageRestored;
 
@@ -42,10 +42,10 @@ private long percentageRestored;
 		this.userRequestId = userRequestId;
 	}
 
-	public int getPriority() {
+	public String getPriority() {
 	return priority;
 }
-public void setPriority(int priority) {
+public void setPriority(String priority) {
 	this.priority = priority;
 }
 public String getVpTicket() {
