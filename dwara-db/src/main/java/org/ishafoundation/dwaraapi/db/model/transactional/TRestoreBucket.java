@@ -19,8 +19,37 @@ public class TRestoreBucket {
     String type;
     String approvalStatus;
     String approver;
+    String approverEmail;
     String requestedBy;
     String createdBy;
+
+    public String getApproverEmail() {
+        return approverEmail;
+    }
+
+    public void setApproverEmail(String approverEmail) {
+        this.approverEmail = approverEmail;
+    }
+
+    public String getDestinationPath() {
+        return destinationPath;
+    }
+
+    public void setDestinationPath(String destinationPath) {
+        this.destinationPath = destinationPath;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
+    }
+
+    String destinationPath;
+    String priority;
+
     @Column(name="createdAt")
     Date createdAt;
     //@Column(name="details")

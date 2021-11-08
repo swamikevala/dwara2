@@ -518,6 +518,7 @@ public class RequestService extends DwaraService{
 		statusList.add(Status.queued);
 		statusList.add(Status.in_progress);
 		statusList.add(Status.failed);
+		statusList.add(Status.cancelled);
 
 		List<Action> actionList =new ArrayList<>();
 		actionList.add(Action.restore);
@@ -538,10 +539,12 @@ public class RequestService extends DwaraService{
 			restoreResponse.setRequestedBy(request.getRequestedBy().getName());
 			restoreResponse.setStatus(String.valueOf(request.getStatus()));
 
-			restoreResponse.setPriority(1); // isko baad mein badlo
+			restoreResponse.setPriority(String.valueOf(request.getPriority()));
+
 			List<RestoreFile> files = new ArrayList();
 			List<Request> systemRequests = requestDao.findAllByRequestRefId(request.getId());
 			long size =0;
+			long restoredSize=0;
 			long movConversionRate = 79; // For MOV
 			long restorationRate = 10; // FOR RESTORATION
 			for(Request systemRequest :systemRequests) {
@@ -576,14 +579,19 @@ public class RequestService extends DwaraService{
 							startTime = job.getStartedAt().toEpochSecond(ZoneOffset.of("+05:30"));
 							restoreETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"restore");
 						userRequestEta+=restoreETA;
+							restoredSize+=getTargetSize(restoreResponse.getName(),restoreResponse.getDestinationPath(),file);
 						}
 						else if(job.getStatus().equals(Status.queued)){
 							long expectedRestoreETA = fileETARestoreCalculator(restoreResponse.getName(),restoreResponse.getDestinationPath(),file,startTime,"restore");
 							userRequestEta+=expectedRestoreETA;
 						}
 						else if (!job.getStatus().equals(Status.completed)) {
+
 							restoreETA = 0;
 							break;
+						}
+						else if(job.getStatus().equals(Status.completed)){
+							restoredSize+=file.getSize();
 						}
 
 						//set the tape details
@@ -627,6 +635,7 @@ public class RequestService extends DwaraService{
 				//how to get startTime
 				//Just add the restoreETA and postPRocess ETA at the end
 				long totalETA = restoreETA + postProcessETA ;
+
 				file.setEta( totalETA);
 				//file.setEta(getUserFromContext());
 				if(file.getStatus()!=String.valueOf(Status.cancelled))
@@ -634,13 +643,26 @@ public class RequestService extends DwaraService{
 			files.add(file);
 			}
 			restoreResponse.setSize(size);
+			long restoredPercentage=0;
+			logger.info(restoreResponse.getName());
+			logger.info(String.valueOf(restoredSize));
+
+			if(restoreResponse.getSize()>0){
+			 restoredPercentage= 100*restoredSize/restoreResponse.getSize();
+			restoreResponse.setPercentageRestored(restoredPercentage-3);
+			logger.info(String.valueOf(restoredPercentage));
+			}
+
 			restoreResponse.setRestoreFiles(files);
 			restoreResponse.setTapes(tapes);
 			if(allTapesLoaded){
 				//restoreResponse.setEta(userRequestEta);
 			}
 			//change this asap uncomment above one
+
 			restoreResponse.setEta(userRequestEta);
+			if(request.getStatus().equals(Status.queued))
+				restoreResponse.setEta(0);
 			restoreResponses.add(restoreResponse);
 		}
 		return restoreResponses;
@@ -721,7 +743,19 @@ public class RequestService extends DwaraService{
 			fileVolume = fileVolumeList.get(0);
 		}
 		return fileVolume;
-}}
+}
+
+private long getTargetSize(String outputFolder , String destinationPath, RestoreFile file ){
+	String path = destinationPath+"/"+outputFolder+"/"+".restoring/"+file.getName();
+	java.io.File targetFile= new java.io.File(path);
+	if (!targetFile.exists()) {
+		return FileUtils.sizeOf(targetFile)   ;
+	}
+    return 0;
+
+}
+
+}
 
 
 
