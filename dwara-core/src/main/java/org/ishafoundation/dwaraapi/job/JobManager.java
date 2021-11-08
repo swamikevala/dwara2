@@ -209,7 +209,9 @@ public class JobManager {
 			List<Request> rewriteSystemRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.rewrite, statusList, RequestType.system);
 			if(rewriteSystemRequestList.size() > 0) { // if there are any rewrite request pending, dont add all its jobs to the queue
 				jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndRequestActionIdIsNotAndStatusOrderById(Action.rewrite, Status.queued);
-				jobList.addAll(jobDao.findTop2ByStoragetaskActionIdIsNotNullAndRequestActionIdAndStatusOrderByRequestId(Action.rewrite, Status.queued)); // add only one rewrite specific job to the collection
+				// add just handful of rewrite specific jobs to the collection
+				jobList.addAll(jobDao.findTop2ByStoragetaskActionIdAndRequestActionIdAndStatusOrderByRequestId(Action.restore, Action.rewrite, Status.queued)); 
+				jobList.addAll(jobDao.findTop2ByStoragetaskActionIdAndRequestActionIdAndStatusOrderByRequestId(Action.write, Action.rewrite, Status.queued));
 			}
 			else
 				jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued); // Irrespective of the tapedrivemapping or format request non storage jobs can still be dequeued, hence we are querying it all...

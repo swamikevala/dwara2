@@ -162,57 +162,73 @@ public class DwaraHoverService extends DwaraService {
 			}
 			results = getSearchQuery(offset, limit, category, queryMode, searchWordsBuilder, categoryBuilderFile1, categoryBuilderFile2);
 
-			results.forEach(entry -> {
-				DwaraHoverFileListDTO dwaraHoverFileListDTO = new DwaraHoverFileListDTO();
-				List<String> proxyFilesForFolderQuery = new ArrayList<>();
-				String pathName = (String) entry[0];
-				long size = ((BigInteger) entry[1]).longValue();
-				int id = (Integer) entry[2];
-				int artifact_id;
-				String artifactClassId;
-				String proxyPathName = null;
-				if (!category.equalsIgnoreCase("folder")) {
-					artifactClassId = (String) entry[3];
-					proxyPathName = (String) entry[4];
+			ExecutorService executor = Executors.newFixedThreadPool(10);
 
-					if (!StringUtils.isEmpty(proxyPathName)) {
-						if (StringUtils.contains(artifactClassId, "priv")) {
-							proxyPathName = "http://172.18.1.24/mam/private/" + proxyPathName;
+			List<Object[]> finalResults = results;
+			List<Future<?>> futures = IntStream.range(0, finalResults.size())
+					.mapToObj(i -> executor.submit(() -> {
+						DwaraHoverFileListDTO dwaraHoverFileListDTO = new DwaraHoverFileListDTO();
+						List<String> proxyFilesForFolderQuery = new ArrayList<>();
+						String pathName = (String) finalResults.get(i)[0];
+						long size = ((BigInteger) finalResults.get(i)[1]).longValue();
+						int id = (Integer) finalResults.get(i)[2];
+						int artifact_id;
+						String artifactClassId;
+						String proxyPathName = null;
+						if (!category.equalsIgnoreCase("folder")) {
+							artifactClassId = (String) finalResults.get(i)[3];
+							proxyPathName = (String) finalResults.get(i)[4];
+
+							if (!StringUtils.isEmpty(proxyPathName)) {
+								if (StringUtils.contains(artifactClassId, "priv")) {
+									proxyPathName = "http://172.18.1.24/mam/private/" + proxyPathName;
+								} else {
+									proxyPathName = "http://172.18.1.24/mam/public/" + proxyPathName;
+								}
+								proxyFilesForFolderQuery.add(proxyPathName);
+							}
+
 						} else {
-							proxyPathName = "http://172.18.1.24/mam/public/" + proxyPathName;
+							artifact_id = (Integer) finalResults.get(i)[3];
+							artifactClassId = (String) finalResults.get(i)[4];
+							String proxyForFolderQuery = "SELECT file1.pathname,artifact1.artifactclass_id FROM artifact1 JOIN file1 ON file1.artifact_id=artifact1.id WHERE artifact_ref_id=" + artifact_id + " AND file1.pathname LIKE '%.mp4'";
+							Query q = entityManager.createNativeQuery(proxyForFolderQuery);
+							List<Object[]> folderQueryResults =  q.getResultList();
+
+							folderQueryResults.forEach(file-> {
+								String proxyName;
+								if (StringUtils.contains((String) file[1], "priv")) {
+									proxyName = "http://172.18.1.24/mam/private/" + file[0];
+								} else {
+									proxyName = "http://172.18.1.24/mam/public/" + file[0];
+								}
+								proxyFilesForFolderQuery.add(proxyName);
+
+							});
+
 						}
-						proxyFilesForFolderQuery.add(proxyPathName);
-					}
+						List<DwaraHoverTranscriptListDTO> transcriptsByPathName = getTranscriptsByPathName(pathName);
+						dwaraHoverFileListDTO.setProxyPathName(proxyFilesForFolderQuery);
+						dwaraHoverFileListDTO.setId(id);
+						dwaraHoverFileListDTO.setSize(size);
+						dwaraHoverFileListDTO.setPathName(pathName);
+						dwaraHoverFileListDTO.setArtifactClass_id(artifactClassId);
+						dwaraHoverFileListDTO.setTranscripts(transcriptsByPathName);
 
-				} else {
-					artifact_id = (Integer) entry[3];
-					artifactClassId = (String) entry[4];
-					String proxyForFolderQuery = "SELECT file1.pathname,artifact1.artifactclass_id FROM artifact1 JOIN file1 ON file1.artifact_id=artifact1.id WHERE artifact_ref_id=" + artifact_id + " AND file1.pathname LIKE '%.mp4'";
-					Query q = entityManager.createNativeQuery(proxyForFolderQuery);
-					List<Object[]> folderQueryResults =  q.getResultList();
+						return dwaraHoverFileListDTO;
+					})).collect(Collectors.toList());
 
-					folderQueryResults.forEach(file-> {
-						String proxyName;
-						if (StringUtils.contains((String) file[1], "priv")) {
-							proxyName = "http://172.18.1.24/mam/private/" + file[0];
-						} else {
-							proxyName = "http://172.18.1.24/mam/public/" + file[0];
-						}
-						proxyFilesForFolderQuery.add(proxyName);
+			executor.shutdown();
 
-					});
-
+			for (Future<?> future : futures) {
+				try {
+					fileResults.add((DwaraHoverFileListDTO) future.get());
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					e.printStackTrace();
 				}
-				List<DwaraHoverTranscriptListDTO> transcriptsByPathName = getTranscriptsByPathName(pathName);
-				dwaraHoverFileListDTO.setProxyPathName(proxyFilesForFolderQuery);
-				dwaraHoverFileListDTO.setId(id);
-				dwaraHoverFileListDTO.setSize(size);
-				dwaraHoverFileListDTO.setPathName(pathName);
-				dwaraHoverFileListDTO.setArtifactClass_id(artifactClassId);
-				dwaraHoverFileListDTO.setTranscripts(transcriptsByPathName);
-
-				fileResults.add(dwaraHoverFileListDTO);
-			});
+			}
 
 		} else {
 			List<DwaraHoverTranscriptListDTO> dwaraHoverTranscriptListDTOS = searchInTranscripts(searchWords, type, offset, limit);
@@ -414,7 +430,7 @@ public class DwaraHoverService extends DwaraService {
 	}
 
 	private List<DwaraHoverTranscriptListDTO> searchInTranscripts(List<String> searchWords, String type, int offset, int limit) {
-		final String transcriptTitleURL = "http://172.18.1.22:8090/rest/api/content/search?cql=(type=page%20and%20space=PUB%20and";
+		final String transcriptTitleURL = "http://172.18.1.22:8090/rest/api/content/search?cql=(type=page%20and";
 		final String transcriptURLAuthorization = "Basic c2FtZWVyLmRhc2g6aG9seQ==";
 		final String transcriptLinkURL = "http://art.iyc.ishafoundation.org";
 		List<DwaraHoverTranscriptListDTO> output = new ArrayList<>();
