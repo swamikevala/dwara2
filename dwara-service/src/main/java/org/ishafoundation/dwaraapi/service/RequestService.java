@@ -539,7 +539,8 @@ public class RequestService extends DwaraService{
 			restoreResponse.setRequestedBy(request.getRequestedBy().getName());
 			restoreResponse.setStatus(String.valueOf(request.getStatus()));
 
-			restoreResponse.setPriority(String.valueOf(request.getPriority())); // isko baad mein badlo
+			restoreResponse.setPriority(String.valueOf(request.getPriority()));
+
 			List<RestoreFile> files = new ArrayList();
 			List<Request> systemRequests = requestDao.findAllByRequestRefId(request.getId());
 			long size =0;
@@ -659,7 +660,10 @@ public class RequestService extends DwaraService{
 				//restoreResponse.setEta(userRequestEta);
 			}
 			//change this asap uncomment above one
+
 			restoreResponse.setEta(userRequestEta);
+			if(request.getStatus().equals(Status.queued))
+				restoreResponse.setEta(0);
 			restoreResponses.add(restoreResponse);
 		}
 		return restoreResponses;
