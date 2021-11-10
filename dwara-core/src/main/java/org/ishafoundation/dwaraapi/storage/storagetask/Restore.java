@@ -55,7 +55,8 @@ public class Restore extends AbstractStoragetaskAction{
 		if(requestedAction == Action.restore || requestedAction == Action.restore_process){
 			String destinationPath = requestDetails.getDestinationPath();//requested destination path
 			String outputFolder = requestDetails.getOutputFolder();
-			restoreLocation = destinationPath + java.io.File.separator + outputFolder + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier();
+			//restoreLocation = destinationPath + java.io.File.separator + outputFolder + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier();
+			restoreLocation = destinationPath + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier() + java.io.File.separator + outputFolder;
 		}
 		else if(requestedAction == Action.ingest || requestedAction == Action.rewrite)
 			restoreLocation = configuration.getRestoreTmpLocationForVerification() + File.separator + "job-" + job.getId();
