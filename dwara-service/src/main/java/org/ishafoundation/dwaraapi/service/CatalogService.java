@@ -195,7 +195,7 @@ public class CatalogService extends DwaraService{
             condition += " and a.finalized_at <= '" + endDate + "'";
         String query = "select group_concat(distinct c.artifactclass_id order by c.artifactclass_id separator ','), a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.healthstatus, a.lifecyclestage, a.finalized_at, a.used_capacity" 
         + " from volume a join artifact1_volume b join artifact1 c"
-        + " where a.id = b.volume_id and b.artifact_id = c.id and a.initialized_at is not null"
+        + " where a.id = b.volume_id and b.artifact_id = c.id"
         + condition
         + " group by a.id"
         + " order by a.finalized_at desc";
@@ -263,9 +263,9 @@ public class CatalogService extends DwaraService{
             condition += ")";
         }
 
-        String query = "select a.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, b.volume_id, d.status, d.completed_at, e.name as ingestedBy, b.name as oldName" 
+        String query = "select a.id, d.id, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, b.volume_id, d.status, d.completed_at, e.name as ingestedBy, b.name as oldName" 
         + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and a.deleted=0"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and a.q_latest_request_id=d.id and d.requested_by_id=e.id and a.deleted=0"
         + condition
         + "order by b.volume_id asc, d.completed_at desc";
 
@@ -331,12 +331,12 @@ public class CatalogService extends DwaraService{
         }
         String query = "select distinct a.id" 
         + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id and a.artifact_ref_id is null and a.deleted=" + deleted
+        + " where a.id=b.artifact_id and b.volume_id=c.id and a.q_latest_request_id=d.id and d.requested_by_id=e.id and a.artifact_ref_id is null and a.deleted=" + deleted
         + condition;
 
-        String query2 = "select a.id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, d.requested_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
+        String query2 = "select a.id, d.id, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, d.requested_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
         + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and a.write_request_id=d.id and d.requested_by_id=e.id"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and a.q_latest_request_id=d.id and d.requested_by_id=e.id"
         + " and a.id in (" + query + ")"
         + " group by a.id order by requested_at desc";
         Query q = entityManager.createNativeQuery(query2);
@@ -356,7 +356,7 @@ public class CatalogService extends DwaraService{
         + " and a.artifact_ref_id in (" + query + ")"
         + " group by a.artifact_ref_id";
         Query qProxy = entityManager.createNativeQuery(query3);
-        logger.info("proxy query: " + query3);
+        // logger.info("proxy query: " + query3);
         List<Object[]> results2 = qProxy.getResultList();
         HashMap<Integer, ProxyData> mapProxy = new HashMap<Integer, ProxyData>();
         results2.stream().forEach((record) -> {
@@ -391,10 +391,7 @@ public class CatalogService extends DwaraService{
     private ArtifactCatalog handleArtifactCatalogData(Object[] record) {
         int i = 0;
         int _artifactId = ((Integer) record[i++]).intValue();
-        /* int _artifactRefId = -1;
-        if(record[i] != null)
-            _artifactRefId = ((Integer) record[i]).intValue();
-        i++; */
+        int _requestId = ((Integer) record[i++]).intValue();
         String _artifactClass = (String) record[i++];
         String _artifactName = (String) record[i++];
         long _size = ((BigInteger)record[i++]).longValue();
@@ -411,7 +408,7 @@ public class CatalogService extends DwaraService{
             _proxyStatus = (String)record[i];
         }
 
-        ArtifactCatalog ac = new ArtifactCatalog(_artifactId, _artifactClass, _artifactName, _size, _volumeId, _requestStatus, _ingestedDate, _ingestedBy, _oldName);
+        ArtifactCatalog ac = new ArtifactCatalog(_artifactId, _requestId, _artifactClass, _artifactName, _size, _volumeId, _requestStatus, _ingestedDate, _ingestedBy, _oldName);
         ac.proxyStatus = _proxyStatus;
         return ac;
     }
