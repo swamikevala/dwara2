@@ -65,8 +65,6 @@ public class DwaraHoverService extends DwaraService {
 	 */
 	public List getSearchData(List<String> searchWords, String type, String category, String contentType, int offset, int limit) {
 
-		logger.info("UserRole" +getUserRoles().toString());
-		logger.info("UserContext"+getUserFromContext());
 		String[] extensions;
 		String[] docExtensions = {"doc", "xls", "xml"};
 		String[] fileExtensions = {"mp4", "mp3"};
@@ -184,20 +182,20 @@ public class DwaraHoverService extends DwaraService {
 
 							if (!StringUtils.isEmpty(proxyPathName)) {
 								if (StringUtils.contains(artifactClassId, "priv")) {
-
 									proxyPathName = "http://172.18.1.24/mam/private/" + proxyPathName;
 								} else {
 									proxyPathName = "http://172.18.1.24/mam/public/" + proxyPathName;
 								}
 
-								if (StringUtils.contains(artifactClassId, "priv")) {
-									if(getUserRoles().contains("priv1")){
-										proxyFilesForFolderQuery.add(proxyPathName);
+								if (StringUtils.contains(artifactClassId, "priv1")){
+									for (String userRole: getUserRoles()) {
+										if(userRole.equals("priv1"))
+											proxyFilesForFolderQuery.add(proxyPathName);
+
 									}
-								}else{
+								} else{
 									proxyFilesForFolderQuery.add(proxyPathName);
 							}
-
 							}
 
 						} else {
@@ -214,15 +212,15 @@ public class DwaraHoverService extends DwaraService {
 								} else {
 									proxyName = "http://172.18.1.24/mam/public/" + file[0];
 								}
-								if (StringUtils.contains(artifactClassId, "priv")) {
-									if(getUserRoles().contains("priv1")){
-										proxyFilesForFolderQuery.add(proxyName);
+								if (StringUtils.contains(artifactClassId, "priv1")){
+									for (String userRole: getUserRoles()) {
+										if(userRole.equals("priv1"))
+											proxyFilesForFolderQuery.add(proxyName);
+
 									}
-								}else{
+								} else{
 									proxyFilesForFolderQuery.add(proxyName);
 								}
-
-
 							});
 
 						}
@@ -271,14 +269,15 @@ public class DwaraHoverService extends DwaraService {
 							} else {
 								proxyName = "http://172.18.1.24/mam/public/" + file[0];
 							}
-							if (StringUtils.contains((String) file[1], "priv")) {
-								if(getUserRoles().contains("priv1")){
-									proxyFilesForFolderQuery.add(proxyName);
+							if (StringUtils.contains((String) file[1], "priv")){
+								for (String userRole: getUserRoles()) {
+									if(userRole.equals("priv1"))
+										proxyFilesForFolderQuery.add(proxyName);
+
 								}
-							}else{
+							} else{
 								proxyFilesForFolderQuery.add(proxyName);
 							}
-
 
 						});
 
