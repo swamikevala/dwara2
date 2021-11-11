@@ -186,9 +186,20 @@ public class DwaraHoverService extends DwaraService {
 								} else {
 									proxyPathName = "http://172.18.1.24/mam/public/" + proxyPathName;
 								}
+								System.out.println("ArtifactClass "+ artifactClassId);
+								if (StringUtils.contains(artifactClassId, "priv")){
 
-
+									for (String userRole: getUserRoles()) {
+										System.out.println("UserRole "+ userRole);										if(userRole.equals("priv1")) {
+											proxyFilesForFolderQuery.add(proxyPathName);
+											System.out.println("Inside private");
+										}
+									}
+								} else{
 									proxyFilesForFolderQuery.add(proxyPathName);
+								}
+
+									//proxyFilesForFolderQuery.add(proxyPathName);
 							}
 
 						} else {
