@@ -6,6 +6,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.Set;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
@@ -17,6 +18,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.keycloak.KeycloakPrincipal;
+import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount;
 import org.keycloak.representations.AccessToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +43,9 @@ public class DwaraService {
 
 	@Value("${dwara.keycloak.enabled}")
     private boolean KEYCLOAK_ENABLED;
+	
+	@Value("${keycloak.resource}")
+	private String KEYCLOAK_RESOURCE;
 
 	public String getUserFromContext() {
 		if(KEYCLOAK_ENABLED) {
@@ -56,6 +61,23 @@ public class DwaraService {
 		else {
 			return SecurityContextHolder.getContext().getAuthentication().getName();
 		}
+	}
+
+	public Set<String> getUserRoles() {
+		if(KEYCLOAK_ENABLED) {
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+			//realm roles
+			/* SimpleKeycloakAccount keycloakAccount = (SimpleKeycloakAccount)authentication.getDetails();
+            Set<String> roles = keycloakAccount.getRoles();
+			return roles; */
+
+			//client roles
+			KeycloakPrincipal principal = (KeycloakPrincipal)authentication.getPrincipal();
+			AccessToken token = principal.getKeycloakSecurityContext().getToken();
+			return token.getResourceAccess().get(KEYCLOAK_RESOURCE).getRoles();
+		}
+		return null;
 	}
 	
 	public User getUserObjFromContext() {
