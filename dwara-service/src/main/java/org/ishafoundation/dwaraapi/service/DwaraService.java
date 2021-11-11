@@ -54,7 +54,9 @@ public class DwaraService {
 				KeycloakPrincipal principal = (KeycloakPrincipal)authentication.getPrincipal();
 				AccessToken token = principal.getKeycloakSecurityContext().getToken();
 				String userName = token.getPreferredUsername();
+
 				return userName;
+
 			}
 			return null;
 		}

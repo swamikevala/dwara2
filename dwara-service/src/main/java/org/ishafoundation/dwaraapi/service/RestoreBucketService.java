@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class RestoreBucketService {
+public class RestoreBucketService extends DwaraService{
     private static final Logger logger = LoggerFactory.getLogger(RestoreBucketService.class);
     @Autowired
     TRestoreBucketDao tRestoreBucketDao;

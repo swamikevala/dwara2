@@ -64,6 +64,9 @@ public class DwaraHoverService extends DwaraService {
 	 * @return List
 	 */
 	public List getSearchData(List<String> searchWords, String type, String category, String contentType, int offset, int limit) {
+
+		logger.info(getUserRoles().toString());
+		logger.info(getUserFromContext());
 		String[] extensions;
 		String[] docExtensions = {"doc", "xls", "xml"};
 		String[] fileExtensions = {"mp4", "mp3"};
@@ -181,11 +184,20 @@ public class DwaraHoverService extends DwaraService {
 
 							if (!StringUtils.isEmpty(proxyPathName)) {
 								if (StringUtils.contains(artifactClassId, "priv")) {
+
 									proxyPathName = "http://172.18.1.24/mam/private/" + proxyPathName;
 								} else {
 									proxyPathName = "http://172.18.1.24/mam/public/" + proxyPathName;
 								}
-								proxyFilesForFolderQuery.add(proxyPathName);
+
+								if (StringUtils.contains(artifactClassId, "priv")) {
+									if(getUserRoles().contains("priv1")){
+										proxyFilesForFolderQuery.add(proxyPathName);
+									}
+								}else{
+									proxyFilesForFolderQuery.add(proxyPathName);
+							}
+
 							}
 
 						} else {
@@ -202,7 +214,14 @@ public class DwaraHoverService extends DwaraService {
 								} else {
 									proxyName = "http://172.18.1.24/mam/public/" + file[0];
 								}
-								proxyFilesForFolderQuery.add(proxyName);
+								if (StringUtils.contains(artifactClassId, "priv")) {
+									if(getUserRoles().contains("priv1")){
+										proxyFilesForFolderQuery.add(proxyName);
+									}
+								}else{
+									proxyFilesForFolderQuery.add(proxyName);
+								}
+
 
 							});
 
@@ -252,7 +271,14 @@ public class DwaraHoverService extends DwaraService {
 							} else {
 								proxyName = "http://172.18.1.24/mam/public/" + file[0];
 							}
-							proxyFilesForFolderQuery.add(proxyName);
+							if (StringUtils.contains((String) file[1], "priv")) {
+								if(getUserRoles().contains("priv1")){
+									proxyFilesForFolderQuery.add(proxyName);
+								}
+							}else{
+								proxyFilesForFolderQuery.add(proxyName);
+							}
+
 
 						});
 
