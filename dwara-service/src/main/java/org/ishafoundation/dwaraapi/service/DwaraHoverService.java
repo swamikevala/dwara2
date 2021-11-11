@@ -191,6 +191,7 @@ public class DwaraHoverService extends DwaraService {
 									for (String userRole: getUserRoles()) {
 										if(userRole.equals("priv1"))
 											proxyFilesForFolderQuery.add(proxyPathName);
+											logger.info("Inside private");
 
 									}
 								} else{
@@ -216,6 +217,7 @@ public class DwaraHoverService extends DwaraService {
 									for (String userRole: getUserRoles()) {
 										if(userRole.equals("priv1"))
 											proxyFilesForFolderQuery.add(proxyName);
+										logger.info("Inside private");
 
 									}
 								} else{
@@ -273,7 +275,7 @@ public class DwaraHoverService extends DwaraService {
 								for (String userRole: getUserRoles()) {
 									if(userRole.equals("priv1"))
 										proxyFilesForFolderQuery.add(proxyName);
-
+									logger.info("Inside private");
 								}
 							} else{
 								proxyFilesForFolderQuery.add(proxyName);
