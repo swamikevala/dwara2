@@ -19,6 +19,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TActivedevice;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
+import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.storage.model.GroupedJobsCollection;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagesubtype.AbstractStoragesubtype;
@@ -65,9 +66,8 @@ public class TapeJobSelector {
 		if(tapeJobsList.size() <= 0)
 			return null;
 		StorageJob tapeJob = null;
-		/*
+		
 		List<StorageJob> ignoreOptimisationTapeJobsList = getIgnoreOptimisationTapeJobsList(tapeJobsList);
-
 		
 		if(ignoreOptimisationTapeJobsList.size() > 0) { // are there IgnoreVolumeOptimisation jobs
 			logger.debug("Contains Ignore Tape Optimisation jobs");
@@ -76,7 +76,7 @@ public class TapeJobSelector {
 		} else {
 			logger.debug("Doesnt contain any Ignore Tape Optimisation jobs");// Optimise Tape Access - true");*/
 			tapeJob = chooseAJobForTheDrive(tapeJobsList, driveDetails);
-		/*}*/
+		}
 		
 		// checking the selected Job's volume capacity against the artifact size
 		if(tapeJob != null && tapeJob.getJob().getStoragetaskActionId() == Action.write) {
@@ -124,6 +124,8 @@ public class TapeJobSelector {
 		List<StorageJob> ignoreOptimisationTapeJobsList = new ArrayList<StorageJob>();
 		for (Iterator<StorageJob> iterator = tapeJobsList.iterator(); iterator.hasNext();) {
 			StorageJob nthTapeJob = (StorageJob) iterator.next();
+			if(nthTapeJob.getPriority() == Priority.critical.getPriorityValue())
+				ignoreOptimisationTapeJobsList.add(nthTapeJob);
 //			TODO : Commented out
 //			if(!nthTapeJob.isOptimizeTapeAccess()) {
 //				ignoreOptimisationTapeJobsList.add(nthTapeJob);
