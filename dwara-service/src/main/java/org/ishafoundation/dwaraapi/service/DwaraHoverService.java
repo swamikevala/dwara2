@@ -65,8 +65,8 @@ public class DwaraHoverService extends DwaraService {
 	 */
 	public List getSearchData(List<String> searchWords, String type, String category, String contentType, int offset, int limit) {
 
-		logger.info(getUserRoles().toString());
-		logger.info(getUserFromContext());
+		logger.info("UserRole" +getUserRoles().toString());
+		logger.info("UserContext"+getUserFromContext());
 		String[] extensions;
 		String[] docExtensions = {"doc", "xls", "xml"};
 		String[] fileExtensions = {"mp4", "mp3"};
