@@ -68,6 +68,7 @@ public class DwaraService {
 	public Set<String> getUserRoles() {
 		if(KEYCLOAK_ENABLED) {
 			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			//System.out.println(authentication.toString());
 
 			//realm roles
 			/* SimpleKeycloakAccount keycloakAccount = (SimpleKeycloakAccount)authentication.getDetails();

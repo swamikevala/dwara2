@@ -64,7 +64,7 @@ public class DwaraHoverService extends DwaraService {
 	 * @return List
 	 */
 	public List getSearchData(List<String> searchWords, String type, String category, String contentType, int offset, int limit) {
-
+		Set<String> userRoles= getUserRoles();
 		String[] extensions;
 		String[] docExtensions = {"doc", "xls", "xml"};
 		String[] fileExtensions = {"mp4", "mp3"};
@@ -186,13 +186,13 @@ public class DwaraHoverService extends DwaraService {
 								} else {
 									proxyPathName = "http://172.18.1.24/mam/public/" + proxyPathName;
 								}
-								System.out.println("ArtifactClass "+ artifactClassId);
+
 								if (StringUtils.contains(artifactClassId, "priv")){
-										System.out.println("UserRoles "+ getUserRoles().toString() );
-									for (String userRole: getUserRoles()) {
-										System.out.println("UserRole "+ userRole);										if(userRole.equals("priv1")) {
+
+									for (String userRole: userRoles) {
+																				if(userRole.equals("priv1")) {
 											proxyFilesForFolderQuery.add(proxyPathName);
-											System.out.println("Inside private");
+
 										}
 									}
 								} else{
@@ -216,13 +216,13 @@ public class DwaraHoverService extends DwaraService {
 								} else {
 									proxyName = "http://172.18.1.24/mam/public/" + file[0];
 								}
-								System.out.println("ArtifactClass "+ artifactClassId);
+
 								if (StringUtils.contains(artifactClassId, "priv")){
-									System.out.println("UserRoles "+ getUserRoles().toString() );
-									for (String userRole: getUserRoles()) {
-										System.out.println("UserRole "+ userRole);										if(userRole.equals("priv1")) {
+
+									for (String userRole: userRoles) {
+																				if(userRole.equals("priv1")) {
 											proxyFilesForFolderQuery.add(proxyName);
-											System.out.println("Inside private");
+
 										}
 									}
 								} else{
@@ -278,13 +278,14 @@ public class DwaraHoverService extends DwaraService {
 							} else {
 								proxyName = "http://172.18.1.24/mam/public/" + file[0];
 							}
-							System.out.println("ArtifactClass "+ file[1]);
+
 							if (StringUtils.contains((String) file[1], "priv")){
-								System.out.println("UserRoles "+ getUserRoles().toString() );
-								for (String userRole: getUserRoles()) {
-									System.out.println("UserRole "+ userRole);										if(userRole.equals("priv1")) {
+
+								for (String userRole: userRoles) {
+
+									if(userRole.equals("priv1")) {
 										proxyFilesForFolderQuery.add(proxyName);
-										System.out.println("Inside private");
+
 									}
 								}
 							} else{
