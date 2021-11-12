@@ -3,9 +3,11 @@ package org.ishafoundation.dwaraapi.resource;
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TRestoreBucketDao;
+import org.ishafoundation.dwaraapi.db.model.transactional.RestoreBucketFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
+import org.ishafoundation.dwaraapi.service.EmailerService;
 import org.ishafoundation.dwaraapi.service.FileService;
 import org.ishafoundation.dwaraapi.service.RestoreBucketService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,6 +30,8 @@ public class RestoreBucketController {
     TRestoreBucketDao tRestoreBucketDao;
     @Autowired
     FileService fileService;
+    @Autowired
+    EmailerService emailerService;
 
 
     @GetMapping("/buckets")
@@ -100,6 +105,17 @@ public class RestoreBucketController {
         tRestoreBucketFromDb.setPriority(tRestoreBucket.getPriority());
         tRestoreBucketFromDb.setApprovalStatus(tRestoreBucket.getApprovalStatus());
         tRestoreBucketDao.save(tRestoreBucketFromDb);
+        String emailBody = "<p>Namaskaram</p>";
+        emailBody += "<p>The following folders need your approval</p>";
+        List<String> fileName = new ArrayList<>();
+        for (RestoreBucketFile file: tRestoreBucketFromDb.getDetails()) {
+            emailBody +="<div> "+ file.getFilePathName()  +"</div>";
+        }
+        emailBody +="<p>Please reply with <pre><approved></pre> if you wish to approve </p>";
+        emailerService.setConcernedEmail(tRestoreBucketFromDb.getApproverEmail());
+        emailerService.setSubject("Need Approval for project: "+tRestoreBucketFromDb.getId());
+        emailerService.sendEmail(emailBody);
+
         return ResponseEntity.status(HttpStatus.OK).body(new TRestoreBucket());
     }
 
