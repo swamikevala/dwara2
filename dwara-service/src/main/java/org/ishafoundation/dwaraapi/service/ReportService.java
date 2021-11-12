@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -130,51 +129,58 @@ public class ReportService extends DwaraService {
 
     }
 
-    public HashMap<String, List<String>> getPipelineReport(String requestedFrom, String requestedTo) {
-        HashMap<String, List<String>> pipelineReport = new HashMap<String, List<String>>();
+    public HashMap<String, HashMap<String, List<String>>> getPipelineReport(String requestedFrom, String requestedTo) {
+        HashMap<String, List<String>> ingestPipelineReport = new HashMap<String, List<String>>();
         String condition = "";
         if(requestedFrom != "")
             condition += " and r.requested_at >= '" + requestedFrom + "'";
         if(requestedTo != "")
             condition += " and r.requested_at <= '" + requestedTo + "'";
         
-        String ingestedArtifactQuery = "select details->>'$.staged_filename' from request r where action_id = 'ingest' and type='system'"
+        String ingestedArtifactQuery = "select distinct(details->>'$.staged_filename') from request r join artifact1 a on a.q_latest_request_id=r.id where a.deleted=0 and action_id = 'ingest' and type='system'"
         + condition;
-        pipelineReport.put("Ingested Artifacts", entityManager.createNativeQuery(ingestedArtifactQuery).getResultList());
-        // System.out.println("ingested query: " + ingestedArtifactQuery);
+        ingestPipelineReport.put("a.Ingested Artifacts", entityManager.createNativeQuery(ingestedArtifactQuery).getResultList());
 
-        String inProgressQuery = "select details->>'$.staged_filename' from request r where action_id = 'ingest' and status = 'in_progress' and type='system'"
+        String queuedQuery = "select distinct(details->>'$.staged_filename') from request r join artifact1 a on a.q_latest_request_id=r.id where a.deleted=0 and action_id = 'ingest' and status = 'queued' and type='system'"
         + condition;
-        pipelineReport.put("In Progress", entityManager.createNativeQuery(inProgressQuery).getResultList());
+        ingestPipelineReport.put("b.Queued", entityManager.createNativeQuery(queuedQuery).getResultList());
 
-        String inProgressBeforeYesterdayQuery = "select details->>'$.staged_filename' from request r where action_id = 'ingest' and status = 'in_progress' and type='system'"
+        String inProgressQuery = "select distinct(details->>'$.staged_filename') from request r join artifact1 a on a.q_latest_request_id=r.id where a.deleted=0 and action_id = 'ingest' and status = 'in_progress' and type='system'"
+        + condition;
+        ingestPipelineReport.put("c.In Progress", entityManager.createNativeQuery(inProgressQuery).getResultList());
+
+        String inProgressBeforeYesterdayQuery = "select distinct(details->>'$.staged_filename') from request r join artifact1 a on a.q_latest_request_id=r.id where a.deleted=0 and action_id = 'ingest' and status = 'in_progress' and type='system'"
         + " and requested_at >= subdate(current_date,1)"
         + condition;
-        pipelineReport.put("In Progress > 24h", entityManager.createNativeQuery(inProgressBeforeYesterdayQuery).getResultList());
+        ingestPipelineReport.put("d.In Progress > 24h", entityManager.createNativeQuery(inProgressBeforeYesterdayQuery).getResultList());
 
-        String completedQuery = "select details->>'$.staged_filename' from request r where action_id = 'ingest' and status = 'completed' and type='system'"
+        String completedQuery = "select distinct(details->>'$.staged_filename') from request r join artifact1 a on a.q_latest_request_id=r.id where a.deleted=0 and action_id = 'ingest' and (status = 'completed' or status='marked_completed') and type='system'"
         + condition;
-        pipelineReport.put("Ingest Completed", entityManager.createNativeQuery(completedQuery).getResultList());
+        ingestPipelineReport.put("e.Ingest Completed", entityManager.createNativeQuery(completedQuery).getResultList());
 
-        String copy1WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.storagetask_action_id='write' and j.group_volume_id like '%1' and j.status='failed'"
+        String completedFailuresQuery = "select distinct(details->>'$.staged_filename') from request r join artifact1 a on a.q_latest_request_id=r.id where a.deleted=0 and action_id = 'ingest' and (status = 'completed_failures' or status = 'failed') and type='system'"
         + condition;
-        pipelineReport.put("Copy1 Write Failed", entityManager.createNativeQuery(copy1WriteFailedQuery).getResultList());
+        ingestPipelineReport.put("f.Ingest Failed", entityManager.createNativeQuery(completedFailuresQuery).getResultList());
 
-        String copy2WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.storagetask_action_id='write' and j.group_volume_id like '%2' and j.status='failed'"
+        String copy1WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.q_latest_request_id=r.id where a.deleted=0 and j.storagetask_action_id='write' and j.group_volume_id like '%1' and (j.status='failed' or j.status='completed_failures')"
         + condition;
-        pipelineReport.put("Copy2 Write Failed", entityManager.createNativeQuery(copy2WriteFailedQuery).getResultList());
+        ingestPipelineReport.put("g.Copy1 Write Failed", entityManager.createNativeQuery(copy1WriteFailedQuery).getResultList());
 
-        String copy3WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.storagetask_action_id='write' and j.group_volume_id like '%3' and j.status='failed'"
+        String copy2WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.q_latest_request_id=r.id where a.deleted=0 and j.storagetask_action_id='write' and j.group_volume_id like '%2' and (j.status='failed' or j.status='completed_failures')"
         + condition;
-        pipelineReport.put("Copy3 Write Failed", entityManager.createNativeQuery(copy3WriteFailedQuery).getResultList());
+        ingestPipelineReport.put("h.Copy2 Write Failed", entityManager.createNativeQuery(copy2WriteFailedQuery).getResultList());
 
-        String proxyGenFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.processingtask_id='video-proxy-low-gen' and j.status='failed'"
+        String copy3WriteFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.q_latest_request_id=r.id where a.deleted=0 and j.storagetask_action_id='write' and j.group_volume_id like '%3' and (j.status='failed' or j.status='completed_failures')"
         + condition;
-        pipelineReport.put("Proxy Gen Failed", entityManager.createNativeQuery(proxyGenFailedQuery).getResultList());
+        ingestPipelineReport.put("i.Copy3 Write Failed", entityManager.createNativeQuery(copy3WriteFailedQuery).getResultList());
 
-        String mamUpdateFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.write_request_id=r.id where a.deleted=0 and j.processingtask_id='video-mam-update' and j.status='failed'"
+        String proxyGenFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.q_latest_request_id=r.id where a.deleted=0 and j.processingtask_id='video-proxy-low-gen' and (j.status='failed' or j.status='completed_failures')"
         + condition;
-        pipelineReport.put("Mam Update Failed", entityManager.createNativeQuery(mamUpdateFailedQuery).getResultList());
+        ingestPipelineReport.put("j.Proxy Gen Failed", entityManager.createNativeQuery(proxyGenFailedQuery).getResultList());
+
+        String mamUpdateFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.q_latest_request_id=r.id where a.deleted=0 and j.processingtask_id='video-mam-update' and (j.status='failed' or j.status='completed_failures')"
+        + condition;
+        ingestPipelineReport.put("k.Mam Update Failed", entityManager.createNativeQuery(mamUpdateFailedQuery).getResultList());
 
         List<String> inStaged3Days = new ArrayList<String>();
         File stagedFile = new File("/data/dwara/staged");
@@ -193,7 +199,37 @@ public class ReportService extends DwaraService {
                 e.printStackTrace();
             }
         }
-        pipelineReport.put("In Staged > 3Days", inStaged3Days);
+        ingestPipelineReport.put("l.In Staged > 3Days", inStaged3Days);
+
+        HashMap<String, List<String>> restorePipelineReport = new HashMap<String, List<String>>();
+        String restoreQuery = "select f.pathname from request r join file1 f on r.file_id=f.id where r.action_id like 'restore%' and r.type='system'"
+        + condition;
+        restorePipelineReport.put("a.Restore Request", entityManager.createNativeQuery(restoreQuery).getResultList());
+
+        String restoreQueuedQuery = "select f.pathname from request r join file1 f on r.file_id=f.id where r.action_id like 'restore%' and r.type='system' and r.status='queued'"
+        + condition;
+        restorePipelineReport.put("b.Queued", entityManager.createNativeQuery(restoreQueuedQuery).getResultList());
+
+        String restoreInProgressQuery = "select f.pathname from request r join file1 f on r.file_id=f.id where r.action_id like 'restore%' and r.type='system' and r.status='in_progress'"
+        + condition;
+        restorePipelineReport.put("c.In Progress", entityManager.createNativeQuery(restoreInProgressQuery).getResultList());
+
+        String restoreCompletedQuery = "select f.pathname from request r join file1 f on r.file_id=f.id where r.action_id like 'restore%' and r.type='system' and (r.status='completed' or r.status='marked_completed')"
+        + condition;
+        restorePipelineReport.put("d.Restore Completed", entityManager.createNativeQuery(restoreCompletedQuery).getResultList());
+
+        String restoreFailedQuery = "SELECT f.pathname FROM job j join request r on r.id = j.request_id join file1 f on r.file_id=f.id where j.processingtask_id = 'restore' and (j.status='failed' or j.status='completed_failures')"
+        + condition;
+        restorePipelineReport.put("f.Restore Failed", entityManager.createNativeQuery(restoreFailedQuery).getResultList());
+
+        String restoreMovConversionFailedQuery = "SELECT f.pathname FROM job j join request r on r.id = j.request_id join file1 f on r.file_id=f.id where j.processingtask_id = 'video-digi-2020-mkv-mov-gen' and (j.status='failed' or j.status='completed_failures')"
+        + condition;
+        restorePipelineReport.put("g.Mov Conversion Failed", entityManager.createNativeQuery(restoreMovConversionFailedQuery).getResultList());
+
+        HashMap<String, HashMap<String, List<String>>> pipelineReport = new HashMap<String, HashMap<String, List<String>>>();
+        pipelineReport.put("1.Ingest", ingestPipelineReport);
+        pipelineReport.put("2.Restore", restorePipelineReport);
+
         return pipelineReport;
     }
 

@@ -30,8 +30,8 @@ public class ReportController {
     }
 
     @GetMapping(value = "/report/pipeline", produces = "application/json")
-	public ResponseEntity<HashMap<String, List<String>>> getPipelineReport(@RequestParam(required=false) String requestedFrom,  @RequestParam(required=false) String requestedTo){
-        HashMap<String, List<String>> report = reportService.getPipelineReport(requestedFrom, requestedTo);
+	public ResponseEntity<HashMap<String, HashMap<String, List<String>>>> getPipelineReport(@RequestParam(required=false) String requestedFrom,  @RequestParam(required=false) String requestedTo){
+        HashMap<String, HashMap<String, List<String>>> report = reportService.getPipelineReport(requestedFrom, requestedTo);
         return ResponseEntity.status(HttpStatus.OK).body(report);
     }
     
