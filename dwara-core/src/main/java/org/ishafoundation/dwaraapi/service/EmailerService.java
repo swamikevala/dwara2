@@ -106,7 +106,7 @@ public class EmailerService {
         Properties props = new Properties();
 
         try {
-            props.load(new FileInputStream(new File("properties\\smtp.properties")));
+            props.load(new FileInputStream(new File("C:\\Users\\aumrit.sarangi.sp21\\git\\dwara2restoreBucket\\dwara-service\\src\\main\\resources\\smtp.properties")));
             Session session = Session.getDefaultInstance(props, null);
             String filteredMsg = "";
             String originalMsg = "";
