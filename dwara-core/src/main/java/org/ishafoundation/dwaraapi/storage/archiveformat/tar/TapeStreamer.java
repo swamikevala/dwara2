@@ -47,8 +47,9 @@ public class TapeStreamer {
 		
 		StringBuffer stdErrRespBuffer = new StringBuffer(); // stderr channel	
 		// for mbuffer stdin channel is tape content and so only stderr channel has both status logging and the broken pipe errors from right side of the pipe
-		// so we are quieting mbuffer from status logging and also exhausting the errorstream but do nothing about its value
-		// TODO : Throw error when we know a genuine error is coming in errorstream
+		// so we are quieting mbuffer from status logging and also reading/exhausting the errorstream but do nothing about its value
+		// as we dont know how to distinguish broken pipe error that we get for a normal scenario and a genuine error
+		// TODO : Deal with genuine errors - when we get one - so that we know differentiating it from a broken pipe errors that we get for a normal success scenario.
 		InputStream es = new BufferedInputStream(proc.getErrorStream(), bufferSize);  
 		byte[] tmp = new byte[1024];
 		byte[] chopchunk = new byte[skipByteCount];
