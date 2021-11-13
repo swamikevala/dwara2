@@ -158,7 +158,7 @@ public class ImportService extends DwaraService {
 				importResponse.setRunCount(nthImportResponse.getRunCount());
 				
 				destDir = completedDirPath; // move the imported catalog to completed folder - eg., /data/dwara/import-staging/completed
-				if(nthImportResponse.getErrors().size() > 0) {
+				if(nthImportResponse.getErrors() != null && nthImportResponse.getErrors().size() > 0) {
 					destDir = invalidDirPath; // if there are errors move the catalog to invalid folder
 					importResponse.setErrors(nthImportResponse.getErrors());
 				}
@@ -399,13 +399,14 @@ public class ImportService extends DwaraService {
 							
 							artifact1 = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) domainSpecificArtifactRepository.save(artifact1);
 							artifactImportStatus = ImportStatus.completed;
-							logger.info("Artifact " + artifact1.getId() + " imported to dwara succesfully");
+							logger.debug("Artifact " + artifact1.getId() + " imported to dwara succesfully");
 						}else {
 							toBeArtifactName = artifact1.getName();
 							artifactImportStatus = ImportStatus.skipped;
-							logger.info("Artifact " + artifact1.getId() + " already exists, so skipping updating DB");  // artifact nth copy / rerun scenario
+							logger.debug("Artifact " + artifact1.getId() + " already exists, so skipping updating DB");  // artifact nth copy / rerun scenario
 						}
-					
+						logger.info("*** Artifact " + artifact1.getId() + " ***");
+						logger.info("Artifact - " + artifactImportStatus);
 						/*
 						 * creating artifact_volume
 						 * 
@@ -436,12 +437,12 @@ public class ImportService extends DwaraService {
 						    // updating this upon all updates are successful - artifactVolume.setStatus(ArtifactVolumeStatus.current);
 						    artifactVolume = domainSpecificArtifactVolumeRepository.save(artifactVolume);
 						    artifactVolumeImportStatus = ImportStatus.completed;
-						    logger.info("ArtifactVolume record created successfully");
+						    
 					    }else {
 					    	artifactVolumeImportStatus = ImportStatus.skipped;
-					    	logger.info("ArtifactVolume for " + artifact1.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
+					    	logger.debug("ArtifactVolume for " + artifact1.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
 					    }
-					    
+					    logger.info("ArtifactVolume - " + artifactVolumeImportStatus);
 					    long artifactTotalSize = 0;
 					    int fileCount = 0;
 					    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = artifact.getFile();

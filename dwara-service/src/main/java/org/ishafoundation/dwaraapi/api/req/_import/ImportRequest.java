@@ -1,10 +1,13 @@
 package org.ishafoundation.dwaraapi.api.req._import;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ImportRequest {
 	
-	private String stagingDir; // /data/dwara/import-staging
+	private String stagingDir; // used in bulk import - /data/dwara/import-staging
 
-	private String xmlPathname;
+	private String xmlPathname; // used in single import -  /data/dwara/import-staging/todo/C16007L6.xml
 
 	
 	public String getStagingDir() {
