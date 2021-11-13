@@ -22,7 +22,17 @@ public class TRestoreBucket {
     String approverEmail;
     Integer requestedBy;
     Integer createdBy;
+    String destinationPath;
+    String priority;
 
+    @Column(name="createdAt")
+    Date createdAt;
+    //@Column(name="details")
+    @Lob
+    @Type(type = "json")
+    @Column(name="details", columnDefinition = "json")
+
+    List<RestoreBucketFile> details ;
     public String getApproverEmail() {
         return approverEmail;
     }
@@ -47,19 +57,9 @@ public class TRestoreBucket {
         this.priority = priority;
     }
 
-    String destinationPath;
-    String priority;
 
-    @Column(name="createdAt")
-    Date createdAt;
-    //@Column(name="details")
-    @Lob
-    @Type(type = "json")
-    @Column(name="details", columnDefinition = "json")
 
-    List<RestoreBucketFile> details ;
-
-    public int getRequestedBy() {
+    public Integer getRequestedBy() {
         return requestedBy;
     }
 
@@ -67,7 +67,7 @@ public class TRestoreBucket {
         this.requestedBy = requestedBy;
     }
 
-    public int getCreatedBy() {
+    public Integer getCreatedBy() {
         return createdBy;
     }
 
