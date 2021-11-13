@@ -113,7 +113,7 @@ public class EmailerService {
 
             Store store = session.getStore("imaps");
             //change
-            store.connect("smtp.gmail.com", "prasanth.presannakumar@ishafoundation.org", "nykctcjwctpswsra");
+            store.connect("smtp.gmail.com", "private.archives.requests@gmail.com", "zxmpasyyllvqgcum");
 
             Folder inbox = store.getFolder("inbox");
             // update the mail status as read
