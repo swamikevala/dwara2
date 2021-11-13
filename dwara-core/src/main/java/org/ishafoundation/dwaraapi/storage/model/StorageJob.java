@@ -39,8 +39,6 @@ public class StorageJob {
 	private String targetLocationPath;
 	private Integer volumeBlock;
 	private Long archiveBlock;
-	private boolean restoreVerify;
-	
 	private int priority = Priority.normal.getPriorityValue();
 
 	public Job getJob() {
@@ -185,14 +183,6 @@ public class StorageJob {
 
 	public void setArchiveBlock(Long archiveBlock) {
 		this.archiveBlock = archiveBlock;
-	}
-	
-	public boolean isRestoreVerify() {
-		return restoreVerify;
-	}
-
-	public void setRestoreVerify(boolean restoreVerify) {
-		this.restoreVerify = restoreVerify;
 	}
 	
 	public int getPriority() {
