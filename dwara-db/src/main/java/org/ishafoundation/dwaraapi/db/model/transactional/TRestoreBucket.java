@@ -20,8 +20,8 @@ public class TRestoreBucket {
     String approvalStatus;
     String approver;
     String approverEmail;
-    int requestedBy;
-    int createdBy;
+    Integer requestedBy;
+    Integer createdBy;
 
     public String getApproverEmail() {
         return approverEmail;
