@@ -1,9 +1,11 @@
 package org.ishafoundation.dwaraapi.service;
+import org.springframework.stereotype.Service;
+
 import java.util.Properties;
 
 import javax.mail.*;
 import javax.mail.internet.*;
-
+@Service
 public class EmailerService {
 
         private  final String appEmail  = "private.archives.requests@gmail.com";
