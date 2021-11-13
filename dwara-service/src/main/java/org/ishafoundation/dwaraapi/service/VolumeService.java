@@ -194,7 +194,7 @@ public class VolumeService extends DwaraService {
 			//details.setMountPoint(mountPoint);
 			//details.setProvider(provider);
 			//details.setRemoveAfterJob(removeAfterJob);
-			if(volume.getType() == Volumetype.group) {
+			if(volume.getType() == Volumetype.group && !volume.isImported()) {
 				logger.info(volume.getId() + ":" +  volResp.getUnusedCapacity() + ":" + (volumeDetails.getMinimumFreeSpace()/sizeUnitDivisor));
 				if(volResp.getUnusedCapacity() < (volumeDetails.getMinimumFreeSpace()/sizeUnitDivisor))
 					details.setExpandCapacity(true);
