@@ -21,7 +21,7 @@ public class ScheduledEmailReader {
     @Autowired
     UserDao userDao;
 
-    @Scheduled()
+    @Scheduled(cron ="0 0/5 * 1/1 * ? *")
     public void readEmail(){
         //hoe to find by approvestatus can't take input
         List<TRestoreBucket> tRestoreBucketfromDbs = tRestoreBucketDao.findByApprovalStatus("in_progress");
