@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface TRestoreBucketDao extends CrudRepository<TRestoreBucket,String> {
     List<TRestoreBucket> findByApprovalStatusNull();
+    List<TRestoreBucket> findByApprovalStatus(String status);
 }

@@ -30,8 +30,7 @@ public class RestoreBucketController {
     TRestoreBucketDao tRestoreBucketDao;
     @Autowired
     FileService fileService;
-    @Autowired
-    EmailerService emailerService;
+
 
 
     @GetMapping("/buckets")
@@ -41,7 +40,7 @@ public class RestoreBucketController {
 
     @PostMapping("/buckets")
     public ResponseEntity<TRestoreBucket> createBucket(@RequestBody Map<String,String> map){
-        TRestoreBucket tRestoreBucket =restoreBucketService.createBucket((String)map.get("id"), map.get("createdBy"));
+        TRestoreBucket tRestoreBucket =restoreBucketService.createBucket((String)map.get("id"));
         return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucket);
     }
 
@@ -104,17 +103,9 @@ public class RestoreBucketController {
         tRestoreBucketFromDb.setApprover(tRestoreBucket.getApprover());
         tRestoreBucketFromDb.setPriority(tRestoreBucket.getPriority());
         tRestoreBucketFromDb.setApprovalStatus(tRestoreBucket.getApprovalStatus());
+        tRestoreBucketFromDb.setRequestedBy(restoreBucketService.getUserObjFromContext().getId());
         tRestoreBucketDao.save(tRestoreBucketFromDb);
-        String emailBody = "<p>Namaskaram</p>";
-        emailBody += "<p>The following folders need your approval</p>";
-        List<String> fileName = new ArrayList<>();
-        for (RestoreBucketFile file: tRestoreBucketFromDb.getDetails()) {
-            emailBody +="<div> "+ file.getFilePathName()  +"</div>";
-        }
-        emailBody +="<p>Please reply with <pre><approved></pre> if you wish to approve </p>";
-        emailerService.setConcernedEmail(tRestoreBucketFromDb.getApproverEmail());
-        emailerService.setSubject("Need Approval for project: "+tRestoreBucketFromDb.getId());
-        emailerService.sendEmail(emailBody);
+        restoreBucketService.sendMail(tRestoreBucketFromDb);
 
         return ResponseEntity.status(HttpStatus.OK).body(new TRestoreBucket());
     }

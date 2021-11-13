@@ -20,8 +20,8 @@ public class TRestoreBucket {
     String approvalStatus;
     String approver;
     String approverEmail;
-    String requestedBy;
-    String createdBy;
+    int requestedBy;
+    int createdBy;
 
     public String getApproverEmail() {
         return approverEmail;
@@ -59,19 +59,19 @@ public class TRestoreBucket {
 
     List<RestoreBucketFile> details ;
 
-    public String getRequestedBy() {
+    public int getRequestedBy() {
         return requestedBy;
     }
 
-    public void setRequestedBy(String requestedBy) {
+    public void setRequestedBy(int requestedBy) {
         this.requestedBy = requestedBy;
     }
 
-    public String getCreatedBy() {
+    public int getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(String createdBy) {
+    public void setCreatedBy(int createdBy) {
         this.createdBy = createdBy;
     }
 
@@ -115,13 +115,6 @@ public class TRestoreBucket {
         this.approver = approver;
     }
 
-    public String getRequesyedBy() {
-        return requestedBy;
-    }
-
-    public void setRequesyedBy(String requesyedBy) {
-        this.requestedBy = requesyedBy;
-    }
 
     public Date getCreatedAt() {
         return createdAt;
@@ -144,7 +137,7 @@ public class TRestoreBucket {
         this.details.addAll(details);
     }
 
-    public TRestoreBucket(String id, String createdBy, Date createdAt) {
+    public TRestoreBucket(String id, int createdBy, Date createdAt) {
         this.id = id;
         this.createdBy = createdBy;
         this.createdAt = createdAt;

@@ -25,9 +25,13 @@ public class RestoreBucketService extends DwaraService{
     File1Dao file1Dao;
     @Autowired
     Artifact1Dao artifact1Dao;
+    @Autowired
+    EmailerService emailerService;
 
-    public TRestoreBucket createBucket(String id , String createdBy){
+    public TRestoreBucket createBucket(String id ){
+        int createdBy =getUserObjFromContext().getId();
         TRestoreBucket tRestoreBucket = new TRestoreBucket( id,createdBy , new Date());
+
         tRestoreBucketDao.save(tRestoreBucket);
         return tRestoreBucket;
     }
@@ -173,6 +177,17 @@ public class RestoreBucketService extends DwaraService{
         return tRestoreBucketDao.findByApprovalStatusNull();
     }
 
-
+    public void sendMail(TRestoreBucket tRestoreBucket){
+        String emailBody = "<p>Namaskaram</p>";
+        emailBody += "<p>The following folders need your approval</p>";
+        List<String> fileName = new ArrayList<>();
+        for (RestoreBucketFile file: tRestoreBucket.getDetails()) {
+            emailBody +="<div> "+ file.getFilePathName()  +"</div>";
+        }
+        emailBody +="<p>Please reply with <pre><approved></pre> if you wish to approve </p>";
+        emailerService.setConcernedEmail(tRestoreBucket.getApproverEmail());
+        emailerService.setSubject("Need Approval for project: _"+tRestoreBucket.getId()+"_");
+        emailerService.sendEmail(emailBody);
+    }
 
 }
