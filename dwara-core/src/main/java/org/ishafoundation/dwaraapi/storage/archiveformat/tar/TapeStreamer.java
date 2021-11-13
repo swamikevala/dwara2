@@ -43,7 +43,14 @@ public class TapeStreamer {
 		Process proc = pb.start();
 		logger.trace("process started...");
 		InputStream is = new BufferedInputStream(proc.getInputStream(), bufferSize);
-		// Dont do anything with errorstream - mbuffer returns broken pipe error - InputStream es = new BufferedInputStream(proc.getErrorStream(), bufferSize);
+		
+		StringBuffer stdErrRespBuffer = new StringBuffer(); // stderr channel	
+		// for mbuffer stdin channel is tape content and so only stderr channel has both status logging and the broken pipe errors from right side of the pipe
+		// so we are quieting mbuffer from status logging and also reading/exhausting the errorstream but do nothing about its value
+		// as we dont know how to distinguish broken pipe error that we get for a normal scenario and a genuine error
+		// TODO : Deal with genuine errors - when we get one - so that we know differentiating it from a broken pipe errors that we get for a normal success scenario.
+		InputStream es = new BufferedInputStream(proc.getErrorStream(), bufferSize);  
+		byte[] tmp = new byte[1024];
 		byte[] chopchunk = new byte[skipByteCount];
 		logger.trace("skipped " + is.read(chopchunk, 0, chopchunk.length) + " bytes");
 
@@ -165,14 +172,26 @@ public class TapeStreamer {
 				
 				totalNoOfBytesRead = tin.getBytesRead();
 				entry = getNextTarEntry(tin);
+	
+				// Just exhausting the error stream and do nothing about it
+				while (es.available() > 0) {
+					int i = es.read(tmp, 0, 1024);
+					if (i < 0)
+						break;
+					stdErrRespBuffer.append(new String(tmp, 0, i));
+				}
 			}
 			logger.trace("no more entries...");
+			logger.trace(commandList + " error stream " + stdErrRespBuffer.toString());
+//			FileUtils.write(new File("/data/dwara/tmp/" + filePathNameWeNeed + ".errorLog"), stdErrRespBuffer.toString());
 		} catch (Exception e) {
 			logger.error("Unable to read tar stream " + e.getMessage(), e);
 			throw e;
 		} finally {
 			if(is != null)
 				is.close();
+			if(es != null)
+				es.close();
 			if (tin != null)
 				tin.close();
 			logger.trace("is proc alive : " + proc.isAlive());

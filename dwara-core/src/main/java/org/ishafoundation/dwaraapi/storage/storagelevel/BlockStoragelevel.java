@@ -6,6 +6,7 @@ import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Archiveformat;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
+import org.ishafoundation.dwaraapi.exception.StorageException;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
@@ -53,7 +54,7 @@ public class BlockStoragelevel implements IStoragelevel {
 	}
 
 	@Override
-	public StorageResponse write(SelectedStorageJob selectedStorageJob) throws Exception{
+	public StorageResponse write(SelectedStorageJob selectedStorageJob) throws StorageException{
 		StorageResponse storageResponse = new StorageResponse();
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		logger.debug("Writing blocks");
@@ -79,23 +80,6 @@ public class BlockStoragelevel implements IStoragelevel {
 	}
 
 	@Override
-	public StorageResponse verify(SelectedStorageJob selectedStorageJob) throws Exception{
-		logger.debug("Verifying blocks");
-		StorageJob storageJob = selectedStorageJob.getStorageJob();
-		Volume volume = storageJob.getVolume();
-		Archiveformat archiveformat = volume.getArchiveformat();
-    	IArchiveformatter archiveFormatter = iArchiveformatterMap.get(archiveformat.getId() + DwaraConstants.ARCHIVER_SUFFIX);
-		StorageResponse storageResponse = new StorageResponse();
-    	ArchiveformatJob archiveformatJob = instantiateArchiveJobWithCommonFields(selectedStorageJob);
-    	archiveformatJob.setTargetLocationPath(storageJob.getTargetLocationPath());
-	
-		ArchiveResponse archiveResponse = archiveFormatter.verify(archiveformatJob);
-		storageResponse.setArchiveResponse(archiveResponse);
-
-		return storageResponse;
-	}
-
-	@Override
 	public StorageResponse finalize(SelectedStorageJob selectedStorageJob) throws Exception{
 		boolean status = volumeindexManager.writeVolumeindex(selectedStorageJob);
 		logger.debug("Indexing success? - " + status);
@@ -104,7 +88,7 @@ public class BlockStoragelevel implements IStoragelevel {
 	}
 	
 	@Override
-	public StorageResponse restore(SelectedStorageJob selectedStorageJob) throws Exception {
+	public StorageResponse restore(SelectedStorageJob selectedStorageJob) throws StorageException {
 		logger.debug("Reading blocks");
 		StorageResponse storageResponse = new StorageResponse();
 		StorageJob storageJob = selectedStorageJob.getStorageJob();

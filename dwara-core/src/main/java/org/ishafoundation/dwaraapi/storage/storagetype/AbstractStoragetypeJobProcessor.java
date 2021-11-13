@@ -546,7 +546,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 			if(requestedAction != Action.restore_process) // we still dont know for restore_process if there is a dependent job to be created or not. Even to determine if a job need to be created or not the restored artifact with its correct name is needed 
 				destPath = destPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");
 
-			move(srcPath, destPath);
+			if(!srcPath.equals(destPath))
+				move(srcPath, destPath);
 			
 			// Had to do this in 2 steps for restore_process because we need the renamed artifact to determine if dependent jobs need to be created or not
 			if(requestedAction == Action.restore_process && (jobCreator.hasDependentJobsToBeCreated(storageJob.getJob()).size() == 0)) { // if no dependent jobs then move it out of the temp folder... 

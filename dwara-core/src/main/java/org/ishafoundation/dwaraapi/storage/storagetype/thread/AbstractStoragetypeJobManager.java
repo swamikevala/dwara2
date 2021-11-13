@@ -19,6 +19,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
+import org.ishafoundation.dwaraapi.exception.StorageException;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.service.JobServiceRequeueHelper;
@@ -106,35 +107,36 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 			job.setMessage("[error] " + errorMsg);
 			updateJobFailed(job);
 			
-			if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.restore) { // Any write or restore failure should have the tape marked as suspect...
-				long jobAlreadyRequeuedCount = jobRunDao.countByJobId(job.getId());
-				if(jobAlreadyRequeuedCount < configuration.getAllowedAutoRequeueAttemptsOnFailedStorageJobs()) {
-					try {
-						logger.info("Requeuing job " + job.getId() + ". Attempt " + (jobAlreadyRequeuedCount + 1));
-						jobServiceRequeueHelper.requeueJob(job.getId(),DwaraConstants.SYSTEM_USER_NAME);
-					} catch (Exception e1) {
-						logger.error("Unable to auto requeue failed job..." + job.getId(), e1);
+			if(e instanceof StorageException) {
+				if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.restore) { // Any write or restore failure should have the tape marked as suspect...
+					long jobAlreadyRequeuedCount = jobRunDao.countByJobId(job.getId());
+					if(jobAlreadyRequeuedCount < configuration.getAllowedAutoRequeueAttemptsOnFailedStorageJobs()) {
+						try {
+							logger.info("Requeuing job " + job.getId() + ". Attempt " + (jobAlreadyRequeuedCount + 1));
+							jobServiceRequeueHelper.requeueJob(job.getId(),DwaraConstants.SYSTEM_USER_NAME);
+						} catch (Exception e1) {
+							logger.error("Unable to auto requeue failed job..." + job.getId(), e1);
+						}
 					}
+					else {
+						if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.restore) { // TODO: Should we Mark a tape suspect on restore failures too or only for write?
+							Volume volume = selectedStorageJob.getStorageJob().getVolume();
+							
+							volume.setHealthstatus(VolumeHealthStatus.suspect);
+							volumeDao.save(volume);
+							logger.info("Marked the volume " + volume.getId() + " as suspect");
+					
+							// create user request for tracking
+							HashMap<String, Object> data = new HashMap<String, Object>();
+							data.put("volumeId", volume.getId());
+							data.put("status", VolumeHealthStatus.suspect);
+							String reason = "Repeated failure on job " + job.getId();
+							data.put("reason", reason);
+							userRequestHelper.createUserRequest(Action.mark_volume, DwaraConstants.SYSTEM_USER_NAME, Status.completed, data, reason);
+						}
+					}	
 				}
-				else {
-					if(job.getStoragetaskActionId() == Action.write) { // TODO: Should we Mark a tape suspect on restore failures too or only for write?
-						Volume volume = selectedStorageJob.getStorageJob().getVolume();
-						
-						volume.setHealthstatus(VolumeHealthStatus.suspect);
-						volumeDao.save(volume);
-						logger.info("Marked the volume " + volume.getId() + " as suspect");
-				
-						// create user request for tracking
-						HashMap<String, Object> data = new HashMap<String, Object>();
-						data.put("volumeId", volume.getId());
-						data.put("status", VolumeHealthStatus.suspect);
-						String reason = "Repeated failure on write job " + job.getId();
-						data.put("reason", reason);
-						userRequestHelper.createUserRequest(Action.mark_volume, DwaraConstants.SYSTEM_USER_NAME, Status.completed, data, reason);
-					}
-				}	
 			}
-			// updateError Table;
 		}finally {
 			threadNameHelper.resetThreadName();
 		}
