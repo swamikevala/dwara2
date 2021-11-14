@@ -5,6 +5,8 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.TRestoreBucketDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.RestoreBucketFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
 import org.ishafoundation.dwaraapi.service.EmailerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -14,6 +16,7 @@ import java.util.List;
 
 @Component
 public class ScheduledEmailReader {
+    private static final Logger logger = LoggerFactory.getLogger(ScheduledEmailReader.class);
     @Autowired
     TRestoreBucketDao tRestoreBucketDao;
     @Autowired
@@ -25,7 +28,9 @@ public class ScheduledEmailReader {
     public void readEmail(){
         //hoe to find by approvestatus can't take input
         List<TRestoreBucket> tRestoreBucketfromDbs = tRestoreBucketDao.findByApprovalStatus("in_progress");
+        logger.info("Started email reading");
         for(TRestoreBucket tRestoreBucket : tRestoreBucketfromDbs){
+        logger.info("Reading for bucket : "+tRestoreBucket.getId());
             boolean found = emailerService.read(tRestoreBucket.getApproverEmail(),tRestoreBucket.getId());
             if(found){
                 tRestoreBucket.setApprovalStatus("approved");
