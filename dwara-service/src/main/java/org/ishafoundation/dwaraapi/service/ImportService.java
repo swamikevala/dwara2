@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -162,6 +163,8 @@ public class ImportService extends DwaraService {
 					destDir = invalidDirPath; // if there are errors move the catalog to invalid folder
 					importResponse.setErrors(nthImportResponse.getErrors());
 				}
+				
+				moveFileNLogToOutputFolder(destDir, nthXmlFile, volumeName, nthImportResponse);
 			}catch (Exception e) {
 				importResponse = new ImportResponse();
 				importResponse.setVolumeId(volumeName);
@@ -177,17 +180,8 @@ public class ImportService extends DwaraService {
 
 				// move it to failed??? or invalid???
 				destDir = invalidDirPath;
-			}
-			finally {
-				destDir = Paths.get(destDir.toString(), volumeName); // create a directory and put the source xml file and its logs...
-
-				// write the response to a log file inside the destDir
-				ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-				String json = ow.writeValueAsString(importResponse);
-				FileUtils.write(Paths.get(destDir.toString(), volumeName + ".log."+importResponse.getRunCount()).toFile(), json);
 				
-				// move the catalog file to the destDir
-				FileUtils.moveFile(nthXmlFile, Paths.get(destDir.toString(), volumeName + ".xml."+importResponse.getRunCount()).toFile());
+				moveFileNLogToOutputFolder(destDir, nthXmlFile, volumeName, importResponse);
 			}
 			irl.add(importResponse);
 		}
@@ -195,6 +189,17 @@ public class ImportService extends DwaraService {
 		return irl;
 	}
 
+	private void moveFileNLogToOutputFolder(Path destDir, File nthXmlFile, String volumeName, ImportResponse importResponse) throws IOException {
+		destDir = Paths.get(destDir.toString(), volumeName); // create a directory and put the source xml file and its logs...
+
+		// write the response to a log file inside the destDir
+		ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+		String json = ow.writeValueAsString(importResponse);
+		FileUtils.write(Paths.get(destDir.toString(), volumeName + ".log."+importResponse.getRunCount()).toFile(), json);
+		
+		// move the catalog file to the destDir
+		FileUtils.moveFile(nthXmlFile, Paths.get(destDir.toString(), volumeName + ".xml."+importResponse.getRunCount()).toFile());
+	}
 	
 	/*
 	 * response with all info for auditing...
