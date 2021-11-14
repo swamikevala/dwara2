@@ -18,6 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.mail.*;
+import javax.mail.Address;
 import javax.mail.Authenticator;
 import javax.mail.internet.*;
 import javax.mail.search.FlagTerm;
@@ -135,8 +136,14 @@ public class EmailerService {
             boolean found = false;
             for (int i = 0; i < messageCount; i++) {
                 Message message = messages[i];
+                System.out.println(message.getSubject());
+                System.out.println(message.getFrom()[0].toString());
+                Address from =message.getFrom()[0];
+                String fromEmail= from.toString().substring(from.toString().indexOf("<")+1,from.toString().indexOf(">"));
+
+                System.out.println(fromEmail);
                 //String extractedASD = extractASDFromSubject(message.getSubject());
-                if (checkBucketIdInSubject(message.getSubject(),bucketId) && message.getFrom().equals(approver_email)) {
+                if (checkBucketIdInSubject(message.getSubject(),bucketId) && fromEmail.equals(approver_email)) {
 
                 logger.info("Inside message");
 
