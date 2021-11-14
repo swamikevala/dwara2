@@ -1,6 +1,9 @@
 package org.ishafoundation.dwaraapi.service;
 import com.squareup.okhttp.*;
 import org.apache.commons.lang.StringUtils;
+import org.ishafoundation.dwaraapi.scheduler.ScheduledStatusUpdater;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -21,7 +24,7 @@ import javax.mail.search.FlagTerm;
 
 @Service
 public class EmailerService {
-
+    private static final Logger logger = LoggerFactory.getLogger(EmailerService.class);
         private  final String appEmail  = "private.archives.requests@gmail.com";
         private   String concernedEmail ;
         // generate password - https://support.google.com/mail/answer/185833?hl=en
@@ -125,7 +128,7 @@ public class EmailerService {
             FlagTerm unseenFlagTerm = new FlagTerm(seen, false);
             Message[] messages = inbox.search(unseenFlagTerm);
             int messageCount = messages.length;
-            System.out.println("Total Messages:- " + messageCount);
+            logger.info("Total Messages:- " + messageCount);
             // inbox.getMessages();
 
             System.out.println("-------------- Program scans for messages every 10 second ----------------");
@@ -135,7 +138,7 @@ public class EmailerService {
                 //String extractedASD = extractASDFromSubject(message.getSubject());
                 if (checkBucketIdInSubject(message.getSubject(),bucketId) && message.getFrom().equals(approver_email)) {
 
-
+                logger.info("Inside message");
 
                 originalMsg = getTextFromMessage(message).trim();
                 List<String> originalMsgArray =Arrays.asList( originalMsg.split("\n"));
@@ -159,6 +162,7 @@ public class EmailerService {
                 if(found) {
                     inbox.close(true);
                     store.close();
+                    logger.info("inside found");
                     return found;
                 }
 
