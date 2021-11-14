@@ -292,12 +292,22 @@ public class ReportService extends DwaraService {
         map.put("ingestedSpace", dwaraIngested.length());  */
 
         String ingestServer = "";
+        String ingestUser = "";
         String catDVServer = "";
         String confluenceServer = "";
         List<String> c1 = new ArrayList<>();
         c1.add("df");
         c1.add("-h"); 
         ingestServer = getCommandOutput(c1);
+
+        List<String> c11 = new ArrayList<>();
+        c11.add("sudo");
+        c11.add("du");
+        c11.add("-h");
+        c11.add("--max-depth=1");
+        c11.add("/data/dwara/user");
+        c11.add("| sort -hr");
+        ingestUser = getCommandOutput(c11);
 
         String username = configuration.getSshSystemUser();
         String privKeyPath = configuration.getSshPrvKeyFileLocation();
@@ -320,6 +330,7 @@ public class ReportService extends DwaraService {
         confluenceServer = getCommandOutput(c3);
 
         map.put("ingestServer", ingestServer);
+        map.put("ingestUser", ingestUser);
         map.put("catDVServer", catDVServer);
         map.put("confluenceServer", confluenceServer);
 
