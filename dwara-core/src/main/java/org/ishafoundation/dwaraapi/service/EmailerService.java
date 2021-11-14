@@ -236,7 +236,7 @@ public class EmailerService {
 
     private boolean checkBucketIdInSubject(String subject , String bucketId) {
         List<String> subjectArray = Arrays.asList( subject.split("_"));
-        if (subjectArray.contains(subject))
+        if (subjectArray.contains(bucketId))
             return true;
         else
             return false;
