@@ -107,10 +107,21 @@ public class EmailerService {
         }
     public boolean read(String approver_email, String bucketId) {
 
-        Properties props = new Properties();
+        Properties props = System.getProperties();
 
         try {
-            props.load(new FileInputStream(new File("C:\\Users\\aumrit.sarangi.sp21\\git\\dwara2restoreBucket\\dwara-service\\src\\main\\resources\\smtp.properties")));
+           // props.load(new FileInputStream(new File("C:\\Users\\aumrit.sarangi.sp21\\git\\dwara2restoreBucket\\dwara-service\\src\\main\\resources\\smtp.properties")));
+
+            props.put( "mail.smtp.host" , "smtp.gmail.com");
+            props.put("mail.smtp.socketFactory.port" , 465);
+            props.put( "mail.smtp.socketFactory.class" ,"javax.net.ssl.SSLSocketFactory" );
+            props.put(" mail.smtp.auth" , true);
+            props.put("mail.smtp.port" , 465);
+            props.put("mail.smtp.starttls.enable",true);
+            props.put("mail.smtp.starttls.required", true);
+            props.put( "mail.smtp.ssl.protocols","TLSv1.2");
+
+
             Session session = Session.getDefaultInstance(props, null);
             String filteredMsg = "";
             String originalMsg = "";
