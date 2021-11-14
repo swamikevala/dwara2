@@ -301,12 +301,16 @@ public class ReportService extends DwaraService {
         ingestServer = getCommandOutput(c1);
 
         List<String> c11 = new ArrayList<>();
-        c11.add("sudo");
+        // c11.add("sudo");
         c11.add("du");
         c11.add("-h");
-        c11.add("--max-depth=1");
+        c11.add("-d");
+        c11.add("1");
         c11.add("/data/dwara/user");
-        c11.add("| sort -hr");
+        c11.add("|");
+        c11.add("sort");
+        c11.add("-h");
+        c11.add("-r");
         ingestUser = getCommandOutput(c11);
 
         String username = configuration.getSshSystemUser();
