@@ -1,6 +1,8 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -20,12 +22,17 @@ import javax.persistence.Query;
 import org.ishafoundation.dwaraapi.api.req.report.RequestReportSize;
 import org.ishafoundation.dwaraapi.api.resp.report.RespondReportRestoreTime;
 import org.ishafoundation.dwaraapi.api.resp.report.RespondReportSize;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ReportService extends DwaraService {
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Autowired
+	private Configuration configuration;
     
     public List<RespondReportSize> getReportIngestSize(RequestReportSize request) {
         String condition = "";
@@ -264,5 +271,90 @@ public class ReportService extends DwaraService {
             list.add(report);
         });
         return list;
+    }
+
+    public HashMap<String, String> getServerInfo() {
+        HashMap<String, String> map = new HashMap<String, String>();
+        /* File data = new File("/data");
+        map.put("totalSpace", data.getTotalSpace());
+        map.put("freeSpace", data.getUsableSpace());
+
+        File dwaraUser = new File("/data/dwara/user");
+        map.put("userSpace", dwaraUser.length());
+
+        File dwaraStaged = new File("/data/dwara/staged");
+        map.put("stagedSpace", dwaraStaged.length());
+
+        File dwaraTranscoded = new File("/data/dwara/transcoded");
+        map.put("transcodedSpace", dwaraTranscoded.length()); 
+
+        File dwaraIngested = new File("/data/dwara/ingested");
+        map.put("ingestedSpace", dwaraIngested.length());  */
+
+        String ingestServer = "";
+        String ingestUser = "";
+        String catDVServer = "";
+        String confluenceServer = "";
+        List<String> c1 = new ArrayList<>();
+        c1.add("df");
+        c1.add("-h"); 
+        ingestServer = getCommandOutput(c1);
+
+        List<String> c11 = new ArrayList<>();
+        c11.add("sudo");
+        c11.add("du");
+        c11.add("-h");
+        c11.add("--max-depth=1");
+        c11.add("/data/dwara/user");
+        c11.add("| sort -hr");
+        ingestUser = getCommandOutput(c11);
+
+        String username = configuration.getSshSystemUser();
+        String privKeyPath = configuration.getSshPrvKeyFileLocation();
+        List<String> c2 = new ArrayList<>();
+        c2.add("ssh");
+        c2.add("-i"); 
+        c2.add(privKeyPath);
+        c2.add(username + "@172.18.1.24");
+        c2.add("df");
+        c2.add("-h");
+        catDVServer = getCommandOutput(c2);
+
+        List<String> c3 = new ArrayList<>();
+        c3.add("ssh");
+        c3.add("-i"); 
+        c3.add(privKeyPath);
+        c3.add(username + "@172.18.1.22");
+        c3.add("df");
+        c3.add("-h");
+        confluenceServer = getCommandOutput(c3);
+
+        map.put("ingestServer", ingestServer);
+        map.put("ingestUser", ingestUser);
+        map.put("catDVServer", catDVServer);
+        map.put("confluenceServer", confluenceServer);
+
+        return map;
+    }
+
+    private String getCommandOutput(List<String> command) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder(command);
+            Process p = pb.start();
+
+            BufferedReader reader = 
+                new BufferedReader(new InputStreamReader(p.getInputStream()));
+            StringBuilder builder = new StringBuilder();
+            String line = null;
+            while ( (line = reader.readLine()) != null) {
+                builder.append(line);
+                builder.append(System.getProperty("line.separator"));
+            }
+            return builder.toString();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return e.getMessage();
+        }
     }
 }
