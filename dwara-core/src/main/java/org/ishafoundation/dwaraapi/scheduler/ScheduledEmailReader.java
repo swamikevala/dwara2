@@ -32,6 +32,7 @@ public class ScheduledEmailReader {
         for(TRestoreBucket tRestoreBucket : tRestoreBucketfromDbs){
         logger.info("Reading for bucket : "+tRestoreBucket.getId());
             boolean found = emailerService.read(tRestoreBucket.getApproverEmail(),tRestoreBucket.getId());
+           logger.info("found " +found);
             if(found){
                 logger.info("Found" + found);
                 tRestoreBucket.setApprovalStatus("approved");
