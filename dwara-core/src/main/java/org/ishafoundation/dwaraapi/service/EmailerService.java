@@ -125,9 +125,9 @@ public class EmailerService {
             int messageCountTotal = inbox.getMessageCount();
 
             //check only un-read messages
-            Flags seen = new Flags(Flags.Flag.SEEN);// RECENT
-            FlagTerm unseenFlagTerm = new FlagTerm(seen, false);
-            Message[] messages = inbox.search(unseenFlagTerm);
+            /*Flags seen = new Flags(Flags.Flag.SEEN);// RECENT
+            FlagTerm unseenFlagTerm = new FlagTerm(seen, false);*/
+            Message[] messages = inbox.getMessages();
             int messageCount = messages.length;
             logger.info("Total Messages:- " + messageCount);
             // inbox.getMessages();
