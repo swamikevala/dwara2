@@ -48,7 +48,7 @@ public class ScheduledEmailReader {
                 int requsterId= tRestoreBucket.getRequestedBy();
                 String requesterEmail = userDao.findById(requsterId).get().getEmail();
                 emailerService.setConcernedEmail(requesterEmail);
-                System.out.println(requesterEmail);
+                logger.info(requesterEmail);
                 emailerService.setSubject("Need Approval for project: _"+tRestoreBucket.getId()+"_");
                 emailerService.sendEmail(emailBody);
             }
