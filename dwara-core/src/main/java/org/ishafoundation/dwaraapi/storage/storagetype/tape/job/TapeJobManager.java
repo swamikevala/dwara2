@@ -22,6 +22,7 @@ import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
+import org.ishafoundation.dwaraapi.exception.StorageException;
 import org.ishafoundation.dwaraapi.service.JobServiceRequeueHelper;
 import org.ishafoundation.dwaraapi.service.UserRequestHelper;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
@@ -468,36 +469,38 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			logger.error(e.getMessage());
 			updateJobFailed(job);
 			
-			if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.restore) { // Any write or verify failure should have the tape marked as suspect...
-				long jobAlreadyRequeuedCount = jobRunDao.countByJobId(job.getId());
-				if(jobAlreadyRequeuedCount < configuration.getAllowedAutoRequeueAttemptsOnFailedStorageJobs()) {
-					try {
-						logger.info("Requeuing job " + job.getId() + ". Attempt " + jobAlreadyRequeuedCount + 1);
-						jobServiceRequeueHelper.requeueJob(job.getId(),DwaraConstants.SYSTEM_USER_NAME);
-					} catch (Exception e1) {
-						logger.error("Unable to auto requeue failed job..." + job.getId(), e);
-					}
-				} else {
-					if(job.getStoragetaskActionId() == Action.write) { // TODO: Should we Mark a tape suspect on restore failures too or only for write?
-						Volume volume = storageJob.getVolume();
-						volume.setHealthstatus(VolumeHealthStatus.suspect);
-						volumeDao.save(volume);
-						logger.info("Marked the volume " + volume.getId() + " as suspect");
-						
-						// create user request for tracking
-						HashMap<String, Object> data = new HashMap<String, Object>();
-						data.put("volumeId", volume.getId());
-						data.put("status", VolumeHealthStatus.suspect);
-						String reason = "Repeated failure on write job " + job.getId();
-						data.put("reason", reason);
-						userRequestHelper.createUserRequest(Action.mark_volume, DwaraConstants.SYSTEM_USER_NAME, Status.completed, data, reason);
-						
-						// requeuing the job in question after marking the tape bad, so that it gets picked up with the new tape...
+			if(e instanceof StorageException) { // we need to requeue and flag suspicion only for storage exception and not because of post processing like moving a file from location a to b etc.,
+				if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.restore) { // Any write or restore failure should have the tape marked as suspect...
+					long jobAlreadyRequeuedCount = jobRunDao.countByJobId(job.getId());
+					if(jobAlreadyRequeuedCount < configuration.getAllowedAutoRequeueAttemptsOnFailedStorageJobs()) {
 						try {
-							logger.info("Requeuing job " + job.getId() + " after marking the current tape as suspect. Attempt " + jobAlreadyRequeuedCount + 1);
+							logger.info("Requeuing job " + job.getId() + ". Attempt " + jobAlreadyRequeuedCount + 1);
 							jobServiceRequeueHelper.requeueJob(job.getId(),DwaraConstants.SYSTEM_USER_NAME);
 						} catch (Exception e1) {
 							logger.error("Unable to auto requeue failed job..." + job.getId(), e);
+						}
+					} else {
+						if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.restore) { // TODO: Should we Mark a tape suspect on restore failures too or only for write?
+							Volume volume = storageJob.getVolume();
+							volume.setHealthstatus(VolumeHealthStatus.suspect);
+							volumeDao.save(volume);
+							logger.info("Marked the volume " + volume.getId() + " as suspect");
+							
+							// create user request for tracking
+							HashMap<String, Object> data = new HashMap<String, Object>();
+							data.put("volumeId", volume.getId());
+							data.put("status", VolumeHealthStatus.suspect);
+							String reason = "Repeated failure on job " + job.getId();
+							data.put("reason", reason);
+							userRequestHelper.createUserRequest(Action.mark_volume, DwaraConstants.SYSTEM_USER_NAME, Status.completed, data, reason);
+							
+							// requeuing the job in question after marking the tape bad, so that it gets picked up with the new tape...
+							try {
+								logger.info("Requeuing job " + job.getId() + " after marking the current tape as suspect. Attempt " + jobAlreadyRequeuedCount + 1);
+								jobServiceRequeueHelper.requeueJob(job.getId(),DwaraConstants.SYSTEM_USER_NAME);
+							} catch (Exception e1) {
+								logger.error("Unable to auto requeue failed job..." + job.getId(), e);
+							}
 						}
 					}
 				}

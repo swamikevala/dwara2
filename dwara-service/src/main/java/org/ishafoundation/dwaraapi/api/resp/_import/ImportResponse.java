@@ -12,6 +12,9 @@ public class ImportResponse {
 	private String action;
 	private String requestedBy;
 	private String requestedAt;
+	private int runCount;
+	private String volumeId;
+	private String volumeImportStatus;
 	private List<Artifact> artifacts;
 	private List<Error> errors;
 	
@@ -38,6 +41,24 @@ public class ImportResponse {
 	}
 	public void setRequestedAt(String requestedAt) {
 		this.requestedAt = requestedAt;
+	}
+	public int getRunCount() {
+		return runCount;
+	}
+	public void setRunCount(int runCount) {
+		this.runCount = runCount;
+	}
+	public String getVolumeId() {
+		return volumeId;
+	}
+	public void setVolumeId(String volumeId) {
+		this.volumeId = volumeId;
+	}
+	public String getVolumeImportStatus() {
+		return volumeImportStatus;
+	}
+	public void setVolumeImportStatus(String volumeImportStatus) {
+		this.volumeImportStatus = volumeImportStatus;
 	}
 	public List<Artifact> getArtifacts() {
 		return artifacts;

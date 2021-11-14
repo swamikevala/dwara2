@@ -1,6 +1,8 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,6 +72,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
@@ -106,76 +110,93 @@ public class ImportService extends DwaraService {
 	@Autowired
 	private FileEntityUtil fileEntityUtil;
 	
+	private String todoDirName = "todo";
+	private String invalidDirName = "invalid";
+	private String completedDirName = "completed";
+	private String failedDirName = "failed";
+	
 	private String bruLinkSeparator = Character.toString(Character.MIN_VALUE);
 	
 	private Map<String, Artifactclass> id_artifactclassMap = null;
 	private List<Error> errorList = null;
 	private List<org.ishafoundation.dwaraapi.api.resp._import.Artifact> artifacts = null;
-	
-	private Volumeindex validateAndGetVolumeindex(File xmlFile) throws Exception{
-		XmlMapper xmlMapper = new XmlMapper();
-		//Get XMLOutputFactory instance.
-		XMLOutputFactory xmlOutputFactory = xmlMapper.getFactory().getXMLOutputFactory();
-	    String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;
-	    xmlOutputFactory.setProperty(propName, true);
-	    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_1_1, true);
-	    xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
-	    Volumeindex volumeindex =  null;
-	    try {
-	    	volumeindex = xmlMapper.readValue(xmlFile, Volumeindex.class);
-		} catch (Exception e) {
-			logger.error(xmlFile.getAbsolutePath() + " not a valid xml", e);
-			throw new DwaraException(xmlFile.getAbsolutePath() + " not a valid xml. " + e.getMessage());
-		}
-	    
-	    // More validation on values...
-		List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
-		for (Artifactclass nthArtifactclass : artifactclassList) {
-			id_artifactclassMap.put(nthArtifactclass.getId(), nthArtifactclass);
-		}
 
-		// validate volumeInfo
-		Volumeinfo volumeinfo = volumeindex.getVolumeinfo();
-
+	public List<ImportResponse> bulkImport(ImportRequest importRequest) throws Exception {
+		String importStagingDirLocation = importRequest.getStagingDir(); // /data/dwara/import-staging
 		
-	    // validate barcode
-		String regEx = "(C|P)([A-Z])?([0-9]*)L[0-9]";
-		Pattern regExPattern = Pattern.compile(regEx);
-		String volumeBarcode = volumeinfo.getVolumeuid();
-		Matcher regExMatcher = regExPattern.matcher(volumeBarcode);
-		if(!regExMatcher.matches()) {
-			throw new DwaraException("Volume barcode should be in " + regEx + " format");
-		}
+		Path todoDirPath = Paths.get(importStagingDirLocation, todoDirName);
+		Path invalidDirPath = Paths.get(importStagingDirLocation, invalidDirName);
+		Path completedDirPath = Paths.get(importStagingDirLocation, completedDirName);
+		File importStagingTodoDir = todoDirPath.toFile();
 		
-		String volumeGroupId = StringUtils.substring(volumeBarcode, 0, 2); 
-		Optional<Volume> volOptional = volumeDao.findById(volumeGroupId);
+		if(!importStagingTodoDir.exists())
+			throw new DwaraException(todoDirPath + " does not exist");
+			
+		File[] toBeImportedXmls = importStagingTodoDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".xml"));
 		
-		if(!volOptional.isPresent()) {
-			throw new DwaraException("Volume Group " + volumeGroupId + " not supported. Either add the volume group in DB or fix the barcode in xml");
-		}
-
-	    
-	    // validate artifactclass in all artifacts - get size too
-		List<Artifact> artifactList = volumeindex.getArtifact();
-		for (Artifact artifact : artifactList) {
-			Artifactclass artifactclass = id_artifactclassMap.get(artifact.getArtifactclassuid());
-			if(artifactclass == null) {
+		if(toBeImportedXmls.length == 0)
+			throw new DwaraException("No xml files to be imported exist in " + todoDirPath);
+		
+		List<ImportResponse> irl = new ArrayList<ImportResponse>();
+		for (File nthXmlFile : toBeImportedXmls) {
+			String volumeName = FilenameUtils.getBaseName(nthXmlFile.getName());
+			logger.info("Taking up " + volumeName + " for importing");
+			
+			ImportResponse importResponse = null;
+			Path destDir = null;		
+			try {
+				ImportRequest ir = new ImportRequest();
+				ir.setXmlPathname(nthXmlFile.getPath());
+				
+				ImportResponse nthImportResponse = importCatalog(ir);
+				
+				// just pulling the needed info from response object
+				importResponse = new ImportResponse();
+				importResponse.setUserRequestId(nthImportResponse.getUserRequestId());
+				importResponse.setVolumeId(nthImportResponse.getVolumeId());
+				importResponse.setVolumeImportStatus(nthImportResponse.getVolumeImportStatus());
+				importResponse.setRunCount(nthImportResponse.getRunCount());
+				
+				destDir = completedDirPath; // move the imported catalog to completed folder - eg., /data/dwara/import-staging/completed
+				if(nthImportResponse.getErrors() != null && nthImportResponse.getErrors().size() > 0) {
+					destDir = invalidDirPath; // if there are errors move the catalog to invalid folder
+					importResponse.setErrors(nthImportResponse.getErrors());
+				}
+			}catch (Exception e) {
+				importResponse = new ImportResponse();
+				importResponse.setVolumeId(volumeName);
+				importResponse.setVolumeImportStatus("failed");
+				
+				List<Error> errorList = new ArrayList<Error>();
 				Error err = new Error();
 				err.setType(Errortype.Error);
-				err.setMessage(artifact.getName() + " has invalid artifactclass " + artifact.getArtifactclassuid());
+				err.setMessage(e.getMessage());
 				errorList.add(err);
+				
+				importResponse.setErrors(errorList);
+
+				// move it to failed??? or invalid???
+				destDir = invalidDirPath;
 			}
+			finally {
+				destDir = Paths.get(destDir.toString(), volumeName); // create a directory and put the source xml file and its logs...
+
+				// write the response to a log file inside the destDir
+				ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+				String json = ow.writeValueAsString(importResponse);
+				FileUtils.write(Paths.get(destDir.toString(), volumeName + ".log."+importResponse.getRunCount()).toFile(), json);
+				
+				// move the catalog file to the destDir
+				FileUtils.moveFile(nthXmlFile, Paths.get(destDir.toString(), volumeName + ".xml."+importResponse.getRunCount()).toFile());
+			}
+			irl.add(importResponse);
 		}
 		
-		if(errorList.size() > 0)
-			throw new Exception("XML has artifacts with invalid artifactclasses");
-		
-	    // 
-		return volumeindex;
+		return irl;
 	}
+
 	
 	/*
-	 * TODO - 
 	 * response with all info for auditing...
 	 * exception handling
 	 * logging
@@ -378,13 +399,14 @@ public class ImportService extends DwaraService {
 							
 							artifact1 = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) domainSpecificArtifactRepository.save(artifact1);
 							artifactImportStatus = ImportStatus.completed;
-							logger.info("Artifact " + artifact1.getId() + " imported to dwara succesfully");
+							logger.debug("Artifact " + artifact1.getId() + " imported to dwara succesfully");
 						}else {
 							toBeArtifactName = artifact1.getName();
 							artifactImportStatus = ImportStatus.skipped;
-							logger.info("Artifact " + artifact1.getId() + " already exists, so skipping updating DB");  // artifact nth copy / rerun scenario
+							logger.debug("Artifact " + artifact1.getId() + " already exists, so skipping updating DB");  // artifact nth copy / rerun scenario
 						}
-					
+						logger.info("*** Artifact " + artifact1.getId() + " ***");
+						logger.info("Artifact - " + artifactImportStatus);
 						/*
 						 * creating artifact_volume
 						 * 
@@ -415,12 +437,12 @@ public class ImportService extends DwaraService {
 						    // updating this upon all updates are successful - artifactVolume.setStatus(ArtifactVolumeStatus.current);
 						    artifactVolume = domainSpecificArtifactVolumeRepository.save(artifactVolume);
 						    artifactVolumeImportStatus = ImportStatus.completed;
-						    logger.info("ArtifactVolume record created successfully");
+						    
 					    }else {
 					    	artifactVolumeImportStatus = ImportStatus.skipped;
-					    	logger.info("ArtifactVolume for " + artifact1.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
+					    	logger.debug("ArtifactVolume for " + artifact1.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
 					    }
-					    
+					    logger.info("ArtifactVolume - " + artifactVolumeImportStatus);
 					    long artifactTotalSize = 0;
 					    int fileCount = 0;
 					    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = artifact.getFile();
@@ -529,7 +551,8 @@ public class ImportService extends DwaraService {
 								break; // This means this is a rerun scenario and so the rest of the files can be skipped....
 							}
 						}	
-						logger.info("File and FileVolume dealt with");
+						logger.info("File - " + fileImportStatus);
+						logger.info("FileVolume - " + fileVolumeImportStatus);
 						
 						// UPDATING THE artifactvolumestatus only when everything is OK, so its used for restoring   
 						if(artifactVolumeImportStatus == ImportStatus.completed) {
@@ -596,6 +619,9 @@ public class ImportService extends DwaraService {
 			requestDao.save(request);
 		
 			ir.setUserRequestId(request.getId());
+			ir.setVolumeId(volumeId);
+			ir.setRunCount(runId);
+			ir.setVolumeImportStatus(tapeImportStatus.toString());
 			ir.setArtifacts(artifacts);
 
 		}
@@ -608,6 +634,7 @@ public class ImportService extends DwaraService {
 			if(request != null) {
 				request.setStatus(Status.failed);
 				requestDao.save(request);
+				ir.setUserRequestId(request.getId());
 			}
 			
 			ir.setErrors(errorList);
@@ -615,6 +642,67 @@ public class ImportService extends DwaraService {
 		return ir;
 	}
 
+	private Volumeindex validateAndGetVolumeindex(File xmlFile) throws Exception{
+		XmlMapper xmlMapper = new XmlMapper();
+		//Get XMLOutputFactory instance.
+		XMLOutputFactory xmlOutputFactory = xmlMapper.getFactory().getXMLOutputFactory();
+	    String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;
+	    xmlOutputFactory.setProperty(propName, true);
+	    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_1_1, true);
+	    xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
+	    Volumeindex volumeindex =  null;
+	    try {
+	    	volumeindex = xmlMapper.readValue(xmlFile, Volumeindex.class);
+		} catch (Exception e) {
+			logger.error(xmlFile.getAbsolutePath() + " not a valid xml", e);
+			throw new DwaraException(xmlFile.getAbsolutePath() + " not a valid xml. " + e.getMessage());
+		}
+	    
+	    // More validation on values...
+		List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
+		for (Artifactclass nthArtifactclass : artifactclassList) {
+			id_artifactclassMap.put(nthArtifactclass.getId(), nthArtifactclass);
+		}
+
+		// validate volumeInfo
+		Volumeinfo volumeinfo = volumeindex.getVolumeinfo();
+		
+	    // validate barcode
+		String regEx = "(C|P)([A-Z])?([0-9]*)L[0-9]";
+		Pattern regExPattern = Pattern.compile(regEx);
+		String volumeBarcode = volumeinfo.getVolumeuid();
+		Matcher regExMatcher = regExPattern.matcher(volumeBarcode);
+		if(!regExMatcher.matches()) {
+			throw new DwaraException("Volume barcode should be in " + regEx + " format");
+		}
+		
+		String volumeGroupId = StringUtils.substring(volumeBarcode, 0, 2); 
+		Optional<Volume> volOptional = volumeDao.findById(volumeGroupId);
+		
+		if(!volOptional.isPresent()) {
+			throw new DwaraException("Volume Group " + volumeGroupId + " not supported. Either add the volume group in DB or fix the barcode in xml");
+		}
+
+	    
+	    // validate artifactclass in all artifacts - get size too
+		List<Artifact> artifactList = volumeindex.getArtifact();
+		for (Artifact artifact : artifactList) {
+			Artifactclass artifactclass = id_artifactclassMap.get(artifact.getArtifactclassuid());
+			if(artifactclass == null) {
+				Error err = new Error();
+				err.setType(Errortype.Error);
+				err.setMessage(artifact.getName() + " has invalid artifactclass " + artifact.getArtifactclassuid());
+				errorList.add(err);
+			}
+		}
+		
+		if(errorList.size() > 0)
+			throw new Exception("XML has artifacts with invalid artifactclasses");
+		
+	    // 
+		return volumeindex;
+	}
+	
 	
 	
 	/**
@@ -700,5 +788,4 @@ public class ImportService extends DwaraService {
 		volume.setDetails(volumeDetails);
 		return volume;
 	}
-
 }

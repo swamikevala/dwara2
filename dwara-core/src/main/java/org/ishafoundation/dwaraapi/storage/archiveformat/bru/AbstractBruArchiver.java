@@ -5,12 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
-import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.exception.StorageException;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
@@ -20,10 +15,8 @@ import org.ishafoundation.dwaraapi.storage.archiveformat.bru.response.components
 import org.ishafoundation.dwaraapi.storage.model.ArchiveformatJob;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,38 +24,41 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractBruArchiver.class);
 
-	@Autowired
-	private DomainUtil domainUtil;
-
 	@Override
-	public ArchiveResponse write(ArchiveformatJob archiveformatJob) throws Exception {
-		String artifactSourcePath = archiveformatJob.getArtifactSourcePath();
-		String artifactNameToBeWritten = archiveformatJob.getArtifactNameToBeWritten();
-		
-		int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
-		int archiveformatBlocksize = archiveformatJob.getArchiveformatBlocksize();
-		String deviceName = archiveformatJob.getDeviceName();
-		
-		int bruBufferSize = volumeBlocksize; // in bytes...
-		
-		String bruCopyCommand = "bru -B -cvvvvvvvvv -QX -s 0 -b " + bruBufferSize + " -f " + deviceName + " " + artifactNameToBeWritten;
-		List<String> commandList = new ArrayList<String>();
-		commandList.add("sh");
-		commandList.add("-c");
-		commandList.add("cd " + artifactSourcePath + " ; " + bruCopyCommand);
-		
-		String commandOutput = null;
-//		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
-			logger.info("Bru write " +  bruCopyCommand);
-			commandOutput = executeWriteCommand(commandList, artifactNameToBeWritten, volumeBlocksize);
-			logger.info("Bru write complete");
-//		}
-		logger.trace("Before parsing bru response - " + commandOutput);
-		BruResponseParser bruResponseParser = new BruResponseParser();
-		BruResponse bruResponse = bruResponseParser.parseBruResponse(commandOutput);
-		logger.trace("Parsed bru response object - " + bruResponse);
-		logger.info("Bru archive id - " +  bruResponse.getArchiveId());
-		return convertBruResponseToArchiveResponse(bruResponse, artifactNameToBeWritten, volumeBlocksize, archiveformatBlocksize);
+	public ArchiveResponse write(ArchiveformatJob archiveformatJob) throws StorageException {
+		ArchiveResponse ar = null;
+		try {
+			String artifactSourcePath = archiveformatJob.getArtifactSourcePath();
+			String artifactNameToBeWritten = archiveformatJob.getArtifactNameToBeWritten();
+			
+			int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
+			int archiveformatBlocksize = archiveformatJob.getArchiveformatBlocksize();
+			String deviceName = archiveformatJob.getDeviceName();
+			
+			int bruBufferSize = volumeBlocksize; // in bytes...
+			
+			String bruCopyCommand = "bru -B -cvvvvvvvvv -QX -s 0 -b " + bruBufferSize + " -f " + deviceName + " " + artifactNameToBeWritten;
+			List<String> commandList = new ArrayList<String>();
+			commandList.add("sh");
+			commandList.add("-c");
+			commandList.add("cd " + artifactSourcePath + " ; " + bruCopyCommand);
+			
+			String commandOutput = null;
+	//		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
+				logger.info("Bru write " +  bruCopyCommand);
+				commandOutput = executeWriteCommand(commandList, artifactNameToBeWritten, volumeBlocksize);
+				logger.info("Bru write complete");
+	//		}
+			logger.trace("Before parsing bru response - " + commandOutput);
+			BruResponseParser bruResponseParser = new BruResponseParser();
+			BruResponse bruResponse = bruResponseParser.parseBruResponse(commandOutput);
+			logger.trace("Parsed bru response object - " + bruResponse);
+			logger.info("Bru archive id - " +  bruResponse.getArchiveId());
+			ar = convertBruResponseToArchiveResponse(bruResponse, artifactNameToBeWritten, volumeBlocksize, archiveformatBlocksize);
+		}catch (Exception e) {
+			throw new StorageException(e.getMessage());
+		}
+		return ar;
 	}
 
 	protected ArchiveResponse convertBruResponseToArchiveResponse(BruResponse bruResponse, String artifactName, int volumeBlocksize, double archiveformatBlocksize){
@@ -135,53 +131,37 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 		ar.setArtifactEndVolumeBlock((artifactStartVolumeBlock-1) + artifactTotalVolumeBlocks);  
 		return ar;
 	}
-
-	@Override
-	public ArchiveResponse verify(ArchiveformatJob archiveformatJob) throws Exception {
-		int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
-		String deviceName = archiveformatJob.getDeviceName();
-		String targetLocationPath = archiveformatJob.getTargetLocationPath();
-		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
-		StorageJob storageJob = selectedStorageJob.getStorageJob();
-		String filePathNameToBeRestored = storageJob.getArtifact().getName();
-		
-		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, false, 0, targetLocationPath, filePathNameToBeRestored);
-//		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
-			executeRestoreCommand(commandList);
-//		}
-		boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype(),true);
-		if(!success)
-			throw new Exception("Verification failed");
-		
-		logger.info("Verification success");
-		return new ArchiveResponse();
-	}
 	
 	@Override
-	public ArchiveResponse restore(ArchiveformatJob archiveformatJob) throws Exception {
-		int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
-		String deviceName = archiveformatJob.getDeviceName();
-		String targetLocationPath = archiveformatJob.getTargetLocationPath();
-		SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
-		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
-		StorageJob storageJob = selectedStorageJob.getStorageJob();			
-		String filePathNameToBeRestored = selectedStorageJob.getFilePathNameToBeRestored();
-		long filesize = file.getSize();
-
-		logger.trace("Creating the directory " + targetLocationPath + ", if not already present");
-		FileUtils.forceMkdir(new java.io.File(targetLocationPath));
-		
-		List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, selectedStorageJob.isUseBuffering(), filesize, targetLocationPath, filePathNameToBeRestored);
-//		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
-			executeRestoreCommand(commandList);
-//		}
-		
-		if(storageJob.isRestoreVerify()) {
-			boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
-			if(!success)
-				throw new Exception("Restored file's verification failed");
+	public ArchiveResponse restore(ArchiveformatJob archiveformatJob) throws StorageException {
+		try {
+			int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
+			String deviceName = archiveformatJob.getDeviceName();
+			String targetLocationPath = archiveformatJob.getTargetLocationPath();
+			SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
+			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
+			StorageJob storageJob = selectedStorageJob.getStorageJob();			
+			String filePathNameToBeRestored = selectedStorageJob.getFilePathNameToBeRestored();
+			long filesize = file.getSize();
+	
+			logger.trace("Creating the directory " + targetLocationPath + ", if not already present");
+			FileUtils.forceMkdir(new java.io.File(targetLocationPath));
+			
+			List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, selectedStorageJob.isUseBuffering(), filesize, targetLocationPath, filePathNameToBeRestored);
+	//		synchronized (deviceLockFactory.getDeviceLock(deviceName)) {
+				executeRestoreCommand(commandList);
+	//		}
+			
+	//		if(storageJob.isRestoreVerify()) {
+	//			boolean success = ChecksumUtil.compareChecksum(selectedStorageJob.getFilePathNameToChecksum(), targetLocationPath, filePathNameToBeRestored, storageJob.getVolume().getChecksumtype());
+	//			if(!success)
+	//				throw new Exception("Restored file's verification failed");
+	//		}
+			logger.info("Restoration complete");
+		}catch (Exception e) {
+			logger.error("Restoration failed - " + e.getMessage(), e);
+			throw new StorageException(e.getMessage());
 		}
-		logger.info("Restoration complete");
 		return new ArchiveResponse();
 	}
 
@@ -207,7 +187,7 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 			int m = (int) Math.max(1, Math.round(fileSizeInGiB/16.0));
 			String mValue = m + "G";
 			
-			bruRestoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e  | bru -xvvvvvvvvv -ua -B -QV -C -Pf -b " + volumeBlocksize + " -f /dev/stdin " + filePathNameToBeRestored;
+			bruRestoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e -q | bru -xvvvvvvvvv -ua -B -QV -C -Pf -b " + volumeBlocksize + " -f /dev/stdin " + filePathNameToBeRestored;
 		}
 		logger.info("Bru restoring to " + destinationPath + " - " +  bruRestoreCommand);
 	
