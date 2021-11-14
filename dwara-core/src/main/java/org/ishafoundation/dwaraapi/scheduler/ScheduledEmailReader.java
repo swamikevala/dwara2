@@ -33,6 +33,7 @@ public class ScheduledEmailReader {
         logger.info("Reading for bucket : "+tRestoreBucket.getId());
             boolean found = emailerService.read(tRestoreBucket.getApproverEmail(),tRestoreBucket.getId());
             if(found){
+                logger.info("Found" + found);
                 tRestoreBucket.setApprovalStatus("approved");
                 tRestoreBucketDao.save(tRestoreBucket);
                 String emailBody = "<p>Namaskaram</p>";
