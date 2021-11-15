@@ -69,6 +69,7 @@ public class DwaraHoverService extends DwaraService {
 		String[] docExtensions = {"doc", "xls", "xml"};
 		String[] fileExtensions = {"mp4", "mp3"};
 		String queryMode = null;
+		String transcriptContentTypeSearch = null;
 		int totalCount = 0;
 		StringBuilder searchWordsBuilder = new StringBuilder();
 		StringBuilder categoryBuilderFile1 = new StringBuilder();
@@ -142,12 +143,15 @@ public class DwaraHoverService extends DwaraService {
 		}
 
 		if(contentType.equalsIgnoreCase("raw")) {
+			transcriptContentTypeSearch = "label!='edited'%20and";
 			queryMode = "artifact1.artifactclass_id NOT LIKE '%edit%'";
 		} else if (contentType.equalsIgnoreCase("edit")) {
+			transcriptContentTypeSearch = "label='edited'%20and";
 			queryMode = "artifact1.artifactclass_id LIKE '%edit%'";
 		}
 		List<Object[]> results = null;
 		List<DwaraHoverFileListDTO> fileResults = new ArrayList<>();
+		boolean userRole = userRoles.stream().anyMatch(role -> role.contains("priv"));
 		if(!category.equalsIgnoreCase("transcript")) {
 
 			totalCount = (int) getTotalCountOfQuery(category, queryMode, searchWordsBuilder, categoryBuilderFile1, categoryBuilderFile2);
@@ -166,6 +170,7 @@ public class DwaraHoverService extends DwaraService {
 			ExecutorService executor = Executors.newFixedThreadPool(10);
 
 			List<Object[]> finalResults = results;
+			String finalTranscriptContentTypeSearch = transcriptContentTypeSearch;
 			List<Future<?>> futures = IntStream.range(0, finalResults.size())
 					.mapToObj(i -> executor.submit(() -> {
 						DwaraHoverFileListDTO dwaraHoverFileListDTO = new DwaraHoverFileListDTO();
@@ -176,30 +181,23 @@ public class DwaraHoverService extends DwaraService {
 						int artifact_id;
 						String artifactClassId;
 						String proxyPathName = null;
+
 						if (!category.equalsIgnoreCase("folder")) {
+							String proxyName = null;
 							artifactClassId = (String) finalResults.get(i)[3];
 							proxyPathName = (String) finalResults.get(i)[4];
-
 							if (!StringUtils.isEmpty(proxyPathName)) {
 								if (StringUtils.contains(artifactClassId, "priv")) {
-									proxyPathName = "http://172.18.1.24/mam/private/" + proxyPathName;
-								} else {
-									proxyPathName = "http://172.18.1.24/mam/public/" + proxyPathName;
-								}
-
-								if (StringUtils.contains(artifactClassId, "priv")){
-
-									for (String userRole: userRoles) {
-																				if(userRole.equals("priv1")) {
-											proxyFilesForFolderQuery.add(proxyPathName);
-
-										}
+									if (userRole) {
+										proxyName = "http://172.18.1.24/mam/private/" + proxyPathName;
 									}
-								} else{
-									proxyFilesForFolderQuery.add(proxyPathName);
+								} else {
+									proxyName = "http://172.18.1.24/mam/public/" + proxyPathName;
 								}
+							}
 
-									//proxyFilesForFolderQuery.add(proxyPathName);
+							if(!StringUtils.isEmpty(proxyName)) {
+								proxyFilesForFolderQuery.add(proxyName);
 							}
 
 						} else {
@@ -208,32 +206,26 @@ public class DwaraHoverService extends DwaraService {
 							String proxyForFolderQuery = "SELECT file1.pathname,artifact1.artifactclass_id FROM artifact1 JOIN file1 ON file1.artifact_id=artifact1.id WHERE artifact_ref_id=" + artifact_id + " AND file1.pathname LIKE '%.mp4'";
 							Query q = entityManager.createNativeQuery(proxyForFolderQuery);
 							List<Object[]> folderQueryResults =  q.getResultList();
-
 							folderQueryResults.forEach(file-> {
-								String proxyName;
+								String proxyName = null;
+
 								if (StringUtils.contains((String) file[1], "priv")) {
-									proxyName = "http://172.18.1.24/mam/private/" + file[0];
+									if (userRole) {
+										proxyName = "http://172.18.1.24/mam/private/" + file[0];
+									}
 								} else {
 									proxyName = "http://172.18.1.24/mam/public/" + file[0];
+
 								}
 
-								if (StringUtils.contains(artifactClassId, "priv")){
-
-									for (String userRole: userRoles) {
-																				if(userRole.equals("priv1")) {
-											proxyFilesForFolderQuery.add(proxyName);
-
-										}
-									}
-								} else{
+								if(!StringUtils.isEmpty(proxyName)) {
 									proxyFilesForFolderQuery.add(proxyName);
 								}
-								//proxyFilesForFolderQuery.add(proxyName);
 
 							});
 
 						}
-						List<DwaraHoverTranscriptListDTO> transcriptsByPathName = getTranscriptsByPathName(pathName);
+						List<DwaraHoverTranscriptListDTO> transcriptsByPathName = getTranscriptsByPathName(pathName, finalTranscriptContentTypeSearch);
 						dwaraHoverFileListDTO.setProxyPathName(proxyFilesForFolderQuery);
 						dwaraHoverFileListDTO.setId(id);
 						dwaraHoverFileListDTO.setSize(size);
@@ -249,15 +241,13 @@ public class DwaraHoverService extends DwaraService {
 			for (Future<?> future : futures) {
 				try {
 					fileResults.add((DwaraHoverFileListDTO) future.get());
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} catch (ExecutionException e) {
+				} catch (InterruptedException | ExecutionException e) {
 					e.printStackTrace();
 				}
 			}
 
 		} else {
-			List<DwaraHoverTranscriptListDTO> dwaraHoverTranscriptListDTOS = searchInTranscripts(searchWords, type, offset, limit);
+			List<DwaraHoverTranscriptListDTO> dwaraHoverTranscriptListDTOS = searchInTranscripts(searchWords, type, transcriptContentTypeSearch, queryMode, offset, limit);
 			totalCount = totalSizeTranscripts;
 
 
@@ -270,28 +260,19 @@ public class DwaraHoverService extends DwaraService {
 						String proxyForFolderQuery = dwaraHoverTranscriptListDTOS.get(i).getSearchQuery();
 						Query q = entityManager.createNativeQuery(proxyForFolderQuery);
 						List<Object[]> folderQueryResults =  q.getResultList();
-
 						folderQueryResults.forEach(file-> {
-							String proxyName;
+							String proxyName = null;
 							if (StringUtils.contains((String) file[1], "priv")) {
-								proxyName = "http://172.18.1.24/mam/private/" + file[0];
+								if (userRole) {
+									proxyName = "http://172.18.1.24/mam/private/" + file[0];
+								}
 							} else {
 								proxyName = "http://172.18.1.24/mam/public/" + file[0];
 							}
 
-							if (StringUtils.contains((String) file[1], "priv")){
-
-								for (String userRole: userRoles) {
-
-									if(userRole.equals("priv1")) {
-										proxyFilesForFolderQuery.add(proxyName);
-
-									}
-								}
-							} else{
+							if (!StringUtils.isEmpty(proxyName)) {
 								proxyFilesForFolderQuery.add(proxyName);
 							}
-							//proxyFilesForFolderQuery.add(proxyName);
 
 						});
 
@@ -313,9 +294,7 @@ public class DwaraHoverService extends DwaraService {
 			for (Future<?> future : futures) {
 				try {
 					fileResults.add((DwaraHoverFileListDTO) future.get());
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} catch (ExecutionException e) {
+				} catch (InterruptedException | ExecutionException e) {
 					e.printStackTrace();
 				}
 			}
@@ -325,11 +304,11 @@ public class DwaraHoverService extends DwaraService {
 		Optional<List<DwaraHoverFileList>> dwaraHoverFileLists = DwaraHoverFileList.build(fileResults);
 
 		Optional<List<DwaraHoverFileListCount>> dwaraHoverFileListCounts = null;
-			if (dwaraHoverFileLists.isPresent()) {
-					dwaraHoverFileListCounts = DwaraHoverFileListCount.build(dwaraHoverFileLists.get(), totalCount);
-					return dwaraHoverFileListCounts.get();
-			}
-		 
+		if (dwaraHoverFileLists.isPresent()) {
+			dwaraHoverFileListCounts = DwaraHoverFileListCount.build(dwaraHoverFileLists.get(), totalCount);
+			return dwaraHoverFileListCounts.get();
+		}
+
 		return dwaraHoverFileListCounts.get();
 	}
 
@@ -337,101 +316,71 @@ public class DwaraHoverService extends DwaraService {
 	private long getTotalCountOfQuery(String category, String queryMode, StringBuilder searchWordsBuilder, StringBuilder categoryBuilderFile1, StringBuilder categoryBuilderFile2) {
 		String queryCount;
 		int totalCount = 0;
-			if(!StringUtils.isEmpty(queryMode) ) {
-				if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
-					queryCount = "SELECT Count(*) FROM file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ")" +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND (" + queryMode + ")";
-				} else if (category.equalsIgnoreCase("file")) {
-					queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ") AND file1.directory=0";
-				} else if (category.equalsIgnoreCase("folder")) {
-					queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ") AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%')";
-				} else {
-					queryCount = "SELECT Count(*) FROM file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ")";
-				}
-			} else {
-				if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
-					queryCount = "SELECT Count(*) FROM file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ")" +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')";
-				} else if (category.equalsIgnoreCase("file")) {
-					queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND file1.directory=0";
-				} else if (category.equalsIgnoreCase("folder")) {
-					queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%')";
-				} else {
-					queryCount = "SELECT Count(*) FROM file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')";
-				}
-			}
+		if(!StringUtils.isEmpty(queryMode) ) {
+			queryMode = " AND (" + queryMode + ")";
+		} else {
+			queryMode = "";
+		}
 
-			Query qCount = entityManager.createNativeQuery(queryCount);
-			totalCount = ((BigInteger) qCount.getResultList().get(0)).intValue();
+		if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
+			queryCount = "SELECT Count(*) FROM file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+					"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ")" +
+					"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')" + queryMode;
+		} else if (category.equalsIgnoreCase("file")) {
+			queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+					"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
+					"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')" + queryMode + " AND file1.directory=0";
+		} else if (category.equalsIgnoreCase("folder")) {
+			queryCount = "SELECT Count(*) from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+					"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')" + queryMode + " AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%')";
+		} else {
+			queryCount = "SELECT Count(*) FROM file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+					"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
+					"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')" + queryMode;
+		}
+
+		Query qCount = entityManager.createNativeQuery(queryCount);
+		totalCount = ((BigInteger) qCount.getResultList().get(0)).intValue();
 
 		return totalCount;
 	}
 
 	private List getSearchQuery(int offset, int limit, String category, String queryMode, StringBuilder searchWordsBuilder, StringBuilder categoryBuilderFile1, StringBuilder categoryBuilderFile2) {
 		String query;
-			if(!StringUtils.isEmpty(queryMode) ) {
-				if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
-					query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ") " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ") " +
-							"LIMIT " + offset + ", " + limit;
-				} else if (category.equalsIgnoreCase("file")) {
-					query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ") AND file1.directory=0 " +
-							"LIMIT " + offset + ", " + limit;
-				} else if (category.equalsIgnoreCase("folder")) {
-					query = "SELECT file1.pathname,file1.size,file1.id,file1.artifact_id,artifact1.artifactclass_id AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ") AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%') " +
-							"LIMIT " + offset + ", " + limit;
-				} else {
-					query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')  AND (" + queryMode + ") " +
-							"LIMIT " + offset + ", " + limit;
-				}
-			} else {
-				if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
-					query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ") " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') " +
-							"LIMIT " + offset + ", " + limit;
-				} else if (category.equalsIgnoreCase("file")) {
-					query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND file1.directory=0 " +
-							"LIMIT " + offset + ", " + limit;
-				} else if (category.equalsIgnoreCase("folder")) {
-					query = "SELECT file1.pathname,file1.size,file1.id,file1.artifact_id,artifact1.artifactclass_id AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%') " +
-							"LIMIT " + offset + ", " + limit;
-				} else {
-					query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
-							"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
-							"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%') " +
-							"LIMIT " + offset + ", " + limit;
-				}
-			}
+		if(!StringUtils.isEmpty(queryMode) ) {
+			queryMode = " AND (" + queryMode + ")";
+		} else {
+			queryMode = "";
+		}
+
+		if (!StringUtils.isEmpty(categoryBuilderFile2.toString()) && !category.equalsIgnoreCase("file")) {
+			query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+					"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id AND (" + categoryBuilderFile2.toString() + ") " +
+					"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')" + queryMode +
+					" LIMIT " + offset + ", " + limit;
+		} else if (category.equalsIgnoreCase("file")) {
+			query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+					"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id  AND (" + categoryBuilderFile2.toString() + ") " +
+					"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')"+ queryMode + " AND file1.directory=0 " +
+					"LIMIT " + offset + ", " + limit;
+		} else if (category.equalsIgnoreCase("folder")) {
+			query = "SELECT file1.pathname,file1.size,file1.id,file1.artifact_id,artifact1.artifactclass_id AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+					"WHERE (" + searchWordsBuilder.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')" + queryMode + " AND (file1.directory=1 AND file1.pathname NOT LIKE '%/%') " +
+					"LIMIT " + offset + ", " + limit;
+		} else {
+			query = "SELECT file1.pathname,file1.size,file1.id,artifact1.artifactclass_id,file2.pathname AS proxy_path_name from file1 join artifact1 ON file1.artifact_id = artifact1.id " +
+					"LEFT JOIN file1 As file2 ON file2.file_ref_id = file1.id " +
+					"WHERE (" + searchWordsBuilder.toString() + ") AND (" + categoryBuilderFile1.toString() + ") AND (artifact1.artifactclass_id NOT LIKE '%proxy%')" + queryMode +
+					" LIMIT " + offset + ", " + limit;
+		}
 
 		Query q = entityManager.createNativeQuery(query);
 		return q.getResultList();
 	}
 
-	private List<DwaraHoverTranscriptListDTO> getTranscriptsByPathName(String filename) {
+	private List<DwaraHoverTranscriptListDTO> getTranscriptsByPathName(String filename, String transcriptContentTypeSearch) {
 
-		final String transcriptTitleURL = "http://172.18.1.22:8090/rest/api/content/search?cql=(type=page%20and%20title~'";
+		final String transcriptTitleURL = "http://172.18.1.22:8090/rest/api/content/search?cql=(type=page%20and%20";
 		final int transcriptTitleLimit = 100;
 		final String transcriptURLAuthorization = "Basic c2FtZWVyLmRhc2g6aG9seQ==";
 		final String transcriptLinkURL = "http://art.iyc.ishafoundation.org";
@@ -448,8 +397,14 @@ public class DwaraHoverService extends DwaraService {
 
 		try {
 			Unirest.setTimeouts(0, 0);
-			HttpResponse<com.mashape.unirest.http.JsonNode>	response = Unirest.get(transcriptTitleURL + title + "')&limit=" + transcriptTitleLimit)
-					.header("Authorization", transcriptURLAuthorization).asJson();
+			HttpResponse<com.mashape.unirest.http.JsonNode>	response;
+			if(!StringUtils.isEmpty(transcriptContentTypeSearch)) {
+				response = Unirest.get(transcriptTitleURL + transcriptContentTypeSearch + "%20title~'" + title + "')&limit=" + transcriptTitleLimit)
+						.header("Authorization", transcriptURLAuthorization).asJson();
+			} else {
+				response = Unirest.get(transcriptTitleURL + "title~'" + title + "')&limit=" + transcriptTitleLimit)
+						.header("Authorization", transcriptURLAuthorization).asJson();
+			}
 
 			JSONArray dataArray = (JSONArray) response.getBody().getObject().get("results");
 			for (Object data : dataArray) {
@@ -468,10 +423,11 @@ public class DwaraHoverService extends DwaraService {
 		return output;
 	}
 
-	private List<DwaraHoverTranscriptListDTO> searchInTranscripts(List<String> searchWords, String type, int offset, int limit) {
-		final String transcriptTitleURL = "http://172.18.1.22:8090/rest/api/content/search?cql=(type=page%20and";
+	private List<DwaraHoverTranscriptListDTO> searchInTranscripts(List<String> searchWords, String type, String transcriptContentTypeSearch, String queryMode, int offset, int limit) {
+		final String transcriptTitleURL = "http://172.18.1.22:8090/rest/api/content/search?cql=(type=page%20and%20";
 		final String transcriptURLAuthorization = "Basic c2FtZWVyLmRhc2g6aG9seQ==";
 		final String transcriptLinkURL = "http://art.iyc.ishafoundation.org";
+
 		List<DwaraHoverTranscriptListDTO> output = new ArrayList<>();
 		StringBuilder searchItemBuilder = new StringBuilder();
 		String searchOperator;
@@ -499,12 +455,16 @@ public class DwaraHoverService extends DwaraService {
 
 		HttpResponse<com.mashape.unirest.http.JsonNode> response = null;
 		try {
-			response = Unirest.get(transcriptTitleURL + searchItemBuilder.toString() + ")&limit=" + limit + "&start=" + offset).header("Authorization", transcriptURLAuthorization).asJson();
+			if(StringUtils.isEmpty(transcriptContentTypeSearch)) {
+				response = Unirest.get(transcriptTitleURL + searchItemBuilder.toString() + ")&limit=" + limit + "&start=" + offset).header("Authorization", transcriptURLAuthorization).asJson();
+			} else {
+				response = Unirest.get(transcriptTitleURL + transcriptContentTypeSearch + searchItemBuilder.toString() + ")&limit=" + limit + "&start=" + offset).header("Authorization", transcriptURLAuthorization).asJson();
+			}
 		} catch (UnirestException e) {
 			e.printStackTrace();
 		}
 
-
+		assert response != null;
 		JSONArray dataArray = (JSONArray) response.getBody().getObject().get("results");
 		totalSizeTranscripts = (int) response.getBody().getObject().get("totalSize");
 
@@ -521,7 +481,7 @@ public class DwaraHoverService extends DwaraService {
 					dwaraHoverTranscriptListDTO.setTitle(transcriptTitle);
 					dwaraHoverTranscriptListDTO.setLink(transcriptURL);
 
-					transcriptQuery = getTranscriptSearchQuery(transcriptTitle);
+					transcriptQuery = getTranscriptSearchQuery(transcriptTitle, queryMode);
 
 					dwaraHoverTranscriptListDTO.setSearchQuery(transcriptQuery);
 					return dwaraHoverTranscriptListDTO;
@@ -532,9 +492,7 @@ public class DwaraHoverService extends DwaraService {
 		for (Future<?> future : futures) {
 			try {
 				output.add((DwaraHoverTranscriptListDTO) future.get());
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (ExecutionException e) {
+			} catch (InterruptedException | ExecutionException e) {
 				e.printStackTrace();
 			}
 		}
@@ -566,13 +524,18 @@ public class DwaraHoverService extends DwaraService {
 
 	}
 
-	private String getTranscriptSearchQuery(String transcriptTitle) {
+	private String getTranscriptSearchQuery(String transcriptTitle, String queryMode) {
 		String regexd = transcriptTitle.replaceFirst("^[A-Z]{0,2}[0-9]{1,4}[\\-_\\s]", "");
 		String date = "";
 		String alternatedDate = "";
 		String removedDateBeforeAfter = regexd;
 		String transcriptQuery;
 
+		if(StringUtils.isEmpty(queryMode) ) {
+			queryMode = "";
+		} else {
+			queryMode = queryMode + " AND ";
+		}
 		Pattern pattern = Pattern.compile("([0-9]{1,2}\\-[A-Za-z]{3}\\-[0-9]{2,4}).*$");
 		Matcher matcher = pattern.matcher(regexd);
 		if (matcher.find()) {
@@ -614,11 +577,11 @@ public class DwaraHoverService extends DwaraService {
 			}
 		}
 
-		if (date != "") {
-			transcriptQuery = "SELECT file1.pathname, artifact1.artifactclass_id FROM file1 JOIN artifact1 ON file1.artifact_id = artifact1.id WHERE (" + builder.toString() + ")" + " AND (pathname like '%" + date + "%' OR pathname like '%" + alternatedDate + "_%') AND (file_ref_id IS NOT null AND pathname LIKE '%.mp4') LIMIT 500";
+		if (!date.equals("")) {
+			transcriptQuery = "SELECT file1.pathname, artifact1.artifactclass_id FROM file1 JOIN artifact1 ON file1.artifact_id = artifact1.id WHERE " + queryMode +  "(" + builder.toString() + ")" + " AND (pathname like '%" + date + "%' OR pathname like '%" + alternatedDate + "_%') AND (file_ref_id IS NOT null AND pathname LIKE '%.mp4') LIMIT 500";
 		}
 		else  {
-			transcriptQuery = "SELECT file1.pathname, artifact1.artifactclass_id FROM file1 JOIN artifact1 ON file1.artifact_id = artifact1.id WHERE (" + builder.toString() + ") AND (file_ref_id IS NOT null AND pathname LIKE '%.mp4') LIMIT 500" ;
+			transcriptQuery = "SELECT file1.pathname, artifact1.artifactclass_id FROM file1 JOIN artifact1 ON file1.artifact_id = artifact1.id WHERE  " + queryMode +  "(" + builder.toString() + ") AND (file_ref_id IS NOT null AND pathname LIKE '%.mp4') LIMIT 500" ;
 		}
 		return transcriptQuery;
 	}

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -80,7 +81,7 @@ public class DwaraService {
 			AccessToken token = principal.getKeycloakSecurityContext().getToken();
 			return token.getResourceAccess().get(KEYCLOAK_RESOURCE).getRoles();
 		}
-		return null;
+		return Collections.emptySet();
 	}
 	
 	public User getUserObjFromContext() {
