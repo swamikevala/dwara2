@@ -22,4 +22,5 @@ public interface ArtifactRepository<T extends Artifact> extends CrudRepository<T
 	Artifact findByPrevSequenceCodeAndDeletedIsFalse(String prevSequenceCode);
 	
 	Artifact findBySequenceCodeAndDeletedIsFalse(String sequenceCode); // sequenceCode is running but extracted code used as sequence code could have been deleted too - So the Deleted check
+
 }
