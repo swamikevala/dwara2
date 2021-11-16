@@ -28,13 +28,13 @@ public class ScheduledEmailReader {
     public void readEmail(){
         //hoe to find by approvestatus can't take input
         List<TRestoreBucket> tRestoreBucketfromDbs = tRestoreBucketDao.findByApprovalStatus("in_progress");
-        logger.info("Started email reading");
+        //logger.info("Started email reading");
         for(TRestoreBucket tRestoreBucket : tRestoreBucketfromDbs){
-        logger.info("Reading for bucket : "+tRestoreBucket.getId());
+        //logger.info("Reading for bucket : "+tRestoreBucket.getId());
             String dateSent = emailerService.read(tRestoreBucket.getApproverEmail(),tRestoreBucket.getId());
-           logger.info("found " +dateSent);
+          // logger.info("found " +dateSent);
             if(!dateSent.equals("")){
-                logger.info("Found" + dateSent);
+             //   logger.info("Found" + dateSent);
                 tRestoreBucket.setApprovalStatus("approved");
                 tRestoreBucket.setApprovalDate(dateSent);
                 tRestoreBucketDao.save(tRestoreBucket);

@@ -18,9 +18,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
-@Component
+//@Component
 public class ScheduledApprovedBucketRestorer {
 
     @Autowired
@@ -38,7 +39,8 @@ public class ScheduledApprovedBucketRestorer {
         for (TRestoreBucket tRestoreBucket : tRestoreBucketList) {
             RestoreUserRequest restoreUserRequest = new RestoreUserRequest();
             restoreUserRequest.setCopy(1);
-            Priority priority = Priority.valueOf(tRestoreBucket.getPriority());
+
+            Priority priority = Priority.valueOf(tRestoreBucket.getPriority().toLowerCase());
             restoreUserRequest.setPriority(priority);
             restoreUserRequest.setDestinationPath(tRestoreBucket.getDestinationPath());
             restoreUserRequest.setOutputFolder(tRestoreBucket.getId());
@@ -47,6 +49,7 @@ public class ScheduledApprovedBucketRestorer {
                 fileIds.add(file.getFileID());
             }
             restoreUserRequest.setFileIds(fileIds);
+            System.out.println(fileIds);
             restoreUserRequest.setFlow("restore-flow");
             RestoreResponse restoreResponse;
             try {
