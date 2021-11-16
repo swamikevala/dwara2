@@ -74,7 +74,7 @@ public class RestoreBucketController {
     public ResponseEntity<RestoreResponse> restoreBucket(@PathVariable String id, @RequestBody RestoreUserRequest restoreUserRequest){
         RestoreResponse restoreResponse = null;
         try {
-            restoreResponse = fileService.restore(restoreUserRequest, Action.restore, restoreUserRequest.getFlow());
+            restoreResponse = fileService.restore(restoreUserRequest, Action.restore_process, restoreUserRequest.getFlow());
             if (!Objects.isNull(restoreResponse) && restoreResponse.getFiles().size() == restoreUserRequest.getFileIds().size()) {
                 restoreBucketService.deleteBucket(id);
             }
