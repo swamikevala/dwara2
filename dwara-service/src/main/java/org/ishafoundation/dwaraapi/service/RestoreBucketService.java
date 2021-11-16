@@ -184,7 +184,7 @@ public class RestoreBucketService extends DwaraService{
         for (RestoreBucketFile file: tRestoreBucket.getDetails()) {
             emailBody +="<div> "+ file.getFilePathName()  +"</div>";
         }
-        emailBody +="<p>Please reply with <pre><approved></pre> if you wish to approve </p>";
+        emailBody +="<p>Please reply with <b><approved></b> if you wish to approve </p>";
         emailerService.setConcernedEmail(tRestoreBucket.getApproverEmail());
         emailerService.setSubject("Need Approval for project: _"+tRestoreBucket.getId()+"_");
         emailerService.sendEmail(emailBody);

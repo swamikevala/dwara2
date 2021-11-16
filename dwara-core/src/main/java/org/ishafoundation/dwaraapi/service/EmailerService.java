@@ -106,7 +106,7 @@ public class EmailerService {
             }
 
         }
-    public boolean read(String approver_email, String bucketId) {
+    public String read(String approver_email, String bucketId) {
 
         Properties props = System.getProperties();
 
@@ -146,6 +146,7 @@ public class EmailerService {
 
             System.out.println("-------------- Program scans for messages every 10 second ----------------");
             boolean found = false;
+            String dateSent="";
             for (int i = 0; i < messageCount; i++) {
                 Message message = messages[i];
                 System.out.println(message.getSubject());
@@ -174,6 +175,7 @@ public class EmailerService {
                 for(String m:filterdMsg) {
                     if (StringUtils.indexOfAny(m.toLowerCase(), new String[] { "approve", "approved" }) != -1) {
                         if (StringUtils.indexOfAny(m.toLowerCase(), new String[] { "what", "why", "how", "when", "who", "not", "don’t" }) == -1) {
+                           dateSent=message.getSentDate().toString();
                             found =true;
                         }
                     }
@@ -182,7 +184,7 @@ public class EmailerService {
                     inbox.close(true);
                     store.close();
                     logger.info("inside found");
-                    return found;
+                    return dateSent;
                 }
 
                 System.out.println("Mail Subject:- " + message.getSubject());
@@ -193,12 +195,12 @@ public class EmailerService {
 
             inbox.close(true);
             store.close();
-            return found;
+            return dateSent;
 
         } catch (Exception e) {
 
             e.printStackTrace();
-            return false;
+            return "";
         }
     }
 

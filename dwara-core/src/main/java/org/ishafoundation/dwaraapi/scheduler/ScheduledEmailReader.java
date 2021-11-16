@@ -24,18 +24,19 @@ public class ScheduledEmailReader {
     @Autowired
     UserDao userDao;
 
-    @Scheduled(cron ="5 * * * * ? ")
+    @Scheduled(cron ="0 0/5 * * * ?")
     public void readEmail(){
         //hoe to find by approvestatus can't take input
         List<TRestoreBucket> tRestoreBucketfromDbs = tRestoreBucketDao.findByApprovalStatus("in_progress");
         logger.info("Started email reading");
         for(TRestoreBucket tRestoreBucket : tRestoreBucketfromDbs){
         logger.info("Reading for bucket : "+tRestoreBucket.getId());
-            boolean found = emailerService.read(tRestoreBucket.getApproverEmail(),tRestoreBucket.getId());
-           logger.info("found " +found);
-            if(found){
-                logger.info("Found" + found);
+            String dateSent = emailerService.read(tRestoreBucket.getApproverEmail(),tRestoreBucket.getId());
+           logger.info("found " +dateSent);
+            if(!dateSent.equals("")){
+                logger.info("Found" + dateSent);
                 tRestoreBucket.setApprovalStatus("approved");
+                tRestoreBucket.setApprovalDate(dateSent);
                 tRestoreBucketDao.save(tRestoreBucket);
                 String emailBody = "<p>Namaskaram</p>";
                 emailBody += "<p>The following folders have been approved for the requested bucket "+ tRestoreBucket.getId()+"</p>";

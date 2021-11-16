@@ -27,6 +27,25 @@ public class TRestoreBucket {
 
     @Column(name="createdAt")
     Date createdAt;
+
+    public void setRequestedBy(Integer requestedBy) {
+        this.requestedBy = requestedBy;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getApprovalDate() {
+        return approvalDate;
+    }
+
+    public void setApprovalDate(String approvalDate) {
+        this.approvalDate = approvalDate;
+    }
+
+    @Column(name = "ApprovalDate")
+    String approvalDate;
     //@Column(name="details")
     @Lob
     @Type(type = "json")
