@@ -518,7 +518,7 @@ public class RequestService extends DwaraService{
 		statusList.add(Status.queued);
 		statusList.add(Status.in_progress);
 		statusList.add(Status.failed);
-		statusList.add(Status.cancelled);
+		//statusList.add(Status.cancelled);
 
 		List<Action> actionList =new ArrayList<>();
 		actionList.add(Action.restore);
