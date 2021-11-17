@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
@@ -19,11 +20,19 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
+
 import org.ishafoundation.dwaraapi.api.req.report.RequestReportSize;
 import org.ishafoundation.dwaraapi.api.resp.report.RespondReportRestoreTime;
 import org.ishafoundation.dwaraapi.api.resp.report.RespondReportSize;
-import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.commandline.remote.sch.RemoteCommandLineExecuter;
+import org.ishafoundation.dwaraapi.commandline.remote.sch.SshSessionHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,8 +40,43 @@ public class ReportService extends DwaraService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Value("${remoteSshUsername}")
+    private String REMOTE_SSH_USER;
+
+    @Value("${remoteSshPrivateKey}")
+    private String REMOTE_SSH_PRIVATE_KEY;
+
+    @Value("${remoteSshKeyPassword}")
+    private String REMOTE_SSH_KEY_PASSWORD;
+
+    @Value("${catDvIP}")
+    private String CATDV_IP;
+
+    @Value("${confluenceIP}")
+    private String CONFLUENCE_IP;
+
+    @Value("${localMountedOn}")
+    private String LOCAL_MOUNTED_ON;
+
+    @Value("${localFolderList}")
+    private String LOCAL_FOLDER_LIST;
+
+    @Value("${catDvMountedOn}")
+    private String CATDV_MOUNTED_ON;
+
+    @Value("${catDvFolderList}")
+    private String CATDV_FOLDER_LIST;
+
+    @Value("${confluenceMountedOn}")
+    private String CONFLUENCE_MOUNTED_ON;
+
     @Autowired
-	private Configuration configuration;
+    SshSessionHelper sshSessionHelper;
+
+    private static final Logger logger = LoggerFactory.getLogger(ReportService.class);
+
+    @Autowired
+    private RemoteCommandLineExecuter remoteCommandLineExecuter;
     
     public List<RespondReportSize> getReportIngestSize(RequestReportSize request) {
         String condition = "";
@@ -275,70 +319,75 @@ public class ReportService extends DwaraService {
 
     public HashMap<String, String> getServerInfo() {
         HashMap<String, String> map = new HashMap<String, String>();
-        /* File data = new File("/data");
-        map.put("totalSpace", data.getTotalSpace());
-        map.put("freeSpace", data.getUsableSpace());
-
-        File dwaraUser = new File("/data/dwara/user");
-        map.put("userSpace", dwaraUser.length());
-
-        File dwaraStaged = new File("/data/dwara/staged");
-        map.put("stagedSpace", dwaraStaged.length());
-
-        File dwaraTranscoded = new File("/data/dwara/transcoded");
-        map.put("transcodedSpace", dwaraTranscoded.length()); 
-
-        File dwaraIngested = new File("/data/dwara/ingested");
-        map.put("ingestedSpace", dwaraIngested.length());  */
-
         String ingestServer = "";
-        String ingestUser = "";
+        String ingestFolder = "";
         String catDVServer = "";
+        String catDVFolder = "";
         String confluenceServer = "";
-        List<String> c1 = new ArrayList<>();
-        c1.add("df");
-        c1.add("-h"); 
-        ingestServer = getCommandOutput(c1);
+        List<String> ingestServerCommand = new ArrayList<>();
+        ingestServerCommand.add("df");
+        ingestServerCommand.add("-h"); 
+        ingestServerCommand.add(LOCAL_MOUNTED_ON);
+        ingestServer = getCommandOutput(ingestServerCommand);
 
-        List<String> c11 = new ArrayList<>();
-        // c11.add("sudo");
-        c11.add("du");
-        c11.add("-h");
-        c11.add("-d");
-        c11.add("1");
-        c11.add("/data/dwara/user");
-        c11.add("|");
-        c11.add("sort");
-        c11.add("-h");
-        c11.add("-r");
-        ingestUser = getCommandOutput(c11);
+        List<String> ingestFolderCommand = new ArrayList<>();
+        ingestFolderCommand.add("/bin/sh");
+        ingestFolderCommand.add("-c");
+        ingestFolderCommand.add("du -h -d 0 " + LOCAL_FOLDER_LIST + " | sort -hr");
+        ingestFolder = getCommandOutput(ingestFolderCommand);
 
-        String username = configuration.getSshSystemUser();
-        String privKeyPath = configuration.getSshPrvKeyFileLocation();
-        List<String> c2 = new ArrayList<>();
-        c2.add("ssh");
-        c2.add("-i"); 
-        c2.add(privKeyPath);
-        c2.add(username + "@172.18.1.24");
-        c2.add("df");
-        c2.add("-h");
-        catDVServer = getCommandOutput(c2);
-
-        List<String> c3 = new ArrayList<>();
-        c3.add("ssh");
-        c3.add("-i"); 
-        c3.add(privKeyPath);
-        c3.add(username + "@172.18.1.22");
-        c3.add("df");
-        c3.add("-h");
-        confluenceServer = getCommandOutput(c3);
+        catDVServer = runCommandOnRemote(REMOTE_SSH_PRIVATE_KEY, REMOTE_SSH_KEY_PASSWORD, REMOTE_SSH_USER, CATDV_IP, 22, "df -h " + CATDV_MOUNTED_ON);
+        catDVFolder = runCommandOnRemote(REMOTE_SSH_PRIVATE_KEY, REMOTE_SSH_KEY_PASSWORD, REMOTE_SSH_USER, CATDV_IP, 22, "du -h -d 0 " + CATDV_FOLDER_LIST + " | sort -hr");
+        confluenceServer = runCommandOnRemote(REMOTE_SSH_PRIVATE_KEY, REMOTE_SSH_KEY_PASSWORD, REMOTE_SSH_USER, CONFLUENCE_IP, 22, "df -h " + CONFLUENCE_MOUNTED_ON);
 
         map.put("ingestServer", ingestServer);
-        map.put("ingestUser", ingestUser);
+        map.put("ingestFolder", ingestFolder);
         map.put("catDVServer", catDVServer);
+        map.put("catDVFolder", catDVFolder);
         map.put("confluenceServer", confluenceServer);
 
         return map;
+    }
+
+    private  String runCommandOnRemote(String privateKey, String keyPassword, String userName, String host, int port, String command) {
+        String result = "";
+        Session session = null;
+        ChannelExec channel = null;
+        
+        try {
+            JSch jsch = new JSch();
+            jsch.addIdentity(privateKey, keyPassword);
+
+            session = jsch.getSession(userName, host, port);
+            session.setConfig("StrictHostKeyChecking", "no");
+            session.connect();
+            
+            channel = (ChannelExec) session.openChannel("exec");
+            channel.setCommand(command);
+            ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
+            channel.setOutputStream(responseStream);
+            channel.connect();
+            
+            while (channel.isConnected()) {
+                Thread.sleep(100);
+            }
+            
+            String responseString = new String(responseStream.toByteArray());
+            // System.out.println(responseString);
+            result = responseString;
+        } catch(Exception e) {
+            result = e.getMessage();
+        }
+        finally {
+            if (session != null) {
+                session.disconnect();
+            }
+            if (channel != null) {
+                channel.disconnect();
+            }
+        }
+        
+        return result;
     }
 
     private String getCommandOutput(List<String> command) {
@@ -357,7 +406,7 @@ public class ReportService extends DwaraService {
             return builder.toString();
         }
         catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             return e.getMessage();
         }
     }
