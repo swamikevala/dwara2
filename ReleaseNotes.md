@@ -1,3 +1,28 @@
+# Dwara App Version - 2.1.34 (20th Nov 2021)
+### New features
+
+1) Mam Update Status in Folder Catalog
+
+2) Get servers space infomation
+
+### Bug fixes
+
+1) Showing imported tapes and artifacts in Tape Catalog and Folder Catalog
+
+### Upgrade steps
+
+1) application.properties: add below lines
+> remoteSshUsername=dwara
+> remoteSshPrivateKey=/opt/dwara/.ssh/id_rsa
+> remoteSshKeyPassword=
+> catDvIP=172.18.1.24
+> confluenceIP=172.18.1.22
+> localMountedOn=/data
+> catDvMountedOn=/data
+> confluenceMountedOn=/data
+> localFolderList=/data /data/dwara/user /data/dwara/user/ramkumarj /data/dwara/user/naveenkumarg /data/dwara/staged
+> catDvFolderList=/data /data/video-backup /data/proxies /data/Physical_Asset /data/db-backups /data/audio
+
 # Dwara App Version - 2.1.33 (1st Nov 2021)
 ### New features
 
