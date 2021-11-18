@@ -10,7 +10,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -58,14 +57,6 @@ public class JobCreator_Test {
 		}
 		request.setDetails(details);
 		requestDao.save(request);
-	}
-	
-	private Domain getDomain(String userRequest) {
-		// to get domaindefault we might need a util... or a query...
-		Domain domain = null;// from user request
-		if (domain == null)
-			domain = Domain.ONE; // defaulting to the domain configured as default...
-		return domain;
 	}
 
 	protected String fillPlaceHolders(String postBodyJson) {

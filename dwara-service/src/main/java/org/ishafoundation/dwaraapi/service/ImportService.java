@@ -26,13 +26,12 @@ import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportStatus;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ImportDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ImportVolumeArtifactDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.keys.ImportVolumeArtifactKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
@@ -43,17 +42,15 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional._import.Import;
 import org.ishafoundation.dwaraapi.db.model.transactional._import.ImportKey;
 import org.ishafoundation.dwaraapi.db.model.transactional._import.jointables.ImportVolumeArtifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
@@ -94,6 +91,18 @@ public class ImportService extends DwaraService {
 	protected ImportDao importDao;
 	
 	@Autowired
+	protected ArtifactDao artifactDao;
+	
+	@Autowired
+	protected FileDao fileDao;
+	
+	@Autowired
+	protected ArtifactVolumeDao artifactVolumeDao;
+	
+	@Autowired
+	protected FileVolumeDao fileVolumeDao;
+	
+	@Autowired
 	protected ImportVolumeArtifactDao importVolumeArtifactDao;
 	
 	@Autowired
@@ -103,13 +112,8 @@ public class ImportService extends DwaraService {
 	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
 	
 	@Autowired
-	private DomainUtil domainUtil;
-	
-	@Autowired
 	protected SequenceUtil sequenceUtil;
 
-	@Autowired
-	private FileEntityUtil fileEntityUtil;
 	
 	private String todoDirName = "todo";
 	private String invalidDirName = "invalid";
@@ -297,12 +301,6 @@ public class ImportService extends DwaraService {
 				volume = volumeDao.save(volume);
 				logger.info("Volume " + volume.getId() + " imported to dwara successfully");
 			}
-			
-			Domain domain = Domain.ONE;
-			ArtifactRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact> domainSpecificArtifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-		    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		    FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
 	    	
 //			List<Artifact> artifactList = volumeindex.getArtifact();
 			for (Artifact artifact : artifactList) {
@@ -349,11 +347,11 @@ public class ImportService extends DwaraService {
 						}
 						
 						boolean artifactAlreadyExists = true;
-						org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact1 = null;
+						org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact1 = null;
 						if(prevSeqCode != null) {
-							artifact1 = domainSpecificArtifactRepository.findByPrevSequenceCodeAndDeletedIsFalse(prevSeqCode);
+							artifact1 = artifactDao.findByPrevSequenceCodeAndDeletedIsFalse(prevSeqCode);
 						}else if(sequenceCode != null){				
-							artifact1 = domainSpecificArtifactRepository.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
+							artifact1 = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
 						}
 		
 						//TODO - should we double check with size too??? domainSpecificArtifactRepository.findAllByTotalSizeAndDeletedIsFalse(size);
@@ -393,7 +391,7 @@ public class ImportService extends DwaraService {
 							 */
 				
 							
-							artifact1 = domainUtil.getDomainSpecificArtifactInstance(domain);
+							artifact1 = new org.ishafoundation.dwaraapi.db.model.transactional.Artifact();
 			//				artifact1.setFileCount(fileCount);
 							artifact1.setName(toBeArtifactName);
 							artifact1.setPrevSequenceCode(prevSeqCode);
@@ -402,7 +400,7 @@ public class ImportService extends DwaraService {
 							artifact1.setArtifactclass(artifactclass);
 							artifact1.setqLatestRequest(request);
 							
-							artifact1 = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) domainSpecificArtifactRepository.save(artifact1);
+							artifact1 = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.save(artifact1);
 							artifactImportStatus = ImportStatus.completed;
 							logger.debug("Artifact " + artifact1.getId() + " imported to dwara succesfully");
 						}else {
@@ -424,10 +422,10 @@ public class ImportService extends DwaraService {
 						  `status` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** current
 						 */
 						
-					    ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifact1.getId(), volume.getId());
+					    ArtifactVolume artifactVolume = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifact1.getId(), volume.getId());
 					    
 					    if(artifactVolume == null) {
-					    	artifactVolume = domainUtil.getDomainSpecificArtifactVolumeInstance(artifact1.getId(), volume, domain);
+					    	artifactVolume = new ArtifactVolume(artifact1.getId(), volume);
 					    
 						    artifactVolume.setName(artifactName); // NOTE : Dont be tempted to change this to toBeArtifactName - whatever in volume needs to go here...
 						    if(volume.getStoragelevel() == Storagelevel.block) {
@@ -440,7 +438,7 @@ public class ImportService extends DwaraService {
 							    artifactVolume.setDetails(artifactVolumeDetails);
 						    }
 						    // updating this upon all updates are successful - artifactVolume.setStatus(ArtifactVolumeStatus.current);
-						    artifactVolume = domainSpecificArtifactVolumeRepository.save(artifactVolume);
+						    artifactVolume = artifactVolumeDao.save(artifactVolume);
 						    artifactVolumeImportStatus = ImportStatus.completed;
 						    
 					    }else {
@@ -478,7 +476,7 @@ public class ImportService extends DwaraService {
 							}
 							
 							byte[] filePathnameChecksum = ChecksumUtil.getChecksum(filePathname);
-							org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
+							org.ishafoundation.dwaraapi.db.model.transactional.File file = null;
 							if(!artifactAlreadyExists) { // if artifactAlreadyExists - file would also exist already - copy / rerun scenario
 								/*
 								 * creating file1
@@ -496,7 +494,7 @@ public class ImportService extends DwaraService {
 								  `symlink_file_id` int(11) DEFAULT NULL, *** - *** null
 								  `symlink_path` varchar(4096) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** null
 								*/  
-								file = domainUtil.getDomainSpecificFileInstance(domain);
+								file = new org.ishafoundation.dwaraapi.db.model.transactional.File();
 				
 				
 								file.setPathname(filePathname);
@@ -504,7 +502,7 @@ public class ImportService extends DwaraService {
 								file.setSize(nthFile.getSize());
 								//file.setSymlinkFileId();
 								file.setSymlinkPath(linkName);
-								fileEntityUtil.setDomainSpecificFileArtifact(file, artifact1);
+								file.setArtifact(artifact1);
 								if(Boolean.TRUE.equals(nthFile.getDirectory())) {// if(StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) {  // TODO - change it to - if(nthFile.isDirectory()) 
 									file.setDirectory(true);
 								}else {
@@ -512,17 +510,17 @@ public class ImportService extends DwaraService {
 									artifactTotalSize += nthFile.getSize(); 
 								}	
 								
-								file = domainSpecificFileRepository.save(file);
+								file = fileDao.save(file);
 								fileImportStatus = ImportStatus.completed;
 						    	logger.debug("File " + filePathname + "  created successfully");
 							}
 							else {
-								file = domainSpecificFileRepository.findByPathnameChecksum(filePathnameChecksum);
+								file = fileDao.findByPathnameChecksum(filePathnameChecksum);
 								fileImportStatus = ImportStatus.skipped;
 								logger.debug("File " + filePathname + " already exists, so skipping updating DB");
 							}
 		
-							FileVolume fileVolume = domainSpecificFileVolumeRepository.findByIdFileIdAndIdVolumeId(file.getId(), volume.getId());
+							FileVolume fileVolume = fileVolumeDao.findByIdFileIdAndIdVolumeId(file.getId(), volume.getId());
 							if(fileVolume == null) {
 								/*
 								 * file1_volume
@@ -539,14 +537,14 @@ public class ImportService extends DwaraService {
 								  `header_blocks` int(11) DEFAULT NULL, *** - *** null
 								  `hardlink_file_id` int(11) DEFAULT NULL, *** - *** null???
 								 */
-								fileVolume = domainUtil.getDomainSpecificFileVolumeInstance(file.getId(), volume, domain);// lets just let users use the util consistently
+								fileVolume = new FileVolume(file.getId(), volume);// lets just let users use the util consistently
 								fileVolume.setArchiveBlock(nthFile.getArchiveblock());
 								fileVolume.setVolumeStartBlock(nthFile.getVolumeStartBlock());
 								fileVolume.setVolumeEndBlock(nthFile.getVolumeEndBlock());
 				
 								//fileVolume.setHardlinkFileId(file.getId());
 								
-						    	domainSpecificFileVolumeRepository.save(fileVolume);
+						    	fileVolumeDao.save(fileVolume);
 						    	fileVolumeImportStatus = ImportStatus.completed;
 						    	logger.debug("FileVolume records created successfully");
 						    }
@@ -564,7 +562,7 @@ public class ImportService extends DwaraService {
 							ArtifactVolumeStatus artifactVolumeStatus = ArtifactVolumeStatus.current;
 	
 							// If already an entry for this pool/group is available (eg. 68*[C16805L6] is migration of 4*[C14023L4]) for this artifact - retire the oldest generation
-							ArtifactVolume alreadyExistingArtifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndVolumeGroupRefCopyIdAndStatus(artifact1.getId(), volume.getGroupRef().getCopy().getId(), ArtifactVolumeStatus.current);
+							ArtifactVolume alreadyExistingArtifactVolume = artifactVolumeDao.findByIdArtifactIdAndVolumeGroupRefCopyIdAndStatus(artifact1.getId(), volume.getGroupRef().getCopy().getId(), ArtifactVolumeStatus.current);
 							if(alreadyExistingArtifactVolume != null) {
 								int alreadyExistingArtifactVolumeGen = Integer.parseInt(StringUtils.substringAfter(alreadyExistingArtifactVolume.getVolume().getStoragesubtype(), "-"));
 								int currentVolumeGen =  Integer.parseInt(StringUtils.substringAfter(volume.getStoragesubtype(), "-"));
@@ -574,21 +572,21 @@ public class ImportService extends DwaraService {
 									artifactVolumeStatus = ArtifactVolumeStatus.current;
 									// flagging the older generation as deleted
 									alreadyExistingArtifactVolume.setStatus(ArtifactVolumeStatus.deleted);
-									domainSpecificArtifactVolumeRepository.save(alreadyExistingArtifactVolume);
+									artifactVolumeDao.save(alreadyExistingArtifactVolume);
 								}
 								else
 									artifactVolumeStatus = ArtifactVolumeStatus.deleted;
 							}
 							 
 						    artifactVolume.setStatus(artifactVolumeStatus);
-						    artifactVolume = domainSpecificArtifactVolumeRepository.save(artifactVolume);
+						    artifactVolume = artifactVolumeDao.save(artifactVolume);
 						}
 						
 						// updating artifact.filecount and size
 						if(!artifactAlreadyExists) {
 							artifact1.setFileCount(fileCount);
 							artifact1.setTotalSize(artifactTotalSize);
-							artifact1 = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) domainSpecificArtifactRepository.save(artifact1);
+							artifact1 = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.save(artifact1);
 						}
 	
 						respArtifact.setId(artifact1.getId());

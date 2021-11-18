@@ -18,6 +18,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TTFileJobKey;
@@ -29,16 +30,14 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
@@ -70,7 +69,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	private TTFileJobDao tFileJobDao;
 		
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactDao artifactDao;
 	
 	@Autowired
 	private ApplicationContext applicationContext;
@@ -208,22 +207,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			Processingtask processingtask = getProcessingtask(processingtaskId);
 //			if(processingtask == null)
 //				throw new Exception(processingtask + " is not configured in DB. Please configure ProcessingTask table properly");
-
-
 			
-			Domain domain = null;
 			Integer inputArtifactId = job.getInputArtifactId();
-			Artifact inputArtifact = null;
-
-	    	Domain[] domains = Domain.values();
-	   		
-    		for (Domain nthDomain : domains) {
-    			inputArtifact = domainUtil.getDomainSpecificArtifact(nthDomain, inputArtifactId);
-    			if(inputArtifact != null) {
-    				domain = nthDomain;
-    				break;
-    			}
-			}
+			Artifact inputArtifact = artifactDao.findById(inputArtifactId).get();
 			
 			String inputArtifactName = inputArtifact.getName();
 			Artifactclass inputArtifactclass = inputArtifact.getArtifactclass();
@@ -268,7 +254,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			logger.trace("outputArtifactPathname " + outputArtifactPathname); 	// null OR 
 																				// /data/transcoded/public/VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
 			
-			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, inputArtifact);
+			HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File> filePathToFileObj = getFilePathToFileObj(inputArtifact);
 			
 			HashMap<String, TFile> filePathToTFileObj = getFilePathToTFileObj(inputArtifactId);
 			
@@ -290,7 +276,6 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				inputArtifactclassForProcess.setSource(inputArtifact.getArtifactclass().getSource());
 				inputArtifactclassForProcess.setPathPrefix(inputArtifact.getArtifactclass().getPathPrefix());
 				inputArtifactclassForProcess.setCategory(inputArtifact.getArtifactclass().getCategory());
-				inputArtifactclassForProcess.setDomain(domain.name());
 				if(jobForProcess.getOutputArtifact() != null)
 					jobForProcess.getOutputArtifact().setName(outputArtifactName);
 
@@ -365,7 +350,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 						}
 					}
 					
-					org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = null;
+					org.ishafoundation.dwaraapi.db.model.transactional.File file = null;
 					if(filePathToFileObj.containsKey(artifactNamePrefixedFilePathname))
 						file = filePathToFileObj.get(artifactNamePrefixedFilePathname);
 
@@ -412,7 +397,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 						ProcessContext processContext = new ProcessContext();
 						processContext.setInputDirPath(inputArtifactPathname);
 						processContext.setJob(jobForProcess);
-						processContext.setFile(fileEntityToFileForProcessConverter.getFileForProcess(file, domain));
+						processContext.setFile(fileEntityToFileForProcessConverter.getFileForProcess(file));
 						processContext.setTFile(fileEntityToFileForProcessConverter.getTFileForProcess(tFile));
 						processContext.setLogicalFile(logicalFile);
 						processContext.setOutputDestinationDirPath(outputFilePath);

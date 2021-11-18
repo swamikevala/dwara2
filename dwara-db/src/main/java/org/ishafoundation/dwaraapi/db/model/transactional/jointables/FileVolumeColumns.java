@@ -1,39 +1,19 @@
-package org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain;
-		
+package org.ishafoundation.dwaraapi.db.model.transactional.jointables;
+
 import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
-import javax.persistence.MapsId;
 
-import org.ishafoundation.dwaraapi.db.keys.domain.FileVolumeKey;
-import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.ishafoundation.dwaraapi.db.keys.FileVolumeKey;
 
-/*
- * 
- * References - 
- * 1) "Bidirectional many-to-many with a link entity" - https://docs.jboss.org/hibernate/orm/5.3/volumeguide/html_single/Hibernate_Volume_Guide.html#associations-many-to-many
- * 2) https://vladmihalcea.com/the-best-way-to-map-a-many-to-many-association-with-extra-columns-when-using-jpa-and-hibernate/
- * 3) https://www.baeldung.com/jpa-many-to-many
- * 
- * 
-*/
 @MappedSuperclass
-public class FileVolume {
-	
-	public static final String TABLE_NAME = File.TABLE_NAME_PREFIX +"<<DOMAIN>>_volume";
+public class FileVolumeColumns {
 	
 	@EmbeddedId
 	protected FileVolumeKey id;
 	
-	@ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("volumeId")
-	private Volume volume;
-		
 	@Column(name="volume_start_block")
 	private Integer volumeStartBlock; // volumeBlockStart
 
@@ -57,27 +37,6 @@ public class FileVolume {
 	
 	@Column(name="hardlink_file_id")
 	private Integer hardlinkFileId;
-	
-	public FileVolume() {
-		
-	}
-	
-	public FileVolume(int fileId, Volume volume) {
-		this.volume = volume;
-		this.id = new FileVolumeKey(fileId, volume.getId());
-	}
-
-	public FileVolumeKey getId() {
-		return id;
-	}
-
-	public void setId(FileVolumeKey id) {
-		this.id = id;
-	}
-
-	public Volume getVolume() {
-		return volume;
-	}
 
 	public Integer getVolumeStartBlock() {
 		return volumeStartBlock;
@@ -90,7 +49,7 @@ public class FileVolume {
 	public Integer getVolumeEndBlock() {
 		return volumeEndBlock;
 	}
-	
+
 	public void setVolumeEndBlock(Integer volumeEndBlock) {
 		this.volumeEndBlock = volumeEndBlock;
 	}
@@ -142,4 +101,6 @@ public class FileVolume {
 	public void setHardlinkFileId(Integer hardlinkFileId) {
 		this.hardlinkFileId = hardlinkFileId;
 	}
+
+
 }

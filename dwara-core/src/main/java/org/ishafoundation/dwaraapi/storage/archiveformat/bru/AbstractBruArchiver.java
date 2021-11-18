@@ -139,7 +139,7 @@ public abstract class AbstractBruArchiver implements IArchiveformatter {
 			String deviceName = archiveformatJob.getDeviceName();
 			String targetLocationPath = archiveformatJob.getTargetLocationPath();
 			SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
+			org.ishafoundation.dwaraapi.db.model.transactional.File file = selectedStorageJob.getFile();
 			StorageJob storageJob = selectedStorageJob.getStorageJob();			
 			String filePathNameToBeRestored = selectedStorageJob.getFilePathNameToBeRestored();
 			long filesize = file.getSize();

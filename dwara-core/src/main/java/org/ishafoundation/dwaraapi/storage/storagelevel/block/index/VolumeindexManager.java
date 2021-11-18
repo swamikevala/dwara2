@@ -1,6 +1,5 @@
 package org.ishafoundation.dwaraapi.storage.storagelevel.block.index;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.Writer;
@@ -18,21 +17,18 @@ import javax.xml.stream.XMLStreamWriter;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.commandline.local.RetriableCommandLineExecutorImpl;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
@@ -41,7 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.ctc.wstx.api.WstxInputProperties;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
@@ -58,7 +53,10 @@ public class VolumeindexManager {
 	private TFileVolumeDao tFileVolumeDao;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactDao artifactDao;
+
+	@Autowired
+	private ArtifactVolumeDao artifactVolumeDao;
 	
 	@Autowired
 	private RetriableCommandLineExecutorImpl retriableCommandLineExecutorImpl;
@@ -74,10 +72,9 @@ public class VolumeindexManager {
 		boolean isSuccess = false;
 		StorageJob storageJob = storagetypeJob.getStorageJob();
 		Volume volume = storageJob.getVolume();
-		Domain domain = storageJob.getDomain();
 		
 		String tmpXmlFilepathname = filesystemTemporarylocation + java.io.File.separator + volume.getId() + xmlFilenameSuffix;
-		createVolumeindexXml(volume, domain, tmpXmlFilepathname);
+		createVolumeindexXml(volume, tmpXmlFilepathname);
 		java.io.File file = new java.io.File(filesystemTemporarylocation + java.io.File.separator + volume.getId() + gzFilenameSuffix);
 		try (GzipCompressorOutputStream out = new GzipCompressorOutputStream(new FileOutputStream(file))){
 			Files.copy(Paths.get(tmpXmlFilepathname), out);
@@ -108,9 +105,9 @@ public class VolumeindexManager {
 	}
 	
 
-	public void createVolumeindexXml(Volume volume, Domain domain, String filePath) throws Exception {
+	public void createVolumeindexXml(Volume volume, String filePath) throws Exception {
 
-		Volumeindex volumeindex = generateVolumeindex(volume, domain);
+		Volumeindex volumeindex = generateVolumeindex(volume);
 		
 	    XmlMapper xmlMapper = new XmlMapper();
 		//Get XMLOutputFactory instance.
@@ -134,7 +131,7 @@ public class VolumeindexManager {
 		logger.info(filePath + "succesfully created");
 	}
 	
-	private Volumeindex generateVolumeindex(Volume volume, Domain domain) throws Exception {
+	private Volumeindex generateVolumeindex(Volume volume) throws Exception {
 		Volumeinfo volumeinfo = new Volumeinfo();
 		volumeinfo.setVolumeuid(volume.getId());
 		volumeinfo.setVolumeblocksize(volume.getDetails().getBlocksize());
@@ -149,11 +146,7 @@ public class VolumeindexManager {
 		//TODO : How to get this info for a volume??? volumeinfo.setArtifactclassuid(artifactclassuid);
 		
 		
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-//		FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-		ArtifactRepository artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-		
-		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeId(volume.getId());
+		List<ArtifactVolume> artifactVolumeList = artifactVolumeDao.findAllByIdVolumeId(volume.getId());
 		List<Artifact> artifactList = new ArrayList<Artifact>();
 		for (ArtifactVolume artifactVolume : artifactVolumeList) {
 			try {
@@ -165,8 +158,8 @@ public class VolumeindexManager {
 				artifact.setStartblock(artifactVolume.getDetails().getStartVolumeBlock());
 				artifact.setEndblock(artifactVolume.getDetails().getEndVolumeBlock());
 				int artifactId = artifactVolume.getId().getArtifactId();
-				org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = (org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact) artifactRepository.findById(artifactId).get();
-				//org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactDbObj = domainUtil.getDomainSpecificArtifact(domain, artifactId);
+				org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifactDbObj = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.findById(artifactId).get();
+				//org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifactDbObj = domainUtil.getDomainSpecificArtifact(domain, artifactId);
 				
 				artifact.setArtifactclassuid(artifactDbObj.getArtifactclass().getId());
 				artifact.setSequencecode(artifactDbObj.getSequenceCode());

@@ -1,4 +1,4 @@
-package org.ishafoundation.dwaraapi.db.keys.domain;
+package org.ishafoundation.dwaraapi.db.keys;
 
 import java.io.Serializable;
 import java.util.Objects;

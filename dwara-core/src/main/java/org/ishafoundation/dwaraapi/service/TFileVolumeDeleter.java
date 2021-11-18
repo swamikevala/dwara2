@@ -3,14 +3,12 @@ package org.ishafoundation.dwaraapi.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,23 +21,22 @@ public class TFileVolumeDeleter {
 
 	@Autowired
 	private TFileVolumeDao tFileVolumeDao;
-	
+
 	@Autowired
-	private DomainUtil domainUtil;
+	private FileVolumeDao fileVolumeDao;
 	
-	public void softDeleteTFileVolumeEntries(Domain domain, List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList, List<TFile> artifactTFileList, Artifact artifact, String volumeId){
+	public void softDeleteTFileVolumeEntries( List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList, List<TFile> artifactTFileList, Artifact artifact, String volumeId){
 		// softDelete Filevolume entries
 		List<FileVolume> toBeUpdatedFileVolumeTableEntries = new ArrayList<FileVolume>();
-		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
-			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volumeId);
+		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : artifactFileList) {
+			FileVolume fileVolume = fileVolumeDao.findByIdFileIdAndIdVolumeId(nthFile.getId(), volumeId);
 			if(fileVolume != null) {
 				fileVolume.setDeleted(true);
 				toBeUpdatedFileVolumeTableEntries.add(fileVolume);
 			}
 		}
 	    if(toBeUpdatedFileVolumeTableEntries.size() > 0) {
-	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-	    	domainSpecificFileVolumeRepository.saveAll(toBeUpdatedFileVolumeTableEntries);
+	    	fileVolumeDao.saveAll(toBeUpdatedFileVolumeTableEntries);
 	    	logger.info("All FileVolume records for " + artifact.getName() + " [" + artifact.getId() + "] in volume " + volumeId + " flagged deleted successfully");
 	    }
 	    

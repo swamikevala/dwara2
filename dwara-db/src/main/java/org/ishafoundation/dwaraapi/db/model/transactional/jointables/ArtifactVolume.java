@@ -1,9 +1,10 @@
-package org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain;
+package org.ishafoundation.dwaraapi.db.model.transactional.jointables;
 		
 import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
@@ -11,13 +12,14 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.MapsId;
 import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
-import org.ishafoundation.dwaraapi.db.keys.domain.ArtifactVolumeKey;
+import org.ishafoundation.dwaraapi.db.keys.ArtifactVolumeKey;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 
@@ -33,10 +35,9 @@ import com.vladmihalcea.hibernate.type.json.JsonStringType;
  * 
 */
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-@MappedSuperclass
+@Entity
+@Table(name="artifact_volume")
 public class ArtifactVolume {
-	
-	public static final String TABLE_NAME = Artifact.TABLE_NAME_PREFIX +"<<DOMAIN>>_volume";
 	
 	@EmbeddedId
 	private ArtifactVolumeKey id;

@@ -7,7 +7,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.service.StagedService;
 import org.junit.Test;
@@ -35,9 +34,6 @@ public class JobCreator_Dependents_Test{
 
 	@Autowired
 	FlowelementDao flowelementDao;
-	
-	@Autowired
-	DomainUtil domainUtil;
 	
 	//String readyToIngestPath =  "C:\\data\\user\\pgurumurthy\\ingest\\pub-video";
 	String readyToIngestPath =  "C:\\data\\ingested";

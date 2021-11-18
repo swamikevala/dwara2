@@ -17,15 +17,12 @@ import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.db.dao.master.DeviceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
@@ -61,7 +58,7 @@ public class AutoloaderService{
 	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactVolumeDao artifactVolumeDao;
 	
 	@Autowired
 	private TapeDeviceUtil tapeDeviceUtil;
@@ -254,15 +251,9 @@ public class AutoloaderService{
 	
 	private boolean hasAnyArtifactOnVolume(Volume volume){
 		boolean hasAnyArtifactOnVolume = false;
-	   	Domain[] domains = Domain.values();
-		for (Domain nthDomain : domains) {
-		    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(nthDomain);
-		    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(volume.getId());
-			if(artifactVolumeCount > 0) {
-				hasAnyArtifactOnVolume = true;
-				break;
-			}
-		}
+	    int artifactVolumeCount = artifactVolumeDao.countByIdVolumeId(volume.getId());
+		if(artifactVolumeCount > 0)
+			hasAnyArtifactOnVolume = true;
 		return hasAnyArtifactOnVolume;
 	}
 	
