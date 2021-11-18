@@ -72,7 +72,7 @@ public class ImportController {
 				throw new DwaraException(errorMsg, null);
 		}
 		
-		if(importResponse.getErrors().size() > 0)
+		if(importResponse.getErrors() != null && importResponse.getErrors().size() > 0)
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(importResponse);
 		
 		return ResponseEntity.status(HttpStatus.OK).body(importResponse);
