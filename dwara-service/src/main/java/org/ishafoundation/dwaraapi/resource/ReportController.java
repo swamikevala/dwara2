@@ -46,4 +46,10 @@ public class ReportController {
         List<RespondReportSize> list = reportService.getReportRestoreSize(requestReportIngestSize);
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
+
+    @GetMapping(value = "/report/serverInfo", produces = "application/json")
+    public ResponseEntity<HashMap<String, String>> getServerInfo() {
+        HashMap<String, String> info = reportService.getServerInfo();
+        return ResponseEntity.status(HttpStatus.OK).body(info);
+    }
 }

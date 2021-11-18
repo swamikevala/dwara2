@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.api.req.restore;
 
+import org.ishafoundation.dwaraapi.enumreferences.Priority;
+
 import java.util.List;
 
 public class RestoreUserRequest {
@@ -8,6 +10,15 @@ public class RestoreUserRequest {
 	private String destinationPath;
 	private String flow;
 	private List<Integer> fileIds;
+	private Priority priority;
+
+	public Priority getPriority() {
+		return priority;
+	}
+
+	public void setPriority(Priority priority) {
+		this.priority = priority;
+	}
 
 	public Integer getCopy() {
 		return copy;

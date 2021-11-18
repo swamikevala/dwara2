@@ -1,6 +1,9 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -17,15 +20,63 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
+
 import org.ishafoundation.dwaraapi.api.req.report.RequestReportSize;
 import org.ishafoundation.dwaraapi.api.resp.report.RespondReportRestoreTime;
 import org.ishafoundation.dwaraapi.api.resp.report.RespondReportSize;
+import org.ishafoundation.dwaraapi.commandline.remote.sch.RemoteCommandLineExecuter;
+import org.ishafoundation.dwaraapi.commandline.remote.sch.SshSessionHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ReportService extends DwaraService {
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Value("${remoteSshUsername}")
+    private String REMOTE_SSH_USER;
+
+    @Value("${remoteSshPrivateKey}")
+    private String REMOTE_SSH_PRIVATE_KEY;
+
+    @Value("${remoteSshKeyPassword}")
+    private String REMOTE_SSH_KEY_PASSWORD;
+
+    @Value("${catDvIP}")
+    private String CATDV_IP;
+
+    @Value("${confluenceIP}")
+    private String CONFLUENCE_IP;
+
+    @Value("${localMountedOn}")
+    private String LOCAL_MOUNTED_ON;
+
+    @Value("${localFolderList}")
+    private String LOCAL_FOLDER_LIST;
+
+    @Value("${catDvMountedOn}")
+    private String CATDV_MOUNTED_ON;
+
+    @Value("${catDvFolderList}")
+    private String CATDV_FOLDER_LIST;
+
+    @Value("${confluenceMountedOn}")
+    private String CONFLUENCE_MOUNTED_ON;
+
+    @Autowired
+    SshSessionHelper sshSessionHelper;
+
+    private static final Logger logger = LoggerFactory.getLogger(ReportService.class);
+
+    @Autowired
+    private RemoteCommandLineExecuter remoteCommandLineExecuter;
     
     public List<RespondReportSize> getReportIngestSize(RequestReportSize request) {
         String condition = "";
@@ -264,5 +315,99 @@ public class ReportService extends DwaraService {
             list.add(report);
         });
         return list;
+    }
+
+    public HashMap<String, String> getServerInfo() {
+        HashMap<String, String> map = new HashMap<String, String>();
+        String ingestServer = "";
+        String ingestFolder = "";
+        String catDVServer = "";
+        String catDVFolder = "";
+        String confluenceServer = "";
+        List<String> ingestServerCommand = new ArrayList<>();
+        ingestServerCommand.add("df");
+        ingestServerCommand.add("-h"); 
+        ingestServerCommand.add(LOCAL_MOUNTED_ON);
+        ingestServer = getCommandOutput(ingestServerCommand);
+
+        List<String> ingestFolderCommand = new ArrayList<>();
+        ingestFolderCommand.add("/bin/sh");
+        ingestFolderCommand.add("-c");
+        ingestFolderCommand.add("du -h -d 0 " + LOCAL_FOLDER_LIST + " | sort -hr");
+        ingestFolder = getCommandOutput(ingestFolderCommand);
+
+        catDVServer = runCommandOnRemote(REMOTE_SSH_PRIVATE_KEY, REMOTE_SSH_KEY_PASSWORD, REMOTE_SSH_USER, CATDV_IP, 22, "df -h " + CATDV_MOUNTED_ON);
+        catDVFolder = runCommandOnRemote(REMOTE_SSH_PRIVATE_KEY, REMOTE_SSH_KEY_PASSWORD, REMOTE_SSH_USER, CATDV_IP, 22, "du -h -d 0 " + CATDV_FOLDER_LIST + " | sort -hr");
+        confluenceServer = runCommandOnRemote(REMOTE_SSH_PRIVATE_KEY, REMOTE_SSH_KEY_PASSWORD, REMOTE_SSH_USER, CONFLUENCE_IP, 22, "df -h " + CONFLUENCE_MOUNTED_ON);
+
+        map.put("ingestServer", ingestServer);
+        map.put("ingestFolder", ingestFolder);
+        map.put("catDVServer", catDVServer);
+        map.put("catDVFolder", catDVFolder);
+        map.put("confluenceServer", confluenceServer);
+
+        return map;
+    }
+
+    private  String runCommandOnRemote(String privateKey, String keyPassword, String userName, String host, int port, String command) {
+        String result = "";
+        Session session = null;
+        ChannelExec channel = null;
+        
+        try {
+            JSch jsch = new JSch();
+            jsch.addIdentity(privateKey, keyPassword);
+
+            session = jsch.getSession(userName, host, port);
+            session.setConfig("StrictHostKeyChecking", "no");
+            session.connect();
+            
+            channel = (ChannelExec) session.openChannel("exec");
+            channel.setCommand(command);
+            ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
+            channel.setOutputStream(responseStream);
+            channel.connect();
+            
+            while (channel.isConnected()) {
+                Thread.sleep(100);
+            }
+            
+            String responseString = new String(responseStream.toByteArray());
+            // System.out.println(responseString);
+            result = responseString;
+        } catch(Exception e) {
+            result = e.getMessage();
+        }
+        finally {
+            if (session != null) {
+                session.disconnect();
+            }
+            if (channel != null) {
+                channel.disconnect();
+            }
+        }
+        
+        return result;
+    }
+
+    private String getCommandOutput(List<String> command) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder(command);
+            Process p = pb.start();
+
+            BufferedReader reader = 
+                new BufferedReader(new InputStreamReader(p.getInputStream()));
+            StringBuilder builder = new StringBuilder();
+            String line = null;
+            while ( (line = reader.readLine()) != null) {
+                builder.append(line);
+                builder.append(System.getProperty("line.separator"));
+            }
+            return builder.toString();
+        }
+        catch (Exception e) {
+            // e.printStackTrace();
+            return e.getMessage();
+        }
     }
 }
