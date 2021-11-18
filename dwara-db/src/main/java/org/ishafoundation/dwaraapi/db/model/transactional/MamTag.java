@@ -4,7 +4,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name ="mamtag")
-public class mamTag {
+public class MamTag {
     @Id
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator = "t_file_sequence")
     @Column(name="id")

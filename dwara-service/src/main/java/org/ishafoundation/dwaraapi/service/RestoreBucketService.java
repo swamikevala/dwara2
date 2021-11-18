@@ -4,6 +4,7 @@ import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TRestoreBucketDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.Artifact1Dao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.domain.File1Dao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.RestoreBucketFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
 import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
@@ -177,7 +178,8 @@ public class RestoreBucketService extends DwaraService{
     }
 
     public List<TRestoreBucket> getAprrovedNull(){
-        return tRestoreBucketDao.findByApprovalStatusNull();
+        int userId =getUserObjFromContext().getId();
+        return tRestoreBucketDao.findByApprovalStatusNullAndCreatedBy(userId);
     }
 
     public void sendMail(TRestoreBucket tRestoreBucket){

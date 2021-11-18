@@ -13,8 +13,8 @@ public class Clip {
     String name;
     Integer file_id;
     Integer fps;
-    Integer in;
-    Integer out;
+    Integer inTime;
+    Integer outTime;
     String notes;
     Integer duration;
    Integer clip_ref_id;
@@ -51,20 +51,21 @@ public class Clip {
         this.fps = fps;
     }
 
-    public Integer getIn() {
-        return in;
+
+    public Integer getInTime() {
+        return inTime;
     }
 
-    public void setIn(Integer in) {
-        this.in = in;
+    public void setInTime(Integer inTime) {
+        this.inTime = inTime;
     }
 
-    public Integer getOut() {
-        return out;
+    public Integer getOutTime() {
+        return outTime;
     }
 
-    public void setOut(Integer out) {
-        this.out = out;
+    public void setOutTime(Integer outTime) {
+        this.outTime = outTime;
     }
 
     public String getNotes() {
