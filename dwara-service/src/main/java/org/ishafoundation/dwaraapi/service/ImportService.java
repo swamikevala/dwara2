@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportStatus;
@@ -122,7 +123,7 @@ public class ImportService extends DwaraService {
 	private List<Error> errorList = null;
 	private List<org.ishafoundation.dwaraapi.api.resp._import.Artifact> artifacts = null;
 
-	public List<ImportResponse> bulkImport(ImportRequest importRequest) throws Exception {
+	public List<ImportResponse> bulkImport(BulkImportRequest importRequest) throws Exception {
 		String importStagingDirLocation = importRequest.getStagingDir(); // /data/dwara/import-staging
 		
 		Path todoDirPath = Paths.get(importStagingDirLocation, todoDirName);
@@ -195,10 +196,10 @@ public class ImportService extends DwaraService {
 		// write the response to a log file inside the destDir
 		ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
 		String json = ow.writeValueAsString(importResponse);
-		FileUtils.write(Paths.get(destDir.toString(), volumeName + ".log."+importResponse.getRunCount()).toFile(), json);
+		FileUtils.write(Paths.get(destDir.toString(), volumeName + ".log."+importResponse.getUserRequestId()).toFile(), json);
 		
 		// move the catalog file to the destDir
-		FileUtils.moveFile(nthXmlFile, Paths.get(destDir.toString(), volumeName + ".xml."+importResponse.getRunCount()).toFile());
+		FileUtils.moveFile(nthXmlFile, Paths.get(destDir.toString(), volumeName + ".xml."+importResponse.getUserRequestId()).toFile());
 	}
 	
 	/*
@@ -261,7 +262,7 @@ public class ImportService extends DwaraService {
 			
 			Import _import = new Import();
 			_import.setId(importKey);
-			_import.setPayload(FileUtils.readFileToByteArray(xmlFile));
+			// TODO: Catalogs are big and saving xml throws package size errror. Not a good decision to save the xml payload in DB - p_import.setPayload(FileUtils.readFileToByteArray(xmlFile));
 			_import.setRequest(request);
 			_import = importDao.save(_import);
 			

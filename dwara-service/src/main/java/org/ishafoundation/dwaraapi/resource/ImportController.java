@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.resource;
 
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -33,7 +34,7 @@ public class ImportController {
 			@ApiResponse(code = 200, message = "Ok")
 	})
 	@PostMapping(value = "/bulkImport", produces = "application/json")
-	public ResponseEntity<List<ImportResponse>> bulkImport(@RequestBody ImportRequest importRequest) throws Exception {
+	public ResponseEntity<List<ImportResponse>> bulkImport(@RequestBody BulkImportRequest importRequest) throws Exception {
 		logger.info("/bulkImport " + importRequest.getStagingDir());
 		List<ImportResponse> importResponse = null;
 		try {
