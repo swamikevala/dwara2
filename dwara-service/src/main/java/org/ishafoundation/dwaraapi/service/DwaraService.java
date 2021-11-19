@@ -54,7 +54,9 @@ public class DwaraService {
 				KeycloakPrincipal principal = (KeycloakPrincipal)authentication.getPrincipal();
 				AccessToken token = principal.getKeycloakSecurityContext().getToken();
 				String userName = token.getPreferredUsername();
+
 				return userName;
+
 			}
 			return null;
 		}
@@ -66,6 +68,7 @@ public class DwaraService {
 	public Set<String> getUserRoles() {
 		if(KEYCLOAK_ENABLED) {
 			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			//System.out.println(authentication.toString());
 
 			//realm roles
 			/* SimpleKeycloakAccount keycloakAccount = (SimpleKeycloakAccount)authentication.getDetails();

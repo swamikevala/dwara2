@@ -237,8 +237,9 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 					try {
 						StorageJob selectedStorageJob = null;
 						String volumeTag = nthAvailableDriveDetails.getDte().getVolumeTag();
+						Volume volume = volumeDao.findById(volumeTag).get();
 						// if an available drive is already loaded with tape - we need to see if we have to hold the tape or not...
-						if(StringUtils.isNotBlank(volumeTag)) { 
+						if(StringUtils.isNotBlank(volumeTag) && !volume.isImported()) { 
 							// ensure that last job on tape has not completed and spawned a dependent storage job "after" the scheduler prepared the storageJobs list.
 							// TODO better take it from the artifact_volume table... 
 							Job lastJobOnTape = jobDao.findTopByStoragetaskActionIdIsNotNullAndVolumeIdAndStatusAndCompletedAtIsNotNullOrderByCompletedAtDesc(volumeTag, Status.completed);
@@ -275,7 +276,6 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 								}
 							}
 							else { // if restore
-								Volume volume = volumeDao.findById(volumeTag).get();
 								VolumeHealthStatus volumeStatus = volume.getHealthstatus();
 								if(volumeStatus == VolumeHealthStatus.suspect ||  volumeStatus == VolumeHealthStatus.defective || volume.isFinalized()) {
 									logger.info("Will be potentially yielding the tape " + volumeTag + " as it is flagged suspect/defective/finalized");

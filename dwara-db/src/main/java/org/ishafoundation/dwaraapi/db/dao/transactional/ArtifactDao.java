@@ -22,4 +22,8 @@ public interface ArtifactDao extends CrudRepository<Artifact,Integer> {
 	Artifact findBySequenceCodeAndDeletedIsFalse(String sequenceCode); // sequenceCode is running but extracted code used as sequence code could have been deleted too - So the Deleted check
 	
 	Artifact findByArtifactRef(Artifact artifact);
+	
+	boolean existsByName(String pathName);
+	
+	List<Artifact> findAllByArtifactRef(Artifact artifact);
 }
