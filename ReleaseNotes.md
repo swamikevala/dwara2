@@ -5,9 +5,18 @@
 
 2) Get servers space infomation
 
+3) Aumrit anna to add the list of features developed for restore
+
+
 ### Bug fixes
 
 1) Showing imported tapes and artifacts in Tape Catalog and Folder Catalog
+
+2) Fix partially restored files
+
+3) mbuffer quitened
+
+4) Import fixes
 
 ### Upgrade steps
 
