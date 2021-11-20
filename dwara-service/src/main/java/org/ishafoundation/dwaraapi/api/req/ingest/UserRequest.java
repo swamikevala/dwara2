@@ -2,13 +2,9 @@ package org.ishafoundation.dwaraapi.api.req.ingest;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
-
 public class UserRequest {
 	
 	private String artifactclass;
-	
-	private Domain domain;
 
 	private List<RequestParams> artifact;
 
@@ -19,14 +15,6 @@ public class UserRequest {
 
 	public void setArtifactclass(String artifactclass) {
 		this.artifactclass = artifactclass;
-	}
-
-	public Domain getDomain() {
-		return domain;
-	}
-
-	public void setDomain(Domain domain) {
-		this.domain = domain;
 	}
 
 	public List<RequestParams> getArtifact() {

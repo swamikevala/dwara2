@@ -42,7 +42,7 @@ public class JobEntityToJobForProcessConverter {
 		}
 		
 		Integer inputArtifactId = jobEntity.getInputArtifactId();
-		//org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact inputArtifactFromDB = domainUtil.getDomainSpecificArtifact(inputArtifactId);
+		//org.ishafoundation.dwaraapi.db.model.transactional.Artifact inputArtifactFromDB = domainUtil.getDomainSpecificArtifact(inputArtifactId);
 
 		Artifact inputArtifact = new Artifact(); // can contain one of the domain artifacts id
 		inputArtifact.setId(inputArtifactId);

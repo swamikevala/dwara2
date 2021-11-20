@@ -1,28 +1,30 @@
-package org.ishafoundation.dwaraapi.db.model.transactional.domain;
+package org.ishafoundation.dwaraapi.db.model.transactional;
 		
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
-import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-@MappedSuperclass
+@Entity
+@SequenceGenerator(initialValue = 1, name = "artifact_sequence", allocationSize = 1)
+@Table(name="artifact", indexes = {@Index(columnList ="total_size")})
 public class Artifact {
-	
-	public static final String TABLE_NAME_PREFIX = "artifact";
-	
 	@Id
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator = "artifact_sequence")
 	@Column(name="id")
@@ -64,6 +66,10 @@ public class Artifact {
 
 	@ManyToMany(mappedBy = "artifacts")
 	Set<Tag> tags;
+	
+	@ManyToOne
+	@JoinColumn(name="artifact_ref_id")
+	private Artifact artifactRef;
 
 	public Artifact() {
 
@@ -188,6 +194,19 @@ public class Artifact {
 		}
 	}
 	
+	@JsonIgnore
+	public Artifact getArtifactRef() {
+		return artifactRef;
+	}
+
+	@JsonIgnore
+	public void setArtifactRef(Artifact artifactRef) {
+		this.artifactRef = artifactRef;
+	}
+
+	public int getArtifactRefId() {
+		return this.artifactRef != null ? this.artifactRef.getId() : 0;
+	}
 
 
 	/* @Override

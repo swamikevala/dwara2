@@ -86,13 +86,13 @@ public class Rewrite extends AbstractStoragetaskAction{
 //		int libraryId = library.getId();
 //		Volume volume = storagejob.getVolume();
 //		// Get a map of Paths and their File1 Ids
-//		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File1> libraryFileList = fileDao.findAllByLibraryId(libraryId);
+//		List<org.ishafoundation.dwaraapi.db.model.transactional.File1> libraryFileList = fileDao.findAllByLibraryId(libraryId);
 //		
 //		HashMap<Integer, String> fileIdToPath = new HashMap<Integer, String>();
 //		HashMap<String, Integer> filePathToId = new HashMap<String, Integer>();
-//		HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File1> filePathNameTofileObj = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File1>();
-//		for (Iterator<org.ishafoundation.dwaraapi.db.model.transactional.domain.File1> iterator = libraryFileList.iterator(); iterator.hasNext();) {
-//			org.ishafoundation.dwaraapi.db.model.transactional.domain.File1 nthFile = iterator.next();
+//		HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File1> filePathNameTofileObj = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File1>();
+//		for (Iterator<org.ishafoundation.dwaraapi.db.model.transactional.File1> iterator = libraryFileList.iterator(); iterator.hasNext();) {
+//			org.ishafoundation.dwaraapi.db.model.transactional.File1 nthFile = iterator.next();
 //			filePathNameTofileObj.put(nthFile.getPathname(), nthFile);
 //			fileIdToPath.put(nthFile.getId(), nthFile.getPathname());
 //		}
@@ -106,7 +106,7 @@ public class Rewrite extends AbstractStoragetaskAction{
 //			String fileName = archivedFile.getFilePathName(); 
 //			
 //			// TODO get the file id from File1 table using this fileName...
-//			org.ishafoundation.dwaraapi.db.model.transactional.domain.File1 file = null;
+//			org.ishafoundation.dwaraapi.db.model.transactional.File1 file = null;
 //			if(filePathNameTofileObj != null)
 //				file = filePathNameTofileObj.get(fileName);
 //

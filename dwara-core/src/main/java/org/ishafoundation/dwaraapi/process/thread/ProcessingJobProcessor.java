@@ -13,14 +13,12 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.ApplicationStatus;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ProcessingFailureDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactEntityUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.keys.TTFileJobKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
@@ -28,16 +26,14 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.ArtifactclassCo
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
@@ -76,8 +72,14 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	private ProcessingFailureDao failureDao;
 	
 	@Autowired
+	private ArtifactDao artifactDao;
+	
+	@Autowired
 	private TFileDao tFileDao;
 	
+	@Autowired
+	private FileDao fileDao;
+
 	@Autowired
 	private TTFileJobDao tFileJobDao;
 	
@@ -91,15 +93,6 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	private JobUtil jobUtil;	
 	
 	@Autowired
-	private DomainUtil domainUtil;
-
-	@Autowired
-	private ArtifactEntityUtil artifactEntityUtil;
-	
-	@Autowired
-	private FileEntityUtil fileEntityUtil;
-	
-	@Autowired
 	private Configuration configuration;
 	
 	private ProcessContext processContext;
@@ -107,7 +100,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	// All below are available in processcontext but to avoid DB calls per file passing it from Manager...
 	private Job job;
 	private Artifact inputArtifact;
-	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File file;
+	private org.ishafoundation.dwaraapi.db.model.transactional.File file;
 	private TFile tFile;
 	
 	private Artifactclass outputArtifactclass;
@@ -138,11 +131,11 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		this.inputArtifact = inputArtifact;
 	}
 
-	public org.ishafoundation.dwaraapi.db.model.transactional.domain.File getFile() {
+	public org.ishafoundation.dwaraapi.db.model.transactional.File getFile() {
 		return file;
 	}
 
-	public void setFile(org.ishafoundation.dwaraapi.db.model.transactional.domain.File file) {
+	public void setFile(org.ishafoundation.dwaraapi.db.model.transactional.File file) {
 		this.file = file;
 	}
 
@@ -167,18 +160,17 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		// This check is because of the same file getting queued up for processing again...
 		// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
 		// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 
-//		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = null;
+//		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.File> domainSpecificFileRepository = null;
 //		if(outputArtifactName != null) {
 //			String proxyTargetLocation = destinationDirPath + File.separator + FilenameUtils.getBaseName(logicalFile.getAbsolutePath()) + ".mp4";
 //			String filepathname = proxyTargetLocation.replace(outputArtifactPathname, outputArtifactName);
 //			domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-//			org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileInQuestion = domainSpecificFileRepository.findByPathname(filepathname);
+//			org.ishafoundation.dwaraapi.db.model.transactional.File fileInQuestion = domainSpecificFileRepository.findByPathname(filepathname);
 //			if(fileInQuestion != null) {
 //				logger.trace(outputArtifactPathname + " already processed. Skipping it");
 //				return;
 //			}
 //		}
-		Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		String outputArtifactName = processContext.getJob().getOutputArtifact().getName();
 		int fileId = tFile != null ? tFile.getId() : file.getId();
@@ -309,14 +301,11 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 								}
 							}
 						}					
-
 						
-						ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-						Artifact outputArtifact = artifactRepository.findByName(outputArtifactName); 
+						Artifact outputArtifact = artifactDao.findByName(outputArtifactName); 
 						if(outputArtifact == null) {// not already created.
-						    outputArtifact = domainUtil.getDomainSpecificArtifactInstance(domain);
-							
-						    artifactEntityUtil.setDomainSpecificArtifactRef(outputArtifact, inputArtifact);
+						    outputArtifact = new Artifact();
+						    outputArtifact.setArtifactRef(inputArtifact);
 
 						    //outputArtifact.setFileStructureMd5("not needed");
 						    outputArtifact.setArtifactclass(outputArtifactclass);
@@ -328,11 +317,11 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 						    outputArtifact.setWriteRequest(inputArtifact.getWriteRequest());
 						    
 						    try {
-						    	outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
+						    	outputArtifact = (Artifact) artifactDao.save(outputArtifact);
 						    }
 						    catch (Exception e) {
 								// possibly updated by another thread already
-								outputArtifact = artifactRepository.findByName(outputArtifactName); 
+								outputArtifact = artifactDao.findByName(outputArtifactName); 
 								if(outputArtifact != null)
 									logger.trace("OutputArtifact details possibly updated by another thread already");
 								else
@@ -362,20 +351,20 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 						// Output Artifact as a file record
 						String artifactFileAbsolutePathName = outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName;
 						HashMap<String, TFile> filePathToTFileObj = getFilePathToTFileObj(outputArtifact.getId());
-						HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathToFileObj = getFilePathToFileObj(domain, outputArtifact);
+						HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File> filePathToFileObj = getFilePathToFileObj(outputArtifact);
 						
 						org.ishafoundation.dwaraapi.db.model.transactional.TFile artifactTFile = filePathToTFileObj.get(outputArtifactName);
 						
 						if(artifactTFile == null) // only if not already created... 
 							artifactTFile = createTFile(artifactFileAbsolutePathName, outputArtifact);	
 							
-						FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-//						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
 						
-						org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFile = filePathToFileObj.get(outputArtifactName);
+//						org.ishafoundation.dwaraapi.db.model.transactional.File artifactFile = domainSpecificFileRepository.findByPathname(outputArtifactName);
+						
+						org.ishafoundation.dwaraapi.db.model.transactional.File artifactFile = filePathToFileObj.get(outputArtifactName);
 						
 						if(artifactFile == null) { // only if not already created... 
-							artifactFile = createFile(artifactFileAbsolutePathName, outputArtifact, domainSpecificFileRepository, domain, artifactTFile);	
+							artifactFile = createFile(artifactFileAbsolutePathName, outputArtifact, artifactTFile);	
 //						}else {
 //							// if artifactFile already exists - need to recalculate the size for i/p = o/p artifact class scenarios which will change the dynamics of the folder completely
 //							if(outputArtifactName.equals(inputArtifact.getName())){
@@ -408,8 +397,8 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 								logger.trace("Now creating T file record for - " + filepathName);
 								nthTFile = createTFile(outputArtifact.getArtifactclass().getPath() + File.separator + filepathName, outputArtifact);	
 							}							
-							org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = filePathToFileObj.get(filepathName);
-							//org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile = domainSpecificFileRepository.findByPathname(filepathName);
+							org.ishafoundation.dwaraapi.db.model.transactional.File nthFile = filePathToFileObj.get(filepathName);
+							//org.ishafoundation.dwaraapi.db.model.transactional.File nthFile = domainSpecificFileRepository.findByPathname(filepathName);
 							if(nthFile == null) { // only if not already created... 
 								String fullFilepathname =  outputArtifact.getArtifactclass().getPath() + File.separator + filepathName;
 								boolean addFileRecords = true;
@@ -424,7 +413,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 								}
 								if(addFileRecords) {
 									logger.trace("Now creating file record for - " + filepathName);
-									createFile(fullFilepathname, outputArtifact, domainSpecificFileRepository, domain, nthTFile);
+									createFile(fullFilepathname, outputArtifact, nthTFile);
 								}
 							}
 						}
@@ -437,7 +426,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 //								//outputArtifact.setFileCount(processedFileNames.length);
 //								logger.trace("Hereee" + processingtaskName + ":" + artifactFileAbsolutePathName + ":" + fileNameFilter + ":" + artifactFileCnt + ":" +  processedFileNames.length);
 //								outputArtifact.setFileCount(artifactFileCnt);
-//							    outputArtifact = (Artifact) artifactRepository.save(outputArtifact);
+//							    outputArtifact = (Artifact) artifactDao.save(outputArtifact);
 //								
 //							}catch (Exception e) {
 //								logger.warn("Weird. File exists but fileutils unable to calculate size. Skipping setting size");
@@ -523,12 +512,11 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		return savedTFile;
 	}
 
-	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File createFile(String fileAbsolutePathName, Artifact outputArtifact, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository, Domain domain, org.ishafoundation.dwaraapi.db.model.transactional.TFile tFileDBObj) throws Exception {
-	    org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFileRowToBeInserted = domainUtil.getDomainSpecificFileInstance(domain);
+	private org.ishafoundation.dwaraapi.db.model.transactional.File createFile(String fileAbsolutePathName, Artifact outputArtifact, org.ishafoundation.dwaraapi.db.model.transactional.TFile tFileDBObj) throws Exception {
+	    org.ishafoundation.dwaraapi.db.model.transactional.File nthFileRowToBeInserted = new org.ishafoundation.dwaraapi.db.model.transactional.File();
 		
-	    fileEntityUtil.setDomainSpecificFileRef(nthFileRowToBeInserted, file);
-	    
-	    fileEntityUtil.setDomainSpecificFileArtifact(nthFileRowToBeInserted, outputArtifact);
+	    nthFileRowToBeInserted.setFileRef(file);
+	    nthFileRowToBeInserted.setArtifact(outputArtifact);
 	    
 	    String filePathname = tFileDBObj.getPathname();
 	    nthFileRowToBeInserted.setPathname(filePathname);
@@ -538,13 +526,13 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	    nthFileRowToBeInserted.setDirectory(tFileDBObj.isDirectory());
 	    nthFileRowToBeInserted.setSize(tFileDBObj.getSize());
 
-	    org.ishafoundation.dwaraapi.db.model.transactional.domain.File savedFile = null;
+	    org.ishafoundation.dwaraapi.db.model.transactional.File savedFile = null;
 		logger.debug("DB File Creation");
 		try {
-			savedFile = domainSpecificFileRepository.save(nthFileRowToBeInserted);
+			savedFile = fileDao.save(nthFileRowToBeInserted);
 		}
 		catch (Exception e) {
-			nthFileRowToBeInserted = domainSpecificFileRepository.findByPathname(filePathname);
+			nthFileRowToBeInserted = fileDao.findByPathname(filePathname);
 			// This check is because of the same file getting queued up for processing again...
 			// JobManager --> get all "Queued" processingjobs --> ProcessingJobManager ==== thread per file ====> ProcessingJobProcessor --> Only when the file's turn comes the status change to inprogress
 			// Next iteration --> get all "Queued" processingjobs would still show the same job above sent already to ProcessingJobManager as it has to wait for its turn for CPU cycle... 

@@ -1,12 +1,20 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.jointables;
 		
+import java.time.LocalDateTime;
+
+import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+//import javax.persistence.Inheritanc;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
 import javax.persistence.Table;
 
 import org.ishafoundation.dwaraapi.db.keys.FileVolumeKey;
+import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 
 /*
@@ -19,20 +27,21 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
  * 
 */
 @Entity
-@Table(name="t_file_volume")
-public class TFileVolume extends FileVolumeColumns{
+@Table(name="file_volume")
+public class FileVolume  extends FileVolumeColumns{
+	
 	
 	@ManyToOne(fetch = FetchType.LAZY)
     @MapsId("volumeId")
 	private Volume volume;
 	
-	public TFileVolume() {
+	public FileVolume() {
 		
 	}
 	
-	public TFileVolume(int tfileId, Volume volume) {
+	public FileVolume(int fileId, Volume volume) {
 		this.volume = volume;
-		this.id = new FileVolumeKey(tfileId, volume.getId());
+		this.id = new FileVolumeKey(fileId, volume.getId());
 	}
 
 	public FileVolumeKey getId() {
@@ -46,4 +55,5 @@ public class TFileVolume extends FileVolumeColumns{
 	public Volume getVolume() {
 		return volume;
 	}
+
 }

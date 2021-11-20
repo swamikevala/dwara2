@@ -447,8 +447,8 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			tapeJob.setDeviceWwnId(tapedriveUid);
 //			if(storagetaskAction == Action.write) {
 //				Domain domain = storageJob.getDomain();
-//			    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-//			    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(volume.getId());
+//			    ArtifactVolumeRepository<ArtifactVolume> artifactVolumeDao = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
+//			    int artifactVolumeCount = artifactVolumeDao.countByIdVolumeId(volume.getId());
 //			    tapeJob.setArtifactVolumeCount(artifactVolumeCount);
 //			}
 

@@ -3,7 +3,6 @@ package org.ishafoundation.dwaraapi.service.common;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -12,26 +11,18 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.TFileVolumeDeleter;
@@ -50,16 +41,16 @@ public class ArtifactDeleter {
 	private JobDao jobDao;
 	
 	@Autowired
+	private ArtifactDao artifactDao;
+	
+	@Autowired
 	private TFileDao tFileDao;
 	
 	@Autowired
-	private TFileVolumeDao tFileVolumeDao;
+	private FileDao fileDao;
 	
 	@Autowired
-	private DomainUtil domainUtil;
-	
-	@Autowired
-	private FileRepositoryUtil fileRepositoryUtil;
+	private ArtifactVolumeDao artifactVolumeDao;
 
 	@Autowired
 	private MamUpdateTaskExecutor mamUpdateTaskExecutor;
@@ -111,14 +102,14 @@ public class ArtifactDeleter {
 		jobDao.saveAll(jobList);
 	}
     
-	public void cleanUp(Request userRequest, Request requestToBeActioned, Domain domain, ArtifactRepository artifactRepository) throws Exception{	
+	public void cleanUp(Request userRequest, Request requestToBeActioned) throws Exception{	
 		int requestId = requestToBeActioned.getId();
-		HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>> artifactId_ArtifactFileList = new HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File>>();
+		HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.File>> artifactId_ArtifactFileList = new HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.File>>();
 		HashMap<Integer, List<TFile>> artifactId_ArtifactTFileList = new HashMap<Integer, List<TFile>>();
 		HashMap<Integer, Artifact> artifactId_Artifact = new HashMap<Integer, Artifact>();
 		
     	// Step 3 - Find all artifacts involved
-    	List<Artifact> artifactList = artifactRepository.findAllByWriteRequestId(requestId);
+    	List<Artifact> artifactList = artifactDao.findAllByWriteRequestId(requestId);
     	for (Iterator iterator = artifactList.iterator(); iterator.hasNext();) {
 			Artifact nthArtifact = (Artifact) iterator.next();
 			logger.info("Now deleting " + nthArtifact.getName() + "[" + nthArtifact.getId() + "] related File/Artifact DB entries and Filesystem files");
@@ -126,15 +117,14 @@ public class ArtifactDeleter {
 			artifactId_Artifact.put(nthArtifact.getId(), nthArtifact);
 			
 	    	// Step 4 - Flag all the file entries as softdeleted
-			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(nthArtifact, domain);
+			List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = fileDao.findAllByArtifactIdAndDeletedFalse(nthArtifact.getId());
 			artifactId_ArtifactFileList.put(nthArtifact.getId(), artifactFileList);
 			
-			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
+			for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : artifactFileList) {
 				nthFile.setDeleted(true);
 			}
 			
-	    	FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-	    	domainSpecificFileRepository.saveAll(artifactFileList);
+	    	fileDao.saveAll(artifactFileList);
 			logger.info("Files flagged Deleted");
 			
 			// Step 4.5 - Flag all the tFile entries as softdeleted
@@ -151,19 +141,18 @@ public class ArtifactDeleter {
 	    	// Step 5 - Flag the artifact as softdeleted
 			nthArtifact.setqLatestRequest(userRequest);
 			nthArtifact.setDeleted(true);
-	    	artifactRepository.save(nthArtifact);
+	    	artifactDao.save(nthArtifact);
 	    	logger.info("Artifact flagged Deleted");
 	    	
 	    	// Step 6 - Flag the artifactVolume deleted
-			ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-			List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactId(nthArtifact.getId());
+			List<ArtifactVolume> artifactVolumeList = artifactVolumeDao.findAllByIdArtifactId(nthArtifact.getId());
 
 			if(artifactVolumeList.size() > 0) {
 				for (ArtifactVolume artifactVolume : artifactVolumeList) {
 					artifactVolume.setStatus(ArtifactVolumeStatus.deleted);
 				}
 				
-				domainSpecificArtifactVolumeRepository.saveAll(artifactVolumeList);
+				artifactVolumeDao.saveAll(artifactVolumeList);
 			}
 			
 			
@@ -212,7 +201,7 @@ public class ArtifactDeleter {
     	List<Job> jobList = jobDao.findAllByRequestId(requestId);
 		for (Job nthJob : jobList) {
 			if(nthJob.getStatus() != Status.cancelled) {
-				List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = artifactId_ArtifactFileList.get(nthJob.getInputArtifactId());
+				List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = artifactId_ArtifactFileList.get(nthJob.getInputArtifactId());
 				List<TFile> artifactTFileList = artifactId_ArtifactTFileList.get(nthJob.getInputArtifactId());
 				
 				Action storagetaskAction = nthJob.getStoragetaskActionId();
@@ -221,7 +210,7 @@ public class ArtifactDeleter {
 				Artifact artifact = artifactId_Artifact.get(artifactId);
 				
 				if(storagetaskAction != null && storagetaskAction == Action.write) {
-					tFileVolumeDeleter.softDeleteTFileVolumeEntries(Domain.ONE, artifactFileList, artifactTFileList, artifact, nthJob.getVolume().getId());
+					tFileVolumeDeleter.softDeleteTFileVolumeEntries(artifactFileList, artifactTFileList, artifact, nthJob.getVolume().getId());
 				}
 				else if(processingtaskId != null) {
 					// TODO - Need to call processingTask specific delete method here 

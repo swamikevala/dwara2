@@ -7,10 +7,8 @@ import java.time.temporal.ChronoUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +25,7 @@ public class ScheduledIngestedArtifactAutoDeleter {
 	private Environment env;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactDao artifactDao;
 	
 	@Autowired
 	private Configuration configuration;
@@ -41,14 +39,7 @@ public class ScheduledIngestedArtifactAutoDeleter {
 		for (File file : ingestableFiles) {// loop through the ingested artifacts
 			String artifactName = file.getName();
 			logger.trace("artifactName " + artifactName);
-			Artifact artifact = null; // get the artifact details from DB
-		   	Domain[] domains = Domain.values();
-    		for (Domain nthDomain : domains) {
-				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(nthDomain);
-				artifact = artifactRepository.findByName(artifactName);
-				if(artifact != null)
-					break;
-    		}
+			Artifact artifact = artifactDao.findByName(artifactName);
     		if(artifact == null) {
     			logger.warn(artifactName + " doesnt exist in dwara. Skipping deleting it");
     		}

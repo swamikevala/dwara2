@@ -2,22 +2,17 @@ package org.ishafoundation.dwaraapi.hotfixes;
 
 
 import java.util.List;
-import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,10 +41,10 @@ public class Edited_SeqCode_Fixer {
 	private TFileDao tFileDao;
 
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactDao artifactDao;
 	
 	@Autowired
-	private FileRepositoryUtil fileRepositoryUtil;
+	private FileDao fileDao;
 
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
@@ -103,23 +98,9 @@ public class Edited_SeqCode_Fixer {
 
 	private void updateArtifact(int artifactId, int seqNumberToBeIncremented) throws Exception {
 		// 2. Change the artifact name in the artifact folder and artifact table/ file table entry for the artifact
-		ArtifactRepository<Artifact> artifactRepository = null;
-		Artifact artifactToRenameActualRow = null; // get the artifact details from DB
-		Domain domain = null; 
-		Domain[] domains = Domain.values();
-		for (Domain nthDomain : domains) {
-			artifactRepository = domainUtil.getDomainSpecificArtifactRepository(nthDomain);
-			Optional<Artifact> artifactEntity = artifactRepository.findById(artifactId);
-			if(artifactEntity.isPresent()) {
-				artifactToRenameActualRow = artifactEntity.get();
-				domain = nthDomain;
-				break;
-			}
-		}
-
+		Artifact artifactToRenameActualRow = artifactDao.findById(artifactId).get();
 		Request systemRequest = artifactToRenameActualRow.getWriteRequest();
-		
-    	List<Artifact> artifactList = artifactRepository.findAllByWriteRequestId(systemRequest.getId());
+    	List<Artifact> artifactList = artifactDao.findAllByWriteRequestId(systemRequest.getId());
     	for (Artifact artifact : artifactList) {
 			String artifactName = artifact.getName();
 			logger.info("Now Updating " + artifactName);
@@ -142,14 +123,14 @@ public class Edited_SeqCode_Fixer {
     		artifact.setName(artifactNewName);
     		artifact.setSequenceCode(newSequenceCode);
 			// Save Artifact first
-			artifactRepository.save(artifact);
+			artifactDao.save(artifact);
 			logger.info("Artifact table updated for " + artifactName + " with " + artifactNewName);
 				
 			// 2 (a) (ii) Change the File Table entries and the file names 
 			// Step 4 - Flag all the file entries as soft-deleted
 			String parentFolderReplaceRegex = "^"+artifactName; 
-			List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getAllArtifactFileList(artifact, domain);			
-			for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File eachfile : artifactFileList) { 
+			List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = fileDao.findAllByArtifactId(artifact.getId());			
+			for (org.ishafoundation.dwaraapi.db.model.transactional.File eachfile : artifactFileList) { 
 				// Each file will now be renamed and the DB entry changed subsequently like butter through knife...
 				String eachFilePath = eachfile.getPathname();
 				// Getting the filename
@@ -172,10 +153,9 @@ public class Edited_SeqCode_Fixer {
 				nthTFile.setPathnameChecksum(filePathChecksum);
 			}
 				
-			FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
 			// Update the file table
 			try {
-				domainSpecificFileRepository.saveAll(artifactFileList);
+				fileDao.saveAll(artifactFileList);
 				tFileDao.saveAll(artifactTFileList);
 				logger.info("T/File tables updated for " + artifactName + " with " + artifactNewName);
 			}

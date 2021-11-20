@@ -18,28 +18,25 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -88,8 +85,14 @@ public class ScheduledStatusUpdater {
 	private TFileDao tFileDao;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private FileDao fileDao;
 	
+	@Autowired
+	private ArtifactDao artifactDao;
+	
+	@Autowired
+	private ArtifactVolumeDao artifactVolumeDao;
+
 	@Autowired
 	private Configuration configuration;
 	
@@ -107,10 +110,7 @@ public class ScheduledStatusUpdater {
 	
 	@Autowired
 	private UserRequestHelper userRequestHelper;
-	
-	@Autowired
-	private FileRepositoryUtil fileRepositoryUtil;
-	
+		
 	@Value("${scheduler.statusUpdater.enabled:true}")
 	private boolean isEnabled;
 	
@@ -244,7 +244,7 @@ public class ScheduledStatusUpdater {
 						
 							// TODO : Digi hack - the permissions script assumes the input artifact folder is "staged" and hence only supports Digitization A/Cs
 							if(outputArtifactId != null) {
-								org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact = domainUtil.getDomainSpecificArtifact(outputArtifactId);
+								org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = artifactDao.findById(outputArtifactId).get();
 								String pathPrefix = artifact.getArtifactclass().getPath();
 								String staged = "/staged";
 								if(pathPrefix.contains(staged))
@@ -268,43 +268,32 @@ public class ScheduledStatusUpdater {
 									}
 									
 									Integer artifactId = job.getInputArtifactId();
-									Domain domain = null;
-									Domain[] domains = Domain.values();
-									for (Domain nthDomain : domains) {
-										Artifact artifact = domainUtil.getDomainSpecificArtifact(nthDomain, artifactId);
-										if(artifact != null) {
-											domain = nthDomain;
-											break;
-										}
-									}
 									
 									// update the status of the defective/migrated artifact/volume
-									ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-									
 									Integer rewriteCopy = job.getRequest().getDetails().getRewriteCopy();
 									RewriteMode rewritePurpose = job.getRequest().getDetails().getMode();
 									if(rewriteCopy != null) { // if rewrite artifact
-										List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
+										List<ArtifactVolume> artifactVolumeList = artifactVolumeDao.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
 										for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
 											if(nthArtifactVolume.getVolume().getGroupRef().getCopy().getId() == rewriteCopy && nthArtifactVolume.getVolume().getId() != job.getVolume().getId()) {
 												nthArtifactVolume.setStatus(ArtifactVolumeStatus.deleted);
-												domainSpecificArtifactVolumeRepository.save(nthArtifactVolume);
+												artifactVolumeDao.save(nthArtifactVolume);
 												
-												softDeleteTFileVolumeEntries(Domain.ONE, artifactId, nthArtifactVolume.getId().getVolumeId());		
+												softDeleteTFileVolumeEntries(artifactId, nthArtifactVolume.getId().getVolumeId());		
 												break;
 											}
 										}
 									}else if(rewritePurpose == RewriteMode.replace || rewritePurpose == RewriteMode.migrate) { // if rewritten volume
 										String volumeId = job.getRequest().getDetails().getVolumeId();
-										ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
+										ArtifactVolume artifactVolume = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
 										ArtifactVolumeStatus artifactVolumeStatus = ArtifactVolumeStatus.deleted;
 										if(rewritePurpose == RewriteMode.migrate)
 											artifactVolumeStatus = ArtifactVolumeStatus.migrated;
 										artifactVolume.setStatus(artifactVolumeStatus);
 										
-										domainSpecificArtifactVolumeRepository.save(artifactVolume);
+										artifactVolumeDao.save(artifactVolume);
 										if(artifactVolumeStatus == ArtifactVolumeStatus.deleted) // TODO : Figure out what should happen to migrate... NOTE : migrate and artifact rewrite piece not tested.
-											softDeleteTFileVolumeEntries(Domain.ONE, artifactId, volumeId);
+											softDeleteTFileVolumeEntries(artifactId, volumeId);
 									}
 									
 									// also delete the goodcopy/source restored content too
@@ -329,14 +318,10 @@ public class ScheduledStatusUpdater {
 									
 									String restoredFilePathName = null;
 									
-							    	Domain[] domains = Domain.values();
-						    		for (Domain nthDomain : domains) {
-						    			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainUtil.getDomainSpecificFile(nthDomain, fileIdRestored);
-						    			if(file != null) {
-						    				restoredFilePathName = file.getPathname();
-						    				break;
-						    			}
-									}
+					    			org.ishafoundation.dwaraapi.db.model.transactional.File file = fileDao.findById(fileIdRestored).get();
+					    			if(file != null)
+					    				restoredFilePathName = file.getPathname();
+					    			
 									// inputPath = something like - /data/restored/someoutputfolder/.restoring
 									String srcPath = inputPath + java.io.File.separator + restoredFilePathName;
 									String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");	
@@ -377,20 +362,20 @@ public class ScheduledStatusUpdater {
 		}
 	}
 	
-	private void softDeleteTFileVolumeEntries(Domain domain, int artifactId, String volumeId) {
-		Artifact nthArtifact = domainUtil.getDomainSpecificArtifact(artifactId);
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = null;
+	private void softDeleteTFileVolumeEntries(int artifactId, String volumeId) {
+		Artifact nthArtifact = artifactDao.findById(artifactId).get();
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = null;
 		try {
-			artifactFileList = fileRepositoryUtil.getArtifactFileList(nthArtifact, domain);
+			artifactFileList = fileDao.findAllByArtifactIdAndDeletedFalse(nthArtifact.getId());
 		} catch (Exception e) {
 			logger.error("Unable to getArtifactFileList for " + nthArtifact.getId() + " : " + e.getMessage(), e);
 		}
 		List<TFile> artifactTFileList  = tFileDao.findAllByArtifactId(nthArtifact.getId()); 
-		tFileVolumeDeleter.softDeleteTFileVolumeEntries(Domain.ONE, artifactFileList, artifactTFileList, nthArtifact, volumeId);
+		tFileVolumeDeleter.softDeleteTFileVolumeEntries(artifactFileList, artifactTFileList, nthArtifact, volumeId);
 	}
 	
 	private void updateArtifactSizeAndCount(Job job, int artifactId) {
-		org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact = domainUtil.getDomainSpecificArtifact(artifactId);
+		org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = artifactDao.findById(artifactId).get();
 		
 		Path artifactPath = Paths.get(artifact.getArtifactclass().getPath(), artifact.getName());
 		File artifactFileObj = artifactPath.toFile();
@@ -408,14 +393,11 @@ public class ScheduledStatusUpdater {
 	    logger.debug("artifactSize old " + artifact.getTotalSize() + " artifactSize new " + artifactSize);
 	    artifact.setTotalSize(artifactSize);
 		artifact.setFileCount(artifactFileCount);
-		
-		ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(artifact.getArtifactclass().getDomain());
-		artifact = (Artifact) artifactRepository.save(artifact);
-		
-		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(artifact.getArtifactclass().getDomain());
-		org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactFileFromDB = domainSpecificFileRepository.findByPathname(artifact.getName());
+		artifact = (Artifact) artifactDao.save(artifact);
+
+		org.ishafoundation.dwaraapi.db.model.transactional.File artifactFileFromDB = fileDao.findByPathname(artifact.getName());
 		artifactFileFromDB.setSize(artifactSize);
-		domainSpecificFileRepository.save(artifactFileFromDB);
+		fileDao.save(artifactFileFromDB);
 		
 		TFile artifactTFileFromDB = tFileDao.findByPathname(artifact.getName());
 		if(artifactTFileFromDB != null) {
@@ -436,9 +418,9 @@ public class ScheduledStatusUpdater {
 			if(artifactSubfolderObj.isDirectory()) {
 		    	long artifactSubfolderSize = FileUtils.sizeOfDirectory(artifactSubfolderObj);
 		    	Path artifactSubfolderFilePath = Paths.get(artifact.getName(), subfolder);
-				org.ishafoundation.dwaraapi.db.model.transactional.domain.File artifactSubfolderFileFromDB = domainSpecificFileRepository.findByPathname(artifactSubfolderFilePath.toString());
+				org.ishafoundation.dwaraapi.db.model.transactional.File artifactSubfolderFileFromDB = fileDao.findByPathname(artifactSubfolderFilePath.toString());
 				artifactSubfolderFileFromDB.setSize(artifactSubfolderSize);
-				domainSpecificFileRepository.save(artifactSubfolderFileFromDB);
+				fileDao.save(artifactSubfolderFileFromDB);
 				
 		    	TFile tfileFromDB = tFileDao.findByPathname(artifactSubfolderFilePath.toString());
 		    	tfileFromDB.setSize(artifactSubfolderSize);
@@ -470,11 +452,7 @@ public class ScheduledStatusUpdater {
 			requestDao.save(nthRequest);
 			
 			if(nthRequest.getActionId() == Action.ingest && (status == Status.marked_completed || status == Status.completed)) {
-				
-				Domain domain = domainUtil.getDomain(nthRequest);
-				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-				
-		    	List<Artifact> artifactList = artifactRepository.findAllByWriteRequestId(nthRequest.getId());
+		    	List<Artifact> artifactList = artifactDao.findAllByWriteRequestId(nthRequest.getId());
 		    	for (Artifact artifact : artifactList) {
 					Artifactclass artifactclass = artifact.getArtifactclass();
 					String srcRootLocation = artifactclass.getPath();

@@ -7,17 +7,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.ltowala.api.resp.Artifact;
@@ -40,10 +38,13 @@ public class ForSolutionSameerService {
 	private RequestDao requestDao;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactDao artifactDao;
 	
 	@Autowired
-	private FileRepositoryUtil fileRepositoryUtil;
+	private FileDao fileDao;
+	
+	@Autowired
+	private ArtifactVolumeDao artifactVolumeDao;
 	
 	// To narrow down the job to a specific copy
 	private int copyNumber = 2; // Could be any copy...
@@ -78,8 +79,7 @@ public class ForSolutionSameerService {
 		for (Request request : allNotCompletedRequestList) {
 			int requestId = request.getId();
 			try {
-				ArtifactRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(Domain.ONE);
-				org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactFromDB = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(requestId);
+				org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifactFromDB = artifactDao.findTopByWriteRequestIdOrderByIdAsc(requestId);
 				int artifactId = artifactFromDB.getId();
 				
 				List<Job> writeJobList = jobDao.findAllByRequestIdAndInputArtifactIdAndStoragetaskActionIdAndStatus(requestId, artifactId, Action.write, Status.completed);
@@ -94,9 +94,7 @@ public class ForSolutionSameerService {
 		for (Request request : requestList) {
 			try {
 				String artifactclassId = request.getDetails().getArtifactclassId();
-				Domain domain = domainUtil.getDomain(artifactclassId);
-				ArtifactRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(domain);
-				org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifactFromDB = artifactRepository.findTopByWriteRequestIdOrderByIdAsc(request.getId());
+				org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifactFromDB = artifactDao.findTopByWriteRequestIdOrderByIdAsc(request.getId());
 				int artifactId = artifactFromDB.getId();
 				String artifactName = artifactFromDB.getName();
 				
@@ -108,8 +106,8 @@ public class ForSolutionSameerService {
 				artifact.setFileCount(artifactFromDB.getFileCount());
 				
 				List<File> fileList = new ArrayList<File>();
-				List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactFromDB, domain);
-				for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
+				List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = fileDao.findAllByArtifactIdAndDeletedFalse(artifactFromDB.getId());
+				for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : artifactFileList) {
 					String filePathname = nthFile.getPathname();
 					if(listFiles || (!listFiles && filePathname.equals(artifactName))) {
 						File file = new File();
@@ -131,8 +129,7 @@ public class ForSolutionSameerService {
 					Job job = jobDao.findByRequestIdAndInputArtifactIdAndStoragetaskActionIdAndGroupVolumeCopyId(request.getId(), artifactId, Action.write, copyNumber);
 					String volumeId = job.getVolume().getId();
 					volume.setBarcode(volumeId);
-					ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-					ArtifactVolume artifactVolume = domainSpecificArtifactVolumeRepository.findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
+					ArtifactVolume artifactVolume = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifactId, volumeId);
 					if(artifactVolume != null)
 						volume.setStartBlock(artifactVolume.getDetails().getStartVolumeBlock());
 					

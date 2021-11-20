@@ -5,11 +5,9 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
@@ -30,7 +28,7 @@ public class FileDeleter implements IProcessingTask {
 	private TFileDao tFileDao;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private FileDao fileDao;
 	
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -41,12 +39,8 @@ public class FileDeleter implements IProcessingTask {
 		String pathPrefix = inputArtifactclass.getPath();
 		
 		LogicalFile logicalFile = processContext.getLogicalFile();
-		
-		// TODO - Remove hardcoding of domain...
-    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(Domain.valueOf(inputArtifactclass.getDomain()));
-
     	// deleting the logical file
-    	deleteFileFromFilesystemAndUpdateDB(logicalFile, domainSpecificFileRepository, pathPrefix);
+    	deleteFileFromFilesystemAndUpdateDB(logicalFile, pathPrefix);
 
     	// deleting all its side cars
 		HashMap<String, File> sidecarFileMap = logicalFile.getSidecarFiles();
@@ -55,7 +49,7 @@ public class FileDeleter implements IProcessingTask {
 			for (String nthSideCarExtn : sidecarFileSet) {
 				File nthSideCarFile = sidecarFileMap.get(nthSideCarExtn);
 				
-				deleteFileFromFilesystemAndUpdateDB(nthSideCarFile, domainSpecificFileRepository, pathPrefix);
+				deleteFileFromFilesystemAndUpdateDB(nthSideCarFile, pathPrefix);
 			}
 		}
 		
@@ -69,12 +63,12 @@ public class FileDeleter implements IProcessingTask {
 		return processingtaskResponse;
 	}
 	
-	private void deleteFileFromFilesystemAndUpdateDB(File fileToBeDeleted, FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository, String pathPrefix){
+	private void deleteFileFromFilesystemAndUpdateDB(File fileToBeDeleted, String pathPrefix){
 		// flag it deleted in the DB
 		String pathname = StringUtils.substringAfter(fileToBeDeleted.getAbsolutePath(), pathPrefix + File.separator);
-    	org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = domainSpecificFileRepository.findByPathname(pathname);
+    	org.ishafoundation.dwaraapi.db.model.transactional.File fileFromDB = fileDao.findByPathname(pathname);
     	fileFromDB.setDeleted(true);
-    	domainSpecificFileRepository.save(fileFromDB);
+    	fileDao.save(fileFromDB);
     	
     	TFile tfileFromDB = tFileDao.findByPathname(pathname);
     	tfileFromDB.setDeleted(true);

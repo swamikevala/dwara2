@@ -1,13 +1,11 @@
-package org.ishafoundation.dwaraapi.db.dao.transactional.domain;
+package org.ishafoundation.dwaraapi.db.dao.transactional;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.NoRepositoryBean;
 
-@NoRepositoryBean
-public interface ArtifactRepository<T extends Artifact> extends CrudRepository<T,Integer> {
+public interface ArtifactDao extends CrudRepository<Artifact,Integer> {
 
 	List<Artifact> findAllByWriteRequestId(int ingestRequestId);
 	
@@ -22,5 +20,10 @@ public interface ArtifactRepository<T extends Artifact> extends CrudRepository<T
 	Artifact findByPrevSequenceCodeAndDeletedIsFalse(String prevSequenceCode);
 	
 	Artifact findBySequenceCodeAndDeletedIsFalse(String sequenceCode); // sequenceCode is running but extracted code used as sequence code could have been deleted too - So the Deleted check
-
+	
+	Artifact findByArtifactRef(Artifact artifact);
+	
+	boolean existsByName(String pathName);
+	
+	List<Artifact> findAllByArtifactRef(Artifact artifact);
 }

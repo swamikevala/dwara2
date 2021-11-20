@@ -78,9 +78,6 @@ public class RequestDetails {
 	@JsonProperty("flow_id")
 	private String flowId;
 	
-	@JsonProperty("domain_id")
-	private Integer domainId;
-	
 	// rewrite stuff
 	@JsonProperty("artifact_id")
 	private Integer artifactId;
@@ -294,14 +291,6 @@ public class RequestDetails {
 
 	public void setFlowId(String flowId) {
 		this.flowId = flowId;
-	}
-
-	public Integer getDomainId() {
-		return domainId;
-	}
-
-	public void setDomainId(Integer domainId) {
-		this.domainId = domainId;
 	}
 
 	/********************  REWRITE  ********************/
