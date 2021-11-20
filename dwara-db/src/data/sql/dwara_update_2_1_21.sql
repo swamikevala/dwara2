@@ -7,7 +7,6 @@ ALTER TABLE `file1` RENAME TO  `file` ;
 ALTER TABLE `artifact1_volume` RENAME TO  `artifact_volume` ;
 ALTER TABLE `file1_volume` RENAME TO  `file_volume` ;
 
-ALTER TABLE `artifact1_label` RENAME TO  `artifact_label` ;
 ALTER TABLE `artifact1_label` CHANGE COLUMN `artifact1_id` `artifact_id` INT(11) NOT NULL , RENAME TO  `artifact_label` ;
 
 DROP TABLE `artifact2`;
