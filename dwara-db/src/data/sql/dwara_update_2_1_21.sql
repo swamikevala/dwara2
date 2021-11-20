@@ -1,6 +1,21 @@
-ALTER TABLE `artifactclass` DROP COLUMN `domain_id`;
--- SET foreign_key_checks = 0;
+SET foreign_key_checks = 0;
 
+ALTER TABLE `artifactclass` DROP COLUMN `domain_id`;
+
+ALTER TABLE `artifact1` RENAME TO  `artifact` ;
+ALTER TABLE `file1` RENAME TO  `file` ;
+ALTER TABLE `artifact1_volume` RENAME TO  `artifact_volume` ;
+ALTER TABLE `file1_volume` RENAME TO  `file_volume` ;
+
+ALTER TABLE `artifact1_label` RENAME TO  `artifact_label` ;
+ALTER TABLE `artifact1_label` CHANGE COLUMN `artifact1_id` `artifact_id` INT(11) NOT NULL , RENAME TO  `artifact_label` ;
+
+DROP TABLE `artifact2`;
+DROP TABLE `file2`;
+DROP TABLE `artifact2_volume`;
+DROP TABLE `file2_volume`;  
+
+SET foreign_key_checks = 1;
 -- import appends
 /* Already executed on 31st Oct
 ALTER TABLE `file1_volume` CHANGE COLUMN `volume_block` `volume_start_block` INT(11) NULL DEFAULT NULL ;

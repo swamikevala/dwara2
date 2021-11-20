@@ -352,6 +352,8 @@ public class FileService extends DwaraService{
     			hasErrors = true;
     		} 
     		
+    		fileId_FileObj_Map.put(nthFileId, fileFromDB);
+    		
     		// Getting the artifactname from artifactvolume as the artifact could have been softRenamed...
     		String artifactName = null;
     		Artifact artifact;
@@ -400,55 +402,51 @@ public class FileService extends DwaraService{
 			fileDao.save(fileFromDB);
 		}
     }
-    public void markBad(int fileId , String reason , boolean dealWithJob) throws Exception{
-    	HashMap<String, Object> data = new HashMap<String, Object>();
-    	
-    	
+    
+	public void markBad(int fileId, String reason, boolean dealWithJob) throws Exception {
+		HashMap<String, Object> data = new HashMap<String, Object>();
 		Request userRequest = null;
 		data.put("fileId", fileId);
 		data.put("bad", true);
-		data.put("reason",reason);
+		data.put("reason", reason);
 		userRequest = createUserRequest(Action.mark_corrupted, data);
-		org.ishafoundation.dwaraapi.db.model.transactional.File fileFromDB = null;
+		org.ishafoundation.dwaraapi.db.model.transactional.File fileFromDB = fileDao.findById(fileId).get();
 		TTFileJob ttFileJob = null;
 		fileFromDB.setBad(true);
 		fileFromDB.setReason(reason);
-		TFile tfile =  tfileDao.findById(fileId).get();
+		TFile tfile = tfileDao.findById(fileId).get();
 		tfile.setBad(true);
 		tfile.setReason(reason);
 		tfileDao.save(tfile);
-    	fileDao.save(fileFromDB);
-		
-    	if( dealWithJob) {
-    	List<TTFileJob> ttFileJobs = ttFileJobDao.findAllByIdFileId(fileId);
-		if(ttFileJobs.size()==1) {
-			ttFileJob = ttFileJobs.get(0);
-			int jobID = ttFileJob.getJob().getId();
-			ttFileJobDao.delete(ttFileJob);
-			
-			List<TTFileJob> ttFileJobswithId = ttFileJobDao.findAllByJobId(jobID);
-			boolean delete = true;
-			for(TTFileJob ttfileJob : ttFileJobswithId ) {
-				if(ttfileJob.getStatus()!=Status.completed) {
-					delete=false;
+		fileDao.save(fileFromDB);
+
+		if (dealWithJob) {
+			List<TTFileJob> ttFileJobs = ttFileJobDao.findAllByIdFileId(fileId);
+			if (ttFileJobs.size() == 1) {
+				ttFileJob = ttFileJobs.get(0);
+				int jobID = ttFileJob.getJob().getId();
+				ttFileJobDao.delete(ttFileJob);
+
+				List<TTFileJob> ttFileJobswithId = ttFileJobDao.findAllByJobId(jobID);
+				boolean delete = true;
+				for (TTFileJob ttfileJob : ttFileJobswithId) {
+					if (ttfileJob.getStatus() != Status.completed) {
+						delete = false;
+					}
+				}
+				if (delete) {
+					ttFileJobDao.deleteAll(ttFileJobswithId);
 				}
 			}
-			if(delete ) {
-				ttFileJobDao.deleteAll(ttFileJobswithId);
+			else {
+				throw new Exception("Multiple jobs references the file " + fileId
+						+ ". Not able to deal with t_file_job and job. Please do it manually");
 			}
 		}
-		
-		else {
-			
-			throw new Exception("Multiple jobs references the file "+fileId+". Not able to deal with t_file_job and job. Please do it manually");
-		}
-    	
-    	}
-	
-    	
-    	userRequest.setStatus(Status.completed);
+
+		userRequest.setStatus(Status.completed);
 		userRequest = requestDao.save(userRequest);
-    }
+	}
 
 }
 
