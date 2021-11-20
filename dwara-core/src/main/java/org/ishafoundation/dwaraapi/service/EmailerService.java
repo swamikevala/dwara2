@@ -31,9 +31,19 @@ public class EmailerService {
         // generate password - https://support.google.com/mail/answer/185833?hl=en
         private  final String appEmailPassword = "zxmpasyyllvqgcum";
         private  String subject;
-
+        private String requesterEmail;
+        private String archiveEmail1 ="maa.jeevapushpa@ishafoundation.org";
+        private String archiveEmail2 = "dhananjaykumar.patel@ishafoundation.org";
     public String getSubject() {
         return subject;
+    }
+
+    public String getRequesterEmail() {
+        return requesterEmail;
+    }
+
+    public void setRequesterEmail(String requesterEmail) {
+        this.requesterEmail = requesterEmail;
     }
 
     public void setSubject(String subject) {
@@ -87,6 +97,11 @@ public class EmailerService {
 // Set To: header field of the header.
 
                 message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
+                if(requesterEmail!=null){
+                message.addRecipient(Message.RecipientType.CC ,new InternetAddress(requesterEmail) );
+                }
+                message.addRecipient(Message.RecipientType.CC, new InternetAddress(archiveEmail1));
+                message.addRecipient(Message.RecipientType.CC, new InternetAddress(archiveEmail2));
 
 // Set Subject: header field
                 message.setSubject(this.subject);

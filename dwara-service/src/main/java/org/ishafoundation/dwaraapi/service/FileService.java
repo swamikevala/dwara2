@@ -24,6 +24,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
@@ -32,6 +33,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
+import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -154,8 +156,12 @@ public class FileService extends DwaraService{
 		
 		return list;
 	}
-	
-    public RestoreResponse restore(RestoreUserRequest restoreUserRequest, Action action, String flow) throws Exception{	
+
+	public RestoreResponse restore(RestoreUserRequest restoreUserRequest, Action action, String flow) throws Exception{
+		return restore(restoreUserRequest, action, flow, null);
+	}
+
+	public RestoreResponse restore(RestoreUserRequest restoreUserRequest, Action action, String flow, User user) throws Exception{
     	RestoreResponse restoreResponse = new RestoreResponse();
 
     	List<Integer> fileIds = restoreUserRequest.getFileIds();
@@ -164,27 +170,18 @@ public class FileService extends DwaraService{
     	String destinationPath = restoreUserRequest.getDestinationPath();
     	
     	if(fileIds.size() == 0)
-    		   		throw new Exception("Invalid request.  No File Id passed");
+    		throw new Exception("Invalid request.  No File Id passed");
+    	
     	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File>();
     	validate(fileIds, copyNumber, destinationPath, outputFolder, fileId_FileObj_Map);
     	
-//		Request userRequest = new Request();
-//    	userRequest.setType(RequestType.user);
-//		userRequest.setActionId(Action.restore);
-//		userRequest.setStatus(Status.queued);
-//    	User user = getUserObjFromContext();
-//    	String requestedBy = user.getName();
-//    	userRequest.setRequestedBy(user);
-//		userRequest.setRequestedAt(LocalDateTime.now());
-//		RequestDetails details = new RequestDetails();
-//		JsonNode postBodyJson = getRequestDetails(restoreUserRequest); 
-//		details.setBody(postBodyJson);
-//		userRequest.setDetails(details);
-//		
-//    	userRequest = requestDao.save(userRequest);
-//    	int userRequestId = userRequest.getId();
-//    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
-    	Request userRequest = createUserRequest(action, restoreUserRequest);
+    	Request userRequest = createUserRequest(action, restoreUserRequest, user);
+    	Priority priority = Priority.normal;
+    	if(restoreUserRequest.getPriority() != null)
+    		priority = restoreUserRequest.getPriority();
+    	userRequest.setPriority(priority);
+    	requestDao.save(userRequest);
+    	
     	int userRequestId = userRequest.getId();
 
     	List<File> files = new ArrayList<File>();
@@ -202,6 +199,7 @@ public class FileService extends DwaraService{
 			systemRequest.setActionId(userRequest.getActionId());
 			systemRequest.setRequestedBy(userRequest.getRequestedBy());
 			systemRequest.setRequestedAt(LocalDateTime.now());
+			systemRequest.setPriority(priority);
 			
     		RequestDetails systemrequestDetails = new RequestDetails();
     		systemrequestDetails.setFileId(nthFileId);
@@ -244,7 +242,7 @@ public class FileService extends DwaraService{
     	restoreResponse.setFiles(files);    	
     	return restoreResponse;
     }
-    
+	
     public RestoreResponse partialFileRestore(PFRestoreUserRequest pfRestoreUserRequest) throws Exception{	
     	RestoreResponse restoreResponse = new RestoreResponse();
 

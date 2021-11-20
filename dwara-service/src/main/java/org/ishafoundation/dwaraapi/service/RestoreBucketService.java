@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TRestoreBucketDao;
@@ -28,6 +29,8 @@ public class RestoreBucketService extends DwaraService {
 	ArtifactDao artifact1Dao;
 	@Autowired
 	EmailerService emailerService;
+    @Autowired
+    UserDao userDao;
 
 	public TRestoreBucket createBucket(String id) {
 		int createdBy = getUserObjFromContext().getId();
@@ -171,19 +174,27 @@ public class RestoreBucketService extends DwaraService {
 	}
 
 	public List<TRestoreBucket> getAprrovedNull() {
-		return tRestoreBucketDao.findByApprovalStatusNull();
+        int userId =getUserObjFromContext().getId();
+        return tRestoreBucketDao.findByApprovalStatusNullAndCreatedBy(userId);
 	}
 
 	public void sendMail(TRestoreBucket tRestoreBucket) {
 		String emailBody = "<p>Namaskaram</p>";
-		emailBody += "<p>The following folders need your approval</p>";
+        String requesterName= userDao.findById(tRestoreBucket.getRequestedBy()).get().getName();
+        emailBody += "<p>A private request has been raised by"+requesterName+"</p>";
+        emailBody += "<p>The following folders in <span style='color:red'>red</span> need your approval.</p>";
 		List<String> fileName = new ArrayList<>();
 		for (RestoreBucketFile file : tRestoreBucket.getDetails()) {
-			emailBody += "<div> " + file.getFilePathName() + "</div>";
+            String css ="";
+            if(file.getArtifactClass().contains("priv")){
+                css="color:red";
+            }
+            emailBody +="<div style='"+css+"'> "+ file.getFilePathName()  +"</div>";
 		}
 		emailBody += "<p>Please reply with <b><approved></b> if you wish to approve </p>";
 		emailerService.setConcernedEmail(tRestoreBucket.getApproverEmail());
-		emailerService.setSubject("Need Approval for project: _" + tRestoreBucket.getId() + "_");
+        emailerService.setSubject("Need Approval for project: _"+tRestoreBucket.getId()+"_. Priority: "+ tRestoreBucket.getPriority());
+        emailerService.setRequesterEmail(requesterName);
 		emailerService.sendEmail(emailBody);
 	}
 

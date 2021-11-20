@@ -68,6 +68,11 @@ update job set volume_id = replace(volume_id, 'G', 'H');
 update job set volume_id = replace(volume_id, 'X', 'W');
 update job set volume_id = replace(volume_id, 'E', 'F');
 
+update job set group_volume_id = replace(group_volume_id, 'R', 'S');
+update job set group_volume_id = replace(group_volume_id, 'G', 'H');
+update job set group_volume_id = replace(group_volume_id, 'X', 'W');
+update job set group_volume_id = replace(group_volume_id, 'E', 'F');
+
 update artifact1_volume set volume_id = replace(volume_id, 'R', 'S');
 update artifact1_volume set volume_id = replace(volume_id, 'G', 'H');
 update artifact1_volume set volume_id = replace(volume_id, 'X', 'W');

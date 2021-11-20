@@ -2,8 +2,10 @@ package org.ishafoundation.dwaraapi.scheduler;
 
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
+import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestApprovalDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TRestoreBucketDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.RequestApproval;
 import org.ishafoundation.dwaraapi.db.model.transactional.RestoreBucketFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
@@ -21,7 +23,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-//@Component
+@Component
 public class ScheduledApprovedBucketRestorer {
 
     @Autowired
@@ -32,10 +34,12 @@ public class ScheduledApprovedBucketRestorer {
     private FileService fileService;
     @Autowired
     private RequestApprovalDao requestApprovalDao;
-
+@Autowired
+private UserDao userDao;
     @Scheduled(cron ="0 0/5 * * * ?")
     public void restoreApproved() {
         List<TRestoreBucket> tRestoreBucketList = tRestoreBucketDao.findByApprovalStatus("approved");
+        System.out.println("Started restore Approver");
         for (TRestoreBucket tRestoreBucket : tRestoreBucketList) {
             RestoreUserRequest restoreUserRequest = new RestoreUserRequest();
             restoreUserRequest.setCopy(1);
@@ -49,11 +53,17 @@ public class ScheduledApprovedBucketRestorer {
                 fileIds.add(file.getFileID());
             }
             restoreUserRequest.setFileIds(fileIds);
-            System.out.println(fileIds);
+            System.out.println("File Id " +restoreUserRequest.getFileIds());
             restoreUserRequest.setFlow("restore-flow");
+            System.out.println("restoreUserRequest.Copy " +restoreUserRequest.getCopy());
+            //System.out.println(restoreUserRequest.toString());
+            System.out.println("restoreUserRequest.DestinationPAth " +restoreUserRequest.getDestinationPath());
+            System.out.println("restoreUserRequest.OutputFolder " +restoreUserRequest.getOutputFolder());
+
             RestoreResponse restoreResponse;
             try {
-                restoreResponse = fileService.restore(restoreUserRequest, Action.restore_process, restoreUserRequest.getFlow());
+                User user = userDao.findById(1).get();
+                restoreResponse = fileService.restore(restoreUserRequest, Action.restore, restoreUserRequest.getFlow(),user);
                 if (!Objects.isNull(restoreResponse) && restoreResponse.getFiles().size() == restoreUserRequest.getFileIds().size()) {
                     RequestApproval requestApproval = new RequestApproval(tRestoreBucket);
                     requestApprovalDao.save(requestApproval);
