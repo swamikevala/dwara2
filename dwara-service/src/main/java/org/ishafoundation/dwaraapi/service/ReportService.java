@@ -229,9 +229,13 @@ public class ReportService extends DwaraService {
         + condition;
         ingestPipelineReport.put("j.Proxy Gen Failed", entityManager.createNativeQuery(proxyGenFailedQuery).getResultList());
 
+        String photoProxyGenFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.q_latest_request_id=r.id where a.deleted=0 and j.processingtask_id='photo-proxy-gen' and (j.status='failed' or j.status='completed_failures')"
+        + condition;
+        ingestPipelineReport.put("k.Photo Proxy Gen Failed", entityManager.createNativeQuery(photoProxyGenFailedQuery).getResultList());
+
         String mamUpdateFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact1 a on a.q_latest_request_id=r.id where a.deleted=0 and j.processingtask_id='video-mam-update' and (j.status='failed' or j.status='completed_failures')"
         + condition;
-        ingestPipelineReport.put("k.Mam Update Failed", entityManager.createNativeQuery(mamUpdateFailedQuery).getResultList());
+        ingestPipelineReport.put("l.Mam Update Failed", entityManager.createNativeQuery(mamUpdateFailedQuery).getResultList());
 
         List<String> inStaged3Days = new ArrayList<String>();
         File stagedFile = new File("/data/dwara/staged");
@@ -269,7 +273,7 @@ public class ReportService extends DwaraService {
         + condition;
         restorePipelineReport.put("d.Restore Completed", entityManager.createNativeQuery(restoreCompletedQuery).getResultList());
 
-        String restoreFailedQuery = "SELECT f.pathname FROM job j join request r on r.id = j.request_id join file1 f on r.file_id=f.id where j.processingtask_id = 'restore' and (j.status='failed' or j.status='completed_failures')"
+        String restoreFailedQuery = "SELECT f.pathname FROM job j join request r on r.id = j.request_id join file1 f on r.file_id=f.id where j.processingtask_id like 'restore%' and (j.status='failed' or j.status='completed_failures')"
         + condition;
         restorePipelineReport.put("f.Restore Failed", entityManager.createNativeQuery(restoreFailedQuery).getResultList());
 
