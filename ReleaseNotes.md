@@ -5,7 +5,9 @@
 
 2) Get servers space infomation
 
-3) Aumrit anna to add the list of features developed for restore
+3) Request priority
+
+4) Aumrit anna to add the list of features developed for restore
 
 
 ### Bug fixes
@@ -31,6 +33,8 @@ catDvMountedOn=/data
 confluenceMountedOn=/data  
 localFolderList=/data /data/dwara/user /data/dwara/user/ramkumarj /data/dwara/user/naveenkumarg /data/dwara/staged  
 catDvFolderList=/data /data/video-backup /data/proxies /data/Physical_Asset /data/db-backups /data/audio  
+
+2) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_21.sql)
 
 # Dwara App Version - 2.1.33 (1st Nov 2021)
 ### New features
