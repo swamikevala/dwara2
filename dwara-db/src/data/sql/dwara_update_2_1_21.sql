@@ -1,5 +1,14 @@
 SET foreign_key_checks = 0;
 
+/*
+ * Missed out updating on 31st Oct ALTER TABLE `t_file_volume` CHANGE COLUMN `volume_block` `volume_start_block` INT(11) NULL DEFAULT NULL ;
+ * 
+ * so we did this on 21st Nov, 1 PM
+ * update t_file_volume set volume_start_block = volume_block where volume_block is not null and volume_start_block is null;
+ * ALTER TABLE `t_file_volume` DROP COLUMN `volume_block`; 
+ */
+
+
 ALTER TABLE `artifactclass` DROP COLUMN `domain_id`;
 
 ALTER TABLE `artifact1` RENAME TO  `artifact` ;
