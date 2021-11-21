@@ -263,9 +263,9 @@ public class CatalogService extends DwaraService{
             condition += ")";
         }
 
-        String query = "select a.id, d.id as requestId, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, b.volume_id, d.status, d.completed_at, e.name as ingestedBy, b.name as oldName" 
+        String query = "select a.id, d.id as requestId, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, b.volume_id, d.status, c.imported, c.finalized_at, d.completed_at, e.name as ingestedBy, b.name as oldName" 
         + " from artifact a join artifact_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and a.q_latest_request_id=d.id and d.requested_by_id=e.id and a.deleted=0"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and ((a.write_request_id is not null and a.write_request_id=d.id) or (a.write_request_id is null and a.q_latest_request_id=d.id)) and d.requested_by_id=e.id and a.deleted=0"
         + condition
         + "order by b.volume_id asc, d.completed_at desc";
 
@@ -331,12 +331,12 @@ public class CatalogService extends DwaraService{
         }
         String query = "select distinct a.id" 
         + " from artifact a join artifact_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and a.q_latest_request_id=d.id and d.requested_by_id=e.id and a.artifact_ref_id is null and a.deleted=" + deleted
+        + " where a.id=b.artifact_id and b.volume_id=c.id and ((a.write_request_id is not null and a.write_request_id=d.id) or (a.write_request_id is null and a.q_latest_request_id=d.id)) and d.requested_by_id=e.id and a.artifact_ref_id is null and a.deleted=" + deleted
         + condition;
 
-        String query2 = "select a.id, d.id as requestId, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, d.requested_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
+        String query2 = "select a.id, d.id as requestId, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, c.imported, c.finalized_at, d.requested_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
         + " from artifact a join artifact_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and a.q_latest_request_id=d.id and d.requested_by_id=e.id"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and ((a.write_request_id is not null and a.write_request_id=d.id) or (a.write_request_id is null and a.q_latest_request_id=d.id)) and d.requested_by_id=e.id"
         + " and a.id in (" + query + ")"
         + " group by a.id order by requested_at desc";
         Query q = entityManager.createNativeQuery(query2);
@@ -397,10 +397,24 @@ public class CatalogService extends DwaraService{
         long _size = ((BigInteger)record[i++]).longValue();
         String _volumeId = (String) record[i++];
         String _requestStatus = (String) record[i++];
-        String _ingestedDate = "";
+        boolean _isImported = (boolean)record[i++];
+        
+        String _finalizedAt = "";
         if(record[i] != null)
-            _ingestedDate = ((Timestamp) record[i]).toLocalDateTime().toString();
+            _finalizedAt = ((Timestamp) record[i]).toLocalDateTime().toString();
         i++;
+        
+        String _requestDate = ""; // could be either request.requested_at or request.completed_at depeding on context of the method call
+        if(record[i] != null)
+        	_requestDate = ((Timestamp) record[i]).toLocalDateTime().toString();
+        i++;
+        
+        String _ingestedDate = "";
+        if(_isImported)
+        	_ingestedDate = _finalizedAt;
+        else
+        	_ingestedDate = _requestDate;
+        
         String _ingestedBy = (String) record[i++];
         String _oldName = (String) record[i++];
         String _proxyStatus = "";
