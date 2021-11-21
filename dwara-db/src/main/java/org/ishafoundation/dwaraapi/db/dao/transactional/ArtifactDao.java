@@ -26,4 +26,6 @@ public interface ArtifactDao extends CrudRepository<Artifact,Integer> {
 	boolean existsByName(String pathName);
 	
 	List<Artifact> findAllByArtifactRef(Artifact artifact);
+
+	List<Artifact> findByNameEndsWithAndArtifactclassId(String artifactName, String id);
 }

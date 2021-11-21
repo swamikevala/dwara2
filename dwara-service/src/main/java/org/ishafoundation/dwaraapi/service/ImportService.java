@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -272,8 +273,8 @@ public class ImportService extends DwaraService {
 			
 		    // update ArtifactVolume table with all entries from xml...
 			List<Artifact> artifactList = volumeindex.getArtifact();
-			for (Artifact artifact : artifactList) {
-				ImportVolumeArtifactKey ivaKey = new ImportVolumeArtifactKey(volumeId, artifact.getName());
+			for (Artifact nthArtifact : artifactList) {
+				ImportVolumeArtifactKey ivaKey = new ImportVolumeArtifactKey(volumeId, nthArtifact.getName());
 				Optional<ImportVolumeArtifact> ivaOptional = importVolumeArtifactDao.findById(ivaKey);
 				ImportVolumeArtifact iva = null;
 				if(ivaOptional.isPresent()) // for rerun this would be already available
@@ -302,10 +303,12 @@ public class ImportService extends DwaraService {
 				volume = volumeDao.save(volume);
 				logger.info("Volume " + volume.getId() + " imported to dwara successfully");
 			}
+			
+			long usedCapacity = 0;
 	    	
 //			List<Artifact> artifactList = volumeindex.getArtifact();
-			for (Artifact artifact : artifactList) {
-				String artifactName = artifact.getName();
+			for (Artifact nthArtifact : artifactList) {
+				String artifactName = nthArtifact.getName();
 				logger.debug("Now importing " + artifactName);
 				
 				ImportStatus artifactImportStatus = ImportStatus.failed; 
@@ -314,9 +317,9 @@ public class ImportService extends DwaraService {
 				ImportStatus fileVolumeImportStatus = ImportStatus.failed;
 				
 				org.ishafoundation.dwaraapi.api.resp._import.Artifact respArtifact = new org.ishafoundation.dwaraapi.api.resp._import.Artifact();
-				respArtifact.setName(artifact.getName());
+				respArtifact.setName(nthArtifact.getName());
 
-				ImportVolumeArtifactKey ivaKey = new ImportVolumeArtifactKey(volumeId, artifact.getName());
+				ImportVolumeArtifactKey ivaKey = new ImportVolumeArtifactKey(volumeId, nthArtifact.getName());
 				ImportVolumeArtifact iva = importVolumeArtifactDao.findById(ivaKey).get();
 				if(iva.getStatus() == Status.completed) { // already completed - so skip it
 					// continue;
@@ -328,7 +331,7 @@ public class ImportService extends DwaraService {
 				else {
 					try {
 						
-						Artifactclass artifactclass = id_artifactclassMap.get(artifact.getArtifactclassuid());
+						Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclassuid());
 						Sequence sequence = artifactclass.getSequence();
 						String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactName);
 						Boolean isForceMatch = sequence.getForceMatch();
@@ -348,15 +351,24 @@ public class ImportService extends DwaraService {
 						}
 						
 						boolean artifactAlreadyExists = true;
-						org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact1 = null;
+						org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = null;
 						if(prevSeqCode != null) {
-							artifact1 = artifactDao.findByPrevSequenceCodeAndDeletedIsFalse(prevSeqCode);
+							artifact = artifactDao.findByPrevSequenceCodeAndDeletedIsFalse(prevSeqCode);
 						}else if(sequenceCode != null){				
-							artifact1 = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
+							artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
+						}else {
+							 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(artifactName,artifactclass.getId()); // Some legacy written artifacts dont have sequencecode to it
+							 for (org.ishafoundation.dwaraapi.db.model.transactional.Artifact nthArtifactEndingWithSameName : artifactsEndingWithSameName) {
+								 String artifactNameShavedOffPrefix = StringUtils.substringAfter(nthArtifactEndingWithSameName.getName(),"_");
+								 if(artifactNameShavedOffPrefix.equals(artifactName)) {
+									 artifact = nthArtifactEndingWithSameName;
+									 break;
+								 }
+							}
 						}
 		
 						//TODO - should we double check with size too??? domainSpecificArtifactRepository.findAllByTotalSizeAndDeletedIsFalse(size);
-						if(artifact1 == null) {
+						if(artifact == null) {
 							artifactAlreadyExists = false;
 							if(sequenceCode == null) {
 //								String overrideSequenceRefId = null;
@@ -392,24 +404,24 @@ public class ImportService extends DwaraService {
 							 */
 				
 							
-							artifact1 = new org.ishafoundation.dwaraapi.db.model.transactional.Artifact();
+							artifact = new org.ishafoundation.dwaraapi.db.model.transactional.Artifact();
 			//				artifact1.setFileCount(fileCount);
-							artifact1.setName(toBeArtifactName);
-							artifact1.setPrevSequenceCode(prevSeqCode);
-							artifact1.setSequenceCode(sequenceCode);
+							artifact.setName(toBeArtifactName);
+							artifact.setPrevSequenceCode(prevSeqCode);
+							artifact.setSequenceCode(sequenceCode);
 			//				artifact1.setTotalSize(size);
-							artifact1.setArtifactclass(artifactclass);
-							artifact1.setqLatestRequest(request);
+							artifact.setArtifactclass(artifactclass);
+							artifact.setqLatestRequest(request);
 							
-							artifact1 = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.save(artifact1);
+							artifact = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.save(artifact);
 							artifactImportStatus = ImportStatus.completed;
-							logger.debug("Artifact " + artifact1.getId() + " imported to dwara succesfully");
+							logger.debug("Artifact " + artifact.getId() + " imported to dwara succesfully");
 						}else {
-							toBeArtifactName = artifact1.getName();
+							toBeArtifactName = artifact.getName();
 							artifactImportStatus = ImportStatus.skipped;
-							logger.debug("Artifact " + artifact1.getId() + " already exists, so skipping updating DB");  // artifact nth copy / rerun scenario
+							logger.debug("Artifact " + artifact.getId() + " already exists, so skipping updating DB");  // artifact nth copy / rerun scenario
 						}
-						logger.info("*** Artifact " + artifact1.getId() + " ***");
+						logger.info("*** Artifact " + artifact.getId() + " ***");
 						logger.info("Artifact - " + artifactImportStatus);
 						/*
 						 * creating artifact_volume
@@ -423,18 +435,18 @@ public class ImportService extends DwaraService {
 						  `status` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** current
 						 */
 						
-					    ArtifactVolume artifactVolume = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifact1.getId(), volume.getId());
+					    ArtifactVolume artifactVolume = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifact.getId(), volume.getId());
 					    
 					    if(artifactVolume == null) {
-					    	artifactVolume = new ArtifactVolume(artifact1.getId(), volume);
+					    	artifactVolume = new ArtifactVolume(artifact.getId(), volume);
 					    
 						    artifactVolume.setName(artifactName); // NOTE : Dont be tempted to change this to toBeArtifactName - whatever in volume needs to go here...
 						    if(volume.getStoragelevel() == Storagelevel.block) {
 							    ArtifactVolumeDetails artifactVolumeDetails = new ArtifactVolumeDetails();
 							    
 							    // artifactVolumeDetails.setArchiveId(archiveId);
-							    artifactVolumeDetails.setStartVolumeBlock(artifact.getStartblock());
-							    artifactVolumeDetails.setEndVolumeBlock(artifact.getEndblock());
+							    artifactVolumeDetails.setStartVolumeBlock(nthArtifact.getStartblock());
+							    artifactVolumeDetails.setEndVolumeBlock(nthArtifact.getEndblock());
 							    
 							    artifactVolume.setDetails(artifactVolumeDetails);
 						    }
@@ -444,12 +456,12 @@ public class ImportService extends DwaraService {
 						    
 					    }else {
 					    	artifactVolumeImportStatus = ImportStatus.skipped;
-					    	logger.debug("ArtifactVolume for " + artifact1.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
+					    	logger.debug("ArtifactVolume for " + artifact.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
 					    }
 					    logger.info("ArtifactVolume - " + artifactVolumeImportStatus);
 					    long artifactTotalSize = 0;
 					    int fileCount = 0;
-					    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = artifact.getFile();
+					    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = nthArtifact.getFile();
 						for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
 							String filePathname = nthFile.getName().replace(artifactName, toBeArtifactName);
 							String linkName = null;
@@ -503,7 +515,7 @@ public class ImportService extends DwaraService {
 								file.setSize(nthFile.getSize());
 								//file.setSymlinkFileId();
 								file.setSymlinkPath(linkName);
-								file.setArtifact(artifact1);
+								file.setArtifact(artifact);
 								if(Boolean.TRUE.equals(nthFile.getDirectory())) {// if(StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) {  // TODO - change it to - if(nthFile.isDirectory()) 
 									file.setDirectory(true);
 								}else {
@@ -563,7 +575,7 @@ public class ImportService extends DwaraService {
 							ArtifactVolumeStatus artifactVolumeStatus = ArtifactVolumeStatus.current;
 	
 							// If already an entry for this pool/group is available (eg. 68*[C16805L6] is migration of 4*[C14023L4]) for this artifact - retire the oldest generation
-							ArtifactVolume alreadyExistingArtifactVolume = artifactVolumeDao.findByIdArtifactIdAndVolumeGroupRefCopyIdAndStatus(artifact1.getId(), volume.getGroupRef().getCopy().getId(), ArtifactVolumeStatus.current);
+							ArtifactVolume alreadyExistingArtifactVolume = artifactVolumeDao.findByIdArtifactIdAndVolumeGroupRefCopyIdAndStatus(artifact.getId(), volume.getGroupRef().getCopy().getId(), ArtifactVolumeStatus.current);
 							if(alreadyExistingArtifactVolume != null) {
 								int alreadyExistingArtifactVolumeGen = Integer.parseInt(StringUtils.substringAfter(alreadyExistingArtifactVolume.getVolume().getStoragesubtype(), "-"));
 								int currentVolumeGen =  Integer.parseInt(StringUtils.substringAfter(volume.getStoragesubtype(), "-"));
@@ -585,15 +597,15 @@ public class ImportService extends DwaraService {
 						
 						// updating artifact.filecount and size
 						if(!artifactAlreadyExists) {
-							artifact1.setFileCount(fileCount);
-							artifact1.setTotalSize(artifactTotalSize);
-							artifact1 = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.save(artifact1);
+							artifact.setFileCount(fileCount);
+							artifact.setTotalSize(artifactTotalSize);
+							artifact = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.save(artifact);
 						}
 	
-						respArtifact.setId(artifact1.getId());
-						respArtifact.setName(artifact1.getName());
+						respArtifact.setId(artifact.getId());
+						respArtifact.setName(artifact.getName());
 						
-	
+						usedCapacity += artifact.getTotalSize();
 						// TODO - should we add - artifact id, DB artifact name,  artifactImportStatus, artifactVolumeImportStatus, fileImportStatus, fileVolumeImportStatus (needs rerun id)
 						iva.setStatus(Status.completed);
 						importVolumeArtifactDao.save(iva);
@@ -609,6 +621,9 @@ public class ImportService extends DwaraService {
 				respArtifact.setFileVolumeStatus(fileVolumeImportStatus);
 				artifacts.add(respArtifact);
 			}
+			
+			volume.setUsedCapacity(usedCapacity);
+			volume = volumeDao.save(volume);
 			
 			List<ImportVolumeArtifact> ivaAllList = importVolumeArtifactDao.findAllByIdVolumeId(volumeId);
 			List<ImportVolumeArtifact> ivaNonCompletedList = importVolumeArtifactDao.findAllByIdVolumeIdAndStatusIsNot(volumeId, Status.completed);
@@ -784,6 +799,11 @@ public class ImportService extends DwaraService {
 		volume.setStoragetype(Storagetype.tape);
 		volume.setStoragelevel(Storagelevel.block);
 		volume.setArchiveformat(configurationTablesUtil.getArchiveformat(volumeinfo.getArchiveformat()));
+		
+		// ISHA XML sends crappy non-ISO date format like 20-Feb-2019, 00:00:00.000
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy, HH:mm:ss.SSS");
+		LocalDateTime finalizedAt = LocalDateTime.parse(volumeinfo.getFinalizedAt(), formatter);
+		volume.setFinalizedAt(finalizedAt);
 		
 		VolumeDetails volumeDetails = new VolumeDetails();
 		volumeDetails.setBarcoded(true);
