@@ -31,8 +31,8 @@ confluenceIP=172.18.1.22
 localMountedOn=/data  
 catDvMountedOn=/data  
 confluenceMountedOn=/data  
-localFolderList=/data /data/dwara/user /data/dwara/user/ramkumarj /data/dwara/user/naveenkumarg /data/dwara/staged  
-catDvFolderList=/data /data/video-backup /data/proxies /data/Physical_Asset /data/db-backups /data/audio  
+localFolderList=/data/dwara/user/ramkumarj /data/dwara/user/naveenkumarg /data/dwara/staged  
+catDvFolderList=/data/video-backup /data/proxies /data/Physical_Asset /data/db-backups /data/audio  
 
 2) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_21.sql)
 
