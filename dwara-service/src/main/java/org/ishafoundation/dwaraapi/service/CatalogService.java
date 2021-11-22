@@ -52,6 +52,9 @@ public class CatalogService extends DwaraService{
     @Autowired
     private ArtifactclassDao artifactclassDao;
 
+    @Autowired
+    private VolumeService volumeService;
+
     public List<Artifactclass> getAllArtifactclass() {
         List<Artifactclass> list = new ArrayList<Artifactclass>();
         artifactclassDao.findAll().forEach(list::add);
@@ -158,9 +161,12 @@ public class CatalogService extends DwaraService{
             condition += ")";
         }
         if(copyNumber != null && copyNumber.length >= 1 && !copyNumber[0].equals("all")) {
-            condition += " and substr(a.group_ref_id, 2, 1) in (";
-            for(String a: copyNumber) {
-                condition += "'" + a + "',";
+            condition += " and a.group_ref_id in (";
+            for(String copy: copyNumber) {
+                List<Volume> listVolume = volumeService.getVolumeGroupByCopyNumber(Integer.parseInt(copy));
+                for(Volume v: listVolume) {
+                    condition += "'" + v.getId() + "',";
+                }
             }
             condition = condition.substring(0, condition.length() -1);
             condition += ")";
