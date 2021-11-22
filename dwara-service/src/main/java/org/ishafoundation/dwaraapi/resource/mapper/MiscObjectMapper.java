@@ -16,7 +16,7 @@ public interface MiscObjectMapper {
         @Mapping(source = "fileStructureMd5", target = "md5")
     })	
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
-	org.ishafoundation.dwaraapi.api.resp.staged.ingest.Artifact getArtifactForIngestResponse(org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact);
+	org.ishafoundation.dwaraapi.api.resp.staged.ingest.Artifact getArtifactForIngestResponse(org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact);
 
 	@Mappings({
         @Mapping(source = "id", target = "artifactId"),
@@ -24,6 +24,6 @@ public interface MiscObjectMapper {
         @Mapping(source = "fileStructureMd5", target = "md5")
     })
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
-	org.ishafoundation.dwaraapi.api.resp.artifact.Artifact getArtifactForArtifactResponse(org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact artifact);
+	org.ishafoundation.dwaraapi.api.resp.artifact.Artifact getArtifactForArtifactResponse(org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact);
 
 }

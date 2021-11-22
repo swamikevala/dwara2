@@ -1,0 +1,46 @@
+package org.isha.dwaraimport;
+
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
+import java.util.List;
+
+@JacksonXmlRootElement(localName = "VolumeIndex")
+public class Volumeindex {
+//	@JacksonXmlProperty(isAttribute = true)
+//	private String xmlns;
+//	private Importinfo importinfo;
+	@JacksonXmlProperty(localName="VolumeInfo")
+	private Volumeinfo volumeinfo;
+	@JacksonXmlProperty(localName="Artifact")
+	@JacksonXmlElementWrapper(useWrapping = false)
+	private List<Artifact> artifact;
+
+	
+//	public String getXmlns() {
+//		return xmlns;
+//	}
+//	public void setXmlns(String xmlns) {
+//		this.xmlns = xmlns;
+//	}
+	//	public Importinfo getImportinfo() {
+//		return importinfo;
+//	}
+//	public void setImportinfo(Importinfo importinfo) {
+//		this.importinfo = importinfo;
+//	}
+	public Volumeinfo getVolumeinfo() {
+		return volumeinfo;
+	}
+	public void setVolumeinfo(Volumeinfo volumeinfo) {
+		this.volumeinfo = volumeinfo;
+	}
+	public List<Artifact> getArtifact() {
+		return artifact;
+	}
+	public void setArtifact(List<Artifact> artifact) {
+		this.artifact = artifact;
+	}
+
+}

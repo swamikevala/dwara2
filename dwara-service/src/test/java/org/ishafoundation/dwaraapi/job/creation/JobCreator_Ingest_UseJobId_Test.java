@@ -2,13 +2,12 @@ package org.ishafoundation.dwaraapi.job.creation;
 
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.service.StagedService;
@@ -36,7 +35,7 @@ public class JobCreator_Ingest_UseJobId_Test{
 	JobDao jobDao;
 
 	@Autowired
-	DomainUtil domainUtil;
+	ArtifactDao artifactDao;
 	
 	//String readyToIngestPath =  "C:\\data\\user\\pgurumurthy\\ingest\\pub-video";
 	String readyToIngestPath =  "C:\\data\\ingested";
@@ -45,14 +44,7 @@ public class JobCreator_Ingest_UseJobId_Test{
 	public void test_a_create() {
 		Request systemrequest = requestDao.findById(26).get();
 				
-		Artifact dependentJobInputArtifact = null;
-		Domain[] domains = Domain.values();
-		for (Domain nthDomain : domains) {
-			dependentJobInputArtifact = domainUtil.getDomainSpecificArtifact(nthDomain, 16);
-			if(dependentJobInputArtifact != null) {
-				break;
-			}
-		}
+		Artifact dependentJobInputArtifact = artifactDao.findById(16).get();
 		List<Job> jobList = jobCreator.createJobs(systemrequest, dependentJobInputArtifact);
 		for (Job job : jobList) {
 			System.out.println(job.getId() + job.getProcessingtaskId() + job.getStoragetaskActionId());

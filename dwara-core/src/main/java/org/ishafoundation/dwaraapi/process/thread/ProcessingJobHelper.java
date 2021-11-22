@@ -15,14 +15,13 @@ import java.util.TreeSet;
 import org.apache.commons.lang3.ArrayUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.FiletypeDao;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Filetype;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.helpers.FiletypePathnameReqexVisitor;
 import org.ishafoundation.dwaraapi.process.helpers.LogicalFileHelper;
@@ -46,7 +45,7 @@ public class ProcessingJobHelper {
 	private TFileDao tFileDao;
 	
 	@Autowired
-	private FileRepositoryUtil fileRepositoryUtil;
+	private FileDao fileDao;
 
 	@Autowired
 	private	LogicalFileHelper logicalFileHelper;
@@ -60,11 +59,11 @@ public class ProcessingJobHelper {
 		return filePathToTFileObj;
 	}
 	
-	protected HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getFilePathToFileObj(Domain domain, Artifact artifactDbObj) throws Exception{
-		HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File> filePathTofileObj = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.domain.File>();
+	protected HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File> getFilePathToFileObj(Artifact artifactDbObj) throws Exception{
+		HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File> filePathTofileObj = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File>();
 		
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifactDbObj, domain);
-		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : artifactFileList) {
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = fileDao.findAllByArtifactIdAndDeletedFalse(artifactDbObj.getId());
+		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : artifactFileList) {
 			filePathTofileObj.put(nthFile.getPathname(), nthFile);
 		}
 		//logger.trace("file collection - " + filePathTofileObj.keySet().toString());

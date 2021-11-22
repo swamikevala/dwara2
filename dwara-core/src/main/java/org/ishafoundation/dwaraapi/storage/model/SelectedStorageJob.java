@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.storage.model;
 import java.util.HashMap;
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 
 public class SelectedStorageJob {
 	
@@ -19,13 +19,13 @@ public class SelectedStorageJob {
 	private Integer artifactEndVolumeBlock;
 
 	// restore stuff
-	private org.ishafoundation.dwaraapi.db.model.transactional.domain.File file;
+	private org.ishafoundation.dwaraapi.db.model.transactional.File file;
 	private boolean useBuffering;
 	private ArtifactVolume artifactVolume;
 	private String filePathNameToBeRestored;
 	
 	// common for both verify and restore
-	private List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList;
+	private List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList;
 	private HashMap<String, byte[]> filePathNameToChecksum;
 
 
@@ -77,11 +77,11 @@ public class SelectedStorageJob {
 		this.artifactEndVolumeBlock = artifactEndVolumeBlock;
 	}
 	
-	public org.ishafoundation.dwaraapi.db.model.transactional.domain.File getFile() {
+	public org.ishafoundation.dwaraapi.db.model.transactional.File getFile() {
 		return file;
 	}
 	
-	public void setFile(org.ishafoundation.dwaraapi.db.model.transactional.domain.File file) {
+	public void setFile(org.ishafoundation.dwaraapi.db.model.transactional.File file) {
 		this.file = file;
 	}
 
@@ -109,11 +109,11 @@ public class SelectedStorageJob {
 		this.filePathNameToBeRestored = filePathNameToBeRestored;
 	}
 
-	public List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> getArtifactFileList() {
+	public List<org.ishafoundation.dwaraapi.db.model.transactional.File> getArtifactFileList() {
 		return artifactFileList;
 	}
 	
-	public void setArtifactFileList(List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> artifactFileList) {
+	public void setArtifactFileList(List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList) {
 		this.artifactFileList = artifactFileList;
 	}
 	

@@ -78,6 +78,7 @@ public class RequestDetails {
 	@JsonProperty("flow_id")
 	private String flowId;
 	
+	// for backward compatibility...
 	@JsonProperty("domain_id")
 	private Integer domainId;
 	

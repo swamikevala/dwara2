@@ -10,17 +10,16 @@ import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.ingest.UserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.StagedFile;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
@@ -67,7 +66,7 @@ public class JobCreator_Ingest_VideoPub_Test extends DwaraService {
 	JobDao jobDao;
 
 	@Autowired
-	DomainUtil domainUtil;
+	ArtifactDao artifactDao;
 	
 	//String readyToIngestPath =  "C:\\data\\user\\pgurumurthy\\ingest\\pub-video";
 	String readyToIngestPath =  "C:\\data\\staged";
@@ -91,7 +90,6 @@ public class JobCreator_Ingest_VideoPub_Test extends DwaraService {
 		
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 		//String readyToIngestPath =  artifactclass.getPathPrefix();
-		Domain domain = artifactclass.getDomain();
 
     	Request userRequest = new Request();
     	userRequest.setType(RequestType.user);
@@ -133,7 +131,7 @@ public class JobCreator_Ingest_VideoPub_Test extends DwaraService {
 			File libraryFileInStagingDir = new File(readyToIngestPath + File.separator + stagedFile.getName());
 	    	//Collection<java.io.File> libraryFileAndDirsList = FileUtils.listFilesAndDirs(libraryFileInStagingDir, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
 	
-			Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
+			Artifact artifact = new Artifact();
 			artifact.setWriteRequest(systemrequest);
 			artifact.setqLatestRequest(systemrequest);
 			artifact.setName(stagedFile.getName());
@@ -142,12 +140,12 @@ public class JobCreator_Ingest_VideoPub_Test extends DwaraService {
 			artifact.setTotalSize(12345);
 			artifact.setSequenceCode("V123");
 			artifact.setPrevSequenceCode(null);
-			artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
+			artifact = artifactDao.save(artifact);
 			
 			artifactId = artifact.getId();
 			logger.info(artifact.getClass().getSimpleName() + " - " + artifact.getId());
 			
-	        stagedService.createFilesAndExtensions(readyToIngestPath, domain, artifact, 12345, libraryFileInStagingDir, ".junk");
+	        stagedService.createFilesAndExtensions(readyToIngestPath, artifact, 12345, libraryFileInStagingDir, ".junk");
 			
 	        List<Job> jobList = jobCreator.createJobs(systemrequest, artifact);
 	        

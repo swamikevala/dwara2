@@ -7,23 +7,20 @@ import java.util.Optional;
 import org.ishafoundation.dwaraapi.db.dao.master.ProcessingtaskDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Processingtask;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassFlow;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolume;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
-import org.ishafoundation.dwaraapi.enumreferences.CoreFlow;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,12 +46,12 @@ public class JobManipulator {
 
 	@Autowired
 	private ProcessingtaskDao processingtaskDao;
+
+	@Autowired
+	private ArtifactDao artifactDao;
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
-
-	@Autowired
-	private DomainUtil domainUtil;
 	
 	@Autowired
 	private FlowelementUtil flowelementUtil;
@@ -70,17 +67,8 @@ public class JobManipulator {
 		if(Actiontype.complex == action.getType()) {
 			logger.trace("Complex action");
 
-			List<Artifact> artifactList = null;
-			Domain[] domains = Domain.values();
-			for (Domain nthDomain : domains) {
-				ArtifactRepository<Artifact> artifactRepository = domainUtil.getDomainSpecificArtifactRepository(nthDomain);
+			List<Artifact> artifactList = artifactDao.findAllByWriteRequestId(request.getId());
 
-				artifactList = artifactRepository.findAllByWriteRequestId(request.getId());
-				
-				if(artifactList != null && artifactList.size() > 0) {
-					break;
-				}
-			}
 			
 			List<ActionArtifactclassFlow> actionArtifactclassFlowList = null;
 			String sourceArtifactclassId = null;

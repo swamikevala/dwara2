@@ -8,8 +8,6 @@ public class Artifactclass {
 	
 	private String pathPrefix;
 	
-	private String domain;
-	
 	private String category;
 
 	public String getId() {
@@ -34,14 +32,6 @@ public class Artifactclass {
 
 	public void setPathPrefix(String pathPrefix) {
 		this.pathPrefix = pathPrefix;
-	}
-	
-	public String getDomain() {
-		return domain;
-	}
-
-	public void setDomain(String domain) {
-		this.domain = domain;
 	}
 
 	public String getCategory() {

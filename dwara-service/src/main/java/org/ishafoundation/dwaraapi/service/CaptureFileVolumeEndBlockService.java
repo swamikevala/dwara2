@@ -1,23 +1,22 @@
 package org.ishafoundation.dwaraapi.service;
 
-import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
-import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import static java.sql.Types.NULL;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.sql.Types.NULL;
+import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
+import org.ishafoundation.dwaraapi.db.model.transactional.File;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 
 @Component
@@ -26,14 +25,15 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
     private static final Logger logger = LoggerFactory.getLogger(CaptureFileVolumeEndBlockService.class);
 
     @Autowired
-    private DomainUtil domainUtil;
-
-    @Autowired
     private VolumeDao volumeDao;
 
+    @Autowired
+    private FileDao fileRepository;
+    
+    @Autowired
+    private FileVolumeDao fileVolumeRepository;
+    
     public void fileVolumeEndBlock(List<String> volumeId) {
-
-        FileVolumeRepository<FileVolume> fileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domainUtil.getDefaultDomain());
         List<FileVolume> fileVolumeBlockList;
         List<Volume> volumeGroupList = new ArrayList<>();
         int endBlock;
@@ -47,8 +47,6 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
         } else {
             volumeGroupList = (List<Volume>) volumeDao.findAll();
         }
-
-        FileRepository<File> fileRepository = domainUtil.getDomainSpecificFileRepository(domainUtil.getDefaultDomain());
 
         List<File> fileList = (List<File>) fileRepository.findAll();
 
