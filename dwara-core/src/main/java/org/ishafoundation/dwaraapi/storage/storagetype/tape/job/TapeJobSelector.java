@@ -480,7 +480,7 @@ public class TapeJobSelector {
 			}
 			else if(storagetaskAction == Action.restore) {
 				// TODO better this...
-				for (int i = Priority.high.getPriorityValue(); i <= Priority.normal.getPriorityValue(); i++) {
+				for (int i = Priority.critical.getPriorityValue(); i <= Priority.normal.getPriorityValue(); i++) {
 					// READ/RESTORE - ordered based on seqBlocks takes precedence over write jobs
 					// V5A001 - readjobs = [Job1, Job3, Job4] becomes [Job4, Job1, Job3]
 					

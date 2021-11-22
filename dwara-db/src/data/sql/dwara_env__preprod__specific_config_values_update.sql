@@ -56,12 +56,13 @@ truncate t_activedevice;
 
 # Set all in_progress jobs to marked_failed
 UPDATE `job` SET `status` = 'marked_failed', `completed_at` = now(), `message` = 'Running jobs at the time of prod db backup. Manually set by test env rebase script.' WHERE (`status` = 'in_progress');
-UPDATE `job` SET `status` = 'marked_failed', `completed_at` = now(), `message` = 'Running jobs at the time of prod db backup. Manually set by test env rebase script.' WHERE (`status` = 'in_progress');
+UPDATE `job` SET `status` = 'on_hold' WHERE (`status` = 'queued');
 
 # Set all in_progress files to marked _failed
 UPDATE `t_t_file_job` SET `status` = 'marked_failed' WHERE (`status` = 'in_progress');
 
-UPDATE `volume` SET `imported`=1 WHERE `id`in ('C1','C2','C3','CA','CB','CC','P1','P2');
+# Remove entries from active device table
+TRUNCATE TABLE `t_activedevice`;
 
 update job set volume_id = replace(volume_id, 'R', 'S');
 update job set volume_id = replace(volume_id, 'G', 'H');
