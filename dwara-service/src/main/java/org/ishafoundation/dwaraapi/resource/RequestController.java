@@ -285,7 +285,7 @@ public class RequestController {
 	}
 	
 	@GetMapping("/request/restore")
-	public ResponseEntity<List<RestoreResponse>> getRestoreRequests(@RequestParam(required=true) String status) {
+	public ResponseEntity<List<RestoreResponse>> getRestoreRequests(@RequestParam(required=true) String status, @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedTo, @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedTo) {
 		List<RestoreResponse> restoreResponses= new ArrayList<>();
 		
 		
