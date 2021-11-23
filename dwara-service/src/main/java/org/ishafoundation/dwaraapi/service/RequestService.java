@@ -518,14 +518,37 @@ public class RequestService extends DwaraService{
 		return requestResponse;
 	}
 
-	public List<RestoreResponse> getRestoreRequests(RequestType requestType, List<Status> statusList){
+	public List<RestoreResponse> getRestoreRequests(RequestType requestType, List<Status> statusList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo){
 		List<RestoreResponse> restoreResponses = new ArrayList<>();
 
 		List<Action> actionList = new ArrayList<>();
 		actionList.add(Action.restore);
 		actionList.add(Action.restore_process);
 		
-		List<Request> userRequests = requestDao.findAllByActionIdInAndStatusInAndTypeAndRequestedByIdNotNullOrderByRequestedAtDesc(actionList, statusList, requestType);
+		//List<Request> userRequests = requestDao.findAllByActionIdInAndStatusInAndTypeAndRequestedByIdNotNullOrderByRequestedAtDesc(actionList, statusList, requestType);
+		
+		LocalDateTime requestedAtStart = requestedFrom != null ? requestedFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+		LocalDateTime requestedAtEnd = requestedTo != null ? requestedTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+		// requested to hardcode...
+		if(requestedAtEnd != null) {
+			requestedAtEnd = requestedAtEnd.plusHours(23);
+			requestedAtEnd = requestedAtEnd.plusMinutes(59);
+			requestedAtEnd = requestedAtEnd.plusSeconds(59);
+		}
+		
+		LocalDateTime completedAtStart = completedFrom != null ? completedFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+		LocalDateTime completedAtEnd = completedTo != null ? completedTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+		// requested to hardcode...
+		if(completedAtEnd != null) {
+			completedAtEnd = completedAtEnd.plusHours(23);
+			completedAtEnd = completedAtEnd.plusMinutes(59);
+			completedAtEnd = completedAtEnd.plusSeconds(59);
+		}
+		
+		int pageNumber = 0;
+		int pageSize = 0;
+		List<Request> userRequests = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, actionList, statusList, null, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, null, null, pageNumber, pageSize);
+
 		
 		logger.trace("User requests length before enthry: " + userRequests.size());
 		for (Request request : userRequests) {

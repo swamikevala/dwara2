@@ -269,6 +269,7 @@ public class RequestController {
     	return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
     }
 	
+	@Deprecated
 	@GetMapping("/request/restoreStatus")
 	public ResponseEntity<List<RestoreResponse>> getRestoreStatus() {
 		List<RestoreResponse> restoreResponses= new ArrayList<>();
@@ -279,7 +280,7 @@ public class RequestController {
 		statusList.add(Status.failed);
 		// statusList.add(Status.cancelled);
 
-		restoreResponses=requestService.getRestoreRequests(RequestType.user, statusList);
+		restoreResponses=requestService.getRestoreRequests(RequestType.user, statusList, null, null, null, null);
 
 		return ResponseEntity.status(HttpStatus.OK).body(restoreResponses);
 	}
@@ -300,7 +301,7 @@ public class RequestController {
 		}
 	   	
 		try {
-			   	restoreResponses=requestService.getRestoreRequests(RequestType.user, statusList);
+			   	restoreResponses=requestService.getRestoreRequests(RequestType.user, statusList, requestedFrom, requestedTo, completedFrom, completedTo);
 		}catch (Exception e) {
 			// TODO: Tidy this up
 			// for now swallow it - as this keep throwing errors in UI
