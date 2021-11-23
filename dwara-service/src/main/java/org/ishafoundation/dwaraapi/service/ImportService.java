@@ -800,8 +800,8 @@ public class ImportService extends DwaraService {
 		volume.setStoragelevel(Storagelevel.block);
 		volume.setArchiveformat(configurationTablesUtil.getArchiveformat(volumeinfo.getArchiveformat()));
 		
-		// ISHA XML sends crappy non-ISO date format like 20-Feb-2019, 00:00:00.000
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy, HH:mm:ss.SSS");
+		// ISHA XMLs sends non-ISO date format like 20-Feb-2019, 00:00:00.000
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d-MMM-yyyy, HH:mm:ss.SSS");// ("yyyy-MM-dd'T'HH:mm:ss");
 		LocalDateTime finalizedAt = LocalDateTime.parse(volumeinfo.getFinalizedAt(), formatter);
 		volume.setFinalizedAt(finalizedAt);
 		
