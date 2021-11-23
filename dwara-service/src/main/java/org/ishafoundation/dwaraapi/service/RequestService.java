@@ -691,56 +691,60 @@ public class RequestService extends DwaraService{
 
 	private long fileETARestoreCalculator(String targetLocation, RestoreFile file, long startTime,
 			String taskType) {
-
+		long eta = 0;
 		String path = targetLocation + java.io.File.separator + file.getName();
 		java.io.File targetFile = new java.io.File(path);
-		long movConversionRate = 79; // For MOV
-		long restorationRate = 10; // FOR RESTORATION
-		// EG:V27033_Ashram-Ambience-Shots_Dhyanalinga-IYC_28-Aug-2020_Drone/DCIM/100MEDIA/DJI_0018.MOV
-		if (taskType == "video-digi-2020-mkv-mov-gen") {
-			boolean foundMovFile = false;
-			// Loop through the folder
-			// destinationPath+"/"+outputFolder+"/"+".restoring/"+file.getName().parentfolder
-			// VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/I030.mkv
-			// BHi hei parey
-			// VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/ Hei
-			// parey
-			// VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/I030.mov
-			// Darkaar
-			if (!targetFile.isDirectory()) {
-				targetFile = new java.io.File(targetFile.getParent());
-			}
-			// Find the mov in the directory and seet it as a path
-			List<java.io.File> searchTheseFiles = Arrays.asList(targetFile.listFiles());
-			for (java.io.File goteyFile : searchTheseFiles) {
-				if (goteyFile.getPath().endsWith(".mov")) {
-					// Set this as the file path
-					targetFile = goteyFile;
-					foundMovFile = true;
+		try {
+			long movConversionRate = 79; // For MOV
+			long restorationRate = 10; // FOR RESTORATION
+			// EG:V27033_Ashram-Ambience-Shots_Dhyanalinga-IYC_28-Aug-2020_Drone/DCIM/100MEDIA/DJI_0018.MOV
+			if (taskType == "video-digi-2020-mkv-mov-gen") {
+				boolean foundMovFile = false;
+				// Loop through the folder
+				// destinationPath+"/"+outputFolder+"/"+".restoring/"+file.getName().parentfolder
+				// VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/I030.mkv
+				// BHi hei parey
+				// VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/ Hei
+				// parey
+				// VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/I030.mov
+				// Darkaar
+				if (!targetFile.isDirectory()) {
+					targetFile = new java.io.File(targetFile.getParent());
 				}
-
+				// Find the mov in the directory and seet it as a path
+				List<java.io.File> searchTheseFiles = Arrays.asList(targetFile.listFiles());
+				for (java.io.File goteyFile : searchTheseFiles) {
+					if (goteyFile.getPath().endsWith(".mov")) {
+						// Set this as the file path
+						targetFile = goteyFile;
+						foundMovFile = true;
+					}
+	
+				}
+	
+				if (!foundMovFile) {
+					return ((file.getSize() / 1073741824) * movConversionRate);
+				}
+			} // Mov gen completes here
+			else if (taskType == "restore") {
+				if (!targetFile.exists()) {
+					return ((file.getSize() / 1073741824) * restorationRate);
+				}
 			}
-
-			if (!foundMovFile) {
-				return ((file.getSize() / 1073741824) * movConversionRate);
-			}
-		} // Mov gen completes here
-		else if (taskType == "restore") {
-			if (!targetFile.exists()) {
-				return ((file.getSize() / 1073741824) * restorationRate);
-			}
+	
+			long targetSize = 0;
+			targetSize = FileUtils.sizeOf(targetFile);
+			long fileSize = file.getSize();
+			logger.trace(String.valueOf(targetSize));
+			logger.trace(String.valueOf(startTime));
+			logger.trace(String.valueOf(fileSize));
+			long remainingSize = (fileSize - targetSize) / (targetSize);
+			logger.trace(String.valueOf(remainingSize));
+			logger.trace(String.valueOf(System.currentTimeMillis() / 1000));
+			eta = ((System.currentTimeMillis() / 1000) - startTime) * remainingSize;
+		}catch (Exception e) {
+			logger.warn("Unable to calc eta for " + path);
 		}
-
-		long targetSize = 0;
-		targetSize = FileUtils.sizeOf(targetFile);
-		long fileSize = file.getSize();
-		logger.trace(String.valueOf(targetSize));
-		logger.trace(String.valueOf(startTime));
-		logger.trace(String.valueOf(fileSize));
-		long remainingSize = (fileSize - targetSize) / (targetSize);
-		logger.trace(String.valueOf(remainingSize));
-		logger.trace(String.valueOf(System.currentTimeMillis() / 1000));
-		long eta = ((System.currentTimeMillis() / 1000) - startTime) * remainingSize;
 		return eta;
 	}
 
@@ -766,11 +770,16 @@ public class RequestService extends DwaraService{
 	}
 
 	private long getTargetSize(String targetLocation, RestoreFile file) {
+		long targetSize = 0;
 		String path = targetLocation + java.io.File.separator + file.getName();
-		java.io.File targetFile = new java.io.File(path);
-		if (!targetFile.exists()) {
-			return FileUtils.sizeOf(targetFile);
+		try {
+			java.io.File targetFile = new java.io.File(path);
+			if (targetFile.exists()) {
+				targetSize = FileUtils.sizeOf(targetFile);
+			}
+		}catch (Exception e) {
+			logger.warn("Unable to calc targetSize for " + path);
 		}
-		return 0;
+		return targetSize;
 	}
 }

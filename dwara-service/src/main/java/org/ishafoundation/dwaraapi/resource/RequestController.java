@@ -303,6 +303,7 @@ public class RequestController {
 		try {
 			   	restoreResponses=requestService.getRestoreRequests(RequestType.user, statusList, requestedFrom, requestedTo, completedFrom, completedTo);
 		}catch (Exception e) {
+			logger.error("Unable to get restore requests : " + e.getMessage(), e);
 			// TODO: Tidy this up
 			// for now swallow it - as this keep throwing errors in UI
 		}
