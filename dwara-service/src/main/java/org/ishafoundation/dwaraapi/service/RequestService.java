@@ -518,19 +518,15 @@ public class RequestService extends DwaraService{
 		return requestResponse;
 	}
 
-	public List<RestoreResponse> restoreRequest() {
+	public List<RestoreResponse> getRestoreRequests(RequestType requestType, List<Status> statusList){
 		List<RestoreResponse> restoreResponses = new ArrayList<>();
-		List<Status> statusList = new ArrayList<>();
-		statusList.add(Status.queued);
-		statusList.add(Status.in_progress);
-		statusList.add(Status.failed);
-		// statusList.add(Status.cancelled);
 
 		List<Action> actionList = new ArrayList<>();
 		actionList.add(Action.restore);
 		actionList.add(Action.restore_process);
-		List<Request> userRequests = requestDao.findAllByActionIdInAndStatusInAndTypeAndRequestedByIdNotNull(actionList,
-				statusList, RequestType.user);
+		
+		List<Request> userRequests = requestDao.findAllByActionIdInAndStatusInAndTypeAndRequestedByIdNotNullOrderByRequestedAtDesc(actionList, statusList, requestType);
+		
 		logger.trace("User requests length before enthry: " + userRequests.size());
 		for (Request request : userRequests) {
 			List<Tape> tapes = new ArrayList<>();

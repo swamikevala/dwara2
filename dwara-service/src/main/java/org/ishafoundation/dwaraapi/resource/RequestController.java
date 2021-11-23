@@ -268,12 +268,45 @@ public class RequestController {
 		}
     	return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
     }
+	
 	@GetMapping("/request/restoreStatus")
 	public ResponseEntity<List<RestoreResponse>> getRestoreStatus() {
 		List<RestoreResponse> restoreResponses= new ArrayList<>();
-		restoreResponses=requestService.restoreRequest();
+		
+		List<Status> statusList = new ArrayList<>();
+		statusList.add(Status.queued);
+		statusList.add(Status.in_progress);
+		statusList.add(Status.failed);
+		// statusList.add(Status.cancelled);
 
+		restoreResponses=requestService.getRestoreRequests(RequestType.user, statusList);
 
 		return ResponseEntity.status(HttpStatus.OK).body(restoreResponses);
 	}
+	
+	@GetMapping("/request/restore")
+	public ResponseEntity<List<RestoreResponse>> getRestoreRequests(@RequestParam(required=true) String status) {
+		List<RestoreResponse> restoreResponses= new ArrayList<>();
+		
+		
+		List<Status> statusList = new ArrayList<Status>();
+		String[] statusArrAsString = status.split(",");
+	   	
+	   	for (int i = 0; i < statusArrAsString.length; i++) {
+	   		if(statusArrAsString[i].equalsIgnoreCase("all")) // Weird UI sends the value "all" also, filter it here regardless of UI is fixed or not
+	   			continue;
+	   		Status statusEnum = Status.valueOf(statusArrAsString[i]);
+	   		statusList.add(statusEnum);
+		}
+	   	
+		try {
+			   	restoreResponses=requestService.getRestoreRequests(RequestType.user, statusList);
+		}catch (Exception e) {
+			// TODO: Tidy this up
+			// for now swallow it - as this keep throwing errors in UI
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(restoreResponses);
+	}
+
 }
