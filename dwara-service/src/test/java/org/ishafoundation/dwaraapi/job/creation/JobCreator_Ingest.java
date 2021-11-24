@@ -12,18 +12,17 @@ import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.StagedFile;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.job.JobCreator;
@@ -71,7 +70,7 @@ public class JobCreator_Ingest extends DwaraService {
 	private JobManager jobManager;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactDao artifactDao;
 	
 	@Autowired
 	private JobUtil jobUtil;
@@ -116,8 +115,6 @@ public class JobCreator_Ingest extends DwaraService {
 		
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 		//String readyToIngestPath =  artifactclass.getPathPrefix();
-		Domain domain = artifactclass.getDomain();
-
 		Request userRequest = createUserRequest(Action.ingest, ingestUserRequest);
     	//int userRequestId = userRequest.getId();
     	
@@ -145,7 +142,7 @@ public class JobCreator_Ingest extends DwaraService {
 			File libraryFileInStagingDir = new File(readyToIngestPath + File.separator + stagedFile.getName());
 	    	//Collection<java.io.File> libraryFileAndDirsList = FileUtils.listFilesAndDirs(libraryFileInStagingDir, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
 	
-			Artifact artifact = domainUtil.getDomainSpecificArtifactInstance(domain);
+			Artifact artifact = new Artifact();
 			artifact.setWriteRequest(systemrequest);
 			artifact.setqLatestRequest(systemrequest);
 			artifact.setName(stagedFile.getName());
@@ -155,12 +152,12 @@ public class JobCreator_Ingest extends DwaraService {
 			String seqCode = StringUtils.substringBefore(stagedFile.getName(), "_");
 			artifact.setSequenceCode(seqCode);
 			artifact.setPrevSequenceCode(null);
-			artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).save(artifact);
+			artifact = artifactDao.save(artifact);
 			
 			artifactId = artifact.getId();
 			logger.info(artifact.getClass().getSimpleName() + " - " + artifact.getId());
 			
-	        stagedService.createFilesAndExtensions(readyToIngestPath, domain, artifact, 12345, libraryFileInStagingDir, ".junk");
+	        stagedService.createFilesAndExtensions(readyToIngestPath, artifact, 12345, libraryFileInStagingDir, ".junk");
 			
 	        return jobCreator.createJobs(systemrequest, artifact);
 //    	}

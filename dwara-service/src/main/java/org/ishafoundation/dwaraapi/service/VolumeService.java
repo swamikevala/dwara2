@@ -19,19 +19,18 @@ import org.ishafoundation.dwaraapi.api.resp.volume.Details;
 import org.ishafoundation.dwaraapi.api.resp.volume.MarkVolumeStatusResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -61,7 +60,10 @@ public class VolumeService extends DwaraService {
 	private RequestDao requestDao;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactDao artifactDao;
+	
+	@Autowired
+	private ArtifactVolumeDao artifactVolumeDao;
 	
 	@Autowired
 	private VolumeUtil volumeUtil;
@@ -135,8 +137,6 @@ public class VolumeService extends DwaraService {
 			volResp.setArchiveformat(volume.getArchiveformat().getId());
 
 		if(volume.getType() == Volumetype.group) {
-
-			Domain domain = null;
 			long groupVolumeCapacity = 0L;
 			long groupVolumeUnusedCapacity = 0L;
 			long groupVolumeUsedCapacity = 0L;
@@ -146,25 +146,13 @@ public class VolumeService extends DwaraService {
 			
 			for (Volume nthPhyscialVolume : physicalVolumeList) { // iterate all physical volume from the group and sum up for total/used/unused cap
 				logger.trace("Dashboard - " + nthPhyscialVolume.getId());
-				if(domain == null) {
-			   		Domain[] domains = Domain.values();
-			   	
-					for (Domain nthDomain : domains) {
-					    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(nthDomain);
-					    int artifactVolumeCount = domainSpecificArtifactVolumeRepository.countByIdVolumeId(nthPhyscialVolume.getId());
-						if(artifactVolumeCount > 0) {
-							domain = nthDomain;
-							break;
-						}
-					}
-				}
 				
 //				long nthPhysicalVolumeCapacity = nthPhyscialVolume.getCapacity();
 //				long nthPhysicalVolumeUsedCapacity = volumeUtil.getVolumeUsedCapacity(domain, nthPhyscialVolume);
-				groupVolumeCapacity += volumeUtil.getVolumeUsableCapacity(domain, nthPhyscialVolume);//nthPhyscialVolume.getCapacity();
+				groupVolumeCapacity += volumeUtil.getVolumeUsableCapacity(nthPhyscialVolume);//nthPhyscialVolume.getCapacity();
 				logger.trace("Dashboard -groupVolumeCapacity - " + groupVolumeCapacity);
 				logger.trace("Dashboard -groupVolumeCapacity in " + sizeUnit + " - " + groupVolumeCapacity/sizeUnitDivisor);
-				long nthPhysicalVolumeUnusedCapacity = volumeUtil.getVolumeUnusedCapacity(domain, nthPhyscialVolume);
+				long nthPhysicalVolumeUnusedCapacity = volumeUtil.getVolumeUnusedCapacity(nthPhyscialVolume);
 				groupVolumeUnusedCapacity += nthPhysicalVolumeUnusedCapacity;
 				logger.trace("Dashboard -groupVolumeUnusedCapacity - " + groupVolumeUnusedCapacity);
 				logger.trace("Dashboard -groupVolumeUnusedCapacity in " + sizeUnit + " - "  + groupVolumeUnusedCapacity/sizeUnitDivisor);
@@ -172,7 +160,7 @@ public class VolumeService extends DwaraService {
 					maxPhysicalUnusedCapacity = nthPhysicalVolumeUnusedCapacity;
 				logger.trace("Dashboard -maxPhysicalUnusedCapacity - " + maxPhysicalUnusedCapacity);
 				logger.trace("Dashboard -maxPhysicalUnusedCapacity in " + sizeUnit + " - "  + maxPhysicalUnusedCapacity/sizeUnitDivisor);
-				groupVolumeUsedCapacity += volumeUtil.getVolumeUsedCapacity(domain, nthPhyscialVolume);
+				groupVolumeUsedCapacity += volumeUtil.getVolumeUsedCapacity(nthPhyscialVolume);
 				logger.trace("Dashboard -groupVolumeUsedCapacity - " + groupVolumeUsedCapacity);
 				logger.trace("Dashboard -groupVolumeUsedCapacity in " + sizeUnit + " - "  + groupVolumeUsedCapacity/sizeUnitDivisor);
 			}
@@ -229,7 +217,7 @@ public class VolumeService extends DwaraService {
 		Volume volume = volumeDao.findById(volumeId).get();
 		
 		String tmpXmlFilepathname = filesystemTemporarylocation + File.separator + volumeId + "_index.xml";
-		volumeindexManager.createVolumeindexXml(volume, Domain.ONE, tmpXmlFilepathname);
+		volumeindexManager.createVolumeindexXml(volume, tmpXmlFilepathname);
 		
 		String response = tmpXmlFilepathname + " created"; 
 		logger.trace(response);
@@ -259,16 +247,13 @@ public class VolumeService extends DwaraService {
 			data.put("artifactclassRegex", artifactclassRegex);
 		}
 		Request userRequest = createUserRequest(Action.rewrite, data);
-		Domain domain = Domain.ONE; // TODO Hardcoded domain
-
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		List<ArtifactVolume> artifactVolumeList = domainSpecificArtifactVolumeRepository.findAllByIdVolumeIdAndStatus(volumeId, ArtifactVolumeStatus.current); // only not deleted artifacts need to be rewritten
+		List<ArtifactVolume> artifactVolumeList = artifactVolumeDao.findAllByIdVolumeIdAndStatus(volumeId, ArtifactVolumeStatus.current); // only not deleted artifacts need to be rewritten
 		
 		// loop artifacts on volume
 		for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
 			int artifactId = nthArtifactVolume.getId().getArtifactId();
 			
-			Artifact artifact = (Artifact) domainUtil.getDomainSpecificArtifactRepository(domain).findById(artifactId).get(); // get the artifact details from DB
+			Artifact artifact = artifactDao.findById(artifactId).get(); // get the artifact details from DB
  
 			// filtering out artifacts that dont match specified artifactclass(es)
 			if(artifactclassRegexPattern != null) {
@@ -283,7 +268,7 @@ public class VolumeService extends DwaraService {
 			// Also System will skip any artifacts which already exist on the additional copy (e.g. if the config was changed to increase the number of copies from 3 to 4 while a tape was partially written - so the artifacts on the latter part of that tape would need to be skipped)
 			if(additionalCopy != null) {
 				boolean isCopyAlreadyWritten = false; 
-				List<ArtifactVolume> artifactVolumeList2 = domainSpecificArtifactVolumeRepository.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
+				List<ArtifactVolume> artifactVolumeList2 = artifactVolumeDao.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
 				for (ArtifactVolume nthArtifactVolume2 : artifactVolumeList2) {
 					if(nthArtifactVolume2.getVolume().getGroupRef().getCopy().getId() == additionalCopy) {
 						isCopyAlreadyWritten = true;

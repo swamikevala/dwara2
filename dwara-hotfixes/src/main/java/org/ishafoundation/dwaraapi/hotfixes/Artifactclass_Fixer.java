@@ -2,12 +2,9 @@ package org.ishafoundation.dwaraapi.hotfixes;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactRepository;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.service.ArtifactService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +25,7 @@ public class Artifactclass_Fixer {
 	private ArtifactService artifactService;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactDao artifactDao;
 	
 	@PostMapping(value = "/fixArtifactclass", produces = "application/json")
 	public ResponseEntity<String> fixArtifactclass(){
@@ -135,19 +132,9 @@ public class Artifactclass_Fixer {
 				artifactService.changeArtifactclass(Integer.parseInt(artifactId), newArtifactClass, true);
 				logger.info("Completed Updating - " + prevSeqCode);
 				
-				ArtifactRepository<Artifact> artifactRepository = null;
-				Artifact requestedArtifact = null; // get the artifact details from DB
-				Domain[] domains = Domain.values();
-				for (Domain nthDomain : domains) {
-					artifactRepository = domainUtil.getDomainSpecificArtifactRepository(nthDomain);
-					Optional<Artifact> artifactEntity = artifactRepository.findById(Integer.parseInt(artifactId));
-					if(artifactEntity.isPresent()) {
-						requestedArtifact = artifactEntity.get();
-						break;
-					}
-				}
+				Artifact requestedArtifact = artifactDao.findById(Integer.parseInt(artifactId)).get();
 				requestedArtifact.setPrevSequenceCode(prevSeqCode); // prevSeqCode was not set
-				artifactRepository.save(requestedArtifact);
+				artifactDao.save(requestedArtifact);
 
 				logger.info(prevSeqCode + " set in " + artifactId);
 			}catch (Exception e) {

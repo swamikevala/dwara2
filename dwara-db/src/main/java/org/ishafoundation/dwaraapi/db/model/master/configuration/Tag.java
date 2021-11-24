@@ -11,8 +11,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact1;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 
 @Entity
 @Table(name="label")
@@ -23,11 +22,11 @@ public class Tag {
 
 	@ManyToMany
 	@JoinTable(
-		name = "artifact1_label",
+		name = "artifact_label",
 		joinColumns = @JoinColumn(name = "tag"),
-		inverseJoinColumns = @JoinColumn(name = "artifact1_id")
+		inverseJoinColumns = @JoinColumn(name = "artifact_id")
 	)
-	Set<Artifact1> artifacts;
+	Set<Artifact> artifacts;
 
 	public Tag(){
 
@@ -37,9 +36,9 @@ public class Tag {
 		tag = value;
 	}
 
-	public Artifact1 getArtifactById(int artifactId) {
+	public Artifact getArtifactById(int artifactId) {
 		if(artifacts != null) {
-			for (Artifact1 artifact : artifacts) {
+			for (Artifact artifact : artifacts) {
 				if(artifact.getId() == artifactId)
 					return artifact;
 			}
@@ -47,14 +46,14 @@ public class Tag {
 		return null;
 	}
 
-	public Artifact1 addArtifact(Artifact1 r) {
+	public Artifact addArtifact(Artifact r) {
 		if(artifacts == null)
-			artifacts = new LinkedHashSet<Artifact1>();
+			artifacts = new LinkedHashSet<Artifact>();
 		artifacts.add(r);
 		return r;
 	}
 
-	public void deleteArtifact(Artifact1 r) {
+	public void deleteArtifact(Artifact r) {
 		if(r != null) {
 			artifacts.remove(r);
 		}
@@ -68,11 +67,11 @@ public class Tag {
 		this.tag = tag;
 	}
 
-	public Set<Artifact1> getArtifacts() {
+	public Set<Artifact> getArtifacts() {
 		return artifacts;
 	}
 
-	public void setArtifacts(Set<Artifact1> artifacts) {
+	public void setArtifacts(Set<Artifact> artifacts) {
 		this.artifacts = artifacts;
 	}
 }

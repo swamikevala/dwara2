@@ -15,8 +15,8 @@ import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.master.TagDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.ArtifactEntityUtil;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.ActionArtifactclassFlow;
@@ -24,12 +24,11 @@ import org.ishafoundation.dwaraapi.db.model.master.jointables.ArtifactclassVolum
 import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig;
 import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig.IncludeExcludeProperties;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Actiontype;
@@ -60,6 +59,9 @@ public class JobCreator {
 
 	@Autowired
 	private JobDao jobDao;
+	
+	@Autowired
+	private ArtifactDao artifactDao;
 
 	@Autowired
 	private ActionArtifactclassFlowDao actionArtifactclassFlowDao;
@@ -69,9 +71,6 @@ public class JobCreator {
 	
 	@Autowired
 	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
-	
-	@Autowired
-	private DomainUtil domainUtil;
 	
 	@Autowired
 	private FlowelementUtil flowelementUtil;
@@ -84,9 +83,6 @@ public class JobCreator {
 	
 	@Autowired
 	private Restore restoreStorageTask;
-	
-	@Autowired
-	private ArtifactEntityUtil artifactEntityUtil;
 	
 	@Autowired
 	private TagDao tagDao;
@@ -201,7 +197,7 @@ public class JobCreator {
 		Integer dependentJobInputArtifactId = job.getOutputArtifactId() != null ? job.getOutputArtifactId() : job.getInputArtifactId();
 		Artifact dependentJobInputArtifact = null;
 		if(dependentJobInputArtifactId != null)
-			dependentJobInputArtifact = domainUtil.getDomainSpecificArtifact(dependentJobInputArtifactId);
+			dependentJobInputArtifact = artifactDao.findById(dependentJobInputArtifactId).get();
 		
 		for (Flowelement nthDependentFlowelement : dependentFlowelementList) {
 			logger.trace("Now processing - " + nthDependentFlowelement);
@@ -439,7 +435,7 @@ public class JobCreator {
 			}
 			else { // if artifact is a derived artifact - tags are only saved with the source artifacts - so get the tag collection from source artifact 
 				try {
-					tags = artifactEntityUtil.getDomainSpecificArtifactRef(artifact).getTags();
+					tags = artifactDao.findByArtifactRef(artifact).getTags();
 				} catch (Exception e) {
 					logger.error("Unable to get tags info from source artifact for " + artifact.getId() + " : " + e.getMessage());
 				}

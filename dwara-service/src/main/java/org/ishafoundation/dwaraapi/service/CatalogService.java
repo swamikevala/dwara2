@@ -97,7 +97,7 @@ public class CatalogService extends DwaraService{
     }
 
     public void updateUsedSpace() {
-        String query = "select volume_id, max(json_extract(details, '$.end_volume_block')) from dwara.artifact1_volume group by volume_id;";
+        String query = "select volume_id, max(json_extract(details, '$.end_volume_block')) from dwara.artifact_volume group by volume_id;";
         Query q = entityManager.createNativeQuery(query);
         List<Object[]> results = q.getResultList();
         results.forEach((record) -> {
@@ -200,7 +200,7 @@ public class CatalogService extends DwaraService{
         if(endDate != "")
             condition += " and a.finalized_at <= '" + endDate + "'";
         String query = "select group_concat(distinct c.artifactclass_id order by c.artifactclass_id separator ','), a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.healthstatus, a.lifecyclestage, a.finalized_at, a.used_capacity" 
-        + " from volume a join artifact1_volume b join artifact1 c"
+        + " from volume a join artifact_volume b join artifact c"
         + " where a.id = b.volume_id and b.artifact_id = c.id"
         + condition
         + " group by a.id"
@@ -270,7 +270,7 @@ public class CatalogService extends DwaraService{
         }
 
         String query = "select a.id, d.id as requestId, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, b.volume_id, d.status, d.completed_at, e.name as ingestedBy, b.name as oldName" 
-        + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
+        + " from artifact a join artifact_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.q_latest_request_id=d.id and d.requested_by_id=e.id and a.deleted=0"
         + condition
         + "order by b.volume_id asc, d.completed_at desc";
@@ -336,12 +336,12 @@ public class CatalogService extends DwaraService{
             condition += " and a.name != b.name";
         }
         String query = "select distinct a.id" 
-        + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
+        + " from artifact a join artifact_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.q_latest_request_id=d.id and d.requested_by_id=e.id and a.artifact_ref_id is null and a.deleted=" + deleted
         + condition;
 
         String query2 = "select a.id, d.id as requestId, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, d.requested_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName" 
-        + " from artifact1 a join artifact1_volume b join volume c join request d join user e"
+        + " from artifact a join artifact_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.q_latest_request_id=d.id and d.requested_by_id=e.id"
         + " and a.id in (" + query + ")"
         + " group by a.id order by requested_at desc";
@@ -357,7 +357,7 @@ public class CatalogService extends DwaraService{
 
         //Query proxy
         String query3 = "select a.artifact_ref_id, group_concat(b.volume_id order by b.volume_id separator ',') as volumeId, group_concat(f.status order by b.volume_id separator ',') as proxyStatus" 
-        + " from artifact1 a join artifact1_volume b on a.id=b.artifact_id join job f on f.input_artifact_id=a.artifact_ref_id"
+        + " from artifact a join artifact_volume b on a.id=b.artifact_id join job f on f.input_artifact_id=a.artifact_ref_id"
         + " where f.processingtask_id='video-proxy-low-gen'"
         + " and a.artifact_ref_id in (" + query + ")"
         + " group by a.artifact_ref_id";
@@ -371,7 +371,7 @@ public class CatalogService extends DwaraService{
         });
 
         //Query mamupdate status
-        String query4 = "select a.artifact_ref_id, status FROM job f join artifact1 a on f.input_artifact_id=a.id where  processingtask_id='video-mam-update' and a.artifact_ref_id in (" + query + ")";
+        String query4 = "select a.artifact_ref_id, status FROM job f join artifact a on f.input_artifact_id=a.id where  processingtask_id='video-mam-update' and a.artifact_ref_id in (" + query + ")";
         // logger.info("mam status query: " + query4);
         Query qMamUpdateStatus = entityManager.createNativeQuery(query4);
         List<Object[]> results3 = qMamUpdateStatus.getResultList();

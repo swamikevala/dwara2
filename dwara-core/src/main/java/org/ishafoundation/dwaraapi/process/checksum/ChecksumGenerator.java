@@ -3,13 +3,10 @@ package org.ishafoundation.dwaraapi.process.checksum;
 import java.util.Optional;
 
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
@@ -29,7 +26,7 @@ public class ChecksumGenerator implements IProcessingTask {
 	private TFileDao tFileDao;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private FileDao fileDao;
 	
 	@Autowired
 	private Configuration configuration;
@@ -38,8 +35,6 @@ public class ChecksumGenerator implements IProcessingTask {
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
 		
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
-		
-		Domain domain = Domain.valueOf(processContext.getJob().getInputArtifact().getArtifactclass().getDomain());
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		org.ishafoundation.dwaraapi.process.request.TFile tFile = processContext.getTFile();
 		org.ishafoundation.dwaraapi.process.request.File file = processContext.getFile();
@@ -71,12 +66,11 @@ public class ChecksumGenerator implements IProcessingTask {
 				}
 			
 				if(file != null) {
-					FileRepository<File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-					Optional<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileOptional = domainSpecificFileRepository.findById(file.getId());
+					Optional<org.ishafoundation.dwaraapi.db.model.transactional.File> fileOptional = fileDao.findById(file.getId());
 					if(fileOptional.isPresent()) { // Not all files are persisted anymore. For e.g., edited videos has only configured files...
-						org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileDBObj = fileOptional.get();
+						org.ishafoundation.dwaraapi.db.model.transactional.File fileDBObj = fileOptional.get();
 						fileDBObj.setChecksum(checksum);
-				    	domainSpecificFileRepository.save(fileDBObj);
+				    	fileDao.save(fileDBObj);
 					}
 				}
 			}

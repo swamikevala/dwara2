@@ -140,37 +140,20 @@ public class DwaraService {
 	}
 		
 	protected Request createUserRequest(Action requestedBusinessAction, Status status, Object requestPayload) {		
-		Request request = new Request();
-		request.setType(RequestType.user);
-		request.setActionId(requestedBusinessAction);
-		request.setStatus(status);
-    	User user = getUserObjFromContext();
-    	String requestedBy = user.getName();
-
-    	LocalDateTime requestedAt = LocalDateTime.now();
-		request.setRequestedAt(requestedAt);
-		request.setRequestedBy(user);
-		RequestDetails details = new RequestDetails();
-		JsonNode postBodyJson = getRequestDetails(requestPayload); 
-		details.setBody(postBodyJson);
-		request.setDetails(details);
-
-		request = requestDao.save(request);
-		logger.info(DwaraConstants.USER_REQUEST + request.getId());
-
-		return request;
+		return createUserRequest(requestedBusinessAction, status, requestPayload, null);
 	}
+	
 	//Overload for scheduler
-	protected Request createUserRequest(Action requestedBusinessAction, Object requestPayload , User user) {
-		return createUserRequest(requestedBusinessAction, Status.queued, requestPayload , user);
+	protected Request createUserRequest(Action requestedBusinessAction, Object requestPayload, User user) {
+		return createUserRequest(requestedBusinessAction, Status.queued, requestPayload, user);
 	}
-	//overloadForSCheduler
-	protected Request createUserRequest(Action requestedBusinessAction, Status status, Object requestPayload ,User sentUser) {
+	
+	protected Request createUserRequest(Action requestedBusinessAction, Status status, Object requestPayload, User sentUser) {
 		Request request = new Request();
 		request.setType(RequestType.user);
 		request.setActionId(requestedBusinessAction);
 		request.setStatus(status);
-		User user = sentUser;
+		User user = sentUser != null ? sentUser : getUserObjFromContext();
 		String requestedBy = user.getName();
 
 		LocalDateTime requestedAt = LocalDateTime.now();

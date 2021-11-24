@@ -18,30 +18,26 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileEntityUtil;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TFileVolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepository;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.FileVolumeRepository;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
@@ -74,6 +70,9 @@ public abstract class AbstractStoragetypeJobProcessor {
 	private DestinationDao destinationDao;
 	
 	@Autowired
+	private FileDao fileDao;
+	
+	@Autowired
 	private TFileDao tFileDao;
 	
 	@Autowired
@@ -83,13 +82,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 	private Map<String, IStoragelevel> storagelevelMap;
 		
 	@Autowired
-	private DomainUtil domainUtil;
+	private ArtifactVolumeDao artifactVolumeDao;
 	
 	@Autowired
-	private FileRepositoryUtil fileRepositoryUtil;
-	
-	@Autowired
-	private FileEntityUtil fileEntityUtil;
+	private FileVolumeDao fileVolumeDao;
 	
 	@Autowired
 	private VolumeUtil volumeUtil;
@@ -214,8 +210,6 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		Volume volume = storagejob.getVolume();
 		
-		Domain domain = storagejob.getDomain();
-		
 		// Get a map of Paths and their File object
 		HashMap<String, ArchivedFile> filePathNameHexToArchivedFileObj = new LinkedHashMap<String, ArchivedFile>();
 		if(volume.getStoragelevel() == Storagelevel.block) { //could use if(storageResponse != null && storageResponse.getArchiveResponse() != null) { but archive and block are NOT mutually exclusive
@@ -267,7 +261,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    	logger.info("TFileVolume records created successfully");
 	    }
 		
-		List<File> artifactFileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
+		List<File> artifactFileList = fileDao.findAllByArtifactIdAndDeletedFalse(artifact.getId());
 		HashMap<String, File> filePathNameToFileObj = new LinkedHashMap<String, File>();
 		for (File file : artifactFileList) {
 			filePathNameToFileObj.put(file.getPathname(), file);
@@ -288,7 +282,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 //				nthFile.setChecksum(Md5Util.getChecksum(file, volume.getChecksumtype()));
 //			}
 			
-			FileVolume fileVolume = domainUtil.getDomainSpecificFileVolumeInstance(nthFile.getId(), volume, domain);// lets just let users use the util consistently
+			FileVolume fileVolume = new FileVolume(nthFile.getId(), volume);// lets just let users use the util consistently
 			
 			// TODO
 			//fileVolume.setVerifiedAt(verifiedAt);
@@ -316,12 +310,11 @@ public abstract class AbstractStoragetypeJobProcessor {
 		}
 		
 	    if(toBeAddedFileVolumeTableEntries.size() > 0) {
-	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-	    	domainSpecificFileVolumeRepository.saveAll(toBeAddedFileVolumeTableEntries);
+	    	fileVolumeDao.saveAll(toBeAddedFileVolumeTableEntries);
 	    	logger.info("FileVolume records created successfully");
 	    }
 	    
-	    ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolumeInstance(artifact.getId(), volume, domain); // lets just let users use the util consistently
+	    ArtifactVolume artifactVolume = new ArtifactVolume(artifact.getId(), volume); // lets just let users use the util consistently
 	    artifactVolume.setName(artifact.getName());
 	    artifactVolume.setJob(storagejob.getJob());
 	    artifactVolume.setStatus(ArtifactVolumeStatus.current);
@@ -338,8 +331,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		    
 		    artifactVolume.setDetails(artifactVolumeDetails);
 	    }
-	    ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-	    artifactVolume = domainSpecificArtifactVolumeRepository.save(artifactVolume);
+	    artifactVolume = artifactVolumeDao.save(artifactVolume);
 	    
 		selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStartVolumeBlock());
 		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEndVolumeBlock());
@@ -355,7 +347,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		labelManager.writeArtifactLabel(selectedStorageJob);
 
-    	boolean isVolumeNeedToBeFinalized = volumeUtil.isVolumeNeedToBeFinalized(domain, volume, usedCapacity);
+    	boolean isVolumeNeedToBeFinalized = volumeUtil.isVolumeNeedToBeFinalized(volume, usedCapacity);
     	if(isVolumeNeedToBeFinalized) {
     		logger.info("Triggering a finalization request for volume - " + volume.getId());
     		
@@ -370,15 +362,14 @@ public abstract class AbstractStoragetypeJobProcessor {
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 		
 		Volume volume = storageJob.getVolume();
-		Domain domain = storageJob.getDomain();
 		List<FileVolume> toBeAddedFileVolumeTableEntries = new ArrayList<FileVolume>();
 		
-		org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileToBeRestored = selectedStorageJob.getFile();
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = selectedStorageJob.getArtifactFileList();
+		org.ishafoundation.dwaraapi.db.model.transactional.File fileToBeRestored = selectedStorageJob.getFile();
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> fileList = selectedStorageJob.getArtifactFileList();
 		for (File nthFile : fileList) {
 			String filePathname = nthFile.getPathname();
 			if(filePathname.startsWith(fileToBeRestored.getPathname())) {
-				FileVolume fileVolume = domainUtil.getDomainSpecificFileVolume(domain, nthFile.getId(), volume.getId());
+				FileVolume fileVolume = fileVolumeDao.findByIdFileIdAndIdVolumeId(nthFile.getId(), volume.getId());
 
 				//if(requestedAction == Action.restore_process && DwaraConstants.RESTORE_AND_VERIFY_FLOW_NAME.equals(request.getDetails().getFlowName())) // called during normal restore with verify option
 					//fileVolume.setVerifiedAt(LocalDateTime.now());
@@ -395,8 +386,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 			}
 		}
 	    if(toBeAddedFileVolumeTableEntries.size() > 0) {
-	    	FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-	    	domainSpecificFileVolumeRepository.saveAll(toBeAddedFileVolumeTableEntries);
+	    	fileVolumeDao.saveAll(toBeAddedFileVolumeTableEntries);
 	    	logger.info("FileVolume records updated with headerblock details successfully");
 	    }
 	}
@@ -446,11 +436,9 @@ public abstract class AbstractStoragetypeJobProcessor {
     protected void beforeRestore(SelectedStorageJob selectedStorageJob) throws Exception {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
     	//storageJob.setTargetLocationPath(storageJob.getTargetLocationPath() + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier());
-    	Domain domain = storageJob.getDomain();
     	int fileIdToBeRestored = storageJob.getFileId();
 		
-		FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(domain);
-		org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = domainSpecificFileRepository.findById(fileIdToBeRestored).get();
+		org.ishafoundation.dwaraapi.db.model.transactional.File file = fileDao.findById(fileIdToBeRestored).get();
 		selectedStorageJob.setFile(file);
 		
 		// TODO : Not sure if we need to pass the destination id or path -- Destination destination = configurationTablesUtil.getDestination(storageJob.getDestination());
@@ -460,17 +448,17 @@ public abstract class AbstractStoragetypeJobProcessor {
 			selectedStorageJob.setUseBuffering(destination.isUseBuffering());
 		}
 		
-    	Artifact artifact = fileEntityUtil.getArtifact(file, domain); 
+    	Artifact artifact = file.getArtifact(); 
     	storageJob.getJob().setInputArtifactId(artifact.getId());
 		storageJob.setArtifact(artifact);
 		
-		List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList = fileRepositoryUtil.getArtifactFileList(artifact, domain);
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> fileList = fileDao.findAllByArtifactIdAndDeletedFalse(artifact.getId());
 		selectedStorageJob.setArtifactFileList(fileList);
 		selectedStorageJob.setFilePathNameToChecksum(getSourceFilesChecksum(fileList));
 
 		Volume volume = storageJob.getVolume();
-		ArtifactVolumeRepository<ArtifactVolume> domainSpecificArtifactVolumeRepository = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
-		ArtifactVolume artifactVolume = domainUtil.getDomainSpecificArtifactVolume(domain, artifact.getId(), volume.getId());
+		
+		ArtifactVolume artifactVolume = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifact.getId(), volume.getId());
 		selectedStorageJob.setArtifactVolume(artifactVolume);
 
 		String filePathNameToBeRestored = file.getPathname();
@@ -484,10 +472,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 		selectedStorageJob.setFilePathNameToBeRestored(filePathNameToBeRestored);
     }
     
-	private HashMap<String, byte[]> getSourceFilesChecksum(List<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileList){
+	private HashMap<String, byte[]> getSourceFilesChecksum(List<org.ishafoundation.dwaraapi.db.model.transactional.File> fileList){
 		// caching the source file' checksum...
 		HashMap<String, byte[]> filePathNameToChecksumObj = new LinkedHashMap<String, byte[]>();
-		for (org.ishafoundation.dwaraapi.db.model.transactional.domain.File nthFile : fileList) {
+		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : fileList) {
 			String filePathName = nthFile.getPathname();
 			byte[] checksum = nthFile.getChecksum();
 			filePathNameToChecksumObj.put(filePathName, checksum);
@@ -523,7 +511,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		if(requestedAction == Action.restore || requestedAction == Action.restore_process || requestedAction == Action.rewrite) { // for ingest and restore_process with dependent jobs this happens in the scheduler... 
 			// upon completion moving the file to the original requested dest path		
-			org.ishafoundation.dwaraapi.db.model.transactional.domain.File file = selectedStorageJob.getFile();
+			org.ishafoundation.dwaraapi.db.model.transactional.File file = selectedStorageJob.getFile();
 			
 			// NOTE : The variable names take a swap here - Dont be confused and tempted to change it
 			String restoredFilePathName = selectedStorageJob.getFilePathNameToBeRestored(); // After restore we need to swap the names of soft renamed entries. 

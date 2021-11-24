@@ -12,7 +12,6 @@ import org.dbunit.dataset.filter.DefaultColumnFilter;
 import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
 import org.ishafoundation.dwaraapi.db.cache.manager.DBMasterTablesCacheManager;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -40,9 +39,6 @@ public class JobCreator_Ingest_Test extends JobCreator_Test{
 	@Autowired
 	private DatabaseDataSourceConnectionFactoryBean dbUnitDatabaseConnection;
 	
-	@Autowired
-	private DomainUtil domainUtil;
-
 	public JobCreator_Ingest_Test() {
 		action = Action.ingest.name();
 		requestInputFilePath = "/testcases/ingest_request.json";

@@ -1,21 +1,24 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.ishafoundation.dwaraapi.api.req.clip.ClipRequest;
 import org.ishafoundation.dwaraapi.api.resp.clip.ClipResponse;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ClipDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ClipTagDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.MamTagDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.Artifact1Dao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.File1Dao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Clip;
 import org.ishafoundation.dwaraapi.db.model.transactional.ClipTag;
+import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.MamTag;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.File1;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
 
 @Service
 public class ClipService extends DwaraService{
@@ -26,9 +29,9 @@ public class ClipService extends DwaraService{
     @Autowired
     ClipTagDao clipTagDao;
     @Autowired
-    File1Dao file1Dao;
+    FileDao file1Dao;
     @Autowired
-    Artifact1Dao artifact1Dao;
+    ArtifactDao artifact1Dao;
 
     public List<ClipResponse> searchClips(ClipRequest clipRequest){
         List<ClipResponse> clipResponseList =new ArrayList<>();
@@ -54,15 +57,15 @@ public class ClipService extends DwaraService{
                 ClipResponse clipResponse =new ClipResponse();
                 clipResponse.setClipId(clip.getId());
                 clipResponse.setClipName(clip.getName());
-                File1 file1 = file1Dao.findById(clip.getFile_id()).get();
+                File file1 = file1Dao.findById(clip.getFile_id()).get();
                 String appendUrlTOProxy = "";
-                if(file1.getArtifact1().getArtifactclass().getId().contains("-priv")){
+                if(file1.getArtifact().getArtifactclass().getId().contains("-priv")){
                     appendUrlTOProxy="http://172.18.1.24/mam/private/";
                 }
                 else
                     appendUrlTOProxy="http://172.18.1.24/mam/public/";
                 clipResponse.setProxyPath(appendUrlTOProxy+file1.getPathname());
-                clipResponse.setArtifactName(file1.getArtifact1().getName());
+                clipResponse.setArtifactName(file1.getArtifact().getName());
                 List<ClipTag> clipTagList = clipTagDao.findAllByClipId(clip.getId());
                 List<Integer> clipTagIds =new ArrayList<>();
                 for(ClipTag  clipTag : clipTagList){
@@ -79,9 +82,9 @@ public class ClipService extends DwaraService{
         return clipResponseList;
         }
         else{
-            Set<File1> file1Set =new TreeSet<>();
+            Set<File> file1Set =new TreeSet<>();
             for(String keyword : clipRequest.getKeyWords()){
-                List<File1> file1s = file1Dao.findByPathnameContains(keyword);
+                List<File> file1s = file1Dao.findByPathnameContains(keyword);
                 file1Set.addAll(file1s);
             }
             Set<Integer> fileIDs =new HashSet<>();
@@ -93,15 +96,15 @@ public class ClipService extends DwaraService{
                 ClipResponse clipResponse =new ClipResponse();
                 clipResponse.setClipId(clip.getId());
                 clipResponse.setClipName(clip.getName());
-                File1 file1 = file1Dao.findById(clip.getFile_id()).get();
+                File file1 = file1Dao.findById(clip.getFile_id()).get();
                 String appendUrlTOProxy = "";
-                if(file1.getArtifact1().getArtifactclass().getId().contains("-priv")){
+                if(file1.getArtifact().getArtifactclass().getId().contains("-priv")){
                     appendUrlTOProxy="http://172.18.1.24/mam/private/";
                 }
                 else
                     appendUrlTOProxy="http://172.18.1.24/mam/public/";
                 clipResponse.setProxyPath(appendUrlTOProxy+file1.getPathname());
-                clipResponse.setArtifactName(file1.getArtifact1().getName());
+                clipResponse.setArtifactName(file1.getArtifact().getName());
                 List<ClipTag> clipTagList = clipTagDao.findAllByClipId(clip.getId());
                 List<Integer> clipTagIds =new ArrayList<>();
                 for(ClipTag  clipTag : clipTagList){

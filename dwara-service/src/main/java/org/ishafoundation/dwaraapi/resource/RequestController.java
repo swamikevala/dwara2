@@ -268,12 +268,47 @@ public class RequestController {
 		}
     	return ResponseEntity.status(HttpStatus.OK).body(requestResponse);
     }
+	
+	@Deprecated
 	@GetMapping("/request/restoreStatus")
 	public ResponseEntity<List<RestoreResponse>> getRestoreStatus() {
 		List<RestoreResponse> restoreResponses= new ArrayList<>();
-		restoreResponses=requestService.restoreRequest();
+		
+		List<Status> statusList = new ArrayList<>();
+		statusList.add(Status.queued);
+		statusList.add(Status.in_progress);
+		statusList.add(Status.failed);
+		// statusList.add(Status.cancelled);
 
+		restoreResponses=requestService.getRestoreRequests(RequestType.user, statusList, null, null, null, null);
 
 		return ResponseEntity.status(HttpStatus.OK).body(restoreResponses);
 	}
+	
+	@GetMapping("/request/restore")
+	public ResponseEntity<List<RestoreResponse>> getRestoreRequests(@RequestParam(required=true) String status, @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date requestedTo, @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedFrom,  @RequestParam(required=false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date completedTo) {
+		List<RestoreResponse> restoreResponses= new ArrayList<>();
+		
+		
+		List<Status> statusList = new ArrayList<Status>();
+		String[] statusArrAsString = status.split(",");
+	   	
+	   	for (int i = 0; i < statusArrAsString.length; i++) {
+	   		if(statusArrAsString[i].equalsIgnoreCase("all")) // Weird UI sends the value "all" also, filter it here regardless of UI is fixed or not
+	   			continue;
+	   		Status statusEnum = Status.valueOf(statusArrAsString[i]);
+	   		statusList.add(statusEnum);
+		}
+	   	
+		try {
+			   	restoreResponses=requestService.getRestoreRequests(RequestType.user, statusList, requestedFrom, requestedTo, completedFrom, completedTo);
+		}catch (Exception e) {
+			logger.error("Unable to get restore requests : " + e.getMessage(), e);
+			// TODO: Tidy this up
+			// for now swallow it - as this keep throwing errors in UI
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(restoreResponses);
+	}
+
 }

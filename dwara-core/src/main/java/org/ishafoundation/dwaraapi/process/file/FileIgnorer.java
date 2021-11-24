@@ -8,9 +8,7 @@ import java.util.Optional;
 
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
-import org.ishafoundation.dwaraapi.db.dao.transactional.domain.FileRepository;
-import org.ishafoundation.dwaraapi.db.utils.DomainUtil;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
@@ -30,7 +28,7 @@ public class FileIgnorer implements IProcessingTask {
 	private Configuration config;
 	
 	@Autowired
-	private DomainUtil domainUtil;
+	private FileDao fileDao;
 	
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -39,13 +37,12 @@ public class FileIgnorer implements IProcessingTask {
 		String inputArtifactName = inputArtifact.getName();
 		
 		LogicalFile logicalFile = processContext.getLogicalFile();
-
-    	FileRepository<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> domainSpecificFileRepository = domainUtil.getDomainSpecificFileRepository(Domain.ONE);
-    	Optional<org.ishafoundation.dwaraapi.db.model.transactional.domain.File> fileOptional = domainSpecificFileRepository.findById(processContext.getFile().getId());
+    	
+    	Optional<org.ishafoundation.dwaraapi.db.model.transactional.File> fileOptional = fileDao.findById(processContext.getFile().getId());
     	if(fileOptional.isPresent()) {
-	    	org.ishafoundation.dwaraapi.db.model.transactional.domain.File fileFromDB = fileOptional.get();
+	    	org.ishafoundation.dwaraapi.db.model.transactional.File fileFromDB = fileOptional.get();
 	    	fileFromDB.setDeleted(true);
-	    	domainSpecificFileRepository.save(fileFromDB);
+	    	fileDao.save(fileFromDB);
     	}
     	
     	// move the File to junk

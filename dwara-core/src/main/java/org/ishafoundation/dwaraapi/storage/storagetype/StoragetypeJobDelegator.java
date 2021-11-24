@@ -10,16 +10,15 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.domain.ArtifactVolumeRepositoryUtil;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.domain.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
-import org.ishafoundation.dwaraapi.storage.storagetask.ImportStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetype.thread.AbstractStoragetypeJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.thread.IStoragetypeThreadPoolExecutor;
 import org.ishafoundation.dwaraapi.storage.utils.StorageJobUtil;
@@ -138,7 +137,7 @@ public class StoragetypeJobDelegator {
 						if(storagetaskAction == Action.write) {
 							ArtifactVolume lastArtifactOnVolume = volume_LastArtifactOnVolume_Map.get(volume);
 							if(lastArtifactOnVolume == null) {
-								lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(storageJob.getDomain(), volume);
+								lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(volume);
 								
 								if(lastArtifactOnVolume != null) {
 									volume_LastArtifactOnVolume_Map.put(volume, lastArtifactOnVolume);

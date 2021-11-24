@@ -1,9 +1,8 @@
 package org.ishafoundation.dwaraapi.storage.model;
 
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
-import org.ishafoundation.dwaraapi.enumreferences.Domain;
 import org.ishafoundation.dwaraapi.enumreferences.Priority;
 
 /**
@@ -15,9 +14,6 @@ public class StorageJob {
 
 	private Job job; 
 	private Volume volume; // Archive Operation determines choosing the volume - For Ingest a volume from pool of volumes fitting library size - Restore based on fileId and copyNumber...
-
-	private Domain domain;
-
 	private boolean encrypted;
 	
 	// Format stuff
@@ -55,14 +51,6 @@ public class StorageJob {
 
 	public void setVolume(Volume volume) {
 		this.volume = volume;
-	}
-
-	public Domain getDomain() {
-		return domain;
-	}
-
-	public void setDomain(Domain domain) {
-		this.domain = domain;
 	}
 
 	public boolean isEncrypted() {

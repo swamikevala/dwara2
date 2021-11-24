@@ -33,9 +33,6 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 	
 	@Column(name="description")
 	private String description;
-	
-	@Column(name="domain_id")
-	private org.ishafoundation.dwaraapi.enumreferences.Domain domain;
 
 	@Column(name="path_prefix")
 	private String pathPrefix;	
@@ -133,14 +130,6 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 
 	public Boolean getSource() {
 		return source;
-	}
-
-	public org.ishafoundation.dwaraapi.enumreferences.Domain getDomain() {
-		return domain;
-	}
-
-	public void setDomain(org.ishafoundation.dwaraapi.enumreferences.Domain domain) {
-		this.domain = domain;
 	}
 	
 	public String getPathPrefix() {

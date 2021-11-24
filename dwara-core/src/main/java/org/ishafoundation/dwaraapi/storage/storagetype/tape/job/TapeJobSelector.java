@@ -14,10 +14,10 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TActivedeviceDao;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TActivedevice;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.domain.Artifact;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.storage.model.GroupedJobsCollection;
@@ -108,7 +108,7 @@ public class TapeJobSelector {
 			}
 			
 			long projectedArtifactSize = volumeUtil.getProjectedArtifactSize(tapeJob.getArtifactSize(), tapeJob.getVolume());
-			if(volumeUtil.getVolumeUnusedCapacity(tapeJob.getDomain(), tapeJob.getVolume()) <= projectedArtifactSize) {
+			if(volumeUtil.getVolumeUnusedCapacity(tapeJob.getVolume()) <= projectedArtifactSize) {
 				logger.debug("Selected job " + tapeJob.getJob().getId() + " volume " + tapeJob.getVolume().getId() + " doesnt have enough capacity to hold the artifact. Removing it from the list so it can be picked up in next schedule. Now re-selecting a job again");
 				tapeJobsList.remove(tapeJob);
 				tapeJob = selectJob(tapeJobsList, driveDetails);
@@ -337,7 +337,20 @@ public class TapeJobSelector {
 		GroupedJobsCollection gjc = groupJobsBasedOnVolumeTag(tapeJobsList);
 		Set<Integer> priorityOrder = gjc.getPriorityOrder();
 		Map<String, List<StorageJob>> volumeTag_volumeTagGroupedJobs = gjc.getVolumeTag_volumeTagGroupedJobs();
+//
+//		Set<Integer> priorityOrder = new TreeSet<Integer>();
+//		
+//	    for (Priority nthPriority : Priority.values()) {
+//	    	nthPriority.getPriorityValue()
+//	    	
+//	        if (ct.javaStyleStoragesubtype.equals(javaStyleStoragesubtype)) {
+//	        	storagesubtype = ct;
+//	        	break;
+//	        }
+//	    }
 
+		
+		
 		// Now iterate through on the sorted jobs priority and get the first job matching the priority.  
 		// then use the grouped jobs on the volume of the picked job
 		// now order the jobs among the volume - so that the job in the order can be used on conditions...
@@ -465,47 +478,48 @@ public class TapeJobSelector {
 			if(storagetaskAction == Action.finalize) {
 				orderedJobsList = storagetaskAction_storagetaskActionGroupedJobs.get(action);
 			}
-			else if(storagetaskAction == Action.verify) { // VERIFY - ordered based on seqId of the artifact... takes precedence over all other jobs
-				logger.trace("Ordering the verify jobs based on artifact seqId");
-				List<StorageJob> verifyJobs = storagetaskAction_storagetaskActionGroupedJobs.get(action);
-				orderOnArtifactSeqId(verifyJobs, orderedJobsList);
-				logger.trace("Completed ordering the verify jobs based on artifact seqId");
-			}
 			else if(storagetaskAction == Action.restore) {
-				// READ/RESTORE - ordered based on seqBlocks takes precedence over write jobs
-				// V5A001 - readjobs = [Job1, Job3, Job4] becomes [Job4, Job1, Job3]
-				
-				logger.trace("Ordering the read jobs using blocknumber");
-				List<StorageJob> readJobs = storagetaskAction_storagetaskActionGroupedJobs.get(action);
-				Set<Integer> seqBlockOrderSortedSet = new TreeSet<Integer>();
-				// In a single block there could be multiple files so need the List<StorageJob>...
-				Map<Integer, List<StorageJob>> seqBlock_seqBlockGroupedJobs = new HashMap<Integer, List<StorageJob>>();
-				Map<Integer, StorageJob> seqOffSet_ArchiveJob = new HashMap<Integer, StorageJob>();
-				for (Iterator<StorageJob> iterator2 = readJobs.iterator(); iterator2.hasNext();) {
-					StorageJob tapeJob = (StorageJob) iterator2.next();
+				// TODO better this...
+				for (int i = Priority.critical.getPriorityValue(); i <= Priority.normal.getPriorityValue(); i++) {
+					// READ/RESTORE - ordered based on seqBlocks takes precedence over write jobs
+					// V5A001 - readjobs = [Job1, Job3, Job4] becomes [Job4, Job1, Job3]
 					
-					int seqBlock = tapeJob.getVolumeBlock();
-					// TODO - Assumes the seqBlock is from the start of the Tape and not the start of the archive...
-					// just ordering by block should be good enough - long seqOffset = fileArchive.getSeqOffset();
-					seqBlockOrderSortedSet.add(seqBlock);
-					if(seqBlock_seqBlockGroupedJobs.containsKey(seqBlock)) {
-						List<StorageJob> groupedOnSeqBlockJobsList = seqBlock_seqBlockGroupedJobs.get(seqBlock);
-						groupedOnSeqBlockJobsList.add(tapeJob);
-						seqBlock_seqBlockGroupedJobs.put(seqBlock, groupedOnSeqBlockJobsList);
+					logger.trace("Ordering the read jobs using blocknumber");
+					List<StorageJob> readJobs = storagetaskAction_storagetaskActionGroupedJobs.get(action);
+					Set<Integer> seqBlockOrderSortedSet = new TreeSet<Integer>();
+					// In a single block there could be multiple files so need the List<StorageJob>...
+					Map<Integer, List<StorageJob>> seqBlock_seqBlockGroupedJobs = new HashMap<Integer, List<StorageJob>>();
+					Map<Integer, StorageJob> seqOffSet_ArchiveJob = new HashMap<Integer, StorageJob>();
+					for (Iterator<StorageJob> iterator2 = readJobs.iterator(); iterator2.hasNext();) {
+						StorageJob tapeJob = (StorageJob) iterator2.next();
+						
+						if(tapeJob.getPriority() != i)
+							continue;
+						
+						int seqBlock = tapeJob.getVolumeBlock();
+						// TODO - Assumes the seqBlock is from the start of the Tape and not the start of the archive...
+						// just ordering by block should be good enough - long seqOffset = fileArchive.getSeqOffset();
+						seqBlockOrderSortedSet.add(seqBlock);
+						if(seqBlock_seqBlockGroupedJobs.containsKey(seqBlock)) {
+							List<StorageJob> groupedOnSeqBlockJobsList = seqBlock_seqBlockGroupedJobs.get(seqBlock);
+							groupedOnSeqBlockJobsList.add(tapeJob);
+							seqBlock_seqBlockGroupedJobs.put(seqBlock, groupedOnSeqBlockJobsList);
+						}
+						else {
+							List<StorageJob> groupedOnSeqBlockJobsList = new ArrayList<StorageJob>();
+							groupedOnSeqBlockJobsList.add(tapeJob);
+							seqBlock_seqBlockGroupedJobs.put(seqBlock, groupedOnSeqBlockJobsList);
+						}
 					}
-					else {
-						List<StorageJob> groupedOnSeqBlockJobsList = new ArrayList<StorageJob>();
-						groupedOnSeqBlockJobsList.add(tapeJob);
-						seqBlock_seqBlockGroupedJobs.put(seqBlock, groupedOnSeqBlockJobsList);
+					// running through each seq Block in the order and adding their respective jobs to the orderedJob collection
+					for (Iterator<Integer> iterator2 = seqBlockOrderSortedSet.iterator(); iterator2.hasNext();) {
+						Integer seqBlock = (Integer) iterator2.next();
+						List<StorageJob> seqBlockGroupedJobsList = seqBlock_seqBlockGroupedJobs.get(seqBlock);
+						orderedJobsList.addAll(seqBlockGroupedJobsList);
 					}
+					logger.trace("Completed ordering the read jobs using blocknumber");
+					
 				}
-				// running through each seq Block in the order and adding their respective jobs to the orderedJob collection
-				for (Iterator<Integer> iterator2 = seqBlockOrderSortedSet.iterator(); iterator2.hasNext();) {
-					Integer seqBlock = (Integer) iterator2.next();
-					List<StorageJob> seqBlockGroupedJobsList = seqBlock_seqBlockGroupedJobs.get(seqBlock);
-					orderedJobsList.addAll(seqBlockGroupedJobsList);
-				}
-				logger.trace("Completed ordering the read jobs using blocknumber");
 			}
 			else if(storagetaskAction == Action.write) { // WRITE/INGEST - ordered based on seqId of the artifact...
 				// V5A005 - readjobs = [Job2] and writejobs = [Job6, Job7], retains the same order
@@ -526,14 +540,11 @@ public class TapeJobSelector {
 	private String marshallKey(Action storagetaskAction){
 		String key = null;
 		switch (storagetaskAction) {
-		case verify:
-			key = "1verify";
-			break;
 		case restore:
-			key = "2restore";
+			key = "1restore";
 			break;
 		case write:
-			key = "3write";
+			key = "2write";
 			break;
 		default:
 			key = storagetaskAction.name();
@@ -544,13 +555,10 @@ public class TapeJobSelector {
 	private Action unmarshallKey(String storagetaskAction){
 		Action key = null;
 		switch (storagetaskAction) {
-		case "1verify":
-			key = Action.verify;
-			break;
-		case "2restore":
+		case "1restore":
 			key = Action.restore;
 			break;
-		case "3write":
+		case "2write":
 			key = Action.write;
 			break;
 		default:
