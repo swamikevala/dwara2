@@ -4,7 +4,6 @@ public class BruData {
     public long size;
     public String name;
     public String category;
-    public String ltoTape;
     public Long startVolumeBlock;
     public String archiveBlock;
     public String archiveId;

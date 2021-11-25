@@ -22,7 +22,14 @@ public class VolumeResponse {
 	private String sizeUnit;
 	private String location;
 	private Details details;
+	private int copyNumber;
 	
+	public int getCopyNumber() {
+		return copyNumber;
+	}
+	public void setCopyNumber(int copyNumber) {
+		this.copyNumber = copyNumber;
+	}
 	public String getId() {
 		return id;
 	}

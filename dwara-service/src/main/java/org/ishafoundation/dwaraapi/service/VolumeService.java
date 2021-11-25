@@ -87,6 +87,11 @@ public class VolumeService extends DwaraService {
 	private String filesystemTemporarylocation;
 
 	private static DecimalFormat df = new DecimalFormat("0.00");
+
+	public List<Volume> getVolumeGroupByCopyNumber(int copyId) {
+		List<Volume> list = volumeDao.findAllByCopyId(copyId);
+		return list;
+	}
 	
 	public List<VolumeResponse> getVolumeByVolumetype(String volumetype){
 		List<VolumeResponse> volumeResponseList = null;
@@ -119,6 +124,7 @@ public class VolumeService extends DwaraService {
 		
 		VolumeResponse volResp = new VolumeResponse();
 		volResp.setId(volume.getId());
+		volResp.setCopyNumber(volume.getCopy().getId());
 		volResp.setVolumetype(volume.getType().name());
 		volResp.setStoragetype(volume.getStoragetype().name());
 		volResp.setStoragelevel(volume.getStoragelevel().name());

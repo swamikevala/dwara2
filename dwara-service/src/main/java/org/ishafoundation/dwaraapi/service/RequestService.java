@@ -43,6 +43,7 @@ import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.common.ArtifactDeleter;
+import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +85,10 @@ public class RequestService extends DwaraService{
 	
 	@Autowired
 	private FileVolumeDao fileVolumeDao;
+	
+	@Autowired
+	private Restore restoreTaskAction;
+	
 
 	
     public RequestResponse getRequest(int requestId) throws Exception{
@@ -513,29 +518,48 @@ public class RequestService extends DwaraService{
 		return requestResponse;
 	}
 
-	public List<RestoreResponse> restoreRequest() {
+	public List<RestoreResponse> getRestoreRequests(RequestType requestType, List<Status> statusList, Date requestedFrom, Date requestedTo, Date completedFrom, Date completedTo){
 		List<RestoreResponse> restoreResponses = new ArrayList<>();
-		List<Status> statusList = new ArrayList<>();
-		statusList.add(Status.queued);
-		statusList.add(Status.in_progress);
-		statusList.add(Status.failed);
-		// statusList.add(Status.cancelled);
 
 		List<Action> actionList = new ArrayList<>();
 		actionList.add(Action.restore);
 		actionList.add(Action.restore_process);
-		List<Request> userRequests = requestDao.findAllByActionIdInAndStatusInAndTypeAndRequestedByIdNotNull(actionList,
-				statusList, RequestType.user);
-		System.out.println("User requests length before enthry: " + userRequests.size());
+		
+		//List<Request> userRequests = requestDao.findAllByActionIdInAndStatusInAndTypeAndRequestedByIdNotNullOrderByRequestedAtDesc(actionList, statusList, requestType);
+		
+		LocalDateTime requestedAtStart = requestedFrom != null ? requestedFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+		LocalDateTime requestedAtEnd = requestedTo != null ? requestedTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+		// requested to hardcode...
+		if(requestedAtEnd != null) {
+			requestedAtEnd = requestedAtEnd.plusHours(23);
+			requestedAtEnd = requestedAtEnd.plusMinutes(59);
+			requestedAtEnd = requestedAtEnd.plusSeconds(59);
+		}
+		
+		LocalDateTime completedAtStart = completedFrom != null ? completedFrom.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+		LocalDateTime completedAtEnd = completedTo != null ? completedTo.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+		// requested to hardcode...
+		if(completedAtEnd != null) {
+			completedAtEnd = completedAtEnd.plusHours(23);
+			completedAtEnd = completedAtEnd.plusMinutes(59);
+			completedAtEnd = completedAtEnd.plusSeconds(59);
+		}
+		
+		int pageNumber = 0;
+		int pageSize = 0;
+		List<Request> userRequests = requestDao.findAllDynamicallyBasedOnParamsOrderByLatest(requestType, actionList, statusList, null, requestedAtStart, requestedAtEnd, completedAtStart, completedAtEnd, null, null, pageNumber, pageSize);
+
+		
+		logger.trace("User requests length before enthry: " + userRequests.size());
 		for (Request request : userRequests) {
 			List<Tape> tapes = new ArrayList<>();
 			long userRequestEta = 0;
 			boolean allTapesLoaded = true;
-			System.out.println("User requests length: " + userRequests.size());
+			logger.trace("User requests length: " + userRequests.size());
 			RestoreResponse restoreResponse = new RestoreResponse();
 			restoreResponse.setName(request.getDetails().getBody().get("outputFolder").textValue());
 			restoreResponse.setUserRequestId(request.getId());
-			System.out.println(request.getDetails().getBody().get("destinationPath"));
+			logger.trace(request.getDetails().getBody().get("destinationPath").textValue());
 			restoreResponse.setDestinationPath(request.getDetails().getBody().get("destinationPath").textValue());
 			restoreResponse.setRequestedAt(request.getRequestedAt());
 			restoreResponse.setRequestedBy(request.getRequestedBy().getName());
@@ -576,14 +600,11 @@ public class RequestService extends DwaraService{
 
 						if (job.getStatus().equals(Status.in_progress)) {
 							startTime = job.getStartedAt().toEpochSecond(ZoneOffset.of("+05:30"));
-							restoreETA = fileETARestoreCalculator(restoreResponse.getName(),
-									restoreResponse.getDestinationPath(), file, startTime, "restore");
+							restoreETA = fileETARestoreCalculator(restoreTaskAction.getRestoreLocation(job), file, startTime, "restore");
 							userRequestEta += restoreETA;
-							restoredSize += getTargetSize(restoreResponse.getName(),
-									restoreResponse.getDestinationPath(), file);
+							restoredSize += getTargetSize(restoreTaskAction.getRestoreLocation(job), file);
 						} else if (job.getStatus().equals(Status.queued)) {
-							long expectedRestoreETA = fileETARestoreCalculator(restoreResponse.getName(),
-									restoreResponse.getDestinationPath(), file, startTime, "restore");
+							long expectedRestoreETA = fileETARestoreCalculator(restoreTaskAction.getRestoreLocation(job), file, startTime, "restore");
 							userRequestEta += expectedRestoreETA;
 						} else if (!job.getStatus().equals(Status.completed)) {
 
@@ -612,8 +633,7 @@ public class RequestService extends DwaraService{
 						// If its completed. Do nothing.
 						if (job.getStatus().equals(Status.in_progress)) {
 							// Get the .mov path from the target folder
-							postProcessETA = fileETARestoreCalculator(restoreResponse.getName(),
-									restoreResponse.getDestinationPath(), file, startTime,
+							postProcessETA = fileETARestoreCalculator(restoreTaskAction.getRestoreLocation(job), file, startTime,
 									"video-digi-2020-mkv-mov-gen");
 							userRequestEta += postProcessETA;
 						} else if (job.getStatus().equals(Status.queued)) {
@@ -669,58 +689,62 @@ public class RequestService extends DwaraService{
 
 	}
 
-	private long fileETARestoreCalculator(String outputFolder, String destinationPath, RestoreFile file, long startTime,
+	private long fileETARestoreCalculator(String targetLocation, RestoreFile file, long startTime,
 			String taskType) {
-
-		String path = destinationPath + "/" + outputFolder + "/" + ".restoring/" + file.getName();
+		long eta = 0;
+		String path = targetLocation + java.io.File.separator + file.getName();
 		java.io.File targetFile = new java.io.File(path);
-		long movConversionRate = 79; // For MOV
-		long restorationRate = 10; // FOR RESTORATION
-		// EG:V27033_Ashram-Ambience-Shots_Dhyanalinga-IYC_28-Aug-2020_Drone/DCIM/100MEDIA/DJI_0018.MOV
-		if (taskType == "video-digi-2020-mkv-mov-gen") {
-			boolean foundMovFile = false;
-			// Loop through the folder
-			// destinationPath+"/"+outputFolder+"/"+".restoring/"+file.getName().parentfolder
-			// VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/I030.mkv
-			// BHi hei parey
-			// VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/ Hei
-			// parey
-			// VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/I030.mov
-			// Darkaar
-			if (!targetFile.isDirectory()) {
-				targetFile = new java.io.File(targetFile.getParent());
-			}
-			// Find the mov in the directory and seet it as a path
-			List<java.io.File> searchTheseFiles = Arrays.asList(targetFile.listFiles());
-			for (java.io.File goteyFile : searchTheseFiles) {
-				if (goteyFile.getPath().endsWith(".mov")) {
-					// Set this as the file path
-					targetFile = goteyFile;
-					foundMovFile = true;
+		try {
+			long movConversionRate = 79; // For MOV
+			long restorationRate = 10; // FOR RESTORATION
+			// EG:V27033_Ashram-Ambience-Shots_Dhyanalinga-IYC_28-Aug-2020_Drone/DCIM/100MEDIA/DJI_0018.MOV
+			if (taskType == "video-digi-2020-mkv-mov-gen") {
+				boolean foundMovFile = false;
+				// Loop through the folder
+				// destinationPath+"/"+outputFolder+"/"+".restoring/"+file.getName().parentfolder
+				// VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/I030.mkv
+				// BHi hei parey
+				// VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/ Hei
+				// parey
+				// VD2_I30_Isha-Fest_IYC_21-Sep-2003_Tamil_51mins-17secs_SDI-Digitized_Cam1/I030.mov
+				// Darkaar
+				if (!targetFile.isDirectory()) {
+					targetFile = new java.io.File(targetFile.getParent());
 				}
-
+				// Find the mov in the directory and seet it as a path
+				List<java.io.File> searchTheseFiles = Arrays.asList(targetFile.listFiles());
+				for (java.io.File goteyFile : searchTheseFiles) {
+					if (goteyFile.getPath().endsWith(".mov")) {
+						// Set this as the file path
+						targetFile = goteyFile;
+						foundMovFile = true;
+					}
+	
+				}
+	
+				if (!foundMovFile) {
+					return ((file.getSize() / 1073741824) * movConversionRate);
+				}
+			} // Mov gen completes here
+			else if (taskType == "restore") {
+				if (!targetFile.exists()) {
+					return ((file.getSize() / 1073741824) * restorationRate);
+				}
 			}
-
-			if (!foundMovFile) {
-				return ((file.getSize() / 1073741824) * movConversionRate);
-			}
-		} // Mov gen completes here
-		else if (taskType == "restore") {
-			if (!targetFile.exists()) {
-				return ((file.getSize() / 1073741824) * restorationRate);
-			}
+	
+			long targetSize = 0;
+			targetSize = FileUtils.sizeOf(targetFile);
+			long fileSize = file.getSize();
+			logger.trace(String.valueOf(targetSize));
+			logger.trace(String.valueOf(startTime));
+			logger.trace(String.valueOf(fileSize));
+			long remainingSize = (fileSize - targetSize) / (targetSize);
+			logger.trace(String.valueOf(remainingSize));
+			logger.trace(String.valueOf(System.currentTimeMillis() / 1000));
+			eta = ((System.currentTimeMillis() / 1000) - startTime) * remainingSize;
+		}catch (Exception e) {
+			logger.warn("Unable to calc eta for " + path);
 		}
-
-		long targetSize = 0;
-		targetSize = FileUtils.sizeOf(targetFile);
-		long fileSize = file.getSize();
-		logger.info(String.valueOf(targetSize));
-		logger.info(String.valueOf(startTime));
-		logger.info(String.valueOf(fileSize));
-		long remainingSize = (fileSize - targetSize) / (targetSize);
-		logger.info(String.valueOf(remainingSize));
-		logger.info(String.valueOf(System.currentTimeMillis() / 1000));
-		long eta = ((System.currentTimeMillis() / 1000) - startTime) * remainingSize;
 		return eta;
 	}
 
@@ -745,12 +769,17 @@ public class RequestService extends DwaraService{
     	return fileVolume;
 	}
 
-	private long getTargetSize(String outputFolder, String destinationPath, RestoreFile file) {
-		String path = destinationPath + "/" + outputFolder + "/" + ".restoring/" + file.getName();
-		java.io.File targetFile = new java.io.File(path);
-		if (!targetFile.exists()) {
-			return FileUtils.sizeOf(targetFile);
+	private long getTargetSize(String targetLocation, RestoreFile file) {
+		long targetSize = 0;
+		String path = targetLocation + java.io.File.separator + file.getName();
+		try {
+			java.io.File targetFile = new java.io.File(path);
+			if (targetFile.exists()) {
+				targetSize = FileUtils.sizeOf(targetFile);
+			}
+		}catch (Exception e) {
+			logger.warn("Unable to calc targetSize for " + path);
 		}
-		return 0;
+		return targetSize;
 	}
 }
