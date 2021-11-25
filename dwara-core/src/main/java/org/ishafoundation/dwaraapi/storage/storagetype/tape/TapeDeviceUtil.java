@@ -191,7 +191,7 @@ public class TapeDeviceUtil {
 				
 				DataTransferElement dataTransferElement = driveAutoloaderAddress_DataTransferElement_Map.get(driveAutoloaderAddress);
 				if(!dataTransferElement.isEmpty()) {
-					logger.debug("Available drive has a tape loaded already. so unloading it");
+					logger.info("Available drive has a tape loaded already. so unloading it");
 					int toBeUsedDataTransferElementSNo = dataTransferElement.getsNo();
 				
 					try {
@@ -210,7 +210,7 @@ public class TapeDeviceUtil {
 				driveDetails.setDte(dte);
 			}else {
 				try {
-					logger.debug("Drive busy. Will wait " + waitInterval);
+					logger.info(tapedriveDeviceId + " Drive busy. Will wait " + waitInterval);
 					Thread.sleep(waitInterval);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
