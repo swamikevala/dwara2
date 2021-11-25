@@ -210,6 +210,7 @@ public class TapeJobSelector {
 					//chosenTapeJob.setDriveAlreadyLoadedWithTape(true);
 					logger.debug("Removing the same tape jobs from the list");
 					tapeJobsList.removeAll(groupedAndOrderedJobsOnVolumeTagList); // removing all same tape specific jobs...
+					tapeJobsList.addAll(tapeJobsListNotSupportedForThisDrive); // add back all not supported jobs we excluded not supported by this drive so next drive picks it up
 					return chosenTapeJob;
 				}
 				// else continue checking with the next job...
@@ -232,7 +233,7 @@ public class TapeJobSelector {
 			tapeJobsList = groupedAndOrderedJobsList; // removing all same tape specific jobs...
 
 		}
-
+		tapeJobsList.addAll(tapeJobsListNotSupportedForThisDrive); // add back all not supported jobs we excluded not supported by this drive so next drive picks it up
 		return chosenTapeJob;
 	}
 
