@@ -16,4 +16,6 @@ public interface VolumeDao extends CrudRepository<Volume,String> {
 	List<Volume> findAllByType(Volumetype volumetype);
 	
 	List<Volume> findAllByStoragetypeAndType(Storagetype storagetype, Volumetype volumetype);
+
+	List<Volume> findAllByCopyId(int copyId);
 }

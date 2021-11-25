@@ -14,9 +14,9 @@ public class Lto4 extends AbstractStoragesubtype{
     	capacity = 800000000000L;
     	generation = 4;
     	suffixToEndWith = "L4";
-    	int[] writeSupportedGenerations = {4,5};
+    	int[] writeSupportedGenerations = {3,4};
     	this.writeSupportedGenerations = writeSupportedGenerations;
-    	int[] readSupportedGenerations = {4,5,6};
+    	int[] readSupportedGenerations = {2,3,4};
     	this.readSupportedGenerations = readSupportedGenerations;
 	}
 }

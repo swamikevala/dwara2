@@ -7,10 +7,10 @@ SET foreign_key_checks = 0;
 /*
 Ran on 22nd Nov - 14 hrs
 
-UPDATE `device` SET `defective`=1, `status`='replaced', `retired_date`='2021-11-22 12:00:00.000000' WHERE `id`='lto7-1';
-UPDATE `device` SET `defective`=1, `status`='replaced', `retired_date`='2021-11-22 12:00:00.000000' WHERE `id`='lto7-4';
-INSERT INTO `device` (`id`, `defective`, `details`, `manufacturer`, `model`, `serial_number`, `status`, `type`, `warranty_expiry_date`, `wwn_id`, `employed_date`) VALUES ('lto7-8', 0, '{\"type\": \"LTO-7\", \"standalone\": false, \"autoloader_id\": \"xl80\", \"autoloader_address\": 1}', 'IBM', 'Ultrium HH7', '91WT802864', 'online', 'tape_drive', '2022-04-15 00:00:00.000000', null, '2021-11-22 13:00:00.000000');
-INSERT INTO `device` (`id`, `defective`, `details`, `manufacturer`, `model`, `serial_number`, `status`, `type`, `warranty_expiry_date`, `wwn_id`, `employed_date`) VALUES ('lto7-9', 0, '{\"type\": \"LTO-7\", \"standalone\": false, \"autoloader_id\": \"xl80\", \"autoloader_address\": 3}', 'IBM', 'Ultrium HH7', '90WT805086', 'online', 'tape_drive', '2023-07-12 00:00:00.000000', null, '2021-11-22 13:00:00.000000');
+UPDATE `device` SET `defective`=1, `status`='replaced', `retired_date`='2021-11-22 12:00:00.000000', `wwn_id`=null WHERE `id`='lto7-1';
+UPDATE `device` SET `defective`=1, `status`='replaced', `retired_date`='2021-11-22 12:00:00.000000', `wwn_id`=null WHERE `id`='lto7-4';
+INSERT INTO `device` (`id`, `defective`, `details`, `manufacturer`, `model`, `serial_number`, `status`, `type`, `warranty_expiry_date`, `wwn_id`, `employed_date`) VALUES ('lto7-8', 0, '{\"type\": \"LTO-7\", \"standalone\": false, \"autoloader_id\": \"xl80\", \"autoloader_address\": 1}', 'IBM', 'Ultrium HH7', '91WT802864', 'online', 'tape_drive', '2022-04-15 00:00:00.000000', '/dev/tape/by-id/scsi-35000e111c5aa70bf-nst', '2021-11-22 13:00:00.000000');
+INSERT INTO `device` (`id`, `defective`, `details`, `manufacturer`, `model`, `serial_number`, `status`, `type`, `warranty_expiry_date`, `wwn_id`, `employed_date`) VALUES ('lto7-9', 0, '{\"type\": \"LTO-7\", \"standalone\": false, \"autoloader_id\": \"xl80\", \"autoloader_address\": 3}', 'IBM', 'Ultrium HH7', '90WT805086', 'online', 'tape_drive', '2023-07-12 00:00:00.000000', '/dev/tape/by-id/scsi-35000e111c5aa70d3-nst', '2021-11-22 13:00:00.000000');
 
 
 UPDATE `device` SET `serial_number`='10WT083802' WHERE `id`='lto6-1';
