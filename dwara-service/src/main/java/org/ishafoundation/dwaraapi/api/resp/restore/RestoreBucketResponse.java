@@ -14,7 +14,7 @@ import java.util.List;
 public class RestoreBucketResponse  {
 
     String creatorName;
-
+   String  id ;
     String externalRefID;
     String type;
     String approvalStatus;
@@ -124,6 +124,7 @@ RestoreBucketResponse(){
     }
 
     public RestoreBucketResponse(TRestoreBucket tRestoreBucket){
+    this.id=tRestoreBucket.getId();
     this.approvalDate=tRestoreBucket.getApprovalDate();
     this.createdBy=tRestoreBucket.getCreatedBy();
     this.approvalStatus=tRestoreBucket.getApprovalStatus();
