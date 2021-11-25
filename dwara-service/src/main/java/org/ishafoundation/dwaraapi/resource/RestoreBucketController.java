@@ -1,7 +1,9 @@
 package org.ishafoundation.dwaraapi.resource;
 
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
+import org.ishafoundation.dwaraapi.api.resp.restore.RestoreBucketResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
+import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TRestoreBucketDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.RestoreBucketFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
@@ -30,12 +32,23 @@ public class RestoreBucketController {
     TRestoreBucketDao tRestoreBucketDao;
     @Autowired
     FileService fileService;
+    @Autowired
+    UserDao userDao;
 
 
 
     @GetMapping("/buckets")
-    public ResponseEntity<List<TRestoreBucket>> getAllBuckets(){
-        return ResponseEntity.status(HttpStatus.OK).body((List<TRestoreBucket>) tRestoreBucketDao.findAll());
+    public ResponseEntity<List<RestoreBucketResponse>> getAllBuckets(){
+        List<TRestoreBucket> tRestoreBucketsFromDb = (List<TRestoreBucket>)tRestoreBucketDao.findAll();
+        List<RestoreBucketResponse> restoreBucketResponses =new ArrayList<>();
+        for (TRestoreBucket tRestoreBucket:tRestoreBucketsFromDb) {
+            RestoreBucketResponse restoreBucketResponse = new RestoreBucketResponse(tRestoreBucket);
+            if(restoreBucketResponse.getCreatedBy()!=null)
+                restoreBucketResponse.setCreatorName(userDao.findById(restoreBucketResponse.getCreatedBy()).get().getName());
+            restoreBucketResponses.add(restoreBucketResponse);
+
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(restoreBucketResponses);
     }
 
     @PostMapping("/buckets")
@@ -91,9 +104,17 @@ public class RestoreBucketController {
 
 
     @GetMapping("/buckets/open")
-    public ResponseEntity<List<TRestoreBucket>> getOpenBuckets(){
+    public ResponseEntity<List<RestoreBucketResponse>> getOpenBuckets(){
         List<TRestoreBucket> tRestoreBuckets = restoreBucketService.getAprrovedNull();
-        return ResponseEntity.status(HttpStatus.OK).body(tRestoreBuckets);
+        List<RestoreBucketResponse> restoreBucketResponses =new ArrayList<>();
+        for (TRestoreBucket tRestoreBucket:tRestoreBuckets) {
+            RestoreBucketResponse restoreBucketResponse = new RestoreBucketResponse(tRestoreBucket);
+            if(restoreBucketResponse.getCreatedBy()!=null)
+                restoreBucketResponse.setCreatorName(userDao.findById(restoreBucketResponse.getCreatedBy()).get().getName());
+            restoreBucketResponses.add(restoreBucketResponse);
+
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(restoreBucketResponses);
     }
     @PutMapping("/bucket/approval")
     public ResponseEntity<TRestoreBucket> getApproval(@RequestBody TRestoreBucket tRestoreBucket){
