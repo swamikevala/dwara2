@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.Column;
 import javax.persistence.Lob;
+import java.util.Date;
 import java.util.List;
 
 public class RestoreBucketResponse  {
@@ -25,6 +26,7 @@ public class RestoreBucketResponse  {
     String priority;
     String approvalDate;
     List<RestoreBucketFile> details ;
+    Date createdAt;
 
 RestoreBucketResponse(){
 
@@ -133,6 +135,7 @@ RestoreBucketResponse(){
     this.priority=tRestoreBucket.getPriority();
     this.requestedBy =tRestoreBucket.getRequestedBy();
     this.type =tRestoreBucket.getType();
+    this.createdAt=tRestoreBucket.getCreatedAt();
     //
 }
 
