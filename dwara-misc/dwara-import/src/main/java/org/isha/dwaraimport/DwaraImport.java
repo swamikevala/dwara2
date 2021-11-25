@@ -49,7 +49,6 @@ public class DwaraImport {
 	private List<BruData> fileList = new ArrayList<>();
 	String finalizedAt = null;
 	String ltoTape;
-	java.io.File failedTextFile;
 
 	static Map getJSONFromFile(String folderPath) throws IOException, ParseException {
 
@@ -72,7 +71,6 @@ public class DwaraImport {
 			if (!textFile.isDirectory()) {
 				System.out.println("Parsing catalog " + textFile.getName());
 				try {
-					failedTextFile = textFile;
 					ltoTape = textFile.getName().split("_")[0];
 					String dateStr = textFile.getName().split("_")[1].split("\\.")[0];
 					finalizedAt = dateStr + ", 00:00:00.000";
@@ -126,13 +124,15 @@ public class DwaraImport {
 						}
 					}
 					LineIterator.closeQuietly(it);
+					artifactsList = listBruData.stream().filter(b -> b.isArtifact).collect(Collectors.toList());
 					//calculateArtifactSize();
 					calculateEndBlock();
 
 					createVolumeindex(finalizedAt, destinationXmlPath);
-
+					FileUtils.moveFile(textFile, Paths.get(bruFile,"completed",textFile.getName()).toFile());
 				} catch (Exception e) {
-					e.getStackTrace();
+					FileUtils.moveFile(textFile, Paths.get(bruFile,"failed",textFile.getName()).toFile());
+					e.printStackTrace();
 
 				}
 
@@ -142,7 +142,6 @@ public class DwaraImport {
 
 
 	private void calculateArtifactSize() {
-		artifactsList = listBruData.stream().filter(b -> b.isArtifact).collect(Collectors.toList());
 		for (int i=0; i< artifactsList.size(); i++) {
 			long totalSize = 0;
 			for (BruData bruData : listBruData) {
@@ -201,7 +200,8 @@ public class DwaraImport {
 	};
 
 
-	public String createVolumeindex(String finalizedDate, String destinationFile) {
+	public String createVolumeindex(String finalizedDate, String destinationFile) throws Exception {
+		boolean hasErrors = false;
 		System.out.println("Framing objects");
 		Volumeinfo volumeinfo = new Volumeinfo();
 		volumeinfo.setVolumeuid(StringUtils.isEmpty(ltoTape) ? "No_LTO" : ltoTape);
@@ -220,12 +220,21 @@ public class DwaraImport {
 				artifact.setName(artifactList.name);
 				artifact.setStartblock(String.valueOf(artifactList.startVolumeBlock));
 				artifact.setEndblock(String.valueOf(artifactList.endVolumeBlock));
+				if(StringUtils.isBlank(artifactList.category)) { // check if its to be ignored...
+					if(ltoTape.equals("P16539L6") && artifactList.name.equals("repair-utils")) { // TODO Move this out to a file...
+						System.out.println("Skipped " + artifactList.name + " its flagged to be ignored");
+						continue;
+					}
+					else
+						throw new Exception("Unable to get artifactclass for " + ltoTape + ":" + artifactList.name);
+				}	
 				artifact.setArtifactclassuid(artifactList.category);
 
 				List<File> fileList = new ArrayList<>();
 				for (BruData bruData : listBruData) {
 					File file = new File();
 					file.setName(bruData.name);
+					file.setSize(String.valueOf(bruData.size));
 					if (bruData.name.equals(artifactList.name)) {
 						file.setVolumeStartBlock(String.valueOf(artifactList.startVolumeBlock));
 						file.setVolumeEndBlock(String.valueOf(artifactList.endVolumeBlock));
@@ -274,11 +283,15 @@ public class DwaraImport {
 				artifactXMLList.add(artifact);
 			}catch (Exception e) {
 				System.err.println(artifactList.name + " has errors " + e.getMessage());
+				hasErrors=true;
 				e.printStackTrace();
 			}
 			System.out.println("Framed object for " + artifactList.name);
 		}
-
+		
+		if(hasErrors)
+			throw new Exception(ltoTape + " has errors ");
+			
 		System.out.println("Generating xml");
 		Volumeindex volumeindex = new Volumeindex();
 		volumeindex.setVolumeinfo(volumeinfo);
