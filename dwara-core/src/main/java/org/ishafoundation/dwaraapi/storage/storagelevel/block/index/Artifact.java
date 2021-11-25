@@ -21,6 +21,8 @@ public class Artifact {
 	private String sequencecode;
 	@JacksonXmlProperty(isAttribute = true, localName="rename")
 	private String rename;
+	@JacksonXmlProperty(isAttribute = true, localName="totalSize")
+	private Long totalSize;
 	@JacksonXmlProperty(localName="File")
 	@JacksonXmlElementWrapper(useWrapping = false)
 	private List<File> file;
@@ -74,6 +76,14 @@ public class Artifact {
 		this.rename = rename;
 	}
 	
+	public Long getTotalSize() {
+		return totalSize;
+	}
+
+	public void setTotalSize(Long totalSize) {
+		this.totalSize = totalSize;
+	}
+
 	public List<File> getFile() {
 		return file;
 	}

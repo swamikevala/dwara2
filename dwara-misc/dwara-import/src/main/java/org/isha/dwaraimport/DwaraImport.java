@@ -126,7 +126,7 @@ public class DwaraImport {
 						}
 					}
 					LineIterator.closeQuietly(it);
-					calculateArtifactSize();
+					//calculateArtifactSize();
 					calculateEndBlock();
 
 					createVolumeindex(finalizedAt, destinationXmlPath);
@@ -225,35 +225,20 @@ public class DwaraImport {
 				List<File> fileList = new ArrayList<>();
 				for (BruData bruData : listBruData) {
 					File file = new File();
+					file.setName(bruData.name);
 					if (bruData.name.equals(artifactList.name)) {
-						file.setName(bruData.name);
-						file.setSize(String.valueOf(artifactList.totalSize));
 						file.setVolumeStartBlock(String.valueOf(artifactList.startVolumeBlock));
 						file.setVolumeEndBlock(String.valueOf(artifactList.endVolumeBlock));
 						file.setArchiveblock(String.valueOf(bruData.archiveBlock));
 						file.setDirectory(String.valueOf(artifactList.isDirectory));
-						fileList.add(file);
-
-					} else {
-						if(bruData.isDirectory && bruData.name.startsWith(artifactList.name + "/")) {
-							file.setName(bruData.name);
-							file.setSize(String.valueOf(bruData.size));
-							file.setVolumeStartBlock(String.valueOf(bruData.startVolumeBlock));
-							file.setVolumeEndBlock(String.valueOf(bruData.endVolumeBlock));
-							file.setArchiveblock(String.valueOf(bruData.archiveBlock));
+					} else if(bruData.name.startsWith(artifactList.name + "/")){
+						file.setVolumeStartBlock(String.valueOf(bruData.startVolumeBlock));
+						file.setVolumeEndBlock(String.valueOf(bruData.endVolumeBlock));
+						file.setArchiveblock(String.valueOf(bruData.archiveBlock));
+						if(bruData.isDirectory)
 							file.setDirectory(String.valueOf(bruData.isDirectory));
-							fileList.add(file);
-
-						} else if(bruData.name.startsWith(artifactList.name + "/") ){
-							file.setName(bruData.name);
-							file.setSize(String.valueOf(bruData.size));
-							file.setVolumeStartBlock(String.valueOf(bruData.startVolumeBlock));
-							file.setVolumeEndBlock(String.valueOf(bruData.endVolumeBlock));
-							file.setArchiveblock(String.valueOf(bruData.archiveBlock));
-							fileList.add(file);
-
-						}
 					}
+					fileList.add(file);
 				}
 				// now lets calculate and collect subfolders size
 				Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
@@ -277,7 +262,12 @@ public class DwaraImport {
 				// now lets make use of the collected subfolder size 
 				for (File nthFile : fileList) {
 					if(Boolean.parseBoolean(nthFile.getDirectory())){
-						nthFile.setSize(filePathnameVsSize_Map.get(nthFile.getName())+"");
+						String nthDirectorySize= filePathnameVsSize_Map.get(nthFile.getName())+"";
+						nthFile.setSize(nthDirectorySize);
+						/*
+						if(nthFile.getName().equals(artifactList.name))
+							artifact.setTotalSize(nthDirectorySize);
+						*/
 					}
 				}		
 				artifact.setFile(fileList);
