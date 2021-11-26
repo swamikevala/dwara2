@@ -17,10 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.time.ZoneOffset;
+import java.util.*;
 
 @CrossOrigin
 @RestController
@@ -43,11 +41,14 @@ public class RestoreBucketController {
         List<RestoreBucketResponse> restoreBucketResponses =new ArrayList<>();
         for (TRestoreBucket tRestoreBucket:tRestoreBucketsFromDb) {
             RestoreBucketResponse restoreBucketResponse = new RestoreBucketResponse(tRestoreBucket);
+            restoreBucketResponse.setRequestedBeforeTimeNumber( System.currentTimeMillis()-restoreBucketResponse.getCreatedAt().toEpochSecond(ZoneOffset.of("+05:30")));
+            restoreBucketResponse.setRequestedBeforeTime(restoreBucketService.getElapsedTime(restoreBucketResponse.getCreatedAt()));
             if(restoreBucketResponse.getCreatedBy()!=null)
                 restoreBucketResponse.setCreatorName(userDao.findById(restoreBucketResponse.getCreatedBy()).get().getName());
             restoreBucketResponses.add(restoreBucketResponse);
 
         }
+        Collections.sort(restoreBucketResponses);
         return ResponseEntity.status(HttpStatus.OK).body(restoreBucketResponses);
     }
 
@@ -109,11 +110,14 @@ public class RestoreBucketController {
         List<RestoreBucketResponse> restoreBucketResponses =new ArrayList<>();
         for (TRestoreBucket tRestoreBucket:tRestoreBuckets) {
             RestoreBucketResponse restoreBucketResponse = new RestoreBucketResponse(tRestoreBucket);
+            restoreBucketResponse.setRequestedBeforeTimeNumber( System.currentTimeMillis()/1000-restoreBucketResponse.getCreatedAt().toEpochSecond(ZoneOffset.of("+05:30")));
+            restoreBucketResponse.setRequestedBeforeTime(restoreBucketService.getElapsedTime(restoreBucketResponse.getCreatedAt()));
             if(restoreBucketResponse.getCreatedBy()!=null)
                 restoreBucketResponse.setCreatorName(userDao.findById(restoreBucketResponse.getCreatedBy()).get().getName());
             restoreBucketResponses.add(restoreBucketResponse);
 
         }
+        Collections.sort(restoreBucketResponses);
         return ResponseEntity.status(HttpStatus.OK).body(restoreBucketResponses);
     }
     @PutMapping("/bucket/approval")

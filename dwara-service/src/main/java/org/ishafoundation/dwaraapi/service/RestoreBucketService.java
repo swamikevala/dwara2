@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,7 +36,7 @@ public class RestoreBucketService extends DwaraService {
 
 	public TRestoreBucket createBucket(String id) {
 		int createdBy = getUserObjFromContext().getId();
-		TRestoreBucket tRestoreBucket = new TRestoreBucket(id, createdBy, new Date());
+		TRestoreBucket tRestoreBucket = new TRestoreBucket(id, createdBy, LocalDateTime.now());
 
 		tRestoreBucketDao.save(tRestoreBucket);
 		return tRestoreBucket;
@@ -196,6 +198,15 @@ public class RestoreBucketService extends DwaraService {
         emailerService.setSubject("Need Approval for project: _"+tRestoreBucket.getId()+"_. Priority: "+ tRestoreBucket.getPriority());
         emailerService.setRequesterEmail(requesterName);
 		emailerService.sendEmail(emailBody);
+	}
+
+	public String getElapsedTime(LocalDateTime createdTime){
+
+		long requestedAgo = System.currentTimeMillis()/1000-createdTime.toEpochSecond(ZoneOffset.of("+05:30"));
+		long hours = requestedAgo/3600;
+		long minutes = (requestedAgo-hours*3600)/60;
+		String timeElapsed = hours+" Hours "+minutes + " Minutes ";
+		return timeElapsed;
 	}
 
 }
