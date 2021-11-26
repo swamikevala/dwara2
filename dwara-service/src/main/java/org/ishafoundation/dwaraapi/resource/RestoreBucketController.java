@@ -35,7 +35,7 @@ public class RestoreBucketController {
 
     @GetMapping("/buckets")
     public ResponseEntity<List<TRestoreBucket>> getAllBuckets(){
-        return ResponseEntity.status(HttpStatus.OK).body((List<TRestoreBucket>) tRestoreBucketDao.findAll());
+        return ResponseEntity.status(HttpStatus.OK).body((List<TRestoreBucket>) tRestoreBucketDao.findAllOrderByCreatedAtDesc());
     }
 
     @PostMapping("/buckets")
