@@ -76,16 +76,12 @@ public class StagedFileEvaluator {
 	private Set<String> supportedExtns = null;
 	
 	@PostConstruct
-	public void getExcludedFileNamesRegexList() {
+	public void setItUp() {
 		String regexAllowedChrsInFileName = config.getRegexAllowedChrsInFileName();
 		//allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName, Pattern.UNICODE_CHARACTER_CLASS); // Reverted this change per latest comment on DU-194
 		allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
 		photoSeriesArtifactclassArifactNamePattern = Pattern.compile("([0-9]{8})_[A-Z]{3}_" + regexAllowedChrsInFileName); // 20200101_CMM_Adiyogi-Ratham-Guru-Pooja-SK-IYC
-		String[] junkFilesFinderRegexPatternList = config.getJunkFilesFinderRegexPatternList();
-		for (int i = 0; i < junkFilesFinderRegexPatternList.length; i++) {
-			Pattern nthJunkFilesFinderRegexPattern = Pattern.compile(junkFilesFinderRegexPatternList[i]);
-			excludedFileNamesRegexList.add(nthJunkFilesFinderRegexPattern);
-		}
+		getExcludedFileNamesRegexList();
 		Iterable<Extension> extensionList = extensionDao.findAllByIgnoreIsTrueOrFiletypesIsNotNull();
 		supportedExtns = new TreeSet<String>();
 		for (Extension extension : extensionList) {
@@ -93,6 +89,14 @@ public class StagedFileEvaluator {
 		}
 		Flowelement flowelement =  flowelementDao.findByFlowIdAndProcessingtaskIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc("video-edit-tr-proxy-flow", "video-proxy-low-gen");
 		editedTrSeriesFlowelementTaskconfigPathnameRegex = flowelement.getTaskconfig().getPathnameRegex();
+	}
+
+	public void getExcludedFileNamesRegexList() {
+		String[] junkFilesFinderRegexPatternList = config.getJunkFilesFinderRegexPatternList();
+		for (int i = 0; i < junkFilesFinderRegexPatternList.length; i++) {
+			Pattern nthJunkFilesFinderRegexPattern = Pattern.compile(junkFilesFinderRegexPatternList[i]);
+			excludedFileNamesRegexList.add(nthJunkFilesFinderRegexPattern);
+		}
 	}
 	
 	public StagedFileDetails evaluateAndGetDetails(Sequence sequence, String sourcePath, File nthIngestableFile){

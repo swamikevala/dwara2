@@ -495,18 +495,19 @@ public class RequestService extends DwaraService{
 			} 
 			else if(requestAction == Action.restore || requestAction == Action.restore_process) {
 				org.ishafoundation.dwaraapi.db.model.transactional.File fileFromDB = fileDao.findById(request.getDetails().getFileId()).get();
-			
-				File fileForRestoreResponse = new File();
-				byte[] checksum = fileFromDB.getChecksum();
-				if(checksum != null)
-					fileForRestoreResponse.setChecksum(Hex.encodeHexString(checksum));
-				
-				fileForRestoreResponse.setId(fileFromDB.getId());
-				fileForRestoreResponse.setPathname(fileFromDB.getPathname());
-				fileForRestoreResponse.setSize(fileFromDB.getSize());
-				fileForRestoreResponse.setSystemRequestId(request.getId());
-				requestResponse.setFile(fileForRestoreResponse);
-				
+				if(fileFromDB != null) { // For import we might have removed the data...
+					
+					File fileForRestoreResponse = new File();
+					byte[] checksum = fileFromDB.getChecksum();
+					if(checksum != null)
+						fileForRestoreResponse.setChecksum(Hex.encodeHexString(checksum));
+					
+					fileForRestoreResponse.setId(fileFromDB.getId());
+					fileForRestoreResponse.setPathname(fileFromDB.getPathname());
+					fileForRestoreResponse.setSize(fileFromDB.getSize());
+					fileForRestoreResponse.setSystemRequestId(request.getId());
+					requestResponse.setFile(fileForRestoreResponse);
+				}
 				requestResponse.setCopyId(request.getDetails().getCopyId());
 				requestResponse.setDestinationPath(request.getDetails().getDestinationPath());
 				requestResponse.setOutputFolder(request.getDetails().getOutputFolder());
@@ -578,6 +579,8 @@ public class RequestService extends DwaraService{
 				file.setSystemRequestId(systemRequest.getId());
 
 				org.ishafoundation.dwaraapi.db.model.transactional.File fileFromDB = fileDao.findById(systemRequest.getDetails().getFileId()).get();
+				if(fileFromDB == null)
+					continue;
 				file.setName(fileFromDB.getPathname());
 				file.setSize(fileFromDB.getSize());
 				List<Job> fileJobs = jobDao.findAllByRequestId(systemRequest.getId());

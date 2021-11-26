@@ -108,7 +108,12 @@ public class DwaraImport {
 									b.name = temp;
 									b.isArtifact = false;
 									temp.substring(temp.lastIndexOf("/") + 1);
-									if (!temp.substring(temp.lastIndexOf("/") + 1).contains(".")) {
+									// extra 4096 check to address entire like 
+									// VL:c|385671168|1|4096|376631|Z7424_Class_IEO_Tamil-Day2-Desire_FCP7-And-FCPX/XMLs/FCP X/._IEO Tamil Day 5 - Acceptance II.fcpxml 
+									// which is a folder. 
+									// Check still doest not guarantee the classification of a file vs folder as there are folders like these too
+									// VL:c|385671168|1|93265|376631|Z7424_Class_IEO_Tamil-Day2-Desire_FCP7-And-FCPX/XMLs/FCP X/Misc Videos - Yatra + Mystic.fcpxml
+									if (!temp.substring(temp.lastIndexOf("/") + 1).contains(".") && b.size != 4096) { 
 										b.isDirectory = true;
 									}
 
@@ -240,14 +245,16 @@ public class DwaraImport {
 						file.setVolumeEndBlock(String.valueOf(artifactList.endVolumeBlock));
 						file.setArchiveblock(String.valueOf(bruData.archiveBlock));
 						file.setDirectory(String.valueOf(artifactList.isDirectory));
+						fileList.add(file);
 					} else if(bruData.name.startsWith(artifactList.name + "/")){
 						file.setVolumeStartBlock(String.valueOf(bruData.startVolumeBlock));
 						file.setVolumeEndBlock(String.valueOf(bruData.endVolumeBlock));
 						file.setArchiveblock(String.valueOf(bruData.archiveBlock));
 						if(bruData.isDirectory)
 							file.setDirectory(String.valueOf(bruData.isDirectory));
+						fileList.add(file);
 					}
-					fileList.add(file);
+					
 				}
 				// now lets calculate and collect subfolders size
 				Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
@@ -304,7 +311,7 @@ public class DwaraImport {
 		try {
 
 			xmlFromJava = xmlMapper.writeValueAsString(volumeindex);
-			Files.write(Paths.get(destinationFile + java.io.File.separator + ltoTape + ".xml"), xmlFromJava.getBytes(), StandardOpenOption.CREATE);
+			Files.write(Paths.get(destinationFile + java.io.File.separator + ltoTape + ".xml"), xmlFromJava.getBytes());
 
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
