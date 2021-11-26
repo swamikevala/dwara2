@@ -36,7 +36,7 @@ public class RestoreBucketService extends DwaraService {
 
 	public TRestoreBucket createBucket(String id) {
 		int createdBy = getUserObjFromContext().getId();
-		TRestoreBucket tRestoreBucket = new TRestoreBucket(id, createdBy, new Date());
+		TRestoreBucket tRestoreBucket = new TRestoreBucket(id, createdBy, LocalDateTime.now());
 
 		tRestoreBucketDao.save(tRestoreBucket);
 		return tRestoreBucket;
@@ -200,12 +200,11 @@ public class RestoreBucketService extends DwaraService {
 		emailerService.sendEmail(emailBody);
 	}
 
-	private String getElapsedTime(LocalDateTime createdTime){
+	public String getElapsedTime(LocalDateTime createdTime){
 
-		long requestedAgo = System.currentTimeMillis()-createdTime.toEpochSecond(ZoneOffset.of("+05:30"));
-		requestedAgo/=1000;
+		long requestedAgo = System.currentTimeMillis()/1000-createdTime.toEpochSecond(ZoneOffset.of("+05:30"));
 		long hours = requestedAgo/3600;
-		long minutes = (requestedAgo-hours)/60;
+		long minutes = (requestedAgo-hours*3600)/60;
 		String timeElapsed = hours+" Hours "+minutes + " Minutes ";
 		return timeElapsed;
 	}
