@@ -681,6 +681,7 @@ public class RequestService extends DwaraService{
 			// change this asap uncomment above one
 
 			restoreResponse.setEta(userRequestEta);
+			restoreResponse.setElapsedTime(getElapsedTime(restoreResponse.getRequestedAt()));
 			if (request.getStatus().equals(Status.queued))
 				restoreResponse.setEta(0);
 			restoreResponses.add(restoreResponse);
@@ -781,5 +782,14 @@ public class RequestService extends DwaraService{
 			logger.warn("Unable to calc targetSize for " + path);
 		}
 		return targetSize;
+	}
+	private String getElapsedTime(LocalDateTime createdTime){
+
+		long requestedAgo = System.currentTimeMillis()-createdTime.toEpochSecond(ZoneOffset.of("+05:30"));
+		requestedAgo/=1000;
+		long hours = requestedAgo/3600;
+		long minutes = (requestedAgo-hours*3600)/60;
+		String timeElapsed = hours+" Hours "+minutes + " Minutes ";
+		return timeElapsed;
 	}
 }

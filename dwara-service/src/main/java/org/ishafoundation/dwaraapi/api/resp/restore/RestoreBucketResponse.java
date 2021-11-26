@@ -27,8 +27,17 @@ public class RestoreBucketResponse  {
     String approvalDate;
     List<RestoreBucketFile> details ;
     Date createdAt;
+    String elapsedTime;
 
-RestoreBucketResponse(){
+    public String getElapsedTime() {
+        return elapsedTime;
+    }
+
+    public void setElapsedTime(String elapsedTime) {
+        this.elapsedTime = elapsedTime;
+    }
+
+    RestoreBucketResponse(){
 
 
 }

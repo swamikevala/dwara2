@@ -17,6 +17,15 @@ private String vpTicket;
 private String priority;
 private int userRequestId;
 private long percentageRestored;
+private String elapsedTime;
+
+	public String getElapsedTime() {
+		return elapsedTime;
+	}
+
+	public void setElapsedTime(String elapsedTime) {
+		this.elapsedTime = elapsedTime;
+	}
 
 	public long getPercentageRestored() {
 		return percentageRestored;
