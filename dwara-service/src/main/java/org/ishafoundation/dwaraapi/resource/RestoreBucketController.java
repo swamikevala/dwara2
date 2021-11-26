@@ -1,26 +1,32 @@
 package org.ishafoundation.dwaraapi.resource;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreBucketResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TRestoreBucketDao;
-import org.ishafoundation.dwaraapi.db.model.transactional.RestoreBucketFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
-import org.ishafoundation.dwaraapi.service.EmailerService;
 import org.ishafoundation.dwaraapi.service.FileService;
 import org.ishafoundation.dwaraapi.service.RestoreBucketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @CrossOrigin
 @RestController
@@ -39,7 +45,7 @@ public class RestoreBucketController {
 
     @GetMapping("/buckets")
     public ResponseEntity<List<RestoreBucketResponse>> getAllBuckets(){
-        List<TRestoreBucket> tRestoreBucketsFromDb = (List<TRestoreBucket>)tRestoreBucketDao.findAll();
+        List<TRestoreBucket> tRestoreBucketsFromDb = (List<TRestoreBucket>)tRestoreBucketDao.findByOrderByCreatedAtDesc();
         List<RestoreBucketResponse> restoreBucketResponses =new ArrayList<>();
         for (TRestoreBucket tRestoreBucket:tRestoreBucketsFromDb) {
             RestoreBucketResponse restoreBucketResponse = new RestoreBucketResponse(tRestoreBucket);
