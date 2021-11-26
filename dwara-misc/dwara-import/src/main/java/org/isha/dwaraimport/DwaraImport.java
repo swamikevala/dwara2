@@ -49,7 +49,6 @@ public class DwaraImport {
 	private List<BruData> fileList = new ArrayList<>();
 	String finalizedAt = null;
 	String ltoTape;
-	java.io.File failedTextFile;
 
 	static Map getJSONFromFile(String folderPath) throws IOException, ParseException {
 
@@ -72,7 +71,6 @@ public class DwaraImport {
 			if (!textFile.isDirectory()) {
 				System.out.println("Parsing catalog " + textFile.getName());
 				try {
-					failedTextFile = textFile;
 					ltoTape = textFile.getName().split("_")[0];
 					String dateStr = textFile.getName().split("_")[1].split("\\.")[0];
 					finalizedAt = dateStr + ", 00:00:00.000";
@@ -110,7 +108,12 @@ public class DwaraImport {
 									b.name = temp;
 									b.isArtifact = false;
 									temp.substring(temp.lastIndexOf("/") + 1);
-									if (!temp.substring(temp.lastIndexOf("/") + 1).contains(".")) {
+									// extra 4096 check to address entire like 
+									// VL:c|385671168|1|4096|376631|Z7424_Class_IEO_Tamil-Day2-Desire_FCP7-And-FCPX/XMLs/FCP X/._IEO Tamil Day 5 - Acceptance II.fcpxml 
+									// which is a folder. 
+									// Check still doest not guarantee the classification of a file vs folder as there are folders like these too
+									// VL:c|385671168|1|93265|376631|Z7424_Class_IEO_Tamil-Day2-Desire_FCP7-And-FCPX/XMLs/FCP X/Misc Videos - Yatra + Mystic.fcpxml
+									if (!temp.substring(temp.lastIndexOf("/") + 1).contains(".") && b.size != 4096) { 
 										b.isDirectory = true;
 									}
 
@@ -126,13 +129,15 @@ public class DwaraImport {
 						}
 					}
 					LineIterator.closeQuietly(it);
-					calculateArtifactSize();
+					artifactsList = listBruData.stream().filter(b -> b.isArtifact).collect(Collectors.toList());
+					//calculateArtifactSize();
 					calculateEndBlock();
 
 					createVolumeindex(finalizedAt, destinationXmlPath);
-
+					FileUtils.moveFile(textFile, Paths.get(bruFile,"completed",textFile.getName()).toFile());
 				} catch (Exception e) {
-					e.getStackTrace();
+					FileUtils.moveFile(textFile, Paths.get(bruFile,"failed",textFile.getName()).toFile());
+					e.printStackTrace();
 
 				}
 
@@ -142,7 +147,6 @@ public class DwaraImport {
 
 
 	private void calculateArtifactSize() {
-		artifactsList = listBruData.stream().filter(b -> b.isArtifact).collect(Collectors.toList());
 		for (int i=0; i< artifactsList.size(); i++) {
 			long totalSize = 0;
 			for (BruData bruData : listBruData) {
@@ -201,7 +205,8 @@ public class DwaraImport {
 	};
 
 
-	public String createVolumeindex(String finalizedDate, String destinationFile) {
+	public String createVolumeindex(String finalizedDate, String destinationFile) throws Exception {
+		boolean hasErrors = false;
 		System.out.println("Framing objects");
 		Volumeinfo volumeinfo = new Volumeinfo();
 		volumeinfo.setVolumeuid(StringUtils.isEmpty(ltoTape) ? "No_LTO" : ltoTape);
@@ -220,40 +225,36 @@ public class DwaraImport {
 				artifact.setName(artifactList.name);
 				artifact.setStartblock(String.valueOf(artifactList.startVolumeBlock));
 				artifact.setEndblock(String.valueOf(artifactList.endVolumeBlock));
+				if(StringUtils.isBlank(artifactList.category)) { // check if its to be ignored...
+					if(ltoTape.equals("P16539L6") && artifactList.name.equals("repair-utils")) { // TODO Move this out to a file...
+						System.out.println("Skipped " + artifactList.name + " its flagged to be ignored");
+						continue;
+					}
+					else
+						throw new Exception("Unable to get artifactclass for " + ltoTape + ":" + artifactList.name);
+				}	
 				artifact.setArtifactclassuid(artifactList.category);
 
 				List<File> fileList = new ArrayList<>();
 				for (BruData bruData : listBruData) {
 					File file = new File();
+					file.setName(bruData.name);
+					file.setSize(String.valueOf(bruData.size));
 					if (bruData.name.equals(artifactList.name)) {
-						file.setName(bruData.name);
-						file.setSize(String.valueOf(artifactList.totalSize));
 						file.setVolumeStartBlock(String.valueOf(artifactList.startVolumeBlock));
 						file.setVolumeEndBlock(String.valueOf(artifactList.endVolumeBlock));
 						file.setArchiveblock(String.valueOf(bruData.archiveBlock));
 						file.setDirectory(String.valueOf(artifactList.isDirectory));
 						fileList.add(file);
-
-					} else {
-						if(bruData.isDirectory && bruData.name.startsWith(artifactList.name + "/")) {
-							file.setName(bruData.name);
-							file.setSize(String.valueOf(bruData.size));
-							file.setVolumeStartBlock(String.valueOf(bruData.startVolumeBlock));
-							file.setVolumeEndBlock(String.valueOf(bruData.endVolumeBlock));
-							file.setArchiveblock(String.valueOf(bruData.archiveBlock));
+					} else if(bruData.name.startsWith(artifactList.name + "/")){
+						file.setVolumeStartBlock(String.valueOf(bruData.startVolumeBlock));
+						file.setVolumeEndBlock(String.valueOf(bruData.endVolumeBlock));
+						file.setArchiveblock(String.valueOf(bruData.archiveBlock));
+						if(bruData.isDirectory)
 							file.setDirectory(String.valueOf(bruData.isDirectory));
-							fileList.add(file);
-
-						} else if(bruData.name.startsWith(artifactList.name + "/") ){
-							file.setName(bruData.name);
-							file.setSize(String.valueOf(bruData.size));
-							file.setVolumeStartBlock(String.valueOf(bruData.startVolumeBlock));
-							file.setVolumeEndBlock(String.valueOf(bruData.endVolumeBlock));
-							file.setArchiveblock(String.valueOf(bruData.archiveBlock));
-							fileList.add(file);
-
-						}
+						fileList.add(file);
 					}
+					
 				}
 				// now lets calculate and collect subfolders size
 				Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
@@ -277,18 +278,27 @@ public class DwaraImport {
 				// now lets make use of the collected subfolder size 
 				for (File nthFile : fileList) {
 					if(Boolean.parseBoolean(nthFile.getDirectory())){
-						nthFile.setSize(filePathnameVsSize_Map.get(nthFile.getName())+"");
+						String nthDirectorySize= filePathnameVsSize_Map.get(nthFile.getName())+"";
+						nthFile.setSize(nthDirectorySize);
+						/*
+						if(nthFile.getName().equals(artifactList.name))
+							artifact.setTotalSize(nthDirectorySize);
+						*/
 					}
 				}		
 				artifact.setFile(fileList);
 				artifactXMLList.add(artifact);
 			}catch (Exception e) {
 				System.err.println(artifactList.name + " has errors " + e.getMessage());
+				hasErrors=true;
 				e.printStackTrace();
 			}
 			System.out.println("Framed object for " + artifactList.name);
 		}
-
+		
+		if(hasErrors)
+			throw new Exception(ltoTape + " has errors ");
+			
 		System.out.println("Generating xml");
 		Volumeindex volumeindex = new Volumeindex();
 		volumeindex.setVolumeinfo(volumeinfo);
@@ -301,7 +311,7 @@ public class DwaraImport {
 		try {
 
 			xmlFromJava = xmlMapper.writeValueAsString(volumeindex);
-			Files.write(Paths.get(destinationFile + java.io.File.separator + ltoTape + ".xml"), xmlFromJava.getBytes(), StandardOpenOption.CREATE);
+			Files.write(Paths.get(destinationFile + java.io.File.separator + ltoTape + ".xml"), xmlFromJava.getBytes());
 
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();

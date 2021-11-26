@@ -1,6 +1,11 @@
 SET foreign_key_checks = 0;
 
 /**
+ * update job set status='failed', `message`='Process skipped during app shutdown. Bypassed maintanence mode. Job stuck in_progress. Had to force fail and requeue to unblock it' where id in (511403);
+ * UPDATE `job` SET `status`='failed', `message`='Process skipped during app shutdown. Bypassed maintanence mode. Job stuck in_progress. Had to force fail and requeue to unblock it' WHERE `id` in (511400,511401);
+ */
+
+/**
  * XL80 Drives replaced 
  */
 

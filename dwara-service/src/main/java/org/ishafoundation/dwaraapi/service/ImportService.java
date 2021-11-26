@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,6 +17,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.PostConstruct;
 import javax.xml.stream.XMLOutputFactory;
 
 import org.apache.commons.io.FileUtils;
@@ -26,6 +28,7 @@ import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportStatus;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
@@ -111,12 +114,15 @@ public class ImportService extends DwaraService {
 	private ConfigurationTablesUtil configurationTablesUtil;
 	
 	@Autowired
+	private Configuration configuration;
+	
+	@Autowired
 	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
 	
 	@Autowired
 	protected SequenceUtil sequenceUtil;
 
-	
+	private List<Pattern> excludedFileNamesRegexList = new ArrayList<Pattern>();
 	private String todoDirName = "todo";
 	private String invalidDirName = "invalid";
 	private String completedDirName = "completed";
@@ -128,6 +134,14 @@ public class ImportService extends DwaraService {
 	private List<Error> errorList = null;
 	private List<org.ishafoundation.dwaraapi.api.resp._import.Artifact> artifacts = null;
 
+	@PostConstruct
+	public void getExcludedFileNamesRegexList() {
+		String[] junkFilesFinderRegexPatternList = configuration.getJunkFilesFinderRegexPatternList();
+		for (int i = 0; i < junkFilesFinderRegexPatternList.length; i++) {
+			Pattern nthJunkFilesFinderRegexPattern = Pattern.compile(junkFilesFinderRegexPatternList[i]);
+			excludedFileNamesRegexList.add(nthJunkFilesFinderRegexPattern);
+		}
+	}
 	public List<ImportResponse> bulkImport(BulkImportRequest importRequest) throws Exception {
 		String importStagingDirLocation = importRequest.getStagingDir(); // /data/dwara/import-staging
 		
@@ -460,9 +474,26 @@ public class ImportService extends DwaraService {
 					    }
 					    logger.info("ArtifactVolume - " + artifactVolumeImportStatus);
 					    long artifactTotalSize = 0;
-					    int fileCount = 0;
+					    
 					    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = nthArtifact.getFile();
-						for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
+					    ArrayList<String> junkFilepathnameList = new ArrayList<String>();
+					    int fileCount = artifactFileList.size();
+					    for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
+					    	if(nthFile.getName().equals(artifactName))
+					    		artifactTotalSize = nthFile.getSize(); 
+					    	
+					    	for (String junkFilepathname : junkFilepathnameList) {
+						    	if(nthFile.getName().startsWith(junkFilepathname)) {
+						    		fileCount--;
+						    		continue;
+						    	}
+							}
+
+					    	if(isJunk(nthFile.getName())) {
+					    		junkFilepathnameList.add(nthFile.getName());
+					    		fileCount--;
+					    		continue;
+					    	}
 							String filePathname = nthFile.getName().replace(artifactName, toBeArtifactName);
 							String linkName = null;
 							if(filePathname.contains(bruLinkSeparator)) {
@@ -512,15 +543,13 @@ public class ImportService extends DwaraService {
 				
 								file.setPathname(filePathname);
 								file.setPathnameChecksum(filePathnameChecksum);
-								file.setSize(nthFile.getSize());
+								file.setSize(nthFile.getSize()); // TODO Note junk file size is not reduced. 
 								//file.setSymlinkFileId();
 								file.setSymlinkPath(linkName);
 								file.setArtifact(artifact);
 								if(Boolean.TRUE.equals(nthFile.getDirectory())) {// if(StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) {  // TODO - change it to - if(nthFile.isDirectory()) 
 									file.setDirectory(true);
-								}else {
-									fileCount++;
-									artifactTotalSize += nthFile.getSize(); 
+									fileCount--;
 								}	
 								
 								file = fileDao.save(file);
@@ -811,5 +840,19 @@ public class ImportService extends DwaraService {
 
 		volume.setDetails(volumeDetails);
 		return volume;
+	}
+	
+	
+	private boolean isJunk(String filePathname) {
+		boolean isJunk=false;
+		for (Iterator<Pattern> iterator2 = excludedFileNamesRegexList.iterator(); iterator2.hasNext();) {
+			// TODO : See if we can use PathMatcher than regex.Matcher
+			Pattern nthJunkFilesFinderRegexPattern = iterator2.next();
+			Matcher m = nthJunkFilesFinderRegexPattern.matcher(filePathname);
+			if(m.matches()) {
+				isJunk=true;
+			}
+		}
+		return isJunk;
 	}
 }
