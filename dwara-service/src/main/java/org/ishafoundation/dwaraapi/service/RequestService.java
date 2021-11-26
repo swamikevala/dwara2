@@ -494,9 +494,9 @@ public class RequestService extends DwaraService{
 				}
 			} 
 			else if(requestAction == Action.restore || requestAction == Action.restore_process) {
-				org.ishafoundation.dwaraapi.db.model.transactional.File fileFromDB = fileDao.findById(request.getDetails().getFileId()).get();
-				if(fileFromDB != null) { // For import we might have removed the data...
-					
+				Optional<org.ishafoundation.dwaraapi.db.model.transactional.File> fileFromDBOptional = fileDao.findById(request.getDetails().getFileId());
+				if(fileFromDBOptional.isPresent()) {// For re-import failed[failed as in size/filecount mismatch etc] imports we might have to remove files that are even requested for restore already ...
+					org.ishafoundation.dwaraapi.db.model.transactional.File fileFromDB = fileFromDBOptional.get();
 					File fileForRestoreResponse = new File();
 					byte[] checksum = fileFromDB.getChecksum();
 					if(checksum != null)
@@ -507,6 +507,8 @@ public class RequestService extends DwaraService{
 					fileForRestoreResponse.setSize(fileFromDB.getSize());
 					fileForRestoreResponse.setSystemRequestId(request.getId());
 					requestResponse.setFile(fileForRestoreResponse);
+				}else {
+					logger.error("File deleted for re-import " + request.getDetails().getFileId());
 				}
 				requestResponse.setCopyId(request.getDetails().getCopyId());
 				requestResponse.setDestinationPath(request.getDetails().getDestinationPath());
@@ -577,10 +579,11 @@ public class RequestService extends DwaraService{
 			for (Request systemRequest : systemRequests) {
 				RestoreFile file = new RestoreFile();
 				file.setSystemRequestId(systemRequest.getId());
+				Optional<org.ishafoundation.dwaraapi.db.model.transactional.File> fileFromDBOptional = fileDao.findById(systemRequest.getDetails().getFileId());
+				if(!fileFromDBOptional.isPresent())
+					continue;				
+				org.ishafoundation.dwaraapi.db.model.transactional.File fileFromDB = fileFromDBOptional.get();
 
-				org.ishafoundation.dwaraapi.db.model.transactional.File fileFromDB = fileDao.findById(systemRequest.getDetails().getFileId()).get();
-				if(fileFromDB == null)
-					continue;
 				file.setName(fileFromDB.getPathname());
 				file.setSize(fileFromDB.getSize());
 				List<Job> fileJobs = jobDao.findAllByRequestId(systemRequest.getId());
