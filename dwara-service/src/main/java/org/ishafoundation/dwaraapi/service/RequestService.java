@@ -3,12 +3,7 @@ package org.ishafoundation.dwaraapi.service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
@@ -682,10 +677,12 @@ public class RequestService extends DwaraService{
 
 			restoreResponse.setEta(userRequestEta);
 			restoreResponse.setElapsedTime(getElapsedTime(restoreResponse.getRequestedAt()));
+			restoreResponse.setElapsedTimeNumber(System.currentTimeMillis()/1000-restoreResponse.getRequestedAt().toEpochSecond(ZoneOffset.of("+05:30")));
 			if (request.getStatus().equals(Status.queued))
 				restoreResponse.setEta(0);
 			restoreResponses.add(restoreResponse);
 		}
+		Collections.sort(restoreResponses);
 		return restoreResponses;
 
 	}
@@ -785,8 +782,7 @@ public class RequestService extends DwaraService{
 	}
 	private String getElapsedTime(LocalDateTime createdTime){
 
-		long requestedAgo = System.currentTimeMillis()-createdTime.toEpochSecond(ZoneOffset.of("+05:30"));
-		requestedAgo/=1000;
+		long requestedAgo = System.currentTimeMillis()/1000-createdTime.toEpochSecond(ZoneOffset.of("+05:30"));
 		long hours = requestedAgo/3600;
 		long minutes = (requestedAgo-hours*3600)/60;
 		String timeElapsed = hours+" Hours "+minutes + " Minutes ";
