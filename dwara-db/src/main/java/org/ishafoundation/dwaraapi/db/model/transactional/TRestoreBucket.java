@@ -5,6 +5,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,7 +27,7 @@ public class TRestoreBucket {
     String priority;
 
     @Column(name="createdAt")
-    Date createdAt;
+    LocalDateTime createdAt;
 
     public void setRequestedBy(Integer requestedBy) {
         this.requestedBy = requestedBy;
@@ -135,11 +136,11 @@ public class TRestoreBucket {
     }
 
 
-    public Date getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Date createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
@@ -156,7 +157,7 @@ public class TRestoreBucket {
         this.details.addAll(details);
     }
 
-    public TRestoreBucket(String id, int createdBy, Date createdAt) {
+    public TRestoreBucket(String id, int createdBy, LocalDateTime createdAt) {
         this.id = id;
         this.createdBy = createdBy;
         this.createdAt = createdAt;

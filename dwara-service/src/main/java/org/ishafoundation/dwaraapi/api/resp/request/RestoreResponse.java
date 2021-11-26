@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.api.resp.request;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class RestoreResponse  {
+public class RestoreResponse implements Comparable {
 private String name;
 private LocalDateTime requestedAt;
 private String requestedBy;
@@ -17,6 +17,24 @@ private String vpTicket;
 private String priority;
 private int userRequestId;
 private long percentageRestored;
+private String elapsedTime;
+private long elapsedTimeNumber;
+
+	public long getElapsedTimeNumber() {
+		return elapsedTimeNumber;
+	}
+
+	public void setElapsedTimeNumber(long elapsedTimeNumber) {
+		this.elapsedTimeNumber = elapsedTimeNumber;
+	}
+
+	public String getElapsedTime() {
+		return elapsedTime;
+	}
+
+	public void setElapsedTime(String elapsedTime) {
+		this.elapsedTime = elapsedTime;
+	}
 
 	public long getPercentageRestored() {
 		return percentageRestored;
@@ -109,4 +127,8 @@ public void setRestoreFiles(List<RestoreFile> restoreFiles) {
 	this.files = restoreFiles;
 }
 
+	@Override
+	public int compareTo(Object o) {
+		return (this.getElapsedTimeNumber() < ((RestoreResponse) o).getElapsedTimeNumber() ? -1 : (this.getElapsedTimeNumber() == ((RestoreResponse) o).getElapsedTimeNumber() ? 0 : 1));
+	}
 }

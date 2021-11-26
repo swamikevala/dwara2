@@ -6,6 +6,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class RequestApproval {
     String priority;
 
     @Column(name="createdAt")
-    Date createdAt;
+    LocalDateTime createdAt;
 
     public void setRequestedBy(Integer requestedBy) {
         this.requestedBy = requestedBy;
@@ -135,11 +136,11 @@ public class RequestApproval {
     }
 
 
-    public Date getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Date createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
