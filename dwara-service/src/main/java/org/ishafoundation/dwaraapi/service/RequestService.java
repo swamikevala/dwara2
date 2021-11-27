@@ -199,9 +199,9 @@ public class RequestService extends DwaraService{
 			requestToBeCancelled.setStatus(Status.cancelled);
 			requestDao.save(requestToBeCancelled);
 
-			Request userRequestToBeCancelled = requestToBeCancelled.getRequestRef();
-			userRequestToBeCancelled.setStatus(Status.cancelled);
-			requestDao.save(userRequestToBeCancelled);
+//			Request userRequestToBeCancelled = requestToBeCancelled.getRequestRef();
+//			userRequestToBeCancelled.setStatus(Status.cancelled);
+//			requestDao.save(userRequestToBeCancelled);
 			
 			userRequest.setStatus(Status.completed);
 			userRequest.setCompletedAt(LocalDateTime.now());

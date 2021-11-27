@@ -31,11 +31,6 @@ public class StatusUtil {
 					anyOnHold = true;
 					isAllComplete = false;
 					break;
-// Commenting out as it doesnt make sense to have a UR is set to cancelled - if 1 SR is cancelled and rest of the SRs are completed...
-//				case cancelled:
-//					anyCancelled = true;
-//					isAllComplete = false;
-//					break;
 				case completed_failures:
 					anyCompletedWithFailures = true;
 					isAllComplete = false;
@@ -54,6 +49,9 @@ public class StatusUtil {
 					break;
 				case completed:
 					break;						
+				case cancelled:
+					anyCancelled = true;
+					break;
 				default:
 					break;
 			}
@@ -81,9 +79,6 @@ public class StatusUtil {
 		else if(anyOnHold) {
 			status = Status.on_hold; 
 		}
-//		else if(anyCancelled) {
-//			status = Status.cancelled;
-//		}
 		else if(hasFailures) {
 			status = Status.failed;
 		}
@@ -99,7 +94,9 @@ public class StatusUtil {
 		else if(isAllComplete) { // All jobs have successfully completed.
 			status = Status.completed; 
 		}
-		
+		else if(anyCancelled) { // It doesnt make sense to have a UR set to cancelled - if 1 SR is cancelled but still rest of the SRs are completed... so moving this out to last
+			status = Status.cancelled;
+		}
 		return status;
 	}
 
