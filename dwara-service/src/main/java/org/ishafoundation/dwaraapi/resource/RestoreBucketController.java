@@ -62,8 +62,15 @@ public class RestoreBucketController {
 
     @PostMapping("/buckets")
     public ResponseEntity<TRestoreBucket> createBucket(@RequestBody Map<String,String> map){
-        TRestoreBucket tRestoreBucket =restoreBucketService.createBucket((String)map.get("id"));
-        return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucket);
+        String id = (String)map.get("id");
+        TRestoreBucket existingBucket = tRestoreBucketDao.findById(id).get();
+        if(existingBucket == null) {
+            TRestoreBucket tRestoreBucket =restoreBucketService.createBucket(id);
+            return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucket);
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
+        }
     }
 
     @DeleteMapping("/buckets/{id}")
