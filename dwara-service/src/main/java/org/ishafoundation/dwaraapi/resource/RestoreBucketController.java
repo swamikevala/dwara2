@@ -63,8 +63,8 @@ public class RestoreBucketController {
     @PostMapping("/buckets")
     public ResponseEntity<TRestoreBucket> createBucket(@RequestBody Map<String,String> map){
         String id = (String)map.get("id");
-        TRestoreBucket existingBucket = tRestoreBucketDao.findById(id).get();
-        if(existingBucket == null) {
+        boolean isExisted = tRestoreBucketDao.existById(id);
+        if(!isExisted) {
             TRestoreBucket tRestoreBucket =restoreBucketService.createBucket(id);
             return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucket);
         }
