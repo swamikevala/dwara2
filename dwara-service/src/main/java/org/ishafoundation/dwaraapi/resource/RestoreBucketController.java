@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi.resource;
 
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,8 @@ public class RestoreBucketController {
         List<RestoreBucketResponse> restoreBucketResponses =new ArrayList<>();
         for (TRestoreBucket tRestoreBucket:tRestoreBucketsFromDb) {
             RestoreBucketResponse restoreBucketResponse = new RestoreBucketResponse(tRestoreBucket);
+            restoreBucketResponse.setRequestedBeforeTimeNumber( System.currentTimeMillis()-restoreBucketResponse.getCreatedAt().toEpochSecond(ZoneOffset.of("+05:30")));
+            restoreBucketResponse.setRequestedBeforeTime(restoreBucketService.getElapsedTime(restoreBucketResponse.getCreatedAt()));
             if(restoreBucketResponse.getCreatedBy()!=null)
                 restoreBucketResponse.setCreatorName(userDao.findById(restoreBucketResponse.getCreatedBy()).get().getName());
             restoreBucketResponses.add(restoreBucketResponse);
