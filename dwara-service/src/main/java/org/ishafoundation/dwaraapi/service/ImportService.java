@@ -532,7 +532,9 @@ public class ImportService extends DwaraService {
 								// for eg., if P16539L6 is imported first followed by CA4485L4 which is the oldest of 2 then we would face this situation as
 								// sequence codes 6028/9 and 30 has differences in the file count...
 								// junk files difference...
-								if(file == null) { // Artifact exists means files should also tally - if there is a mismatch in files then it needs investigation...
+								if(file == null) { 
+									// Artifact exists means files should also tally - if there is a mismatch in files then it needs investigation...
+									// Pls check out https://jira.isha.in/browse/DU-872 for more observations documented...
 									missingFilepathnameList.add(filePathname);
 									fileRecordsImportStatus.add(ImportStatus.failed);
 									logger.error("Already existing artifact " + artifact.getId() + " supposed to have but missing " + filePathname);
@@ -621,7 +623,7 @@ public class ImportService extends DwaraService {
 					    fileImportStatus = ImportStatusUtil.getStatus(fileRecordsImportStatus);
 					    fileVolumeImportStatus = ImportStatusUtil.getStatus(fileVolumeRecordsImportStatus);
 					    if(fileImportStatus == ImportStatus.failed) {
-					    	iva.setMessage("Investigate " + missingFilepathnameList.toString());
+					    	iva.setMessage("Investigate " + missingFilepathnameList.toString()); 
 					    	logger.error("Investigate " + missingFilepathnameList.toString());
 					    }
 					    else
