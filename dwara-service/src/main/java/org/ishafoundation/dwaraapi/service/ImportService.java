@@ -612,7 +612,7 @@ public class ImportService extends DwaraService {
 								else {
 									logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
 									fileVolumeRecordsImportStatus.add(ImportStatus.skipped);
-									break; // This means this is a rerun scenario and so the rest of the files can be skipped....
+									// break; // This means this is a rerun scenario and so the rest of the files can be skipped....
 								}
 							}
 						}
