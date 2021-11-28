@@ -11,4 +11,5 @@ public interface TRestoreBucketDao extends CrudRepository<TRestoreBucket,String>
     List<TRestoreBucket> findByApprovalStatusNullAndCreatedBy( int userName);
     List<TRestoreBucket> findByApprovalStatus(String status);
     List<TRestoreBucket> findByOrderByCreatedAtDesc();
+    boolean existsById(String id);
 }
