@@ -27,7 +27,6 @@ import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
-import org.ishafoundation.dwaraapi.api.resp._import.ImportStatus;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
@@ -56,6 +55,7 @@ import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
+import org.ishafoundation.dwaraapi.enumreferences.ImportStatus;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
@@ -69,6 +69,7 @@ import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Volumeindex;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Volumeinfo;
 import org.ishafoundation.dwaraapi.storage.storagesubtype.AbstractStoragesubtype;
 import org.ishafoundation.dwaraapi.utils.ChecksumUtil;
+import org.ishafoundation.dwaraapi.utils.ImportStatusUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -476,6 +477,10 @@ public class ImportService extends DwaraService {
 					    long artifactTotalSize = 0;
 					    
 					    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = nthArtifact.getFile();
+					    ArrayList<ImportStatus> fileRecordsImportStatus = new ArrayList<ImportStatus>();
+					    ArrayList<ImportStatus> fileVolumeRecordsImportStatus = new ArrayList<ImportStatus>();
+					    ArrayList<String> missingFilepathnameList = new ArrayList<String>();
+					    
 					    ArrayList<String> junkFilepathnameList = new ArrayList<String>();
 					    int fileCount = artifactFileList.size();
 					    for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
@@ -553,50 +558,71 @@ public class ImportService extends DwaraService {
 								}	
 								
 								file = fileDao.save(file);
-								fileImportStatus = ImportStatus.completed;
+								fileRecordsImportStatus.add(ImportStatus.completed);
 						    	logger.debug("File " + filePathname + "  created successfully");
 							}
 							else {
 								file = fileDao.findByPathnameChecksum(filePathnameChecksum);
-								fileImportStatus = ImportStatus.skipped;
-								logger.debug("File " + filePathname + " already exists, so skipping updating DB");
+								// Maybe we should import oldest tapes first
+								// for eg., if P16539L6 is imported first followed by CA4485L4 which is the oldest of 2 then we would face this situation as
+								// sequence codes 6028/9 and 30 has differences in the file count...
+								// junk files difference...
+								if(file == null) { // Artifact exists means files should also tally - if there is a mismatch in files then it needs investigation...
+									missingFilepathnameList.add(filePathname);
+									fileRecordsImportStatus.add(ImportStatus.failed);
+									// throw new Exception("File " + filePathname + " expected, but missing"); // should we throw error or continue flagging it
+								}else {
+									fileRecordsImportStatus.add(ImportStatus.skipped);
+									logger.debug("File " + filePathname + " already exists, so skipping updating DB");
+								}
 							}
-		
-							FileVolume fileVolume = fileVolumeDao.findByIdFileIdAndIdVolumeId(file.getId(), volume.getId());
-							if(fileVolume == null) {
-								/*
-								 * file1_volume
-								 *
-				
-								  `file_id` int(11) NOT NULL,
-								  `archive_block` bigint(20) DEFAULT NULL, 
-								  `deleted` bit(1) DEFAULT NULL, *** - *** 0
-								  `encrypted` bit(1) DEFAULT NULL, *** - *** null
-								  `verified_at` datetime(6) DEFAULT NULL, *** - *** null
-								  `volume_start_block` int(11) DEFAULT NULL, *** - *** dynamic
-								  `volume_end_block` int(11) DEFAULT NULL, *** - *** dynamic
-								  `volume_id` varchar(255) COLLATE utf8mb4_unicode_520_ci NOT NULL, 
-								  `header_blocks` int(11) DEFAULT NULL, *** - *** null
-								  `hardlink_file_id` int(11) DEFAULT NULL, *** - *** null???
-								 */
-								fileVolume = new FileVolume(file.getId(), volume);// lets just let users use the util consistently
-								fileVolume.setArchiveBlock(nthFile.getArchiveblock());
-								fileVolume.setVolumeStartBlock(nthFile.getVolumeStartBlock());
-								fileVolume.setVolumeEndBlock(nthFile.getVolumeEndBlock());
-				
-								//fileVolume.setHardlinkFileId(file.getId());
-								
-						    	fileVolumeDao.save(fileVolume);
-						    	fileVolumeImportStatus = ImportStatus.completed;
-						    	logger.debug("FileVolume records created successfully");
-						    }
+							
+							if(file == null) {
+								fileVolumeRecordsImportStatus.add(ImportStatus.failed);
+							}
 							else {
-								logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
-								fileVolumeImportStatus = ImportStatus.skipped;
-								break; // This means this is a rerun scenario and so the rest of the files can be skipped....
+								FileVolume fileVolume = fileVolumeDao.findByIdFileIdAndIdVolumeId(file.getId(), volume.getId());
+								if(fileVolume == null) {
+									/*
+									 * file1_volume
+									 *
+					
+									  `file_id` int(11) NOT NULL,
+									  `archive_block` bigint(20) DEFAULT NULL, 
+									  `deleted` bit(1) DEFAULT NULL, *** - *** 0
+									  `encrypted` bit(1) DEFAULT NULL, *** - *** null
+									  `verified_at` datetime(6) DEFAULT NULL, *** - *** null
+									  `volume_start_block` int(11) DEFAULT NULL, *** - *** dynamic
+									  `volume_end_block` int(11) DEFAULT NULL, *** - *** dynamic
+									  `volume_id` varchar(255) COLLATE utf8mb4_unicode_520_ci NOT NULL, 
+									  `header_blocks` int(11) DEFAULT NULL, *** - *** null
+									  `hardlink_file_id` int(11) DEFAULT NULL, *** - *** null???
+									 */
+									fileVolume = new FileVolume(file.getId(), volume);// lets just let users use the util consistently
+									fileVolume.setArchiveBlock(nthFile.getArchiveblock());
+									fileVolume.setVolumeStartBlock(nthFile.getVolumeStartBlock());
+									fileVolume.setVolumeEndBlock(nthFile.getVolumeEndBlock());
+					
+									//fileVolume.setHardlinkFileId(file.getId());
+									
+							    	fileVolumeDao.save(fileVolume);
+							    	fileVolumeRecordsImportStatus.add(ImportStatus.completed);
+							    	logger.debug("FileVolume records created successfully");
+							    }
+								else {
+									logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
+									fileVolumeRecordsImportStatus.add(ImportStatus.skipped);
+									break; // This means this is a rerun scenario and so the rest of the files can be skipped....
+								}
 							}
-						}	
-						logger.info("File - " + fileImportStatus);
+						}
+					    
+					    fileImportStatus = ImportStatusUtil.getStatus(fileRecordsImportStatus);
+					    fileVolumeImportStatus = ImportStatusUtil.getStatus(fileVolumeRecordsImportStatus);
+					    if(fileImportStatus == ImportStatus.failed) 
+					    	logger.error("File - " + fileImportStatus + " - Investigate missing files " + missingFilepathnameList.toString());	
+					    else
+					    	logger.info("File - " + fileImportStatus);
 						logger.info("FileVolume - " + fileVolumeImportStatus);
 						
 						// UPDATING THE artifactvolumestatus only when everything is OK, so its used for restoring   
@@ -635,8 +661,11 @@ public class ImportService extends DwaraService {
 						respArtifact.setName(artifact.getName());
 						
 						usedCapacity += artifact.getTotalSize();
-						// TODO - should we add - artifact id, DB artifact name,  artifactImportStatus, artifactVolumeImportStatus, fileImportStatus, fileVolumeImportStatus (needs rerun id)
-						iva.setStatus(Status.completed);
+						if(fileImportStatus == ImportStatus.failed || fileVolumeImportStatus == ImportStatus.failed)
+							iva.setStatus(Status.failed);
+						else 
+							iva.setStatus(Status.completed); // TODO - should we add - artifact id, DB artifact name,  artifactImportStatus, artifactVolumeImportStatus, fileImportStatus, fileVolumeImportStatus (needs rerun id)
+						
 						importVolumeArtifactDao.save(iva);
 					}catch (Exception e) {
 						logger.error("Unable to import completely " + artifactName, e);

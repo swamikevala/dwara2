@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.api.resp._import;
 
+import org.ishafoundation.dwaraapi.enumreferences.ImportStatus;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
