@@ -37,7 +37,7 @@ public class RequestResponse {
     private String action;
     private String status;
     private String message;
-    
+    private String priority;
     private List<RequestResponse> request;
     
     // For ingest
@@ -128,6 +128,14 @@ public class RequestResponse {
 
 	public void setMessage(String message) {
 		this.message = message;
+	}
+
+	public String getPriority() {
+		return priority;
+	}
+
+	public void setPriority(String priority) {
+		this.priority = priority;
 	}
 
 	public List<RequestResponse> getRequest() {

@@ -411,7 +411,7 @@ public class RequestService extends DwaraService{
 		requestResponse.setRequestedAt(getDateForUI(request.getRequestedAt()));
 		requestResponse.setCompletedAt(getDateForUI(request.getCompletedAt()));
 		requestResponse.setRequestedBy(request.getRequestedBy().getName());
-				
+		requestResponse.setPriority(request.getPriority() != null ? request.getPriority().name() : Priority.normal.name());
 		requestResponse.setStatus(request.getStatus().name());
 		Action requestAction = request.getActionId();
 		requestResponse.setAction(requestAction.name());
