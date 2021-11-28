@@ -36,6 +36,10 @@ public class Import {
 	@Enumerated(EnumType.STRING)
 	@Column(name="status")
 	private Status status;
+	
+	@Lob
+	@Column(name="message")
+	private String message; 
 
 	public ImportKey getId() {
 		return id;
@@ -67,5 +71,13 @@ public class Import {
 
 	public void setStatus(Status status) {
 		this.status = status;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
 	}
 }

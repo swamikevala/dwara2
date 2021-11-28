@@ -16,6 +16,9 @@ public class ImportStatusUtil {
 					hasFailures = true;
 					isAllSkipped = false;
 					break;
+				case completed:
+					isAllSkipped = false;
+					break;					
 				default:
 					break;
 			}

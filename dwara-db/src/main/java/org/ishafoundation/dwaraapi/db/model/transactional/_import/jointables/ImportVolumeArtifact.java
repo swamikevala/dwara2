@@ -5,6 +5,7 @@ import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.Lob;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.TypeDef;
@@ -26,6 +27,10 @@ public class ImportVolumeArtifact {
 	@Enumerated(EnumType.STRING)
 	@Column(name="status")
 	private Status status;
+	
+	@Lob
+	@Column(name="message")
+	private String message; 
 
 	public ImportVolumeArtifactKey getId() {
 		return id;
@@ -42,5 +47,12 @@ public class ImportVolumeArtifact {
 	public void setStatus(Status status) {
 		this.status = status;
 	}
-    
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
 }

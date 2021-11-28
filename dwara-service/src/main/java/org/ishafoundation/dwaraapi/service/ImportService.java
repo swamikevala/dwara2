@@ -526,7 +526,23 @@ public class ImportService extends DwaraService {
 							
 							byte[] filePathnameChecksum = ChecksumUtil.getChecksum(filePathname);
 							org.ishafoundation.dwaraapi.db.model.transactional.File file = null;
-							if(!artifactAlreadyExists) { // if artifactAlreadyExists - file would also exist already - copy / rerun scenario
+							if(artifactAlreadyExists) { // if artifactAlreadyExists - file would also exist already - copy / rerun scenario
+								file = fileDao.findByPathnameChecksum(filePathnameChecksum);
+								// Maybe we should import oldest tapes first
+								// for eg., if P16539L6 is imported first followed by CA4485L4 which is the oldest of 2 then we would face this situation as
+								// sequence codes 6028/9 and 30 has differences in the file count...
+								// junk files difference...
+								if(file == null) { // Artifact exists means files should also tally - if there is a mismatch in files then it needs investigation...
+									missingFilepathnameList.add(filePathname);
+									fileRecordsImportStatus.add(ImportStatus.failed);
+									logger.error("Already existing artifact " + artifact.getId() + " supposed to have but missing " + filePathname);
+								}else {
+									fileRecordsImportStatus.add(ImportStatus.skipped);
+									logger.debug("File " + filePathname + " already exists, so skipping updating DB");
+								}
+							}
+							
+							if(file == null) { // if artifactAlready doesnt Exists or if artifactAlreadyExists but file supposed to be there but not there then create the file...
 								/*
 								 * creating file1
 								 * 
@@ -561,21 +577,6 @@ public class ImportService extends DwaraService {
 								fileRecordsImportStatus.add(ImportStatus.completed);
 						    	logger.debug("File " + filePathname + "  created successfully");
 							}
-							else {
-								file = fileDao.findByPathnameChecksum(filePathnameChecksum);
-								// Maybe we should import oldest tapes first
-								// for eg., if P16539L6 is imported first followed by CA4485L4 which is the oldest of 2 then we would face this situation as
-								// sequence codes 6028/9 and 30 has differences in the file count...
-								// junk files difference...
-								if(file == null) { // Artifact exists means files should also tally - if there is a mismatch in files then it needs investigation...
-									missingFilepathnameList.add(filePathname);
-									fileRecordsImportStatus.add(ImportStatus.failed);
-									// throw new Exception("File " + filePathname + " expected, but missing"); // should we throw error or continue flagging it
-								}else {
-									fileRecordsImportStatus.add(ImportStatus.skipped);
-									logger.debug("File " + filePathname + " already exists, so skipping updating DB");
-								}
-							}
 							
 							if(file == null) {
 								fileVolumeRecordsImportStatus.add(ImportStatus.failed);
@@ -607,7 +608,7 @@ public class ImportService extends DwaraService {
 									
 							    	fileVolumeDao.save(fileVolume);
 							    	fileVolumeRecordsImportStatus.add(ImportStatus.completed);
-							    	logger.debug("FileVolume records created successfully");
+							    	logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " record created successfully");
 							    }
 								else {
 									logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
@@ -619,8 +620,10 @@ public class ImportService extends DwaraService {
 					    
 					    fileImportStatus = ImportStatusUtil.getStatus(fileRecordsImportStatus);
 					    fileVolumeImportStatus = ImportStatusUtil.getStatus(fileVolumeRecordsImportStatus);
-					    if(fileImportStatus == ImportStatus.failed) 
-					    	logger.error("File - " + fileImportStatus + " - Investigate missing files " + missingFilepathnameList.toString());	
+					    if(fileImportStatus == ImportStatus.failed) {
+					    	iva.setMessage("Investigate " + missingFilepathnameList.toString());
+					    	logger.error("Investigate " + missingFilepathnameList.toString());
+					    }
 					    else
 					    	logger.info("File - " + fileImportStatus);
 						logger.info("FileVolume - " + fileVolumeImportStatus);
