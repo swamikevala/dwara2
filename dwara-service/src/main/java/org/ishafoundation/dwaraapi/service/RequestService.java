@@ -174,18 +174,8 @@ public class RequestService extends DwaraService{
 		logger.info("Cancelling request " + requestId);
 		Request userRequest = null;
 		try {
-			List<Job> jobList = jobDao.findAllByRequestId(requestId);
-			for (Job job : jobList) {
-				if(force) { // irrespective of the status of job just mark it cancelled... - TODO: Only static status or allow dynamically transitioning statuses too
-					job.setStatus(Status.cancelled);
-				}
-				else {
-					if(job.getStatus() == Status.queued)
-						job.setStatus(Status.cancelled);
-					else
-						throw new DwaraException(requestId + " request cannot be cancelled. All jobs should be in queued status");
-				}
-			}
+			if(!force)
+				validateRequestToBeCancelled(requestToBeCancelled);
 			
 			HashMap<String, Object> data = new HashMap<String, Object>();
 	    	data.put("requestId", requestId);
@@ -193,15 +183,32 @@ public class RequestService extends DwaraService{
 	    	int userRequestId = userRequest.getId();
 	    	logger.info(DwaraConstants.USER_REQUEST + userRequestId);
 	
-			
-			jobDao.saveAll(jobList);
-			
-			requestToBeCancelled.setStatus(Status.cancelled);
-			requestDao.save(requestToBeCancelled);
-
-//			Request userRequestToBeCancelled = requestToBeCancelled.getRequestRef();
-//			userRequestToBeCancelled.setStatus(Status.cancelled);
-//			requestDao.save(userRequestToBeCancelled);
+			if(requestToBeCancelled.getType() == RequestType.user) {
+				List<Request> systemRequestsToBeCancelledList = requestDao.findAllByRequestRefId(requestId);
+				for (Request nthSystemRequestToBeCancelled : systemRequestsToBeCancelledList) {
+					updateJobs(nthSystemRequestToBeCancelled.getId());
+					
+					if(nthSystemRequestToBeCancelled.getStatus() == Status.queued || nthSystemRequestToBeCancelled.getStatus() == Status.on_hold)
+						nthSystemRequestToBeCancelled.setStatus(Status.cancelled);
+					
+				}
+				requestDao.saveAll(systemRequestsToBeCancelledList);
+				
+				if(requestToBeCancelled.getStatus() == Status.queued || requestToBeCancelled.getStatus() == Status.on_hold) {
+					requestToBeCancelled.setStatus(Status.cancelled);
+					requestDao.save(requestToBeCancelled);
+				} // else scheduler will update the status accordingly
+			}
+			else if(requestToBeCancelled.getType() == RequestType.system) {
+				updateJobs(requestId);
+				
+				if(requestToBeCancelled.getStatus() == Status.queued || requestToBeCancelled.getStatus() == Status.on_hold) {
+					requestToBeCancelled.setStatus(Status.cancelled);
+					requestDao.save(requestToBeCancelled);
+				}
+				
+				// NOTE: DONT be tempted to set status as cancelled for the userrequest if the cancellation is requested only for a SR. The scheduler will take care of it according to the other SRs statuses
+			}
 			
 			userRequest.setStatus(Status.completed);
 			userRequest.setCompletedAt(LocalDateTime.now());
@@ -218,7 +225,38 @@ public class RequestService extends DwaraService{
 			throw e;
 		}
 	}
-    
+
+	private void validateRequestToBeCancelled(Request requestToBeCancelled) {
+		int requestId = requestToBeCancelled.getId();
+		if(requestToBeCancelled.getType() == RequestType.user) {
+			List<Request> systemRequestsToBeCancelledList = requestDao.findAllByRequestRefId(requestId);
+			for (Request nthSystemRequestToBeCancelled : systemRequestsToBeCancelledList) {
+				validateJobs(nthSystemRequestToBeCancelled.getId());
+			}
+		}
+		if(requestToBeCancelled.getType() == RequestType.system) {
+			validateJobs(requestId);
+		}
+	}
+	
+	private void validateJobs(int requestId) {
+		List<Job> jobList = jobDao.findAllByRequestId(requestId);
+		for (Job job : jobList) {
+			if(job.getStatus() != Status.queued)
+				throw new DwaraException(requestId + " request cannot be cancelled. All jobs should be in queued status");
+		}
+	}
+	
+	private void updateJobs(int requestId) {
+		List<Job> jobList = jobDao.findAllByRequestId(requestId);
+		
+		for (Job job : jobList) {
+			if(job.getStatus() == Status.queued || job.getStatus() == Status.on_hold)
+				job.setStatus(Status.cancelled);
+		}
+		jobDao.saveAll(jobList);
+	}
+	
     private RequestResponse cancelAndCleanupRequest(Request requestToBeCancelled, String reason) throws Exception{
 		Request userRequest = null;
 		try {
