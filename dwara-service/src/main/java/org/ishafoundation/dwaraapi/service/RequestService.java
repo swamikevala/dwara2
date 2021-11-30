@@ -174,6 +174,23 @@ public class RequestService extends DwaraService{
 		logger.info("Cancelling request " + requestId);
 		Request userRequest = null;
 		try {
+			
+			Status requestToBeCancelledStatus = requestToBeCancelled.getStatus();
+			
+			switch (requestToBeCancelledStatus) {
+				case completed:
+				case completed_failures:
+				case marked_completed:
+				case failed:	
+				case marked_failed:		
+					throw new DwaraException(requestId + " request cannot be cancelled. Its already " + requestToBeCancelledStatus.name());
+				default:
+					break;
+			}
+			
+//			if(requestToBeCancelledStatus == Status.completed)
+//				throw new DwaraException(requestId + " request cannot be cancelled. Its already " + requestToBeCancelledStatus.name());
+			
 			if(!force)
 				validateRequestToBeCancelled(requestToBeCancelled);
 			
