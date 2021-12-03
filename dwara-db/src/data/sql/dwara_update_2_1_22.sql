@@ -28,13 +28,12 @@ INSERT INTO `sequence` (`id`, `code_regex`, `force_match`, `group`, `keep_code`,
 INSERT INTO `sequence` (`id`, `code_regex`, `force_match`, `group`, `keep_code`, `prefix`, `type`, `sequence_ref_id`, `replace_code`) VALUES ('video-digi-2010-priv2', '^[0-9A-Za-z-]+', 1, 0, 0, 'VDXSN', 'artifact', 'video-digi-2010-grp', 0); -- VDSN - Video digi Swami Nir-vichara
 
 
-INSERT INTO `artifactclass` (`id`, `description`, `domain_id`, `sequence_id`, `source`, `concurrent_volume_copies`, `display_order`, `path_prefix`, `artifactclass_ref_id`, `import_only`, `config`) VALUES 
-('video-digi-2010-pub', 'Digi attempt 1 - SN', 1, 'video-digi-2010-pub', 1, 1, 9, '/data/dwara/staged', null, 1, null);
-INSERT INTO `artifactclass` (`id`, `description`, `domain_id`, `sequence_id`, `source`, `concurrent_volume_copies`, `display_order`, `path_prefix`, `artifactclass_ref_id`, `import_only`, `config`) VALUES 
-('video-digi-2010-priv1', 'Digi attempt 1 - SN', 1, 'video-digi-2010-pub', 1, 1, 9, '/data/dwara/staged', null, 1, null);
-INSERT INTO `artifactclass` (`id`, `description`, `domain_id`, `sequence_id`, `source`, `concurrent_volume_copies`, `display_order`, `path_prefix`, `artifactclass_ref_id`, `import_only`, `config`) VALUES 
-('video-digi-2010-priv2', 'Digi attempt 1 - SN', 1, 'video-digi-2010-priv2', 1, 1, 9, '/data/dwara/staged', null, 1, null);
-
+INSERT INTO `artifactclass` (`id`, `description`, `sequence_id`, `source`, `concurrent_volume_copies`, `display_order`, `path_prefix`, `artifactclass_ref_id`, `import_only`, `config`) VALUES 
+('video-digi-2010-pub', 'Digi attempt 1 - SN', 'video-digi-2010-pub', 1, 1, 9, '/data/dwara/staged', null, 1, null);
+INSERT INTO `artifactclass` (`id`, `description`, `sequence_id`, `source`, `concurrent_volume_copies`, `display_order`, `path_prefix`, `artifactclass_ref_id`, `import_only`, `config`) VALUES 
+('video-digi-2010-priv1', 'Digi attempt 1 - SN', 'video-digi-2010-pub', 1, 1, 9, '/data/dwara/staged', null, 1, null);
+INSERT INTO `artifactclass` (`id`, `description`, `sequence_id`, `source`, `concurrent_volume_copies`, `display_order`, `path_prefix`, `artifactclass_ref_id`, `import_only`, `config`) VALUES 
+('video-digi-2010-priv2', 'Digi attempt 1 - SN', 'video-digi-2010-priv2', 1, 1, 9, '/data/dwara/staged', null, 1, null);
 -- volume sequences
 -- INSERT INTO `sequence` (`id`, `current_number`, `ending_number`, `force_match`, `group`, `keep_code`, `prefix`, `starting_number`, `type`) VALUES ('imported-1', '-1', '-1', 0, 0, 0, 'C', '-1', 'volume');
 -- INSERT INTO `sequence` (`id`, `current_number`, `ending_number`, `force_match`, `group`, `keep_code`, `prefix`, `starting_number`, `type`) VALUES ('imported-2', '-1', '-1', 0, 0, 0, 'C', '-1', 'volume');

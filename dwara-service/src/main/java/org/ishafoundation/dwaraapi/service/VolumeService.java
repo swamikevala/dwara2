@@ -124,7 +124,7 @@ public class VolumeService extends DwaraService {
 		
 		VolumeResponse volResp = new VolumeResponse();
 		volResp.setId(volume.getId());
-		volResp.setCopyNumber(volume.getCopy().getId());
+		volResp.setCopyNumber(volume.getType() == Volumetype.group ? volume.getCopy().getId() : volume.getGroupRef().getCopy().getId());
 		volResp.setVolumetype(volume.getType().name());
 		volResp.setStoragetype(volume.getStoragetype().name());
 		volResp.setStoragelevel(volume.getStoragelevel().name());
