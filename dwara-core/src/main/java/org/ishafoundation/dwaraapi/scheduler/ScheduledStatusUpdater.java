@@ -518,20 +518,19 @@ public class ScheduledStatusUpdater {
 				
 				logger.trace("User request status - " + nthUserRequest.getId() + " ::: " + status);
 			}
-			// Commented out as .restoring is global now...
-//			// For completed restore jobs the .restoring folder is cleaned up...
-//			if((nthUserRequest.getActionId() == Action.restore || nthUserRequest.getActionId() == Action.restore_process) && status == Status.completed) {
-//				JsonNode jsonNode = nthUserRequest.getDetails().getBody();
-//				String outputFolder = jsonNode.get("outputFolder").asText();
-//				String destinationPath = jsonNode.get("destinationPath").asText();
-//				File restoreTmpFolder = FileUtils.getFile(destinationPath , outputFolder, configuration.getRestoreInProgressFileIdentifier());
-//				try {
-//					FileUtils.deleteDirectory(restoreTmpFolder);
-//					logger.trace(restoreTmpFolder.getPath() + " deleted succesfully");
-//				} catch (IOException e) {
-//					logger.error("Unable to delete " + restoreTmpFolder.getPath());
-//				}
-//			}
+			// For completed restore jobs the .restoring folder is cleaned up...
+			if((nthUserRequest.getActionId() == Action.restore || nthUserRequest.getActionId() == Action.restore_process) && status == Status.completed) {
+				JsonNode jsonNode = nthUserRequest.getDetails().getBody();
+				String outputFolder = jsonNode.get("outputFolder").asText();
+				String destinationPath = jsonNode.get("destinationPath").asText();
+				File restoreTmpFolder = FileUtils.getFile(destinationPath, configuration.getRestoreInProgressFileIdentifier(), outputFolder);
+				try {
+					FileUtils.deleteDirectory(restoreTmpFolder);
+					logger.trace(restoreTmpFolder.getPath() + " deleted succesfully");
+				} catch (IOException e) {
+					logger.error("Unable to delete " + restoreTmpFolder.getPath());
+				}
+			}
 			nthUserRequest.setStatus(status); 
 			
 			if(status != Status.queued && status != Status.in_progress && status != Status.on_hold)
