@@ -230,7 +230,15 @@ public class VolumeService extends DwaraService {
 		Volume volume = volumeDao.findById(volumeId).get();
 		if(volume.getHealthstatus() != VolumeHealthStatus.defective)
 			throw new Exception(volumeId + " not flagged as defective. Please double check and flag it first");
-			
+		
+		List<Status> statusList = new ArrayList<Status>();
+		statusList.add(Status.queued);
+		statusList.add(Status.in_progress);
+		
+		List<Request> rewriteSystemRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.rewrite, statusList, RequestType.user);
+		if(rewriteSystemRequestList.size() > 0)
+			throw new Exception("Already there is a rewrite request in_progress " + rewriteSystemRequestList.get(0).getId() + ". System can handle only one rewrite request at a time");
+		
 		// create user request
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		data.put("volumeId", volumeId);
