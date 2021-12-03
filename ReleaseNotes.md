@@ -1,4 +1,4 @@
-# Dwara App Version - 2.1.34 (20th Nov 2021)
+# Dwara App Version - 2.1.34 (3rd Dec 2021)
 ### New features
 
 0) DOMAIN - Removed.
