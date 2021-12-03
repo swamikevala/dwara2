@@ -1,24 +1,29 @@
 # Dwara App Version - 2.1.34 (20th Nov 2021)
 ### New features
 
+0) DOMAIN - Removed.
+
 1) Mam Update Status in Folder Catalog
 
-2) Get servers space infomation
+2) Get servers space information
 
-3) Request priority
+3) New restore related APIs
 
-4) Aumrit anna to add the list of features developed for restore
+4) Support for priority on Request(Restores only) level
+
+5) Support for Cancellation on an entire user request
 
 
 ### Bug fixes
 
 1) Showing imported tapes and artifacts in Tape Catalog and Folder Catalog
 
-2) Fix partially restored files
+2) Restore : Fix partially restored files - changed folder structure - temp folder on global level 
 
-3) mbuffer quitened
+3) Restore : mbuffer quietened
 
 4) Import fixes
+
 
 ### Upgrade steps
 
@@ -34,7 +39,12 @@ confluenceMountedOn=/data
 localFolderList=/data/dwara/user/ramkumarj /data/dwara/user/naveenkumarg /data/dwara/staged  
 catDvFolderList=/data/video-backup /data/proxies /data/Physical_Asset /data/db-backups /data/audio  
 
-2) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_21.sql)
+2) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_22.sql)
+
+### Post rollout checklist
+
+1) Test partial restore, mbuffer fix
+
 
 # Dwara App Version - 2.1.33 (1st Nov 2021)
 ### New features
