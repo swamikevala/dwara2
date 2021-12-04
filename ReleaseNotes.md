@@ -24,6 +24,9 @@
 
 4) Import fixes
 
+5) Fix for multi generation support
+
+6) Only storage mechanism exceptions should requeue jobs and mark volume suspect
 
 ### Upgrade steps
 

@@ -173,7 +173,7 @@ public class FileService extends DwaraService{
     		throw new Exception("Invalid request.  No File Id passed");
     	
     	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File>();
-    	validate(fileIds, copyNumber, destinationPath, outputFolder, fileId_FileObj_Map);
+    	validate(fileIds, copyNumber != null ? copyNumber : 1, destinationPath, outputFolder, fileId_FileObj_Map);
     	
     	Request userRequest = createUserRequest(action, restoreUserRequest, user);
     	Priority priority = Priority.normal;
