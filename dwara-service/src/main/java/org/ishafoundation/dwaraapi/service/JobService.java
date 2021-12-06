@@ -263,6 +263,10 @@ public class JobService extends DwaraService{
 			jobSystemRequest.setStatus(Status.in_progress); // NOTE: Dont be tempted to update this to marked_completed - Let the scheduler do it...
 			requestDao.save(jobSystemRequest);
 			
+			Request jobUserRequest = jobSystemRequest.getRequestRef();
+			jobUserRequest.setStatus(Status.in_progress); // Resetting the Jobs' user Request too...
+			requestDao.save(jobUserRequest);
+			
 			userRequest.setStatus(Status.completed);
 			userRequest = requestDao.save(userRequest);
 		} catch (Exception e) {
