@@ -390,19 +390,22 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		for (int i = 0; i < storageJobsList.size(); i++) {
 			StorageJob nthStorageJob = storageJobsList.get(i);
 			String volumeTag = nthStorageJob.getVolume().getId();
+			String messageToBeSaved = null;
 			if(tapeOnLibraryList.contains(volumeTag)) {// Only Tapes on library - else don't pick the job - let it be queued
 				onlyTapeOnLibraryStorageJobsList.add(nthStorageJob);
 			}
 			else {
-				String message = volumeTag + " not inside the library ";
-				logger.debug(message + tapeLibraryName +" . Skipping job - " + nthStorageJob.getJob().getId()); 
-				Job nthJob = nthStorageJob.getJob();
-				if(!message.equals(nthJob.getMessage())) {
-					nthJob.setMessage(message);
-					Job latestJobObjFromDb = jobDao.findById(nthJob.getId()).get();
-					if(latestJobObjFromDb.getStatus() != Status.cancelled) // if a job is cancelled in another thread - dont save the object as it overwrites the status
-						jobDao.save(nthJob);
-				}
+				messageToBeSaved = volumeTag + " not inside the library ";
+				logger.debug(messageToBeSaved + tapeLibraryName +" . Skipping job - " + nthStorageJob.getJob().getId()); 
+			}
+			
+			Job nthJob = nthStorageJob.getJob();
+			String alreadyExistingJobMessage = nthJob.getMessage();
+			if((messageToBeSaved == null && alreadyExistingJobMessage != null) || (messageToBeSaved != null && !messageToBeSaved.equals(alreadyExistingJobMessage))) {
+				nthJob.setMessage(messageToBeSaved);
+				Job latestJobObjFromDb = jobDao.findById(nthJob.getId()).get();
+				if(latestJobObjFromDb.getStatus() != Status.cancelled) // if a job is cancelled in another thread - dont save the object as it overwrites the status
+					jobDao.save(nthJob);
 			}
 		}
 	
