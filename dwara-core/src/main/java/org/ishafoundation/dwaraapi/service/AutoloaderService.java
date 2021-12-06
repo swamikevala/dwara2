@@ -232,6 +232,7 @@ public class AutoloaderService{
 			if(!getBlankTapesOnly || (getBlankTapesOnly && tapeStatus == TapeStatus.blank)) // only add blank tapes to blank tapes call
 				tapes.add(tape);
 		}
+		logger.trace("Got all loaded tapes in the physcial Tape library " + autoloaderDevice.getId());
 		return tapes;
 	}
 

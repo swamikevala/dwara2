@@ -125,6 +125,7 @@ public class AutoloaderController {
 	
 	@GetMapping(value = "/autoloader/{autoloaderId}", produces = "application/json")
 	public ResponseEntity<AutoloaderResponse> getAutoloader(@PathVariable("autoloaderId") String autoloaderId){ // TODO is this id or uid thats going to be requested? should be uid
+		logger.info("/autoloader/" + autoloaderId);
 		Device autoloaderDevice = deviceDao.findById(autoloaderId).get();
 		if(autoloaderDevice == null) {
 			throw new DwaraException(autoloaderId + " does not exist in the system", null);
@@ -158,6 +159,7 @@ public class AutoloaderController {
 				}
 			}
 			
+			logger.trace("Now deal with - Add tapes - for queued jobs not in tape library");
 			// Add tapes - for queued jobs not in tape library 
 			List<Job> jobList = null;
 			
@@ -175,6 +177,7 @@ public class AutoloaderController {
 			else
 				jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued); 
 			
+			logger.trace("Iterating queued jobs");
 			if(jobList.size() == 0)
 				logger.info("No storage jobs in queue");
 			else {
@@ -216,6 +219,7 @@ public class AutoloaderController {
 				}
 			}
 
+			logger.trace("Now deal with - Add tapes");
 			// Add tapes - for capacity expansion
 			// If there are any groups running out of space and needing new tapes
 			List<VolumeResponse> volGroupList = volumeService.getVolumeByVolumetype(Volumetype.group.name());
@@ -229,6 +233,7 @@ public class AutoloaderController {
 				}
 			}
 
+			logger.trace("Now deal with - Tapes in action");
 			// Show Tapes in action - currently restoring/writing
 			List<Job> inProgressJobsList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.in_progress);
 			if(inProgressJobsList.size() == 0)
@@ -249,7 +254,8 @@ public class AutoloaderController {
 					}
 				}
 			}
-
+			
+			logger.trace("Now deal with - Remove/Written tapes - No jobs queued and either finalized or removeAfterJob");
 			// Remove/Written tapes - No jobs queued and either finalized or removeAfterJob
 			for (Tape nthTapeOnLibrary : tapeList) {
 				if(nthTapeOnLibrary.getUsageStatus() == TapeUsageStatus.no_job_queued && (nthTapeOnLibrary.getStatus() == TapeStatus.finalized || (nthTapeOnLibrary.isRemoveAfterJob() != null && nthTapeOnLibrary.isRemoveAfterJob()))) {

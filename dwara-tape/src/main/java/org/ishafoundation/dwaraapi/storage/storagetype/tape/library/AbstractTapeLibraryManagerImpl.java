@@ -33,7 +33,9 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 	}
 	  
 	public List<TapeOnLibrary> getAllLoadedTapesInTheLibrary(String tapeLibraryName) throws Exception{
+		logger.trace("getAllLoadedTapesInTheLibrary for " + tapeLibraryName);
 		MtxStatus mtxStatus = getMtxStatus(tapeLibraryName);
+		logger.trace("mtx call complete for " + tapeLibraryName);
 		List<TapeOnLibrary> tapeOnLibraryList = new ArrayList<TapeOnLibrary>();
 		
 		List<DataTransferElement> dteList = mtxStatus.getDteList();
@@ -59,7 +61,7 @@ public abstract class AbstractTapeLibraryManagerImpl implements TapeLibraryManag
 				tapeOnLibraryList.add(tol);
 			}
 		}
-		
+		logger.trace("getAllLoadedTapesInTheLibrary completed for " + tapeLibraryName);
 		return tapeOnLibraryList;
 	}
 
