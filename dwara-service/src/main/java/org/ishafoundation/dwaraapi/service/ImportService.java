@@ -487,13 +487,18 @@ public class ImportService extends DwaraService {
 					    	if(nthFile.getName().equals(artifactName))
 					    		artifactTotalSize = nthFile.getSize(); 
 					    	
-					    	for (String junkFilepathname : junkFilepathnameList) {
+					    	boolean fileChildOfJunkFolder = false;
+					    	for (String junkFilepathname : junkFilepathnameList) { // if files belong to a junk folder skip it too
 						    	if(nthFile.getName().startsWith(junkFilepathname)) {
 						    		fileCount--;
-						    		continue;
+						    		fileChildOfJunkFolder = true;
+						    		break;
 						    	}
 							}
-
+					    	
+					    	if (fileChildOfJunkFolder)
+					    		continue;
+					    	
 					    	if(isJunk(nthFile.getName())) {
 					    		junkFilepathnameList.add(nthFile.getName());
 					    		fileCount--;
@@ -882,7 +887,7 @@ public class ImportService extends DwaraService {
 		for (Iterator<Pattern> iterator2 = excludedFileNamesRegexList.iterator(); iterator2.hasNext();) {
 			// TODO : See if we can use PathMatcher than regex.Matcher
 			Pattern nthJunkFilesFinderRegexPattern = iterator2.next();
-			Matcher m = nthJunkFilesFinderRegexPattern.matcher(filePathname);
+			Matcher m = nthJunkFilesFinderRegexPattern.matcher(FilenameUtils.getBaseName(filePathname));
 			if(m.matches()) {
 				isJunk=true;
 			}
