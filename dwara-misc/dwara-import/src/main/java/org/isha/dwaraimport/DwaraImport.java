@@ -46,6 +46,7 @@ public class DwaraImport {
 	private List<BruData> artifactsList = new ArrayList<>();
 	private List<BruData> fileList = new ArrayList<>();
 	
+	private Map<String, Object> ignoreImportArtifacts = null;
 	static Map getJSONFromFile(String folderPath) throws IOException, ParseException {
 
 		JSONParser parser = new JSONParser();
@@ -59,9 +60,13 @@ public class DwaraImport {
 	}
 
 
-	public void apacheGetXMLData(String bruFile, String folderPath, String destinationXmlPath) throws IOException, ParseException {
-		System.out.println("Loading artifactclass mapping into memory from " + folderPath);
-		Map<String, Object> folders = getJSONFromFile(folderPath);
+	public void apacheGetXMLData(String bruFile, String artifactsToBeImportIgnoredJsonFolderPathLocation, String artifactToArtifactClassMappingJsonFolderPath, String destinationXmlPath) throws IOException, ParseException {
+		System.out.println("Loading artifacts to be ignored from importing " + artifactsToBeImportIgnoredJsonFolderPathLocation);
+		ignoreImportArtifacts = getJSONFromFile(artifactsToBeImportIgnoredJsonFolderPathLocation);
+
+		System.out.println("Loading artifact to artifactclass mapping " + artifactToArtifactClassMappingJsonFolderPath);
+		Map<String, Object> artifactToArtifactClassMapping = getJSONFromFile(artifactToArtifactClassMappingJsonFolderPath);
+
 		java.io.File file = new java.io.File(bruFile);
 		for (java.io.File textFile : file.listFiles()) {
 			if (!textFile.isDirectory()) {
@@ -108,14 +113,14 @@ public class DwaraImport {
 									// which is a folder. 
 									// Check still doest not guarantee the classification of a file vs folder as there are folders like these too
 									// VL:c|385671168|1|93265|376631|Z7424_Class_IEO_Tamil-Day2-Desire_FCP7-And-FCPX/XMLs/FCP X/Misc Videos - Yatra + Mystic.fcpxml
-									if (!temp.substring(temp.lastIndexOf("/") + 1).contains(".") && b.size != 4096) { 
+									if (!temp.substring(temp.lastIndexOf("/") + 1).contains(".") || b.size == 4096) { 
 										b.isDirectory = true;
 									}
 
 									fileList.add(b);
 								}
 
-								b.category = (String) folders.get(temp);
+								b.category = (String) artifactToArtifactClassMapping.get(temp);
 								b.archiveBlock = arrValues[1];
 								b.archiveId = "";
 
@@ -131,9 +136,8 @@ public class DwaraImport {
 					createVolumeindex(ltoTape, writtenAt, destinationXmlPath);
 					FileUtils.moveFile(textFile, Paths.get(bruFile,"completed",textFile.getName()).toFile());
 				} catch (Exception e) {
-					FileUtils.moveFile(textFile, Paths.get(bruFile,"failed",textFile.getName()).toFile());
 					e.printStackTrace();
-
+					FileUtils.moveFile(textFile, Paths.get(bruFile,"failed",textFile.getName()).toFile());
 				}
 
 			}
@@ -225,7 +229,8 @@ public class DwaraImport {
 				artifact.setStartblock(artifactList.startVolumeBlock.intValue());
 				artifact.setEndblock(artifactList.endVolumeBlock.intValue());
 				if(StringUtils.isBlank(artifactList.category)) { // check if its to be ignored...
-					if(ltoTape.equals("P16539L6") && artifactList.name.equals("repair-utils")) { // TODO Move this out to a file...
+					List<String> abc = (List<String>) ignoreImportArtifacts.get(ltoTape);
+					if(abc != null && abc.contains(artifactList.name)){
 						System.out.println("Skipped " + artifactList.name + " its flagged to be ignored");
 						continue;
 					}
@@ -259,7 +264,7 @@ public class DwaraImport {
 				Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
 				for (File nthFile : fileList) {
 					String nthFilepathname = nthFile.getName();
-					if(nthFile.getDirectory()){
+					if(Boolean.TRUE.equals(nthFile.getDirectory())){
 						filePathnameVsSize_Map.put(nthFilepathname,0L);
 					}else {
 						String nthFileDirectoryName = FilenameUtils.getFullPathNoEndSeparator(nthFilepathname);
@@ -276,7 +281,7 @@ public class DwaraImport {
 
 				// now lets make use of the collected subfolder size 
 				for (File nthFile : fileList) {
-					if(nthFile.getDirectory()){
+					if(Boolean.TRUE.equals(nthFile.getDirectory())){
 						Long nthDirectorySize= filePathnameVsSize_Map.get(nthFile.getName());
 						nthFile.setSize(nthDirectorySize);
 						/*
