@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.db.model.transactional.json;
 
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -16,6 +18,8 @@ public class VolumeDetails {
 	private Boolean removeAfterJob; // Set this for tapes which should be removed from the autoloader as soon as any job is completed. Used for managing the security of tapes that hold confidential data.
 	@JsonProperty("minimum_free_space")
 	private Long minimumFreeSpace; 
+	@JsonProperty("written_at")
+	private LocalDateTime writtenAt; 
 	
 	public Boolean getBarcoded() {
 		return barcoded;
@@ -58,6 +62,12 @@ public class VolumeDetails {
 	}
 	public void setMinimumFreeSpace(Long minimumFreeSpace) {
 		this.minimumFreeSpace = minimumFreeSpace;
+	}
+	public LocalDateTime getWrittenAt() {
+		return writtenAt;
+	}
+	public void setWrittenAt(LocalDateTime writtenAt) {
+		this.writtenAt = writtenAt;
 	}
 	// TODO : equals and hashCode
 }

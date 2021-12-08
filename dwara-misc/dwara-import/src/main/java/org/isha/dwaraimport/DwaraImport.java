@@ -1,21 +1,27 @@
 package org.isha.dwaraimport;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.LineIterator;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jdom2.Attribute;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Imported;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Volumeindex;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Volumeinfo;
 import org.jdom2.output.support.AbstractXMLOutputProcessor;
 import org.jdom2.output.support.FormatStack;
 import org.jdom2.output.support.XMLOutputProcessor;
@@ -25,20 +31,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 @Component
 public class DwaraImport {
@@ -47,9 +45,7 @@ public class DwaraImport {
 	private List<BruData> listBruData = new ArrayList<>();
 	private List<BruData> artifactsList = new ArrayList<>();
 	private List<BruData> fileList = new ArrayList<>();
-	String finalizedAt = null;
-	String ltoTape;
-
+	
 	static Map getJSONFromFile(String folderPath) throws IOException, ParseException {
 
 		JSONParser parser = new JSONParser();
@@ -71,14 +67,13 @@ public class DwaraImport {
 			if (!textFile.isDirectory()) {
 				System.out.println("Parsing catalog " + textFile.getName());
 				try {
-					ltoTape = textFile.getName().split("_")[0];
+					String ltoTape = textFile.getName().split("_")[0];
 					String dateStr = textFile.getName().split("_")[1].split("\\.")[0];
-					finalizedAt = dateStr + ", 00:00:00.000";
 
-					//            		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d-MMM-yyyy HH"); 
-					//            		LocalDateTime dateTime = LocalDateTime.parse(dateStr + " 00", formatter);
-					//            		DateTimeFormatter formatterISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-					//            		finalizedAt = dateTime.format(formatterISO);
+            		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d-MMM-yyyy HH"); 
+            		LocalDateTime dateTime = LocalDateTime.parse(dateStr + " 00", formatter);
+            		DateTimeFormatter formatterISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+            		String writtenAt = dateTime.format(formatterISO);
 
 					LineIterator it = FileUtils.lineIterator(textFile, "UTF-8");
 					listBruData.clear();
@@ -133,7 +128,7 @@ public class DwaraImport {
 					//calculateArtifactSize();
 					calculateEndBlock();
 
-					createVolumeindex(finalizedAt, destinationXmlPath);
+					createVolumeindex(ltoTape, writtenAt, destinationXmlPath);
 					FileUtils.moveFile(textFile, Paths.get(bruFile,"completed",textFile.getName()).toFile());
 				} catch (Exception e) {
 					FileUtils.moveFile(textFile, Paths.get(bruFile,"failed",textFile.getName()).toFile());
@@ -205,17 +200,21 @@ public class DwaraImport {
 	};
 
 
-	public String createVolumeindex(String finalizedDate, String destinationFile) throws Exception {
+	public String createVolumeindex(String ltoTape, String writtenAt, String destinationFile) throws Exception {
 		boolean hasErrors = false;
 		System.out.println("Framing objects");
 		Volumeinfo volumeinfo = new Volumeinfo();
 		volumeinfo.setVolumeuid(StringUtils.isEmpty(ltoTape) ? "No_LTO" : ltoTape);
-		volumeinfo.setVolumeblocksize("1048576");
+		volumeinfo.setVolumeblocksize(1048576);
 		volumeinfo.setArchiveformat("bru");
-		volumeinfo.setArchiveblocksize("1024");
-		volumeinfo.setEncryptionalgorithm("AES-128");
-		volumeinfo.setFinalizedAt(finalizedDate);
-		volumeinfo.setChecksumalgorithm("md5");
+		volumeinfo.setArchiveblocksize(1024);
+		//volumeinfo.setEncryptionalgorithm("AES-128");
+		Imported imported = new Imported();
+		imported.setImported(true);
+		imported.setWrittenAt(writtenAt);
+		volumeinfo.setImported(imported);
+		//volumeinfo.setFinalizedAt(finalizedDate);
+		//volumeinfo.setChecksumalgorithm("md5");
 
 		List<Artifact> artifactXMLList = new ArrayList<>();
 		for (BruData artifactList: artifactsList) {
@@ -223,8 +222,8 @@ public class DwaraImport {
 				System.out.println("Framing object for " + artifactList.name);
 				Artifact artifact = new Artifact();
 				artifact.setName(artifactList.name);
-				artifact.setStartblock(String.valueOf(artifactList.startVolumeBlock));
-				artifact.setEndblock(String.valueOf(artifactList.endVolumeBlock));
+				artifact.setStartblock(artifactList.startVolumeBlock.intValue());
+				artifact.setEndblock(artifactList.endVolumeBlock.intValue());
 				if(StringUtils.isBlank(artifactList.category)) { // check if its to be ignored...
 					if(ltoTape.equals("P16539L6") && artifactList.name.equals("repair-utils")) { // TODO Move this out to a file...
 						System.out.println("Skipped " + artifactList.name + " its flagged to be ignored");
@@ -239,19 +238,19 @@ public class DwaraImport {
 				for (BruData bruData : listBruData) {
 					File file = new File();
 					file.setName(bruData.name);
-					file.setSize(String.valueOf(bruData.size));
+					file.setSize(bruData.size);
 					if (bruData.name.equals(artifactList.name)) {
-						file.setVolumeStartBlock(String.valueOf(artifactList.startVolumeBlock));
-						file.setVolumeEndBlock(String.valueOf(artifactList.endVolumeBlock));
-						file.setArchiveblock(String.valueOf(bruData.archiveBlock));
-						file.setDirectory(String.valueOf(artifactList.isDirectory));
+						file.setVolumeStartBlock(artifactList.startVolumeBlock.intValue());
+						//file.setVolumeEndBlock(String.valueOf(artifactList.endVolumeBlock));
+						file.setArchiveblock(Long.parseLong(bruData.archiveBlock));
+						file.setDirectory(artifactList.isDirectory);
 						fileList.add(file);
 					} else if(bruData.name.startsWith(artifactList.name + "/")){
-						file.setVolumeStartBlock(String.valueOf(bruData.startVolumeBlock));
-						file.setVolumeEndBlock(String.valueOf(bruData.endVolumeBlock));
-						file.setArchiveblock(String.valueOf(bruData.archiveBlock));
+						file.setVolumeStartBlock(bruData.startVolumeBlock.intValue());
+						//file.setVolumeEndBlock(String.valueOf(bruData.endVolumeBlock));
+						file.setArchiveblock(Long.parseLong(bruData.archiveBlock));
 						if(bruData.isDirectory)
-							file.setDirectory(String.valueOf(bruData.isDirectory));
+							file.setDirectory(bruData.isDirectory);
 						fileList.add(file);
 					}
 					
@@ -260,7 +259,7 @@ public class DwaraImport {
 				Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
 				for (File nthFile : fileList) {
 					String nthFilepathname = nthFile.getName();
-					if(Boolean.parseBoolean(nthFile.getDirectory())){
+					if(nthFile.getDirectory()){
 						filePathnameVsSize_Map.put(nthFilepathname,0L);
 					}else {
 						String nthFileDirectoryName = FilenameUtils.getFullPathNoEndSeparator(nthFilepathname);
@@ -268,7 +267,7 @@ public class DwaraImport {
 						for (String nthArtifactSubDirectory : filePathnameVsSize_Map.keySet()) {
 							if(nthFileDirectoryName.contains(nthArtifactSubDirectory)) {
 								Long size = filePathnameVsSize_Map.get(nthArtifactSubDirectory);
-								size += Long.parseLong(nthFile.getSize());
+								size += nthFile.getSize();
 								filePathnameVsSize_Map.put(nthArtifactSubDirectory,size);
 							}
 						}
@@ -277,8 +276,8 @@ public class DwaraImport {
 
 				// now lets make use of the collected subfolder size 
 				for (File nthFile : fileList) {
-					if(Boolean.parseBoolean(nthFile.getDirectory())){
-						String nthDirectorySize= filePathnameVsSize_Map.get(nthFile.getName())+"";
+					if(nthFile.getDirectory()){
+						Long nthDirectorySize= filePathnameVsSize_Map.get(nthFile.getName());
 						nthFile.setSize(nthDirectorySize);
 						/*
 						if(nthFile.getName().equals(artifactList.name))

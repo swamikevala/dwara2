@@ -23,7 +23,9 @@ public class Volumeinfo {
 	private String artifactclassuid;
 	@JacksonXmlProperty(localName="FinalizedAt")
 	private String finalizedAt;	 
-	 
+	@JacksonXmlProperty(localName="Imported")
+	private Imported imported;
+	
 	public String getVolumeuid() {
 		return volumeuid;
 	}
@@ -71,6 +73,12 @@ public class Volumeinfo {
 	}
 	public void setFinalizedAt(String finalizedAt) {
 		this.finalizedAt = finalizedAt;
+	}
+	public Imported getImported() {
+		return imported;
+	}
+	public void setImported(Imported imported) {
+		this.imported = imported;
 	}	
 }
 
