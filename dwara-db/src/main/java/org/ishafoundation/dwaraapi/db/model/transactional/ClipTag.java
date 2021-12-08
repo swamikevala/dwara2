@@ -3,7 +3,7 @@ package org.ishafoundation.dwaraapi.db.model.transactional;
 import javax.persistence.*;
 
 @Entity
-@Table(name ="clip_tag")
+@Table(name ="clip_mamtag")
 public class ClipTag {
     public int getId() {
         return id;
@@ -22,17 +22,17 @@ public class ClipTag {
     }
 
     public int getTagId() {
-        return tagId;
+        return mamtagId;
     }
 
     public void setTagId(int tagId) {
-        this.tagId = tagId;
+        this.mamtagId = tagId;
     }
 
     @Id
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator = "t_file_sequence")
+    @GeneratedValue(strategy= GenerationType.SEQUENCE)
     @Column(name="id")
      int id;
     int clipId;
-    int tagId;
+    int mamtagId;
 }

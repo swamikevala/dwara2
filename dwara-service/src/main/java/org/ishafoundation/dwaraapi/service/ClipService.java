@@ -31,6 +31,7 @@ public class ClipService extends DwaraService{
     ArtifactDao artifact1Dao;
 
     public List<ClipArtifactResponse> getEvents(ClipRequest clipRequest){
+        System.out.println("Events");
         List<ClipArtifactResponse> clipArtifactResponses = new ArrayList<>();
         //Set<File> file1Set =new TreeSet<>();
         Set<File> file1s = new HashSet<>();
@@ -85,6 +86,9 @@ public class ClipService extends DwaraService{
                 ClipResponse clipResponse = new ClipResponse();
                 clipResponse.setClipId(clip.getId());
                 clipResponse.setClipName(clip.getName());
+                if(clip.getFile_id()!=null && clip.getFile_id()!=0){
+                System.out.println("clip: "+clip.getId());
+                System.out.println(clip.getFile_id());
                 File file1 = file1Dao.findById(clip.getFile_id()).get();
                 String appendUrlTOProxy = "";
                 if (file1.getArtifact().getArtifactclass().getId().contains("-priv")) {
@@ -104,9 +108,10 @@ public class ClipService extends DwaraService{
                     tags.add(mamTag.getName());
                 }
                 clipResponse.setTagList(tags);
+                //System.out.println(clip);
                 clipResponseList.add(clipResponse);
 
-            }
+            }}
             clipArtifactResponse.setClipResponseList(clipResponseList);
             clipArtifactResponses.add(clipArtifactResponse);
         }
@@ -116,21 +121,34 @@ public class ClipService extends DwaraService{
     }
 
     public List<ClipArtifactResponse> getTags(ClipRequest clipRequest){
+        System.out.println("Inside Tags");
         List<ClipArtifactResponse> clipArtifactResponses = new ArrayList<>();
         List<MamTag> mamTags = mamTagDao.findByNameIn(clipRequest.getKeyWords());
         List<Clip> clips =new ArrayList<>();
         List<Integer> tagIds =new ArrayList<>();
+       // System.out.println(mamTags);
         for(MamTag mamTag:mamTags){
             tagIds.add(mamTag.getId());
 
         }
-        List<ClipTag> clipTags =clipTagDao.findByTagIdIn(tagIds);
+        List<ClipTag> clipTags =clipTagDao.findByMamtagIdIn(tagIds);
         Set<Integer> clipIds = new TreeSet<>();
 
         for (ClipTag clipTag: clipTags) {
-            if (clipRequest.getOperator().equals("AND")) {
-                    if(clipTagDao.findAllByClipId(clipTag.getClipId()).containsAll(tagIds))
+            if (clipRequest.getOperator().equals("And")) {
+              List<ClipTag> TagsofClips =  clipTagDao.findAllByClipId(clipTag.getClipId());
+              List<Integer> tagsOfClip = new ArrayList<>();
+                for (ClipTag clipTag1: TagsofClips
+                     ) {
+                    tagsOfClip.add(clipTag1.getTagId());
+                }
+                System.out.println(tagIds);
+                System.out.println(tagsOfClip);
+                    if((tagsOfClip).containsAll(tagIds))
+                    {
+                        System.out.println("inside ANd");
                         clipIds.add(clipTag.getTagId());
+                    }
             }
             else
             clipIds.add(clipTag.getClipId());
@@ -138,12 +156,14 @@ public class ClipService extends DwaraService{
 
 
         clips=clipDao.findAllByIdIn(clipIds);
-
+        System.out.println(clipIds);
         Map<String , List<ClipResponse>> artifactClips = new HashMap<>();
         for (Clip clip: clips) {
             ClipResponse clipResponse =new ClipResponse();
             clipResponse.setClipId(clip.getId());
             clipResponse.setClipName(clip.getName());
+            System.out.println(clip.getFile_id());
+            if(clip.getFile_id()!=null && clip.getFile_id()!=0){
             File file1 = file1Dao.findById(clip.getFile_id()).get();
             String appendUrlTOProxy = "";
             if(file1.getArtifact().getArtifactclass().getId().contains("-priv")){
@@ -177,7 +197,7 @@ public class ClipService extends DwaraService{
                 artifactClips.put(file1.getArtifact().getName(),clipResponseList);
             }
             //clipResponseList.add(clipResponse);
-        }
+        }}
         for (String artifact: artifactClips.keySet()) {
             ClipArtifactResponse clipArtifactResponse = new ClipArtifactResponse();
             clipArtifactResponse.setName(artifact);
@@ -191,15 +211,20 @@ public class ClipService extends DwaraService{
 
     public List<ClipArtifactResponse> searchClips(ClipRequest clipRequest){
         List<ClipArtifactResponse> clipArtifactResponses = new ArrayList<>();
+        System.out.println(clipRequest.getType());
         if(clipRequest.getType().equals("Events"))
             return getEvents(clipRequest);
         else if( clipRequest.getType().equals("Tags"))
-            return getEvents(clipRequest);
+            return getTags(clipRequest);
         clipArtifactResponses.addAll(getEvents(clipRequest));
         clipArtifactResponses.addAll(getTags(clipRequest));
         return clipArtifactResponses;
 
-    }}
+    }
+
+
+
+}
 
 
 
