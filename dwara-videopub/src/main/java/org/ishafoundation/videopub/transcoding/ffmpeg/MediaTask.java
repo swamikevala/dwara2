@@ -23,8 +23,11 @@ public class MediaTask {
 	@Autowired
 	protected CommandLineExecuter commandLineExecuter;	
 	
-	
 	protected CommandLineExecutionResponse createProcessAndExecuteCommand(String mediaFileId, List<String> commandParamsList) throws Exception{
+		return createProcessAndExecuteCommand(mediaFileId, commandParamsList, true);
+	}
+	
+	protected CommandLineExecutionResponse createProcessAndExecuteCommand(String mediaFileId, List<String> commandParamsList, boolean extractLastLineAsFailureReason) throws Exception{
 		Process proc = commandLineExecuter.createProcess(commandParamsList);
 		CommandLineProcessMapKeyBean commandLineProcessMapKeyBean = new CommandLineProcessMapKeyBean();
 		// TODO : commandLineProcessMapKeyBean.setLibraryId(job.getLibraryId());
@@ -34,7 +37,9 @@ public class MediaTask {
 		commandLineProcessMapValueBean.setProcess(proc);
 		
 		RUNNING_MEDIAPROCESSING_PROCESSES_MAP.put(commandLineProcessMapKeyBean, commandLineProcessMapValueBean);
-		CommandLineExecutionResponse commandLineExecutionResponse = commandLineExecuter.executeCommand(commandParamsList, proc);
+		CommandLineExecutionResponse commandLineExecutionResponse = commandLineExecuter.executeCommand(commandParamsList, proc, extractLastLineAsFailureReason); 
+				
+				
 		commandLineExecutionResponse.setIsCancelled(commandLineProcessMapValueBean.isKillProcessInitiated());
 		RUNNING_MEDIAPROCESSING_PROCESSES_MAP.remove(commandLineProcessMapKeyBean);
 		

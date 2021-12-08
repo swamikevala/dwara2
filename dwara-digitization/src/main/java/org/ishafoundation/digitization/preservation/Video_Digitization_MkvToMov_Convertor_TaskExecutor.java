@@ -86,7 +86,7 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		logger.info("Mov Conversion starts for " + sourceFilePathname + " - targetLocation is - " + outputFileTargetLocation);
 		
 		List<String> conversionCommandParamsList = getConversionCommand(sourceFilePathname, outputFileTargetLocation, videoType);
-		CommandLineExecutionResponse conversionCommandLineExecutionResponse = createProcessAndExecuteCommand(fileId+"~"+taskName , conversionCommandParamsList);
+		CommandLineExecutionResponse conversionCommandLineExecutionResponse = createProcessAndExecuteCommand(fileId+"~"+taskName , conversionCommandParamsList, false);
 		if(conversionCommandLineExecutionResponse.isComplete())
 			logger.info("Mov Conversion successful - " + outputFileTargetLocation);
 		
