@@ -335,7 +335,11 @@ public class FileService extends DwaraService{
     	restoreResponse.setFiles(files);    	
     	return restoreResponse;
     }
-    
+
+	
+	// To avoid consequent duplicate requests from client we need to check in dB something like below, but only one bucket with same name at a time is allowd so does check still required...
+	// select * from request where requested_at>'2021-12-06' and action_id='restore_process' and type='system' and json_extract(details, '$.file_id') = 175038 and json_extract(details, '$.output_folder') = 'Aum---Mani-Padme-Hum_Set3'
+
     private void validate(List<Integer> fileIds, int copyNumber, String destinationPath, String outputFolder, Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File> fileId_FileObj_Map) {
     	List<String> requestedDirectoriesPathNameList = new ArrayList<String>();
     	List<String> errorFileList = new ArrayList<String>();
