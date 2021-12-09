@@ -7,8 +7,7 @@ public class Import {
     public static void main (String[] args) throws Exception {
         String bruFileLocation = args[0];
         String artifactToArtifactClassMappingJsonFolderPath = args[1];
-        String artifactsToBeImportIgnoredJsonFolderPathLocation = args[2];
-        String destinationXMLLocation = args[3];
+        String destinationXMLLocation = args[2];
 
         DwaraImport dwaraImport = new DwaraImport();
         
@@ -21,7 +20,7 @@ public class Import {
 		}).length == 0)
 			throw new Exception("No catalog available for xml generation in " + bruFileLocation);
 
-		dwaraImport.apacheGetXMLData(bruFileLocation, artifactsToBeImportIgnoredJsonFolderPathLocation, artifactToArtifactClassMappingJsonFolderPath, destinationXMLLocation);
+		dwaraImport.apacheGetXMLData(bruFileLocation, artifactToArtifactClassMappingJsonFolderPath, destinationXMLLocation);
     }
 
 }

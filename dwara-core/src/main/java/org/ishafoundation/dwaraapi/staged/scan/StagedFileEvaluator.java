@@ -43,7 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class StagedFileEvaluator {
+public class StagedFileEvaluator extends Validation{
 	
 	private static final Logger logger = LoggerFactory.getLogger(StagedFileEvaluator.class);
 
@@ -71,7 +71,6 @@ public class StagedFileEvaluator {
 	private List<Pattern> excludedFileNamesRegexList = new ArrayList<Pattern>();
 	private Pattern allowedChrsInFileNamePattern = null;
 	private Pattern photoSeriesArtifactclassArifactNamePattern = null;
-	private static SimpleDateFormat photoSeriesArtifactNameDateFormat = new SimpleDateFormat("yyyyMMdd");
 	private String editedTrSeriesFlowelementTaskconfigPathnameRegex = null;
 	private Set<String> supportedExtns = null;
 	
@@ -142,58 +141,18 @@ public class StagedFileEvaluator {
 		}	
 		
 		// 1- validateName
-		errorList.addAll(validateName(fileName));
+		errorList.addAll(validateName(fileName, allowedChrsInFileNamePattern));
 
 		// 1a - validateName for photo* artifactclass
 		if(FilenameUtils.getBaseName(sourcePath).startsWith("photo")) { // validation only for photo* artifactclass
-			Matcher m = photoSeriesArtifactclassArifactNamePattern.matcher(fileName);
-			if(!m.matches()) { 
-				Error error = new Error();
-				error.setType(Errortype.Error);
-				error.setMessage("Artifact Name should be in yyyyMMdd_XXX_* pattern");
-				errorList.add(error);
-			} else {
-				// should i check for a valid date here???
-				try {
-					photoSeriesArtifactNameDateFormat.parse(m.group(1));
-				} catch (ParseException e) {
-					Error error = new Error();
-					error.setType(Errortype.Error);
-					error.setMessage("Artifact Name date should be in yyyyMMdd pattern");
-					errorList.add(error);
-				}
-			}
-			
-			if(sfv != null && sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0) {
-				Error error = new Error();
-				error.setType(Errortype.Error);
-				error.setMessage("File Names shoud be in yyyymmdd_xxx_dddd pattern");
-				errorList.add(error);
-				logger.error(fileName + " has following files failing validation "  + sfv.getPhotoSeriesFileNameValidationFailedFileNames());
-			}
+			errorList.addAll(validatePhotoName(fileName, allowedChrsInFileNamePattern, (sfv != null && sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0 ? sfv.getPhotoSeriesFileNameValidationFailedFileNames() : null)));
 		}
 		
 		// 2- validateCount
-		if(fileCount == 0) {
-			Error error = new Error();
-			error.setType(Errortype.Error);
-			error.setMessage("Artifact Folder has no non-junk files inside");
-			errorList.add(error);
-		}
+		errorList.addAll(validateFileCount(fileCount));
 
 		// 3- validateSize
-		long configuredSize = 1048576; // 1MB // TODO whats the size we need to compare against?
-		if(size == 0) {
-			Error error = new Error();
-			error.setType(Errortype.Error);
-			error.setMessage("Artifact size is 0");
-			errorList.add(error);
-		}else if(size < configuredSize) {
-			Error error = new Error();
-			error.setType(Errortype.Warning);
-			error.setMessage("Artifact is less than 1 MiB");
-			errorList.add(error);
-		};
+		errorList.addAll(validateFileSize(size));
 
 		// 4- dupe check on size against existing artifact
 		List<Artifact> alreadyExistingArtifacts = artifactDao.findAllByTotalSizeAndDeletedIsFalse(size);
@@ -312,35 +271,6 @@ public class StagedFileEvaluator {
 		return nthIngestFile;
 	}
 
-	public List<Error> validateName(String fileName) {
-		List<Error> errorList = new ArrayList<Error>();
-		if(fileName.length() > 238) { // 238 because we need to add sequence number and when inserting catalog to catdv it becomes like 2006/09/VDL1154_
-			Error error = new Error();
-			error.setType(Errortype.Error);
-			error.setMessage("Artifact Name gt 238 characters");
-			errorList.add(error);
-		}
-
-		Matcher m = allowedChrsInFileNamePattern.matcher(fileName);
-		if(!m.matches()) {
-			Error error = new Error();
-			error.setType(Errortype.Error);
-			error.setMessage("Artifact Name contains special characters");
-			errorList.add(error);
-		}
-		
-		CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
-		try {
-			decoder.decode(ByteBuffer.wrap(fileName.getBytes()));		           
-		} catch (CharacterCodingException ex) {		        
-			Error error = new Error();
-			error.setType(Errortype.Error);
-			error.setMessage("Artifact Name contains non-unicode characters");
-			errorList.add(error);
-		} 
-
-		return errorList;
-	}
 
 	// Used in ingest to validate level 1 on file size and count
 	public ArtifactFileDetails getDetails(File nthIngestableFile){

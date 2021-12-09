@@ -11,12 +11,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.staged.scan.Error;
+import org.ishafoundation.dwaraapi.staged.scan.Validation;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Imported;
@@ -39,14 +42,15 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 @Component
-public class DwaraImport {
+public class DwaraImport extends Validation{
 	private static final Logger LOG = LoggerFactory.getLogger(DwaraImport.class);
 
 	private List<BruData> listBruData = new ArrayList<>();
 	private List<BruData> artifactsList = new ArrayList<>();
 	private List<BruData> fileList = new ArrayList<>();
+	String regexAllowedChrsInFileName = "[\\w-.]*";
+	Pattern allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
 	
-	private Map<String, Object> ignoreImportArtifacts = null;
 	static Map getJSONFromFile(String folderPath) throws IOException, ParseException {
 
 		JSONParser parser = new JSONParser();
@@ -60,10 +64,7 @@ public class DwaraImport {
 	}
 
 
-	public void apacheGetXMLData(String bruFile, String artifactsToBeImportIgnoredJsonFolderPathLocation, String artifactToArtifactClassMappingJsonFolderPath, String destinationXmlPath) throws IOException, ParseException {
-		System.out.println("Loading artifacts to be ignored from importing " + artifactsToBeImportIgnoredJsonFolderPathLocation);
-		ignoreImportArtifacts = getJSONFromFile(artifactsToBeImportIgnoredJsonFolderPathLocation);
-
+	public void apacheGetXMLData(String bruFile, String artifactToArtifactClassMappingJsonFolderPath, String destinationXmlPath) throws IOException, ParseException {
 		System.out.println("Loading artifact to artifactclass mapping " + artifactToArtifactClassMappingJsonFolderPath);
 		Map<String, Object> artifactToArtifactClassMapping = getJSONFromFile(artifactToArtifactClassMappingJsonFolderPath);
 
@@ -206,7 +207,7 @@ public class DwaraImport {
 
 	public String createVolumeindex(String ltoTape, String writtenAt, String destinationFile) throws Exception {
 		boolean hasErrors = false;
-		System.out.println("Framing objects");
+		System.out.println("Framing VolumeIndex Object from parsed data");
 		Volumeinfo volumeinfo = new Volumeinfo();
 		volumeinfo.setVolumeuid(StringUtils.isEmpty(ltoTape) ? "No_LTO" : ltoTape);
 		volumeinfo.setVolumeblocksize(1048576);
@@ -223,18 +224,21 @@ public class DwaraImport {
 		List<Artifact> artifactXMLList = new ArrayList<>();
 		for (BruData artifactList: artifactsList) {
 			try {
-				System.out.println("Framing object for " + artifactList.name);
+				List<Error> errorList = new ArrayList<Error>();
+				errorList.addAll(validateName(artifactList.name, allowedChrsInFileNamePattern));
+				
+				// System.out.println("Framing object for " + artifactList.name);
 				Artifact artifact = new Artifact();
 				artifact.setName(artifactList.name);
 				artifact.setStartblock(artifactList.startVolumeBlock.intValue());
 				artifact.setEndblock(artifactList.endVolumeBlock.intValue());
 				if(StringUtils.isBlank(artifactList.category)) { // check if its to be ignored...
-					List<String> abc = (List<String>) ignoreImportArtifacts.get(ltoTape);
-					if(abc != null && abc.contains(artifactList.name)){
-						System.out.println("Skipped " + artifactList.name + " its flagged to be ignored");
-						continue;
-					}
-					else
+//					List<String> abc = (List<String>) ignoreImportArtifacts.get(ltoTape);
+//					if(abc != null && abc.contains(artifactList.name)){
+//						System.out.println("Skipped " + artifactList.name + " its flagged to be ignored");
+//						continue;
+//					}
+//					else
 						throw new Exception("Unable to get artifactclass for " + ltoTape + ":" + artifactList.name);
 				}	
 				artifact.setArtifactclassuid(artifactList.category);
@@ -279,25 +283,36 @@ public class DwaraImport {
 					}
 				}                 
 
+				long artifactSize = 0L;
 				// now lets make use of the collected subfolder size 
 				for (File nthFile : fileList) {
 					if(Boolean.TRUE.equals(nthFile.getDirectory())){
 						Long nthDirectorySize= filePathnameVsSize_Map.get(nthFile.getName());
 						nthFile.setSize(nthDirectorySize);
-						/*
-						if(nthFile.getName().equals(artifactList.name))
-							artifact.setTotalSize(nthDirectorySize);
-						*/
+
+						if(nthFile.getName().equals(artifactList.name)){
+							artifactSize = nthDirectorySize;
+							//artifact.setTotalSize(nthDirectorySize);
+						}
+
 					}
 				}		
 				artifact.setFile(fileList);
+				
+				errorList.addAll(validateFileCount(fileList.size()));
+				errorList.addAll(validateFileSize(artifactSize));
+
+				if(errorList.size() > 0)
+					throw new Exception("Validation failures - " + errorList.toString());
+					
 				artifactXMLList.add(artifact);
+
 			}catch (Exception e) {
 				System.err.println(artifactList.name + " has errors " + e.getMessage());
 				hasErrors=true;
 				e.printStackTrace();
 			}
-			System.out.println("Framed object for " + artifactList.name);
+			// System.out.println("Framed object for " + artifactList.name);
 		}
 		
 		if(hasErrors)
