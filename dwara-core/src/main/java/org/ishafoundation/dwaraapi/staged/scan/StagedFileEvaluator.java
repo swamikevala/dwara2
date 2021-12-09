@@ -141,7 +141,7 @@ public class StagedFileEvaluator extends Validation{
 		}	
 		
 		// 1- validateName
-		errorList.addAll(validateName(fileName, allowedChrsInFileNamePattern));
+		errorList.addAll(validateName(fileName));
 
 		// 1a - validateName for photo* artifactclass
 		if(FilenameUtils.getBaseName(sourcePath).startsWith("photo")) { // validation only for photo* artifactclass
@@ -270,8 +270,11 @@ public class StagedFileEvaluator extends Validation{
 
 		return nthIngestFile;
 	}
-
-
+	
+	public List<Error> validateName(String fileName) {
+		return validateName(fileName, allowedChrsInFileNamePattern);
+	}
+	
 	// Used in ingest to validate level 1 on file size and count
 	public ArtifactFileDetails getDetails(File nthIngestableFile){
 		return invokeVisitor(nthIngestableFile, false);
