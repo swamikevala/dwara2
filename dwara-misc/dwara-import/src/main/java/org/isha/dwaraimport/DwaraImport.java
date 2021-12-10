@@ -239,7 +239,7 @@ public class DwaraImport extends Validation{
 //						continue;
 //					}
 //					else
-						throw new Exception("Unable to get artifactclass for " + ltoTape + ":" + artifactList.name);
+					System.err.println(ltoTape + ":" + artifactList.name + " misses artifactclass");
 				}	
 				artifact.setArtifactclassuid(artifactList.category);
 
@@ -302,22 +302,24 @@ public class DwaraImport extends Validation{
 				errorList.addAll(validateFileCount(fileList.size()));
 				errorList.addAll(validateFileSize(artifactSize));
 
-				if(errorList.size() > 0)
-					throw new Exception("Validation failures - " + errorList.toString());
-					
-				artifactXMLList.add(artifact);
+				if(errorList.size() > 0) {
+					System.err.println(ltoTape + ":" + artifactList.name + " has validation failures - " + errorList.toString());
+					hasErrors=true;
+				}
+				else	
+					artifactXMLList.add(artifact);
 
 			}catch (Exception e) {
-				System.err.println(artifactList.name + " has errors " + e.getMessage());
+				System.err.println(ltoTape + ":" + artifactList.name + " has errors " + e.getMessage());
 				hasErrors=true;
 				e.printStackTrace();
 			}
 			// System.out.println("Framed object for " + artifactList.name);
 		}
 		
-		if(hasErrors)
-			throw new Exception(ltoTape + " has errors ");
-			
+		if(hasErrors) {
+			destinationFile = destinationFile + "-failed";
+		}	
 		System.out.println("Generating xml");
 		Volumeindex volumeindex = new Volumeindex();
 		volumeindex.setVolumeinfo(volumeinfo);
@@ -338,6 +340,9 @@ public class DwaraImport extends Validation{
 			e.printStackTrace();
 		}
 		System.out.println("Xml Generated");
+		if(hasErrors) {
+			throw new Exception(ltoTape + " has errors");
+		}
 		return xmlFromJava;
 
 	}
