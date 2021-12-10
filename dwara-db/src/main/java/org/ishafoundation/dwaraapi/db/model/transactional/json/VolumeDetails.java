@@ -19,7 +19,7 @@ public class VolumeDetails {
 	@JsonProperty("minimum_free_space")
 	private Long minimumFreeSpace; 
 	@JsonProperty("written_at")
-	private LocalDateTime writtenAt; 
+	private String writtenAt; 
 	
 	public Boolean getBarcoded() {
 		return barcoded;
@@ -63,10 +63,10 @@ public class VolumeDetails {
 	public void setMinimumFreeSpace(Long minimumFreeSpace) {
 		this.minimumFreeSpace = minimumFreeSpace;
 	}
-	public LocalDateTime getWrittenAt() {
+	public String getWrittenAt() {
 		return writtenAt;
 	}
-	public void setWrittenAt(LocalDateTime writtenAt) {
+	public void setWrittenAt(String writtenAt) {
 		this.writtenAt = writtenAt;
 	}
 	// TODO : equals and hashCode

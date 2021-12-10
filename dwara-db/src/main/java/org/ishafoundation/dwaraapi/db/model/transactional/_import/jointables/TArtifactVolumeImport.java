@@ -1,38 +1,32 @@
-package org.ishafoundation.dwaraapi.db.model.transactional._import;
+package org.ishafoundation.dwaraapi.db.model.transactional._import.jointables;
 		
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.Lob;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.TypeDef;
-import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.keys.TArtifactVolumeImportKey;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
 
 
-
+// TODO - Should this be action_volume_artifact or artifact_volume_action ???
 @Entity
-@Table(name="import")
+@Table(name="t_artifact_volume_import") // holds a list of artifacts of a volume we are importing 
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-public class Import {
-	
+public class TArtifactVolumeImport {
+
 	@EmbeddedId
-	private ImportKey id;
+	private TArtifactVolumeImportKey id;
 	
-	@OneToOne(fetch = FetchType.LAZY)
-    private Request request;
+	@Column(name="artifact_id")
+	private Integer artifactId;
 	
-    @Lob
-    @Column(name = "payload", columnDefinition="LONGBLOB")
-    private byte[] payload;
-    
 	@Enumerated(EnumType.STRING)
 	@Column(name="status")
 	private Status status;
@@ -40,29 +34,21 @@ public class Import {
 	@Lob
 	@Column(name="message")
 	private String message; 
-
-	public ImportKey getId() {
+	
+	public TArtifactVolumeImportKey getId() {
 		return id;
 	}
 
-	public void setId(ImportKey id) {
+	public void setId(TArtifactVolumeImportKey id) {
 		this.id = id;
 	}
 
-	public Request getRequest() {
-		return request;
+	public Integer getArtifactId() {
+		return artifactId;
 	}
 
-	public void setRequest(Request request) {
-		this.request = request;
-	}
-
-	public byte[] getPayload() {
-		return payload;
-	}
-
-	public void setPayload(byte[] payload) {
-		this.payload = payload;
+	public void setArtifactId(Integer artifactId) {
+		this.artifactId = artifactId;
 	}
 
 	public Status getStatus() {

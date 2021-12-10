@@ -7,7 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 @Embeddable
-public class ImportVolumeArtifactKey implements Serializable {
+public class TArtifactVolumeImportKey implements Serializable {
 
 	private static final long serialVersionUID = 397632917957707570L;
 
@@ -17,9 +17,9 @@ public class ImportVolumeArtifactKey implements Serializable {
     @Column(name = "artifact_name")
     private String artifactName;
  
-    public ImportVolumeArtifactKey() {}
+    public TArtifactVolumeImportKey() {}
     
-    public ImportVolumeArtifactKey(String volumeId, String artifactName) {
+    public TArtifactVolumeImportKey(String volumeId, String artifactName) {
         this.volumeId = volumeId;
         this.artifactName = artifactName;
     }
@@ -47,7 +47,7 @@ public class ImportVolumeArtifactKey implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        ImportVolumeArtifactKey that = (ImportVolumeArtifactKey) o;
+        TArtifactVolumeImportKey that = (TArtifactVolumeImportKey) o;
         return Objects.equals(volumeId, that.volumeId) &&
                Objects.equals(artifactName, that.artifactName);
     }
