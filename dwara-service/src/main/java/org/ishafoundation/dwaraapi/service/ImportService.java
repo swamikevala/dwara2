@@ -236,7 +236,6 @@ public class ImportService extends DwaraService {
 			String volumeId = volumeInfo.getVolumeuid();
 			
 			// TODO - move this to validateAndGetVolumeindex method
-			
 			Request alreadyCompletelyImportedVolumeRequest = requestDao.findAlreadyCompletelyImportedVolumeNative(volumeId);
 			if(alreadyCompletelyImportedVolumeRequest != null) {
 				String msg = volumeId + " already imported successfully";
