@@ -46,10 +46,10 @@ UPDATE `t_artifact_volume_import` SET `artifact_id`=49056 WHERE `artifact_name`=
 UPDATE `t_artifact_volume_import` SET `artifact_id`=49057 WHERE `artifact_name`='Z7461_Meditators-Sathsang_DV_M299-To-M302_MD-M453_AA04-To-AA05_Edited-Files' and `volume_id`='P17023L6';
 
 -- attend to the failures...
-UPDATE `t_artifact_volume_import` SET status='failed' and message='Artifact Name has special characters'  WHERE `artifact_id`=49034 and `volume_id`='P17023L6';
-UPDATE `t_artifact_volume_import` SET status='failed' and message='Artifact size is less than 1MiB'  WHERE `artifact_id`=49034 and `volume_id`='P17023L6';
+UPDATE `t_artifact_volume_import` SET status='failed', message='Artifact Name has special characters'  WHERE `artifact_id`=49034 and `volume_id`='P17023L6';
+UPDATE `t_artifact_volume_import` SET status='failed', message='Artifact size is less than 1MiB'  WHERE `artifact_id`=49034 and `volume_id`='P17023L6';
 
 -- update request status 
-update request set status = 'completed_failures' where action_id='import' and json_extract(details, '$.body.xmlPathname') like "%P17023L6%"
+update request set status = 'completed_failures' where action_id='import' and json_extract(details, '$.body.xmlPathname') like "%P17023L6%";
 
 SET foreign_key_checks = 1;

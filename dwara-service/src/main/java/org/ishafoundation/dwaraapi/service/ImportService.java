@@ -419,9 +419,11 @@ public class ImportService extends DwaraService {
 						}
 						logger.info("*** Artifact " + artifact.getId() + " ***");
 						logger.info("Artifact - " + artifactImportStatus);
-						if(avi.getArtifactId() != artifact.getId())
+						if(avi.getArtifactId() == null)
 							avi.setArtifactId(artifact.getId());
 						
+						if(avi.getArtifactId() != artifact.getId())
+							throw new Exception("Something wrong with avi.artifactId. Expected " + artifact.getId() + " but actual " + avi.getArtifactId());
 						/*
 						 * creating artifact_volume
 						 * 
