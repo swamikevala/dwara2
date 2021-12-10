@@ -118,10 +118,8 @@ public class ImportService extends DwaraService {
 	protected SequenceUtil sequenceUtil;
 
 	private List<Pattern> excludedFileNamesRegexList = new ArrayList<Pattern>();
-	private String todoDirName = "todo";
-	private String invalidDirName = "invalid";
-	private String completedDirName = "completed";
-	private String failedDirName = "failed";
+	private String invalidDirName = "invalid"; // invalid xml goes here
+	private String completedDirName = "completed"; // successfully completed xmls goes here
 	
 	private String bruLinkSeparator = Character.toString(Character.MIN_VALUE);
 	
@@ -140,7 +138,7 @@ public class ImportService extends DwaraService {
 	public List<ImportResponse> bulkImport(BulkImportRequest importRequest) throws Exception {
 		String importStagingDirLocation = importRequest.getStagingDir(); // /data/dwara/import-staging
 		
-		Path todoDirPath = Paths.get(importStagingDirLocation, todoDirName);
+		Path todoDirPath = Paths.get(importStagingDirLocation);
 		Path invalidDirPath = Paths.get(importStagingDirLocation, invalidDirName);
 		Path completedDirPath = Paths.get(importStagingDirLocation, completedDirName);
 		File importStagingTodoDir = todoDirPath.toFile();
