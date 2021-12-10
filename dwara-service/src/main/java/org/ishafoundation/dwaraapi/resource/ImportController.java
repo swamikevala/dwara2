@@ -36,9 +36,9 @@ public class ImportController {
 	@PostMapping(value = "/bulkImport", produces = "application/json")
 	public ResponseEntity<List<ImportResponse>> bulkImport(@RequestBody BulkImportRequest importRequest) throws Exception {
 		logger.info("/bulkImport " + importRequest.getStagingDir());
-		List<ImportResponse> importResponse = null;
+		List<ImportResponse> importResponseList = null;
 		try {
-			importResponse = importService.bulkImport(importRequest);
+			importResponseList = importService.bulkImport(importRequest);
 		}catch (Exception e) {
 			String errorMsg = "Unable to bulkImport - " + e.getMessage();
 			logger.error(errorMsg, e);
@@ -48,8 +48,14 @@ public class ImportController {
 			else
 				throw new DwaraException(errorMsg, null);
 		}
+
+		// Bit tricky if there are multiple files and one has error then its not a bad request...
+//		for (ImportResponse nthImportResponse : importResponseList) { // If any of the response has errors we throw 400
+//			if(nthImportResponse.getErrors() != null && nthImportResponse.getErrors().size() > 0)
+//				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(importResponseList);
+//		}
 		
-		return ResponseEntity.status(HttpStatus.OK).body(importResponse);
+		return ResponseEntity.status(HttpStatus.OK).body(importResponseList);
 	}
 	
 	@ApiOperation(value = "Imports a non-dwara tape's meta xml into dwara")
