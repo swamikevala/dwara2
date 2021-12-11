@@ -73,6 +73,11 @@ public class DwaraImport extends Validation{
 			if (!textFile.isDirectory()) {
 				System.out.println("Parsing catalog " + textFile.getName());
 				try {
+					java.io.File completedFile = Paths.get(bruFile,"completed",textFile.getName()).toFile();
+					if(completedFile.exists()) {
+						System.err.println(completedFile.getAbsolutePath() + " already exists. Figure out why we are already running a complete catalog. Skipping it");
+						throw new Exception(completedFile.getAbsolutePath() + " already exists. Figure out why we are already running a complete catalog. Skipping it");
+					}
 					String ltoTape = textFile.getName().split("_")[0];
 					String dateStr = textFile.getName().split("_")[1].split("\\.")[0];
 
@@ -135,10 +140,14 @@ public class DwaraImport extends Validation{
 					calculateEndBlock();
 
 					createVolumeindex(ltoTape, writtenAt, destinationXmlPath);
+					
 					FileUtils.moveFile(textFile, Paths.get(bruFile,"completed",textFile.getName()).toFile());
 				} catch (Exception e) {
 					e.printStackTrace();
-					FileUtils.moveFile(textFile, Paths.get(bruFile,"failed",textFile.getName()).toFile());
+					java.io.File failedFile = Paths.get(bruFile,"failed",textFile.getName()).toFile();
+					if(failedFile.exists())
+						failedFile.delete();
+					FileUtils.moveFile(textFile, failedFile);
 				}
 
 			}
@@ -240,6 +249,7 @@ public class DwaraImport extends Validation{
 //					}
 //					else
 					System.err.println(ltoTape + ":" + artifactList.name + " misses artifactclass");
+					hasErrors=true;
 				}	
 				artifact.setArtifactclassuid(artifactList.category);
 
