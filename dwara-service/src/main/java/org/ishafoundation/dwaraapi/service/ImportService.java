@@ -161,6 +161,7 @@ public class ImportService extends DwaraService {
 			try {
 				ImportRequest ir = new ImportRequest();
 				ir.setXmlPathname(nthXmlFile.getPath());
+				ir.setForceMatch(true); // TODO For import should we always say forceMatch... 
 				
 				ImportResponse nthImportResponse = importCatalog(ir);
 				
@@ -257,7 +258,8 @@ public class ImportService extends DwaraService {
 			request.setRequestedBy(user);
 			
 			HashMap<String, Object> data = new HashMap<String, Object>();
-			data.put("xmlPathname", importRequest.getXmlPathname());		
+			data.put("xmlPathname", importRequest.getXmlPathname());
+			data.put("forceMatch", importRequest.getForceMatch());
 			RequestDetails details = new RequestDetails();
 			JsonNode postBodyJson = getRequestDetails(data); 
 			details.setBody(postBodyJson);
@@ -329,7 +331,7 @@ public class ImportService extends DwaraService {
 						Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclassuid());
 						Sequence sequence = artifactclass.getSequence();
 						String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactName);
-						Boolean isForceMatch = sequence.getForceMatch();
+						Boolean isForceMatch = importRequest.getForceMatch() != null ? importRequest.getForceMatch() : sequence.getForceMatch();
 						if(Boolean.TRUE.equals(isForceMatch) && extractedCode == null) {
 							throw new Exception("Missing expected PreviousSeqCode " + artifactName);
 						}
@@ -374,6 +376,10 @@ public class ImportService extends DwaraService {
 //								}
 //								sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactName, overrideSequenceRefId);	
 								sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactName);
+								org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
+								if(alreadyExistingArtifactWithSameSequenceCode != null)
+									throw new Exception("Artifact with sequenceCode " + sequenceCode + " already exists - " + alreadyExistingArtifactWithSameSequenceCode.getId());
+								
 								if(extractedCode != null && sequence.isReplaceCode())
 									toBeArtifactName = artifactName.replace(extractedCode, sequenceCode);
 								else
