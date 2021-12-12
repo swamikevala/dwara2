@@ -50,7 +50,7 @@ public class Sequence implements Cacheable{
 	private String numberRegex;
 	
 	@Column(name="force_match")
-	private Boolean forceMatch;
+	private Integer forceMatch;
 	
 	@Column(name="keep_code")
 	private Boolean keepCode;
@@ -138,11 +138,11 @@ public class Sequence implements Cacheable{
 		this.numberRegex = numberRegex;
 	}
 
-	public Boolean getForceMatch() {
+	public Integer getForceMatch() {
 		return forceMatch;
 	}
 
-	public void setForceMatch(Boolean forceMatch) {
+	public void setForceMatch(Integer forceMatch) {
 		this.forceMatch = forceMatch;
 	}
 

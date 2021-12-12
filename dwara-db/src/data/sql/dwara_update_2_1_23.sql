@@ -483,4 +483,21 @@ update request set status = 'completed_failures' where action_id='import' and js
 update request set status = 'completed_failures' where action_id='import' and json_extract(details, '$.body.xmlPathname') like "%C17027L6%";
 update request set status = 'completed_failures' where action_id='import' and json_extract(details, '$.body.xmlPathname') like "%C17031L7%";
 
+ALTER TABLE `sequence` CHANGE COLUMN `force_match` `force_match` INT(1) NULL DEFAULT NULL ;
+
+UPDATE `sequence` SET `force_match`='2' WHERE `id`='video-pub';
+UPDATE `sequence` SET `force_match`='2' WHERE `id`='video-priv2';
+UPDATE `sequence` SET `force_match`='2' WHERE `id`='video-priv3';
+UPDATE `sequence` SET `force_match`='2' WHERE `id`='video-edit-pub';
+UPDATE `sequence` SET `force_match`='2' WHERE `id`='video-edit-priv2';
+UPDATE `sequence` SET `force_match`='0' WHERE `id`='video-digi-2010-priv2';
+UPDATE `sequence` SET `force_match`='0' WHERE `id`='video-digi-2010-pub';
+
+/*
+select sequence_code, artifactclass_id, count(sequence_code) from artifact 
+-- where artifactclass_id not like '%low' 
+group by sequence_code , artifactclass_id having count(sequence_code) > 1; 
+ALTER TABLE `artifact` ADD UNIQUE INDEX `sequence_code_UNIQUE` (`sequence_code` ASC);
+*/
+
 SET foreign_key_checks = 1;

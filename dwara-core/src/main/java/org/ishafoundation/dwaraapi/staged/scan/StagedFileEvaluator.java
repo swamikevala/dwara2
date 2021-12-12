@@ -254,13 +254,13 @@ public class StagedFileEvaluator extends Validation{
 		nthIngestFile.setErrors(errorList);
 
 		Boolean isKeepExtractedCode = sequence.isKeepCode();
-		Boolean isForceMatch = sequence.getForceMatch();
+		boolean isForceMatch = (sequence.getForceMatch() != null && sequence.getForceMatch() == 1)  ? true : false;
 
 		if(!isKeepExtractedCode) {
 			String prevSeqCode = sequenceUtil.getExtractedCode(sequence, fileName);
 			nthIngestFile.setPrevSequenceCode(prevSeqCode);
 		}	
-		if(isForceMatch != null && isForceMatch)
+		if(isForceMatch)
 			nthIngestFile.setPrevSequenceCodeExpected(true);
 
 		// TODO : Talk to swami - do we still need suggested filename now that we are not migrating
