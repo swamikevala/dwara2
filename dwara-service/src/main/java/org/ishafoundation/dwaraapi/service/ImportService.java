@@ -304,8 +304,10 @@ public class ImportService extends DwaraService {
 	    	
 //			List<Artifact> artifactList = volumeindex.getArtifact();
 			for (Artifact nthArtifact : artifactList) {
-				String artifactName = nthArtifact.getName();
-				logger.debug("Now importing " + artifactName);
+				String artifactNameAsInCatalog = nthArtifact.getName(); // Name thats in tape
+				String artifactNameProposed = nthArtifact.getRename() != null ? nthArtifact.getRename() : artifactNameAsInCatalog; // Proposed new name thats in tape
+				String toBeArtifactName = null; // Name that needs to be saved in Artifact/File tables in DB
+				logger.debug("Now importing " + artifactNameAsInCatalog);				
 				
 				ImportStatus artifactImportStatus = ImportStatus.failed; 
 				ImportStatus artifactVolumeImportStatus = ImportStatus.failed;
@@ -313,9 +315,9 @@ public class ImportService extends DwaraService {
 				ImportStatus fileVolumeImportStatus = ImportStatus.failed;
 				
 				org.ishafoundation.dwaraapi.api.resp._import.Artifact respArtifact = new org.ishafoundation.dwaraapi.api.resp._import.Artifact();
-				respArtifact.setName(nthArtifact.getName());
+				respArtifact.setName(artifactNameAsInCatalog);
 
-				TArtifactVolumeImportKey aviKey = new TArtifactVolumeImportKey(volumeId, nthArtifact.getName());
+				TArtifactVolumeImportKey aviKey = new TArtifactVolumeImportKey(volumeId, artifactNameAsInCatalog);
 				TArtifactVolumeImport avi = tArtifactVolumeImportDao.findById(aviKey).get();
 				if(avi.getStatus() == Status.completed) { // already completed - so skip it
 					// continue;
@@ -329,23 +331,23 @@ public class ImportService extends DwaraService {
 						
 						Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclassuid());
 						Sequence sequence = artifactclass.getSequence();
-						String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactName);
+						String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
 						boolean isForceMatch = (sequence.getForceMatch() != null && sequence.getForceMatch() >= 1)  ? true : false;
 						if(isForceMatch && extractedCode == null) {
-							throw new Exception("Missing expected PreviousSeqCode " + artifactName);
+							throw new Exception("Missing expected PreviousSeqCode " + artifactNameProposed);
 						}
 						String sequenceCode = null;
 						String prevSeqCode = null;
-						String toBeArtifactName = null;
-						if(sequence.isKeepCode() && extractedCode != null) {
-							// retaining the same name
-							toBeArtifactName = artifactName;
-							sequenceCode = extractedCode;
+						if(extractedCode != null) {
+							if(sequence.isKeepCode()) {
+								// retaining the same name
+								toBeArtifactName = artifactNameProposed;
+								sequenceCode = extractedCode;
+							}
+							else {
+								prevSeqCode = extractedCode;
+							}
 						}
-						else {
-							prevSeqCode = extractedCode;
-						}
-						
 						boolean artifactAlreadyExists = true;
 						org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = null;
 						if(prevSeqCode != null) {
@@ -353,10 +355,10 @@ public class ImportService extends DwaraService {
 						}else if(sequenceCode != null){				
 							artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
 						}else {
-							 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(artifactName,artifactclass.getId()); // Some legacy written artifacts dont have sequencecode to it
+							 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(artifactNameProposed,artifactclass.getId()); // Some legacy written artifacts dont have sequencecode to it
 							 for (org.ishafoundation.dwaraapi.db.model.transactional.Artifact nthArtifactEndingWithSameName : artifactsEndingWithSameName) {
 								 String artifactNameShavedOffPrefix = StringUtils.substringAfter(nthArtifactEndingWithSameName.getName(),"_");
-								 if(artifactNameShavedOffPrefix.equals(artifactName)) {
+								 if(artifactNameShavedOffPrefix.equals(artifactNameProposed)) {
 									 artifact = nthArtifactEndingWithSameName;
 									 break;
 								 }
@@ -374,15 +376,15 @@ public class ImportService extends DwaraService {
 //										overrideSequenceRefId = "video-imported-grp";
 //								}
 //								sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactName, overrideSequenceRefId);	
-								sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactName);
-								org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
+								sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactNameProposed);
+								org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);// findBySequenceCodeAndDeletedIsFalse(sequenceCode);
 								if(alreadyExistingArtifactWithSameSequenceCode != null)
 									throw new Exception("Artifact with sequenceCode " + sequenceCode + " already exists - " + alreadyExistingArtifactWithSameSequenceCode.getId());
 								
 								if(extractedCode != null && sequence.isReplaceCode())
-									toBeArtifactName = artifactName.replace(extractedCode, sequenceCode);
+									toBeArtifactName = artifactNameProposed.replace(extractedCode, sequenceCode);
 								else
-									toBeArtifactName = sequenceCode + "_" + artifactName;
+									toBeArtifactName = sequenceCode + "_" + artifactNameProposed;
 							}
 				
 							/*
@@ -445,7 +447,7 @@ public class ImportService extends DwaraService {
 					    if(artifactVolume == null) {
 					    	artifactVolume = new ArtifactVolume(artifact.getId(), volume);
 					    
-						    artifactVolume.setName(artifactName); // NOTE : Dont be tempted to change this to toBeArtifactName - whatever in volume needs to go here...
+						    artifactVolume.setName(artifactNameAsInCatalog); // NOTE : Dont be tempted to change this to toBeArtifactName - whatever in volume needs to go here...
 						    if(volume.getStoragelevel() == Storagelevel.block) {
 							    ArtifactVolumeDetails artifactVolumeDetails = new ArtifactVolumeDetails();
 							    
@@ -474,7 +476,7 @@ public class ImportService extends DwaraService {
 					    ArrayList<String> junkFilepathnameList = new ArrayList<String>();
 					    int fileCount = artifactFileList.size();
 					    for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
-					    	if(nthFile.getName().equals(artifactName))
+					    	if(nthFile.getName().equals(artifactNameAsInCatalog))
 					    		artifactTotalSize = nthFile.getSize(); 
 					    	
 					    	boolean fileChildOfJunkFolder = false;
@@ -494,7 +496,7 @@ public class ImportService extends DwaraService {
 					    		fileCount--;
 					    		continue;
 					    	}
-							String filePathname = nthFile.getName().replace(artifactName, toBeArtifactName);
+							String filePathname = nthFile.getName().replace(artifactNameAsInCatalog, toBeArtifactName);
 							String linkName = null;
 							if(filePathname.contains(bruLinkSeparator)) {
 								linkName = StringUtils.substringAfter(filePathname, bruLinkSeparator);
@@ -668,7 +670,7 @@ public class ImportService extends DwaraService {
 						
 						tArtifactVolumeImportDao.save(avi);
 					}catch (Exception e) {
-						logger.error("Unable to import completely " + artifactName, e);
+						logger.error("Unable to import completely " + artifactNameAsInCatalog, e);
 						avi.setStatus(Status.failed);
 						tArtifactVolumeImportDao.save(avi);
 					}
