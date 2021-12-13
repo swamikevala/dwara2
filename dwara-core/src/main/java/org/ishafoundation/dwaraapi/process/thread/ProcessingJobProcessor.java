@@ -312,7 +312,14 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 						    outputArtifact.setName(outputArtifactName);
 						    //outputArtifact.setPrevSequenceCode(inputArtifact.getPrevSequenceCode());
 						    //outputArtifact.setSequenceCode(inputArtifact.getSequenceCode());
-						    outputArtifact.setSequenceCode(StringUtils.substringBefore(outputArtifactName, "_"));
+						    
+						    String sequenceCode = StringUtils.substringBefore(outputArtifactName, "_");
+							// TODO - Instead of Unique constraint on DB - doing this check here...
+							Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);
+							if(alreadyExistingArtifactWithSameSequenceCode != null)
+								throw new Exception("Artifact with sequenceCode " + sequenceCode + " already exists - " + alreadyExistingArtifactWithSameSequenceCode.getId());
+
+						    outputArtifact.setSequenceCode(sequenceCode);
 						    outputArtifact.setqLatestRequest(inputArtifact.getqLatestRequest());
 						    outputArtifact.setWriteRequest(inputArtifact.getWriteRequest());
 						    

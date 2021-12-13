@@ -494,6 +494,8 @@ UPDATE `sequence` SET `force_match`='0' WHERE `id`='video-digi-2010-priv2';
 UPDATE `sequence` SET `force_match`='0' WHERE `id`='video-digi-2010-pub';
 
 /*
+ * NEED to add unique constraint on artifact.sequence_code but right now we have problem with our data - Need clean up
+ * 
 select sequence_code, artifactclass_id, count(sequence_code) from artifact 
 -- where artifactclass_id not like '%low' 
 group by sequence_code , artifactclass_id having count(sequence_code) > 1; 

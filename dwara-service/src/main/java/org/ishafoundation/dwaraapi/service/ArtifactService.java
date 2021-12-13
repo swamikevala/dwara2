@@ -417,6 +417,11 @@ public class ArtifactService extends DwaraService{
 		
 				String toBeArtifactName = newSeqCode + "_" + artifactNameWithoutSequence;
 		
+				// TODO - Instead of Unique constraint on DB - doing this check here...
+				Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(newSeqCode);
+				if(alreadyExistingArtifactWithSameSequenceCode != null)
+					throw new Exception("Artifact with sequenceCode " + newSeqCode + " already exists - " + alreadyExistingArtifactWithSameSequenceCode.getId());
+				
 				// update artifact table
 				nthArtifact.setSequenceCode(newSeqCode);
 				nthArtifact.setName(toBeArtifactName);

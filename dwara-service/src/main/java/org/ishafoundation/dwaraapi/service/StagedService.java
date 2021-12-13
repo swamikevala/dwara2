@@ -250,7 +250,7 @@ public class StagedService extends DwaraService{
 		return stagedRenameResponse;
 	}
     
-    public IngestResponse ingest(IngestUserRequest ingestUserRequest){	
+    public synchronized IngestResponse ingest(IngestUserRequest ingestUserRequest){	
     	IngestResponse ingestResponse = new IngestResponse();
     	Request userRequest = null;
     	try{
@@ -519,6 +519,12 @@ public class StagedService extends DwaraService{
 					artifact.setArtifactclass(artifactclass);
 					artifact.setFileCount(fileCount);
 					artifact.setTotalSize(size);
+					
+					// TODO - Instead of Unique constraint on DB - doing this check here...
+					Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);
+					if(alreadyExistingArtifactWithSameSequenceCode != null)
+						throw new Exception("Artifact with sequenceCode " + sequenceCode + " already exists - " + alreadyExistingArtifactWithSameSequenceCode.getId());
+					
 					artifact.setSequenceCode(sequenceCode);
 					artifact.setPrevSequenceCode(prevSeqCode);
 					artifact = artifactDao.save(artifact);
