@@ -358,20 +358,20 @@ public class ImportService extends DwaraService {
 
 						if(artifact != null) { // even if artifact extracted code matches - double check for name - and if name differs flag it
 							String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
-							
-							if(!artifactNameProposed.equals(artifactNameShavedOffPrefix))
-								throw new Exception ("Same extractedCode but different artifact names : " + extractedCode + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposed);
-							
+							String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
+							if(!artifactNameProposedShavedOffPrefix.equals(artifactNameShavedOffPrefix))
+								throw new Exception ("Same extractedCode but different artifact names : " + extractedCode + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposedShavedOffPrefix);
 						}
 
 						
 						if(artifact == null) { // Some imported artifacts has same name but different extracted codes...
-							 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(artifactNameProposed,artifactclass.getId());
+							String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
+							 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(artifactNameProposedShavedOffPrefix,artifactclass.getId());
 							 for (org.ishafoundation.dwaraapi.db.model.transactional.Artifact nthArtifactEndingWithSameName : artifactsEndingWithSameName) {
 								 String artifactNameShavedOffPrefix = StringUtils.substringAfter(nthArtifactEndingWithSameName.getName(),"_");
-								 if(artifactNameShavedOffPrefix.equals(artifactNameProposed)) {
+								 if(artifactNameShavedOffPrefix.equals(artifactNameProposedShavedOffPrefix)) {
 									 artifact = nthArtifactEndingWithSameName;
-									 throw new Exception ("Different extractedCodes but same artifact name : " + artifactNameProposed + ". Existing code " + artifact.getPrevSequenceCode() !=null ? artifact.getPrevSequenceCode() : artifact.getSequenceCode() + " Actual " + extractedCode);
+									 throw new Exception ("Different extractedCodes but same artifact name : " + artifactNameProposedShavedOffPrefix + ". Existing code " + artifact.getPrevSequenceCode() !=null ? artifact.getPrevSequenceCode() : artifact.getSequenceCode() + " Actual " + extractedCode);
 								 }
 							}
 						}
