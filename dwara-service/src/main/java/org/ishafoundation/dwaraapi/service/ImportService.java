@@ -354,17 +354,29 @@ public class ImportService extends DwaraService {
 							artifact = artifactDao.findByPrevSequenceCodeAndDeletedIsFalse(prevSeqCode);
 						}else if(sequenceCode != null){				
 							artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
-						}else {
-							 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(artifactNameProposed,artifactclass.getId()); // Some legacy written artifacts dont have sequencecode to it
+						}
+
+						if(artifact != null) { // even if artifact extracted code matches - double check for name - and if name differs flag it
+							String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
+							
+							if(!artifactNameProposed.equals(artifactNameShavedOffPrefix))
+								throw new Exception ("Same extractedCode but different artifact names : " + extractedCode + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposed);
+							
+						}
+
+						
+						if(artifact == null) { // Some imported artifacts has same name but different extracted codes...
+							 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(artifactNameProposed,artifactclass.getId());
 							 for (org.ishafoundation.dwaraapi.db.model.transactional.Artifact nthArtifactEndingWithSameName : artifactsEndingWithSameName) {
 								 String artifactNameShavedOffPrefix = StringUtils.substringAfter(nthArtifactEndingWithSameName.getName(),"_");
 								 if(artifactNameShavedOffPrefix.equals(artifactNameProposed)) {
 									 artifact = nthArtifactEndingWithSameName;
-									 break;
+									 throw new Exception ("Different extractedCodes but same artifact name : " + artifactNameProposed + ". Existing code " + artifact.getPrevSequenceCode() !=null ? artifact.getPrevSequenceCode() : artifact.getSequenceCode() + " Actual " + extractedCode);
 								 }
 							}
 						}
 		
+						
 						//TODO - should we double check with size too??? domainSpecificArtifactRepository.findAllByTotalSizeAndDeletedIsFalse(size);
 						if(artifact == null) {
 							artifactAlreadyExists = false;
@@ -472,7 +484,7 @@ public class ImportService extends DwaraService {
 					    ArrayList<ImportStatus> fileRecordsImportStatus = new ArrayList<ImportStatus>();
 					    ArrayList<ImportStatus> fileVolumeRecordsImportStatus = new ArrayList<ImportStatus>();
 					    ArrayList<String> missingFilepathnameList = new ArrayList<String>();
-					    
+					    ArrayList<String> differingSizeList = new ArrayList<String>();
 					    ArrayList<String> junkFilepathnameList = new ArrayList<String>();
 					    int fileCount = artifactFileList.size();
 					    for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
@@ -535,7 +547,12 @@ public class ImportService extends DwaraService {
 									missingFilepathnameList.add(filePathname);
 									fileRecordsImportStatus.add(ImportStatus.failed);
 									logger.error("Already existing artifact " + artifact.getId() + " supposed to have but missing " + filePathname);
-								}else {
+								}else if (file.getSize() != nthFile.getSize()){
+									differingSizeList.add(filePathname);
+									fileRecordsImportStatus.add(ImportStatus.failed);
+									logger.error("File size differs for " + filePathname + " Expected " + file.getSize() + " Actual " + nthFile.getSize());
+								}
+								else {
 									fileRecordsImportStatus.add(ImportStatus.skipped);
 									logger.debug("File " + filePathname + " already exists, so skipping updating DB");
 								}
