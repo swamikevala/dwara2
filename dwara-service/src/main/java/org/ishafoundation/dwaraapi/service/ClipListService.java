@@ -14,18 +14,18 @@ import java.util.*;
 
 @Service
 public class ClipListService  extends  DwaraService{
-        @Autowired
+    @Autowired
     ClipListDao clipListDao;
-        @Autowired
+    @Autowired
     ClipClipListDao clipClipListDao;
-       @Autowired
+    @Autowired
     ClipDao clipDao;
-       @Autowired
+    @Autowired
     FileDao file1Dao;
-       @Autowired
+    @Autowired
     ClipTagDao clipTagDao;
-       @Autowired
-       MamTagDao mamTagDao;
+    @Autowired
+    MamTagDao mamTagDao;
 
     public List<ClipListResponse> getAllClipList(){
         List<ClipList> clipLists = (List<ClipList>) clipListDao.findAll();
