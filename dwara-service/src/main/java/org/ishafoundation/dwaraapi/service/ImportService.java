@@ -31,6 +31,7 @@ import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactFlagDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TArtifactVolumeImportDao;
@@ -42,6 +43,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional._import.jointables.TArtifactVolumeImport;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactFlag;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
@@ -104,6 +106,9 @@ public class ImportService extends DwaraService {
 	
 	@Autowired
 	protected TArtifactVolumeImportDao tArtifactVolumeImportDao;
+	
+	@Autowired
+	protected ArtifactFlagDao artifactFlagDao;
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
@@ -364,7 +369,7 @@ public class ImportService extends DwaraService {
 						}
 
 						
-						if(artifact == null) { // Some imported artifacts has same name but different extracted codes...
+						if(artifact == null) { // Some imported artifacts has same name but different extracted codes... if so flag it
 							String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
 							 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(artifactNameProposedShavedOffPrefix,artifactclass.getId());
 							 for (org.ishafoundation.dwaraapi.db.model.transactional.Artifact nthArtifactEndingWithSameName : artifactsEndingWithSameName) {
@@ -655,14 +660,14 @@ public class ImportService extends DwaraService {
 								int currentVolumeGen =  Integer.parseInt(StringUtils.substringAfter(volume.getStoragesubtype(), "-"));
 	
 								// check out the latest generation and use the most latest
-								if(currentVolumeGen > alreadyExistingArtifactVolumeGen) { // if current volume is the latest - delete the oldest generation
+								if(currentVolumeGen > alreadyExistingArtifactVolumeGen) { // if current volume is the latest gen - flag the the oldest generation as previous
 									artifactVolumeStatus = ArtifactVolumeStatus.current;
-									// flagging the older generation as deleted
-									alreadyExistingArtifactVolume.setStatus(ArtifactVolumeStatus.deleted);
+									// flagging the older generation as previous
+									alreadyExistingArtifactVolume.setStatus(ArtifactVolumeStatus.previous);
 									artifactVolumeDao.save(alreadyExistingArtifactVolume);
 								}
 								else
-									artifactVolumeStatus = ArtifactVolumeStatus.deleted;
+									artifactVolumeStatus = ArtifactVolumeStatus.previous;
 							}
 							 
 						    artifactVolume.setStatus(artifactVolumeStatus);
@@ -680,16 +685,20 @@ public class ImportService extends DwaraService {
 						respArtifact.setName(artifact.getName());
 						
 						usedCapacity += artifact.getTotalSize();
-						if(fileImportStatus == ImportStatus.failed || fileVolumeImportStatus == ImportStatus.failed)
+						if(fileImportStatus == ImportStatus.failed || fileVolumeImportStatus == ImportStatus.failed) {
 							avi.setStatus(Status.failed);
+
+							ArtifactFlag artifactFlag =  new ArtifactFlag(artifact.getId(), 1); // TODO : Hardcoding flag to 1
+							artifactFlagDao.save(artifactFlag);
+						}
 						else 
-							avi.setStatus(Status.completed); // TODO - should we add - artifact id, DB artifact name,  artifactImportStatus, artifactVolumeImportStatus, fileImportStatus, fileVolumeImportStatus (needs rerun id)
-						
+							avi.setStatus(Status.completed); 
 						tArtifactVolumeImportDao.save(avi);
 					}catch (Exception e) {
 						logger.error("Unable to import completely " + artifactNameAsInCatalog, e);
 						avi.setMessage(e.getMessage()); 
 						avi.setStatus(Status.failed);
+					
 						tArtifactVolumeImportDao.save(avi);
 					}
 				}

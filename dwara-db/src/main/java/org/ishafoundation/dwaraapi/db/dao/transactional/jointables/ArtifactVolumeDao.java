@@ -2,11 +2,13 @@ package org.ishafoundation.dwaraapi.db.dao.transactional.jointables;
 
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.db.keys.ArtifactVolumeKey;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.springframework.data.repository.CrudRepository;
 
 public interface ArtifactVolumeDao extends CrudRepository<ArtifactVolume, Integer> {
+// public interface ArtifactVolumeDao extends CrudRepository<ArtifactVolume, ArtifactVolumeKey> {
 	
 	ArtifactVolume findByIdArtifactIdAndIdVolumeId(int artifactId, String volumeId);
 	
