@@ -334,7 +334,7 @@ public class ImportService extends DwaraService {
 						String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
 						boolean isForceMatch = (sequence.getForceMatch() != null && sequence.getForceMatch() >= 1)  ? true : false;
 						if(isForceMatch && extractedCode == null) {
-							throw new Exception("Missing expected PreviousSeqCode " + artifactNameProposed);
+							throw new Exception("Missing expected PreviousSeqCode : " + artifactNameProposed);
 						}
 						String sequenceCode = null;
 						String prevSeqCode = null;
@@ -379,7 +379,7 @@ public class ImportService extends DwaraService {
 								sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactNameProposed);
 								org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);// findBySequenceCodeAndDeletedIsFalse(sequenceCode);
 								if(alreadyExistingArtifactWithSameSequenceCode != null)
-									throw new Exception("Artifact with sequenceCode " + sequenceCode + " already exists - " + alreadyExistingArtifactWithSameSequenceCode.getId());
+									throw new Exception("An artifact already exists with sequenceCode : " + sequenceCode + ". Already existing artifactId with same sequenceCode - " + alreadyExistingArtifactWithSameSequenceCode.getId());
 								
 								if(extractedCode != null && sequence.isReplaceCode())
 									toBeArtifactName = artifactNameProposed.replace(extractedCode, sequenceCode);
@@ -429,7 +429,7 @@ public class ImportService extends DwaraService {
 							avi.setArtifactId(artifact.getId());
 						
 						if(avi.getArtifactId() != artifact.getId())
-							throw new Exception("Something wrong with avi.artifactId. Expected " + artifact.getId() + " but actual " + avi.getArtifactId());
+							throw new Exception("Something wrong with avi.artifactId : Expected - " + artifact.getId() + " actual - " + avi.getArtifactId());
 						/*
 						 * creating artifact_volume
 						 * 
@@ -620,7 +620,7 @@ public class ImportService extends DwaraService {
 					    fileImportStatus = ImportStatusUtil.getStatus(fileRecordsImportStatus);
 					    fileVolumeImportStatus = ImportStatusUtil.getStatus(fileVolumeRecordsImportStatus);
 					    if(fileImportStatus == ImportStatus.failed) {
-					    	avi.setMessage("Investigate " + missingFilepathnameList.toString()); 
+					    	avi.setMessage("Investigate missing files : " + missingFilepathnameList.toString()); 
 					    	logger.error("Investigate " + missingFilepathnameList.toString());
 					    }
 					    else
@@ -671,6 +671,7 @@ public class ImportService extends DwaraService {
 						tArtifactVolumeImportDao.save(avi);
 					}catch (Exception e) {
 						logger.error("Unable to import completely " + artifactNameAsInCatalog, e);
+						avi.setMessage(e.getMessage()); 
 						avi.setStatus(Status.failed);
 						tArtifactVolumeImportDao.save(avi);
 					}
@@ -685,15 +686,34 @@ public class ImportService extends DwaraService {
 			volume.setUsedCapacity(usedCapacity);
 			volume = volumeDao.save(volume);
 			
+			Map<String,Integer> sameErrorMsg_Cnt = new HashMap<String, Integer>();
 			List<TArtifactVolumeImport> aviList = tArtifactVolumeImportDao.findAllByIdVolumeId(volumeId);
 			List<Status> statusList = new ArrayList<Status>();
 			for (TArtifactVolumeImport nthAvi : aviList) {
-				statusList.add(nthAvi.getStatus());
+				Status aviStatus = nthAvi.getStatus();
+				statusList.add(aviStatus);
+				
+				if(aviStatus == Status.failed) {
+					String failureMessage = StringUtils.substringBefore(nthAvi.getMessage(), ":");
+					Integer cnt = 1;
+					if(sameErrorMsg_Cnt.containsKey(failureMessage)) {
+						cnt = sameErrorMsg_Cnt.get(failureMessage) + 1;
+					}
+					sameErrorMsg_Cnt.put(failureMessage, cnt);
+				}
 			}
 			Status tapeImportStatus = StatusUtil.getStatus(statusList); // NOTE If there is any update in iva.status then we need to update the Request status appropriately
 			
 			if(tapeImportStatus == Status.completed)
 				tArtifactVolumeImportDao.deleteAll(aviList);
+
+			if(sameErrorMsg_Cnt.size() > 0) {
+				StringBuffer sb = new StringBuffer();
+				for (String failureMessage : sameErrorMsg_Cnt.keySet()) {
+					sb.append("Has " + sameErrorMsg_Cnt.get(failureMessage) + " " + failureMessage + " errors . ");
+				}
+				request.setMessage(sb.toString());
+			}
 			
 			request.setStatus(tapeImportStatus);
 			request.setCompletedAt(LocalDateTime.now());
