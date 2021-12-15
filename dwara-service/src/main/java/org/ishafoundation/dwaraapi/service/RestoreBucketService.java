@@ -209,7 +209,7 @@ public class RestoreBucketService extends DwaraService {
 		emailerService.sendEmail(emailBody);*/
 		String sendUrlTemplate= UriComponentsBuilder.fromHttpUrl(sendUrl)
 				.queryParam("concernedEmail" , tRestoreBucket.getApproverEmail() )
-				.queryParam("subject","Need Approval for project: _\"+tRestoreBucket.getId()+\"_. Priority: \"+ tRestoreBucket.getPriority()")
+				.queryParam("subject","Need Approval for project: _"+tRestoreBucket.getId()+"_. Priority: "+ tRestoreBucket.getPriority())
 				.queryParam("emailBody", emailBody)
 				.queryParam("requesterEmail" , requesterName)
 				.encode()
