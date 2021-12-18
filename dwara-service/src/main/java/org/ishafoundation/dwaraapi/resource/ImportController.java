@@ -62,7 +62,7 @@ public class ImportController {
 	@ApiResponses(value = { 
 			@ApiResponse(code = 200, message = "Ok")
 	})
-	@PostMapping(value = "/import", produces = "application/json")
+	// @PostMapping(value = "/import", produces = "application/json")
 	public ResponseEntity<ImportResponse> importCatalog(@RequestBody ImportRequest importRequest) throws Exception {
 		logger.info("/import " + importRequest.getXmlPathname());
 		ImportResponse importResponse = null;

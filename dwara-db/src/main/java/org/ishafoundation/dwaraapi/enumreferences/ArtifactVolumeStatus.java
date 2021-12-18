@@ -4,5 +4,6 @@ public enum ArtifactVolumeStatus {
 	previous,
 	current,
 	deleted,
+	diffs,
 	migrated;
 }

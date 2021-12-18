@@ -3,10 +3,13 @@ package org.ishafoundation.dwaraapi.db.model.transactional;
 import java.util.Objects;
 
 import javax.persistence.Column;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Lob;
 import javax.persistence.MappedSuperclass;
 
 import org.hibernate.annotations.Type;
+import org.ishafoundation.dwaraapi.enumreferences.DiffValues;
 
 @MappedSuperclass
 public class FileColumns {
@@ -47,8 +50,13 @@ public class FileColumns {
 	
 	@Lob
 	@Column( name ="reason") 
-	 private String reason;
+	private String reason;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name="diff", length=1)
+	private DiffValues diff;
+	
+	
 	public String getPathname() {
 		return pathname;
 	}
@@ -120,26 +128,31 @@ public class FileColumns {
 	public void setSymlinkPath(String symlinkPath) {
 		this.symlinkPath = symlinkPath;
 	}
-	
-	public void setBad(boolean bad) 
-	{
-		this.bad=bad;
-	}
-	
-	public void setReason(String reason) 
-	{
-		this.reason=reason;
-	}
-	
-	public Boolean getBad() 
-	{
+
+	public Boolean getBad() {
 		return bad;
 	}
-	
-	public String getReason() 
-	{
+
+	public void setBad(Boolean bad) {
+		this.bad = bad;
+	}
+
+	public String getReason() {
 		return reason;
 	}
+
+	public void setReason(String reason) {
+		this.reason = reason;
+	}
+
+	public DiffValues getDiff() {
+		return diff;
+	}
+
+	public void setDiff(DiffValues diff) {
+		this.diff = diff;
+	}
+
 	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
