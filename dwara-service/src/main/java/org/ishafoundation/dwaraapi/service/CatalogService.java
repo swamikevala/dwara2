@@ -269,7 +269,7 @@ public class CatalogService extends DwaraService{
             condition += ")";
         }
 
-        String query = "select a.id, d.id as requestId, a.artifact_ref_id, a.artifactclass_id, a.name, a.total_size, b.volume_id, d.status, d.completed_at, e.name as ingestedBy, b.name as oldName" 
+        String query = "select a.id, d.id as requestId, a.artifactclass_id, a.name, a.total_size, b.volume_id, d.status, d.completed_at, e.name as ingestedBy, b.name as oldName" 
         + " from artifact a join artifact_volume b join volume c join request d join user e"
         + " where a.id=b.artifact_id and b.volume_id=c.id and a.q_latest_request_id=d.id and d.requested_by_id=e.id and a.deleted=0"
         + condition
