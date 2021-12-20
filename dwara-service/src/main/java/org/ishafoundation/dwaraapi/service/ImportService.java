@@ -758,7 +758,7 @@ public class ImportService extends DwaraService {
 					    fileImportStatus = ImportStatusUtil.getStatus(fileRecordsImportStatus);
 					    fileVolumeImportStatus = ImportStatusUtil.getStatus(fileVolumeRecordsImportStatus);
 					    if(fileImportStatus == ImportStatus.failed) {
-					    	avi.setMessage("Aritact has differences : "); 
+					    	avi.setMessage("Differences exist between artifact copies : "); 
 					    	logger.error("Investigate " + missingFilepathnameList.toString());
 					    }
 					    else
