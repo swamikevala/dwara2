@@ -1138,6 +1138,9 @@ public class ImportService extends DwaraService {
 		FileUtils.write(Paths.get(destDir.toString(), volumeName + ".log."+importResponse.getUserRequestId()).toFile(), json);
 		
 		// move the catalog file to the destDir
-		FileUtils.moveFile(nthXmlFile, Paths.get(destDir.toString(), volumeName + ".xml."+importResponse.getUserRequestId()).toFile());
+		File destFile = Paths.get(destDir.toString(), volumeName + ".xml."+importResponse.getUserRequestId()).toFile();
+		if(destFile.exists())
+			destFile.delete();
+		FileUtils.moveFile(nthXmlFile, destFile);
 	}
 }
