@@ -316,8 +316,8 @@ public class DwaraImport extends Validation{
 					System.err.println(ltoTape + ":" + artifactList.name + " has validation failures - " + errorList.toString());
 					hasErrors=true;
 				}
-				else	
-					artifactXMLList.add(artifact);
+
+				artifactXMLList.add(artifact);
 
 			}catch (Exception e) {
 				System.err.println(ltoTape + ":" + artifactList.name + " has errors " + e.getMessage());
