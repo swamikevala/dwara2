@@ -315,8 +315,8 @@ public class DwaraImport {
 				}		
 				artifact.setFile(fileList);
 				
-				errorList.addAll(basicArtifactValidator.validateFileCount(fileList.size()));
-				errorList.addAll(basicArtifactValidator.validateFileSize(artifactSize));
+				//errorList.addAll(basicArtifactValidator.validateFileCount(fileList.size()));
+				//errorList.addAll(basicArtifactValidator.validateFileSize(artifactSize));
 
 				if(errorList.size() > 0) {
 					System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " has validation failures - " + errorList.toString());
