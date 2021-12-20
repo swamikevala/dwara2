@@ -18,8 +18,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.staged.scan.BasicArtifactValidator;
 import org.ishafoundation.dwaraapi.staged.scan.Error;
-import org.ishafoundation.dwaraapi.staged.scan.Validation;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Imported;
@@ -42,7 +42,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 @Component
-public class DwaraImport extends Validation{
+public class DwaraImport {
 	private static final Logger LOG = LoggerFactory.getLogger(DwaraImport.class);
 
 	private List<BruData> listBruData = new ArrayList<>();
@@ -50,6 +50,8 @@ public class DwaraImport extends Validation{
 	private List<BruData> fileList = new ArrayList<>();
 	String regexAllowedChrsInFileName = "[\\w-.]*";
 	Pattern allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
+	
+	private BasicArtifactValidator basicArtifactValidator = new BasicArtifactValidator();
 	
 	static Map getJSONFromFile(String folderPath) throws IOException, ParseException {
 
@@ -234,7 +236,7 @@ public class DwaraImport extends Validation{
 		for (BruData artifactList: artifactsList) {
 			try {
 				List<Error> errorList = new ArrayList<Error>();
-				errorList.addAll(validateName(artifactList.name, allowedChrsInFileNamePattern));
+				errorList.addAll(basicArtifactValidator.validateName(artifactList.name, allowedChrsInFileNamePattern));
 				
 				// System.out.println("Framing object for " + artifactList.name);
 				Artifact artifact = new Artifact();
@@ -309,8 +311,8 @@ public class DwaraImport extends Validation{
 				}		
 				artifact.setFile(fileList);
 				
-				errorList.addAll(validateFileCount(fileList.size()));
-				errorList.addAll(validateFileSize(artifactSize));
+				errorList.addAll(basicArtifactValidator.validateFileCount(fileList.size()));
+				errorList.addAll(basicArtifactValidator.validateFileSize(artifactSize));
 
 				if(errorList.size() > 0) {
 					System.err.println(ltoTape + ":" + artifactList.name + " has validation failures - " + errorList.toString());

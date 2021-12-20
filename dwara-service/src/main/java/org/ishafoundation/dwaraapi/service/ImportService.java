@@ -63,6 +63,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
+import org.ishafoundation.dwaraapi.staged.scan.BasicArtifactValidator;
 import org.ishafoundation.dwaraapi.staged.scan.Error;
 import org.ishafoundation.dwaraapi.staged.scan.Errortype;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
@@ -124,6 +125,9 @@ public class ImportService extends DwaraService {
 	
 	@Autowired
 	protected SequenceUtil sequenceUtil;
+	
+	@Autowired
+	private BasicArtifactValidator basicArtifactValidator;
 
 	private List<Pattern> excludedFileNamesRegexList = new ArrayList<Pattern>();
 	private String invalidDirName = "invalid"; // invalid xml goes here
@@ -134,9 +138,13 @@ public class ImportService extends DwaraService {
 	private Map<String, Artifactclass> id_artifactclassMap = null;
 	private List<Error> errorList = null;
 	private List<org.ishafoundation.dwaraapi.api.resp._import.Artifact> artifacts = null;
-
+	private Pattern allowedChrsInFileNamePattern = null;
+	
 	@PostConstruct
 	public void getExcludedFileNamesRegexList() {
+		String regexAllowedChrsInFileName = configuration.getRegexAllowedChrsInFileName();
+		allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
+		
 		String[] junkFilesFinderRegexPatternList = configuration.getJunkFilesFinderRegexPatternList();
 		for (int i = 0; i < junkFilesFinderRegexPatternList.length; i++) {
 			Pattern nthJunkFilesFinderRegexPattern = Pattern.compile(junkFilesFinderRegexPatternList[i]);
@@ -954,12 +962,28 @@ public class ImportService extends DwaraService {
 				err.setMessage(artifact.getName() + " has invalid artifactclass " + artifact.getArtifactclassuid());
 				errorList.add(err);
 			}
+			else {
+				String fileName = artifact.getRename() != null ? artifact.getRename() : artifact.getName();
+				if(!artifactclass.getId().startsWith("photo")) { // validation only for photo* artifactclass
+					// 1- validateName
+					errorList.addAll(basicArtifactValidator.validateName(fileName, allowedChrsInFileNamePattern));
+				}
+				else {
+					// 1a - validateName for photo* artifactclass
+					//errorList.addAll(basicArtifactValidator.validatePhotoName(fileName, allowedChrsInFileNamePattern, (sfv != null && sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0 ? sfv.getPhotoSeriesFileNameValidationFailedFileNames() : null)));
+				}
+// not needed				
+//				// 2- validateCount
+//				errorList.addAll(basicArtifactValidator.validateFileCount(fileCount));
+//	
+//				// 3- validateSize
+//				errorList.addAll(basicArtifactValidator.validateFileSize(size));
+			}
 		}
-		
+
 		if(errorList.size() > 0)
-			throw new Exception("XML has artifacts with invalid artifactclasses");
+			throw new Exception("XML has invalid artifacts");
 		
-	    // 
 		return volumeindex;
 	}
 	
