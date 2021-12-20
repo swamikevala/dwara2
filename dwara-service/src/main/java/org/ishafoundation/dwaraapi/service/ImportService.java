@@ -247,11 +247,14 @@ public class ImportService extends DwaraService {
 				errorList.add(err);
 				throw new DwaraException(msg);
 			}
+
+			List<Request> importRequestList = requestDao.findAllByActionIsImportAndVolume_Native(volumeId);
+			int runId = importRequestList.size() + 1;
 			
 			request = new Request();
 			request.setType(RequestType.user);
 			request.setActionId(Action._import);
-			request.setStatus(Status.queued);
+			request.setStatus(Status.in_progress);
 	    	User user = getUserObjFromContext();
 	
 	    	LocalDateTime requestedAt = LocalDateTime.now();
@@ -268,9 +271,6 @@ public class ImportService extends DwaraService {
 
 			request = requestDao.save(request);
 			logger.info(DwaraConstants.USER_REQUEST + request.getId());
-			
-			List<Request> importRequestList = requestDao.findAllByActionIsImportAndVolume_Native(volumeId);
-			int runId = importRequestList.size() + 1;
 			
 		    // update ArtifactVolume table with all entries from xml... // for reruns only delta is added here...
 			List<Artifact> artifactList = volumeindex.getArtifact();
@@ -1149,6 +1149,7 @@ public class ImportService extends DwaraService {
 		// write the response to a log file inside the destDir
 		ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
 		String json = ow.writeValueAsString(importResponse);
+		logger.trace("Import log - " + json);
 		FileUtils.write(Paths.get(destDir.toString(), volumeName + ".log."+importResponse.getUserRequestId()).toFile(), json);
 		
 		// move the catalog file to the destDir
