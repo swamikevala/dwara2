@@ -77,7 +77,7 @@ public class DwaraImport {
 				try {
 					java.io.File completedFile = Paths.get(bruFile,"completed",textFile.getName()).toFile();
 					if(completedFile.exists()) {
-						System.err.println(completedFile.getAbsolutePath() + " already exists. Figure out why we are already running a complete catalog. Skipping it");
+						System.err.println("ERROR - " + completedFile.getAbsolutePath() + " already exists. Figure out why we are already running a complete catalog. Skipping it");
 						throw new Exception(completedFile.getAbsolutePath() + " already exists. Figure out why we are already running a complete catalog. Skipping it");
 					}
 					String ltoTape = textFile.getName().split("_")[0];
@@ -153,6 +153,10 @@ public class DwaraImport {
 				}
 
 			}
+			
+			System.out.println("***************-***************");
+			System.out.println("\n");
+			System.out.println("***************-***************");
 		}
 	}
 
@@ -250,7 +254,7 @@ public class DwaraImport {
 //						continue;
 //					}
 //					else
-					System.err.println(ltoTape + ":" + artifactList.name + " misses artifactclass");
+					System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " misses artifactclass");
 					hasErrors=true;
 				}	
 				artifact.setArtifactclassuid(artifactList.category);
@@ -315,14 +319,14 @@ public class DwaraImport {
 				errorList.addAll(basicArtifactValidator.validateFileSize(artifactSize));
 
 				if(errorList.size() > 0) {
-					System.err.println(ltoTape + ":" + artifactList.name + " has validation failures - " + errorList.toString());
+					System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " has validation failures - " + errorList.toString());
 					hasErrors=true;
 				}
 
 				artifactXMLList.add(artifact);
 
 			}catch (Exception e) {
-				System.err.println(ltoTape + ":" + artifactList.name + " has errors " + e.getMessage());
+				System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " has errors " + e.getMessage());
 				hasErrors=true;
 				e.printStackTrace();
 			}
