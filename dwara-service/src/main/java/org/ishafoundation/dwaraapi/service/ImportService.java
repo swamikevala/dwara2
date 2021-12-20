@@ -233,7 +233,7 @@ public class ImportService extends DwaraService {
 			Volumeindex volumeindex = validateAndGetVolumeindex(xmlFile);	
 			Volumeinfo volumeInfo = volumeindex.getVolumeinfo();
 			String volumeId = volumeInfo.getVolumeuid();
-			
+			ir.setVolumeId(volumeId);
 			// TODO - move this to validateAndGetVolumeindex method
 			Request alreadyCompletelyImportedVolumeRequest = requestDao.findActionIsImportAndStatusIsCompletedAndVolume_Native(volumeId);
 			if(alreadyCompletelyImportedVolumeRequest != null) {
@@ -888,7 +888,7 @@ public class ImportService extends DwaraService {
 			requestDao.save(request);
 		
 			ir.setUserRequestId(request.getId());
-			ir.setVolumeId(volumeId);
+			ir.setRunCount(runId);
 			ir.setVolumeImportStatus(tapeImportStatus.toString());
 			ir.setArtifacts(artifacts);
 
@@ -966,7 +966,11 @@ public class ImportService extends DwaraService {
 				String fileName = artifact.getRename() != null ? artifact.getRename() : artifact.getName();
 				if(!artifactclass.getId().startsWith("photo")) { // validation only for photo* artifactclass
 					// 1- validateName
-					errorList.addAll(basicArtifactValidator.validateName(fileName, allowedChrsInFileNamePattern));
+					List<Error> errorListFromValidator = basicArtifactValidator.validateName(fileName, allowedChrsInFileNamePattern);
+					for (Error nthError : errorListFromValidator) {
+						nthError.setMessage(fileName + " - " + nthError.getMessage());
+						errorList.add(nthError);
+					}
 				}
 				else {
 					// 1a - validateName for photo* artifactclass
