@@ -230,10 +230,13 @@ public class ImportService extends DwaraService {
 			String xmlPathname = importRequest.getXmlPathname();
 			File xmlFile = FileUtils.getFile(xmlPathname);
 	
-			Volumeindex volumeindex = validateAndGetVolumeindex(xmlFile);	
+			Volumeindex volumeindex = getVolumeindex(xmlFile);	
 			Volumeinfo volumeInfo = volumeindex.getVolumeinfo();
 			String volumeId = volumeInfo.getVolumeuid();
 			ir.setVolumeId(volumeId);
+			
+			validate(volumeindex);
+			
 			// TODO - move this to validateAndGetVolumeindex method
 			Request alreadyCompletelyImportedVolumeRequest = requestDao.findActionIsImportAndStatusIsCompletedAndVolume_Native(volumeId);
 			if(alreadyCompletelyImportedVolumeRequest != null) {
@@ -910,7 +913,7 @@ public class ImportService extends DwaraService {
 		return ir;
 	}
 
-	private Volumeindex validateAndGetVolumeindex(File xmlFile) throws Exception{
+	private Volumeindex getVolumeindex(File xmlFile) throws Exception{
 		XmlMapper xmlMapper = new XmlMapper();
 		//Get XMLOutputFactory instance.
 		XMLOutputFactory xmlOutputFactory = xmlMapper.getFactory().getXMLOutputFactory();
@@ -925,6 +928,10 @@ public class ImportService extends DwaraService {
 			logger.error(xmlFile.getAbsolutePath() + " not a valid xml", e);
 			throw new DwaraException(xmlFile.getAbsolutePath() + " not a valid xml. " + e.getMessage());
 		}
+	    return volumeindex;
+	}
+	
+	private void validate(Volumeindex volumeindex) throws Exception {
 	    
 	    // More validation on values...
 		List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
@@ -987,8 +994,7 @@ public class ImportService extends DwaraService {
 
 		if(errorList.size() > 0)
 			throw new Exception("XML has invalid artifacts");
-		
-		return volumeindex;
+
 	}
 	
 	
@@ -1110,6 +1116,14 @@ public class ImportService extends DwaraService {
 		String volume2WrittenAt = volume2.getDetails().getWrittenAt();
 		LocalDateTime volume2DateTime = LocalDateTime.parse(volume2WrittenAt, formatterISO);
 	
+		if(volume1DateTime.isEqual(volume2DateTime)) {
+			if(volume1.getId().compareTo(volume2.getId()) < 0)
+				return true;
+			else
+				return false;
+		}
+			
+		
 		if(volume1DateTime.isBefore(volume2DateTime))
 			return true;
 		
