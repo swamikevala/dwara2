@@ -7,7 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 @Embeddable
-public class TArtifactVolumeImportKey implements Serializable {
+public class ImportKey implements Serializable {
 
 	private static final long serialVersionUID = 397632917957707570L;
 
@@ -16,12 +16,16 @@ public class TArtifactVolumeImportKey implements Serializable {
     
     @Column(name = "artifact_name")
     private String artifactName;
- 
-    public TArtifactVolumeImportKey() {}
     
-    public TArtifactVolumeImportKey(String volumeId, String artifactName) {
+    @Column(name = "requeue_id")
+    private int requeueId;
+ 
+    public ImportKey() {}
+    
+    public ImportKey(String volumeId, String artifactName, int requeueId) {
         this.volumeId = volumeId;
         this.artifactName = artifactName;
+        this.requeueId = requeueId;
     }
 
 	public String getVolumeId() {
@@ -40,6 +44,14 @@ public class TArtifactVolumeImportKey implements Serializable {
 		this.artifactName = artifactName;
 	}
 
+	public int getRequeueId() {
+		return requeueId;
+	}
+
+	public void setRequeueId(int requeueId) {
+		this.requeueId = requeueId;
+	}
+
 	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -47,13 +59,14 @@ public class TArtifactVolumeImportKey implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
  
-        TArtifactVolumeImportKey that = (TArtifactVolumeImportKey) o;
+        ImportKey that = (ImportKey) o;
         return Objects.equals(volumeId, that.volumeId) &&
-               Objects.equals(artifactName, that.artifactName);
+               Objects.equals(artifactName, that.artifactName) &&
+               Objects.equals(requeueId, that.requeueId);
     }
  
     @Override
     public int hashCode() {
-        return Objects.hash(volumeId, artifactName);
+        return Objects.hash(volumeId, artifactName, requeueId);
     }
 }
