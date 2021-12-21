@@ -157,7 +157,7 @@ public class ArtifactService extends DwaraService{
 			throw new Exception("No request attached to " + artifactId + ". Wont be able to rename.");
 		
 		Status requestStatus =  request.getStatus();
-		if (!force && requestStatus != Status.completed && requestStatus != Status.marked_completed) {
+		if (!Boolean.TRUE.equals(force) && requestStatus != Status.completed && requestStatus != Status.marked_completed) {
 			throw new Exception("System request " + request.getId() + " not yet completed");
 		}
 
