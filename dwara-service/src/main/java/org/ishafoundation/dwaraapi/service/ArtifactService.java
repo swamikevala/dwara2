@@ -176,7 +176,7 @@ public class ArtifactService extends DwaraService{
 			}
 		}
 		
-		if (force && (queued || inProgress)) {
+		if (Boolean.TRUE.equals(force) && (queued || inProgress)) {
 			throw new Exception("System request " + request.getId() + " has jobs in running state. So can't proceed further");
 		}
 		String artifactName = artifactToBeRenamed.getName();
