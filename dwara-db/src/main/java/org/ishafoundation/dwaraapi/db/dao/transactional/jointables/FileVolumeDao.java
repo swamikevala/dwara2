@@ -16,4 +16,6 @@ public interface FileVolumeDao extends CrudRepository<FileVolume, Integer> {
     List<FileVolume> findAllByIdVolumeIdOrderByVolumeStartBlockAsc(String volumeId);
     
     List<FileVolume> findAllByIdVolumeId(String volumeId);
+    
+    List<FileVolume> findAllByIdFileId(int fileId);
 }
