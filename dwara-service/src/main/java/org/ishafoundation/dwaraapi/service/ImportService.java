@@ -462,7 +462,7 @@ public class ImportService extends DwaraService {
 							throw new Exception("Something wrong with import.artifactId : Expected - " + artifact.getId() + " actual - " + importTable.getArtifactId());
 
 						Volume masterVolume = getMasterVolume(artifact, volume); // Getting artifact's master copy
-						logger.trace("masterVolume - " + masterVolume.getId());
+						logger.info("masterVolume - " + masterVolume.getId());
 						boolean isToBeImportedVolumeMaster = true; // the volume we are importing - is it the master volume?
 					    if(!masterVolume.getId().equals(volume.getId()))
 					    	isToBeImportedVolumeMaster = false;
@@ -643,24 +643,22 @@ public class ImportService extends DwaraService {
 								if(differingSizeList.contains(filePathname)) { // if file already exists and size differs and if catalog to be imported is master...
 									diffValueToBeUsedForFileVolume = DiffValues.c;
 									
-									
 									if(isToBeImportedVolumeMaster) {
 										file.setSize(nthFile.getSize());
 										file = fileDao.save(file);
-									}
 									
-									// TODO - Should we move this to filevolume section
-									// get all fileVolumes... and update them here
-							    	List<FileVolume> fileVolumeList = fileVolumeDao.findAllByIdFileId(file.getId());
-									for (FileVolume nthFileVolume : fileVolumeList) {
-										if(!nthFileVolume.getVolume().getId().equals(masterVolume.getId())) {
-											if(nthFileVolume.getDiff() != DiffValues.c) { // if not already updated...
-												nthFileVolume.setDiff(DiffValues.c);
-												fileVolumeDao.save(nthFileVolume); 
-												
-												FileVolumeDiff fileVolumeDiff = new FileVolumeDiff(file.getId(), nthFileVolume.getId().getVolumeId());
-												fileVolumeDiff.setSize(existingFileSizeInDB);
-												fileVolumeDiffDao.save(fileVolumeDiff);
+										// get all fileVolumes... and update diff here
+								    	List<FileVolume> fileVolumeList = fileVolumeDao.findAllByIdFileId(file.getId());
+										for (FileVolume nthFileVolume : fileVolumeList) {
+											if(!nthFileVolume.getVolume().getId().equals(masterVolume.getId())) {
+												if(nthFileVolume.getDiff() != DiffValues.c) { // if not already updated...
+													nthFileVolume.setDiff(DiffValues.c);
+													fileVolumeDao.save(nthFileVolume); 
+													
+													FileVolumeDiff fileVolumeDiff = new FileVolumeDiff(file.getId(), nthFileVolume.getId().getVolumeId());
+													fileVolumeDiff.setSize(existingFileSizeInDB);
+													fileVolumeDiffDao.save(fileVolumeDiff);
+												}
 											}
 										}
 									}
@@ -883,12 +881,12 @@ public class ImportService extends DwaraService {
 //			if(tapeImportStatus == Status.completed)
 //				importDao.deleteAll(aviList);
 
+			StringBuffer failureReason = new StringBuffer();
 			if(sameErrorMsg_Cnt.size() > 0) {
-				StringBuffer sb = new StringBuffer();
 				for (String failureMessage : sameErrorMsg_Cnt.keySet()) {
-					sb.append("Has " + sameErrorMsg_Cnt.get(failureMessage) + " " + failureMessage + " errors . ");
+					failureReason.append("Has " + sameErrorMsg_Cnt.get(failureMessage) + " " + failureMessage + " errors . ");
 				}
-				request.setMessage(sb.toString());
+				request.setMessage(failureReason.toString());
 			}
 			
 			request.setStatus(tapeImportStatus);
@@ -898,6 +896,8 @@ public class ImportService extends DwaraService {
 			ir.setUserRequestId(request.getId());
 			ir.setRunCount(runId);
 			ir.setVolumeImportStatus(tapeImportStatus.toString());
+			if(failureReason.length() > 0)
+				ir.setVolumeImportFailureReason(failureReason.toString());
 			ir.setArtifacts(artifacts);
 
 		}
@@ -1105,6 +1105,7 @@ public class ImportService extends DwaraService {
 				if(nthArtifactVolume.getId().getVolumeId().compareTo(currentMasterArtifactVolume.getId().getVolumeId()) < 0)
 					currentMasterArtifactVolume	= nthArtifactVolume;	
 			}
+			artifactVolumeRunningCount++;
 		}
 		
 		if(currentMasterArtifactVolume != null) {// if(!currentMasterArtifactVolume.getVolume().getId().equals(volume.getId())) {
