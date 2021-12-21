@@ -192,6 +192,9 @@ public class ArtifactService extends DwaraService{
 		Request userRequest = createUserRequest(Action.rename, Status.in_progress, data);
 		
     	List<Artifact> artifactList = artifactDao.findAllByWriteRequestId(request.getId());
+    	if(artifactList.size() == 0) // For import we dont use writeRequest
+    		artifactList.add(artifactToBeRenamed); 
+    	
     	for (Artifact artifact : artifactList) {
     		sequenceId = artifact.getSequenceCode();
     		artifactName = artifact.getName();
