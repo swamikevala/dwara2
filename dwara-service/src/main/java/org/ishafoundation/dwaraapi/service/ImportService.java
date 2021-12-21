@@ -381,7 +381,7 @@ public class ImportService extends DwaraService {
 							String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
 							String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
 							if(!artifactNameProposedShavedOffPrefix.equals(artifactNameShavedOffPrefix))
-								throw new Exception ("Same extractedCode but different artifact names : " + extractedCode + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposedShavedOffPrefix);
+								throw new Exception ("Same extractedCode but different artifact names : extractedCode - " + extractedCode + " ArtifactId " + artifact.getId() + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposedShavedOffPrefix);
 						}
 
 						
@@ -392,7 +392,7 @@ public class ImportService extends DwaraService {
 								 String artifactNameShavedOffPrefix = StringUtils.substringAfter(nthArtifactEndingWithSameName.getName(),"_");
 								 if(artifactNameShavedOffPrefix.equals(artifactNameProposedShavedOffPrefix)) {
 									 artifact = nthArtifactEndingWithSameName;
-									 String errMsg = "Different extractedCodes but same artifact name : " + artifactNameProposedShavedOffPrefix + ". Existing code " + (artifact.getPrevSequenceCode() !=null ? artifact.getPrevSequenceCode() : artifact.getSequenceCode()) + " Actual " + extractedCode;
+									 String errMsg = "Different extractedCodes but same artifact name : ArtifactId " + artifact.getId() + " - " + artifactNameProposedShavedOffPrefix + ". Expected code - " + (artifact.getPrevSequenceCode() !=null ? artifact.getPrevSequenceCode() : artifact.getSequenceCode()) + " Actual - " + extractedCode;
 									 throw new Exception (errMsg);
 								 }
 							}
