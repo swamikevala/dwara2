@@ -280,39 +280,39 @@ public class DwaraImport {
 					}
 					
 				}
-				// now lets calculate and collect subfolders size
-				Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
-				for (File nthFile : fileList) {
-					String nthFilepathname = nthFile.getName();
-					if(Boolean.TRUE.equals(nthFile.getDirectory())){
-						filePathnameVsSize_Map.put(nthFilepathname,0L);
-					}else {
-						String nthFileDirectoryName = FilenameUtils.getFullPathNoEndSeparator(nthFilepathname);
-
-						for (String nthArtifactSubDirectory : filePathnameVsSize_Map.keySet()) {
-							if(nthFileDirectoryName.contains(nthArtifactSubDirectory)) {
-								Long size = filePathnameVsSize_Map.get(nthArtifactSubDirectory);
-								size += nthFile.getSize();
-								filePathnameVsSize_Map.put(nthArtifactSubDirectory,size);
-							}
-						}
-					}
-				}                 
-
-				long artifactSize = 0L;
-				// now lets make use of the collected subfolder size 
-				for (File nthFile : fileList) {
-					if(Boolean.TRUE.equals(nthFile.getDirectory())){
-						Long nthDirectorySize= filePathnameVsSize_Map.get(nthFile.getName());
-						nthFile.setSize(nthDirectorySize);
-
-						if(nthFile.getName().equals(artifactList.name)){
-							artifactSize = nthDirectorySize;
-							//artifact.setTotalSize(nthDirectorySize);
-						}
-
-					}
-				}		
+//				// now lets calculate and collect subfolders size
+//				Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
+//				for (File nthFile : fileList) {
+//					String nthFilepathname = nthFile.getName();
+//					if(Boolean.TRUE.equals(nthFile.getDirectory())){
+//						filePathnameVsSize_Map.put(nthFilepathname,0L);
+//					}else {
+//						String nthFileDirectoryName = FilenameUtils.getFullPathNoEndSeparator(nthFilepathname);
+//
+//						for (String nthArtifactSubDirectory : filePathnameVsSize_Map.keySet()) {
+//							if(nthFileDirectoryName.contains(nthArtifactSubDirectory)) {
+//								Long size = filePathnameVsSize_Map.get(nthArtifactSubDirectory);
+//								size += nthFile.getSize();
+//								filePathnameVsSize_Map.put(nthArtifactSubDirectory,size);
+//							}
+//						}
+//					}
+//				}                 
+//
+//				long artifactSize = 0L;
+//				// now lets make use of the collected subfolder size 
+//				for (File nthFile : fileList) {
+//					if(Boolean.TRUE.equals(nthFile.getDirectory())){
+//						Long nthDirectorySize= filePathnameVsSize_Map.get(nthFile.getName());
+//						nthFile.setSize(nthDirectorySize);
+//
+//						if(nthFile.getName().equals(artifactList.name)){
+//							artifactSize = nthDirectorySize;
+//							//artifact.setTotalSize(nthDirectorySize);
+//						}
+//
+//					}
+//				}		
 				artifact.setFile(fileList);
 				
 				//errorList.addAll(basicArtifactValidator.validateFileCount(fileList.size()));
