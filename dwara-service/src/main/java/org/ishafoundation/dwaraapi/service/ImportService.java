@@ -24,7 +24,6 @@ import javax.xml.stream.XMLOutputFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
@@ -41,7 +40,6 @@ import org.ishafoundation.dwaraapi.db.keys.ImportKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional._import.jointables.FileVolumeDiff;
@@ -49,7 +47,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional._import.jointables.Imp
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
-import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
@@ -57,7 +54,6 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.DiffValues;
 import org.ishafoundation.dwaraapi.enumreferences.ImportStatus;
-import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
@@ -78,7 +74,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -186,6 +181,7 @@ public class ImportService extends DwaraService {
 				importResponse.setUserRequestId(nthImportResponse.getUserRequestId());
 				importResponse.setVolumeId(nthImportResponse.getVolumeId());
 				importResponse.setVolumeImportStatus(nthImportResponse.getVolumeImportStatus());
+				importResponse.setVolumeImportFailureReason(nthImportResponse.getVolumeImportFailureReason());
 				importResponse.setRunCount(nthImportResponse.getRunCount());
 				
 				destDir = completedDirPath; // move the imported catalog to completed folder - eg., /data/dwara/import-staging/completed
@@ -251,51 +247,13 @@ public class ImportService extends DwaraService {
 			List<Request> importRequestList = requestDao.findAllByActionIsImportAndVolume_Native(volumeId);
 			int runId = importRequestList.size() + 1;
 			
-			request = new Request();
-			request.setType(RequestType.user);
-			request.setActionId(Action._import);
-			request.setStatus(Status.in_progress);
-	    	User user = getUserObjFromContext();
-	
-	    	LocalDateTime requestedAt = LocalDateTime.now();
-			request.setRequestedAt(requestedAt);
-			request.setRequestedBy(user);
-			
 			HashMap<String, Object> data = new HashMap<String, Object>();
 			data.put("xmlPathname", importRequest.getXmlPathname());
-
-			RequestDetails details = new RequestDetails();
-			JsonNode postBodyJson = getRequestDetails(data); 
-			details.setBody(postBodyJson);
-			request.setDetails(details);
-
-			request = requestDao.save(request);
-			logger.info(DwaraConstants.USER_REQUEST + request.getId());
 			
-		    // update ArtifactVolume table with all entries from xml... // for reruns only delta is added here...
-			List<Artifact> artifactList = volumeindex.getArtifact();
-			for (Artifact nthArtifact : artifactList) {
-				List<Import> artifactImportList = importDao.findAllByIdVolumeIdAndIdArtifactName(volumeId, nthArtifact.getName());
-				boolean isArtifactAlreadyComplete = false;
-				if(artifactImportList!= null && artifactImportList.size() > 0) {
-					for (Import nthArtifactImport : artifactImportList) {
-						if(nthArtifactImport.getStatus() == Status.completed || nthArtifactImport.getStatus() == Status.marked_completed) {
-							isArtifactAlreadyComplete = true;
-							break;
-						}
-					}
-				}
-				
-				if(!isArtifactAlreadyComplete) { 
-					ImportKey importKey = new ImportKey(volumeId, nthArtifact.getName(), runId);
-					Import importDBRecord = new Import();				
-					importDBRecord.setId(importKey);
-					importDBRecord.setStatus(Status.in_progress);
-					importDBRecord.setRequest(request);
-					importDao.save(importDBRecord);
-				}
-			}
-
+			request = createUserRequest(Action._import, Status.in_progress, data);
+			
+		    // update Import table with all entries from xml... // for reruns only delta is added here...
+			createImportEntries(volumeindex, volumeId, request, runId);
 			
 			// updating the volume table
 			boolean isRerun = false;
@@ -313,552 +271,7 @@ public class ImportService extends DwaraService {
 				logger.info("Volume " + volume.getId() + " imported to dwara successfully");
 			}
 			
-			long usedCapacity = 0;
-			
-//			List<Artifact> artifactList = volumeindex.getArtifact();
-			for (Artifact nthArtifact : artifactList) {
-				String artifactNameAsInCatalog = nthArtifact.getName(); // Name thats in tape
-				String artifactNameProposed = nthArtifact.getRename() != null ? nthArtifact.getRename() : artifactNameAsInCatalog; // Proposed new name thats in tape
-				String toBeArtifactName = null; // Name that needs to be saved in Artifact/File tables in DB
-				logger.debug("Now importing " + artifactNameAsInCatalog);				
-				
-				ImportStatus artifactImportStatus = ImportStatus.failed; 
-				ImportStatus artifactVolumeImportStatus = ImportStatus.failed;
-				ImportStatus fileImportStatus = ImportStatus.failed;
-				ImportStatus fileVolumeImportStatus = ImportStatus.failed;
-				
-				org.ishafoundation.dwaraapi.api.resp._import.Artifact respArtifact = new org.ishafoundation.dwaraapi.api.resp._import.Artifact();
-				respArtifact.setName(artifactNameAsInCatalog);
-
-				ImportKey importKey = new ImportKey(volumeId, artifactNameAsInCatalog, runId);
-				Optional<Import> aviImport = importDao.findById(importKey);
-				
-				Import importTable = aviImport.isPresent() ? aviImport.get() : null;
-				if(importTable == null || importTable.getStatus() == Status.completed) { // already completed - so skip it
-					// continue;
-					artifactImportStatus = ImportStatus.skipped; 
-					artifactVolumeImportStatus = ImportStatus.skipped;
-					fileImportStatus = ImportStatus.skipped;
-					fileVolumeImportStatus = ImportStatus.skipped;
-				}
-				else {
-					try {
-						
-						/*
-						 * 
-						*** dealing with artifact ***
-						*
-						*/
-						Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclassuid());
-						Sequence sequence = artifactclass.getSequence();
-						String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
-						boolean isForceMatch = (sequence.getForceMatch() != null && sequence.getForceMatch() >= 1)  ? true : false;
-						if(isForceMatch && extractedCode == null) {
-							throw new Exception("Missing expected PreviousSeqCode : " + artifactNameProposed);
-						}
-						String sequenceCode = null;
-						String prevSeqCode = null;
-						if(extractedCode != null) {
-							if(sequence.isKeepCode()) {
-								// retaining the same name
-								toBeArtifactName = artifactNameProposed;
-								sequenceCode = extractedCode;
-							}
-							else {
-								prevSeqCode = extractedCode;
-							}
-						}
-						
-						boolean artifactAlreadyExists = true;
-						org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = null;
-						if(prevSeqCode != null) {
-							artifact = artifactDao.findByPrevSequenceCodeAndDeletedIsFalse(prevSeqCode);
-						}else if(sequenceCode != null){				
-							artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
-						}
-
-						if(artifact != null) { // even if artifact extracted code matches - double check for name - and if name differs flag it
-							String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
-							String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
-							if(!artifactNameProposedShavedOffPrefix.equals(artifactNameShavedOffPrefix))
-								throw new Exception ("Same extractedCode but different artifact names : extractedCode - " + extractedCode + " ArtifactId " + artifact.getId() + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposedShavedOffPrefix);
-						}
-
-						
-						if(artifact == null) { // Some imported artifacts has same name but different extracted codes... if so flag it
-							String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
-							 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(artifactNameProposedShavedOffPrefix,artifactclass.getId());
-							 for (org.ishafoundation.dwaraapi.db.model.transactional.Artifact nthArtifactEndingWithSameName : artifactsEndingWithSameName) {
-								 String artifactNameShavedOffPrefix = StringUtils.substringAfter(nthArtifactEndingWithSameName.getName(),"_");
-								 if(artifactNameShavedOffPrefix.equals(artifactNameProposedShavedOffPrefix)) {
-									 artifact = nthArtifactEndingWithSameName;
-									 String errMsg = "Different extractedCodes but same artifact name : ArtifactId " + artifact.getId() + " - " + artifactNameProposedShavedOffPrefix + ". Expected code - " + (artifact.getPrevSequenceCode() !=null ? artifact.getPrevSequenceCode() : artifact.getSequenceCode()) + " Actual - " + extractedCode;
-									 throw new Exception (errMsg);
-								 }
-							}
-						}
-						
-						//TODO - should we double check with size too??? domainSpecificArtifactRepository.findAllByTotalSizeAndDeletedIsFalse(size);
-						if(artifact == null) {
-							artifactAlreadyExists = false;
-							if(sequenceCode == null) {
-//								String overrideSequenceRefId = null;
-//								if(artifactclass.getId().startsWith("video") && !artifactclass.getId().startsWith("video-digi")) {
-//				    				Sequence importSequenceGrp = sequenceDao.findById("video-imported-grp").get();
-//									if(importSequenceGrp.getCurrrentNumber() <= 27000) 
-//										overrideSequenceRefId = "video-imported-grp";
-//								}
-//								sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactName, overrideSequenceRefId);	
-								sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactNameProposed);
-								org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);// findBySequenceCodeAndDeletedIsFalse(sequenceCode);
-								if(alreadyExistingArtifactWithSameSequenceCode != null)
-									throw new Exception("An artifact already exists with sequenceCode : " + sequenceCode + ". Already existing artifactId with same sequenceCode - " + alreadyExistingArtifactWithSameSequenceCode.getId());
-								
-								if(extractedCode != null && sequence.isReplaceCode())
-									toBeArtifactName = artifactNameProposed.replace(extractedCode, sequenceCode);
-								else
-									toBeArtifactName = sequenceCode + "_" + artifactNameProposed;
-							}
-				
-							/*
-							 *** Creating artifact if not already in DB ***
-							 * 
-							  `id` int(11) NOT NULL, *** - *** auto 
-							  `deleted` bit(1) DEFAULT NULL, *** - *** 0?
-							  `file_count` int(11) DEFAULT NULL, *** - *** filecount
-							  `file_structure_md5` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** null
-							  `name` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** name with new sequence_code (logic is all same as ingest but sequence value is from different new column/table)
-							  `prev_sequence_code` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** extracted sequence_code (logic is all same as ingest)
-							  `sequence_code` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** generated sequence_code
-							  `total_size` bigint(20) DEFAULT NULL, *** - *** size
-							  `artifactclass_id` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** video-pub
-							  `q_latest_request_id` int(11) DEFAULT NULL, *** - *** null
-							  `write_request_id` int(11) DEFAULT NULL, *** - *** null
-							  `artifact_ref_id` int(11) DEFAULT NULL, *** - *** null
-							 */
-							artifact = new org.ishafoundation.dwaraapi.db.model.transactional.Artifact();
-			//				artifact1.setFileCount(fileCount);
-							artifact.setName(toBeArtifactName);
-							artifact.setPrevSequenceCode(prevSeqCode);
-							artifact.setSequenceCode(sequenceCode);
-			//				artifact1.setTotalSize(size);
-							artifact.setArtifactclass(artifactclass);
-							artifact.setqLatestRequest(request);
-							
-							artifact = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.save(artifact);
-							artifactImportStatus = ImportStatus.completed;
-							logger.debug("Artifact " + artifact.getId() + " imported to dwara succesfully");
-						}else {
-							toBeArtifactName = artifact.getName();
-							artifactImportStatus = ImportStatus.skipped;
-							logger.debug("Artifact " + artifact.getId() + " already exists, so skipping updating DB");  // artifact nth copy / rerun scenario
-						}
-						logger.info("*** Artifact " + artifact.getId() + " ***");
-						logger.info("Artifact - " + artifactImportStatus);
-						if(importTable.getArtifactId() == null)
-							importTable.setArtifactId(artifact.getId());
-						
-						if(importTable.getArtifactId() != artifact.getId())
-							throw new Exception("Something wrong with import.artifactId : Expected - " + artifact.getId() + " actual - " + importTable.getArtifactId());
-
-						Volume masterVolume = getMasterVolume(artifact, volume); // Getting artifact's master copy
-						logger.info("masterVolume - " + masterVolume.getId());
-						boolean isToBeImportedVolumeMaster = true; // the volume we are importing - is it the master volume?
-					    if(!masterVolume.getId().equals(volume.getId()))
-					    	isToBeImportedVolumeMaster = false;
-						
-						/*
-						 *** Creating artifact_volume ***
-						 * 
-						  
-						  `artifact_id` int(11) NOT NULL,
-						  `details` json DEFAULT NULL, *** - ***  {"archive_id": "5f76113cacf1", "end_volume_block": 79866, "start_volume_block": 2}
-						  `name` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-						  `volume_id` varchar(255) COLLATE utf8mb4_unicode_520_ci NOT NULL,
-						  `job_id` int(11) DEFAULT NULL, *** - *** null
-						  `status` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** current
-						 */
-					    ArtifactVolume artifactVolume = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifact.getId(), volume.getId());
-					    if(artifactVolume == null) {
-					    	artifactVolume = new ArtifactVolume(artifact.getId(), volume);
-					    
-						    artifactVolume.setName(artifactNameAsInCatalog); // NOTE : Dont be tempted to change this to toBeArtifactName - whatever in volume needs to go here...
-						    if(volume.getStoragelevel() == Storagelevel.block) {
-							    ArtifactVolumeDetails artifactVolumeDetails = new ArtifactVolumeDetails();
-							    
-							    // artifactVolumeDetails.setArchiveId(archiveId);
-							    artifactVolumeDetails.setStartVolumeBlock(nthArtifact.getStartblock());
-							    artifactVolumeDetails.setEndVolumeBlock(nthArtifact.getEndblock());
-							    
-							    artifactVolume.setDetails(artifactVolumeDetails);
-						    }
-						    // updating this upon all updates are successful - artifactVolume.setStatus(ArtifactVolumeStatus.current);
-						    artifactVolume = artifactVolumeDao.save(artifactVolume);
-						    artifactVolumeImportStatus = ImportStatus.completed;
-					    }else {
-					    	artifactVolumeImportStatus = ImportStatus.skipped;
-					    	logger.debug("ArtifactVolume for " + artifact.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
-					    }
-					    logger.info("ArtifactVolume - " + artifactVolumeImportStatus);
-					    
-						long artifactTotalSize = 0;
-					    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = nthArtifact.getFile();
-					    int fileCount = artifactFileList.size();
-					    
-					    // caching the file entries to avoid repeated queries...
-					    List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
-					    // collection to hold the extra files in DB but not in catalog
-					    Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File>();
-					    // collection to cache the file Objects
-					    Map<byte[], org.ishafoundation.dwaraapi.db.model.transactional.File> filePathnameChecksum_FileObj_Map = new HashMap<byte[], org.ishafoundation.dwaraapi.db.model.transactional.File>();
-					    for (org.ishafoundation.dwaraapi.db.model.transactional.File nthMasterFile : masterFileList) {
-					    	fileId_FileObj_Map.put(nthMasterFile.getId(), nthMasterFile);
-					    	filePathnameChecksum_FileObj_Map.put(nthMasterFile.getPathnameChecksum(), nthMasterFile);
-						}
-
-					    ArrayList<ImportStatus> fileRecordsImportStatus = new ArrayList<ImportStatus>();
-					    ArrayList<ImportStatus> fileVolumeRecordsImportStatus = new ArrayList<ImportStatus>();
-					    ArrayList<String> missingFilepathnameList = new ArrayList<String>();
-					    ArrayList<String> differingSizeList = new ArrayList<String>();
-					    ArrayList<String> junkFilepathnameList = new ArrayList<String>();
-						for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
-								
-							if(nthFile.getName().equals(artifactNameAsInCatalog))
-								artifactTotalSize = nthFile.getSize(); 
-							
-							boolean fileChildOfJunkFolder = false;
-							for (String junkFilepathname : junkFilepathnameList) { // if files belong to a junk folder skip it too
-								if(nthFile.getName().startsWith(junkFilepathname)) {
-									fileCount--;
-									fileChildOfJunkFolder = true;
-									break;
-								}
-							}
-							
-							if (fileChildOfJunkFolder)
-								continue;
-							
-							if(isJunk(nthFile.getName())) {
-								junkFilepathnameList.add(nthFile.getName());
-								fileCount--;
-								continue;
-							}
-							
-							String filePathname = nthFile.getName().replace(artifactNameAsInCatalog, toBeArtifactName);
-							String linkName = null;
-							if(filePathname.contains(bruLinkSeparator)) {
-								linkName = StringUtils.substringAfter(filePathname, bruLinkSeparator);
-								filePathname = StringUtils.substringBefore(filePathname, bruLinkSeparator);
-								
-								logger.trace("filePathName "+ filePathname);
-								logger.trace("linkName "+ linkName);
-							}
-							
-							if(artifactclass.getConfig() != null) {
-								String pathnameRegex = artifactclass.getConfig().getPathnameRegex();
-								
-								String filePathnameMinusArtifactName = filePathname.replace(toBeArtifactName, "");
-								if(StringUtils.isNotBlank(filePathnameMinusArtifactName)) { // artifact folder needed to be added - hence the notblank condition
-									if(filePathnameMinusArtifactName.startsWith(FilenameUtils.separatorsToUnix(File.separator))) {
-										filePathnameMinusArtifactName = filePathnameMinusArtifactName.substring(1);
-									}
-									if(!filePathnameMinusArtifactName.matches(pathnameRegex)) {
-										logger.trace("Doesnt match " + pathnameRegex + " regex for " + filePathnameMinusArtifactName);
-										continue;
-									}
-								}
-							}
-							
-							byte[] filePathnameChecksum = ChecksumUtil.getChecksum(filePathname);
-							org.ishafoundation.dwaraapi.db.model.transactional.File file = null;
-							if(artifactAlreadyExists) { // if artifactAlreadyExists - file would also exist already - copy / rerun scenario
-								file = fileDao.findByPathnameChecksum(filePathnameChecksum); // filePathnameChecksum_FileObj_Map.get(filePathnameChecksum);
-								// Maybe we should import oldest tapes first
-								// for eg., if P16539L6 is imported first followed by CA4485L4 which is the oldest of 2 then we would face this situation as
-								// sequence codes 6028/9 and 30 has differences in the file count...
-								// junk files difference...
-								if(file == null) { 
-									// Artifact exists means files should also tally - if there is a mismatch in files then it needs investigation...
-									// Pls check out https://jira.isha.in/browse/DU-872 for more observations documented...
-									missingFilepathnameList.add(filePathname);
-									fileRecordsImportStatus.add(ImportStatus.failed);
-									logger.error("Already existing artifact " + artifact.getId() + " supposed to have but missing " + filePathname);
-								}else {
-									fileId_FileObj_Map.remove(file.getId()); // removing files already there and matches...
-									if (file.getSize() != nthFile.getSize() && !file.isDirectory()){
-										differingSizeList.add(filePathname);
-										fileRecordsImportStatus.add(ImportStatus.failed);
-										logger.error("File size differs for " + filePathname + " Expected " + file.getSize() + " Actual " + nthFile.getSize());
-									}
-									else {
-										fileRecordsImportStatus.add(ImportStatus.skipped);
-										logger.debug("File " + filePathname + " already exists, so skipping updating DB");
-									}
-								}	
-							}
-							
-							DiffValues diffValueToBeUsedForFileVolume = null;
-							long existingFileSizeInDB = 0L;
-							if(file == null) { // if artifactAlready doesnt Exists or if artifactAlreadyExists but file supposed to be there but not there then create the file...
-								/*
-								 * creating file1
-								 * 
-								  
-								  `id` int(11) NOT NULL,
-								  `checksum` varbinary(32) DEFAULT NULL, *** - *** null
-								  `deleted` bit(1) DEFAULT NULL,
-								  `pathname` varchar(4096) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-								  `pathname_checksum` varbinary(20) DEFAULT NULL,
-								  `size` bigint(20) DEFAULT NULL,
-								  `artifact_id` int(11) DEFAULT NULL,
-								  `file_ref_id` int(11) DEFAULT NULL, *** - *** null
-								  `directory` bit(1) DEFAULT NULL,
-								  `symlink_file_id` int(11) DEFAULT NULL, *** - *** null
-								  `symlink_path` varchar(4096) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** null
-								*/  
-								file = new org.ishafoundation.dwaraapi.db.model.transactional.File();
-
-
-								file.setPathname(filePathname);
-								file.setPathnameChecksum(filePathnameChecksum);
-								file.setSize(nthFile.getSize()); // TODO Note junk file size is not reduced.
-								//file.setSymlinkFileId();
-								file.setSymlinkPath(linkName);
-								file.setArtifact(artifact);
-								if(Boolean.TRUE.equals(nthFile.getDirectory())) {// if(StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) {  // TODO - change it to - if(nthFile.isDirectory()) 
-									file.setDirectory(true);
-									fileCount--;
-								}	
-
-								if(missingFilepathnameList.contains(filePathname) && !isToBeImportedVolumeMaster) { // if file is missing in DB and if the catalog we are importing is not master then set diff = a
-									diffValueToBeUsedForFileVolume = DiffValues.a;
-									file.setDiff(diffValueToBeUsedForFileVolume);
-								}
-								file = fileDao.save(file);
-								fileRecordsImportStatus.add(ImportStatus.completed);
-								logger.debug("File " + filePathname + "  created successfully");
-							}else { // file already in DB check if size differs
-								existingFileSizeInDB = file.getSize();
-								
-								if(differingSizeList.contains(filePathname)) { // if file already exists and size differs and if catalog to be imported is master...
-									diffValueToBeUsedForFileVolume = DiffValues.c;
-									
-									if(isToBeImportedVolumeMaster) {
-										file.setSize(nthFile.getSize());
-										file = fileDao.save(file);
-									
-										// get all fileVolumes... and update diff here
-								    	List<FileVolume> fileVolumeList = fileVolumeDao.findAllByIdFileId(file.getId());
-										for (FileVolume nthFileVolume : fileVolumeList) {
-											if(!nthFileVolume.getVolume().getId().equals(masterVolume.getId())) {
-												if(nthFileVolume.getDiff() != DiffValues.c) { // if not already updated...
-													nthFileVolume.setDiff(DiffValues.c);
-													fileVolumeDao.save(nthFileVolume); 
-													
-													FileVolumeDiff fileVolumeDiff = new FileVolumeDiff(file.getId(), nthFileVolume.getId().getVolumeId());
-													fileVolumeDiff.setSize(existingFileSizeInDB);
-													fileVolumeDiffDao.save(fileVolumeDiff);
-												}
-											}
-										}
-									}
-								}
-							}
-							
-							if(file == null) {
-								fileVolumeRecordsImportStatus.add(ImportStatus.failed);
-							}
-							else {
-								FileVolume fileVolume = fileVolumeDao.findByIdFileIdAndIdVolumeId(file.getId(), volume.getId());
-								if(fileVolume == null) {
-									/*
-									 * file1_volume
-									 *
-
-									  `file_id` int(11) NOT NULL,
-									  `archive_block` bigint(20) DEFAULT NULL, 
-									  `deleted` bit(1) DEFAULT NULL, *** - *** 0
-									  `encrypted` bit(1) DEFAULT NULL, *** - *** null
-									  `verified_at` datetime(6) DEFAULT NULL, *** - *** null
-									  `volume_start_block` int(11) DEFAULT NULL, *** - *** dynamic
-									  `volume_end_block` int(11) DEFAULT NULL, *** - *** dynamic
-									  `volume_id` varchar(255) COLLATE utf8mb4_unicode_520_ci NOT NULL, 
-									  `header_blocks` int(11) DEFAULT NULL, *** - *** null
-									  `hardlink_file_id` int(11) DEFAULT NULL, *** - *** null???
-									 */
-									fileVolume = new FileVolume(file.getId(), volume);// lets just let users use the util consistently
-									fileVolume.setArchiveBlock(nthFile.getArchiveblock());
-									fileVolume.setVolumeStartBlock(nthFile.getVolumeStartBlock());
-									fileVolume.setVolumeEndBlock(nthFile.getVolumeEndBlock());
-
-									//fileVolume.setHardlinkFileId(file.getId());
-									if(diffValueToBeUsedForFileVolume != null && !isToBeImportedVolumeMaster) {
-										fileVolume.setDiff(diffValueToBeUsedForFileVolume);
-										
-										if(diffValueToBeUsedForFileVolume == DiffValues.c) {
-											FileVolumeDiff fileVolumeDiff = new FileVolumeDiff(file.getId(), volume.getId());
-											fileVolumeDiff.setSize(nthFile.getSize());
-											fileVolumeDiffDao.save(fileVolumeDiff);
-										}
-									}
-										
-
-									fileVolumeDao.save(fileVolume);
-									fileVolumeRecordsImportStatus.add(ImportStatus.completed);
-									logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " record created successfully");
-								}
-								else {
-									logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
-									fileVolumeRecordsImportStatus.add(ImportStatus.skipped);
-									// break; // This means this is a rerun scenario and so the rest of the files can be skipped....
-								}
-							}
-					    }
-						
-					    // update the extra files in DB but not in current catalog appropriately
-						Set<Integer> extraMasterFileList = fileId_FileObj_Map.keySet();
-						ArrayList<org.ishafoundation.dwaraapi.db.model.transactional.File> extraFileList = new ArrayList<org.ishafoundation.dwaraapi.db.model.transactional.File>(); 
-						ArrayList<FileVolume> extraFileVolumeList = new ArrayList<FileVolume>(); 
-						for (Integer nthFileId : extraMasterFileList) {
-							org.ishafoundation.dwaraapi.db.model.transactional.File nthExtraFile = fileId_FileObj_Map.get(nthFileId);
-							if(isToBeImportedVolumeMaster) {
-								nthExtraFile.setDiff(DiffValues.a);
-								extraFileList.add(nthExtraFile);
-								
-						    	List<FileVolume> fileVolumeList = fileVolumeDao.findAllByIdFileId(nthFileId);
-								for (FileVolume nthFileVolume : fileVolumeList) {
-									if(!nthFileVolume.getVolume().getId().equals(masterVolume.getId())) {
-										if(nthFileVolume.getDiff() != DiffValues.a) { // if not already updated
-											nthFileVolume.setDiff(DiffValues.a);
-											extraFileVolumeList.add(nthFileVolume);		
-										}
-									}
-								}
-
-							}
-						}
-						fileDao.saveAll(extraFileList);
-						fileVolumeDao.saveAll(extraFileVolumeList);
-						
-						// find the missing ones and create filevolume entries
-						masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
-						List<ArtifactVolume> alreadyExistingArtifactVolumeList = artifactVolumeDao.findAllByIdArtifactId(artifact.getId());
-						for (ArtifactVolume nthAlreadyExistingArtifactVolume : alreadyExistingArtifactVolumeList) {
-							if(nthAlreadyExistingArtifactVolume.getId().getVolumeId().equals(masterVolume.getId()))
-								continue;
-
-							Set<Integer> fileIdList = new TreeSet<Integer>();
-							List<FileVolume> alreadyExistingFileVolumeList = fileVolumeDao.findAllByIdVolumeId(nthAlreadyExistingArtifactVolume.getId().getVolumeId());
-							for (FileVolume nthAlreadyExistingFileVolume : alreadyExistingFileVolumeList) {
-								fileIdList.add(nthAlreadyExistingFileVolume.getId().getFileId());
-							}
-							for (org.ishafoundation.dwaraapi.db.model.transactional.File nthMasterFile : masterFileList) {
-								if(!fileIdList.contains(nthMasterFile.getId())){
-									FileVolume dummyFileVolume = new FileVolume(nthMasterFile.getId(), nthAlreadyExistingArtifactVolume.getVolume());
-									dummyFileVolume.setDiff(DiffValues.d);
-									fileVolumeDao.save(dummyFileVolume);
-								}
-							}
-						}
-						
-					    fileImportStatus = ImportStatusUtil.getStatus(fileRecordsImportStatus);
-					    fileVolumeImportStatus = ImportStatusUtil.getStatus(fileVolumeRecordsImportStatus);
-
-				    	logger.info("File - " + fileImportStatus);
-				    	logger.info("FileVolume - " + fileVolumeImportStatus);
-
-						boolean hasDiffs = false;
-						if(missingFilepathnameList.size() > 0 || extraMasterFileList.size() > 0 || differingSizeList.size() > 0)
-							hasDiffs = true;
-						
-						// UPDATING THE artifactvolumestatus only when everything is OK, so its used for restoring   
-						/*
-						    4 - av.curr 
-
-							6 - isNewer against curr(4) - true
-									diff - 
-										av.diff
-									no diff - 
-										av.curr && existingCurr becomes av.prev
-									
-									
-							3 - isNewer against curr - false
-									diff -
-										av.curr && 
-										existingCurr becomes av.diff
-									no diff - 	
-										av.prev && existingCurr remains as it is
-						 */
-						if(artifactVolumeImportStatus == ImportStatus.completed) {
-							ArtifactVolumeStatus artifactVolumeStatus = ArtifactVolumeStatus.current;
-							
-							ArtifactVolume alreadyExistingArtifactVolume = artifactVolumeDao.findByIdArtifactIdAndVolumeGroupRefCopyIdAndStatus(artifact.getId(), volume.getGroupRef().getCopy().getId(), ArtifactVolumeStatus.current);
-							if(alreadyExistingArtifactVolume != null) { // same copy pool need to handle current/previous etc
-								if(isNewer(volume, alreadyExistingArtifactVolume.getVolume())) {
-									if(hasDiffs)
-										artifactVolumeStatus = ArtifactVolumeStatus.diffs;
-									else {
-										artifactVolumeStatus = ArtifactVolumeStatus.current;
-										
-										// flagging the older generation as previous
-										alreadyExistingArtifactVolume.setStatus(ArtifactVolumeStatus.previous);
-										artifactVolumeDao.save(alreadyExistingArtifactVolume);
-									}
-								}else {
-									if(hasDiffs) {
-										artifactVolumeStatus = ArtifactVolumeStatus.current;
-										
-										// flagging the older generation as previous
-										alreadyExistingArtifactVolume.setStatus(ArtifactVolumeStatus.diffs);
-										artifactVolumeDao.save(alreadyExistingArtifactVolume);
-									}else 
-										artifactVolumeStatus = ArtifactVolumeStatus.previous;
-								}
-							}else {
-								if(hasDiffs)
-									artifactVolumeStatus = ArtifactVolumeStatus.diffs;
-							}
-							
-						    artifactVolume.setStatus(artifactVolumeStatus);
-						    artifactVolume = artifactVolumeDao.save(artifactVolume);
-						}
-						
-						// updating artifact.filecount and size
-						if(!artifactAlreadyExists) {
-							artifact.setFileCount(fileCount);
-							artifact.setTotalSize(artifactTotalSize);
-							artifact = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.save(artifact);
-						}
-	
-						respArtifact.setId(artifact.getId());
-						respArtifact.setName(artifact.getName());
-						
-						usedCapacity += artifact.getTotalSize();
-						if(hasDiffs) {
-					    	importTable.setMessage("Differences exist between artifact copies : ");
-							importTable.setStatus(Status.failed);
-					    }
-						else 
-							importTable.setStatus(Status.completed);
-						
-						importDao.save(importTable);
-					}catch (Exception e) {
-						logger.error("Unable to import completely " + artifactNameAsInCatalog, e);
-						importTable.setMessage(e.getMessage()); 
-						importTable.setStatus(Status.failed);
-					
-						importDao.save(importTable);
-					}
-				}
-				respArtifact.setArtifactStatus(artifactImportStatus);
-				respArtifact.setArtifactVolumeStatus(artifactVolumeImportStatus);
-				respArtifact.setFileStatus(fileImportStatus);
-				respArtifact.setFileVolumeStatus(fileVolumeImportStatus);
-				artifacts.add(respArtifact);
-			}
-			
-			volume.setUsedCapacity(usedCapacity);
-			volume = volumeDao.save(volume);
+			iterateCatalogArtifacts(volumeindex, volume, runId, request);
 			
 			Map<String,Integer> sameErrorMsg_Cnt = new HashMap<String, Integer>();
 			List<Import> importList = importDao.findAllByIdVolumeIdAndIdRequeueId(volumeId, runId);
@@ -917,7 +330,7 @@ public class ImportService extends DwaraService {
 		}
 		return ir;
 	}
-
+	
 	private Volumeindex getVolumeindex(File xmlFile) throws Exception{
 		XmlMapper xmlMapper = new XmlMapper();
 		//Get XMLOutputFactory instance.
@@ -1002,7 +415,30 @@ public class ImportService extends DwaraService {
 
 	}
 	
-	
+	private void createImportEntries(Volumeindex volumeindex, String volumeId, Request request, int runId){	
+		List<Artifact> artifactList = volumeindex.getArtifact();
+		for (Artifact nthArtifact : artifactList) {
+			List<Import> artifactImportList = importDao.findAllByIdVolumeIdAndIdArtifactName(volumeId, nthArtifact.getName());
+			boolean isArtifactAlreadyComplete = false;
+			if(artifactImportList!= null && artifactImportList.size() > 0) {
+				for (Import nthArtifactImport : artifactImportList) {
+					if(nthArtifactImport.getStatus() == Status.completed || nthArtifactImport.getStatus() == Status.marked_completed) {
+						isArtifactAlreadyComplete = true;
+						break;
+					}
+				}
+			}
+			
+			if(!isArtifactAlreadyComplete) { 
+				ImportKey importKey = new ImportKey(volumeId, nthArtifact.getName(), runId);
+				Import importDBRecord = new Import();				
+				importDBRecord.setId(importKey);
+				importDBRecord.setStatus(Status.in_progress);
+				importDBRecord.setRequest(request);
+				importDao.save(importDBRecord);
+			}
+		}
+	}
 	
 	/**
 	 *   
@@ -1092,6 +528,504 @@ public class ImportService extends DwaraService {
 		return volume;
 	}
 	
+	private void iterateCatalogArtifacts(Volumeindex volumeindex, Volume volume, int runId, Request request){
+		String volumeId = volume.getId();
+		long usedCapacity = 0;
+		List<Artifact> artifactList = volumeindex.getArtifact();
+		for (Artifact nthArtifact : artifactList) {
+			String artifactNameAsInCatalog = nthArtifact.getName(); // Name thats in tape
+			String artifactNameProposed = nthArtifact.getRename() != null ? nthArtifact.getRename() : artifactNameAsInCatalog; // Proposed new name thats in tape
+			String toBeArtifactName = null; // Name that needs to be saved in Artifact/File tables in DB
+			logger.debug("Now importing " + artifactNameAsInCatalog);				
+			
+			ImportStatus artifactImportStatus = ImportStatus.failed; 
+			ImportStatus artifactVolumeImportStatus = ImportStatus.failed;
+			ImportStatus fileImportStatus = ImportStatus.failed;
+			ImportStatus fileVolumeImportStatus = ImportStatus.failed;
+			
+			org.ishafoundation.dwaraapi.api.resp._import.Artifact respArtifact = new org.ishafoundation.dwaraapi.api.resp._import.Artifact();
+			respArtifact.setName(artifactNameAsInCatalog);
+	
+			ImportKey importKey = new ImportKey(volumeId, artifactNameAsInCatalog, runId);
+			Optional<Import> aviImport = importDao.findById(importKey);
+			
+			Import importTable = aviImport.isPresent() ? aviImport.get() : null;
+			if(importTable == null || importTable.getStatus() == Status.completed) { // already completed - so skip it
+				// continue;
+				artifactImportStatus = ImportStatus.skipped; 
+				artifactVolumeImportStatus = ImportStatus.skipped;
+				fileImportStatus = ImportStatus.skipped;
+				fileVolumeImportStatus = ImportStatus.skipped;
+			}
+			else {
+				try {
+					
+					/*
+					 * 
+					*** dealing with artifact ***
+					*
+					*/
+					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclassuid());
+					Sequence sequence = artifactclass.getSequence();
+					String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
+					boolean isForceMatch = (sequence.getForceMatch() != null && sequence.getForceMatch() >= 1)  ? true : false;
+					if(isForceMatch && extractedCode == null) {
+						throw new Exception("Missing expected PreviousSeqCode : " + artifactNameProposed);
+					}
+					String sequenceCode = null;
+					String prevSeqCode = null;
+					if(extractedCode != null) {
+						if(sequence.isKeepCode()) {
+							// retaining the same name
+							toBeArtifactName = artifactNameProposed;
+							sequenceCode = extractedCode;
+						}
+						else {
+							prevSeqCode = extractedCode;
+						}
+					}
+					
+					boolean artifactAlreadyExists = true;
+					org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = null;
+					if(prevSeqCode != null) {
+						artifact = artifactDao.findByPrevSequenceCodeAndDeletedIsFalse(prevSeqCode);
+					}else if(sequenceCode != null){				
+						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
+					}
+	
+					if(artifact != null) { // even if artifact extracted code matches - double check for name - and if name differs flag it
+						String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
+						String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
+						if(!artifactNameProposedShavedOffPrefix.equals(artifactNameShavedOffPrefix))
+							throw new Exception ("Same extractedCode but different artifact names : extractedCode - " + extractedCode + " ArtifactId " + artifact.getId() + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposedShavedOffPrefix);
+					}
+	
+					
+					if(artifact == null) { // Some imported artifacts has same name but different extracted codes... if so flag it
+						String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
+						 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(artifactNameProposedShavedOffPrefix,artifactclass.getId());
+						 for (org.ishafoundation.dwaraapi.db.model.transactional.Artifact nthArtifactEndingWithSameName : artifactsEndingWithSameName) {
+							 String artifactNameShavedOffPrefix = StringUtils.substringAfter(nthArtifactEndingWithSameName.getName(),"_");
+							 if(artifactNameShavedOffPrefix.equals(artifactNameProposedShavedOffPrefix)) {
+								 artifact = nthArtifactEndingWithSameName;
+								 String errMsg = "Different extractedCodes but same artifact name : ArtifactId " + artifact.getId() + " - " + artifactNameProposedShavedOffPrefix + ". Expected code - " + (artifact.getPrevSequenceCode() !=null ? artifact.getPrevSequenceCode() : artifact.getSequenceCode()) + " Actual - " + extractedCode;
+								 throw new Exception (errMsg);
+							 }
+						}
+					}
+					
+					//TODO - should we double check with size too??? domainSpecificArtifactRepository.findAllByTotalSizeAndDeletedIsFalse(size);
+					if(artifact == null) {
+						artifactAlreadyExists = false;
+						if(sequenceCode == null) {
+	//						String overrideSequenceRefId = null;
+	//						if(artifactclass.getId().startsWith("video") && !artifactclass.getId().startsWith("video-digi")) {
+	//		    				Sequence importSequenceGrp = sequenceDao.findById("video-imported-grp").get();
+	//							if(importSequenceGrp.getCurrrentNumber() <= 27000) 
+	//								overrideSequenceRefId = "video-imported-grp";
+	//						}
+	//						sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactName, overrideSequenceRefId);	
+							sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactNameProposed);
+							org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);// findBySequenceCodeAndDeletedIsFalse(sequenceCode);
+							if(alreadyExistingArtifactWithSameSequenceCode != null)
+								throw new Exception("An artifact already exists with sequenceCode : " + sequenceCode + ". Already existing artifactId with same sequenceCode - " + alreadyExistingArtifactWithSameSequenceCode.getId());
+							
+							if(extractedCode != null && sequence.isReplaceCode())
+								toBeArtifactName = artifactNameProposed.replace(extractedCode, sequenceCode);
+							else
+								toBeArtifactName = sequenceCode + "_" + artifactNameProposed;
+						}
+			
+						/*
+						 *** Creating artifact if not already in DB ***
+						 * 
+						  `id` int(11) NOT NULL, *** - *** auto 
+						  `deleted` bit(1) DEFAULT NULL, *** - *** 0?
+						  `file_count` int(11) DEFAULT NULL, *** - *** filecount
+						  `file_structure_md5` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** null
+						  `name` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** name with new sequence_code (logic is all same as ingest but sequence value is from different new column/table)
+						  `prev_sequence_code` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** extracted sequence_code (logic is all same as ingest)
+						  `sequence_code` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** generated sequence_code
+						  `total_size` bigint(20) DEFAULT NULL, *** - *** size
+						  `artifactclass_id` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** video-pub
+						  `q_latest_request_id` int(11) DEFAULT NULL, *** - *** null
+						  `write_request_id` int(11) DEFAULT NULL, *** - *** null
+						  `artifact_ref_id` int(11) DEFAULT NULL, *** - *** null
+						 */
+						artifact = new org.ishafoundation.dwaraapi.db.model.transactional.Artifact();
+		//				artifact1.setFileCount(fileCount);
+						artifact.setName(toBeArtifactName);
+						artifact.setPrevSequenceCode(prevSeqCode);
+						artifact.setSequenceCode(sequenceCode);
+		//				artifact1.setTotalSize(size);
+						artifact.setArtifactclass(artifactclass);
+						artifact.setqLatestRequest(request);
+						
+						artifact = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.save(artifact);
+						artifactImportStatus = ImportStatus.completed;
+						logger.debug("Artifact " + artifact.getId() + " imported to dwara succesfully");
+					}else {
+						toBeArtifactName = artifact.getName();
+						artifactImportStatus = ImportStatus.skipped;
+						logger.debug("Artifact " + artifact.getId() + " already exists, so skipping updating DB");  // artifact nth copy / rerun scenario
+					}
+					logger.info("*** Artifact " + artifact.getId() + " ***");
+					logger.info("Artifact - " + artifactImportStatus);
+					if(importTable.getArtifactId() == null)
+						importTable.setArtifactId(artifact.getId());
+					
+					if(importTable.getArtifactId() != artifact.getId())
+						throw new Exception("Something wrong with import.artifactId : Expected - " + artifact.getId() + " actual - " + importTable.getArtifactId());
+	
+					Volume masterVolume = getMasterVolume(artifact, volume); // Getting artifact's master copy
+					logger.info("masterVolume - " + masterVolume.getId());
+					boolean isToBeImportedVolumeMaster = true; // the volume we are importing - is it the master volume?
+				    if(!masterVolume.getId().equals(volume.getId()))
+				    	isToBeImportedVolumeMaster = false;
+					
+					/*
+					 *** Creating artifact_volume ***
+					 * 
+					  
+					  `artifact_id` int(11) NOT NULL,
+					  `details` json DEFAULT NULL, *** - ***  {"archive_id": "5f76113cacf1", "end_volume_block": 79866, "start_volume_block": 2}
+					  `name` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+					  `volume_id` varchar(255) COLLATE utf8mb4_unicode_520_ci NOT NULL,
+					  `job_id` int(11) DEFAULT NULL, *** - *** null
+					  `status` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** current
+					 */
+				    ArtifactVolume artifactVolume = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifact.getId(), volume.getId());
+				    if(artifactVolume == null) {
+				    	artifactVolume = new ArtifactVolume(artifact.getId(), volume);
+				    
+					    artifactVolume.setName(artifactNameAsInCatalog); // NOTE : Dont be tempted to change this to toBeArtifactName - whatever in volume needs to go here...
+					    if(volume.getStoragelevel() == Storagelevel.block) {
+						    ArtifactVolumeDetails artifactVolumeDetails = new ArtifactVolumeDetails();
+						    
+						    // artifactVolumeDetails.setArchiveId(archiveId);
+						    artifactVolumeDetails.setStartVolumeBlock(nthArtifact.getStartblock());
+						    artifactVolumeDetails.setEndVolumeBlock(nthArtifact.getEndblock());
+						    
+						    artifactVolume.setDetails(artifactVolumeDetails);
+					    }
+					    // updating this upon all updates are successful - artifactVolume.setStatus(ArtifactVolumeStatus.current);
+					    artifactVolume = artifactVolumeDao.save(artifactVolume);
+					    artifactVolumeImportStatus = ImportStatus.completed;
+				    }else {
+				    	artifactVolumeImportStatus = ImportStatus.skipped;
+				    	logger.debug("ArtifactVolume for " + artifact.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
+				    }
+				    logger.info("ArtifactVolume - " + artifactVolumeImportStatus);
+				    
+				    // collection to hold the extra files in DB but not in catalog
+				    Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File>();
+				    ArrayList<ImportStatus> fileRecordsImportStatus = new ArrayList<ImportStatus>();
+				    ArrayList<ImportStatus> fileVolumeRecordsImportStatus = new ArrayList<ImportStatus>();
+				    ArrayList<String> missingFilepathnameList = new ArrayList<String>();
+				    ArrayList<String> differingSizeList = new ArrayList<String>();
+
+
+				    FileMeta fileMeta = dealCatalogFiles(nthArtifact, artifact, artifactNameAsInCatalog, toBeArtifactName, artifactclass, volume, masterVolume, 
+				    		isToBeImportedVolumeMaster, artifactAlreadyExists, fileId_FileObj_Map, fileRecordsImportStatus, fileVolumeRecordsImportStatus, missingFilepathnameList, differingSizeList);
+	
+				    fileImportStatus = ImportStatusUtil.getStatus(fileRecordsImportStatus);
+				    fileVolumeImportStatus = ImportStatusUtil.getStatus(fileVolumeRecordsImportStatus);
+
+			    	logger.info("File - " + fileImportStatus);
+			    	logger.info("FileVolume - " + fileVolumeImportStatus);
+			    	
+					boolean hasDiffs = false;
+					Set<Integer> extraMasterFileList = fileId_FileObj_Map.keySet();
+					if(missingFilepathnameList.size() > 0 || extraMasterFileList.size() > 0 || differingSizeList.size() > 0)
+						hasDiffs = true;
+
+					// UPDATING THE artifactvolumestatus only when everything is OK, so its used for restoring
+					if(artifactVolumeImportStatus == ImportStatus.completed) {
+					    artifactVolume.setStatus(getArtifactVolumeStatus(volume, artifact.getId(), hasDiffs));
+					    artifactVolume = artifactVolumeDao.save(artifactVolume);
+					}
+
+					
+					// updating artifact.filecount and size
+					if(isToBeImportedVolumeMaster && fileMeta != null) {
+						artifact.setFileCount(fileMeta.getFileCount());
+						artifact.setTotalSize(fileMeta.getTotalSize());
+						artifact = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.save(artifact);
+					}
+	
+					respArtifact.setId(artifact.getId());
+					respArtifact.setName(artifact.getName());
+					
+					usedCapacity += artifact.getTotalSize();
+					if(hasDiffs) {
+				    	importTable.setMessage("Differences exist between artifact copies : ");
+						importTable.setStatus(Status.failed);
+				    }
+					else 
+						importTable.setStatus(Status.completed);
+					
+					importDao.save(importTable);
+				}catch (Exception e) {
+					logger.error("Unable to import completely " + artifactNameAsInCatalog, e);
+					importTable.setMessage(e.getMessage()); 
+					importTable.setStatus(Status.failed);
+				
+					importDao.save(importTable);
+				}
+			}
+			respArtifact.setArtifactStatus(artifactImportStatus);
+			respArtifact.setArtifactVolumeStatus(artifactVolumeImportStatus);
+			respArtifact.setFileStatus(fileImportStatus);
+			respArtifact.setFileVolumeStatus(fileVolumeImportStatus);
+			artifacts.add(respArtifact);
+		
+		}
+		
+		volume.setUsedCapacity(usedCapacity);
+		volume = volumeDao.save(volume);
+	}
+	
+	private FileMeta dealCatalogFiles(Artifact nthArtifact, org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact, 
+			String artifactNameAsInCatalog, String toBeArtifactName, Artifactclass artifactclass, 
+			Volume volume, Volume masterVolume, boolean isToBeImportedVolumeMaster, boolean artifactAlreadyExists,
+	    Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File> fileId_FileObj_Map,
+	    ArrayList<ImportStatus> fileRecordsImportStatus,
+	    ArrayList<ImportStatus> fileVolumeRecordsImportStatus,
+	    ArrayList<String> missingFilepathnameList,
+	    ArrayList<String> differingSizeList) throws Exception {
+		
+	    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = nthArtifact.getFile();
+	    int fileCount = artifactFileList.size();
+
+	    // caching the file entries to avoid repeated queries...
+	    List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
+	    // collection to cache the file Objects
+	    Map<byte[], org.ishafoundation.dwaraapi.db.model.transactional.File> filePathnameChecksum_FileObj_Map = new HashMap<byte[], org.ishafoundation.dwaraapi.db.model.transactional.File>();
+	    for (org.ishafoundation.dwaraapi.db.model.transactional.File nthMasterFile : masterFileList) {
+	    	fileId_FileObj_Map.put(nthMasterFile.getId(), nthMasterFile);
+	    	filePathnameChecksum_FileObj_Map.put(nthMasterFile.getPathnameChecksum(), nthMasterFile);
+		}
+
+	    ArrayList<String> junkFilepathnameList = new ArrayList<String>();
+		for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
+				
+			boolean fileChildOfJunkFolder = false;
+			for (String junkFilepathname : junkFilepathnameList) { // if files belong to a junk folder skip it too
+				if(nthFile.getName().startsWith(junkFilepathname)) {
+					fileCount--;
+					fileChildOfJunkFolder = true;
+					break;
+				}
+			}
+			
+			if (fileChildOfJunkFolder)
+				continue;
+			
+			if(isJunk(nthFile.getName())) {
+				junkFilepathnameList.add(nthFile.getName());
+				fileCount--;
+				continue;
+			}
+			
+			String filePathname = nthFile.getName().replace(artifactNameAsInCatalog, toBeArtifactName);
+			String linkName = null;
+			if(filePathname.contains(bruLinkSeparator)) {
+				linkName = StringUtils.substringAfter(filePathname, bruLinkSeparator);
+				filePathname = StringUtils.substringBefore(filePathname, bruLinkSeparator);
+				
+				logger.trace("filePathName "+ filePathname);
+				logger.trace("linkName "+ linkName);
+			}
+			
+			if(artifactclass.getConfig() != null) {
+				String pathnameRegex = artifactclass.getConfig().getPathnameRegex();
+				
+				String filePathnameMinusArtifactName = filePathname.replace(toBeArtifactName, "");
+				if(StringUtils.isNotBlank(filePathnameMinusArtifactName)) { // artifact folder needed to be added - hence the notblank condition
+					if(filePathnameMinusArtifactName.startsWith(FilenameUtils.separatorsToUnix(File.separator))) {
+						filePathnameMinusArtifactName = filePathnameMinusArtifactName.substring(1);
+					}
+					if(!filePathnameMinusArtifactName.matches(pathnameRegex)) {
+						logger.trace("Doesnt match " + pathnameRegex + " regex for " + filePathnameMinusArtifactName);
+						continue;
+					}
+				}
+			}
+			
+			byte[] filePathnameChecksum = ChecksumUtil.getChecksum(filePathname);
+			org.ishafoundation.dwaraapi.db.model.transactional.File file = null;
+			if(artifactAlreadyExists) { // if artifactAlreadyExists - file would also exist already - copy / rerun scenario
+				file = fileDao.findByPathnameChecksum(filePathnameChecksum); // filePathnameChecksum_FileObj_Map.get(filePathnameChecksum);
+				// Maybe we should import oldest tapes first
+				// for eg., if P16539L6 is imported first followed by CA4485L4 which is the oldest of 2 then we would face this situation as
+				// sequence codes 6028/9 and 30 has differences in the file count...
+				// junk files difference...
+				if(file == null) { 
+					// Artifact exists means files should also tally - if there is a mismatch in files then it needs investigation...
+					// Pls check out https://jira.isha.in/browse/DU-872 for more observations documented...
+					missingFilepathnameList.add(filePathname);
+					fileRecordsImportStatus.add(ImportStatus.failed);
+					logger.error("Already existing artifact " + artifact.getId() + " supposed to have but missing " + filePathname);
+				}else {
+					fileId_FileObj_Map.remove(file.getId()); // removing files already there and matches...
+					if (file.getSize() != nthFile.getSize() && !file.isDirectory()){
+						differingSizeList.add(filePathname);
+						fileRecordsImportStatus.add(ImportStatus.failed);
+						logger.error("File size differs for " + filePathname + " Expected " + file.getSize() + " Actual " + nthFile.getSize());
+					}
+					else {
+						fileRecordsImportStatus.add(ImportStatus.skipped);
+						logger.debug("File " + filePathname + " already exists, so skipping updating DB");
+					}
+				}	
+			}
+			
+			DiffValues diffValueToBeUsedForFileVolume = null;
+			long existingFileSizeInDB = 0L;
+			if(file == null) { // if artifactAlready doesnt Exists or if artifactAlreadyExists but file supposed to be there but not there then create the file...
+				/*
+				 * creating file1
+				 * 
+				  
+				  `id` int(11) NOT NULL,
+				  `checksum` varbinary(32) DEFAULT NULL, *** - *** null
+				  `deleted` bit(1) DEFAULT NULL,
+				  `pathname` varchar(4096) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+				  `pathname_checksum` varbinary(20) DEFAULT NULL,
+				  `size` bigint(20) DEFAULT NULL,
+				  `artifact_id` int(11) DEFAULT NULL,
+				  `file_ref_id` int(11) DEFAULT NULL, *** - *** null
+				  `directory` bit(1) DEFAULT NULL,
+				  `symlink_file_id` int(11) DEFAULT NULL, *** - *** null
+				  `symlink_path` varchar(4096) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** null
+				*/  
+				file = new org.ishafoundation.dwaraapi.db.model.transactional.File();
+	
+	
+				file.setPathname(filePathname);
+				file.setPathnameChecksum(filePathnameChecksum);
+				file.setSize(nthFile.getSize()); // TODO Note junk file size is not reduced.
+				//file.setSymlinkFileId();
+				file.setSymlinkPath(linkName);
+				file.setArtifact(artifact);
+				if(Boolean.TRUE.equals(nthFile.getDirectory())) {// if(StringUtils.isBlank(FilenameUtils.getExtension(filePathname))) {  // TODO - change it to - if(nthFile.isDirectory()) 
+					file.setDirectory(true);
+					fileCount--;
+				}	
+	
+				if(missingFilepathnameList.contains(filePathname) && !isToBeImportedVolumeMaster) { // if file is missing in DB and if the catalog we are importing is not master then set diff = a
+					diffValueToBeUsedForFileVolume = DiffValues.a;
+					file.setDiff(diffValueToBeUsedForFileVolume);
+				}
+				file = fileDao.save(file);
+				fileRecordsImportStatus.add(ImportStatus.completed);
+				logger.debug("File " + filePathname + "  created successfully");
+			}else { // file already in DB check if size differs
+				existingFileSizeInDB = file.getSize();
+				
+				if(differingSizeList.contains(filePathname)) { // if file already exists and size differs and if catalog to be imported is master...
+					diffValueToBeUsedForFileVolume = DiffValues.c;
+					
+					if(isToBeImportedVolumeMaster) {
+						file.setSize(nthFile.getSize());
+						file = fileDao.save(file);
+					
+						// get all fileVolumes... and update diff here
+				    	List<FileVolume> fileVolumeList = fileVolumeDao.findAllByIdFileId(file.getId());
+						for (FileVolume nthFileVolume : fileVolumeList) {
+							if(!nthFileVolume.getVolume().getId().equals(masterVolume.getId())) {
+								if(nthFileVolume.getDiff() != DiffValues.c) { // if not already updated...
+									nthFileVolume.setDiff(DiffValues.c);
+									fileVolumeDao.save(nthFileVolume); 
+									
+									FileVolumeDiff fileVolumeDiff = new FileVolumeDiff(file.getId(), nthFileVolume.getId().getVolumeId());
+									fileVolumeDiff.setSize(existingFileSizeInDB);
+									fileVolumeDiffDao.save(fileVolumeDiff);
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			if(file == null) {
+				fileVolumeRecordsImportStatus.add(ImportStatus.failed);
+			}
+			else {
+				FileVolume fileVolume = fileVolumeDao.findByIdFileIdAndIdVolumeId(file.getId(), volume.getId());
+				if(fileVolume == null) {
+					/*
+					 * file1_volume
+					 *
+	
+					  `file_id` int(11) NOT NULL,
+					  `archive_block` bigint(20) DEFAULT NULL, 
+					  `deleted` bit(1) DEFAULT NULL, *** - *** 0
+					  `encrypted` bit(1) DEFAULT NULL, *** - *** null
+					  `verified_at` datetime(6) DEFAULT NULL, *** - *** null
+					  `volume_start_block` int(11) DEFAULT NULL, *** - *** dynamic
+					  `volume_end_block` int(11) DEFAULT NULL, *** - *** dynamic
+					  `volume_id` varchar(255) COLLATE utf8mb4_unicode_520_ci NOT NULL, 
+					  `header_blocks` int(11) DEFAULT NULL, *** - *** null
+					  `hardlink_file_id` int(11) DEFAULT NULL, *** - *** null???
+					 */
+					fileVolume = new FileVolume(file.getId(), volume);// lets just let users use the util consistently
+					fileVolume.setArchiveBlock(nthFile.getArchiveblock());
+					fileVolume.setVolumeStartBlock(nthFile.getVolumeStartBlock());
+					fileVolume.setVolumeEndBlock(nthFile.getVolumeEndBlock());
+	
+					//fileVolume.setHardlinkFileId(file.getId());
+					if(diffValueToBeUsedForFileVolume != null && !isToBeImportedVolumeMaster) {
+						fileVolume.setDiff(diffValueToBeUsedForFileVolume);
+						
+						if(diffValueToBeUsedForFileVolume == DiffValues.c) {
+							FileVolumeDiff fileVolumeDiff = new FileVolumeDiff(file.getId(), volume.getId());
+							fileVolumeDiff.setSize(nthFile.getSize());
+							fileVolumeDiffDao.save(fileVolumeDiff);
+						}
+					}
+						
+	
+					fileVolumeDao.save(fileVolume);
+					fileVolumeRecordsImportStatus.add(ImportStatus.completed);
+					logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " record created successfully");
+				}
+				else {
+					logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
+					fileVolumeRecordsImportStatus.add(ImportStatus.skipped);
+					// break; // This means this is a rerun scenario and so the rest of the files can be skipped....
+				}
+			}
+	    }
+		
+	    // update the extra files in DB but not in current catalog appropriately
+		dealExtraFilesInDBButNotInCatalog(fileId_FileObj_Map, masterVolume, isToBeImportedVolumeMaster);
+		
+		// find the missing ones and create filevolume entries
+		masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
+		dealMissingFilesInDBButPresentInCatalog(artifact.getId(), masterFileList, masterVolume);
+		
+		FileMeta fm = null;
+		if(isToBeImportedVolumeMaster)
+			fm = calculateAndSetFolderSizes(artifact);
+    	
+    	return fm;
+	}
+	
+	private boolean isJunk(String filePathname) {
+		boolean isJunk=false;
+		for (Iterator<Pattern> iterator2 = excludedFileNamesRegexList.iterator(); iterator2.hasNext();) {
+			// TODO : See if we can use PathMatcher than regex.Matcher
+			Pattern nthJunkFilesFinderRegexPattern = iterator2.next();
+			Matcher m = nthJunkFilesFinderRegexPattern.matcher(FilenameUtils.getBaseName(filePathname));
+			if(m.matches()) {
+				isJunk=true;
+			}
+		}
+		return isJunk;
+	}
+
+	
 	private Volume getMasterVolume(org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact, Volume volume){
 		Volume masterVolume = null;
 		
@@ -1146,19 +1080,156 @@ public class ImportService extends DwaraService {
 		
 		return false;
 	}
+
+
+	private void dealExtraFilesInDBButNotInCatalog(Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File> fileId_FileObj_Map, Volume masterVolume, boolean isToBeImportedVolumeMaster) {
+		Set<Integer> extraMasterFileList = fileId_FileObj_Map.keySet();
+		ArrayList<org.ishafoundation.dwaraapi.db.model.transactional.File> extraFileList = new ArrayList<org.ishafoundation.dwaraapi.db.model.transactional.File>(); 
+		ArrayList<FileVolume> extraFileVolumeList = new ArrayList<FileVolume>(); 
+		for (Integer nthFileId : extraMasterFileList) {
+			org.ishafoundation.dwaraapi.db.model.transactional.File nthExtraFile = fileId_FileObj_Map.get(nthFileId);
+			if(isToBeImportedVolumeMaster) {
+				nthExtraFile.setDiff(DiffValues.a);
+				extraFileList.add(nthExtraFile);
+				
+		    	List<FileVolume> fileVolumeList = fileVolumeDao.findAllByIdFileId(nthFileId);
+				for (FileVolume nthFileVolume : fileVolumeList) {
+					if(!nthFileVolume.getVolume().getId().equals(masterVolume.getId())) {
+						if(nthFileVolume.getDiff() != DiffValues.a) { // if not already updated
+							nthFileVolume.setDiff(DiffValues.a);
+							extraFileVolumeList.add(nthFileVolume);		
+						}
+					}
+				}
 	
-	private boolean isJunk(String filePathname) {
-		boolean isJunk=false;
-		for (Iterator<Pattern> iterator2 = excludedFileNamesRegexList.iterator(); iterator2.hasNext();) {
-			// TODO : See if we can use PathMatcher than regex.Matcher
-			Pattern nthJunkFilesFinderRegexPattern = iterator2.next();
-			Matcher m = nthJunkFilesFinderRegexPattern.matcher(FilenameUtils.getBaseName(filePathname));
-			if(m.matches()) {
-				isJunk=true;
 			}
 		}
-		return isJunk;
+		fileDao.saveAll(extraFileList);
+		fileVolumeDao.saveAll(extraFileVolumeList);
 	}
+	
+	private void dealMissingFilesInDBButPresentInCatalog(int artifactId, List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList, Volume masterVolume) {
+		List<ArtifactVolume> alreadyExistingArtifactVolumeList = artifactVolumeDao.findAllByIdArtifactId(artifactId);
+		for (ArtifactVolume nthAlreadyExistingArtifactVolume : alreadyExistingArtifactVolumeList) {
+			if(nthAlreadyExistingArtifactVolume.getId().getVolumeId().equals(masterVolume.getId()))
+				continue;
+	
+			Set<Integer> fileIdList = new TreeSet<Integer>();
+			List<FileVolume> alreadyExistingFileVolumeList = fileVolumeDao.findAllByIdVolumeId(nthAlreadyExistingArtifactVolume.getId().getVolumeId());
+			for (FileVolume nthAlreadyExistingFileVolume : alreadyExistingFileVolumeList) {
+				fileIdList.add(nthAlreadyExistingFileVolume.getId().getFileId());
+			}
+			for (org.ishafoundation.dwaraapi.db.model.transactional.File nthMasterFile : masterFileList) {
+				if(!fileIdList.contains(nthMasterFile.getId())){
+					FileVolume dummyFileVolume = new FileVolume(nthMasterFile.getId(), nthAlreadyExistingArtifactVolume.getVolume());
+					dummyFileVolume.setDiff(DiffValues.d);
+					fileVolumeDao.save(dummyFileVolume);
+				}
+			}
+		}
+	}
+	
+	
+	private FileMeta calculateAndSetFolderSizes(org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact) {	
+	    List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
+
+		// now lets calculate and collect subfolders size
+		Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
+		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : masterFileList) {
+			String nthFilepathname = nthFile.getPathname();
+			if(Boolean.TRUE.equals(nthFile.isDirectory())){
+				filePathnameVsSize_Map.put(nthFilepathname,0L);
+			}else {
+				String nthFileDirectoryName = FilenameUtils.getFullPathNoEndSeparator(nthFilepathname);
+	
+				for (String nthArtifactSubDirectory : filePathnameVsSize_Map.keySet()) {
+					if(nthFileDirectoryName.contains(nthArtifactSubDirectory)) {
+						Long size = filePathnameVsSize_Map.get(nthArtifactSubDirectory);
+						size += nthFile.getSize();
+						filePathnameVsSize_Map.put(nthArtifactSubDirectory,size);
+					}
+				}
+			}
+		}                 
+	
+		long artifactSize = 0L;
+		int fileCount = masterFileList.size();
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> fileListToBeDbUpdated = new ArrayList<org.ishafoundation.dwaraapi.db.model.transactional.File>();
+		// now lets make use of the collected subfolder size 
+		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : masterFileList) {
+			if(Boolean.TRUE.equals(nthFile.isDirectory())){
+				Long nthDirectorySize= filePathnameVsSize_Map.get(nthFile.getPathname());
+				nthFile.setSize(nthDirectorySize);
+	
+				if(nthFile.getPathname().equals(artifact.getName())){
+					artifactSize = nthDirectorySize;
+				}
+				fileListToBeDbUpdated.add(nthFile);
+				fileCount--;
+			}
+		}
+		
+		if(fileListToBeDbUpdated.size() > 0)
+			fileDao.saveAll(fileListToBeDbUpdated);
+		
+
+    	FileMeta fm = new FileMeta();
+    	fm.setFileCount(fileCount);
+    	fm.setTotalSize(artifactSize);
+
+    	return fm;
+	}
+	
+	/*
+	    4 - av.curr 
+	
+		6 - isNewer against curr(4) - true
+				diff - 
+					av.diff
+				no diff - 
+					av.curr && existingCurr becomes av.prev
+				
+				
+		3 - isNewer against curr - false
+				diff -
+					av.curr && 
+					existingCurr becomes av.diff
+				no diff - 	
+					av.prev && existingCurr remains as it is
+	 */
+	private ArtifactVolumeStatus getArtifactVolumeStatus(Volume volumeToBeImported, int artifactId, boolean hasDiffs) {
+		ArtifactVolumeStatus artifactVolumeStatus = ArtifactVolumeStatus.current;
+		
+		ArtifactVolume alreadyExistingArtifactVolume = artifactVolumeDao.findByIdArtifactIdAndVolumeGroupRefCopyIdAndStatus(artifactId, volumeToBeImported.getGroupRef().getCopy().getId(), ArtifactVolumeStatus.current);
+		if(alreadyExistingArtifactVolume != null) { // same copy pool need to handle current/previous etc
+			if(isNewer(volumeToBeImported, alreadyExistingArtifactVolume.getVolume())) {
+				if(hasDiffs)
+					artifactVolumeStatus = ArtifactVolumeStatus.diffs;
+				else {
+					artifactVolumeStatus = ArtifactVolumeStatus.current;
+					
+					// flagging the older generation as previous
+					alreadyExistingArtifactVolume.setStatus(ArtifactVolumeStatus.previous);
+					artifactVolumeDao.save(alreadyExistingArtifactVolume);
+				}
+			}else {
+				if(hasDiffs) {
+					artifactVolumeStatus = ArtifactVolumeStatus.current;
+					
+					// flagging the older generation as previous
+					alreadyExistingArtifactVolume.setStatus(ArtifactVolumeStatus.diffs);
+					artifactVolumeDao.save(alreadyExistingArtifactVolume);
+				}else 
+					artifactVolumeStatus = ArtifactVolumeStatus.previous;
+			}
+		}else {
+			if(hasDiffs)
+				artifactVolumeStatus = ArtifactVolumeStatus.diffs;
+		}
+	
+		return artifactVolumeStatus;
+	}
+
 	
 	private void moveFileNLogToOutputFolder(Path destDir, File nthXmlFile, String volumeName, ImportResponse importResponse) throws IOException {
 		destDir = Paths.get(destDir.toString(), volumeName); // create a directory and put the source xml file and its logs...
@@ -1175,4 +1246,21 @@ public class ImportService extends DwaraService {
 			destFile.delete();
 		FileUtils.moveFile(nthXmlFile, destFile);
 	}
+	
+	public class FileMeta{
+		private int fileCount;
+		private long totalSize;
+		public int getFileCount() {
+			return fileCount;
+		}
+		public void setFileCount(int fileCount) {
+			this.fileCount = fileCount;
+		}
+		public long getTotalSize() {
+			return totalSize;
+		}
+		public void setTotalSize(long totalSize) {
+			this.totalSize = totalSize;
+		}
+	} 
 }
