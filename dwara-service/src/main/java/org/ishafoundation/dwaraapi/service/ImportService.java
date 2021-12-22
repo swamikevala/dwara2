@@ -528,8 +528,8 @@ public class ImportService extends DwaraService {
 		return volume;
 	}
 	
-	private void iterateCatalogArtifacts(Volumeindex volumeindex, Volume volume, int runId, Request request){
-		String volumeId = volume.getId();
+	private void iterateCatalogArtifacts(Volumeindex volumeindex, Volume toBeImportedVolume, int runId, Request request){
+		String volumeId = toBeImportedVolume.getId();
 		long usedCapacity = 0;
 		List<Artifact> artifactList = volumeindex.getArtifact();
 		for (Artifact nthArtifact : artifactList) {
@@ -677,10 +677,10 @@ public class ImportService extends DwaraService {
 					if(importTable.getArtifactId() != artifact.getId())
 						throw new Exception("Something wrong with import.artifactId : Expected - " + artifact.getId() + " actual - " + importTable.getArtifactId());
 	
-					Volume masterVolume = getMasterVolume(artifact, volume); // Getting artifact's master copy
+					Volume masterVolume = getMasterVolume(artifact, toBeImportedVolume); // Getting artifact's master copy
 					logger.info("masterVolume - " + masterVolume.getId());
 					boolean isToBeImportedVolumeMaster = true; // the volume we are importing - is it the master volume?
-				    if(!masterVolume.getId().equals(volume.getId()))
+				    if(!masterVolume.getId().equals(toBeImportedVolume.getId()))
 				    	isToBeImportedVolumeMaster = false;
 					
 					/*
@@ -694,12 +694,12 @@ public class ImportService extends DwaraService {
 					  `job_id` int(11) DEFAULT NULL, *** - *** null
 					  `status` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, *** - *** current
 					 */
-				    ArtifactVolume artifactVolume = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifact.getId(), volume.getId());
+				    ArtifactVolume artifactVolume = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifact.getId(), toBeImportedVolume.getId());
 				    if(artifactVolume == null) {
-				    	artifactVolume = new ArtifactVolume(artifact.getId(), volume);
+				    	artifactVolume = new ArtifactVolume(artifact.getId(), toBeImportedVolume);
 				    
 					    artifactVolume.setName(artifactNameAsInCatalog); // NOTE : Dont be tempted to change this to toBeArtifactName - whatever in volume needs to go here...
-					    if(volume.getStoragelevel() == Storagelevel.block) {
+					    if(toBeImportedVolume.getStoragelevel() == Storagelevel.block) {
 						    ArtifactVolumeDetails artifactVolumeDetails = new ArtifactVolumeDetails();
 						    
 						    // artifactVolumeDetails.setArchiveId(archiveId);
@@ -713,7 +713,7 @@ public class ImportService extends DwaraService {
 					    artifactVolumeImportStatus = ImportStatus.completed;
 				    }else {
 				    	artifactVolumeImportStatus = ImportStatus.skipped;
-				    	logger.debug("ArtifactVolume for " + artifact.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
+				    	logger.debug("ArtifactVolume for " + artifact.getId() + ":" + toBeImportedVolume.getId() + " already exists, so skipping updating DB"); // rerun scenario
 				    }
 				    logger.info("ArtifactVolume - " + artifactVolumeImportStatus);
 				    
@@ -725,7 +725,7 @@ public class ImportService extends DwaraService {
 				    ArrayList<String> differingSizeList = new ArrayList<String>();
 
 
-				    FileMeta fileMeta = dealCatalogFiles(nthArtifact, artifact, artifactNameAsInCatalog, toBeArtifactName, artifactclass, volume, masterVolume, 
+				    FileMeta fileMeta = dealCatalogFiles(nthArtifact, artifact, artifactNameAsInCatalog, toBeArtifactName, artifactclass, toBeImportedVolume, masterVolume, 
 				    		isToBeImportedVolumeMaster, artifactAlreadyExists, fileId_FileObj_Map, fileRecordsImportStatus, fileVolumeRecordsImportStatus, missingFilepathnameList, differingSizeList);
 	
 				    fileImportStatus = ImportStatusUtil.getStatus(fileRecordsImportStatus);
@@ -741,7 +741,7 @@ public class ImportService extends DwaraService {
 
 					// UPDATING THE artifactvolumestatus only when everything is OK, so its used for restoring
 					if(artifactVolumeImportStatus == ImportStatus.completed) {
-					    artifactVolume.setStatus(getArtifactVolumeStatus(volume, artifact.getId(), hasDiffs));
+					    artifactVolume.setStatus(getArtifactVolumeStatus(toBeImportedVolume, isToBeImportedVolumeMaster, artifact.getId(), hasDiffs));
 					    artifactVolume = artifactVolumeDao.save(artifactVolume);
 					}
 
@@ -781,8 +781,8 @@ public class ImportService extends DwaraService {
 		
 		}
 		
-		volume.setUsedCapacity(usedCapacity);
-		volume = volumeDao.save(volume);
+		toBeImportedVolume.setUsedCapacity(usedCapacity);
+		toBeImportedVolume = volumeDao.save(toBeImportedVolume);
 	}
 	
 	private FileMeta dealCatalogFiles(Artifact nthArtifact, org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact, 
@@ -1180,55 +1180,82 @@ public class ImportService extends DwaraService {
     	return fm;
 	}
 	
-	/*
-	    4 - av.curr 
-	
-		6 - isNewer against curr(4) - true
-				diff - 
-					av.diff
-				no diff - 
-					av.curr && existingCurr becomes av.prev
-				
-				
-		3 - isNewer against curr - false
-				diff -
-					av.curr && 
-					existingCurr becomes av.diff
-				no diff - 	
-					av.prev && existingCurr remains as it is
-	 */
-	private ArtifactVolumeStatus getArtifactVolumeStatus(Volume volumeToBeImported, int artifactId, boolean hasDiffs) {
+	private ArtifactVolumeStatus getArtifactVolumeStatus(Volume volumeToBeImported, boolean isToBeImportedVolumeMaster, int artifactId, boolean hasDiffs) {
 		ArtifactVolumeStatus artifactVolumeStatus = ArtifactVolumeStatus.current;
-		
-		ArtifactVolume alreadyExistingArtifactVolume = artifactVolumeDao.findByIdArtifactIdAndVolumeGroupRefCopyIdAndStatus(artifactId, volumeToBeImported.getGroupRef().getCopy().getId(), ArtifactVolumeStatus.current);
-		if(alreadyExistingArtifactVolume != null) { // same copy pool need to handle current/previous etc
-			if(isNewer(volumeToBeImported, alreadyExistingArtifactVolume.getVolume())) {
-				if(hasDiffs)
-					artifactVolumeStatus = ArtifactVolumeStatus.diffs;
-				else {
-					artifactVolumeStatus = ArtifactVolumeStatus.current;
-					
-					// flagging the older generation as previous
-					alreadyExistingArtifactVolume.setStatus(ArtifactVolumeStatus.previous);
-					artifactVolumeDao.save(alreadyExistingArtifactVolume);
-				}
-			}else {
-				if(hasDiffs) {
-					artifactVolumeStatus = ArtifactVolumeStatus.current;
-					
-					// flagging the older generation as previous
+		if(hasDiffs) {
+			if(isToBeImportedVolumeMaster) {
+				artifactVolumeStatus = ArtifactVolumeStatus.current;
+				
+				// all other artifact volume should have diffs
+				List<ArtifactVolume> alreadyExistingArtifactVolumeList = artifactVolumeDao.findAllByIdArtifactId(artifactId);
+				for (ArtifactVolume alreadyExistingArtifactVolume : alreadyExistingArtifactVolumeList) {
 					alreadyExistingArtifactVolume.setStatus(ArtifactVolumeStatus.diffs);
 					artifactVolumeDao.save(alreadyExistingArtifactVolume);
-				}else 
-					artifactVolumeStatus = ArtifactVolumeStatus.previous;
+				}	
+			}else {
+				artifactVolumeStatus = ArtifactVolumeStatus.diffs;
 			}
 		}else {
-			if(hasDiffs)
-				artifactVolumeStatus = ArtifactVolumeStatus.diffs;
-		}
-	
+				ArtifactVolume alreadyExistingArtifactVolume = artifactVolumeDao.findByIdArtifactIdAndVolumeGroupRefCopyIdAndStatus(artifactId, volumeToBeImported.getGroupRef().getCopy().getId(), ArtifactVolumeStatus.current);
+				if(alreadyExistingArtifactVolume != null) { // same copy pool need to handle current/previous etc
+					if(isNewer(volumeToBeImported, alreadyExistingArtifactVolume.getVolume())) {
+							artifactVolumeStatus = ArtifactVolumeStatus.current;
+							
+							// flagging the older generation as previous
+							alreadyExistingArtifactVolume.setStatus(ArtifactVolumeStatus.previous);
+							artifactVolumeDao.save(alreadyExistingArtifactVolume);
+					}else {
+							artifactVolumeStatus = ArtifactVolumeStatus.previous;
+					}
+				}
+			}
 		return artifactVolumeStatus;
 	}
+		
+		
+//		List<ArtifactVolume> alreadyExistingMasterArtifactVolumeList = artifactVolumeDao.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
+//		for (ArtifactVolume alreadyExistingMasterArtifactVolume : alreadyExistingMasterArtifactVolumeList) {
+//			
+//			if(volumeToBeImported.getGroupRef().getCopy().getId() == alreadyExistingMasterArtifactVolume.getVolume().getGroupRef().getCopy().getId()){ // same copy pool need to handle current/previous etc
+//				if(isNewer(volumeToBeImported, alreadyExistingMasterArtifactVolume.getVolume())) {
+//					if(hasDiffs)
+//						artifactVolumeStatus = ArtifactVolumeStatus.diffs;
+//					else {
+//						artifactVolumeStatus = ArtifactVolumeStatus.current;
+//						
+//						// flagging the older generation as previous
+//						alreadyExistingMasterArtifactVolume.setStatus(ArtifactVolumeStatus.previous);
+//						artifactVolumeDao.save(alreadyExistingMasterArtifactVolume);
+//					}
+//				}else { // means volumeToBeImported is master // swapping the master here - existing master is either set to previous or diffs (if there are diffs)
+//					if(hasDiffs) { 
+//						artifactVolumeStatus = ArtifactVolumeStatus.current;
+//						
+//						
+//						alreadyExistingMasterArtifactVolume.setStatus(ArtifactVolumeStatus.diffs);
+//						artifactVolumeDao.save(alreadyExistingMasterArtifactVolume);
+//					}else  // flagging the older generation as previous
+//						artifactVolumeStatus = ArtifactVolumeStatus.previous;
+//				}
+//			}else {
+//				if(isToBeImportedVolumeMaster) { // Master of all pools
+//					artifactVolumeStatus = ArtifactVolumeStatus.current;
+//					
+//					if(hasDiffs) { // if master has diffs even other pool masters need to be set with diffs
+//						alreadyExistingMasterArtifactVolume.setStatus(ArtifactVolumeStatus.diffs);
+//						artifactVolumeDao.save(alreadyExistingMasterArtifactVolume);
+//					}
+//				} else {
+//					if(hasDiffs) {
+//						artifactVolumeStatus = ArtifactVolumeStatus.diffs;
+//					}	
+//				}
+//			}
+//			
+//		}
+//	
+//		return artifactVolumeStatus;
+//	}
 
 	
 	private void moveFileNLogToOutputFolder(Path destDir, File nthXmlFile, String volumeName, ImportResponse importResponse) throws IOException {
