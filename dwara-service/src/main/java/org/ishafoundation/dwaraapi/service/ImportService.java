@@ -184,12 +184,15 @@ public class ImportService extends DwaraService {
 				importResponse.setVolumeImportFailureReason(nthImportResponse.getVolumeImportFailureReason());
 				importResponse.setRunCount(nthImportResponse.getRunCount());
 				
-				destDir = completedDirPath; // move the imported catalog to completed folder - eg., /data/dwara/import-staging/completed
-				if(nthImportResponse.getErrors() != null && nthImportResponse.getErrors().size() > 0) {
+				if(nthImportResponse.getVolumeImportStatus().equals(ImportStatus.completed.toString()))
+					destDir = completedDirPath; // move the imported catalog to completed folder - eg., /data/dwara/import-staging/completed
+				else
 					destDir = invalidDirPath; // if there are errors move the catalog to invalid folder
+
+				if(nthImportResponse.getErrors() != null && nthImportResponse.getErrors().size() > 0) {
 					importResponse.setErrors(nthImportResponse.getErrors());
 				}
-				
+			
 				moveFileNLogToOutputFolder(destDir, nthXmlFile, volumeName, nthImportResponse);
 			}catch (Exception e) {
 				importResponse = new ImportResponse();
@@ -280,7 +283,7 @@ public class ImportService extends DwaraService {
 				Status nthImportStatus = nthImport.getStatus();
 				statusList.add(nthImportStatus);
 				
-				if(nthImportStatus == Status.failed) {
+				if(nthImportStatus == Status.failed || nthImportStatus == Status.completed_failures) {
 					String failureMessage = StringUtils.substringBefore(nthImport.getMessage(), ":");
 					Integer cnt = 1;
 					if(sameErrorMsg_Cnt.containsKey(failureMessage)) {
@@ -291,9 +294,6 @@ public class ImportService extends DwaraService {
 			}
 			Status tapeImportStatus = StatusUtil.getStatus(statusList); // NOTE If there is any update in iva.status then we need to update the Request status appropriately
 			
-//			if(tapeImportStatus == Status.completed)
-//				importDao.deleteAll(aviList);
-
 			StringBuffer failureReason = new StringBuffer();
 			if(sameErrorMsg_Cnt.size() > 0) {
 				for (String failureMessage : sameErrorMsg_Cnt.keySet()) {
@@ -759,7 +759,7 @@ public class ImportService extends DwaraService {
 					usedCapacity += artifact.getTotalSize();
 					if(hasDiffs) {
 				    	importTable.setMessage("Differences exist between artifact copies : ");
-						importTable.setStatus(Status.failed);
+						importTable.setStatus(Status.completed_failures);
 				    }
 					else 
 						importTable.setStatus(Status.completed);

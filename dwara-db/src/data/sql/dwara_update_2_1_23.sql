@@ -21,9 +21,9 @@ UPDATE `sequence` SET `force_match`='0' WHERE `id`='video-digi-2010-pub';
 -- update the already imported 5 tapes with changed schema
 
 -- update request status 
-update request set status = 'failed' where action_id='import' and json_extract(details, '$.body.xmlPathname') like "%P17023L6%";
-update request set status = 'failed' where action_id='import' and json_extract(details, '$.body.xmlPathname') like "%C17027L6%";
-update request set status = 'failed' where action_id='import' and json_extract(details, '$.body.xmlPathname') like "%C17031L7%";
+update request set status = 'completed_failures' where action_id='import' and json_extract(details, '$.body.xmlPathname') like "%P17023L6%";
+update request set status = 'completed_failures' where action_id='import' and json_extract(details, '$.body.xmlPathname') like "%C17027L6%";
+update request set status = 'completed_failures' where action_id='import' and json_extract(details, '$.body.xmlPathname') like "%C17031L7%";
 
 DROP TABLE IF EXISTS `import`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -77,8 +77,8 @@ VALUES
 
 INSERT INTO `import` (`artifact_id`,`artifact_name`, `volume_id`,`requeue_id` , `message`, `status`, `request_id`) 
 VALUES 
-(49034,' Z7438_Resi-Meet_HD4K_2020-Mar-22_Nalanda-Grounds-IYC_Edited-Files','P17023L6',1,'Artifact name has special characters','failed',80527),
-(49056,'Z7460_Meditators-Sathsang_DV_M296-To-M298_Same-In_M036_MD_M057_Edited-Files','P17023L6',1,'Artifact size is less than 1MiB','failed',80527);
+(49034,' Z7438_Resi-Meet_HD4K_2020-Mar-22_Nalanda-Grounds-IYC_Edited-Files','P17023L6',1,'Artifact name has special characters','completed_failures',80527),
+(49056,'Z7460_Meditators-Sathsang_DV_M296-To-M298_Same-In_M036_MD_M057_Edited-Files','P17023L6',1,'Artifact size is less than 1MiB','completed_failures',80527);
 
 
 -- **************** C17027L6 *************** - failed
@@ -216,7 +216,7 @@ VALUES
 
 INSERT INTO `import` (`artifact_id`,`artifact_name`, `volume_id`,`requeue_id` , `message`, `status`, `request_id`) 
 VALUES 
-(48984,'25025_Agroforestry-Farm-Shots-From-Farmer-Suresh-Farm_ Karekura-Mandya-District_05-Feb-2020_Drone','C17027L6',1,'Artifact name has special characters','failed',80526);
+(48984,'25025_Agroforestry-Farm-Shots-From-Farmer-Suresh-Farm_ Karekura-Mandya-District_05-Feb-2020_Drone','C17027L6',1,'Artifact name has special characters','completed_failures',80526);
 
 -- **************** CA4220L4 *************** - completed 80525
 INSERT INTO `import` (`artifact_id`,`artifact_name`, `volume_id`,`requeue_id` , `message`, `status`, `request_id`) 
@@ -603,7 +603,7 @@ VALUES
 -- attend to the failures...
 INSERT INTO `import` (`artifact_id`,`artifact_name`, `volume_id`,`requeue_id` , `message`, `status`, `request_id`) 
 VALUES 
-(48577,'25116_Sadhguru-Interview-With-NDTV-For-The-Cycle-Of-Change-Show_Nalanda1-IYC_02-May-2020_YouTube-Download','C17031L7',1,'Artifact size is 0','failed',80522);
+(48577,'25116_Sadhguru-Interview-With-NDTV-For-The-Cycle-Of-Change-Show_Nalanda1-IYC_02-May-2020_YouTube-Download','C17031L7',1,'Artifact size is 0','completed_failures',80522);
 
 -- drop table import_volume_artifact
 drop table import_volume_artifact;
@@ -616,7 +616,7 @@ UPDATE `volume` SET `details`='{\"barcoded\": true, \"blocksize\": 1048576, \"wr
 UPDATE `volume` SET `details`='{\"barcoded\": true, \"blocksize\": 1048576, \"written_at\": \"2020-05-14T00:00:00\"}', `finalized_at`=null WHERE `id`='P17023L6';
 
 -- volume end block is not needed for import
-update file_volume set volume_end_block is null where volume_end_block is not null and volume_id in ('C16139L6','C17027L6','C17031L7','CA4220L4','P17023L6');
+update file_volume set volume_end_block = null where volume_end_block is not null and volume_id in ('C16139L6','C17027L6','C17031L7','CA4220L4','P17023L6');
 
 /*
  * NEED to add unique constraint on artifact.sequence_code but right now we have problem with our data - Need clean up

@@ -73,15 +73,23 @@ public class DwaraImport {
 		java.io.File file = new java.io.File(bruFile);
 		for (java.io.File textFile : file.listFiles()) {
 			if (!textFile.isDirectory()) {
-				System.out.println("Parsing catalog " + textFile.getName());
+				String fileName = textFile.getName();
+				System.out.println("***************-***************");
+				System.out.println("Parsing catalog " + fileName);
 				try {
-					java.io.File completedFile = Paths.get(bruFile,"completed",textFile.getName()).toFile();
+					java.io.File completedFile = Paths.get(bruFile,"completed",fileName).toFile();
 					if(completedFile.exists()) {
 						System.err.println("ERROR - " + completedFile.getAbsolutePath() + " already exists. Figure out why we are already running a complete catalog. Skipping it");
 						throw new Exception(completedFile.getAbsolutePath() + " already exists. Figure out why we are already running a complete catalog. Skipping it");
 					}
-					String ltoTape = textFile.getName().split("_")[0];
-					String dateStr = textFile.getName().split("_")[1].split("\\.")[0];
+					
+					
+					String[] fileNameParts = fileName.split("_");
+					if(fileNameParts.length != 2) // use regex instead...
+						throw new Exception(fileName + " doesnt follow catalog naming convention <<Barcode>>_<<WrittenDate>>");
+					
+					String ltoTape = fileName.split("_")[0];
+					String dateStr = fileName.split("_")[1].split("\\.")[0];
 
             		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d-MMM-yyyy HH"); 
             		LocalDateTime dateTime = LocalDateTime.parse(dateStr + " 00", formatter);
@@ -152,11 +160,9 @@ public class DwaraImport {
 					FileUtils.moveFile(textFile, failedFile);
 				}
 
+				System.out.println("***************-***************");
+				System.out.println("\n");
 			}
-			
-			System.out.println("***************-***************");
-			System.out.println("\n");
-			System.out.println("***************-***************");
 		}
 	}
 
