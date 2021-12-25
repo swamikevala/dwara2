@@ -588,9 +588,15 @@ public class ImportService extends DwaraService {
 					boolean artifactAlreadyExists = true;
 					org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = null;
 					if(prevSeqCode != null) {
-						artifact = artifactDao.findByPrevSequenceCodeAndDeletedIsFalse(prevSeqCode);
-					}else if(sequenceCode != null){				
-						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
+						if(artifactclass.getSequence().getSequenceRef() != null)
+							artifact = artifactDao.findByPrevSequenceCodeAndDeletedIsFalseAndArtifactclassSequenceSequenceRefId(prevSeqCode, artifactclass.getSequence().getSequenceRef().getId());
+						else
+							artifact = artifactDao.findByPrevSequenceCodeAndDeletedIsFalseAndArtifactclassId(prevSeqCode, artifactclass.getId());
+					}else if(sequenceCode != null){
+						if(artifactclass.getSequence().getSequenceRef() != null)
+							artifact = artifactDao.findBySequenceCodeAndDeletedIsFalseAndArtifactclassSequenceSequenceRefId(sequenceCode, artifactclass.getSequence().getSequenceRef().getId());
+						else
+							artifact = artifactDao.findBySequenceCodeAndDeletedIsFalseAndArtifactclassId(sequenceCode, artifactclass.getId());
 					}
 	
 					if(artifact != null) { // even if artifact extracted code matches - double check for name - and if name differs flag it

@@ -18,6 +18,23 @@ UPDATE `sequence` SET `force_match`='2' WHERE `id`='video-edit-priv2';
 UPDATE `sequence` SET `force_match`='0' WHERE `id`='video-digi-2010-priv2';
 UPDATE `sequence` SET `force_match`='0' WHERE `id`='video-digi-2010-pub';
 
+-- change prefix for 2010-raw - VC
+UPDATE `sequence` SET `prefix`='VC' WHERE `id`='video-digi-2010-pub';
+UPDATE `sequence` SET `prefix`='VCX' WHERE `id`='video-digi-2010-priv2';
+
+-- add entries for 2010-edited ZC
+-- SEQUENCE --
+INSERT INTO sequence (id, `type`, prefix, code_regex, number_regex, `group`, starting_number, ending_number, current_number, sequence_ref_id, force_match, keep_code, replace_code) VALUES 
+('video-digi-2010-edit-grp','artifact',null,null,null,1,1,-1,0,null,0,0,null),
+('video-digi-2010-edit-pub','artifact','ZC','^ZP?\\d+',null,0,null,null,null,'video-digi-2010-edit-grp',1,0,0),
+('video-digi-2010-edit-priv2','artifact','ZCX','^ZY?\\d+',null,0,null,null,null,'video-digi-2010-edit-grp',1,0,0);
+
+-- ARTIFACTCLASS --
+INSERT INTO artifactclass (id, `description`, domain_id, sequence_id, source, concurrent_volume_copies, display_order, path_prefix, artifactclass_ref_id, import_only, config) VALUES 
+('video-digi-2010-edit-pub','',1,'video-digi-2010-edit-pub',1,1,10,'/data/dwara/staged',null,0,null),
+('video-digi-2010-edit-priv1','',1,'video-digi-2010-edit-pub',1,1,11,'/data/dwara/staged',null,0,null),
+('video-digi-2010-edit-priv2','',1,'video-digi-2010-edit-priv2',1,1,12,'/data/dwara/staged',null,0,null);
+
 -- update the already imported 5 tapes with changed schema
 
 -- update request status 
