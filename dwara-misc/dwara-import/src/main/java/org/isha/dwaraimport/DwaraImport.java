@@ -252,7 +252,12 @@ public class DwaraImport {
 				Artifact artifact = new Artifact();
 				artifact.setName(artifactList.name);
 				artifact.setStartblock(artifactList.startVolumeBlock.intValue());
-				artifact.setEndblock(artifactList.endVolumeBlock.intValue());
+				if(artifactList.endVolumeBlock == null) {
+					System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " is an empty folder");
+					hasErrors=true;
+				}
+				else
+					artifact.setEndblock(artifactList.endVolumeBlock.intValue());
 				if(StringUtils.isBlank(artifactList.category)) { // check if its to be ignored...
 //					List<String> abc = (List<String>) ignoreImportArtifacts.get(ltoTape);
 //					if(abc != null && abc.contains(artifactList.name)){
