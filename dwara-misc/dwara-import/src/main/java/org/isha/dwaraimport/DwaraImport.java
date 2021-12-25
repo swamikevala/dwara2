@@ -18,8 +18,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.staged.scan.BasicArtifactValidator;
 import org.ishafoundation.dwaraapi.staged.scan.Error;
-import org.ishafoundation.dwaraapi.staged.scan.Validation;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Imported;
@@ -42,7 +42,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 @Component
-public class DwaraImport extends Validation{
+public class DwaraImport {
 	private static final Logger LOG = LoggerFactory.getLogger(DwaraImport.class);
 
 	private List<BruData> listBruData = new ArrayList<>();
@@ -50,6 +50,8 @@ public class DwaraImport extends Validation{
 	private List<BruData> fileList = new ArrayList<>();
 	String regexAllowedChrsInFileName = "[\\w-.]*";
 	Pattern allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
+	
+	private BasicArtifactValidator basicArtifactValidator = new BasicArtifactValidator();
 	
 	static Map getJSONFromFile(String folderPath) throws IOException, ParseException {
 
@@ -71,15 +73,23 @@ public class DwaraImport extends Validation{
 		java.io.File file = new java.io.File(bruFile);
 		for (java.io.File textFile : file.listFiles()) {
 			if (!textFile.isDirectory()) {
-				System.out.println("Parsing catalog " + textFile.getName());
+				String fileName = textFile.getName();
+				System.out.println("***************-***************");
+				System.out.println("Parsing catalog " + fileName);
 				try {
-					java.io.File completedFile = Paths.get(bruFile,"completed",textFile.getName()).toFile();
+					java.io.File completedFile = Paths.get(bruFile,"completed",fileName).toFile();
 					if(completedFile.exists()) {
-						System.err.println(completedFile.getAbsolutePath() + " already exists. Figure out why we are already running a complete catalog. Skipping it");
+						System.err.println("ERROR - " + completedFile.getAbsolutePath() + " already exists. Figure out why we are already running a complete catalog. Skipping it");
 						throw new Exception(completedFile.getAbsolutePath() + " already exists. Figure out why we are already running a complete catalog. Skipping it");
 					}
-					String ltoTape = textFile.getName().split("_")[0];
-					String dateStr = textFile.getName().split("_")[1].split("\\.")[0];
+					
+					
+					String[] fileNameParts = fileName.split("_");
+					if(fileNameParts.length != 2) // use regex instead...
+						throw new Exception(fileName + " doesnt follow catalog naming convention <<Barcode>>_<<WrittenDate>>");
+					
+					String ltoTape = fileName.split("_")[0];
+					String dateStr = fileName.split("_")[1].split("\\.")[0];
 
             		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d-MMM-yyyy HH"); 
             		LocalDateTime dateTime = LocalDateTime.parse(dateStr + " 00", formatter);
@@ -150,6 +160,8 @@ public class DwaraImport extends Validation{
 					FileUtils.moveFile(textFile, failedFile);
 				}
 
+				System.out.println("***************-***************");
+				System.out.println("\n");
 			}
 		}
 	}
@@ -234,13 +246,18 @@ public class DwaraImport extends Validation{
 		for (BruData artifactList: artifactsList) {
 			try {
 				List<Error> errorList = new ArrayList<Error>();
-				errorList.addAll(validateName(artifactList.name, allowedChrsInFileNamePattern));
+				errorList.addAll(basicArtifactValidator.validateName(artifactList.name, allowedChrsInFileNamePattern));
 				
 				// System.out.println("Framing object for " + artifactList.name);
 				Artifact artifact = new Artifact();
 				artifact.setName(artifactList.name);
 				artifact.setStartblock(artifactList.startVolumeBlock.intValue());
-				artifact.setEndblock(artifactList.endVolumeBlock.intValue());
+				if(artifactList.endVolumeBlock == null) {
+					System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " is an empty folder");
+					hasErrors=true;
+				}
+				else
+					artifact.setEndblock(artifactList.endVolumeBlock.intValue());
 				if(StringUtils.isBlank(artifactList.category)) { // check if its to be ignored...
 //					List<String> abc = (List<String>) ignoreImportArtifacts.get(ltoTape);
 //					if(abc != null && abc.contains(artifactList.name)){
@@ -248,7 +265,7 @@ public class DwaraImport extends Validation{
 //						continue;
 //					}
 //					else
-					System.err.println(ltoTape + ":" + artifactList.name + " misses artifactclass");
+					System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " misses artifactclass");
 					hasErrors=true;
 				}	
 				artifact.setArtifactclassuid(artifactList.category);
@@ -274,53 +291,53 @@ public class DwaraImport extends Validation{
 					}
 					
 				}
-				// now lets calculate and collect subfolders size
-				Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
-				for (File nthFile : fileList) {
-					String nthFilepathname = nthFile.getName();
-					if(Boolean.TRUE.equals(nthFile.getDirectory())){
-						filePathnameVsSize_Map.put(nthFilepathname,0L);
-					}else {
-						String nthFileDirectoryName = FilenameUtils.getFullPathNoEndSeparator(nthFilepathname);
-
-						for (String nthArtifactSubDirectory : filePathnameVsSize_Map.keySet()) {
-							if(nthFileDirectoryName.contains(nthArtifactSubDirectory)) {
-								Long size = filePathnameVsSize_Map.get(nthArtifactSubDirectory);
-								size += nthFile.getSize();
-								filePathnameVsSize_Map.put(nthArtifactSubDirectory,size);
-							}
-						}
-					}
-				}                 
-
-				long artifactSize = 0L;
-				// now lets make use of the collected subfolder size 
-				for (File nthFile : fileList) {
-					if(Boolean.TRUE.equals(nthFile.getDirectory())){
-						Long nthDirectorySize= filePathnameVsSize_Map.get(nthFile.getName());
-						nthFile.setSize(nthDirectorySize);
-
-						if(nthFile.getName().equals(artifactList.name)){
-							artifactSize = nthDirectorySize;
-							//artifact.setTotalSize(nthDirectorySize);
-						}
-
-					}
-				}		
+//				// now lets calculate and collect subfolders size
+//				Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
+//				for (File nthFile : fileList) {
+//					String nthFilepathname = nthFile.getName();
+//					if(Boolean.TRUE.equals(nthFile.getDirectory())){
+//						filePathnameVsSize_Map.put(nthFilepathname,0L);
+//					}else {
+//						String nthFileDirectoryName = FilenameUtils.getFullPathNoEndSeparator(nthFilepathname);
+//
+//						for (String nthArtifactSubDirectory : filePathnameVsSize_Map.keySet()) {
+//							if(nthFileDirectoryName.contains(nthArtifactSubDirectory)) {
+//								Long size = filePathnameVsSize_Map.get(nthArtifactSubDirectory);
+//								size += nthFile.getSize();
+//								filePathnameVsSize_Map.put(nthArtifactSubDirectory,size);
+//							}
+//						}
+//					}
+//				}                 
+//
+//				long artifactSize = 0L;
+//				// now lets make use of the collected subfolder size 
+//				for (File nthFile : fileList) {
+//					if(Boolean.TRUE.equals(nthFile.getDirectory())){
+//						Long nthDirectorySize= filePathnameVsSize_Map.get(nthFile.getName());
+//						nthFile.setSize(nthDirectorySize);
+//
+//						if(nthFile.getName().equals(artifactList.name)){
+//							artifactSize = nthDirectorySize;
+//							//artifact.setTotalSize(nthDirectorySize);
+//						}
+//
+//					}
+//				}		
 				artifact.setFile(fileList);
 				
-				errorList.addAll(validateFileCount(fileList.size()));
-				errorList.addAll(validateFileSize(artifactSize));
+				//errorList.addAll(basicArtifactValidator.validateFileCount(fileList.size()));
+				//errorList.addAll(basicArtifactValidator.validateFileSize(artifactSize));
 
 				if(errorList.size() > 0) {
-					System.err.println(ltoTape + ":" + artifactList.name + " has validation failures - " + errorList.toString());
+					System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " has validation failures - " + errorList.toString());
 					hasErrors=true;
 				}
-				else	
-					artifactXMLList.add(artifact);
+
+				artifactXMLList.add(artifact);
 
 			}catch (Exception e) {
-				System.err.println(ltoTape + ":" + artifactList.name + " has errors " + e.getMessage());
+				System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " has errors " + e.getMessage());
 				hasErrors=true;
 				e.printStackTrace();
 			}

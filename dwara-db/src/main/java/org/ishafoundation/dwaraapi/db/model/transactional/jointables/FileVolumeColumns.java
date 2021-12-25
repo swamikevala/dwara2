@@ -4,9 +4,12 @@ import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.MappedSuperclass;
 
 import org.ishafoundation.dwaraapi.db.keys.FileVolumeKey;
+import org.ishafoundation.dwaraapi.enumreferences.DiffValues;
 
 @MappedSuperclass
 public class FileVolumeColumns {
@@ -37,6 +40,10 @@ public class FileVolumeColumns {
 	
 	@Column(name="hardlink_file_id")
 	private Integer hardlinkFileId;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name="diff", length=1)
+	private DiffValues diff;
 
 	public Integer getVolumeStartBlock() {
 		return volumeStartBlock;
@@ -100,6 +107,14 @@ public class FileVolumeColumns {
 
 	public void setHardlinkFileId(Integer hardlinkFileId) {
 		this.hardlinkFileId = hardlinkFileId;
+	}
+
+	public DiffValues getDiff() {
+		return diff;
+	}
+
+	public void setDiff(DiffValues diff) {
+		this.diff = diff;
 	}
 
 

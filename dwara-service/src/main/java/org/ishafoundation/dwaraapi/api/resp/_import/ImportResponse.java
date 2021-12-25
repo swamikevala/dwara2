@@ -15,6 +15,7 @@ public class ImportResponse {
 	private int runCount;
 	private String volumeId;
 	private String volumeImportStatus;
+	private String volumeImportFailureReason;
 	private List<Artifact> artifacts;
 	private List<Error> errors;
 	
@@ -59,6 +60,12 @@ public class ImportResponse {
 	}
 	public void setVolumeImportStatus(String volumeImportStatus) {
 		this.volumeImportStatus = volumeImportStatus;
+	}
+	public String getVolumeImportFailureReason() {
+		return volumeImportFailureReason;
+	}
+	public void setVolumeImportFailureReason(String volumeImportFailureReason) {
+		this.volumeImportFailureReason = volumeImportFailureReason;
 	}
 	public List<Artifact> getArtifacts() {
 		return artifacts;

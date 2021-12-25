@@ -30,4 +30,13 @@ public interface ArtifactDao extends CrudRepository<Artifact,Integer> {
 	List<Artifact> findAllByArtifactRef(Artifact artifact);
 
 	List<Artifact> findByNameEndsWithAndArtifactclassId(String artifactName, String id);
+
+	Artifact findByPrevSequenceCodeAndDeletedIsFalseAndArtifactclassSequenceSequenceRefId(String prevSeqCode,
+			String sequenceRefId);
+
+	Artifact findByPrevSequenceCodeAndDeletedIsFalseAndArtifactclassId(String prevSeqCode, String sequenceId);
+
+	Artifact findBySequenceCodeAndDeletedIsFalseAndArtifactclassSequenceSequenceRefId(String sequenceCode, String sequenceRefId);
+
+	Artifact findBySequenceCodeAndDeletedIsFalseAndArtifactclassId(String sequenceCode, String sequenceId);
 }

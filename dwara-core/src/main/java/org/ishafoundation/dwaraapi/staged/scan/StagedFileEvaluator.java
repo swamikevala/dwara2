@@ -43,7 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class StagedFileEvaluator extends Validation{
+public class StagedFileEvaluator {
 	
 	private static final Logger logger = LoggerFactory.getLogger(StagedFileEvaluator.class);
 
@@ -67,6 +67,9 @@ public class StagedFileEvaluator extends Validation{
 	
 	@Autowired
 	private Configuration configuration;
+	
+	@Autowired
+	private BasicArtifactValidator basicArtifactValidator;
 
 	private List<Pattern> excludedFileNamesRegexList = new ArrayList<Pattern>();
 	private Pattern allowedChrsInFileNamePattern = null;
@@ -145,14 +148,14 @@ public class StagedFileEvaluator extends Validation{
 
 		// 1a - validateName for photo* artifactclass
 		if(FilenameUtils.getBaseName(sourcePath).startsWith("photo")) { // validation only for photo* artifactclass
-			errorList.addAll(validatePhotoName(fileName, allowedChrsInFileNamePattern, (sfv != null && sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0 ? sfv.getPhotoSeriesFileNameValidationFailedFileNames() : null)));
+			errorList.addAll(basicArtifactValidator.validatePhotoName(fileName, allowedChrsInFileNamePattern, (sfv != null && sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0 ? sfv.getPhotoSeriesFileNameValidationFailedFileNames() : null)));
 		}
 		
 		// 2- validateCount
-		errorList.addAll(validateFileCount(fileCount));
+		errorList.addAll(basicArtifactValidator.validateFileCount(fileCount));
 
 		// 3- validateSize
-		errorList.addAll(validateFileSize(size));
+		errorList.addAll(basicArtifactValidator.validateFileSize(size));
 
 		// 4- dupe check on size against existing artifact
 		List<Artifact> alreadyExistingArtifacts = artifactDao.findAllByTotalSizeAndDeletedIsFalse(size);
@@ -272,7 +275,7 @@ public class StagedFileEvaluator extends Validation{
 	}
 	
 	public List<Error> validateName(String fileName) {
-		return validateName(fileName, allowedChrsInFileNamePattern);
+		return basicArtifactValidator.validateName(fileName, allowedChrsInFileNamePattern);
 	}
 	
 	// Used in ingest to validate level 1 on file size and count

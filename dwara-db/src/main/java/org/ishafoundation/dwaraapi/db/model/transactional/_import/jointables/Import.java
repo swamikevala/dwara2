@@ -5,11 +5,14 @@ import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.Lob;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.TypeDef;
-import org.ishafoundation.dwaraapi.db.keys.TArtifactVolumeImportKey;
+import org.ishafoundation.dwaraapi.db.keys.ImportKey;
+import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
@@ -17,15 +20,18 @@ import com.vladmihalcea.hibernate.type.json.JsonStringType;
 
 // TODO - Should this be action_volume_artifact or artifact_volume_action ???
 @Entity
-@Table(name="t_artifact_volume_import") // holds a list of artifacts of a volume we are importing 
+@Table(name="import") // holds a list of artifacts of a volume we are importing 
 @TypeDef(name = "json", typeClass = JsonStringType.class)
-public class TArtifactVolumeImport {
+public class Import {
 
 	@EmbeddedId
-	private TArtifactVolumeImportKey id;
+	private ImportKey id;
 	
 	@Column(name="artifact_id")
 	private Integer artifactId;
+	
+	@OneToOne(fetch = FetchType.LAZY)
+    private Request request;
 	
 	@Enumerated(EnumType.STRING)
 	@Column(name="status")
@@ -35,11 +41,11 @@ public class TArtifactVolumeImport {
 	@Column(name="message")
 	private String message; 
 	
-	public TArtifactVolumeImportKey getId() {
+	public ImportKey getId() {
 		return id;
 	}
 
-	public void setId(TArtifactVolumeImportKey id) {
+	public void setId(ImportKey id) {
 		this.id = id;
 	}
 
@@ -49,6 +55,14 @@ public class TArtifactVolumeImport {
 
 	public void setArtifactId(Integer artifactId) {
 		this.artifactId = artifactId;
+	}
+
+	public Request getRequest() {
+		return request;
+	}
+
+	public void setRequest(Request request) {
+		this.request = request;
 	}
 
 	public Status getStatus() {

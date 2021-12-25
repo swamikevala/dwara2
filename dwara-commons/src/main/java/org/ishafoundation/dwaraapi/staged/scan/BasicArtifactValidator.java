@@ -14,10 +14,12 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
-public class Validation {
+@Component
+public class BasicArtifactValidator {
 	
-	private static final Logger logger = LoggerFactory.getLogger(Validation.class);
+	private static final Logger logger = LoggerFactory.getLogger(BasicArtifactValidator.class);
 	private static SimpleDateFormat photoSeriesArtifactNameDateFormat = new SimpleDateFormat("yyyyMMdd");
 	
 	public List<Error> validateName(String fileName, Pattern allowedChrsInFileNamePattern) {

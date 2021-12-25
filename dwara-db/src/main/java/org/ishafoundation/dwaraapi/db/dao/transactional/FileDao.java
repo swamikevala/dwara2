@@ -24,4 +24,6 @@ public interface FileDao extends CrudRepository<File,Integer> {
 	List<File> findByPathnameIn(List<String> pathnameList);
 	
 	List<File> findByPathnameContains(String keyword);
+	
+	List<File> findAllByArtifactIdAndDeletedFalseAndDiffIsNull(int artifactId);
 }

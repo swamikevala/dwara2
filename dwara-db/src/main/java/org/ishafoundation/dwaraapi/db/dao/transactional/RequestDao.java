@@ -33,5 +33,8 @@ public interface RequestDao extends CrudRepository<Request,Integer>, RequestCust
 	List<Request> findAllByCompletedAtBetweenAndActionIdAndStatusInAndType(LocalDateTime startDateTime, LocalDateTime endDateTime, Action action, Collection<Status> completedVariants, RequestType type);
 	
 	@Query(value = "select * from request where action_id='import' and status='completed' and json_extract(details, '$.body.xmlPathname') like %?1%", nativeQuery = true)
-	Request findAlreadyCompletelyImportedVolumeNative(String volumeId);
+	Request findActionIsImportAndStatusIsCompletedAndVolume_Native(String volumeId);
+	
+	@Query(value = "select * from request where action_id='import' and json_extract(details, '$.body.xmlPathname') like %?1%", nativeQuery = true)
+	List<Request> findAllByActionIsImportAndVolume_Native(String volumeId);
 }

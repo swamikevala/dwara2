@@ -139,23 +139,29 @@ public class ArtifactService extends DwaraService{
 		};
 			
 		// 2. Change the artifact name in the artifact folder and artifact table/ file table entry for the artifact
-		Artifact artifactToRenameActualRow = artifactDao.findById(artifactId).get();
+		Artifact artifactToBeRenamed = artifactDao.findById(artifactId).get();
 
 		// 2 (a) ------ Artifact level change
 		// Check if the artifact id exists 
 		// If artifact ID is null return error and escape into the unknown
-		if (artifactToRenameActualRow == null) { 
+		if (artifactToBeRenamed == null) { 
 			throw new Exception("Artifact doesnt exist!");
 		}
 			
 		// Check if the system request is completed - only allow softrename on completed requests - NOTE with force option even when the request is not completed we allow softrename 
-		Request systemRequest = artifactToRenameActualRow.getWriteRequest();
-		Status systemRequestStatus =  systemRequest.getStatus();
-		if (!force && systemRequestStatus != Status.completed && systemRequestStatus != Status.marked_completed) {
-			throw new Exception("System request " + systemRequest.getId() + " not yet completed");
+		Request request = artifactToBeRenamed.getWriteRequest();
+		if(request == null)
+			request = artifactToBeRenamed.getqLatestRequest(); // For import there is no write request
+		
+		if(request == null)
+			throw new Exception("No request attached to " + artifactId + ". Wont be able to rename.");
+		
+		Status requestStatus =  request.getStatus();
+		if (!Boolean.TRUE.equals(force) && requestStatus != Status.completed && requestStatus != Status.marked_completed) {
+			throw new Exception("System request " + request.getId() + " not yet completed");
 		}
 
-		List<Job> jobList = jobDao.findAllByRequestId(systemRequest.getId());
+		List<Job> jobList = jobDao.findAllByRequestId(request.getId());
 		boolean queued = false;
 		boolean inProgress = false;
 		for (Job job : jobList) {
@@ -170,11 +176,11 @@ public class ArtifactService extends DwaraService{
 			}
 		}
 		
-		if (force && (queued || inProgress)) {
-			throw new Exception("System request " + systemRequest.getId() + " has jobs in running state. So can't proceed further");
+		if (Boolean.TRUE.equals(force) && (queued || inProgress)) {
+			throw new Exception("System request " + request.getId() + " has jobs in running state. So can't proceed further");
 		}
-		String artifactName = artifactToRenameActualRow.getName();
-		String sequenceId = artifactToRenameActualRow.getSequenceCode();
+		String artifactName = artifactToBeRenamed.getName();
+		String sequenceId = artifactToBeRenamed.getSequenceCode();
 		String artifactNewName = sequenceId + "_" + newName; 
 	
 		// Step 1 - Create User Request
@@ -185,7 +191,10 @@ public class ArtifactService extends DwaraService{
 		
 		Request userRequest = createUserRequest(Action.rename, Status.in_progress, data);
 		
-    	List<Artifact> artifactList = artifactDao.findAllByWriteRequestId(systemRequest.getId());
+    	List<Artifact> artifactList = artifactDao.findAllByWriteRequestId(request.getId());
+    	if(artifactList.size() == 0) // For import we dont use writeRequest
+    		artifactList.add(artifactToBeRenamed); 
+    	
     	for (Artifact artifact : artifactList) {
     		sequenceId = artifact.getSequenceCode();
     		artifactName = artifact.getName();
@@ -251,7 +260,7 @@ public class ArtifactService extends DwaraService{
 
 		// Return response
 		ArtifactResponse dr = new ArtifactResponse();
-		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForArtifactResponse(artifactToRenameActualRow);
+		org.ishafoundation.dwaraapi.api.resp.artifact.Artifact artifactForResponse = miscObjectMapper.getArtifactForArtifactResponse(artifactToBeRenamed);
 		dr.setArtifact(artifactForResponse);
 		dr.setUserRequestId(userRequest.getId());
 		dr.setAction(Action.rename.name());

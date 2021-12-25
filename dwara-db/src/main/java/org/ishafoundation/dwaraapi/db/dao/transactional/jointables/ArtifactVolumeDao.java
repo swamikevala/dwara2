@@ -14,6 +14,8 @@ public interface ArtifactVolumeDao extends CrudRepository<ArtifactVolume, Intege
 	
 	ArtifactVolume findByIdArtifactIdAndVolumeGroupRefCopyIdAndStatus(int artifactId, int copyNumber, ArtifactVolumeStatus artifactVolumeStatus);
 	
+	List<ArtifactVolume> findAllByIdArtifactIdAndVolumeGroupRefCopyId(int artifactId, int copyNumber);
+	
 	List<ArtifactVolume> findAllByIdVolumeId(String volumeId);
 	
 	List<ArtifactVolume> findAllByIdVolumeIdAndStatus(String volumeId, ArtifactVolumeStatus current);
