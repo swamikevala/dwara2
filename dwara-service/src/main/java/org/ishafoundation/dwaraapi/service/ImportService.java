@@ -1,7 +1,9 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -20,12 +22,14 @@ import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
 import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamWriter;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
+import org.ishafoundation.dwaraapi.api.req._import.SetSequenceImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
@@ -36,7 +40,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional._import.jointables.FileV
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ImportDao;
-import org.ishafoundation.dwaraapi.db.keys.ImportKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
@@ -277,7 +280,7 @@ public class ImportService extends DwaraService {
 			iterateCatalogArtifacts(volumeindex, volume, runId, request);
 			
 			Map<String,Integer> sameErrorMsg_Cnt = new HashMap<String, Integer>();
-			List<Import> importList = importDao.findAllByIdVolumeIdAndIdRequeueId(volumeId, runId);
+			List<Import> importList = importDao.findAllByVolumeIdAndRequeueId(volumeId, runId);
 			List<Status> statusList = new ArrayList<Status>();
 			for (Import nthImport : importList) {
 				Status nthImportStatus = nthImport.getStatus();
@@ -418,7 +421,7 @@ public class ImportService extends DwaraService {
 	private void createImportEntries(Volumeindex volumeindex, String volumeId, Request request, int runId){	
 		List<Artifact> artifactList = volumeindex.getArtifact();
 		for (Artifact nthArtifact : artifactList) {
-			List<Import> artifactImportList = importDao.findAllByIdVolumeIdAndIdArtifactName(volumeId, nthArtifact.getName());
+			List<Import> artifactImportList = importDao.findAllByVolumeIdAndArtifactName(volumeId, nthArtifact.getName());
 			boolean isArtifactAlreadyComplete = false;
 			if(artifactImportList!= null && artifactImportList.size() > 0) {
 				for (Import nthArtifactImport : artifactImportList) {
@@ -430,9 +433,10 @@ public class ImportService extends DwaraService {
 			}
 			
 			if(!isArtifactAlreadyComplete) { 
-				ImportKey importKey = new ImportKey(volumeId, nthArtifact.getName(), runId);
 				Import importDBRecord = new Import();				
-				importDBRecord.setId(importKey);
+				importDBRecord.setVolumeId(volumeId);
+				importDBRecord.setArtifactName(nthArtifact.getName());
+				importDBRecord.setRequeueId(runId);
 				importDBRecord.setStatus(Status.in_progress);
 				importDBRecord.setRequest(request);
 				importDao.save(importDBRecord);
@@ -546,10 +550,8 @@ public class ImportService extends DwaraService {
 			org.ishafoundation.dwaraapi.api.resp._import.Artifact respArtifact = new org.ishafoundation.dwaraapi.api.resp._import.Artifact();
 			respArtifact.setName(artifactNameAsInCatalog);
 	
-			ImportKey importKey = new ImportKey(volumeId, artifactNameAsInCatalog, runId);
-			Optional<Import> aviImport = importDao.findById(importKey);
-			
-			Import importTable = aviImport.isPresent() ? aviImport.get() : null;
+			Import importTable = importDao.findByVolumeIdAndArtifactNameAndRequeueId(volumeId, artifactNameAsInCatalog, runId);
+
 			if(importTable == null || importTable.getStatus() == Status.completed) { // already completed - so skip it
 				// continue;
 				artifactImportStatus = ImportStatus.skipped; 
@@ -1222,52 +1224,6 @@ public class ImportService extends DwaraService {
 			}
 		return artifactVolumeStatus;
 	}
-		
-		
-//		List<ArtifactVolume> alreadyExistingMasterArtifactVolumeList = artifactVolumeDao.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
-//		for (ArtifactVolume alreadyExistingMasterArtifactVolume : alreadyExistingMasterArtifactVolumeList) {
-//			
-//			if(volumeToBeImported.getGroupRef().getCopy().getId() == alreadyExistingMasterArtifactVolume.getVolume().getGroupRef().getCopy().getId()){ // same copy pool need to handle current/previous etc
-//				if(isNewer(volumeToBeImported, alreadyExistingMasterArtifactVolume.getVolume())) {
-//					if(hasDiffs)
-//						artifactVolumeStatus = ArtifactVolumeStatus.diffs;
-//					else {
-//						artifactVolumeStatus = ArtifactVolumeStatus.current;
-//						
-//						// flagging the older generation as previous
-//						alreadyExistingMasterArtifactVolume.setStatus(ArtifactVolumeStatus.previous);
-//						artifactVolumeDao.save(alreadyExistingMasterArtifactVolume);
-//					}
-//				}else { // means volumeToBeImported is master // swapping the master here - existing master is either set to previous or diffs (if there are diffs)
-//					if(hasDiffs) { 
-//						artifactVolumeStatus = ArtifactVolumeStatus.current;
-//						
-//						
-//						alreadyExistingMasterArtifactVolume.setStatus(ArtifactVolumeStatus.diffs);
-//						artifactVolumeDao.save(alreadyExistingMasterArtifactVolume);
-//					}else  // flagging the older generation as previous
-//						artifactVolumeStatus = ArtifactVolumeStatus.previous;
-//				}
-//			}else {
-//				if(isToBeImportedVolumeMaster) { // Master of all pools
-//					artifactVolumeStatus = ArtifactVolumeStatus.current;
-//					
-//					if(hasDiffs) { // if master has diffs even other pool masters need to be set with diffs
-//						alreadyExistingMasterArtifactVolume.setStatus(ArtifactVolumeStatus.diffs);
-//						artifactVolumeDao.save(alreadyExistingMasterArtifactVolume);
-//					}
-//				} else {
-//					if(hasDiffs) {
-//						artifactVolumeStatus = ArtifactVolumeStatus.diffs;
-//					}	
-//				}
-//			}
-//			
-//		}
-//	
-//		return artifactVolumeStatus;
-//	}
-
 	
 	private void moveFileNLogToOutputFolder(Path destDir, File nthXmlFile, String volumeName, ImportResponse importResponse) throws IOException {
 		destDir = Paths.get(destDir.toString(), volumeName); // create a directory and put the source xml file and its logs...
@@ -1300,5 +1256,79 @@ public class ImportService extends DwaraService {
 		public void setTotalSize(long totalSize) {
 			this.totalSize = totalSize;
 		}
-	} 
+	}
+
+	public ImportResponse markedCompletedImport(int importId, String reason) {
+		ImportResponse importResponse = new ImportResponse();	
+		Request userRequest = null;
+		Import importTable = null;
+		try {		
+			importTable = importDao.findById(importId).get();
+			if(importTable.getStatus() != Status.failed)
+				throw new DwaraException("Import cannot be marked completed. Only failed Import records can be marked_completed"); //
+
+			HashMap<String, Object> data = new HashMap<String, Object>();
+	    	data.put("importId", importId);
+			
+			userRequest = createUserRequest(Action.marked_completed, data);
+			
+			Import importDBRecord = new Import();				
+			importDBRecord.setVolumeId(importTable.getVolumeId());
+			importDBRecord.setArtifactName(importTable.getArtifactName());
+			importDBRecord.setRequeueId(importTable.getRequeueId() + 1);
+			importDBRecord.setArtifactId(importTable.getArtifactId());
+			importDBRecord.setMessage(reason);
+			importDBRecord.setStatus(Status.marked_completed);
+			importDBRecord.setRequest(userRequest);
+			
+			importDBRecord = importDao.save(importDBRecord);
+			logger.info("Import marked as completed successfully " + importDBRecord);
+			
+			userRequest.setStatus(Status.completed);
+			userRequest = requestDao.save(userRequest);
+			importResponse.setUserRequestId(userRequest.getId());
+			importResponse.setAction(Action.marked_completed.name());
+			importResponse.setRequestedBy(userRequest.getRequestedBy().getName());
+			importResponse.setRequestedAt(userRequest.getRequestedAt().toString());
+			importResponse.setRunCount(importDBRecord.getRequeueId());
+			importResponse.setVolumeId(importTable.getVolumeId());
+			
+		} catch (Exception e) {
+			if(userRequest != null && userRequest.getId() != 0) {
+				userRequest.setStatus(Status.failed);
+				userRequest = requestDao.save(userRequest);
+				importResponse.setUserRequestId(userRequest.getId());
+			}
+			throw e;
+		}
+		return importResponse;
+	}
+
+	public String setSequence(SetSequenceImportRequest importRequest) throws Exception {
+		File xmlFile = FileUtils.getFile(importRequest.getXmlPathname());
+		int counter = importRequest.getStartingNumber();
+		Volumeindex volumeindex = getVolumeindex(xmlFile);
+		List<Artifact> artifactList = volumeindex.getArtifact();
+		for (Artifact artifact : artifactList) {
+			artifact.setRename(counter + "_" + artifact.getName());
+			counter++;
+		}
+		
+	    XmlMapper xmlMapper = new XmlMapper();
+		//Get XMLOutputFactory instance.
+		XMLOutputFactory xmlOutputFactory = xmlMapper.getFactory().getXMLOutputFactory();
+	    String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;
+	    xmlOutputFactory.setProperty(propName, true);
+	    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_1_1, true);
+	    xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+		//Create FileWriter object.
+		Writer fileWriter = new FileWriter(xmlFile.getAbsolutePath()+"_new");
+		//Create XMLStreamWriter object from xmlOutputFactory.
+		XMLStreamWriter xmlStreamWriter = xmlOutputFactory.createXMLStreamWriter(fileWriter);
+
+	    xmlMapper.writeValue(xmlStreamWriter, volumeindex);
+
+		return "Done";
+	}
 }

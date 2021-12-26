@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
+import org.ishafoundation.dwaraapi.api.req._import.SetSequenceImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.ImportService;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -80,6 +82,48 @@ public class ImportController {
 		
 		if(importResponse.getErrors() != null && importResponse.getErrors().size() > 0)
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(importResponse);
+		
+		return ResponseEntity.status(HttpStatus.OK).body(importResponse);
+	}
+	
+	@PostMapping("/import/{importId}/marked_completed")
+    public ResponseEntity<ImportResponse> markedCompletedImport(@PathVariable("importId") int importId, @RequestBody (required=false) String reason) {
+    	logger.info("/import/" + importId + "/marked_completed");
+    	ImportResponse importResponse = null;
+    	try {
+    		importResponse = importService.markedCompletedImport(importId, reason);
+		}catch (Exception e) {
+			String errorMsg = "Unable to marked_completed Import - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+    	return ResponseEntity.status(HttpStatus.OK).body(importResponse);
+    }
+	
+	@ApiOperation(value = "Just a temp endpoint - ToBeDeleted - Sets fed in sequence incrementally across artifacts given a xml")
+	@ApiResponses(value = { 
+			@ApiResponse(code = 200, message = "Ok")
+	})
+	@PostMapping(value = "/setSequence", produces = "application/json")
+	public ResponseEntity<String> setSequence(@RequestBody SetSequenceImportRequest importRequest) throws Exception {
+		logger.info("/import " + importRequest.getXmlPathname() + ":" + importRequest.getStartingNumber());
+		String importResponse = null;
+		try {
+			importResponse = importService.setSequence(importRequest);
+		}catch (Exception e) {
+			String errorMsg = "Unable to set sequence - " + e.getMessage();
+			logger.error(errorMsg, e);
+	
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+		
 		
 		return ResponseEntity.status(HttpStatus.OK).body(importResponse);
 	}

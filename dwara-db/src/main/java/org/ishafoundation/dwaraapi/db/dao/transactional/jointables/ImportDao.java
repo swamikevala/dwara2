@@ -2,19 +2,20 @@ package org.ishafoundation.dwaraapi.db.dao.transactional.jointables;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.keys.ImportKey;
 import org.ishafoundation.dwaraapi.db.model.transactional._import.jointables.Import;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.springframework.data.repository.CrudRepository;
 
-public interface ImportDao extends CrudRepository<Import,ImportKey> {
+public interface ImportDao extends CrudRepository<Import, Integer> {
 	
-	List<Import>  findAllByIdVolumeId(String volumeId);
+	List<Import>  findAllByVolumeId(String volumeId);
 	
-	List<Import>  findAllByIdVolumeIdAndIdArtifactName(String volumeId, String artifactName);
+	List<Import>  findAllByVolumeIdAndArtifactName(String volumeId, String artifactName);
 	
-	List<Import>  findAllByIdVolumeIdAndIdRequeueId(String volumeId, int requeueId);
+	List<Import>  findAllByVolumeIdAndRequeueId(String volumeId, int requeueId);
 	
-	List<Import>  findAllByIdVolumeIdAndStatusIsNot(String volumeId, Status status);
+	List<Import>  findAllByVolumeIdAndStatusIsNot(String volumeId, Status status);
+
+	Import findByVolumeIdAndArtifactNameAndRequeueId(String volumeId, String artifactNameAsInCatalog, int runId);
 	
 }
