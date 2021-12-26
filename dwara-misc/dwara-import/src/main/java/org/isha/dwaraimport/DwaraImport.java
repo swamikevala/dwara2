@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -44,12 +45,15 @@ import com.google.gson.reflect.TypeToken;
 @Component
 public class DwaraImport {
 	private static final Logger LOG = LoggerFactory.getLogger(DwaraImport.class);
-
+	
+	private static final Pattern BRCODE_REGEX_PATTERN  = Pattern.compile("BR[0-9]*_");
+	
 	private List<BruData> listBruData = new ArrayList<>();
 	private List<BruData> artifactsList = new ArrayList<>();
 	private List<BruData> fileList = new ArrayList<>();
 	String regexAllowedChrsInFileName = "[\\w-.]*";
 	Pattern allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
+	
 	
 	private BasicArtifactValidator basicArtifactValidator = new BasicArtifactValidator();
 	
@@ -225,7 +229,6 @@ public class DwaraImport {
 		}
 	};
 
-
 	public String createVolumeindex(String ltoTape, String writtenAt, String destinationFile) throws Exception {
 		boolean hasErrors = false;
 		System.out.println("Framing VolumeIndex Object from parsed data");
@@ -250,7 +253,15 @@ public class DwaraImport {
 				
 				// System.out.println("Framing object for " + artifactList.name);
 				Artifact artifact = new Artifact();
-				artifact.setName(artifactList.name);
+				String artifactName = artifactList.name;
+				String artifactNewName = null;
+				Matcher m = BRCODE_REGEX_PATTERN.matcher(artifactName); // Special logic for BR* artifactNames - There are some artifacts like BR00565_Z1833_Br-Meet_HD_SPH_Edited-Files_12-Mar-13 - we need to have it as Z1833_Br-Meet_HD_SPH_Edited-Files_12-Mar-13. We are setting this in rename attribute...
+				if(m.find()) {
+					artifactNewName = artifactName.replace(m.group(0),"");
+				}
+				artifact.setName(artifactName);
+				if(artifactNewName != null)
+					artifact.setRename(artifactNewName);
 				artifact.setStartblock(artifactList.startVolumeBlock.intValue());
 				if(artifactList.endVolumeBlock == null) {
 					System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " is an empty folder");
