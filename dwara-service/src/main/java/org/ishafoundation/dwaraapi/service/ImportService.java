@@ -605,7 +605,6 @@ public class ImportService extends DwaraService {
 						if(!artifactNameProposedShavedOffPrefix.equals(artifactNameShavedOffPrefix))
 							throw new Exception ("Same extractedCode but different artifact names : extractedCode - " + extractedCode + " ArtifactId " + artifact.getId() + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposedShavedOffPrefix);
 					}
-	
 					
 					if(artifact == null) { // Some imported artifacts has same name but different extracted codes... if so flag it
 						String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
@@ -620,6 +619,12 @@ public class ImportService extends DwaraService {
 						}
 					}
 					
+					if(artifact != null) { // check if catalog artifactclass is same as existing artifact's artifactclass
+						if(!artifact.getArtifactclass().getId().equals(artifactclass.getId())) {
+							 String errMsg = "Different Artifactclasses for same artifact : ArtifactId " + artifact.getId() + " - " + artifactNameAsInCatalog + ". Expected - " + artifact.getArtifactclass().getId() + " Actual - " + artifactclass.getId();
+							 throw new Exception (errMsg);
+						}	
+					}
 					//TODO - should we double check with size too??? domainSpecificArtifactRepository.findAllByTotalSizeAndDeletedIsFalse(size);
 					if(artifact == null) {
 						artifactAlreadyExists = false;
