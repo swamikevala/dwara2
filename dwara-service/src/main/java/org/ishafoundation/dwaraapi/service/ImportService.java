@@ -570,6 +570,9 @@ public class ImportService extends DwaraService {
 					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclassuid());
 					Sequence sequence = artifactclass.getSequence();
 					String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
+					if(StringUtils.isBlank(extractedCode)) {
+						extractedCode = sequenceUtil.getExtractedSeqNum(sequence, artifactNameProposed);
+					}
 					boolean isForceMatch = (sequence.getForceMatch() != null && sequence.getForceMatch() >= 1)  ? true : false;
 					if(isForceMatch && extractedCode == null) {
 						throw new Exception("Missing expected PreviousSeqCode : " + artifactNameProposed);

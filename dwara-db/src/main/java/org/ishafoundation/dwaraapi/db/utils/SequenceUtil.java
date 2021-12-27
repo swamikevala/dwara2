@@ -26,6 +26,12 @@ public class SequenceUtil {
 		return sequenceCode;
 	}
 	
+	public String getExtractedSeqNum(Sequence sequence, String artifactName){
+		String artifactNumberRegex = sequence.getNumberRegex();
+		String extractedSeqNum = artifactNumberRegex != null ? extractSequenceFromArtifactName(artifactName, artifactNumberRegex) : null;
+		return extractedSeqNum;
+	}
+	
 	public String getSequenceCode(Sequence sequence, String artifactName) {
 		return getSequenceCode(sequence, artifactName, null);
 	}
@@ -35,10 +41,7 @@ public class SequenceUtil {
 
 		boolean useExtractedCode = sequence.isKeepCode();
 	    if(useExtractedCode) { 
-	    	String artifactCodeRegex = sequence.getCodeRegex();
-	    	
-	    	if(artifactCodeRegex != null) // if use extracted code, and code_regex matches then we dont want a new code
-	    		sequenceCode = extractSequenceFromArtifactName(artifactName, artifactCodeRegex);
+    		sequenceCode = getExtractedCode(sequence, artifactName); // if use extracted code, and code_regex matches then we dont want a new code
 	    }
 	    
 	    if(StringUtils.isBlank(sequenceCode)) { // if keep_code is true but code_regex doesnt return a match...
@@ -48,8 +51,7 @@ public class SequenceUtil {
 	    		If number_regex returns a match value, use concat(prefix, value)
 	    		Use concat(prefix, current_number + 1)
 	    	*/
-			String artifactNumberRegex = sequence.getNumberRegex();
-			String extractedSeqNum = artifactNumberRegex != null ? extractSequenceFromArtifactName(artifactName, artifactNumberRegex) : null; 
+			String extractedSeqNum = getExtractedSeqNum(sequence, artifactName); 
 
 			if(StringUtils.isNotBlank(extractedSeqNum)) // If number_regex returns a match value, use concat(prefix, value)
 				sequenceCode = (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + extractedSeqNum;
