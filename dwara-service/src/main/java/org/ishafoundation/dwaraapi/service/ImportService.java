@@ -569,26 +569,18 @@ public class ImportService extends DwaraService {
 					*/
 					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclassuid());
 					Sequence sequence = artifactclass.getSequence();
-					String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
-					if(StringUtils.isBlank(extractedCode)) {
-						extractedCode = sequenceUtil.getExtractedSeqNum(sequence, artifactNameProposed);
-					}
+					
+
+					String prevSeqCode = getPrevSeqCode(sequence, artifactNameAsInCatalog);
+					String sequenceCode = getSequenceCodeFromCatalog(sequence, artifactNameProposed);
+
 					boolean isForceMatch = (sequence.getForceMatch() != null && sequence.getForceMatch() >= 1)  ? true : false;
-					if(isForceMatch && extractedCode == null) {
-						throw new Exception("Missing expected PreviousSeqCode : " + artifactNameProposed);
+					if(isForceMatch && sequenceCode == null) {
+						throw new Exception("Missing expected code : " + artifactNameProposed);
 					}
-					String sequenceCode = null;
-					String prevSeqCode = null;
-					if(extractedCode != null) {
-						if(sequence.isKeepCode()) {
-							// retaining the same name
-							toBeArtifactName = artifactNameProposed;
-							sequenceCode = extractedCode;
-						}
-						else {
-							prevSeqCode = extractedCode;
-						}
-					}
+					
+					if(sequenceCode != null && sequence.isKeepCode())
+						toBeArtifactName = artifactNameProposed; // retaining the same name
 					
 					boolean artifactAlreadyExists = true;
 					org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = null;
@@ -608,7 +600,7 @@ public class ImportService extends DwaraService {
 						String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
 						String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
 						if(!artifactNameProposedShavedOffPrefix.equals(artifactNameShavedOffPrefix))
-							throw new Exception ("Same extractedCode but different artifact names : extractedCode - " + extractedCode + " ArtifactId " + artifact.getId() + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposedShavedOffPrefix);
+							throw new Exception ("Same code but different artifact names : code - " + sequenceCode + " ArtifactId " + artifact.getId() + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposedShavedOffPrefix);
 					}
 					
 					if(artifact == null) { // Some imported artifacts has same name but different extracted codes... if so flag it
@@ -618,7 +610,7 @@ public class ImportService extends DwaraService {
 							 String artifactNameShavedOffPrefix = StringUtils.substringAfter(nthArtifactEndingWithSameName.getName(),"_");
 							 if(artifactNameShavedOffPrefix.equals(artifactNameProposedShavedOffPrefix)) {
 								 artifact = nthArtifactEndingWithSameName;
-								 String errMsg = "Different extractedCodes but same artifact name : ArtifactId " + artifact.getId() + " - " + artifactNameProposedShavedOffPrefix + ". Expected code - " + (artifact.getPrevSequenceCode() !=null ? artifact.getPrevSequenceCode() : artifact.getSequenceCode()) + " Actual - " + extractedCode;
+								 String errMsg = "Different extractedCodes but same artifact name : ArtifactId " + artifact.getId() + " - " + artifactNameProposedShavedOffPrefix + ". Expected code - " + (artifact.getPrevSequenceCode() !=null ? artifact.getPrevSequenceCode() : artifact.getSequenceCode()) + " Actual - " + (prevSeqCode != null ? prevSeqCode : sequenceCode);
 								 throw new Exception (errMsg);
 							 }
 						}
@@ -641,6 +633,7 @@ public class ImportService extends DwaraService {
 	//								overrideSequenceRefId = "video-imported-grp";
 	//						}
 	//						sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactName, overrideSequenceRefId);	
+							String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
 							sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactNameProposed);
 							org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);// findBySequenceCodeAndDeletedIsFalse(sequenceCode);
 							if(alreadyExistingArtifactWithSameSequenceCode != null)
@@ -801,6 +794,38 @@ public class ImportService extends DwaraService {
 		toBeImportedVolume = volumeDao.save(toBeImportedVolume);
 	}
 	
+
+	private String getPrevSeqCode(Sequence sequence, String artifactNameAsInCatalog) {
+		String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameAsInCatalog);
+		
+		if(StringUtils.isNotBlank(extractedCode) && sequence.isKeepCode()) // for keepCode true scenario...
+			return null;
+		else {
+			String extractedSeqNum = sequenceUtil.getExtractedSeqNum(sequence, artifactNameAsInCatalog);
+		
+			if(StringUtils.isNotBlank(extractedSeqNum) && sequence.isKeepCode())
+				return (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + extractedSeqNum; // If number_regex returns a match value, use concat(prefix, value)
+			else
+				return extractedSeqNum; 
+		}
+	}
+	
+	private String getSequenceCodeFromCatalog(Sequence sequence, String artifactNameProposed) {
+		String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
+		if(sequence.isKeepCode()) {
+			if(StringUtils.isNotBlank(extractedCode))
+				return extractedCode;
+			else {
+				String extractedSeqNum = sequenceUtil.getExtractedSeqNum(sequence, artifactNameProposed);
+				
+				if(StringUtils.isNotBlank(extractedSeqNum))
+					return (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + extractedSeqNum; // If number_regex returns a match value, use concat(prefix, value)
+			}
+		}
+
+		return null;
+	}
+
 	private FileMeta dealCatalogFiles(Artifact nthArtifact, org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact, 
 			String artifactNameAsInCatalog, String toBeArtifactName, Artifactclass artifactclass, 
 			Volume volume, Volume masterVolume, boolean isToBeImportedVolumeMaster, boolean artifactAlreadyExists,
