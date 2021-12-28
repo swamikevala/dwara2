@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -53,6 +54,8 @@ public class DwaraImport {
 	private List<BruData> fileList = new ArrayList<>();
 	String regexAllowedChrsInFileName = "[\\w-.]*";
 	Pattern allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
+	String archiveIdRegEx = "archive ID = (.*)";
+	Pattern archiveIdRegExPattern = Pattern.compile(archiveIdRegEx);
 	
 	
 	private BasicArtifactValidator basicArtifactValidator = new BasicArtifactValidator();
@@ -94,7 +97,8 @@ public class DwaraImport {
 					
 					String ltoTape = fileName.split("_")[0];
 					String dateStr = fileName.split("_")[1].split("\\.")[0];
-
+					String bruArchiveId = null;
+					
             		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d-MMM-yyyy HH"); 
             		LocalDateTime dateTime = LocalDateTime.parse(dateStr + " 00", formatter);
             		DateTimeFormatter formatterISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
@@ -104,6 +108,12 @@ public class DwaraImport {
 					listBruData.clear();
 					while (it.hasNext()) {
 						String line = it.nextLine();
+						if(line.startsWith("archive ID = ")) {
+							Matcher archiveIdRegExMatcher = archiveIdRegExPattern.matcher(line);
+							if(archiveIdRegExMatcher.matches()) {
+								bruArchiveId = archiveIdRegExMatcher.group(1);
+							}
+						}
 						if (line.contains("VL:c")) {
 
 							String[] arrValues = line.split("\\|");
@@ -153,7 +163,7 @@ public class DwaraImport {
 					//calculateArtifactSize();
 					calculateEndBlock();
 
-					createVolumeindex(ltoTape, writtenAt, destinationXmlPath);
+					createVolumeindex(ltoTape, writtenAt, bruArchiveId, destinationXmlPath);
 					
 					FileUtils.moveFile(textFile, Paths.get(bruFile,"completed",textFile.getName()).toFile());
 				} catch (Exception e) {
@@ -229,10 +239,12 @@ public class DwaraImport {
 		}
 	};
 
-	public String createVolumeindex(String ltoTape, String writtenAt, String destinationFile) throws Exception {
+	public String createVolumeindex(String ltoTape, String writtenAt, String bruArchiveId, String destinationFile) throws Exception {
 		boolean hasErrors = false;
 		System.out.println("Framing VolumeIndex Object from parsed data");
 		Volumeinfo volumeinfo = new Volumeinfo();
+		String volumeuuid = StringUtils.substringBeforeLast(UUID.randomUUID().toString(), "-") +  bruArchiveId;
+		volumeinfo.setVolumeuuid(volumeuuid);
 		volumeinfo.setVolumeuid(StringUtils.isEmpty(ltoTape) ? "No_LTO" : ltoTape);
 		volumeinfo.setVolumeblocksize(1048576);
 		volumeinfo.setArchiveformat("bru");

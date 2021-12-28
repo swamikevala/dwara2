@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -477,7 +476,7 @@ public class ImportService extends DwaraService {
 		
 		String volumeBarcode = volumeinfo.getVolumeuid();
 		volume.setId(volumeBarcode);
-		volume.setUuid(UUID.randomUUID().toString());
+		volume.setUuid(volumeinfo.getVolumeuuid());
 		volume.setType(Volumetype.physical);
 		String volumeGroupId = StringUtils.substring(volumeBarcode, 0, 2); 
 		Optional<Volume> volOptional = volumeDao.findById(volumeGroupId);
