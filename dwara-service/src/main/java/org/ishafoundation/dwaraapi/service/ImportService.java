@@ -798,13 +798,17 @@ public class ImportService extends DwaraService {
 	private String getPrevSeqCode(Sequence sequence, String artifactNameAsInCatalog) {
 		String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameAsInCatalog);
 		
-		if(StringUtils.isNotBlank(extractedCode) && sequence.isKeepCode()) // for keepCode true scenario...
-			return null;
+		if(StringUtils.isNotBlank(extractedCode)) {
+			if(sequence.isKeepCode())// for keepCode true scenario...
+				return null;
+			else
+				return extractedCode;
+		}
 		else {
 			String extractedSeqNum = sequenceUtil.getExtractedSeqNum(sequence, artifactNameAsInCatalog);
 		
-			if(StringUtils.isNotBlank(extractedSeqNum) && sequence.isKeepCode())
-				return (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + extractedSeqNum; // If number_regex returns a match value, use concat(prefix, value)
+			if(sequence.isKeepCode())
+				return null;
 			else
 				return extractedSeqNum; 
 		}
