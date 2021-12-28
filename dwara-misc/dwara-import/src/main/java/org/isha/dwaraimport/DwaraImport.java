@@ -243,7 +243,7 @@ public class DwaraImport {
 		boolean hasErrors = false;
 		System.out.println("Framing VolumeIndex Object from parsed data");
 		Volumeinfo volumeinfo = new Volumeinfo();
-		String volumeuuid = StringUtils.substringBeforeLast(UUID.randomUUID().toString(), "-") +  bruArchiveId;
+		String volumeuuid = StringUtils.substringBeforeLast(UUID.randomUUID().toString(), "-") + "-" + bruArchiveId;
 		volumeinfo.setVolumeuuid(volumeuuid);
 		volumeinfo.setVolumeuid(StringUtils.isEmpty(ltoTape) ? "No_LTO" : ltoTape);
 		volumeinfo.setVolumeblocksize(1048576);
