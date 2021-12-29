@@ -569,14 +569,14 @@ public class ImportService extends DwaraService {
 					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclassuid());
 					Sequence sequence = artifactclass.getSequence();
 					
-
-					String prevSeqCode = getPrevSeqCode(sequence, artifactNameAsInCatalog);
-					String sequenceCode = getSequenceCodeFromCatalog(sequence, artifactNameProposed);
-
+					String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
 					boolean isForceMatch = (sequence.getForceMatch() != null && sequence.getForceMatch() >= 1)  ? true : false;
-					if(isForceMatch && sequenceCode == null) {
+					if(isForceMatch && extractedCode == null) {
 						throw new Exception("Missing expected code : " + artifactNameProposed);
 					}
+					
+					String prevSeqCode = getPrevSeqCode(sequence, artifactNameAsInCatalog);
+					String sequenceCode = getSequenceCodeFromCatalog(sequence, artifactNameProposed);
 					
 					if(sequenceCode != null && sequence.isKeepCode())
 						toBeArtifactName = artifactNameProposed; // retaining the same name
@@ -632,7 +632,6 @@ public class ImportService extends DwaraService {
 	//								overrideSequenceRefId = "video-imported-grp";
 	//						}
 	//						sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactName, overrideSequenceRefId);	
-							String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
 							sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactNameProposed);
 							org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);// findBySequenceCodeAndDeletedIsFalse(sequenceCode);
 							if(alreadyExistingArtifactWithSameSequenceCode != null)
