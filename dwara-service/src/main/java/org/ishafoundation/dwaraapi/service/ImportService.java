@@ -569,31 +569,24 @@ public class ImportService extends DwaraService {
 					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclassuid());
 					Sequence sequence = artifactclass.getSequence();
 					
-					String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
+					String prevSeqCode = getPrevSeqCode(sequence, artifactNameAsInCatalog);
+					String sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactNameProposed, false);
+
 					boolean isForceMatch = (sequence.getForceMatch() != null && sequence.getForceMatch() >= 1)  ? true : false;
-					if(isForceMatch && extractedCode == null) {
+					if(isForceMatch && sequenceCode == null) {
 						throw new Exception("Missing expected code : " + artifactNameProposed);
 					}
-					
-					String prevSeqCode = getPrevSeqCode(sequence, artifactNameAsInCatalog);
-					String sequenceCode = getSequenceCodeFromCatalog(sequence, artifactNameProposed);
-					
+
 					if(sequenceCode != null && sequence.isKeepCode())
 						toBeArtifactName = artifactNameProposed; // retaining the same name
 					
 					boolean artifactAlreadyExists = true;
 					org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = null;
-					if(prevSeqCode != null) {
-						if(artifactclass.getSequence().getSequenceRef() != null)
-							artifact = artifactDao.findByPrevSequenceCodeAndDeletedIsFalseAndArtifactclassSequenceSequenceRefId(prevSeqCode, artifactclass.getSequence().getSequenceRef().getId());
-						else
-							artifact = artifactDao.findByPrevSequenceCodeAndDeletedIsFalseAndArtifactclassId(prevSeqCode, artifactclass.getId());
-					}else if(sequenceCode != null){
-						if(artifactclass.getSequence().getSequenceRef() != null)
-							artifact = artifactDao.findBySequenceCodeAndDeletedIsFalseAndArtifactclassSequenceSequenceRefId(sequenceCode, artifactclass.getSequence().getSequenceRef().getId());
-						else
-							artifact = artifactDao.findBySequenceCodeAndDeletedIsFalseAndArtifactclassId(sequenceCode, artifactclass.getId());
-					}
+
+					if(artifactclass.getSequence().getSequenceRef() != null)
+						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalseAndArtifactclassSequenceSequenceRefId(sequenceCode, artifactclass.getSequence().getSequenceRef().getId());
+					else
+						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalseAndArtifactclassId(sequenceCode, artifactclass.getId());
 	
 					if(artifact != null) { // even if artifact extracted code matches - double check for name - and if name differs flag it
 						String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
@@ -609,7 +602,7 @@ public class ImportService extends DwaraService {
 							 String artifactNameShavedOffPrefix = StringUtils.substringAfter(nthArtifactEndingWithSameName.getName(),"_");
 							 if(artifactNameShavedOffPrefix.equals(artifactNameProposedShavedOffPrefix)) {
 								 artifact = nthArtifactEndingWithSameName;
-								 String errMsg = "Different extractedCodes but same artifact name : ArtifactId " + artifact.getId() + " - " + artifactNameProposedShavedOffPrefix + ". Expected code - " + (artifact.getPrevSequenceCode() !=null ? artifact.getPrevSequenceCode() : artifact.getSequenceCode()) + " Actual - " + (prevSeqCode != null ? prevSeqCode : sequenceCode);
+								 String errMsg = "Different codes but same artifact name : ArtifactId - " + artifact.getId() + " - " + artifactNameProposedShavedOffPrefix + ". Expected code - " + artifact.getSequenceCode() + " Actual - " + sequenceCode;//(prevSeqCode != null ? prevSeqCode : sequenceCode);
 								 throw new Exception (errMsg);
 							 }
 						}
@@ -621,27 +614,20 @@ public class ImportService extends DwaraService {
 							 throw new Exception (errMsg);
 						}	
 					}
+
 					//TODO - should we double check with size too??? domainSpecificArtifactRepository.findAllByTotalSizeAndDeletedIsFalse(size);
 					if(artifact == null) {
 						artifactAlreadyExists = false;
-						if(sequenceCode == null) {
-	//						String overrideSequenceRefId = null;
-	//						if(artifactclass.getId().startsWith("video") && !artifactclass.getId().startsWith("video-digi")) {
-	//		    				Sequence importSequenceGrp = sequenceDao.findById("video-imported-grp").get();
-	//							if(importSequenceGrp.getCurrrentNumber() <= 27000) 
-	//								overrideSequenceRefId = "video-imported-grp";
-	//						}
-	//						sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactName, overrideSequenceRefId);	
-							sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactNameProposed);
-							org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);// findBySequenceCodeAndDeletedIsFalse(sequenceCode);
-							if(alreadyExistingArtifactWithSameSequenceCode != null)
-								throw new Exception("An artifact already exists with sequenceCode : " + sequenceCode + ". Already existing artifactId with same sequenceCode - " + alreadyExistingArtifactWithSameSequenceCode.getId());
-							
-							if(extractedCode != null && sequence.isReplaceCode())
-								toBeArtifactName = artifactNameProposed.replace(extractedCode, sequenceCode);
-							else
-								toBeArtifactName = sequenceCode + "_" + artifactNameProposed;
-						}
+
+						org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);// findBySequenceCodeAndDeletedIsFalse(sequenceCode);
+						if(alreadyExistingArtifactWithSameSequenceCode != null)
+							throw new Exception("An artifact already exists with sequenceCode : " + sequenceCode + ". Already existing artifactId with same sequenceCode - " + alreadyExistingArtifactWithSameSequenceCode.getId());
+						
+						String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
+						if(extractedCode != null && sequence.isReplaceCode())
+							toBeArtifactName = artifactNameProposed.replace(extractedCode, sequenceCode);
+						else
+							toBeArtifactName = sequenceCode + "_" + artifactNameProposed;
 			
 						/*
 						 *** Creating artifact if not already in DB ***
@@ -814,18 +800,17 @@ public class ImportService extends DwaraService {
 	
 	private String getSequenceCodeFromCatalog(Sequence sequence, String artifactNameProposed) {
 		String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
-		if(sequence.isKeepCode()) {
-			if(StringUtils.isNotBlank(extractedCode))
-				return extractedCode;
-			else {
-				String extractedSeqNum = sequenceUtil.getExtractedSeqNum(sequence, artifactNameProposed);
-				
-				if(StringUtils.isNotBlank(extractedSeqNum))
-					return (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + extractedSeqNum; // If number_regex returns a match value, use concat(prefix, value)
-			}
-		}
 
-		return null;
+		if(StringUtils.isNotBlank(extractedCode))
+			return extractedCode;
+		else {
+			String extractedSeqNum = sequenceUtil.getExtractedSeqNum(sequence, artifactNameProposed);
+			
+			if(StringUtils.isNotBlank(extractedSeqNum))
+				return (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + extractedSeqNum; // If number_regex returns a match value, use concat(prefix, value)
+			else
+				return null;
+		}
 	}
 
 	private FileMeta dealCatalogFiles(Artifact nthArtifact, org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact, 

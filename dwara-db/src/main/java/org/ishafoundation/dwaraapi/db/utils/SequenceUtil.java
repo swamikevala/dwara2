@@ -31,12 +31,17 @@ public class SequenceUtil {
 		String extractedSeqNum = artifactNumberRegex != null ? extractSequenceFromArtifactName(artifactName, artifactNumberRegex) : null;
 		return extractedSeqNum;
 	}
-	
+
 	public String getSequenceCode(Sequence sequence, String artifactName) {
-		return getSequenceCode(sequence, artifactName, null);
+		return getSequenceCode(sequence, artifactName, null, true);
 	}
+	
+	public String getSequenceCode(Sequence sequence, String artifactName, boolean generateSequence) {
+		return getSequenceCode(sequence, artifactName, null, generateSequence);
+	}
+	
 	// Used when ingesting or by the processing framework when framing the outputartifactname for artifactclasses that produce outputArtifactclass  
-	public String getSequenceCode(Sequence sequence, String artifactName, String overrideSequenceRefId) {
+	public String getSequenceCode(Sequence sequence, String artifactName, String overrideSequenceRefId, boolean generateSequence) {
 	    String sequenceCode = null;
 
 		boolean useExtractedCode = sequence.isKeepCode();
@@ -56,6 +61,7 @@ public class SequenceUtil {
 			if(StringUtils.isNotBlank(extractedSeqNum)) // If number_regex returns a match value, use concat(prefix, value)
 				sequenceCode = (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + extractedSeqNum;
 			else {
+				if(generateSequence) {
 					// generating the sequence
 			    	synchronized (artifactName) {
 			    		Integer incrementedCurrentNumber = null;
@@ -78,6 +84,7 @@ public class SequenceUtil {
 			    		sequenceCode = (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + incrementedCurrentNumber;
 			    	}
 				}
+			}
 	    }
 		return sequenceCode;
 	}	 
