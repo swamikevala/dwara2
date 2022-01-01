@@ -566,28 +566,39 @@ public class ImportService extends DwaraService {
 					*** dealing with artifact ***
 					*
 					*/
+					String extractedCodeFromProposedArtifactName = StringUtils.substringBefore(artifactNameProposed, "_");
+					if(!artifactNameAsInCatalog.equals(artifactNameProposed) && !StringUtils.substringBefore(artifactNameAsInCatalog, "_").equals(extractedCodeFromProposedArtifactName))
+						throw new Exception ("Different sequences in name and rename attributes not supported. @name - " + artifactNameAsInCatalog + " @rename - " + artifactNameProposed);
+
 					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclassuid());
 					Sequence sequence = artifactclass.getSequence();
 					
-					String prevSeqCode = getPrevSeqCode(sequence, artifactNameAsInCatalog);
-					String sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactNameProposed, false);
-
-					boolean isForceMatch = (sequence.getForceMatch() != null && sequence.getForceMatch() >= 1)  ? true : false;
-					if(isForceMatch && sequenceCode == null) {
-						throw new Exception("Missing expected code : " + artifactNameProposed);
+					String prevSeqCode = nthArtifact.getPrevcode();
+					boolean keepCode = Boolean.TRUE.equals(nthArtifact.getKeepCode());
+					boolean replaceCode = Boolean.TRUE.equals(nthArtifact.getReplaceCode());
+					
+					String sequenceCode =  null;
+					
+					if(keepCode) {
+						sequenceCode = extractedCodeFromProposedArtifactName;
+						toBeArtifactName = artifactNameProposed; // retaining the same name
+					}
+					else if(replaceCode) {
+						Integer seqNum = nthArtifact.getSeqnum();
+						if(prevSeqCode == null || seqNum == null)
+							throw new Exception ("To replace a code both previousCode and sequenceNumber attributes should be present");
+						sequenceCode = sequence.getPrefix() + seqNum;
+						toBeArtifactName = artifactNameProposed.replace(prevSeqCode, sequenceCode);
 					}
 
-					if(sequenceCode != null && sequence.isKeepCode())
-						toBeArtifactName = artifactNameProposed; // retaining the same name
-					
+					// TODO - we need prevseqcode checks...
 					boolean artifactAlreadyExists = true;
 					org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = null;
-
-					if(artifactclass.getSequence().getSequenceRef() != null)
-						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalseAndArtifactclassSequenceSequenceRefId(sequenceCode, artifactclass.getSequence().getSequenceRef().getId());
-					else
-						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalseAndArtifactclassId(sequenceCode, artifactclass.getId());
-	
+					if(sequenceCode != null) {
+						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
+					}else if(prevSeqCode != null)
+						artifact = artifactDao.findByPrevSequenceCodeAndDeletedIsFalseAndArtifactclassSequenceSequenceRefId(prevSeqCode, sequence.getSequenceRef().getId()); // if there is a M228 skip from digi-2020
+					
 					if(artifact != null) { // even if artifact extracted code matches - double check for name - and if name differs flag it
 						String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
 						String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
@@ -619,15 +630,12 @@ public class ImportService extends DwaraService {
 					if(artifact == null) {
 						artifactAlreadyExists = false;
 
-						org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);// findBySequenceCodeAndDeletedIsFalse(sequenceCode);
-						if(alreadyExistingArtifactWithSameSequenceCode != null)
-							throw new Exception("An artifact already exists with sequenceCode : " + sequenceCode + ". Already existing artifactId with same sequenceCode - " + alreadyExistingArtifactWithSameSequenceCode.getId());
+//						org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);// findBySequenceCodeAndDeletedIsFalse(sequenceCode);
+//						if(alreadyExistingArtifactWithSameSequenceCode != null)
+//							throw new Exception("An artifact already exists with sequenceCode : " + sequenceCode + ". Already existing artifactId with same sequenceCode - " + alreadyExistingArtifactWithSameSequenceCode.getId());
 						
-						String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
-						if(extractedCode != null && sequence.isReplaceCode())
-							toBeArtifactName = artifactNameProposed.replace(extractedCode, sequenceCode);
-						else
-							toBeArtifactName = sequenceCode + "_" + artifactNameProposed;
+						sequenceCode = sequenceUtil.generateSequenceCode(sequence, artifactNameProposed);
+						toBeArtifactName = sequenceCode + "_" + artifactNameProposed;
 			
 						/*
 						 *** Creating artifact if not already in DB ***
@@ -776,41 +784,6 @@ public class ImportService extends DwaraService {
 		
 		toBeImportedVolume.setUsedCapacity(usedCapacity);
 		toBeImportedVolume = volumeDao.save(toBeImportedVolume);
-	}
-	
-
-	private String getPrevSeqCode(Sequence sequence, String artifactNameAsInCatalog) {
-		String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameAsInCatalog);
-		
-		if(StringUtils.isNotBlank(extractedCode)) {
-			if(sequence.isKeepCode())// for keepCode true scenario...
-				return null;
-			else
-				return extractedCode;
-		}
-		else {
-			String extractedSeqNum = sequenceUtil.getExtractedSeqNum(sequence, artifactNameAsInCatalog);
-		
-			if(sequence.isKeepCode())
-				return null;
-			else
-				return extractedSeqNum; 
-		}
-	}
-	
-	private String getSequenceCodeFromCatalog(Sequence sequence, String artifactNameProposed) {
-		String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
-
-		if(StringUtils.isNotBlank(extractedCode))
-			return extractedCode;
-		else {
-			String extractedSeqNum = sequenceUtil.getExtractedSeqNum(sequence, artifactNameProposed);
-			
-			if(StringUtils.isNotBlank(extractedSeqNum))
-				return (StringUtils.isNotBlank(sequence.getPrefix()) ? sequence.getPrefix() : "") + extractedSeqNum; // If number_regex returns a match value, use concat(prefix, value)
-			else
-				return null;
-		}
 	}
 
 	private FileMeta dealCatalogFiles(Artifact nthArtifact, org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact, 
@@ -1301,12 +1274,37 @@ public class ImportService extends DwaraService {
 			
 			userRequest.setStatus(Status.completed);
 			userRequest = requestDao.save(userRequest);
+			
+//			Request origUserRequest = importTable.getRequest();
+//			List<Import> importVolumeList = importDao.findAllByVolumeId(importTable.getVolumeId());
+//			 
+//			Map<String, Status> artifactName_Status = new HashMap<String, Status>();
+//			Map<String, Integer> artifactName_RequeueId = new HashMap<String, Integer>();
+//			for (Import nthImport : importVolumeList) {
+//				Integer existingRequeueId = artifactName_RequeueId.get(nthImport.getArtifactName());
+//				if(existingRequeueId == null || nthImport.getRequeueId() > existingRequeueId) {
+//					artifactName_RequeueId.put(nthImport.getArtifactName(), nthImport.getRequeueId());
+//					artifactName_Status.put(nthImport.getArtifactName(), nthImport.getStatus());
+//				}
+//			}
+//			
+//			Set<String> keySet = artifactName_Status.keySet();
+//			List<Status> importStatusList = new ArrayList<Status>();
+//			for (String nthArtifactName : keySet) {
+//				importStatusList.add(artifactName_Status.get(nthArtifactName));
+//			}
+//			
+//			origUserRequest.setStatus(StatusUtil.getStatus(importStatusList));
+			
+			
 			importResponse.setUserRequestId(userRequest.getId());
 			importResponse.setAction(Action.marked_completed.name());
 			importResponse.setRequestedBy(userRequest.getRequestedBy().getName());
 			importResponse.setRequestedAt(userRequest.getRequestedAt().toString());
 			importResponse.setRunCount(importDBRecord.getRequeueId());
 			importResponse.setVolumeId(importTable.getVolumeId());
+			
+			
 			
 		} catch (Exception e) {
 			if(userRequest != null && userRequest.getId() != 0) {

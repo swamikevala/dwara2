@@ -173,6 +173,7 @@ public class StagedFileEvaluator {
 		
 		// 4b- For digi artifacts - dupe check on prev-seq-code against existing artifact - there could be multiple artifacts (PART) with same prev seq
 		//if(FilenameUtils.getBaseName(sourcePath).startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX)) {
+		/* Digi is over - so commenting this out
 		String prevSequenceCode = sequenceUtil.getExtractedCode(sequence, fileName);
 		
 		List<Artifact> alreadyExistingArtifactList = artifactDao.findAllByPrevSequenceCode(prevSequenceCode);
@@ -189,7 +190,7 @@ public class StagedFileEvaluator {
 				}
 			}
 		}
-
+*/
 		//}
 				
 		// 5- Unsupported extns
@@ -256,15 +257,15 @@ public class StagedFileEvaluator {
 		nthIngestFile.setTotalSize(size);
 		nthIngestFile.setErrors(errorList);
 
-		Boolean isKeepExtractedCode = sequence.isKeepCode();
-		boolean isForceMatch = (sequence.getForceMatch() != null && sequence.getForceMatch() == 1)  ? true : false;
-
-		if(!isKeepExtractedCode) {
-			String prevSeqCode = sequenceUtil.getExtractedCode(sequence, fileName);
-			nthIngestFile.setPrevSequenceCode(prevSeqCode);
-		}	
-		if(isForceMatch)
-			nthIngestFile.setPrevSequenceCodeExpected(true);
+//		Boolean isKeepExtractedCode = sequence.isKeepCode();
+//		boolean isForceMatch = (sequence.getForceMatch() != null && sequence.getForceMatch() == 1)  ? true : false;
+//
+//		if(!isKeepExtractedCode) {
+//			String prevSeqCode = sequenceUtil.getExtractedCode(sequence, fileName);
+//			nthIngestFile.setPrevSequenceCode(prevSeqCode);
+//		}	
+//		if(isForceMatch)
+//			nthIngestFile.setPrevSequenceCodeExpected(true);
 
 		// TODO : Talk to swami - do we still need suggested filename now that we are not migrating
 		//		String customFileName = getCustomArtifactName(fileName, prevSeqCode, sequence, isKeepExtractedCode);

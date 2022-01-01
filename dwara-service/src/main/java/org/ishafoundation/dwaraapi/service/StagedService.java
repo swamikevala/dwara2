@@ -34,6 +34,7 @@ import org.ishafoundation.dwaraapi.api.resp.staged.ingest.IngestSystemRequest;
 import org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameResponse;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.ArtifactClassGroupedStagedFileDetails;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
+import org.ishafoundation.dwaraapi.artifact.ArtifactAttributesHandler;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassUserDao;
@@ -454,26 +455,28 @@ public class StagedService extends DwaraService{
 					String stagedFileName = stagedFile.getName();
 	
 		        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, stagedFileName);
-		        	
-					String extractedCode = sequenceUtil.getExtractedCode(sequence, stagedFileName);
 					
-					String sequenceCode = null;
-					String prevSeqCode = null;
-					String toBeArtifactName = null;
-					// NOTE : forcematch is taken care of upfront during scan... No need to act on it...
-					if(sequence.isKeepCode() && extractedCode != null) {
-						// retaining the same name
-						toBeArtifactName = stagedFileName;
-						sequenceCode = extractedCode;
-					}
-					else {
-						prevSeqCode = extractedCode;
-						sequenceCode = sequenceUtil.getSequenceCode(sequence, stagedFileName);	
-						if(extractedCode != null && sequence.isReplaceCode())
-							toBeArtifactName = stagedFileName.replace(extractedCode, sequenceCode);
-						else
-							toBeArtifactName = sequenceCode + "_" + stagedFileName;
-					}
+					String sequenceCode = sequenceUtil.generateSequenceCode(sequence, stagedFileName); 
+					ArtifactAttributesHandler su = new ArtifactAttributesHandler();
+					String prevSeqCode = su.getArtifactAttributes(artifactclass.getId(), stagedFileName).getPreviousCode();				
+					String toBeArtifactName = sequenceCode + "_" + stagedFileName;
+					
+//					String extractedCode = sequenceUtil.getExtractedCode(sequence, stagedFileName);
+//					// NOTE : forcematch is taken care of upfront during scan... No need to act on it...
+//					if(sequence.isKeepCode() && extractedCode != null) {
+//						// retaining the same name
+//						toBeArtifactName = stagedFileName;
+//						sequenceCode = extractedCode;
+//					}
+//					else {
+//						prevSeqCode = extractedCode;
+//						sequenceCode = sequenceUtil.getSequenceCode(sequence, stagedFileName);	
+//						if(extractedCode != null && sequence.isReplaceCode())
+//							toBeArtifactName = stagedFileName.replace(extractedCode, sequenceCode);
+//						else
+//							toBeArtifactName = sequenceCode + "_" + stagedFileName;
+//					}
+					
 			        // Renames the artifact with the needed sequencecode...
 					// NOTE : there should be not any error here - Dont have to catch exception and act on it...
 			        java.io.File stagedFileInAppReadyToIngest = moveFile(appReadyToIngestFileObj, FileUtils.getFile(readyToIngestPath, toBeArtifactName));  

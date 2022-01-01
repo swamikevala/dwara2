@@ -43,20 +43,20 @@ public class Sequence implements Cacheable{
 	@Column(name="prefix")
 	private String prefix;
 
-	@Column(name="code_regex")
-	private String codeRegex;
-
-	@Column(name="number_regex")
-	private String numberRegex;
-	
-	@Column(name="force_match")
-	private Integer forceMatch;
-	
-	@Column(name="keep_code")
-	private Boolean keepCode;
-
-	@Column(name="replace_code")
-	private Boolean replaceCode;
+//	@Column(name="code_regex")
+//	private String codeRegex;
+//
+//	@Column(name="number_regex")
+//	private String numberRegex;
+//	
+//	@Column(name="force_match")
+//	private Integer forceMatch;
+//	
+//	@Column(name="keep_code")
+//	private Boolean keepCode;
+//
+//	@Column(name="replace_code")
+//	private Boolean replaceCode;
 	
 	public String getId() {
 		return id;
@@ -122,45 +122,45 @@ public class Sequence implements Cacheable{
 		this.prefix = prefix;
 	}
 
-	public String getCodeRegex() {
-		return codeRegex;
-	}
-
-	public void setCodeRegex(String codeRegex) {
-		this.codeRegex = codeRegex;
-	}
-
-	public String getNumberRegex() {
-		return numberRegex;
-	}
-
-	public void setNumberRegex(String numberRegex) {
-		this.numberRegex = numberRegex;
-	}
-
-	public Integer getForceMatch() {
-		return forceMatch;
-	}
-
-	public void setForceMatch(Integer forceMatch) {
-		this.forceMatch = forceMatch;
-	}
-
-	public Boolean isKeepCode() {
-		return keepCode;
-	}
-
-	public void setKeepCode(Boolean keepCode) {
-		this.keepCode = keepCode;
-	}
-	
-	public Boolean isReplaceCode() {
-		return replaceCode;
-	}
-
-	public void setReplaceCode(Boolean replaceCode) {
-		this.replaceCode = replaceCode;
-	}
+//	public String getCodeRegex() {
+//		return codeRegex;
+//	}
+//
+//	public void setCodeRegex(String codeRegex) {
+//		this.codeRegex = codeRegex;
+//	}
+//
+//	public String getNumberRegex() {
+//		return numberRegex;
+//	}
+//
+//	public void setNumberRegex(String numberRegex) {
+//		this.numberRegex = numberRegex;
+//	}
+//
+//	public Integer getForceMatch() {
+//		return forceMatch;
+//	}
+//
+//	public void setForceMatch(Integer forceMatch) {
+//		this.forceMatch = forceMatch;
+//	}
+//
+//	public Boolean isKeepCode() {
+//		return keepCode;
+//	}
+//
+//	public void setKeepCode(Boolean keepCode) {
+//		this.keepCode = keepCode;
+//	}
+//	
+//	public Boolean isReplaceCode() {
+//		return replaceCode;
+//	}
+//
+//	public void setReplaceCode(Boolean replaceCode) {
+//		this.replaceCode = replaceCode;
+//	}
 
 	public Integer incrementCurrentNumber() {
 		if(currrentNumber != null)

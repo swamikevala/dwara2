@@ -411,7 +411,7 @@ public class ArtifactService extends DwaraService{
 
 					// just replace the sequence number with the correct prefix
 					// newSeqCode = currentSeqCode.replace(currentArtifactclass.getSequence().getPrefix(), newArtifactclass.getSequence().getPrefix());
-					newSeqCode = sequenceUtil.getSequenceCode(newArtifactclass.getSequence(), artifactDao.findByArtifactRef(nthArtifact).getName());	
+					newSeqCode = sequenceUtil.generateSequenceCode(newArtifactclass.getSequence(), artifactDao.findByArtifactRef(nthArtifact).getName());	
 				}
 				else {
 					currentSequenceRefId = currentArtifactclass.getSequence().getSequenceRef().getId();
@@ -422,7 +422,7 @@ public class ArtifactService extends DwaraService{
 						newSeqCode = currentSeqCode.replace(currentArtifactclass.getSequence().getPrefix(), newArtifactclass.getSequence().getPrefix());
 					}
 					else if(force) {
-						newSeqCode = sequenceUtil.getSequenceCode(newArtifactclass.getSequence(), artifactNameWithoutSequence);	
+						newSeqCode = sequenceUtil.generateSequenceCode(newArtifactclass.getSequence(), artifactNameWithoutSequence);	
 					}
 				}
 		

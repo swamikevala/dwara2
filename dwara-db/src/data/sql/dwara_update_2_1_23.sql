@@ -18,6 +18,13 @@ UPDATE `sequence` SET `force_match`='2' WHERE `id`='video-edit-priv2';
 UPDATE `sequence` SET `force_match`='0' WHERE `id`='video-digi-2010-priv2';
 UPDATE `sequence` SET `force_match`='0' WHERE `id`='video-digi-2010-pub';
 
+ALTER TABLE `sequence` 
+DROP COLUMN `code_regex`,
+DROP COLUMN `number_regex`,
+DROP COLUMN `force_match`,
+DROP COLUMN `keep_code`,
+DROP COLUMN `replace_code`
+;
 -- change prefix for 2010-raw - VC
 UPDATE `sequence` SET `prefix`='VC' WHERE `id`='video-digi-2010-pub';
 UPDATE `sequence` SET `prefix`='VCX' WHERE `id`='video-digi-2010-priv2';

@@ -36,7 +36,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
-import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -76,9 +75,6 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
-	
-	@Autowired
-	private SequenceUtil sequenceUtil;
 	
 	@Autowired
 	private FlowelementUtil flowelementUtil;
@@ -240,7 +236,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 						throw new DwaraException(outputArtifactclassId + " not configured in artifactclass table. Please double check");
 					}
 					else {
-						outputArtifactName = getOutputArtifactName(outputArtifactclass, inputArtifactName);
+						outputArtifactName = getOutputArtifactName(inputArtifactName, inputArtifactclass, outputArtifactclass);
 						outputArtifactPathname = getOutputArtifactPathname(outputArtifactclass, outputArtifactName);
 					}
 				}
@@ -454,13 +450,19 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 		}
 	}
 
-	private String getOutputArtifactName(Artifactclass outputArtifactclass, String inputArtifactName){
+	private String getOutputArtifactName(String inputArtifactName, Artifactclass inputArtifactclass, Artifactclass outputArtifactclass){
+		String inputArtifactClassSequenceId = inputArtifactclass.getSequenceId();
+		Sequence inputArtifactClassSequence = configurationTablesUtil.getSequence(inputArtifactClassSequenceId);
+		String inputArtifactPrefix = inputArtifactClassSequence.getPrefix();
+		
 		String outputArtifactClassSequenceId = outputArtifactclass.getSequenceId();
 		Sequence outputArtifactClassSequence = configurationTablesUtil.getSequence(outputArtifactClassSequenceId);
-		String inputArtifactSeqCode = sequenceUtil.getExtractedCode(outputArtifactClassSequence, inputArtifactName);
-		if(inputArtifactSeqCode == null)
-			throw new DwaraException("Unable to extract sequence code from " + inputArtifactName + " with sequence code_regex " + outputArtifactClassSequence.getCodeRegex());
-		String outputArtifactSeqCode = sequenceUtil.getSequenceCode(outputArtifactClassSequence, inputArtifactName);
+		String outputArtifactPrefix = outputArtifactClassSequence.getPrefix();
+				
+		String inputArtifactSeqCode = StringUtils.substringBefore(inputArtifactName,"_");
+		
+		String outputArtifactSeqCode = inputArtifactSeqCode.replace(inputArtifactPrefix, outputArtifactPrefix);
+		
 		String outputArtifactName = inputArtifactName.replace(inputArtifactSeqCode, outputArtifactSeqCode);
 		if(StringUtils.isNotBlank(FilenameUtils.getExtension(outputArtifactName))) // is a file - remove the extn
 			outputArtifactName =  FilenameUtils.getBaseName(outputArtifactName);

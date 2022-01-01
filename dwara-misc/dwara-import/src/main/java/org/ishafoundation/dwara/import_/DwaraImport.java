@@ -1,4 +1,4 @@
-package org.isha.dwaraimport;
+package org.ishafoundation.dwara.import_;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -12,14 +12,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwara.import_.bru.BruCatalogParser;
+import org.ishafoundation.dwara.import_.bru.BruFile;
+import org.ishafoundation.dwara.import_.bru.BruResponseCatalog;
+import org.ishafoundation.dwaraapi.artifact.ArtifactAttributesHandler;
+import org.ishafoundation.dwaraapi.artifact.ArtifactAttributesHandler.ArtifactAttributes;
 import org.ishafoundation.dwaraapi.staged.scan.BasicArtifactValidator;
 import org.ishafoundation.dwaraapi.staged.scan.Error;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
@@ -47,15 +49,10 @@ import com.google.gson.reflect.TypeToken;
 public class DwaraImport {
 	private static final Logger LOG = LoggerFactory.getLogger(DwaraImport.class);
 	
-	private static final Pattern BRCODE_REGEX_PATTERN  = Pattern.compile("BR[0-9]*_");
-	
-	private List<BruData> listBruData = new ArrayList<>();
-	private List<BruData> artifactsList = new ArrayList<>();
-	private List<BruData> fileList = new ArrayList<>();
+
 	String regexAllowedChrsInFileName = "[\\w-.]*";
 	Pattern allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
-	String archiveIdRegEx = "archive ID = (.*)";
-	Pattern archiveIdRegExPattern = Pattern.compile(archiveIdRegEx);
+
 	
 	
 	private BasicArtifactValidator basicArtifactValidator = new BasicArtifactValidator();
@@ -96,74 +93,25 @@ public class DwaraImport {
 						throw new Exception(fileName + " doesnt follow catalog naming convention <<Barcode>>_<<WrittenDate>>");
 					
 					String ltoTape = fileName.split("_")[0];
+					if(StringUtils.isEmpty(ltoTape))
+						throw new Exception(fileName + " doesnt follow catalog naming convention <<Barcode>>_<<WrittenDate>>");
 					String dateStr = fileName.split("_")[1].split("\\.")[0];
-					String bruArchiveId = null;
+					
 					
             		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d-MMM-yyyy HH"); 
             		LocalDateTime dateTime = LocalDateTime.parse(dateStr + " 00", formatter);
             		DateTimeFormatter formatterISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
             		String writtenAt = dateTime.format(formatterISO);
 
-					LineIterator it = FileUtils.lineIterator(textFile, "UTF-8");
-					listBruData.clear();
-					while (it.hasNext()) {
-						String line = it.nextLine();
-						if(line.startsWith("archive ID = ")) {
-							Matcher archiveIdRegExMatcher = archiveIdRegExPattern.matcher(line);
-							if(archiveIdRegExMatcher.matches()) {
-								bruArchiveId = archiveIdRegExMatcher.group(1);
-							}
-						}
-						if (line.contains("VL:c")) {
+            		BruCatalogParser bcp = new BruCatalogParser();
+            		BruResponseCatalog brc  = bcp.parseBruCatalog(textFile, artifactToArtifactClassMapping);
+            		String bruArchiveId = brc.getArchiveId();
+            		List<BruFile> bruFileList = brc.getBruFileList();
+            		
+            		List<BruFile> artifactsList = bruFileList.stream().filter(b -> b.isArtifact).collect(Collectors.toList());
+					calculateEndBlock(bruFileList, artifactsList);
 
-							String[] arrValues = line.split("\\|");
-							BruData b = new BruData();
-							if (arrValues[0].equals("VL:c")) {
-								String temp = arrValues[5].replaceAll("\\P{Print}", "");
-								if (arrValues[5].endsWith("/")) {
-									temp = StringUtils.substring(arrValues[5], 0, -1);
-								}
-								if (temp.startsWith("./")) {
-									temp = temp.replace("./", "");
-								}
-
-								b.startVolumeBlock = Long.parseLong(arrValues[4]) + 1;
-								b.size = Long.parseLong(arrValues[3]);
-
-								if (!temp.contains("/")) {
-									b.name = temp;
-									b.isArtifact = true;
-									b.isDirectory = true;
-								} else {
-									b.name = temp;
-									b.isArtifact = false;
-									temp.substring(temp.lastIndexOf("/") + 1);
-									// extra 4096 check to address entire like 
-									// VL:c|385671168|1|4096|376631|Z7424_Class_IEO_Tamil-Day2-Desire_FCP7-And-FCPX/XMLs/FCP X/._IEO Tamil Day 5 - Acceptance II.fcpxml 
-									// which is a folder. 
-									// Check still doest not guarantee the classification of a file vs folder as there are folders like these too
-									// VL:c|385671168|1|93265|376631|Z7424_Class_IEO_Tamil-Day2-Desire_FCP7-And-FCPX/XMLs/FCP X/Misc Videos - Yatra + Mystic.fcpxml
-									if (!temp.substring(temp.lastIndexOf("/") + 1).contains(".") || b.size == 4096) { 
-										b.isDirectory = true;
-									}
-
-									fileList.add(b);
-								}
-
-								b.category = (String) artifactToArtifactClassMapping.get(temp);
-								b.archiveBlock = arrValues[1];
-								b.archiveId = "";
-
-								listBruData.add(b);
-							}
-						}
-					}
-					LineIterator.closeQuietly(it);
-					artifactsList = listBruData.stream().filter(b -> b.isArtifact).collect(Collectors.toList());
-					//calculateArtifactSize();
-					calculateEndBlock();
-
-					createVolumeindex(ltoTape, writtenAt, bruArchiveId, destinationXmlPath);
+					createVolumeindex(ltoTape, writtenAt, bruArchiveId, bruFileList, artifactsList, destinationXmlPath);
 					
 					FileUtils.moveFile(textFile, Paths.get(bruFile,"completed",textFile.getName()).toFile());
 				} catch (Exception e) {
@@ -180,29 +128,14 @@ public class DwaraImport {
 		}
 	}
 
-
-	private void calculateArtifactSize() {
-		for (int i=0; i< artifactsList.size(); i++) {
-			long totalSize = 0;
-			for (BruData bruData : listBruData) {
-				if(bruData.name.startsWith(artifactsList.get(i).name) && bruData.isDirectory) {
-					totalSize += bruData.size;
-				}
-			}
-			BruData tempArtifact = artifactsList.get(i);
-			tempArtifact.totalSize = totalSize;
-			artifactsList.set(i, tempArtifact);
-		}
-	}
-
-	private void calculateEndBlock() {
+	private void calculateEndBlock(List<BruFile> listBruData, List<BruFile> artifactsList) {
 
 		for(int i=0; i< artifactsList.size(); i++) {
 			boolean lastArtifactFile = false;
 			Long tempArtifactEndBlock = null;
 			for(int j=0; j< listBruData.size(); j++) {
 				if(listBruData.get(j).name.startsWith(artifactsList.get(i).name + "/")) {
-					BruData tempFile = listBruData.get(j);
+					BruFile tempFile = listBruData.get(j);
 					if(j == listBruData.size()-1) {
 						tempFile.endVolumeBlock = (long) (listBruData.get(j).startVolumeBlock + (Math.ceil(((double)listBruData.get(j).size) / 1024) - 1));
 					} else {
@@ -221,7 +154,7 @@ public class DwaraImport {
 
 			}
 			if(lastArtifactFile) {
-				BruData artifactTempFile = artifactsList.get(i);
+				BruFile artifactTempFile = artifactsList.get(i);
 				artifactTempFile.endVolumeBlock = tempArtifactEndBlock;
 				artifactsList.set(i, artifactTempFile);
 			}
@@ -239,13 +172,13 @@ public class DwaraImport {
 		}
 	};
 
-	public String createVolumeindex(String ltoTape, String writtenAt, String bruArchiveId, String destinationFile) throws Exception {
+	public String createVolumeindex(String ltoTape, String writtenAt, String bruArchiveId, List<BruFile> bruFileList, List<BruFile> artifactsList, String destinationFile) throws Exception {
 		boolean hasErrors = false;
 		System.out.println("Framing VolumeIndex Object from parsed data");
 		Volumeinfo volumeinfo = new Volumeinfo();
 		String volumeuuid = StringUtils.substringBeforeLast(UUID.randomUUID().toString(), "-") + "-" + bruArchiveId;
 		volumeinfo.setVolumeuuid(volumeuuid);
-		volumeinfo.setVolumeuid(StringUtils.isEmpty(ltoTape) ? "No_LTO" : ltoTape);
+		volumeinfo.setVolume(ltoTape);
 		volumeinfo.setVolumeblocksize(1048576);
 		volumeinfo.setArchiveformat("bru");
 		volumeinfo.setArchiveblocksize(1024);
@@ -258,7 +191,7 @@ public class DwaraImport {
 		//volumeinfo.setChecksumalgorithm("md5");
 
 		List<Artifact> artifactXMLList = new ArrayList<>();
-		for (BruData artifactList: artifactsList) {
+		for (BruFile artifactList: artifactsList) {
 			try {
 				List<Error> errorList = new ArrayList<Error>();
 				errorList.addAll(basicArtifactValidator.validateName(artifactList.name, allowedChrsInFileNamePattern));
@@ -266,14 +199,9 @@ public class DwaraImport {
 				// System.out.println("Framing object for " + artifactList.name);
 				Artifact artifact = new Artifact();
 				String artifactName = artifactList.name;
-				String artifactNewName = null;
-				Matcher m = BRCODE_REGEX_PATTERN.matcher(artifactName); // Special logic for BR* artifactNames - There are some artifacts like BR00565_Z1833_Br-Meet_HD_SPH_Edited-Files_12-Mar-13 - we need to have it as Z1833_Br-Meet_HD_SPH_Edited-Files_12-Mar-13. We are setting this in rename attribute...
-				if(m.find()) {
-					artifactNewName = artifactName.replace(m.group(0),"");
-				}
+
 				artifact.setName(artifactName);
-				if(artifactNewName != null)
-					artifact.setRename(artifactNewName);
+
 				artifact.setStartblock(artifactList.startVolumeBlock.intValue());
 				if(artifactList.endVolumeBlock == null) {
 					System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " is an empty folder");
@@ -281,6 +209,8 @@ public class DwaraImport {
 				}
 				else
 					artifact.setEndblock(artifactList.endVolumeBlock.intValue());
+				
+				artifact.setArtifactclass(artifactList.category);
 				if(StringUtils.isBlank(artifactList.category)) { // check if its to be ignored...
 //					List<String> abc = (List<String>) ignoreImportArtifacts.get(ltoTape);
 //					if(abc != null && abc.contains(artifactList.name)){
@@ -290,30 +220,38 @@ public class DwaraImport {
 //					else
 					System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " misses artifactclass");
 					hasErrors=true;
-				}	
-				artifact.setArtifactclassuid(artifactList.category);
+				}
+				else {
+					ArtifactAttributesHandler su = new ArtifactAttributesHandler();
+					ArtifactAttributes artifactAttributes = su.getArtifactAttributes(artifactList.category, artifactName);
+					artifact.setPrevcode(artifactAttributes.getPreviousCode());
+					artifact.setSeqnum(artifactAttributes.getSequenceNumber());
+					artifact.setKeepCode(artifactAttributes.getKeepCode());
+					artifact.setReplaceCode(artifactAttributes.getReplaceCode());
+				}
 
 				List<File> fileList = new ArrayList<>();
-				for (BruData bruData : listBruData) {
+				for (BruFile bruFile : bruFileList) {
 					File file = new File();
-					file.setName(bruData.name);
-					file.setSize(bruData.size);
-					if (bruData.name.equals(artifactList.name)) {
+					file.setName(bruFile.name);
+					file.setSize(bruFile.size);
+					if (bruFile.name.equals(artifactList.name)) {
 						file.setVolumeStartBlock(artifactList.startVolumeBlock.intValue());
 						//file.setVolumeEndBlock(String.valueOf(artifactList.endVolumeBlock));
-						file.setArchiveblock(Long.parseLong(bruData.archiveBlock));
+						file.setArchiveblock(Long.parseLong(bruFile.archiveBlock));
 						file.setDirectory(artifactList.isDirectory);
 						fileList.add(file);
-					} else if(bruData.name.startsWith(artifactList.name + "/")){
-						file.setVolumeStartBlock(bruData.startVolumeBlock.intValue());
+					} else if(bruFile.name.startsWith(artifactList.name + "/")){
+						file.setVolumeStartBlock(bruFile.startVolumeBlock.intValue());
 						//file.setVolumeEndBlock(String.valueOf(bruData.endVolumeBlock));
-						file.setArchiveblock(Long.parseLong(bruData.archiveBlock));
-						if(bruData.isDirectory)
-							file.setDirectory(bruData.isDirectory);
+						file.setArchiveblock(Long.parseLong(bruFile.archiveBlock));
+						if(bruFile.isDirectory)
+							file.setDirectory(bruFile.isDirectory);
 						fileList.add(file);
 					}
 					
 				}
+		
 //				// now lets calculate and collect subfolders size
 //				Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
 //				for (File nthFile : fileList) {
@@ -342,11 +280,12 @@ public class DwaraImport {
 //
 //						if(nthFile.getName().equals(artifactList.name)){
 //							artifactSize = nthDirectorySize;
-//							//artifact.setTotalSize(nthDirectorySize);
+////							artifact.setTotalSize(nthDirectorySize);
 //						}
 //
 //					}
-//				}		
+//				}
+				
 				artifact.setFile(fileList);
 				
 				//errorList.addAll(basicArtifactValidator.validateFileCount(fileList.size()));
