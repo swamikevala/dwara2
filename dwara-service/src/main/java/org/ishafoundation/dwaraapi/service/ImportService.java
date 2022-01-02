@@ -30,6 +30,9 @@ import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.SetSequenceImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
+import org.ishafoundation.dwaraapi.artifact.ArtifactAttributes;
+import org.ishafoundation.dwaraapi.artifact.ArtifactAttributesHandler;
+import org.ishafoundation.dwaraapi.artifact.ArtifactUtil;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
@@ -121,7 +124,13 @@ public class ImportService extends DwaraService {
 	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
 	
 	@Autowired
-	protected SequenceUtil sequenceUtil;
+	private SequenceUtil sequenceUtil;
+	
+	@Autowired
+	private ArtifactAttributesHandler artifactAttributesHandler;
+	
+	@Autowired
+	private ArtifactUtil artifactUtil;
 	
 	@Autowired
 	private BasicArtifactValidator basicArtifactValidator;
@@ -573,23 +582,12 @@ public class ImportService extends DwaraService {
 					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclassuid());
 					Sequence sequence = artifactclass.getSequence();
 					
-					String prevSeqCode = nthArtifact.getPrevcode();
-					boolean keepCode = Boolean.TRUE.equals(nthArtifact.getKeepCode());
-					boolean replaceCode = Boolean.TRUE.equals(nthArtifact.getReplaceCode());
+					ArtifactAttributes artifactAttributes = artifactAttributesHandler.getArtifactAttributes(artifactclass.getId(), artifactNameProposed);
 					
-					String sequenceCode =  null;
-					
-					if(keepCode) {
-						sequenceCode = extractedCodeFromProposedArtifactName;
-						toBeArtifactName = artifactNameProposed; // retaining the same name
-					}
-					else if(replaceCode) {
-						Integer seqNum = nthArtifact.getSeqnum();
-						if(prevSeqCode == null || seqNum == null)
-							throw new Exception ("To replace a code both previousCode and sequenceNumber attributes should be present");
-						sequenceCode = sequence.getPrefix() + seqNum;
-						toBeArtifactName = artifactNameProposed.replace(prevSeqCode, sequenceCode);
-					}
+					String prevSeqCode = artifactAttributes.getPreviousCode();
+				
+					toBeArtifactName = artifactUtil.getArtifactName(artifactNameProposed, sequence, artifactAttributes, false);
+					String sequenceCode =  StringUtils.substringBefore(toBeArtifactName, "_");
 
 					// TODO - we need prevseqcode checks...
 					boolean artifactAlreadyExists = true;
@@ -634,9 +632,10 @@ public class ImportService extends DwaraService {
 //						if(alreadyExistingArtifactWithSameSequenceCode != null)
 //							throw new Exception("An artifact already exists with sequenceCode : " + sequenceCode + ". Already existing artifactId with same sequenceCode - " + alreadyExistingArtifactWithSameSequenceCode.getId());
 						
-						sequenceCode = sequenceUtil.generateSequenceCode(sequence, artifactNameProposed);
-						toBeArtifactName = sequenceCode + "_" + artifactNameProposed;
-			
+						if(sequenceCode == null) {
+							sequenceCode = sequenceUtil.generateSequenceCode(sequence, artifactNameProposed);
+							toBeArtifactName = sequenceCode + "_" + artifactNameProposed;
+						}
 						/*
 						 *** Creating artifact if not already in DB ***
 						 * 

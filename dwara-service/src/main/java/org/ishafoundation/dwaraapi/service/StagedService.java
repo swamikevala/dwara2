@@ -25,6 +25,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.StagedFile;
@@ -34,7 +35,9 @@ import org.ishafoundation.dwaraapi.api.resp.staged.ingest.IngestSystemRequest;
 import org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameResponse;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.ArtifactClassGroupedStagedFileDetails;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
+import org.ishafoundation.dwaraapi.artifact.ArtifactAttributes;
 import org.ishafoundation.dwaraapi.artifact.ArtifactAttributesHandler;
+import org.ishafoundation.dwaraapi.artifact.ArtifactUtil;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassUserDao;
@@ -137,7 +140,13 @@ public class StagedService extends DwaraService{
 	
 	@Autowired
 	private TagService tagService;
+	
+	@Autowired
+	private ArtifactAttributesHandler artifactAttributesHandler;
 
+	@Autowired
+	private ArtifactUtil artifactUtil;
+	
 	private Map<String, List<String>> artifactClass_volumeGroups_Map = new HashMap<String, List<String>>();
 	
 	@PostConstruct
@@ -456,10 +465,12 @@ public class StagedService extends DwaraService{
 	
 		        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, stagedFileName);
 					
-					String sequenceCode = sequenceUtil.generateSequenceCode(sequence, stagedFileName); 
-					ArtifactAttributesHandler su = new ArtifactAttributesHandler();
-					String prevSeqCode = su.getArtifactAttributes(artifactclass.getId(), stagedFileName).getPreviousCode();				
-					String toBeArtifactName = sequenceCode + "_" + stagedFileName;
+					
+		        	ArtifactAttributes artifactAttributes = artifactAttributesHandler.getArtifactAttributes(artifactclass.getId(), stagedFileName);
+					
+					String toBeArtifactName = artifactUtil.getArtifactName(stagedFileName, sequence, artifactAttributes, true);
+					String prevSeqCode = artifactAttributes.getPreviousCode();				
+					String sequenceCode = StringUtils.substringBefore(toBeArtifactName, "_"); 
 					
 //					String extractedCode = sequenceUtil.getExtractedCode(sequence, stagedFileName);
 //					// NOTE : forcematch is taken care of upfront during scan... No need to act on it...
