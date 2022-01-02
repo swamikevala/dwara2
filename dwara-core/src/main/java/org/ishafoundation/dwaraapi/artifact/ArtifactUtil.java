@@ -14,17 +14,12 @@ public class ArtifactUtil {
 	@Autowired
 	protected SequenceUtil sequenceUtil;
 
-	public String getArtifactName(String artifactNameProposed, Sequence sequence, ArtifactAttributes artifactAttributes,
-			boolean generateSequence) throws Exception {
+	public ArtifactMeta getArtifactMeta(String artifactName, Sequence sequence, ArtifactAttributes artifactAttributes, boolean generateSequence) throws Exception {
 		String previousCode = artifactAttributes.getPreviousCode();
 		boolean keepCode = Boolean.TRUE.equals(artifactAttributes.getKeepCode());
 		boolean replaceCode = Boolean.TRUE.equals(artifactAttributes.getReplaceCode());
 		Integer sequenceNumber = artifactAttributes.getSequenceNumber();
 
-		return getArtifactName(artifactNameProposed, sequence, previousCode, sequenceNumber, keepCode, replaceCode, generateSequence);
-	}
-	
-	public String getArtifactName(String artifactName, Sequence sequence, String previousCode, Integer sequenceNumber,	boolean keepCode, boolean replaceCode, boolean generateSequence) throws Exception{
 		String toBeArtifactName = null;
 		String extractedCodeFromProposedArtifactName = StringUtils.substringBefore(artifactName, "_");
 		
@@ -41,18 +36,26 @@ public class ArtifactUtil {
 			toBeArtifactName = artifactName.replace(previousCode, sequenceCode);
 		}
 		
+		ArtifactMeta am = new ArtifactMeta();
+		am.setArtifactName(toBeArtifactName);
+		am.setSequenceCode(sequenceCode);				
+		
 		if(sequenceCode == null) {
 			if(generateSequence) {
-				toBeArtifactName = generateSequenceAndPrefixToName(artifactName, sequence);
+				am = generateSequenceCodeAndPrefixToName(artifactName, sequence);
 			}
 		}
-		return toBeArtifactName;
+		return am;
 	}
 	
-	public String generateSequenceAndPrefixToName(String artifactName, Sequence sequence) {
+	public ArtifactMeta generateSequenceCodeAndPrefixToName(String artifactName, Sequence sequence) {
 		String sequenceCode = sequenceUtil.generateSequenceCode(sequence, artifactName);
 		String toBeArtifactName = sequenceCode + "_" + artifactName;
-		return toBeArtifactName;
+		
+		ArtifactMeta am = new ArtifactMeta();
+		am.setArtifactName(toBeArtifactName);
+		am.setSequenceCode(sequenceCode);
+		return am;
 	}
 
 

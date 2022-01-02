@@ -32,6 +32,7 @@ import org.ishafoundation.dwaraapi.api.req._import.SetSequenceImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
 import org.ishafoundation.dwaraapi.artifact.ArtifactAttributes;
 import org.ishafoundation.dwaraapi.artifact.ArtifactAttributesHandler;
+import org.ishafoundation.dwaraapi.artifact.ArtifactMeta;
 import org.ishafoundation.dwaraapi.artifact.ArtifactUtil;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
@@ -242,7 +243,7 @@ public class ImportService extends DwaraService {
 	
 			Volumeindex volumeindex = getVolumeindex(xmlFile);	
 			Volumeinfo volumeInfo = volumeindex.getVolumeinfo();
-			String volumeId = volumeInfo.getVolumeuid();
+			String volumeId = volumeInfo.getVolume();
 			ir.setVolumeId(volumeId);
 			
 			validate(volumeindex);
@@ -374,7 +375,7 @@ public class ImportService extends DwaraService {
 	    // validate barcode
 		String regEx = "(C|P)([A-Z])?([0-9]*)L[0-9]";
 		Pattern regExPattern = Pattern.compile(regEx);
-		String volumeBarcode = volumeinfo.getVolumeuid();
+		String volumeBarcode = volumeinfo.getVolume();
 		Matcher regExMatcher = regExPattern.matcher(volumeBarcode);
 		if(!regExMatcher.matches()) {
 			throw new DwaraException("Volume barcode should be in " + regEx + " format");
@@ -391,11 +392,11 @@ public class ImportService extends DwaraService {
 	    // validate artifactclass in all artifacts - get size too
 		List<Artifact> artifactList = volumeindex.getArtifact();
 		for (Artifact artifact : artifactList) {
-			Artifactclass artifactclass = id_artifactclassMap.get(artifact.getArtifactclassuid());
+			Artifactclass artifactclass = id_artifactclassMap.get(artifact.getArtifactclass());
 			if(artifactclass == null) {
 				Error err = new Error();
 				err.setType(Errortype.Error);
-				err.setMessage(artifact.getName() + " has invalid artifactclass " + artifact.getArtifactclassuid());
+				err.setMessage(artifact.getName() + " has invalid artifactclass " + artifact.getArtifactclass());
 				errorList.add(err);
 			}
 			else {
@@ -483,7 +484,7 @@ public class ImportService extends DwaraService {
 	private Volume getVolume(Volumeinfo volumeinfo) throws Exception {
 		Volume volume = new Volume();
 		
-		String volumeBarcode = volumeinfo.getVolumeuid();
+		String volumeBarcode = volumeinfo.getVolume();
 		volume.setId(volumeBarcode);
 		volume.setUuid(volumeinfo.getVolumeuuid());
 		volume.setType(Volumetype.physical);
@@ -579,15 +580,16 @@ public class ImportService extends DwaraService {
 					if(!artifactNameAsInCatalog.equals(artifactNameProposed) && !StringUtils.substringBefore(artifactNameAsInCatalog, "_").equals(extractedCodeFromProposedArtifactName))
 						throw new Exception ("Different sequences in name and rename attributes not supported. @name - " + artifactNameAsInCatalog + " @rename - " + artifactNameProposed);
 
-					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclassuid());
+					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclass());
 					Sequence sequence = artifactclass.getSequence();
 					
 					ArtifactAttributes artifactAttributes = artifactAttributesHandler.getArtifactAttributes(artifactclass.getId(), artifactNameProposed);
 					
 					String prevSeqCode = artifactAttributes.getPreviousCode();
 				
-					toBeArtifactName = artifactUtil.getArtifactName(artifactNameProposed, sequence, artifactAttributes, false);
-					String sequenceCode =  StringUtils.substringBefore(toBeArtifactName, "_");
+					ArtifactMeta am = artifactUtil.getArtifactMeta(artifactNameProposed, sequence, artifactAttributes, false);
+					toBeArtifactName = am.getArtifactName();
+					String sequenceCode =  am.getSequenceCode();
 
 					// TODO - we need prevseqcode checks...
 					boolean artifactAlreadyExists = true;

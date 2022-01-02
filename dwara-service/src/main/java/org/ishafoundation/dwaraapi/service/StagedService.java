@@ -37,6 +37,7 @@ import org.ishafoundation.dwaraapi.api.resp.staged.scan.ArtifactClassGroupedStag
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
 import org.ishafoundation.dwaraapi.artifact.ArtifactAttributes;
 import org.ishafoundation.dwaraapi.artifact.ArtifactAttributesHandler;
+import org.ishafoundation.dwaraapi.artifact.ArtifactMeta;
 import org.ishafoundation.dwaraapi.artifact.ArtifactUtil;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ExtensionDao;
@@ -468,9 +469,10 @@ public class StagedService extends DwaraService{
 					
 		        	ArtifactAttributes artifactAttributes = artifactAttributesHandler.getArtifactAttributes(artifactclass.getId(), stagedFileName);
 					
-					String toBeArtifactName = artifactUtil.getArtifactName(stagedFileName, sequence, artifactAttributes, true);
-					String prevSeqCode = artifactAttributes.getPreviousCode();				
-					String sequenceCode = StringUtils.substringBefore(toBeArtifactName, "_"); 
+		        	ArtifactMeta am = artifactUtil.getArtifactMeta(stagedFileName, sequence, artifactAttributes, true);
+					String toBeArtifactName = am.getArtifactName();
+					String sequenceCode = am.getSequenceCode(); 
+					String prevSeqCode = artifactAttributes.getPreviousCode();
 					
 //					String extractedCode = sequenceUtil.getExtractedCode(sequence, stagedFileName);
 //					// NOTE : forcematch is taken care of upfront during scan... No need to act on it...
