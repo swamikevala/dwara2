@@ -20,8 +20,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwara.import_.bru.BruCatalogParser;
 import org.ishafoundation.dwara.import_.bru.BruFile;
 import org.ishafoundation.dwara.import_.bru.BruResponseCatalog;
-import org.ishafoundation.dwaraapi.artifact.ArtifactAttributesHandler;
-import org.ishafoundation.dwaraapi.artifact.ArtifactAttributesHandler.ArtifactAttributes;
 import org.ishafoundation.dwaraapi.staged.scan.BasicArtifactValidator;
 import org.ishafoundation.dwaraapi.staged.scan.Error;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
@@ -221,14 +219,14 @@ public class DwaraImport {
 					System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " misses artifactclass");
 					hasErrors=true;
 				}
-				else {
-					ArtifactAttributesHandler su = new ArtifactAttributesHandler();
-					ArtifactAttributes artifactAttributes = su.getArtifactAttributes(artifactList.category, artifactName);
-					artifact.setPrevcode(artifactAttributes.getPreviousCode());
-					artifact.setSeqnum(artifactAttributes.getSequenceNumber());
-					artifact.setKeepCode(artifactAttributes.getKeepCode());
-					artifact.setReplaceCode(artifactAttributes.getReplaceCode());
-				}
+//				else {
+//					ArtifactAttributesHandler aah = new ArtifactAttributesHandler();
+//					ArtifactAttributes artifactAttributes = aah.getArtifactAttributes(artifactList.category, artifactName);
+//					artifact.setPrevcode(artifactAttributes.getPreviousCode());
+//					artifact.setSeqnum(artifactAttributes.getSequenceNumber());
+//					artifact.setKeepCode(artifactAttributes.getKeepCode());
+//					artifact.setReplaceCode(artifactAttributes.getReplaceCode());
+//				}
 
 				List<File> fileList = new ArrayList<>();
 				for (BruFile bruFile : bruFileList) {
