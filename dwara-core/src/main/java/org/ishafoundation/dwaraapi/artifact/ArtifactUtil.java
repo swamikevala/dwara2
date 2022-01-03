@@ -12,9 +12,18 @@ import org.springframework.stereotype.Component;
 public class ArtifactUtil {
 	
 	@Autowired
-	protected SequenceUtil sequenceUtil;
+	private ArtifactAttributesHandler artifactAttributesHandler;
 
-	public ArtifactMeta getArtifactMeta(String artifactName, Sequence sequence, ArtifactAttributes artifactAttributes, boolean generateSequence) throws Exception {
+	@Autowired
+	private SequenceUtil sequenceUtil;
+
+	public ArtifactMeta getArtifactMeta(String artifactName, String artifactclass, Sequence sequence, boolean generateSequence) throws Exception {
+		ArtifactAttributes artifactAttributes = artifactAttributesHandler.getArtifactAttributes(artifactclass, artifactName, sequence.getPrefix());
+		return getArtifactMeta(artifactName, sequence, artifactAttributes, generateSequence);
+	}
+	
+
+	private ArtifactMeta getArtifactMeta(String artifactName, Sequence sequence, ArtifactAttributes artifactAttributes, boolean generateSequence) throws Exception {
 		String previousCode = artifactAttributes.getPreviousCode();
 		Integer sequenceNumber = artifactAttributes.getSequenceNumber();
 
@@ -40,6 +49,7 @@ public class ArtifactUtil {
 		ArtifactMeta am = new ArtifactMeta();
 		am.setArtifactName(toBeArtifactName);
 		am.setSequenceCode(sequenceCode);				
+		am.setPrevSequenceCode(previousCode);
 		
 		if(sequenceCode == null) {
 			if(generateSequence) {
@@ -58,6 +68,4 @@ public class ArtifactUtil {
 		am.setSequenceCode(sequenceCode);
 		return am;
 	}
-
-
 }

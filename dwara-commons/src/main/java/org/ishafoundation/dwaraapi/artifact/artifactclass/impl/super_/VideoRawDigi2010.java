@@ -8,7 +8,7 @@ public class VideoRawDigi2010 implements Artifactclass{
 	@Override
 	public ArtifactAttributes getArtifactAttributes(String artifactName) {
 		ArtifactAttributes artifactAttributes = new ArtifactAttributes();
-		artifactAttributes.setReplaceCode(false);
+		artifactAttributes.setPreviousCode(artifactName);
 		return artifactAttributes;
 	}
 

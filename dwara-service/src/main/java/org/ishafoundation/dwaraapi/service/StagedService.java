@@ -150,7 +150,7 @@ public class StagedService extends DwaraService{
 	private Map<String, List<String>> artifactClass_volumeGroups_Map = new HashMap<String, List<String>>();
 	
 	@PostConstruct
-	public void getExcludedFileNamesRegexList() {
+	public void setUp() {
     	List<ArtifactclassVolume> artifactclassVolumeList = (List<ArtifactclassVolume>) artifactclassVolumeDao.findAll();
 
 		for (ArtifactclassVolume artifactclassVolume : artifactclassVolumeList) {
@@ -464,13 +464,11 @@ public class StagedService extends DwaraService{
 					String stagedFileName = stagedFile.getName();
 	
 		        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, stagedFileName);
-					
-					
-		        	ArtifactAttributes artifactAttributes = artifactAttributesHandler.getArtifactAttributes(artifactclass.getId(), stagedFileName, sequence.getPrefix());
-		        	ArtifactMeta am = artifactUtil.getArtifactMeta(stagedFileName, sequence, artifactAttributes, true);
+
+		        	ArtifactMeta am = artifactUtil.getArtifactMeta(stagedFileName, artifactclass.getId(), sequence, true);
 					String toBeArtifactName = am.getArtifactName();
 					String sequenceCode = am.getSequenceCode(); 
-					String prevSeqCode = artifactAttributes.getPreviousCode();
+					String prevSeqCode = am.getPrevSequenceCode();
 					
 //					String extractedCode = sequenceUtil.getExtractedCode(sequence, stagedFileName);
 //					// NOTE : forcematch is taken care of upfront during scan... No need to act on it...

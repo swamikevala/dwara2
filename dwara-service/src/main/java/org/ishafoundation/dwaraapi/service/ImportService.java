@@ -128,9 +128,6 @@ public class ImportService extends DwaraService {
 	private SequenceUtil sequenceUtil;
 	
 	@Autowired
-	private ArtifactAttributesHandler artifactAttributesHandler;
-	
-	@Autowired
 	private ArtifactUtil artifactUtil;
 	
 	@Autowired
@@ -583,21 +580,30 @@ public class ImportService extends DwaraService {
 					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclass());
 					Sequence sequence = artifactclass.getSequence();
 					
-					// Checks if there is a custom artifactclass impl
-					ArtifactAttributes artifactAttributes = artifactAttributesHandler.getArtifactAttributes(artifactclass.getId(), artifactNameProposed, sequence.getPrefix());
-					String prevSeqCode = artifactAttributes.getPreviousCode();
-					ArtifactMeta am = artifactUtil.getArtifactMeta(artifactNameProposed, sequence, artifactAttributes, false);
+					// Checks if there is a custom artifactclass impl, else applies default extraction logic but doesnt generate new sequence
+					ArtifactMeta am = artifactUtil.getArtifactMeta(artifactNameProposed, artifactclass.getId(), sequence, false);
 					toBeArtifactName = am.getArtifactName();
+					String prevSeqCode = am.getPrevSequenceCode();
 					String sequenceCode =  am.getSequenceCode();
 
 					boolean artifactAlreadyExists = true;
 					org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = null;
 					if(sequenceCode != null) {
 						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
-					}else if(prevSeqCode != null)
-						artifact = artifactDao.findByPrevSequenceCodeAndDeletedIsFalseAndArtifactclassSequenceSequenceRefId(prevSeqCode, sequence.getSequenceRef().getId()); // if there is a M228 skip from digi-2020
-					
-					if(artifact != null) { // even if artifact extracted code matches - double check for name - and if name differs flag it
+					}
+					else {
+						String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
+						artifact = artifactDao.findByNameEndsWith(artifactNameProposedShavedOffPrefix);
+					}
+
+					if(artifact != null) { 
+						// check if catalog artifactclass is same as existing artifact's artifactclass
+						if(!artifact.getArtifactclass().getId().equals(artifactclass.getId())) {
+							 String errMsg = "Different Artifactclasses for same artifact : ArtifactId " + artifact.getId() + " - " + artifactNameAsInCatalog + ". Expected - " + artifact.getArtifactclass().getId() + " Actual - " + artifactclass.getId();
+							 throw new Exception (errMsg);
+						}	
+						
+						// even if artifact extracted code matches - double check for name - and if name differs flag it
 						String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
 						String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
 						if(!artifactNameProposedShavedOffPrefix.equals(artifactNameShavedOffPrefix))
@@ -616,13 +622,7 @@ public class ImportService extends DwaraService {
 							 }
 						}
 					}
-					
-					if(artifact != null) { // check if catalog artifactclass is same as existing artifact's artifactclass
-						if(!artifact.getArtifactclass().getId().equals(artifactclass.getId())) {
-							 String errMsg = "Different Artifactclasses for same artifact : ArtifactId " + artifact.getId() + " - " + artifactNameAsInCatalog + ". Expected - " + artifact.getArtifactclass().getId() + " Actual - " + artifactclass.getId();
-							 throw new Exception (errMsg);
-						}	
-					}
+
 
 					//TODO - should we double check with size too??? domainSpecificArtifactRepository.findAllByTotalSizeAndDeletedIsFalse(size);
 					if(artifact == null) {
@@ -633,9 +633,9 @@ public class ImportService extends DwaraService {
 //							throw new Exception("An artifact already exists with sequenceCode : " + sequenceCode + ". Already existing artifactId with same sequenceCode - " + alreadyExistingArtifactWithSameSequenceCode.getId());
 						
 						if(sequenceCode == null) {
-							
-							sequenceCode = sequenceUtil.generateSequenceCode(sequence, artifactNameProposed);
-							toBeArtifactName = sequenceCode + "_" + artifactNameProposed;
+							am = artifactUtil.generateSequenceCodeAndPrefixToName(artifactNameProposed, sequence);
+							sequenceCode = am.getSequenceCode();
+							toBeArtifactName = am.getArtifactName();
 						}
 						/*
 						 *** Creating artifact if not already in DB ***
