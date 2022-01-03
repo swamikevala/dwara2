@@ -96,8 +96,8 @@ public class DwaraImport {
 					String dateStr = fileName.split("_")[1].split("\\.")[0];
 					
 					
-            		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d-MMM-yyyy HH"); 
-            		LocalDateTime dateTime = LocalDateTime.parse(dateStr + " 00", formatter);
+            		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy_HH-mm-ss"); 
+            		LocalDateTime dateTime = LocalDateTime.parse(dateStr, formatter);
             		DateTimeFormatter formatterISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
             		String writtenAt = dateTime.format(formatterISO);
 
