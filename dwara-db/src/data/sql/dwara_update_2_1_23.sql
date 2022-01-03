@@ -638,11 +638,19 @@ INSERT INTO `dwara_sequences` (`primary_key_fields`, `current_val`) VALUES ('imp
 drop table import_volume_artifact;
 
 -- move finalizedDate to details...
+/*
 UPDATE `volume` SET `details`='{\"barcoded\": true, \"blocksize\": 1048576, \"written_at\": \"2017-12-31T00:00:00\"}', `finalized_at`=null WHERE `id`='C16139L6';
 UPDATE `volume` SET `details`='{\"barcoded\": true, \"blocksize\": 1048576, \"written_at\": \"2020-05-06T00:00:00\"}', `finalized_at`=null WHERE `id`='C17027L6';
 UPDATE `volume` SET `details`='{\"barcoded\": true, \"blocksize\": 1048576, \"written_at\": \"2020-05-16T00:00:00\"}', `finalized_at`=null WHERE `id`='C17031L7';
 UPDATE `volume` SET `details`='{\"barcoded\": true, \"blocksize\": 1048576, \"written_at\": \"2010-12-29T00:00:00\"}', `finalized_at`=null WHERE `id`='CA4220L4';
 UPDATE `volume` SET `details`='{\"barcoded\": true, \"blocksize\": 1048576, \"written_at\": \"2020-05-14T00:00:00\"}', `finalized_at`=null WHERE `id`='P17023L6';
+*/
+
+ALTER TABLE `volume` 
+CHANGE COLUMN `initialized_at` `first_written_at` DATETIME(6) NULL DEFAULT NULL ,
+CHANGE COLUMN `finalized_at` `last_written_at` DATETIME(6) NULL DEFAULT NULL ;
+
+
 
 -- volume end block is not needed for import
 update file_volume set volume_end_block = null where volume_end_block is not null and volume_id in ('C16139L6','C17027L6','C17031L7','CA4220L4','P17023L6');

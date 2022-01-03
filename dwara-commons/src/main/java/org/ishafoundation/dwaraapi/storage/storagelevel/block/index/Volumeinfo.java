@@ -34,8 +34,10 @@ public class Volumeinfo {
 	private String artifactclassid;	
 	@JacksonXmlProperty(localName="FinalizedAt")
 	private String finalizedAt;	 
-	@JacksonXmlProperty(localName="Imported")
-	private Imported imported;
+	@JacksonXmlProperty(localName="FirstWrittenAt")
+	private String firstWrittenAt;	 
+	@JacksonXmlProperty(localName="LastWrittenAt")
+	private String lastWrittenAt;	 
 	
 	
 	public String getVolumeuuid() {
@@ -104,11 +106,17 @@ public class Volumeinfo {
 	public void setFinalizedAt(String finalizedAt) {
 		this.finalizedAt = finalizedAt;
 	}
-	public Imported getImported() {
-		return imported;
+	public String getFirstWrittenAt() {
+		return firstWrittenAt;
 	}
-	public void setImported(Imported imported) {
-		this.imported = imported;
+	public void setFirstWrittenAt(String firstWrittenAt) {
+		this.firstWrittenAt = firstWrittenAt;
+	}
+	public String getLastWrittenAt() {
+		return lastWrittenAt;
+	}
+	public void setLastWrittenAt(String lastWrittenAt) {
+		this.lastWrittenAt = lastWrittenAt;
 	}
 }
 

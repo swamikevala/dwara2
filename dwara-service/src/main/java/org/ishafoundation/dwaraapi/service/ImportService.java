@@ -30,8 +30,6 @@ import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.SetSequenceImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
-import org.ishafoundation.dwaraapi.artifact.ArtifactAttributes;
-import org.ishafoundation.dwaraapi.artifact.ArtifactAttributesHandler;
 import org.ishafoundation.dwaraapi.artifact.ArtifactMeta;
 import org.ishafoundation.dwaraapi.artifact.ArtifactUtil;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -55,7 +53,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.DiffValues;
@@ -123,10 +120,7 @@ public class ImportService extends DwaraService {
 	
 	@Autowired
 	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
-	
-	@Autowired
-	private SequenceUtil sequenceUtil;
-	
+		
 	@Autowired
 	private ArtifactUtil artifactUtil;
 	
@@ -526,13 +520,16 @@ public class ImportService extends DwaraService {
 		volume.setStoragelevel(Storagelevel.block);
 		volume.setArchiveformat(configurationTablesUtil.getArchiveformat(volumeinfo.getArchiveformat()));
 		
-//		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-//		LocalDateTime writtenAt = LocalDateTime.parse(volumeinfo.getImported().getWrittenAt(), formatter);
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+		LocalDateTime firstWrittenAt = LocalDateTime.parse(volumeinfo.getFirstWrittenAt(), formatter);
+		volume.setInitializedAt(firstWrittenAt);
+		
+		LocalDateTime lastWrittenAt = LocalDateTime.parse(volumeinfo.getLastWrittenAt(), formatter);
+		volume.setFinalizedAt(lastWrittenAt);
 		
 		VolumeDetails volumeDetails = new VolumeDetails();
 		volumeDetails.setBarcoded(true);
 		volumeDetails.setBlocksize(volumeinfo.getVolumeblocksize());
-		volumeDetails.setWrittenAt(volumeinfo.getImported().getWrittenAt());
 
 		volume.setDetails(volumeDetails);
 		return volume;
@@ -585,8 +582,13 @@ public class ImportService extends DwaraService {
 					toBeArtifactName = am.getArtifactName();
 					String prevSeqCode = am.getPrevSequenceCode();
 					String sequenceCode =  am.getSequenceCode();
+//					We are doing this on the custom class by figuring out all the missing sequencecodes one and assigning them some values or generating new sequence - check VideoRaw custom Artifactclass 
+//					if(sequenceCode == null) {
+//						throw new Exception("Missing expected code : " + artifactNameProposed);
+//					}
 
 					boolean artifactAlreadyExists = true;
+					
 					org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = null;
 					if(sequenceCode != null) {
 						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
@@ -595,7 +597,7 @@ public class ImportService extends DwaraService {
 						String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
 						artifact = artifactDao.findByNameEndsWith(artifactNameProposedShavedOffPrefix);
 					}
-
+				
 					if(artifact != null) { 
 						// check if catalog artifactclass is same as existing artifact's artifactclass
 						if(!artifact.getArtifactclass().getId().equals(artifactclass.getId())) {
@@ -1060,13 +1062,8 @@ public class ImportService extends DwaraService {
 	}
 	
 	private boolean isOlder(Volume volume1, Volume volume2) { // is Volume1 Older than Volume2
-		DateTimeFormatter formatterISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-		
-		String volume1WrittenAt = volume1.getDetails().getWrittenAt(); // lets be consistent in using volume - volumeInfo.getImported().getWrittenAt();
-		LocalDateTime volume1DateTime = LocalDateTime.parse(volume1WrittenAt, formatterISO);
-	
-		String volume2WrittenAt = volume2.getDetails().getWrittenAt();
-		LocalDateTime volume2DateTime = LocalDateTime.parse(volume2WrittenAt, formatterISO);
+		LocalDateTime volume1DateTime = volume1.getFinalizedAt();
+		LocalDateTime volume2DateTime = volume2.getFinalizedAt();
 	
 		if(volume1DateTime.isEqual(volume2DateTime)) {
 			if(volume1.getId().compareTo(volume2.getId()) < 0)

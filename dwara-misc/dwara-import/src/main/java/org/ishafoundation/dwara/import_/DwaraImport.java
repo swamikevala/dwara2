@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -24,7 +25,6 @@ import org.ishafoundation.dwaraapi.staged.scan.BasicArtifactValidator;
 import org.ishafoundation.dwaraapi.staged.scan.Error;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File;
-import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Imported;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Volumeindex;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Volumeinfo;
 import org.jdom2.output.support.AbstractXMLOutputProcessor;
@@ -55,7 +55,7 @@ public class DwaraImport {
 	
 	private BasicArtifactValidator basicArtifactValidator = new BasicArtifactValidator();
 	
-	static Map getJSONFromFile(String folderPath) throws IOException, ParseException {
+	static Map<String, Object> getJSONFromFile(String folderPath) throws IOException, ParseException {
 
 		JSONParser parser = new JSONParser();
 		Object obj = parser.parse(new FileReader(folderPath));
@@ -84,22 +84,32 @@ public class DwaraImport {
 						System.err.println("ERROR - " + completedFile.getAbsolutePath() + " already exists. Figure out why we are already running a complete catalog. Skipping it");
 						throw new Exception(completedFile.getAbsolutePath() + " already exists. Figure out why we are already running a complete catalog. Skipping it");
 					}
+
+					String barcodeRegEx = "((C|P)([A-Z])?([0-9]*)L[0-9])";
+					String dateTimeRegEx = "([0-9]{2}-[A-Z][a-z]{2}-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2})";
+					String fileNameRegEx = barcodeRegEx + "_" + dateTimeRegEx + "_" + dateTimeRegEx;
+
+					Pattern fileNamePattern = Pattern.compile(fileNameRegEx);
+					Matcher m = fileNamePattern.matcher(fileName);
+					String ltoTape = null;
+					String firstWrittenAt = null;
+					String lastWrittenAt = null;
+					if(!m.matches()) {
+						throw new Exception(fileName + " doesnt follow catalog naming convention <<Barcode>>_<<FirstWrittenAt>>_<<LastWrittenAt>>");
+					}else {
+						ltoTape = m.group(1);
+						firstWrittenAt = m.group(5);
+						lastWrittenAt = m.group(6);
+					}
 					
-					
-					String[] fileNameParts = fileName.split("_");
-					if(fileNameParts.length != 2) // use regex instead...
-						throw new Exception(fileName + " doesnt follow catalog naming convention <<Barcode>>_<<WrittenDate>>");
-					
-					String ltoTape = fileName.split("_")[0];
-					if(StringUtils.isEmpty(ltoTape))
-						throw new Exception(fileName + " doesnt follow catalog naming convention <<Barcode>>_<<WrittenDate>>");
-					String dateStr = fileName.split("_")[1].split("\\.")[0];
-					
-					
-            		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy_HH-mm-ss"); 
-            		LocalDateTime dateTime = LocalDateTime.parse(dateStr, formatter);
+            		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy-HH-mm-ss"); 
             		DateTimeFormatter formatterISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-            		String writtenAt = dateTime.format(formatterISO);
+
+            		LocalDateTime firstWrittenDateTime = LocalDateTime.parse(firstWrittenAt, formatter);
+            		String formattedFirstWrittenAt = firstWrittenDateTime.format(formatterISO);
+            		
+            		LocalDateTime lastWrittenDateTime = LocalDateTime.parse(lastWrittenAt, formatter);
+            		String formattedLastWrittenAt = lastWrittenDateTime.format(formatterISO);
 
             		BruCatalogParser bcp = new BruCatalogParser();
             		BruResponseCatalog brc  = bcp.parseBruCatalog(textFile, artifactToArtifactClassMapping);
@@ -109,7 +119,7 @@ public class DwaraImport {
             		List<BruFile> artifactsList = bruFileList.stream().filter(b -> b.isArtifact).collect(Collectors.toList());
 					calculateEndBlock(bruFileList, artifactsList);
 
-					createVolumeindex(ltoTape, writtenAt, bruArchiveId, bruFileList, artifactsList, destinationXmlPath);
+					createVolumeindex(ltoTape, formattedFirstWrittenAt, formattedLastWrittenAt, bruArchiveId, bruFileList, artifactsList, destinationXmlPath);
 					
 					FileUtils.moveFile(textFile, Paths.get(bruFile,"completed",textFile.getName()).toFile());
 				} catch (Exception e) {
@@ -170,7 +180,7 @@ public class DwaraImport {
 		}
 	};
 
-	public String createVolumeindex(String ltoTape, String writtenAt, String bruArchiveId, List<BruFile> bruFileList, List<BruFile> artifactsList, String destinationFile) throws Exception {
+	public String createVolumeindex(String ltoTape, String firstWrittenAt, String lastWrittenAt, String bruArchiveId, List<BruFile> bruFileList, List<BruFile> artifactsList, String destinationFile) throws Exception {
 		boolean hasErrors = false;
 		System.out.println("Framing VolumeIndex Object from parsed data");
 		Volumeinfo volumeinfo = new Volumeinfo();
@@ -181,10 +191,8 @@ public class DwaraImport {
 		volumeinfo.setArchiveformat("bru");
 		volumeinfo.setArchiveblocksize(1024);
 		//volumeinfo.setEncryptionalgorithm("AES-128");
-		Imported imported = new Imported();
-		imported.setImported(true);
-		imported.setWrittenAt(writtenAt);
-		volumeinfo.setImported(imported);
+		volumeinfo.setFirstWrittenAt(firstWrittenAt);
+		volumeinfo.setLastWrittenAt(lastWrittenAt);
 		//volumeinfo.setFinalizedAt(finalizedDate);
 		//volumeinfo.setChecksumalgorithm("md5");
 

@@ -2,8 +2,11 @@ package org.ishafoundation.dwaraapi.artifact;
 
 
 
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -44,6 +47,9 @@ public class ArtifactUtil {
 				throw new Exception ("To replace a code both previousCode and sequenceNumber attributes should be present");
 			sequenceCode = sequence.getPrefix() + sequenceNumber;
 			toBeArtifactName = artifactName.replace(previousCode, sequenceCode);
+		}else if(sequenceNumber != null){
+			sequenceCode = sequence.getPrefix() + sequenceNumber;
+			toBeArtifactName = sequenceCode + "_" + artifactName;
 		}
 		
 		ArtifactMeta am = new ArtifactMeta();

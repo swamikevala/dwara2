@@ -11,7 +11,7 @@
 
 	<groupId>org.isha</groupId>
 	<artifactId>dwara-import</artifactId>
-	<version>2.2</version>
+	<version>2.3</version>
 	<packaging>jar</packaging>
 	<name>dwara-import</name>
 	<description>Import data to dwara from BRU.gz</description>
@@ -98,7 +98,7 @@
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
-			<version>2.4</version>
+			<version>2.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
