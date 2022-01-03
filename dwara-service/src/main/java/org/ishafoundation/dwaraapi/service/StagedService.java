@@ -25,7 +25,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.IngestUserRequest;
 import org.ishafoundation.dwaraapi.api.req.staged.ingest.StagedFile;
@@ -467,8 +466,7 @@ public class StagedService extends DwaraService{
 		        	java.io.File appReadyToIngestFileObj = FileUtils.getFile(readyToIngestPath, stagedFileName);
 					
 					
-		        	ArtifactAttributes artifactAttributes = artifactAttributesHandler.getArtifactAttributes(artifactclass.getId(), stagedFileName);
-					
+		        	ArtifactAttributes artifactAttributes = artifactAttributesHandler.getArtifactAttributes(artifactclass.getId(), stagedFileName, sequence.getPrefix());
 		        	ArtifactMeta am = artifactUtil.getArtifactMeta(stagedFileName, sequence, artifactAttributes, true);
 					String toBeArtifactName = am.getArtifactName();
 					String sequenceCode = am.getSequenceCode(); 

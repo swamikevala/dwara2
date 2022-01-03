@@ -583,15 +583,13 @@ public class ImportService extends DwaraService {
 					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclass());
 					Sequence sequence = artifactclass.getSequence();
 					
-					ArtifactAttributes artifactAttributes = artifactAttributesHandler.getArtifactAttributes(artifactclass.getId(), artifactNameProposed);
-					
+					// Checks if there is a custom artifactclass impl
+					ArtifactAttributes artifactAttributes = artifactAttributesHandler.getArtifactAttributes(artifactclass.getId(), artifactNameProposed, sequence.getPrefix());
 					String prevSeqCode = artifactAttributes.getPreviousCode();
-				
 					ArtifactMeta am = artifactUtil.getArtifactMeta(artifactNameProposed, sequence, artifactAttributes, false);
 					toBeArtifactName = am.getArtifactName();
 					String sequenceCode =  am.getSequenceCode();
 
-					// TODO - we need prevseqcode checks...
 					boolean artifactAlreadyExists = true;
 					org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = null;
 					if(sequenceCode != null) {
@@ -635,6 +633,7 @@ public class ImportService extends DwaraService {
 //							throw new Exception("An artifact already exists with sequenceCode : " + sequenceCode + ". Already existing artifactId with same sequenceCode - " + alreadyExistingArtifactWithSameSequenceCode.getId());
 						
 						if(sequenceCode == null) {
+							
 							sequenceCode = sequenceUtil.generateSequenceCode(sequence, artifactNameProposed);
 							toBeArtifactName = sequenceCode + "_" + artifactNameProposed;
 						}

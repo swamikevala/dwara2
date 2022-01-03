@@ -16,10 +16,11 @@ public class ArtifactUtil {
 
 	public ArtifactMeta getArtifactMeta(String artifactName, Sequence sequence, ArtifactAttributes artifactAttributes, boolean generateSequence) throws Exception {
 		String previousCode = artifactAttributes.getPreviousCode();
-		boolean keepCode = Boolean.TRUE.equals(artifactAttributes.getKeepCode());
-		boolean replaceCode = Boolean.TRUE.equals(artifactAttributes.getReplaceCode());
 		Integer sequenceNumber = artifactAttributes.getSequenceNumber();
 
+		boolean keepCode = Boolean.TRUE.equals(artifactAttributes.getKeepCode());
+		boolean replaceCode = Boolean.TRUE.equals(artifactAttributes.getReplaceCode());
+		
 		String toBeArtifactName = null;
 		String extractedCodeFromProposedArtifactName = StringUtils.substringBefore(artifactName, "_");
 		
