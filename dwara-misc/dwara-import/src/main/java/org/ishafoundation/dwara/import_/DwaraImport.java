@@ -86,8 +86,9 @@ public class DwaraImport {
 					}
 
 					//Example format: CC4016L4_01-Apr-2010-22-47-35_02-Apr-2010-01-36-16
+					String monthRegex = "(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)";
 					String barcodeRegEx = "([CP][ABCDE12345][3467][0-9]{3}L[3467])";
-					String dateTimeRegEx = "([0-9]{2}-[A-Z]{3}-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2})";
+					String dateTimeRegEx = "([0-9]{2}-" + monthRegex + "-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2})";
 					String fileNameRegEx = barcodeRegEx + "_" + dateTimeRegEx + "_" + dateTimeRegEx;
 
 					Pattern fileNamePattern = Pattern.compile(fileNameRegEx);
