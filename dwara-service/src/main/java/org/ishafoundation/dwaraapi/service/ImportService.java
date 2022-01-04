@@ -604,21 +604,31 @@ public class ImportService extends DwaraService {
 							 throw new Exception (errMsg);
 						}	
 						
-						// even if artifact extracted code matches - double check for name - and if name differs flag it
-						String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
-						String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
-						if(!artifactNameProposedShavedOffPrefix.equals(artifactNameShavedOffPrefix))
-							throw new Exception ("Same code but different artifact names : code - " + sequenceCode + " ArtifactId " + artifact.getId() + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposedShavedOffPrefix);
+						if(sequenceCode != null) {
+							// even if artifact extracted code matches - double check for name - and if name differs flag it
+							String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
+							String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
+							if(!artifactNameProposedShavedOffPrefix.equals(artifactNameShavedOffPrefix))
+								throw new Exception ("Same code but different artifact names : code - " + sequenceCode + " ArtifactId " + artifact.getId() + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposedShavedOffPrefix);
+						} else {
+							// even if artifact extracted code matches - double check for name - and if name differs flag it
+							String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
+							if(!artifactNameProposed.equals(artifactNameShavedOffPrefix)) {
+								String errMsg = "Different codes but same artifact name : ArtifactId - " + artifact.getId() + " - " + artifactNameProposed + ". Expected code - " + artifact.getSequenceCode() + " Actual - " + sequenceCode;//(prevSeqCode != null ? prevSeqCode : sequenceCode);
+								throw new Exception (errMsg);
+							}
+						}
 					}
 					
 					if(artifact == null) { // Some imported artifacts has same name but different extracted codes... if so flag it
 						String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
-						 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(artifactNameProposedShavedOffPrefix,artifactclass.getId());
+						String an = sequenceCode != null ? artifactNameProposedShavedOffPrefix : artifactNameProposed;
+						 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(an,artifactclass.getId());
 						 for (org.ishafoundation.dwaraapi.db.model.transactional.Artifact nthArtifactEndingWithSameName : artifactsEndingWithSameName) {
 							 String artifactNameShavedOffPrefix = StringUtils.substringAfter(nthArtifactEndingWithSameName.getName(),"_");
-							 if(artifactNameShavedOffPrefix.equals(artifactNameProposedShavedOffPrefix)) {
+							 if(artifactNameShavedOffPrefix.equals(an)) {
 								 artifact = nthArtifactEndingWithSameName;
-								 String errMsg = "Different codes but same artifact name : ArtifactId - " + artifact.getId() + " - " + artifactNameProposedShavedOffPrefix + ". Expected code - " + artifact.getSequenceCode() + " Actual - " + sequenceCode;//(prevSeqCode != null ? prevSeqCode : sequenceCode);
+								 String errMsg = "Different codes but same artifact name : ArtifactId - " + artifact.getId() + " - " + an + ". Expected code - " + artifact.getSequenceCode() + " Actual - " + sequenceCode;//(prevSeqCode != null ? prevSeqCode : sequenceCode);
 								 throw new Exception (errMsg);
 							 }
 						}
