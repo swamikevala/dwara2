@@ -7,7 +7,8 @@ DROP TABLE `domain`;
 UPDATE `request` SET `status`='cancelled', `message`='Deleted artifact. Request shouldnt have got created in the first place.' WHERE `id`='76074';
 
 -- Import 
--- config changes  
+-- config changes
+/*  
 ALTER TABLE `sequence` CHANGE COLUMN `force_match` `force_match` INT(1) NULL DEFAULT NULL ;
 
 UPDATE `sequence` SET `force_match`='2' WHERE `id`='video-pub';
@@ -17,6 +18,7 @@ UPDATE `sequence` SET `force_match`='2' WHERE `id`='video-edit-pub';
 UPDATE `sequence` SET `force_match`='2' WHERE `id`='video-edit-priv2';
 UPDATE `sequence` SET `force_match`='0' WHERE `id`='video-digi-2010-priv2';
 UPDATE `sequence` SET `force_match`='0' WHERE `id`='video-digi-2010-pub';
+*/
 
 ALTER TABLE `sequence` 
 DROP COLUMN `code_regex`,
@@ -31,10 +33,10 @@ UPDATE `sequence` SET `prefix`='VCX' WHERE `id`='video-digi-2010-priv2';
 
 -- add entries for 2010-edited ZC
 -- SEQUENCE --
-INSERT INTO sequence (id, `type`, prefix, code_regex, number_regex, `group`, starting_number, ending_number, current_number, sequence_ref_id, force_match, keep_code, replace_code) VALUES 
-('video-digi-2010-edit-grp','artifact',null,null,null,1,1,-1,0,null,0,0,null),
-('video-digi-2010-edit-pub','artifact','ZC','^ZP?\\d+',null,0,null,null,null,'video-digi-2010-edit-grp',2,0,0),
-('video-digi-2010-edit-priv2','artifact','ZCX','^ZY?\\d+',null,0,null,null,null,'video-digi-2010-edit-grp',2,0,0);
+INSERT INTO sequence (id, `type`, prefix, `group`, starting_number, ending_number, current_number, sequence_ref_id) VALUES 
+('video-digi-2010-edit-grp','artifact',null,1,1,-1,0,null),
+('video-digi-2010-edit-pub','artifact','ZC',0,null,null,null,'video-digi-2010-edit-grp'),
+('video-digi-2010-edit-priv2','artifact','ZCX',0,null,null,null,'video-digi-2010-edit-grp');
 
 -- ARTIFACTCLASS --
 INSERT INTO artifactclass (id, `description`, sequence_id, source, concurrent_volume_copies, display_order, path_prefix, artifactclass_ref_id, import_only, config) VALUES 
