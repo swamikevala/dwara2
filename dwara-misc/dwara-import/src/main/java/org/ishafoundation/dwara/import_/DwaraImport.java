@@ -100,8 +100,8 @@ public class DwaraImport {
 						throw new Exception(fileName + " doesnt follow catalog naming convention <<Barcode>>_<<FirstWrittenAt>>_<<LastWrittenAt>>");
 					}else {
 						ltoTape = m.group(1);
-						firstWrittenAt = m.group(5);
-						lastWrittenAt = m.group(6);
+						firstWrittenAt = m.group(2);
+						lastWrittenAt = m.group(4);
 					}
 					
             		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy-HH-mm-ss"); 

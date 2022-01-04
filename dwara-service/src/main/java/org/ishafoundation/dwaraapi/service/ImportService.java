@@ -594,8 +594,7 @@ public class ImportService extends DwaraService {
 						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
 					}
 					else {
-						String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
-						artifact = artifactDao.findByNameEndsWith(artifactNameProposedShavedOffPrefix);
+						artifact = artifactDao.findByNameEndsWith(artifactNameProposed);
 					}
 				
 					if(artifact != null) { 
