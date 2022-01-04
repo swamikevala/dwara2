@@ -85,8 +85,9 @@ public class DwaraImport {
 						throw new Exception(completedFile.getAbsolutePath() + " already exists. Figure out why we are already running a complete catalog. Skipping it");
 					}
 
-					String barcodeRegEx = "((C|P)([A-Z])?([0-9]*)L[0-9])";
-					String dateTimeRegEx = "([0-9]{2}-[A-Z][a-z]{2}-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2})";
+					//Example format: CC4016L4_01-Apr-2010-22-47-35_02-Apr-2010-01-36-16
+					String barcodeRegEx = "([CP][ABCDE12345][3467][0-9]{3}L[3467])";
+					String dateTimeRegEx = "([0-9]{2}-[A-Z]{3}-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2})";
 					String fileNameRegEx = barcodeRegEx + "_" + dateTimeRegEx + "_" + dateTimeRegEx;
 
 					Pattern fileNamePattern = Pattern.compile(fileNameRegEx);
