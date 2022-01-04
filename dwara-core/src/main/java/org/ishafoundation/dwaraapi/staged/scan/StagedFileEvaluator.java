@@ -148,7 +148,7 @@ public class StagedFileEvaluator {
 
 		// 1a - validateName for photo* artifactclass
 		if(FilenameUtils.getBaseName(sourcePath).startsWith("photo")) { // validation only for photo* artifactclass
-			errorList.addAll(basicArtifactValidator.validatePhotoName(fileName, allowedChrsInFileNamePattern, (sfv != null && sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0 ? sfv.getPhotoSeriesFileNameValidationFailedFileNames() : null)));
+			errorList.addAll(basicArtifactValidator.validatePhotoName(fileName, photoSeriesArtifactclassArifactNamePattern, (sfv != null && sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0 ? sfv.getPhotoSeriesFileNameValidationFailedFileNames() : null)));
 		}
 		
 		// 2- validateCount
