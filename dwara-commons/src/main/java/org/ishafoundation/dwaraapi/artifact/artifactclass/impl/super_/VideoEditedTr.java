@@ -6,7 +6,7 @@ import org.ishafoundation.dwaraapi.artifact.artifactclass.Artifactclass;
 
 public class VideoEditedTr implements Artifactclass{
 	
-	private static final String EDITED_TR_CODE_REGEX = "^[A-Z]{3}[a-z]{3}[A-Z]{2}\\d{6}(?=_)";
+	private static final String EDITED_TR_CODE_REGEX = "^[A-Z]{3}[a-z]{3}[A-Z]{2}\\d+(?=_)";
 
 	@Override
 	public ArtifactAttributes getArtifactAttributes(String proposedName) {

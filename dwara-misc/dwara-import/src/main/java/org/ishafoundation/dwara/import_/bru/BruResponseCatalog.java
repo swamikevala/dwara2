@@ -4,6 +4,7 @@ import java.util.List;
 
 public class BruResponseCatalog {
 	private String archiveId;
+	private String volumeId;
 	private List<BruFile> bruFileList;
 
 	public String getArchiveId() {
@@ -17,5 +18,11 @@ public class BruResponseCatalog {
 	}
 	public void setBruFileList(List<BruFile> bruFileList) {
 		this.bruFileList = bruFileList;
+	}
+	public String getVolumeId() {
+		return volumeId;
+	}
+	public void setVolumeId(String volumeId) {
+		this.volumeId = volumeId;
 	}
 }

@@ -17,8 +17,8 @@ import org.springframework.core.io.ResourceLoader;
 
 public class VideoRaw implements Artifactclass{
 	
-	private static final String NUMERIC_SEQUENCE_REGEX = "^[\\d]{1,5}";
-	private static final String BR_CODE_REGEX = "^BR[\\d]{1,5}";
+	private static final String NUMERIC_SEQUENCE_REGEX = "^[\\d]+";
+	private static final String BR_CODE_REGEX = "^BR[\\d]+";
 	
 	private static final Map<String, Integer> ARTIFACTNAME_SEQUENCENUMBER_MAP = new HashMap<String, Integer>();
 
@@ -36,7 +36,6 @@ public class VideoRaw implements Artifactclass{
         	Integer sequenceNumber = Integer.parseInt(parts[1]);
         	ARTIFACTNAME_SEQUENCENUMBER_MAP.put(artifactName, sequenceNumber);
         }
-        ARTIFACTNAME_SEQUENCENUMBER_MAP.put("xyz", 999);
 	}
 	
 	@Override

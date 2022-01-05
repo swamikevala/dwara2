@@ -15,9 +15,12 @@ public class BruCatalogParser {
 
 	private String archiveIdRegEx = "archive ID = (.*)";
 	private Pattern archiveIdRegExPattern = Pattern.compile(archiveIdRegEx);
+	private String labelRegEx = "label = (.*)";
+	private Pattern labelRegExPattern = Pattern.compile(labelRegEx);
 	
 	public BruResponseCatalog parseBruCatalog(File bruCatalogFile, Map<String, Object> artifactToArtifactClassMapping) throws Exception {
 		String bruArchiveId = null;
+		String volumeId = null;
 		List<BruFile> bruFileList = new ArrayList<>();
 		
 		LineIterator it = FileUtils.lineIterator(bruCatalogFile, "UTF-8");
@@ -29,14 +32,20 @@ public class BruCatalogParser {
 					bruArchiveId = archiveIdRegExMatcher.group(1);
 				}
 			}
+			if(line.startsWith("label = ")) {
+				Matcher labelRegExMatcher = labelRegExPattern.matcher(line);
+				if(labelRegExMatcher.matches()) {
+					volumeId = labelRegExMatcher.group(1);
+				}
+			}			
 			if (line.contains("VL:c")) {
 	
 				String[] arrValues = line.split("\\|");
 				BruFile b = new BruFile();
 				if (arrValues[0].equals("VL:c")) {
-					String temp = arrValues[5].replaceAll("\\P{Print}", "");
-					if (arrValues[5].endsWith("/")) {
-						temp = StringUtils.substring(arrValues[5], 0, -1);
+					String temp = arrValues[5]; //.replaceAll("\\P{Print}", "");
+					if (temp.endsWith("/")) {
+						temp = StringUtils.substring(temp, 0, -1);
 					}
 					if (temp.startsWith("./")) {
 						temp = temp.replace("./", "");
@@ -52,7 +61,8 @@ public class BruCatalogParser {
 					} else {
 						b.name = temp;
 						b.isArtifact = false;
-						temp.substring(temp.lastIndexOf("/") + 1);
+						// temp.substring(temp.lastIndexOf("/") + 1);
+						
 						// extra 4096 check to address entire like 
 						// VL:c|385671168|1|4096|376631|Z7424_Class_IEO_Tamil-Day2-Desire_FCP7-And-FCPX/XMLs/FCP X/._IEO Tamil Day 5 - Acceptance II.fcpxml 
 						// which is a folder. 
@@ -75,6 +85,7 @@ public class BruCatalogParser {
 		
 		BruResponseCatalog brc = new BruResponseCatalog();
 		brc.setArchiveId(bruArchiveId);
+		brc.setVolumeId(volumeId);
 		brc.setBruFileList(bruFileList);
 		return brc;
 	}
