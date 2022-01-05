@@ -1,11 +1,14 @@
 package org.ishafoundation.dwaraapi.resource;
 
+import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.SetSequenceImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
+import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.ImportService;
 import org.slf4j.Logger;
@@ -14,9 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.annotations.ApiOperation;
@@ -127,4 +132,80 @@ public class ImportController {
 		
 		return ResponseEntity.status(HttpStatus.OK).body(importResponse);
 	}
+	
+	
+	@GetMapping("queryByNameStartsWith")
+	public ResponseEntity<String> queryByNameStartsWith(@RequestParam String artifactNameToTapeMappingFilepathname, @RequestParam String startsWith){
+		StringBuffer sb = new StringBuffer();
+		try {
+			java.io.File artifactNameToTapeMappingFile = new java.io.File(artifactNameToTapeMappingFilepathname);
+			List<String> lineList = FileUtils.readLines(artifactNameToTapeMappingFile);
+			for (String nthLine : lineList) {
+				if(nthLine.startsWith(startsWith))
+					sb.append(nthLine+"\n");
+			}
+		}catch (Exception e) {
+			String errorMsg = "Unable to queryByNameStartsWith - " + e.getMessage();
+			logger.error(errorMsg, e);
+	
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+		
+		return ResponseEntity.status(HttpStatus.OK).body(sb.toString());
+	}
+
+	@GetMapping("queryByVolumeId")
+	public ResponseEntity<String> queryByVolumeId(@RequestParam String artifactNameToTapeMappingFilepathname, @RequestParam String volumeId){
+		StringBuffer sb = new StringBuffer();
+		try {
+			java.io.File artifactNameToTapeMappingFile = new java.io.File(artifactNameToTapeMappingFilepathname);
+			List<String> lineList = FileUtils.readLines(artifactNameToTapeMappingFile);
+			for (String nthLine : lineList) {
+				String[] parts = nthLine.split("|");
+				if(parts[1].equals(volumeId))
+					sb.append(parts[0]+"\n");
+			}
+		}catch (Exception e) {
+			String errorMsg = "Unable to queryByVolumeId - " + e.getMessage();
+			logger.error(errorMsg, e);
+	
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+		
+		return ResponseEntity.status(HttpStatus.OK).body(sb.toString());
+	}
+	
+	@PostMapping("assignArtifactclass")
+	public ResponseEntity<String> assignArtifactclass(@RequestParam String artifactNameToTapeMappingFilepathname, @RequestParam String volumeId, @RequestParam String artifactclass){
+		StringBuffer sb = new StringBuffer();
+		try {
+			java.io.File artifactNameToTapeMappingFile = new java.io.File(artifactNameToTapeMappingFilepathname);
+			List<String> lineList = FileUtils.readLines(artifactNameToTapeMappingFile);
+			for (String nthLine : lineList) {
+				String[] parts = nthLine.split("|");
+				if(parts[1].equals(volumeId))
+					sb.append(parts[0]+"|"+parts[1]+"|"+artifactclass);
+				else
+					sb.append(nthLine + "\n");
+			}
+			FileUtils.write(artifactNameToTapeMappingFile, sb.toString());
+		}catch (Exception e) {
+			String errorMsg = "Unable to queryByVolumeId - " + e.getMessage();
+			logger.error(errorMsg, e);
+	
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+		
+		return ResponseEntity.status(HttpStatus.OK).body(artifactNameToTapeMappingFilepathname + " updated");
+	}
+
 }
