@@ -134,7 +134,7 @@ public class ImportController {
 	}
 	
 	
-	@GetMapping("queryByNameStartsWith")
+	@GetMapping("artifactListManipulator/queryByNameStartsWith")
 	public ResponseEntity<String> queryByNameStartsWith(@RequestParam String artifactNameToTapeMappingFilepathname, @RequestParam String startsWith){
 		StringBuffer sb = new StringBuffer();
 		try {
@@ -153,11 +153,11 @@ public class ImportController {
 			else
 				throw new DwaraException(errorMsg, null);
 		}
-		
+		logger.info("queryByNameStartsWith - " + sb.toString());
 		return ResponseEntity.status(HttpStatus.OK).body(sb.toString());
 	}
 
-	@GetMapping("queryByVolumeId")
+	@GetMapping("artifactListManipulator/queryByVolumeId")
 	public ResponseEntity<String> queryByVolumeId(@RequestParam String artifactNameToTapeMappingFilepathname, @RequestParam String volumeId){
 		StringBuffer sb = new StringBuffer();
 		try {
@@ -177,11 +177,11 @@ public class ImportController {
 			else
 				throw new DwaraException(errorMsg, null);
 		}
-		
+		logger.info("queryByVolumeId - " + sb.toString());
 		return ResponseEntity.status(HttpStatus.OK).body(sb.toString());
 	}
 	
-	@PostMapping("assignArtifactclass")
+	@PostMapping("artifactListManipulator/assignArtifactclass")
 	public ResponseEntity<String> assignArtifactclass(@RequestParam String artifactNameToTapeMappingFilepathname, @RequestParam String volumeId, @RequestParam String artifactclass){
 		StringBuffer sb = new StringBuffer();
 		try {
@@ -204,7 +204,7 @@ public class ImportController {
 			else
 				throw new DwaraException(errorMsg, null);
 		}
-		
+		logger.info("assignArtifactclass - " + artifactNameToTapeMappingFilepathname + " updated");
 		return ResponseEntity.status(HttpStatus.OK).body(artifactNameToTapeMappingFilepathname + " updated");
 	}
 

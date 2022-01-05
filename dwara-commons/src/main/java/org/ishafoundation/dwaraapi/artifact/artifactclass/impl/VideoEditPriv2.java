@@ -6,5 +6,5 @@ import org.springframework.stereotype.Component;
 @Component("video-edit-priv2")
 public class VideoEditPriv2 extends VideoEdited{
 	
-	private static final String EDITED_CODE_REGEX = "^ZX[\\d]+";
+	private String EDITED_CODE_REGEX = "^ZX[\\d]+";
 }

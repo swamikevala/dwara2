@@ -6,7 +6,7 @@ import org.ishafoundation.dwaraapi.artifact.artifactclass.Artifactclass;
 
 public class VideoEdited implements Artifactclass{
 	
-	private static final String EDITED_CODE_REGEX = "^Z[\\d]+";
+	private String EDITED_CODE_REGEX = "^Z[\\d]+";
 	private static final String BR_CODE_REGEX = "^BR[\\d]+";
 
 	@Override
