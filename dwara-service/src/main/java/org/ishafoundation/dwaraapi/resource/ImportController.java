@@ -141,6 +141,7 @@ public class ImportController {
 			java.io.File artifactNameToTapeMappingFile = new java.io.File(artifactNameToTapeMappingFilepathname);
 			List<String> lineList = FileUtils.readLines(artifactNameToTapeMappingFile);
 			for (String nthLine : lineList) {
+				logger.info(nthLine);
 				if(nthLine.startsWith(startsWith))
 					sb.append(nthLine+"\n");
 			}
@@ -164,7 +165,7 @@ public class ImportController {
 			java.io.File artifactNameToTapeMappingFile = new java.io.File(artifactNameToTapeMappingFilepathname);
 			List<String> lineList = FileUtils.readLines(artifactNameToTapeMappingFile);
 			for (String nthLine : lineList) {
-				String[] parts = nthLine.split("|");
+				String[] parts = nthLine.split("\\|");
 				if(parts[1].equals(volumeId))
 					sb.append(parts[0]+"\n");
 			}
@@ -188,7 +189,7 @@ public class ImportController {
 			java.io.File artifactNameToTapeMappingFile = new java.io.File(artifactNameToTapeMappingFilepathname);
 			List<String> lineList = FileUtils.readLines(artifactNameToTapeMappingFile);
 			for (String nthLine : lineList) {
-				String[] parts = nthLine.split("|");
+				String[] parts = nthLine.split("\\|");
 				if(parts[1].equals(volumeId))
 					sb.append(parts[0]+"|"+parts[1]+"|"+artifactclass);
 				else

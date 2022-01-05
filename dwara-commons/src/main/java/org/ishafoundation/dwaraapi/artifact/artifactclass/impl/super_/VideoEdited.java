@@ -9,6 +9,10 @@ public class VideoEdited implements Artifactclass{
 	private String EDITED_CODE_REGEX = "^Z[\\d]+";
 	private static final String BR_CODE_REGEX = "^BR[\\d]+";
 
+	public void setEDITED_CODE_REGEX(String eDITED_CODE_REGEX) {
+		EDITED_CODE_REGEX = eDITED_CODE_REGEX;
+	}
+
 	@Override
 	public ArtifactAttributes getArtifactAttributes(String proposedName) {
 		ArtifactAttributes artifactAttributes = new ArtifactAttributes();
