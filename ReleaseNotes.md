@@ -1,3 +1,13 @@
+# Dwara App Version - 2.1.35 (6th Jan 2022)
+### New features
+
+1) Files count in folder catalog
+
+### Bug fixes
+
+1) Download tape catalog
+
+
 # Dwara App Version - 2.1.34 (3rd Dec 2021)
 ### New features
 
