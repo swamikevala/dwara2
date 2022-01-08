@@ -137,7 +137,7 @@ public class ImportService extends DwaraService {
 	private List<Error> errorList = null;
 	private List<org.ishafoundation.dwaraapi.api.resp._import.Artifact> artifacts = null;
 	private Pattern allowedChrsInFileNamePattern = null;
-	
+    
 	@PostConstruct
 	public void getExcludedFileNamesRegexList() {
 		String regexAllowedChrsInFileName = configuration.getRegexAllowedChrsInFileName();
@@ -574,6 +574,16 @@ public class ImportService extends DwaraService {
 					if(!artifactNameAsInCatalog.equals(artifactNameProposed) && !StringUtils.substringBefore(artifactNameAsInCatalog, "_").equals(extractedCodeFromProposedArtifactName))
 						throw new Exception ("Different sequences in name and rename attributes not supported. @name - " + artifactNameAsInCatalog + " @rename - " + artifactNameProposed);
 
+					
+				    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = nthArtifact.getFile();
+				    int fileCount = 0;
+				    if(artifactFileList != null) {
+					    fileCount = artifactFileList.size();
+				    }
+
+				    if(fileCount == 0)// empty folder
+				    	throw new Exception ("Empty folder");
+				    
 					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclass());
 					Sequence sequence = artifactclass.getSequence();
 					

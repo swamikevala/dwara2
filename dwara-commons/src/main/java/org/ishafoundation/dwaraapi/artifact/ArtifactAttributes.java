@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.artifact;
 
 public class ArtifactAttributes{
 	private String previousCode;
+	private String matchCode;
 	private Integer sequenceNumber;
 	private Boolean keepCode;
 	private Boolean replaceCode;
@@ -11,6 +12,12 @@ public class ArtifactAttributes{
 	}
 	public void setPreviousCode(String previousCode) {
 		this.previousCode = previousCode;
+	}
+	public String getMatchCode() {
+		return matchCode;
+	}
+	public void setMatchCode(String matchCode) {
+		this.matchCode = matchCode;
 	}
 	public Integer getSequenceNumber() {
 		return sequenceNumber;
@@ -33,6 +40,7 @@ public class ArtifactAttributes{
 	
 	@Override
 	public String toString() {
-		return "\tpreviousCode - " + previousCode + "\n\tsequenceNumber - " + sequenceNumber + "\n\tkeepCode - " + keepCode + "\n\treplaceCode - " + replaceCode;
-	}		
+		return "\tpreviousCode - " + previousCode + "\n\tmatchCode - " + matchCode + "\n\tsequenceNumber - " + sequenceNumber + "\n\tkeepCode - " + keepCode + "\n\treplaceCode - " + replaceCode;
+	}
+		
 } 

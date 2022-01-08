@@ -212,8 +212,11 @@ public class DwaraImport {
 
 				artifact.setStartblock(artifactList.startVolumeBlock.intValue());
 				if(artifactList.endVolumeBlock == null) {
-					System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " is an empty folder");
-					hasErrors=true;
+					// We are now dealing this on the app side... 
+//					System.err.println("ERROR - " + ltoTape + ":" + artifactList.name + " is an empty folder");
+//					hasErrors=true;
+					
+					artifact.setEndblock(artifactList.startVolumeBlock.intValue());
 				}
 				else
 					artifact.setEndblock(artifactList.endVolumeBlock.intValue());
