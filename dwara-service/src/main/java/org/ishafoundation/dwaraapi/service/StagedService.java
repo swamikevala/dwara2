@@ -34,8 +34,6 @@ import org.ishafoundation.dwaraapi.api.resp.staged.ingest.IngestSystemRequest;
 import org.ishafoundation.dwaraapi.api.resp.staged.rename.StagedRenameResponse;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.ArtifactClassGroupedStagedFileDetails;
 import org.ishafoundation.dwaraapi.api.resp.staged.scan.StagedFileDetails;
-import org.ishafoundation.dwaraapi.artifact.ArtifactAttributes;
-import org.ishafoundation.dwaraapi.artifact.ArtifactAttributesHandler;
 import org.ishafoundation.dwaraapi.artifact.ArtifactMeta;
 import org.ishafoundation.dwaraapi.artifact.ArtifactUtil;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -140,9 +138,6 @@ public class StagedService extends DwaraService{
 	
 	@Autowired
 	private TagService tagService;
-	
-	@Autowired
-	private ArtifactAttributesHandler artifactAttributesHandler;
 
 	@Autowired
 	private ArtifactUtil artifactUtil;

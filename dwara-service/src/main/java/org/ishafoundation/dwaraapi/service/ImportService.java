@@ -592,7 +592,7 @@ public class ImportService extends DwaraService {
 					toBeArtifactName = am.getArtifactName();
 					String prevSeqCode = am.getPrevSequenceCode();
 					String sequenceCode =  am.getSequenceCode();
-//					We are doing this on the custom class by figuring out all the missing sequencecodes one and assigning them some values or generating new sequence - check VideoRaw custom Artifactclass 
+//					We are doing this on the custom class by figuring out all the missing sequencecodes one and assigning them some values or generating new sequence - check DefaultArtifactclassImpl custom Artifactclass 
 //					if(sequenceCode == null) {
 //						throw new Exception("Missing expected code : " + artifactNameProposed);
 //					}
