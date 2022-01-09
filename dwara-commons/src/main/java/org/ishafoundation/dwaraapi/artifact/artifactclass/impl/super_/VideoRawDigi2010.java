@@ -19,14 +19,13 @@ import org.springframework.core.io.ResourceLoader;
 public class VideoRawDigi2010 implements Artifactclass{
 
 	private static final String NUMBER_REGEX = "[\\d]+";  
-	private static final String DV_CODE_REGEX = "[A-Z]{1,2}[\\d]{1,5}$";
+	private static final String DV_CODE_REGEX = "[A-Z]{1,2}[\\d]{1,5}";
 	private static final String DV_CAPTURED_REGEX = "_D[Vv]-[Cc]aptured_";
 	private static final String SHIFTED_FROM_REGEX = "_Shifted-From-";  
 
     private String DV_CODE_REGEX2 = "[A-Z]{1,2}[\\d]{1,5}";
     private String SHIFTED_DV_REGEX = "^" + DV_CODE_REGEX2 + "_Shifted-to-" + DV_CODE_REGEX2;
     private Pattern SHIFTED_DV_REGEX_PATTERN = Pattern.compile(SHIFTED_DV_REGEX);
-
 
 	private static final Set<String> SHIFTED_TO_SET = new TreeSet<String>();
 	
@@ -50,7 +49,7 @@ public class VideoRawDigi2010 implements Artifactclass{
 	public ArtifactAttributes getArtifactAttributes(String proposedName) {
 		ArtifactAttributes artifactAttributes = new ArtifactAttributes();
 		
-		if(proposedName.matches("^" + DV_CODE_REGEX)) {
+		if(proposedName.matches("^" + DV_CODE_REGEX + "$")) {
 			artifactAttributes.setPreviousCode(proposedName);
 			
 		} else if(proposedName.matches("^" + NUMBER_REGEX + DV_CAPTURED_REGEX  + DV_CODE_REGEX)) {  //5902_DV-Captured_A1929_Inner-Engineering_Tampa_Day3_Cam2_Tape2_10-Nov-06
