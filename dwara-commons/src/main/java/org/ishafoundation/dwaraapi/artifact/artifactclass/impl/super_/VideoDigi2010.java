@@ -2,9 +2,12 @@ package org.ishafoundation.dwaraapi.artifact.artifactclass.impl.super_;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
@@ -15,41 +18,45 @@ import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Component;
 
-public class VideoRawDigi2010 implements Artifactclass{
+@Component
+public class VideoDigi2010 implements Artifactclass{
 
 	private static final String NUMBER_REGEX = "[\\d]+";  
 	private static final String DV_CODE_REGEX = "[A-Z]{1,2}[\\d]{1,5}";
 	private static final String DV_CAPTURED_REGEX = "_D[Vv]-[Cc]aptured_";
 	private static final String SHIFTED_FROM_REGEX = "_Shifted-From-";  
-
-    private String DV_CODE_REGEX2 = "[A-Z]{1,2}[\\d]{1,5}";
-    private String SHIFTED_DV_REGEX = "^" + DV_CODE_REGEX2 + "_Shifted-to-" + DV_CODE_REGEX2;
+    private String SHIFTED_DV_REGEX = "^(" + DV_CODE_REGEX + ")_Shifted-to-(" + DV_CODE_REGEX + ")";
     private Pattern SHIFTED_DV_REGEX_PATTERN = Pattern.compile(SHIFTED_DV_REGEX);
 
-	private static final Set<String> SHIFTED_TO_SET = new TreeSet<String>();
+	private static final Map<String, String> SHIFTED_TO_MAP = new HashMap<String, String>();
 	
 	@PostConstruct
 	public void setUp() throws Exception {
         ResourceLoader resourceLoader = new DefaultResourceLoader();
-        Resource resource = resourceLoader.getResource("NotToBeImported_ShiftedTo_ArtifactsList.csv");
+        Resource resource = resourceLoader.getResource("ArtifactnameTo_ShiftedTo-ContextArtifactName_Mapping.csv");
         BufferedReader br = new BufferedReader(new InputStreamReader(resource.getInputStream()));
         String line = null;
         
         while ((line = br.readLine()) != null) {
-        	SHIFTED_TO_SET.add(line);
-//        	String[] parts = line.split("~!~");
-//        	String prevSeqCode = parts[0];
-//        	String artifactName = parts[1];
-//        	SHIFTED_TO_MAP.put(prevSeqCode, artifactName);
+//        	SHIFTED_TO_SET.add(line);
+        	String[] parts = line.split("~!~");
+        	String prevSeqCode = parts[0];
+        	String artifactName = parts[1];
+        	SHIFTED_TO_MAP.put(prevSeqCode, artifactName);
         }
 	}
+	
 	
 	@Override
 	public ArtifactAttributes getArtifactAttributes(String proposedName) {
 		ArtifactAttributes artifactAttributes = new ArtifactAttributes();
 		
 		if(proposedName.matches("^" + DV_CODE_REGEX + "$")) {
+			if(SHIFTED_TO_MAP.containsKey(proposedName))
+				artifactAttributes.setPreviousCode(getPreviousCodeFromShiftedToName(SHIFTED_TO_MAP.get(proposedName)));
+			
 			artifactAttributes.setPreviousCode(proposedName);
 			
 		} else if(proposedName.matches("^" + NUMBER_REGEX + DV_CAPTURED_REGEX  + DV_CODE_REGEX)) {  //5902_DV-Captured_A1929_Inner-Engineering_Tampa_Day3_Cam2_Tape2_10-Nov-06
@@ -70,6 +77,15 @@ public class VideoRawDigi2010 implements Artifactclass{
 		return artifactAttributes;
 	}
 	
+	private String getPreviousCodeFromShiftedToName(String shiftedToArtifactName) {
+		Matcher m1 = SHIFTED_DV_REGEX_PATTERN.matcher(shiftedToArtifactName);
+		if(m1.find()) {
+			return m1.group(2) + "_" + m1.group(1);
+		}
+		return null;
+	}
+
+
 	public static int ordinalIndexOf(String str, String substr, int n) {
 	    int pos = str.indexOf(substr);
 	    while (--n > 0 && pos != -1)
@@ -92,14 +108,14 @@ public class VideoRawDigi2010 implements Artifactclass{
 			}
 	    }
 		
-	    if((SHIFTED_DV_REGEX_PATTERN.matcher(artifactNameAsInCatalog).matches() && artifactSize < 1024) // matches() or find() - regex seems to be made for find()
+	    if((SHIFTED_DV_REGEX_PATTERN.matcher(artifactNameAsInCatalog).find() && artifactSize < 1024) // matches() or find() - regex seems to be made for find()
 	    		|| artifactNameAsInCatalog.equals("Z150_Shifted-to-Br-Category_Sw-Nirvichara-has-catalog-numbers_19-Dec-2010")
 	    		|| artifactNameAsInCatalog.equals("Z151_Shifted-to-Br-Category_Sw-Nirvichara-has-catalog-numbers_19-Dec-2010")
 	    		|| artifactNameAsInCatalog.equals("Z1179_Shifted-to-Brahmachari-Material_No-new-category-code-given-by-Swami-Nirvichara_15-Jan-2011"))
-	    	throw new Exception ("Shifted-to folder");
+	    	throw new Exception ("Shifted-to placeholder folder");
 	    
-	    if(SHIFTED_TO_SET.contains(artifactNameAsInCatalog))
-	    	throw new Exception ("Dummy Shifted-to folder");
+//	    if(SHIFTED_TO_SET.contains(artifactNameAsInCatalog))
+//	    	throw new Exception ("Dummy Shifted-to folder");
 		return true;
 	}
 }		

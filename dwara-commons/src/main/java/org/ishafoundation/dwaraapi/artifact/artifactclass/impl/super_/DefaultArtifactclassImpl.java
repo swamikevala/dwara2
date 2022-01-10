@@ -14,7 +14,9 @@ import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Component;
 
+@Component
 public class DefaultArtifactclassImpl implements Artifactclass{
 	
 	private static final String NUMBER_REGEX = "^[\\d]+";
