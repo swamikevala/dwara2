@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
 
@@ -27,6 +28,9 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 	
 	private static final Map<String, Integer> ARTIFACTNAME_SEQUENCENUMBER_MAP = new HashMap<String, Integer>();
 
+	private static final Pattern BR_CODE_NUMBER_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + NUMBER_REGEX);
+	private static final Pattern BR_CODE_EDITED_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + EDITED_REGEX);
+	private static final Pattern BR_CODE_EDITED_PRIV2_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + EDITED_PRIV2_REGEX);
 	
 	@PostConstruct
 	public void setUp() throws Exception {
@@ -67,14 +71,15 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 				if( idx > -1 ) {
 					String prefix = proposedName.substring(0, idx); //BR00326_2283 
 
-					if(proposedName.matches(BR_CODE_REGEX + "_" + NUMBER_REGEX)) {  //BR00326_2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2
+
+					if(BR_CODE_NUMBER_REGEX_PATTERN.matcher(proposedName).find()) {  //BR00326_2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2
 						int oldSeq = Integer.parseInt(StringUtils.substringAfter(prefix,  "_")); //2283	
 						artifactAttributes.setSequenceNumber(oldSeq);
 						artifactAttributes.setMatchCode(prefix);
 						artifactAttributes.setPreviousCode(prefix);
 						artifactAttributes.setReplaceCode(true);
 					} 
-					else if(proposedName.matches(BR_CODE_REGEX + "_" + EDITED_REGEX) || proposedName.matches(BR_CODE_REGEX + "_" + EDITED_PRIV2_REGEX)) {  //BR00326_Z2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2
+					else if(BR_CODE_EDITED_REGEX_PATTERN.matcher(proposedName).find() || BR_CODE_EDITED_PRIV2_REGEX_PATTERN.matcher(proposedName).find()) {  //BR00326_Z2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2
 						int oldSeq = Integer.parseInt(StringUtils.substringAfter(prefix,  "_").substring(1)); //2283
 						artifactAttributes.setSequenceNumber(oldSeq);
 						artifactAttributes.setMatchCode(prefix);
@@ -87,7 +92,7 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 					}
 				}
 			} 
-			else if(extractedCode.matches(ORIGINAL_REGEX)) {
+			else if(extractedCode.matches(ORIGINAL_REGEX)) { // For a tape containing dwara written artifacts and such 
 				artifactAttributes.setMatchCode(extractedCode);
 				artifactAttributes.setKeepCode(true);
 			}
