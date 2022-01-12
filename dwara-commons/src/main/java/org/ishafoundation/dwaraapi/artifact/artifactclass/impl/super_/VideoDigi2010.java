@@ -125,46 +125,19 @@ public class VideoDigi2010 implements Artifactclass{
 	}
 	
 	public static void main(String[] args) {
-
+		Artifactclass ac = new VideoDigi2010();
+		
 		String proposedName = "M904";
+		System.out.println(ac.getArtifactAttributes(proposedName) + "\n\n");
 		
 		SHIFTED_TO_MAP.put("M903","A1164_Shifted-to-M903_14-Oct-2010");
 		proposedName = "M903";
+		System.out.println(ac.getArtifactAttributes(proposedName) + "\n\n");
 		
 		proposedName = "5902_DV-Captured_A1929_Inner-Engineering_Tampa_Day3_Cam2_Tape2_10-Nov-06";
+		System.out.println(ac.getArtifactAttributes(proposedName) + "\n\n");
+		
 		proposedName = "6719_DV-Captured_P204_Shifted-From-M970_Residents-Meet_IIIS_8-Apr-2009_Tape2_Cam1";
-		
-//		String shiftedToArtifactName = "A1164_Shifted-to-M903_14-Oct-2010";
-//		Matcher m1 = SHIFTED_TO_DV_REGEX_PATTERN.matcher(shiftedToArtifactName);
-//		if(m1.find()) {
-//			System.out.println(m1.group(2) + "_" + m1.group(1));
-//		}
-//
-//
-//		if(NUMBER_DV_CAPTURED_DV_CODE_REGEX_PATTERN.matcher(proposedName).matches()) {  //5902_DV-Captured_A1929_Inner-Engineering_Tampa_Day3_Cam2_Tape2_10-Nov-06
-//			System.out.println("im here");
-//		}
-		
-
-		Matcher m1 = NUMBER_DV_CAPTURED_DV_CODE_REGEX_PATTERN.matcher(proposedName);
-		if(proposedName.matches("^" + DV_CODE_REGEX + "$")) {
-			if(SHIFTED_TO_MAP.containsKey(proposedName))
-				System.out.println("SHIFTED_TO_MAP - " + getPreviousCodeFromShiftedToName(SHIFTED_TO_MAP.get(proposedName)));
-			else 
-				System.out.println("General - " + proposedName);
-			
-		} else if(m1.find()) {  //5902_DV-Captured_A1929_Inner-Engineering_Tampa_Day3_Cam2_Tape2_10-Nov-06
-			int oldSeq = Integer.parseInt(m1.group(1)); //5902
-			System.out.println("DVC - " + m1.group(1) + "_" + m1.group(2));  //5902_A1929
-			//artifactAttributes.setPreviousCode(m1.group(2) + "_" + m1.group(1));  //A1929_5902
-			
-			Matcher m2 = NUMBER_DV_CAPTURED_DV_CODE_SHIFTED_FROM_DV_CODE_REGEX_PATTERN.matcher(proposedName); //6719_DV-Captured_P204_Shifted-From-M970_Residents-Meet_IIIS_8-Apr-2009_Tape2_Cam1
-			if(m2.find()) {
-				String prevCodes = m2.group(1) + "_" + m2.group(2) + "_" + m2.group(3);   //6719_P204_M970
-				//String prevCodes = m1.group(3) + "_" + m1.group(2) + "_" + m1.group(1);   //M970_P204_6719
-				System.out.println("DVC SF - " + prevCodes);
-			}
-			System.out.println("DVC Seq num - " +oldSeq);
-		}
+		System.out.println(ac.getArtifactAttributes(proposedName) + "\n\n");
 	}		
 }

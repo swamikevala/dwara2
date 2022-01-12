@@ -28,9 +28,9 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 	
 	private static final Map<String, Integer> ARTIFACTNAME_SEQUENCENUMBER_MAP = new HashMap<String, Integer>();
 
-	private static final Pattern BR_CODE_NUMBER_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + NUMBER_REGEX);
-	private static final Pattern BR_CODE_EDITED_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + EDITED_REGEX);
-	private static final Pattern BR_CODE_EDITED_PRIV2_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + EDITED_PRIV2_REGEX);
+	private static final Pattern BR_CODE_NUMBER_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + NUMBER_REGEX.substring(1));
+	private static final Pattern BR_CODE_EDITED_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + EDITED_REGEX.substring(1));
+	private static final Pattern BR_CODE_EDITED_PRIV2_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + EDITED_PRIV2_REGEX.substring(1));
 	
 	@PostConstruct
 	public void setUp() throws Exception {
@@ -115,4 +115,28 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 		return true;
 	}
 	
+	public static void main(String[] args) {
+		Artifactclass ac = new DefaultArtifactclassImpl();
+		
+		String artifactName = "2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2";
+		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
+		
+		artifactName = "Z2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2";
+		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
+		
+		artifactName = "BR00326_2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2";
+		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
+		
+		artifactName = "BR00326_Z2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2";
+		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
+		
+		artifactName = "V2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2";
+		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
+		
+		ARTIFACTNAME_SEQUENCENUMBER_MAP.put("Ananda-Alai-Sathsang-Kothagiri_10-May-09_Cam1", 450);
+		ARTIFACTNAME_SEQUENCENUMBER_MAP.put("Coimbatore-Mayor-Visit-to-IYC_26-Jun-09", 454);
+		
+		artifactName = "Ananda-Alai-Sathsang-Kothagiri_10-May-09_Cam1";
+		System.out.println(ac.getArtifactAttributes(artifactName));
+	}
 }
