@@ -46,7 +46,8 @@ public class VideoDigi2010 implements Artifactclass{
         String line = null;
         
         while ((line = br.readLine()) != null) {
-//        	SHIFTED_TO_SET.add(line);
+        	if(line.startsWith("#"))
+        		continue;
         	String[] parts = line.split("~!~");
         	String prevSeqCode = parts[0];
         	String artifactName = parts[1];

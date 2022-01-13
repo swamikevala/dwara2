@@ -40,6 +40,8 @@ public class DefaultArtifactclassImpl implements Artifactclass{
         String line = null;
         
         while ((line = br.readLine()) != null) {
+        	if(line.startsWith("#"))
+        		continue;
         	String[] parts = line.split("~!~");
         	String artifactName = parts[0];
         	Integer sequenceNumber = Integer.parseInt(parts[1]);

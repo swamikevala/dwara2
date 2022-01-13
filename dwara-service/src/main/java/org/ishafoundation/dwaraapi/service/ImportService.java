@@ -693,6 +693,14 @@ public class ImportService extends DwaraService {
 						artifactImportStatus = ImportStatus.completed;
 						logger.debug("Artifact " + artifact.getId() + " imported to dwara succesfully");
 					}else {
+						String prevSeqCodeFromDB = artifact.getPrevSequenceCode();
+						if(prevSeqCode != null && !prevSeqCode.equals(prevSeqCodeFromDB)) {
+							String prevSeqCodeTmp = getUnionPrevSeqCode(prevSeqCodeFromDB, prevSeqCodeFromDB);
+							artifact.setPrevSequenceCode(prevSeqCodeTmp);
+							artifact = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.save(artifact);
+							logger.debug("Artifact " + artifact.getId() + " updated with PrevSequenceCode succesfully");
+						}
+							
 						toBeArtifactName = artifact.getName();
 						artifactImportStatus = ImportStatus.skipped;
 						logger.debug("Artifact " + artifact.getId() + " already exists, so skipping updating DB");  // artifact nth copy / rerun scenario
@@ -811,6 +819,31 @@ public class ImportService extends DwaraService {
 		
 		toBeImportedVolume.setUsedCapacity(usedCapacity);
 		toBeImportedVolume = volumeDao.save(toBeImportedVolume);
+	}
+	
+	private String getUnionPrevSeqCode(String prevSeqCodeFromDB, String prevSeqCode) {
+		Set<String> prevSeqCodeSet = new TreeSet<String>();
+		
+		String[] prevSeqCodeParts = prevSeqCode.split("_");
+		
+		for (int i = 0; i < prevSeqCodeParts.length; i++) {
+			prevSeqCodeSet.add(prevSeqCodeParts[i]);
+		}
+		
+		if(prevSeqCodeFromDB != null) {
+			String[] prevSeqCodeFromDBParts = prevSeqCodeFromDB.split("_");
+			
+			for (int i = 0; i < prevSeqCodeFromDBParts.length; i++) {
+				prevSeqCodeSet.add(prevSeqCodeFromDBParts[i]);
+			}
+		}
+		String prevSeqCodeTmp = "";
+		for (String nthPrevSeqCode : prevSeqCodeSet) {
+			if(StringUtils.isNotBlank(prevSeqCodeTmp))
+				prevSeqCodeTmp = prevSeqCodeTmp + "_";
+			prevSeqCodeTmp = prevSeqCodeTmp + nthPrevSeqCode;
+		}
+		return prevSeqCodeTmp;
 	}
 
 	private FileMeta dealCatalogFiles(Artifact nthArtifact, org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact, 
