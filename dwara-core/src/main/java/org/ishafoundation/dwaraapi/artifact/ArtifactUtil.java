@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.artifact.artifactclass.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
+import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,11 +21,41 @@ public class ArtifactUtil {
 	@Autowired
 	private Map<String, Artifactclass> iArtifactclassMap;
 	
+	public boolean validateImport(Artifact artifact) throws Exception{
+		String artifactclass = artifact.getArtifactclass();
+		Artifactclass ac = iArtifactclassMap.get(artifactclass);
+		if(ac == null)
+			return true;
+		return ac.validateImport(artifact);
+	}
+	
+	public void preImport(Artifact artifact){
+		String artifactclass = artifact.getArtifactclass();
+		Artifactclass ac = iArtifactclassMap.get(artifactclass);
+		if(ac != null)
+			ac.preImport(artifact);
+	}
+	
 	public ArtifactMeta getArtifactMeta(String artifactName, String artifactclass, Sequence sequence, boolean generateSequence) throws Exception {
 		ArtifactAttributes artifactAttributes = getArtifactAttributes(artifactclass, artifactName, sequence.getPrefix());
 		return getArtifactMeta(artifactName, sequence, artifactAttributes, generateSequence);
 	}
 	
+	private ArtifactAttributes getArtifactAttributes(String artifactclass, String proposedName, String prefix) throws Exception {
+		Artifactclass ac = iArtifactclassMap.get(artifactclass);
+		if(ac == null) {
+			// if there is no custom class fallback to default logic
+			ArtifactAttributes artifactAttributes = new ArtifactAttributes();
+			String extractedCode = StringUtils.substringBefore(proposedName, "_");
+			if(extractedCode != null) {
+				if((extractedCode + "_").matches("^" + prefix + "\\d+_")) {
+					artifactAttributes.setKeepCode(true); 
+				}
+			}				
+			return artifactAttributes;
+		}
+		return ac.getArtifactAttributes(proposedName);
+	}
 
 	private ArtifactMeta getArtifactMeta(String artifactName, Sequence sequence, ArtifactAttributes artifactAttributes, boolean generateSequence) throws Exception {
 		String previousCode = artifactAttributes.getPreviousCode();
@@ -75,22 +106,5 @@ public class ArtifactUtil {
 		am.setSequenceCode(sequenceCode);
 		return am;
 	}
-	
-	private ArtifactAttributes getArtifactAttributes(String artifactclass, String proposedName, String prefix) throws Exception {
-		Artifactclass ac = iArtifactclassMap.get(artifactclass);
-		if(ac == null) {
-			// if there is no custom class fallback to default logic
-			ArtifactAttributes artifactAttributes = new ArtifactAttributes();
-			String extractedCode = StringUtils.substringBefore(proposedName, "_");
-			if(extractedCode != null) {
-				if((extractedCode + "_").matches("^" + prefix + "\\d+_")) {
-					artifactAttributes.setKeepCode(true); 
-				}
-			}				
-			return artifactAttributes;
-		}
-		return ac.getArtifactAttributes(proposedName);
-	}
-	
 }
 

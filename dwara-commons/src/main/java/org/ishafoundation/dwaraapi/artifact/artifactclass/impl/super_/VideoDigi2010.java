@@ -19,7 +19,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
 @Component
-public class VideoDigi2010 implements Artifactclass{
+public class VideoDigi2010 extends DefaultArtifactclassImpl{
 
 	private static final String NUMBER_REGEX = "[\\d]+";  
 	private static final String DV_CODE_REGEX = "[A-Z]{1,2}[\\d]{1,5}";
@@ -55,6 +55,31 @@ public class VideoDigi2010 implements Artifactclass{
         }
 	}
 	
+	@Override
+	public boolean validateImport(Artifact nthArtifact) throws Exception {
+		String artifactNameAsInCatalog = nthArtifact.getName();
+		
+	    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = nthArtifact.getFile();
+	    long artifactSize = 0L;
+	    
+	    if(artifactFileList != null) {
+			for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
+				if(!Boolean.TRUE.equals(nthFile.getDirectory())){
+					artifactSize += nthFile.getSize();
+				}
+			}
+	    }
+		
+	    if((SHIFTED_TO_DV_REGEX_PATTERN.matcher(artifactNameAsInCatalog).find() && artifactSize < 1024) // matches() or find() - regex seems to be made for find()
+	    		|| artifactNameAsInCatalog.equals("Z150_Shifted-to-Br-Category_Sw-Nirvichara-has-catalog-numbers_19-Dec-2010")
+	    		|| artifactNameAsInCatalog.equals("Z151_Shifted-to-Br-Category_Sw-Nirvichara-has-catalog-numbers_19-Dec-2010")
+	    		|| artifactNameAsInCatalog.equals("Z1179_Shifted-to-Brahmachari-Material_No-new-category-code-given-by-Swami-Nirvichara_15-Jan-2011"))
+	    	throw new Exception ("Shifted-to placeholder folder");
+	    
+//	    if(SHIFTED_TO_SET.contains(artifactNameAsInCatalog))
+//	    	throw new Exception ("Dummy Shifted-to folder");
+		return true;
+	}
 	
 	@Override
 	public ArtifactAttributes getArtifactAttributes(String proposedName) {
@@ -98,32 +123,7 @@ public class VideoDigi2010 implements Artifactclass{
 	        pos = str.indexOf(substr, pos + 1);
 	    return pos;
 	}
-	
-	@Override
-	public boolean validateImport(Artifact nthArtifact) throws Exception {
-		String artifactNameAsInCatalog = nthArtifact.getName();
-		
-	    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = nthArtifact.getFile();
-	    long artifactSize = 0L;
-	    
-	    if(artifactFileList != null) {
-			for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
-				if(!Boolean.TRUE.equals(nthFile.getDirectory())){
-					artifactSize += nthFile.getSize();
-				}
-			}
-	    }
-		
-	    if((SHIFTED_TO_DV_REGEX_PATTERN.matcher(artifactNameAsInCatalog).find() && artifactSize < 1024) // matches() or find() - regex seems to be made for find()
-	    		|| artifactNameAsInCatalog.equals("Z150_Shifted-to-Br-Category_Sw-Nirvichara-has-catalog-numbers_19-Dec-2010")
-	    		|| artifactNameAsInCatalog.equals("Z151_Shifted-to-Br-Category_Sw-Nirvichara-has-catalog-numbers_19-Dec-2010")
-	    		|| artifactNameAsInCatalog.equals("Z1179_Shifted-to-Brahmachari-Material_No-new-category-code-given-by-Swami-Nirvichara_15-Jan-2011"))
-	    	throw new Exception ("Shifted-to placeholder folder");
-	    
-//	    if(SHIFTED_TO_SET.contains(artifactNameAsInCatalog))
-//	    	throw new Exception ("Dummy Shifted-to folder");
-		return true;
-	}
+
 	
 	public static void main(String[] args) {
 		Artifactclass ac = new VideoDigi2010();

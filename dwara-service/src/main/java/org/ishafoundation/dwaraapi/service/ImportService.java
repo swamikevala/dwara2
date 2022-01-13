@@ -584,6 +584,12 @@ public class ImportService extends DwaraService {
 				    if(fileCount == 0)// empty folder
 				    	throw new Exception ("Empty folder");
 				    
+				    artifactUtil.validateImport(nthArtifact);
+				    
+				    artifactUtil.preImport(nthArtifact);
+				    
+				    artifactNameProposed = nthArtifact.getRename() != null ? nthArtifact.getRename() : artifactNameAsInCatalog; // Proposed new name thats in tape
+				    
 					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclass());
 					Sequence sequence = artifactclass.getSequence();
 					

@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
@@ -27,6 +29,7 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 	private static final String BR_CODE_REGEX = "^BR[\\d]+";  
 	
 	private static final Map<String, Integer> ARTIFACTNAME_SEQUENCENUMBER_MAP = new HashMap<String, Integer>();
+	private static final Set<String> HYPHENATED_ARTIFACTS_SET = new TreeSet<String>();
 
 	private static final Pattern BR_CODE_NUMBER_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + NUMBER_REGEX.substring(1));
 	private static final Pattern BR_CODE_EDITED_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + EDITED_REGEX.substring(1));
@@ -47,6 +50,37 @@ public class DefaultArtifactclassImpl implements Artifactclass{
         	Integer sequenceNumber = Integer.parseInt(parts[1]);
         	ARTIFACTNAME_SEQUENCENUMBER_MAP.put(artifactName, sequenceNumber);
         }
+        
+        resource = resourceLoader.getResource("HyphenatedArtifactList.csv");
+        br = new BufferedReader(new InputStreamReader(resource.getInputStream()));
+        line = null;
+        
+        while ((line = br.readLine()) != null) {
+        	if(line.startsWith("#"))
+        		continue;
+        	HYPHENATED_ARTIFACTS_SET.add(line);
+        }
+        
+	}
+
+	@Override
+	public boolean validateImport(Artifact artifact) throws Exception {
+		return true;
+	}
+
+	@Override
+	public void preImport(Artifact artifact) {
+		String proposedName = artifact.getName();
+		if(HYPHENATED_ARTIFACTS_SET.contains(proposedName)) {
+			String extractedCode = StringUtils.substringBefore(proposedName, "-");
+			
+			if(extractedCode != null) {
+				if(extractedCode.matches(NUMBER_REGEX) || extractedCode.matches(EDITED_REGEX) || extractedCode.matches(EDITED_PRIV2_REGEX)) { // 2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2 or Z2283-BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2
+					proposedName = proposedName.replace(extractedCode + "-", extractedCode + "_");
+					artifact.setRename(proposedName);
+				}
+			}
+		}
 	}
 	
 	@Override
@@ -55,7 +89,6 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 		String extractedCode = StringUtils.substringBefore(proposedName, "_");
 		
 		if(extractedCode != null) {
-			
 			if(extractedCode.matches(NUMBER_REGEX)) {  //2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2
 				int oldSeq = Integer.parseInt(extractedCode);
 				artifactAttributes.setSequenceNumber(oldSeq);
@@ -112,10 +145,6 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 	    return pos;
 	}
 
-	@Override
-	public boolean validateImport(Artifact artifact) throws Exception {
-		return true;
-	}
 	
 	public static void main(String[] args) {
 		Artifactclass ac = new DefaultArtifactclassImpl();
@@ -141,4 +170,5 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 		artifactName = "Ananda-Alai-Sathsang-Kothagiri_10-May-09_Cam1";
 		System.out.println(ac.getArtifactAttributes(artifactName));
 	}
+
 }

@@ -2,13 +2,13 @@ package org.ishafoundation.dwaraapi.artifact.artifactclass.impl.super_;
 
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.artifact.ArtifactAttributes;
-import org.ishafoundation.dwaraapi.artifact.artifactclass.Artifactclass;
-import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
+import org.springframework.stereotype.Component;
 
-public class VideoEditedTr implements Artifactclass{
+@Component
+public class VideoEditedTr extends DefaultArtifactclassImpl{
 	
 	private static final String EDITED_TR_CODE_REGEX = "^[A-Z]{3}[a-z]{3}[A-Z]{2}\\d+(?=_)";
-
+	
 	@Override
 	public ArtifactAttributes getArtifactAttributes(String proposedName) {
 		ArtifactAttributes artifactAttributes = new ArtifactAttributes();
@@ -20,10 +20,4 @@ public class VideoEditedTr implements Artifactclass{
 		}
 		return artifactAttributes;
 	}
-
-	@Override
-	public boolean validateImport(Artifact artifact) throws Exception {
-		return true;
-	}
-
 }
