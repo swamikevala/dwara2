@@ -51,6 +51,10 @@ public class DefaultArtifactclassImpl implements Artifactclass{
         while ((line = br.readLine()) != null) {
         	if(line.startsWith("#") || StringUtils.isBlank(line))
         		continue;
+        	if(!line.contains("~!~")) {
+        		logger.error("Skipping entry " + line);
+        		continue;
+        	}
         	String[] parts = line.split("~!~");
         	String artifactName = parts[0];
         	Integer sequenceNumber = null;
@@ -58,7 +62,7 @@ public class DefaultArtifactclassImpl implements Artifactclass{
         		sequenceNumber = Integer.parseInt(parts[1]);
         	}
         	catch (Exception e) {
-        		logger.error(parts[1] + " is not a valid integer. Skipping entry " + line);
+        		logger.error("Skipping entry " + line, e);
         	}
         	ARTIFACTNAME_SEQUENCENUMBER_MAP.put(artifactName, sequenceNumber);
         }

@@ -129,17 +129,20 @@ public class VideoDigi2010 extends DefaultArtifactclassImpl{
 	public static void main(String[] args) {
 		Artifactclass ac = new VideoDigi2010();
 		
-		String proposedName = "M904";
-		System.out.println(ac.getArtifactAttributes(proposedName) + "\n\n");
+		String artifactName = "M904";
+		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
 		
 		SHIFTED_TO_MAP.put("M903","A1164_Shifted-to-M903_14-Oct-2010");
-		proposedName = "M903";
-		System.out.println(ac.getArtifactAttributes(proposedName) + "\n\n");
+		artifactName = "M903";
+		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
 		
-		proposedName = "5902_DV-Captured_A1929_Inner-Engineering_Tampa_Day3_Cam2_Tape2_10-Nov-06";
-		System.out.println(ac.getArtifactAttributes(proposedName) + "\n\n");
+		artifactName = "5902_DV-Captured_A1929_Inner-Engineering_Tampa_Day3_Cam2_Tape2_10-Nov-06";
+		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
 		
-		proposedName = "6719_DV-Captured_P204_Shifted-From-M970_Residents-Meet_IIIS_8-Apr-2009_Tape2_Cam1";
-		System.out.println(ac.getArtifactAttributes(proposedName) + "\n\n");
+		artifactName = "6719_DV-Captured_P204_Shifted-From-M970_Residents-Meet_IIIS_8-Apr-2009_Tape2_Cam1";
+		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
+		
+		artifactName = "22186_S0060_Avudiar-12-Min-and-SSY-Sadhguru-Introduction_06-Jul-1996_Tape1-of-3_Copied-From-S-VHS-03_Re-Digitized-03-Feb-2019";
+		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
 	}		
 }
