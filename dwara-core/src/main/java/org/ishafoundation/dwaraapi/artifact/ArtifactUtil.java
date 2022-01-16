@@ -20,6 +20,13 @@ public class ArtifactUtil {
 
 	@Autowired
 	private Map<String, Artifactclass> iArtifactclassMap;
+
+	public void preImport(Artifact artifact){
+		String artifactclass = artifact.getArtifactclass();
+		Artifactclass ac = iArtifactclassMap.get(artifactclass);
+		if(ac != null)
+			ac.preImport(artifact);
+	}
 	
 	public boolean validateImport(Artifact artifact) throws Exception{
 		String artifactclass = artifact.getArtifactclass();
@@ -27,13 +34,6 @@ public class ArtifactUtil {
 		if(ac == null)
 			return true;
 		return ac.validateImport(artifact);
-	}
-	
-	public void preImport(Artifact artifact){
-		String artifactclass = artifact.getArtifactclass();
-		Artifactclass ac = iArtifactclassMap.get(artifactclass);
-		if(ac != null)
-			ac.preImport(artifact);
 	}
 	
 	public ArtifactMeta getArtifactMeta(String artifactName, String artifactclass, Sequence sequence, boolean generateSequence) throws Exception {

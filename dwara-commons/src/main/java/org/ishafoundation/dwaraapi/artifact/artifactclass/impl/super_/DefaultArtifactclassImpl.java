@@ -14,6 +14,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.artifact.ArtifactAttributes;
 import org.ishafoundation.dwaraapi.artifact.artifactclass.Artifactclass;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -22,11 +24,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class DefaultArtifactclassImpl implements Artifactclass{
 	
+	private static final Logger logger = LoggerFactory.getLogger(DefaultArtifactclassImpl.class);
+	
 	private static final String NUMBER_REGEX = "^[\\d]+";
 	private static final String ORIGINAL_REGEX = "^V[\\d]+";
 	private static final String EDITED_REGEX = "^Z[\\d]+";
 	private static final String EDITED_PRIV2_REGEX = "^ZX[\\d]+";
 	private static final String BR_CODE_REGEX = "^BR[\\d]+";  
+	private static final String EDITED_TRANSLATED_REGEX = "^ZG[\\d]+";
+	private static final String EDITED_RESIDENTS_REGEX = "^ZR[\\d]+";
 	
 	private static final Map<String, Integer> ARTIFACTNAME_SEQUENCENUMBER_MAP = new HashMap<String, Integer>();
 	private static final Set<String> HYPHENATED_ARTIFACTS_SET = new TreeSet<String>();
@@ -43,11 +49,17 @@ public class DefaultArtifactclassImpl implements Artifactclass{
         String line = null;
         
         while ((line = br.readLine()) != null) {
-        	if(line.startsWith("#"))
+        	if(line.startsWith("#") || StringUtils.isBlank(line))
         		continue;
         	String[] parts = line.split("~!~");
         	String artifactName = parts[0];
-        	Integer sequenceNumber = Integer.parseInt(parts[1]);
+        	Integer sequenceNumber = null;
+        	try {
+        		sequenceNumber = Integer.parseInt(parts[1]);
+        	}
+        	catch (Exception e) {
+        		logger.error(parts[1] + " is not a valid integer. Skipping entry " + line);
+        	}
         	ARTIFACTNAME_SEQUENCENUMBER_MAP.put(artifactName, sequenceNumber);
         }
         
@@ -56,38 +68,41 @@ public class DefaultArtifactclassImpl implements Artifactclass{
         line = null;
         
         while ((line = br.readLine()) != null) {
-        	if(line.startsWith("#"))
+        	if(line.startsWith("#") || StringUtils.isBlank(line))
         		continue;
         	HYPHENATED_ARTIFACTS_SET.add(line);
         }
         
 	}
-
-	@Override
-	public boolean validateImport(Artifact artifact) throws Exception {
-		return true;
-	}
-
+	
 	@Override
 	public void preImport(Artifact artifact) {
-		String proposedName = artifact.getName();
-		if(HYPHENATED_ARTIFACTS_SET.contains(proposedName)) {
-			String extractedCode = StringUtils.substringBefore(proposedName, "-");
+		String artifactName = artifact.getName();
+		if(artifactName.startsWith(" ")) {
+			artifactName = artifactName.trim();
+			artifact.setRename(artifactName);
+		}
+		if(HYPHENATED_ARTIFACTS_SET.contains(artifactName)) {
+			String extractedCode = StringUtils.substringBefore(artifactName, "-");
 			
 			if(extractedCode != null) {
 				if(extractedCode.matches(NUMBER_REGEX) || extractedCode.matches(EDITED_REGEX) || extractedCode.matches(EDITED_PRIV2_REGEX)) { // 2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2 or Z2283-BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2
-					proposedName = proposedName.replace(extractedCode + "-", extractedCode + "_");
-					artifact.setRename(proposedName);
+					artifactName = artifactName.replace(extractedCode + "-", extractedCode + "_");
+					artifact.setRename(artifactName);
 				}
 			}
 		}
 	}
 	
 	@Override
+	public boolean validateImport(Artifact artifact) throws Exception {
+		return true;
+	}
+	
+	@Override
 	public ArtifactAttributes getArtifactAttributes(String proposedName) {
 		ArtifactAttributes artifactAttributes = new ArtifactAttributes();
 		String extractedCode = StringUtils.substringBefore(proposedName, "_");
-		
 		if(extractedCode != null) {
 			if(extractedCode.matches(NUMBER_REGEX)) {  //2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2
 				int oldSeq = Integer.parseInt(extractedCode);
@@ -131,10 +146,26 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 				artifactAttributes.setMatchCode(extractedCode);
 				artifactAttributes.setKeepCode(true);
 			}
-			else if(ARTIFACTNAME_SEQUENCENUMBER_MAP.get(proposedName) != null){ // get the seqNumber from the list... NOTE: There are some range of sequences left for some artifacts missing out sequences - use them here
-				artifactAttributes.setSequenceNumber(ARTIFACTNAME_SEQUENCENUMBER_MAP.get(proposedName));
+			else if(extractedCode.matches(EDITED_TRANSLATED_REGEX)){ //ZG72_SGCknYT001555_How-To-Simplify-&-Declutter-Your-Life-Sadhguru_Kannada_16-Oct-2019
+				int idx = ordinalIndexOf(proposedName, "_", 2);
+				if( idx > -1 ) {
+					String prefix = proposedName.substring(0, idx); //ZG72_SGCknYT001555
+					artifactAttributes.setPreviousCode(prefix);
+				}
 			}
-		}				
+			else if(extractedCode.matches(EDITED_RESIDENTS_REGEX)){ // ZR17_One-Drop-Of-Spirituality_Athur-Volunteers-Meet_29-Nov-2010_Edited-Files
+				artifactAttributes.setSequenceNumber(Integer.parseInt(extractedCode.substring(2)));
+				artifactAttributes.setMatchCode(extractedCode);
+				artifactAttributes.setPreviousCode(extractedCode);
+				artifactAttributes.setReplaceCode(true);
+			}
+		}
+		
+		if(ARTIFACTNAME_SEQUENCENUMBER_MAP.get(proposedName) != null){ // get the seqNumber from the list... NOTE: There are some range of sequences left for some artifacts missing out sequences - use them here
+			artifactAttributes.setSequenceNumber(ARTIFACTNAME_SEQUENCENUMBER_MAP.get(proposedName));
+			artifactAttributes.setReplaceCode(false);
+		}
+
 		return artifactAttributes;
 	}
 		
@@ -168,6 +199,24 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 		ARTIFACTNAME_SEQUENCENUMBER_MAP.put("Coimbatore-Mayor-Visit-to-IYC_26-Jun-09", 454);
 		
 		artifactName = "Ananda-Alai-Sathsang-Kothagiri_10-May-09_Cam1";
+		System.out.println(ac.getArtifactAttributes(artifactName));
+		
+		HYPHENATED_ARTIFACTS_SET.add("863-Isha-Samskiriti-Krishna-Janmasti-Day-1-Aug-10");
+		artifactName = "863-Isha-Samskiriti-Krishna-Janmasti-Day-1-Aug-10";
+		Artifact artifact = new Artifact();
+		artifact.setName(artifactName);
+		ac.preImport(artifact);
+		System.out.println(artifact);
+		
+		artifactName = " 863_StartingWithSpace-Isha-Samskiriti-Krishna-Janmasti-Day_1-Aug-10";
+		artifact.setName(artifactName);
+		ac.preImport(artifact);
+		System.out.println(artifact);
+		
+		artifactName = "ZG72_SGCknYT001555_How-To-Simplify-&-Declutter-Your-Life-Sadhguru_Kannada_16-Oct-2019";
+		System.out.println(ac.getArtifactAttributes(artifactName));
+		
+		artifactName = "ZR17_One-Drop-Of-Spirituality_Athur-Volunteers-Meet_29-Nov-2010_Edited-Files";
 		System.out.println(ac.getArtifactAttributes(artifactName));
 	}
 

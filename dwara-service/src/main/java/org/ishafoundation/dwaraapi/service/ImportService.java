@@ -541,9 +541,13 @@ public class ImportService extends DwaraService {
 		List<Artifact> artifactList = volumeindex.getArtifact();
 		for (Artifact nthArtifact : artifactList) {
 			String artifactNameAsInCatalog = nthArtifact.getName(); // Name thats in tape
+			logger.debug("Now importing " + artifactNameAsInCatalog);
+			
+			artifactUtil.preImport(nthArtifact);
+			
 			String artifactNameProposed = nthArtifact.getRename() != null ? nthArtifact.getRename() : artifactNameAsInCatalog; // Proposed new name thats in tape
 			String toBeArtifactName = null; // Name that needs to be saved in Artifact/File tables in DB
-			logger.debug("Now importing " + artifactNameAsInCatalog);				
+							
 			
 			ImportStatus artifactImportStatus = ImportStatus.failed; 
 			ImportStatus artifactVolumeImportStatus = ImportStatus.failed;
@@ -564,12 +568,12 @@ public class ImportService extends DwaraService {
 			}
 			else {
 				try {
-					
 					/*
 					 * 
 					*** dealing with artifact ***
 					*
 					*/
+					
 					String extractedCodeFromProposedArtifactName = StringUtils.substringBefore(artifactNameProposed, "_");
 					if(!artifactNameAsInCatalog.equals(artifactNameProposed) && !StringUtils.substringBefore(artifactNameAsInCatalog, "_").equals(extractedCodeFromProposedArtifactName))
 						throw new Exception ("Different sequences in name and rename attributes not supported. @name - " + artifactNameAsInCatalog + " @rename - " + artifactNameProposed);
@@ -585,10 +589,6 @@ public class ImportService extends DwaraService {
 				    	throw new Exception ("Empty folder");
 				    
 				    artifactUtil.validateImport(nthArtifact);
-				    
-				    artifactUtil.preImport(nthArtifact);
-				    
-				    artifactNameProposed = nthArtifact.getRename() != null ? nthArtifact.getRename() : artifactNameAsInCatalog; // Proposed new name thats in tape
 				    
 					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclass());
 					Sequence sequence = artifactclass.getSequence();

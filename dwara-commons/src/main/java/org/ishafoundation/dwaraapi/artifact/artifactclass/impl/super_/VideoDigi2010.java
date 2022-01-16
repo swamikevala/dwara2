@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.artifact.ArtifactAttributes;
 import org.ishafoundation.dwaraapi.artifact.artifactclass.Artifactclass;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
@@ -46,7 +47,7 @@ public class VideoDigi2010 extends DefaultArtifactclassImpl{
         String line = null;
         
         while ((line = br.readLine()) != null) {
-        	if(line.startsWith("#"))
+        	if(line.startsWith("#") || StringUtils.isBlank(line))
         		continue;
         	String[] parts = line.split("~!~");
         	String prevSeqCode = parts[0];

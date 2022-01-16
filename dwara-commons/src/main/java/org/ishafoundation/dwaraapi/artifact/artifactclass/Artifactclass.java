@@ -5,12 +5,9 @@ import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Artifact;
 
 public interface Artifactclass {
 	
-	boolean validateImport(Artifact artifact) throws Exception;
-	
 	void preImport(Artifact artifact);
 	
+	boolean validateImport(Artifact artifact) throws Exception;
+	
 	ArtifactAttributes getArtifactAttributes(String artifactName);
-	
-	
-
 }
