@@ -542,23 +542,8 @@ public class ImportService extends DwaraService {
 		for (Artifact nthArtifact : artifactList) {
 			String artifactNameAsInCatalog = nthArtifact.getName(); // Name thats in tape
 			logger.debug("Now importing " + artifactNameAsInCatalog);
-			
-			artifactUtil.preImport(nthArtifact);		
-			
 			String artifactNameProposed = nthArtifact.getRename() != null ? nthArtifact.getRename() : artifactNameAsInCatalog; // Proposed new name thats in tape
-			
-			Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclass());
-			if(!artifactclass.getId().startsWith("photo")) { // validation only for photo* artifactclass
-				// 1- validateName
-				List<Error> errorListFromValidator = basicArtifactValidator.validateName(artifactNameProposed, allowedChrsInFileNamePattern);
-				for (Error nthError : errorListFromValidator) {
-					nthError.setMessage(artifactNameProposed + " - " + nthError.getMessage());
-					errorList.add(nthError);
-				}
-			}
-
 			String toBeArtifactName = null; // Name that needs to be saved in Artifact/File tables in DB
-							
 			
 			ImportStatus artifactImportStatus = ImportStatus.failed; 
 			ImportStatus artifactVolumeImportStatus = ImportStatus.failed;
@@ -588,7 +573,20 @@ public class ImportService extends DwaraService {
 					String extractedCodeFromProposedArtifactName = StringUtils.substringBefore(artifactNameProposed, "_");
 					if(!artifactNameAsInCatalog.equals(artifactNameProposed) && !StringUtils.substringBefore(artifactNameAsInCatalog, "_").equals(extractedCodeFromProposedArtifactName))
 						throw new Exception ("Different sequences in name and rename attributes not supported. @name - " + artifactNameAsInCatalog + " @rename - " + artifactNameProposed);
-
+					
+					artifactUtil.preImport(nthArtifact);		
+					
+					artifactNameProposed = nthArtifact.getRename() != null ? nthArtifact.getRename() : artifactNameAsInCatalog;
+					
+					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclass());
+					if(!artifactclass.getId().startsWith("photo")) { // validation only for photo* artifactclass
+						// 1- validateName
+						List<Error> errorListFromValidator = basicArtifactValidator.validateName(artifactNameProposed, allowedChrsInFileNamePattern);
+						for (Error nthError : errorListFromValidator) {
+							nthError.setMessage(artifactNameProposed + " - " + nthError.getMessage());
+							errorList.add(nthError);
+						}
+					}
 					
 				    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = nthArtifact.getFile();
 				    int fileCount = 0;
