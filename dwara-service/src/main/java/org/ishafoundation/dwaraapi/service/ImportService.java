@@ -390,31 +390,31 @@ public class ImportService extends DwaraService {
 				err.setMessage(artifact.getName() + " has invalid artifactclass " + artifact.getArtifactclass());
 				errorList.add(err);
 			}
-			else {
-				String fileName = artifact.getRename() != null ? artifact.getRename() : artifact.getName();
-				if(!artifactclass.getId().startsWith("photo")) { // validation only for photo* artifactclass
-					// 1- validateName
-					List<Error> errorListFromValidator = basicArtifactValidator.validateName(fileName, allowedChrsInFileNamePattern);
-					for (Error nthError : errorListFromValidator) {
-						nthError.setMessage(fileName + " - " + nthError.getMessage());
-						errorList.add(nthError);
-					}
-				}
-				else {
-					// 1a - validateName for photo* artifactclass
-					//errorList.addAll(basicArtifactValidator.validatePhotoName(fileName, allowedChrsInFileNamePattern, (sfv != null && sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0 ? sfv.getPhotoSeriesFileNameValidationFailedFileNames() : null)));
-				}
-// not needed				
-//				// 2- validateCount
-//				errorList.addAll(basicArtifactValidator.validateFileCount(fileCount));
-//	
-//				// 3- validateSize
-//				errorList.addAll(basicArtifactValidator.validateFileSize(size));
-			}
+//			else {
+//				String fileName = artifact.getRename() != null ? artifact.getRename() : artifact.getName();
+//				if(!artifactclass.getId().startsWith("photo")) { // validation only for photo* artifactclass
+//					// 1- validateName
+//					List<Error> errorListFromValidator = basicArtifactValidator.validateName(fileName, allowedChrsInFileNamePattern);
+//					for (Error nthError : errorListFromValidator) {
+//						nthError.setMessage(fileName + " - " + nthError.getMessage());
+//						errorList.add(nthError);
+//					}
+//				}
+//				else {
+//					// 1a - validateName for photo* artifactclass
+//					//errorList.addAll(basicArtifactValidator.validatePhotoName(fileName, allowedChrsInFileNamePattern, (sfv != null && sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0 ? sfv.getPhotoSeriesFileNameValidationFailedFileNames() : null)));
+//				}
+//// not needed				
+////				// 2- validateCount
+////				errorList.addAll(basicArtifactValidator.validateFileCount(fileCount));
+////	
+////				// 3- validateSize
+////				errorList.addAll(basicArtifactValidator.validateFileSize(size));
+//			}
 		}
 
 		if(errorList.size() > 0)
-			throw new Exception("XML has invalid artifacts");
+			throw new Exception("XML has invalid artifacts - " + errorList);
 
 	}
 	
@@ -543,9 +543,20 @@ public class ImportService extends DwaraService {
 			String artifactNameAsInCatalog = nthArtifact.getName(); // Name thats in tape
 			logger.debug("Now importing " + artifactNameAsInCatalog);
 			
-			artifactUtil.preImport(nthArtifact);
+			artifactUtil.preImport(nthArtifact);		
 			
 			String artifactNameProposed = nthArtifact.getRename() != null ? nthArtifact.getRename() : artifactNameAsInCatalog; // Proposed new name thats in tape
+			
+			Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclass());
+			if(!artifactclass.getId().startsWith("photo")) { // validation only for photo* artifactclass
+				// 1- validateName
+				List<Error> errorListFromValidator = basicArtifactValidator.validateName(artifactNameProposed, allowedChrsInFileNamePattern);
+				for (Error nthError : errorListFromValidator) {
+					nthError.setMessage(artifactNameProposed + " - " + nthError.getMessage());
+					errorList.add(nthError);
+				}
+			}
+
 			String toBeArtifactName = null; // Name that needs to be saved in Artifact/File tables in DB
 							
 			
@@ -590,7 +601,6 @@ public class ImportService extends DwaraService {
 				    
 				    artifactUtil.validateImport(nthArtifact);
 				    
-					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclass());
 					Sequence sequence = artifactclass.getSequence();
 					
 					// Checks if there is a custom artifactclass impl, else applies default extraction logic but doesnt generate new sequence
