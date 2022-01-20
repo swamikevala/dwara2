@@ -18,7 +18,7 @@ public class BruCatalogParser {
 	private String labelRegEx = "label = (.*)";
 	private Pattern labelRegExPattern = Pattern.compile(labelRegEx);
 	
-	public BruResponseCatalog parseBruCatalog(File bruCatalogFile, Map<String, Object> artifactToArtifactClassMapping) throws Exception {
+	public BruResponseCatalog parseBruCatalog(File bruCatalogFile, Map<String, String> artifactToArtifactClassMapping) throws Exception {
 		String bruArchiveId = null;
 		String volumeId = null;
 		List<BruFile> bruFileList = new ArrayList<>();
@@ -73,7 +73,7 @@ public class BruCatalogParser {
 						}
 					}
 	
-					b.category = (String) artifactToArtifactClassMapping.get(temp);
+					b.category = artifactToArtifactClassMapping.get(temp);
 					b.archiveBlock = arrValues[1];
 					b.archiveId = "";
 	

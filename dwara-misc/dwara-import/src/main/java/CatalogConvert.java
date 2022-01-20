@@ -12,16 +12,17 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.zip.GZIPInputStream;
+
 import org.apache.commons.io.input.ReversedLinesFileReader;
 
 public class CatalogConvert {
 
-	static final String csv = "C:\\Users\\Lenovo\\Documents\\dwara-import-testing\\import.csv";
-	static final String catalogs = "C:\\Users\\Lenovo\\Documents\\dwara-import-testing\\brucats";
-	static final String converted = "C:\\Users\\Lenovo\\Documents\\dwara-import-testing\\converted";
-	
-//	public static void main(String args[]) throws IOException {
 	public static void mainn(String args[]) throws IOException {	
+		
+		String csv = args[0];
+		String catalogs = args[1];
+		String converted = args[2];
+		
 		InputStream in = new FileInputStream(csv);
 		InputStreamReader inr = new InputStreamReader(in, Charset.forName("UTF-8"));
 		BufferedReader binr = new BufferedReader(inr);
@@ -41,8 +42,8 @@ public class CatalogConvert {
 			brucode = line.substring(9,21);
 			lineCount++;
 			
-			Path source = Paths.get(catalogs + "\\BRU-" + brucode + ".gz");
-			Path target = Paths.get(converted + "\\" + barcode);
+			Path source = Paths.get(catalogs, "BRU-" + brucode + ".gz");
+			Path target = Paths.get(converted, barcode);
 			
 			if (Files.notExists(source)) {
 				System.err.printf("The file %s doesn't exist", source);

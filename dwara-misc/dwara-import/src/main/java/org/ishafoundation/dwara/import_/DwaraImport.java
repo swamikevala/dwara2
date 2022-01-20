@@ -3,6 +3,7 @@ package org.ishafoundation.dwara.import_;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwara.import_.bru.BruCatalogParser;
 import org.ishafoundation.dwara.import_.bru.BruFile;
@@ -45,15 +47,30 @@ import com.google.gson.reflect.TypeToken;
 
 @Component
 public class DwaraImport {
-	private static final Logger LOG = LoggerFactory.getLogger(DwaraImport.class);
 	
+	private static final Logger LOG = LoggerFactory.getLogger(DwaraImport.class);
 
 	String regexAllowedChrsInFileName = "[\\w-.]*";
 	Pattern allowedChrsInFileNamePattern = Pattern.compile(regexAllowedChrsInFileName);
 
-	
-	
 	private BasicArtifactValidator basicArtifactValidator = new BasicArtifactValidator();
+	
+	static Map<String, String> getMapping(String folderPath){
+		Map<String, String> map = new HashMap<String, String>();
+		java.io.File fileObj = new java.io.File(folderPath);
+		
+		try {
+			List<String> lines = FileUtils.readLines(fileObj, StandardCharsets.UTF_8);
+			for (String nthEntry : lines) {
+				String part0 = StringUtils.substringBeforeLast(nthEntry, ",");
+				String part1 = StringUtils.substringAfterLast(nthEntry, ",");
+				map.put(part0, part1);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return map;
+	}
 	
 	static Map<String, Object> getJSONFromFile(String folderPath) throws IOException, ParseException {
 
@@ -64,13 +81,11 @@ public class DwaraImport {
 				.fromJson(obj.toString(), new TypeToken<HashMap<String, Object>>() {}.getType());
 
 		return map;
-
 	}
-
-
+	
 	public void apacheGetXMLData(String bruFile, String artifactToArtifactClassMappingJsonFolderPath, String destinationXmlPath) throws IOException, ParseException {
 		System.out.println("Loading artifact to artifactclass mapping " + artifactToArtifactClassMappingJsonFolderPath);
-		Map<String, Object> artifactToArtifactClassMapping = getJSONFromFile(artifactToArtifactClassMappingJsonFolderPath);
+		Map<String, String> artifactToArtifactClassMapping = getMapping(artifactToArtifactClassMappingJsonFolderPath);
 
 		java.io.File file = new java.io.File(bruFile);
 		for (java.io.File textFile : file.listFiles()) {
@@ -87,7 +102,7 @@ public class DwaraImport {
 
 					//Example format: CC4016L4_01-Apr-2010-22-47-35_02-Apr-2010-01-36-16
 					String monthRegex = "(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)";
-					String barcodeRegEx = "([CP][ABCDE12345][3467][0-9]{3}L[3467])";
+					String barcodeRegEx = "([CPB][ABCDE12345][3467][0-9]{3}L[3467])";
 					String dateTimeRegEx = "([0-9]{2}-" + monthRegex + "-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2})";
 					String fileNameRegEx = barcodeRegEx + "_" + dateTimeRegEx + "_" + dateTimeRegEx;
 
@@ -201,12 +216,14 @@ public class DwaraImport {
 		List<Artifact> artifactXMLList = new ArrayList<>();
 		for (BruFile artifactList: artifactsList) {
 			try {
+				String artifactName = artifactList.name;
+				//artifactName = massageName(artifactName);
 				List<Error> errorList = new ArrayList<Error>();
-				errorList.addAll(basicArtifactValidator.validateName(artifactList.name, allowedChrsInFileNamePattern));
+				errorList.addAll(basicArtifactValidator.validateName(artifactName, allowedChrsInFileNamePattern));
 				
 				// System.out.println("Framing object for " + artifactList.name);
 				Artifact artifact = new Artifact();
-				String artifactName = artifactList.name;
+				
 
 				artifact.setName(artifactName);
 
@@ -244,15 +261,16 @@ public class DwaraImport {
 				List<File> fileList = new ArrayList<>();
 				for (BruFile bruFile : bruFileList) {
 					File file = new File();
-					file.setName(bruFile.name);
+					String bruFileName = massageFileName(bruFile.name);
+					file.setName(bruFileName);
 					file.setSize(bruFile.size);
-					if (bruFile.name.equals(artifactList.name)) {
+					if (bruFileName.equals(artifactName)) {
 						file.setVolumeStartBlock(artifactList.startVolumeBlock.intValue());
 						//file.setVolumeEndBlock(String.valueOf(artifactList.endVolumeBlock));
 						file.setArchiveblock(Long.parseLong(bruFile.archiveBlock));
 						file.setDirectory(artifactList.isDirectory);
 						fileList.add(file);
-					} else if(bruFile.name.startsWith(artifactList.name + "/")){
+					} else if(bruFileName.startsWith(artifactName + "/")){
 						file.setVolumeStartBlock(bruFile.startVolumeBlock.intValue());
 						//file.setVolumeEndBlock(String.valueOf(bruData.endVolumeBlock));
 						file.setArchiveblock(Long.parseLong(bruFile.archiveBlock));
@@ -345,6 +363,13 @@ public class DwaraImport {
 		}
 		return xmlFromJava;
 
+	}
+
+	private String massageFileName(String fileName) {
+		if(fileName.contains("\0"))
+			fileName = fileName.replace("\0", "");
+		//fileName = StringEscapeUtils.escapeXml(fileName);
+		return fileName;
 	}
 
 }

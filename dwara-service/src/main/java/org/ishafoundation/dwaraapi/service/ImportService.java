@@ -364,7 +364,7 @@ public class ImportService extends DwaraService {
 		Volumeinfo volumeinfo = volumeindex.getVolumeinfo();
 		
 	    // validate barcode
-		String regEx = "(C|P)([A-Z])?([0-9]*)L[0-9]";
+		String regEx = "(C|P|B)([A-Z])?([0-9]*)L[0-9]";
 		Pattern regExPattern = Pattern.compile(regEx);
 		String volumeBarcode = volumeinfo.getVolume();
 		Matcher regExMatcher = regExPattern.matcher(volumeBarcode);
