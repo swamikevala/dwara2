@@ -63,7 +63,7 @@ public class BruCatalogParser {
 						b.isArtifact = false;
 						// temp.substring(temp.lastIndexOf("/") + 1);
 						
-						// extra 4096 check to address entire like 
+						// extra 4096 check to address entries like 
 						// VL:c|385671168|1|4096|376631|Z7424_Class_IEO_Tamil-Day2-Desire_FCP7-And-FCPX/XMLs/FCP X/._IEO Tamil Day 5 - Acceptance II.fcpxml 
 						// which is a folder. 
 						// Check still doest not guarantee the classification of a file vs folder as there are folders like these too
