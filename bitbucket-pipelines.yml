@@ -6,4 +6,4 @@ pipelines:
   default:
     - step:
         script:
-          - git push --mirror git@github.com:swamikevala/dwara.git
+          - git push --mirror git@github.com:isha-archives/dwara.git
