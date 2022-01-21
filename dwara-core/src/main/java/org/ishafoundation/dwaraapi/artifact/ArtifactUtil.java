@@ -41,7 +41,7 @@ public class ArtifactUtil {
 		return getArtifactMeta(artifactName, sequence, artifactAttributes, generateSequence);
 	}
 	
-	private ArtifactAttributes getArtifactAttributes(String artifactclass, String proposedName, String prefix) throws Exception {
+	public ArtifactAttributes getArtifactAttributes(String artifactclass, String proposedName, String prefix) throws Exception {
 		Artifactclass ac = iArtifactclassMap.get(artifactclass);
 		if(ac == null) {
 			// if there is no custom class fallback to default logic
@@ -73,6 +73,7 @@ public class ArtifactUtil {
 		if(keepCode) {
 			sequenceCode = extractedCodeFromProposedArtifactName;
 			toBeArtifactName = artifactName; // retaining the same name
+			previousCode = null;
 		}
 		else if(replaceCode) {
 			if(matchCode == null || sequenceNumber == null)

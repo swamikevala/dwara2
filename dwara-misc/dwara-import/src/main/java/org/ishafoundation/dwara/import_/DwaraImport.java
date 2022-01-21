@@ -1,6 +1,5 @@
 package org.ishafoundation.dwara.import_;
 
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -18,7 +17,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwara.import_.bru.BruCatalogParser;
 import org.ishafoundation.dwara.import_.bru.BruFile;
@@ -32,7 +30,6 @@ import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.Volumeinfo;
 import org.jdom2.output.support.AbstractXMLOutputProcessor;
 import org.jdom2.output.support.FormatStack;
 import org.jdom2.output.support.XMLOutputProcessor;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,8 +39,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 @Component
 public class DwaraImport {
@@ -71,18 +66,7 @@ public class DwaraImport {
 		}
 		return map;
 	}
-	
-	static Map<String, Object> getJSONFromFile(String folderPath) throws IOException, ParseException {
 
-		JSONParser parser = new JSONParser();
-		Object obj = parser.parse(new FileReader(folderPath));
-
-		Map<String, Object> map = new Gson()
-				.fromJson(obj.toString(), new TypeToken<HashMap<String, Object>>() {}.getType());
-
-		return map;
-	}
-	
 	public void apacheGetXMLData(String bruFile, String artifactToArtifactClassMappingJsonFolderPath, String destinationXmlPath) throws IOException, ParseException {
 		System.out.println("Loading artifact to artifactclass mapping " + artifactToArtifactClassMappingJsonFolderPath);
 		Map<String, String> artifactToArtifactClassMapping = getMapping(artifactToArtifactClassMappingJsonFolderPath);

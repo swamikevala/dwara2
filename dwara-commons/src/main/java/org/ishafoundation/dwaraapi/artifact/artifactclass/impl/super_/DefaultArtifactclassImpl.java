@@ -166,7 +166,10 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 		}
 		
 		if(ARTIFACTNAME_SEQUENCENUMBER_MAP.get(proposedName) != null){ // get the seqNumber from the list... NOTE: There are some range of sequences left for some artifacts missing out sequences - use them here
+			if(artifactAttributes.getPreviousCode() == null)
+				artifactAttributes.setPreviousCode(extractedCode);
 			artifactAttributes.setSequenceNumber(ARTIFACTNAME_SEQUENCENUMBER_MAP.get(proposedName));
+			artifactAttributes.setKeepCode(false);
 			artifactAttributes.setReplaceCode(false);
 		}
 

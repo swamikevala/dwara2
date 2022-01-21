@@ -30,6 +30,7 @@ import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.SetSequenceImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
+import org.ishafoundation.dwaraapi.artifact.ArtifactAttributes;
 import org.ishafoundation.dwaraapi.artifact.ArtifactMeta;
 import org.ishafoundation.dwaraapi.artifact.ArtifactUtil;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
@@ -76,6 +77,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -133,7 +135,7 @@ public class ImportService extends DwaraService {
 	
 	private String bruLinkSeparator = Character.toString(Character.MIN_VALUE);
 	
-	private Map<String, Artifactclass> id_artifactclassMap = null;
+	private Map<String, Artifactclass> id_artifactclassMap = new HashMap<String, Artifactclass>();
 	private List<Error> errorList = null;
 	private List<org.ishafoundation.dwaraapi.api.resp._import.Artifact> artifacts = null;
 	private Pattern allowedChrsInFileNamePattern = null;
@@ -147,6 +149,11 @@ public class ImportService extends DwaraService {
 		for (int i = 0; i < junkFilesFinderRegexPatternList.length; i++) {
 			Pattern nthJunkFilesFinderRegexPattern = Pattern.compile(junkFilesFinderRegexPatternList[i]);
 			excludedFileNamesRegexList.add(nthJunkFilesFinderRegexPattern);
+		}
+		
+		List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
+		for (Artifactclass nthArtifactclass : artifactclassList) {
+			id_artifactclassMap.put(nthArtifactclass.getId(), nthArtifactclass);
 		}
 	}
 	
@@ -222,7 +229,6 @@ public class ImportService extends DwaraService {
 	}
 
 	public ImportResponse importCatalog(ImportRequest importRequest) throws Exception{	
-		id_artifactclassMap = new HashMap<String, Artifactclass>();
 		errorList = new ArrayList<Error>();
 		artifacts = new ArrayList<org.ishafoundation.dwaraapi.api.resp._import.Artifact>();
 		
@@ -353,13 +359,6 @@ public class ImportService extends DwaraService {
 	}
 	
 	private void validate(Volumeindex volumeindex) throws Exception {
-	    
-	    // More validation on values...
-		List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
-		for (Artifactclass nthArtifactclass : artifactclassList) {
-			id_artifactclassMap.put(nthArtifactclass.getId(), nthArtifactclass);
-		}
-
 		// validate volumeInfo
 		Volumeinfo volumeinfo = volumeindex.getVolumeinfo();
 		
@@ -1385,7 +1384,46 @@ public class ImportService extends DwaraService {
 		}
 		return importResponse;
 	}
+	
+	public ArtifactAttributes getArtifactAttributes(String artifactNameProposed, String artifactclassId){
+		Artifactclass artifactclass = id_artifactclassMap.get(artifactclassId);
+		
+		ArtifactAttributes aa = null;
+		try {
+			aa = artifactUtil.getArtifactAttributes(artifactclassId, artifactNameProposed, artifactclass.getSequence().getPrefix());
+			String matchCode = aa.getMatchCode();
+			Boolean kc = aa.getKeepCode();
+			Boolean rc = aa.getReplaceCode();
+			String prevSeqCode = aa.getPreviousCode();
+			Integer sequenceNum =  aa.getSequenceNumber();
+			
+			logger.info("matchCode -" + matchCode + " : keepCode " + kc + " : replaceCode " + rc + " : previousCode " + prevSeqCode + " : sequenceNumber " + sequenceNum);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return aa;
+	}
 
+	
+	public ArtifactMeta getArtifactMeta(String artifactNameProposed, String artifactclassId){
+		Artifactclass artifactclass = id_artifactclassMap.get(artifactclassId);
+		
+		ArtifactMeta am = null;
+		try {
+			am = artifactUtil.getArtifactMeta(artifactNameProposed, artifactclassId, artifactclass.getSequence(), false);
+			String toBeArtifactName = am.getArtifactName();
+			String prevSeqCode = am.getPrevSequenceCode();
+			String sequenceCode =  am.getSequenceCode();
+			
+			logger.info(toBeArtifactName + ":" + prevSeqCode + ":" + sequenceCode);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return am;
+	}
+	
 	public String setSequence(SetSequenceImportRequest importRequest) throws Exception {
 		File xmlFile = FileUtils.getFile(importRequest.getXmlPathname());
 		int counter = importRequest.getStartingNumber();

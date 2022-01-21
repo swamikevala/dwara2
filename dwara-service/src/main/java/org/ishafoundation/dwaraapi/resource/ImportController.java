@@ -1,7 +1,9 @@
 package org.ishafoundation.dwaraapi.resource;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
@@ -9,6 +11,9 @@ import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.SetSequenceImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
+import org.ishafoundation.dwaraapi.artifact.ArtifactAttributes;
+import org.ishafoundation.dwaraapi.artifact.ArtifactMeta;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.ImportService;
 import org.slf4j.Logger;
@@ -133,6 +138,43 @@ public class ImportController {
 		return ResponseEntity.status(HttpStatus.OK).body(importResponse);
 	}
 	
+	@GetMapping("getArtifactAttributes")
+	public ResponseEntity<ArtifactAttributes> getArtifactAttributes(@RequestParam String artifactNameProposed, @RequestParam String artifactclassId){
+    	logger.info("/getArtifactAttributes");
+    	ArtifactAttributes artifactAttributes = null;
+    	try {
+    		artifactAttributes = importService.getArtifactAttributes(artifactNameProposed, artifactclassId);
+		}catch (Exception e) {
+			String errorMsg = "Unable to getArtifactAttributes - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+    	return ResponseEntity.status(HttpStatus.OK).body(artifactAttributes);
+		
+	}
+	
+	@GetMapping("getArtifactMeta")
+	public ResponseEntity<ArtifactMeta> getArtifactMeta(@RequestParam String artifactNameProposed, @RequestParam String artifactclassId){
+    	logger.info("/getArtifactMeta");
+    	ArtifactMeta artifactMeta = null;
+    	try {
+    		artifactMeta = importService.getArtifactMeta(artifactNameProposed, artifactclassId);
+		}catch (Exception e) {
+			String errorMsg = "Unable to getArtifactMeta - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+    	return ResponseEntity.status(HttpStatus.OK).body(artifactMeta);
+		
+	}
 	
 	@GetMapping("artifactListManipulator/queryByNameStartsWith")
 	public ResponseEntity<String> queryByNameStartsWith(@RequestParam String artifactNameToTapeMappingFilepathname, @RequestParam String startsWith){
