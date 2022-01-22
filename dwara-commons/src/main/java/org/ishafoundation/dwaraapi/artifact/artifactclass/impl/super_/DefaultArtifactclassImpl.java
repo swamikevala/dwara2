@@ -27,19 +27,19 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 	private static final Logger logger = LoggerFactory.getLogger(DefaultArtifactclassImpl.class);
 	
 	public static final String NUMBER_REGEX = "^[\\d]+";
-	private static final String ORIGINAL_REGEX = "^V[\\d]+";
-	private static final String EDITED_REGEX = "^Z[\\d]+";
-	private static final String EDITED_PRIV2_REGEX = "^ZX[\\d]+";
-	private static final String BR_CODE_REGEX = "^BR[\\d]+";  
-	private static final String EDITED_TRANSLATED_REGEX = "^ZG[\\d]+";
-	private static final String EDITED_RESIDENTS_REGEX = "^ZR[\\d]+";
+	public static final String ORIGINAL_REGEX = "^V[\\d]+";
+	public static final String EDITED_REGEX = "^Z[\\d]+";
+	public static final String EDITED_PRIV2_REGEX = "^ZX[\\d]+";
+	public static final String BR_CODE_REGEX = "^BR[\\d]+";  
+	public static final String EDITED_TRANSLATED_REGEX = "^ZG[\\d]+";
+	public static final String EDITED_RESIDENTS_REGEX = "^ZR[\\d]+";
 	
 	private static final Map<String, Integer> ARTIFACTNAME_SEQUENCENUMBER_MAP = new HashMap<String, Integer>();
 	private static final Set<String> HYPHENATED_ARTIFACTS_SET = new TreeSet<String>();
 
-	private static final Pattern BR_CODE_NUMBER_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + NUMBER_REGEX.substring(1));
-	private static final Pattern BR_CODE_EDITED_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + EDITED_REGEX.substring(1));
-	private static final Pattern BR_CODE_EDITED_PRIV2_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + EDITED_PRIV2_REGEX.substring(1));
+	public static final Pattern BR_CODE_NUMBER_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + NUMBER_REGEX.substring(1));
+	public static final Pattern BR_CODE_EDITED_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + EDITED_REGEX.substring(1));
+	public static final Pattern BR_CODE_EDITED_PRIV2_REGEX_PATTERN = Pattern.compile(BR_CODE_REGEX + "_" + EDITED_PRIV2_REGEX.substring(1));
 	
 	@PostConstruct
 	public void setUp() throws Exception {

@@ -76,10 +76,13 @@ public class ArtifactUtil {
 			previousCode = null;
 		}
 		else if(replaceCode) {
-			if(matchCode == null || sequenceNumber == null)
-				throw new Exception ("To replace a code both matchCode and sequenceNumber attributes should be present");
-			sequenceCode = sequence.getPrefix() + sequenceNumber;
-			toBeArtifactName = artifactName.replace(matchCode, sequenceCode);
+			if(matchCode == null)
+				throw new Exception ("To replace a code matchCode should be present");
+			
+			if(sequenceNumber != null) {
+				sequenceCode = sequence.getPrefix() + sequenceNumber;
+				toBeArtifactName = artifactName.replace(matchCode, sequenceCode);
+			}
 		}else if(sequenceNumber != null){
 			sequenceCode = sequence.getPrefix() + sequenceNumber;
 			toBeArtifactName = sequenceCode + "_" + artifactName;
@@ -92,15 +95,19 @@ public class ArtifactUtil {
 		
 		if(sequenceCode == null) {
 			if(generateSequence) {
-				am = generateSequenceCodeAndPrefixToName(artifactName, sequence);
+				am = generateSequenceCodeAndPrefixToName(artifactName, replaceCode, matchCode, sequence);
 			}
 		}
 		return am;
 	}
 	
-	public ArtifactMeta generateSequenceCodeAndPrefixToName(String artifactName, Sequence sequence) {
+	public ArtifactMeta generateSequenceCodeAndPrefixToName(String artifactName, Boolean replaceCode, String matchCode, Sequence sequence) {
 		String sequenceCode = sequenceUtil.generateSequenceCode(sequence, artifactName);
-		String toBeArtifactName = sequenceCode + "_" + artifactName;
+		String toBeArtifactName = null;
+		if(Boolean.TRUE.equals(replaceCode) && matchCode != null)
+			artifactName = artifactName.replace(matchCode, sequenceCode);
+		else
+			toBeArtifactName = sequenceCode + "_" + artifactName;
 		
 		ArtifactMeta am = new ArtifactMeta();
 		am.setArtifactName(toBeArtifactName);

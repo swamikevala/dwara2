@@ -617,7 +617,7 @@ public class ImportService extends DwaraService {
 						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
 					}
 					else {
-						artifact = artifactDao.findByNameEndsWith(artifactNameProposed);
+						artifact = artifactDao.findByNameEndsWithAndArtifactclassSourceIsTrueAndDeletedIsFalse(artifactNameProposed);
 					}
 				
 					if(artifact != null) { 
@@ -673,7 +673,8 @@ public class ImportService extends DwaraService {
 //							throw new Exception("An artifact already exists with sequenceCode : " + sequenceCode + ". Already existing artifactId with same sequenceCode - " + alreadyExistingArtifactWithSameSequenceCode.getId());
 						
 						if(sequenceCode == null) {
-							am = artifactUtil.generateSequenceCodeAndPrefixToName(artifactNameProposed, sequence);
+							ArtifactAttributes aa = artifactUtil.getArtifactAttributes(artifactclass.getId(), artifactNameProposed, sequence.getPrefix());
+							am = artifactUtil.generateSequenceCodeAndPrefixToName(artifactNameProposed, aa.getReplaceCode(), aa.getMatchCode(), sequence);
 							sequenceCode = am.getSequenceCode();
 							toBeArtifactName = am.getArtifactName();
 						}

@@ -28,8 +28,6 @@ public interface ArtifactDao extends CrudRepository<Artifact,Integer> {
 	boolean existsByName(String pathName);
 	
 	List<Artifact> findAllByArtifactRef(Artifact artifact);
-
-	Artifact findByNameEndsWith(String id);
 	
 	List<Artifact> findByNameEndsWithAndArtifactclassId(String artifactName, String id);
 
@@ -41,4 +39,6 @@ public interface ArtifactDao extends CrudRepository<Artifact,Integer> {
 	Artifact findBySequenceCodeAndDeletedIsFalseAndArtifactclassSequenceSequenceRefId(String sequenceCode, String sequenceRefId);
 
 	Artifact findBySequenceCodeAndDeletedIsFalseAndArtifactclassId(String sequenceCode, String sequenceId);
+
+	Artifact findByNameEndsWithAndArtifactclassSourceIsTrueAndDeletedIsFalse(String artifactNameProposed);
 }
