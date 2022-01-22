@@ -105,7 +105,7 @@ public class ArtifactUtil {
 		String sequenceCode = sequenceUtil.generateSequenceCode(sequence, artifactName);
 		String toBeArtifactName = null;
 		if(Boolean.TRUE.equals(replaceCode) && matchCode != null)
-			artifactName = artifactName.replace(matchCode, sequenceCode);
+			toBeArtifactName = artifactName.replace(matchCode, sequenceCode);
 		else
 			toBeArtifactName = sequenceCode + "_" + artifactName;
 		
