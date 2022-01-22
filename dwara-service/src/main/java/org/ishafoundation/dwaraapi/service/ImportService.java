@@ -874,10 +874,16 @@ public class ImportService extends DwaraService {
 	    // caching the file entries to avoid repeated queries...
 	    List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
 	    // collection to cache the file Objects
-	    Map<byte[], org.ishafoundation.dwaraapi.db.model.transactional.File> filePathnameChecksum_FileObj_Map = new HashMap<byte[], org.ishafoundation.dwaraapi.db.model.transactional.File>();
+	    Map<String, org.ishafoundation.dwaraapi.db.model.transactional.File> filePathname_FileObj_Map = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File>();
 	    for (org.ishafoundation.dwaraapi.db.model.transactional.File nthMasterFile : masterFileList) {
 	    	fileId_FileObj_Map.put(nthMasterFile.getId(), nthMasterFile);
-	    	filePathnameChecksum_FileObj_Map.put(nthMasterFile.getPathnameChecksum(), nthMasterFile);
+	    	filePathname_FileObj_Map.put(nthMasterFile.getPathname(), nthMasterFile);
+		}
+	    
+	    List<FileVolume> fileVolumeEntries = fileVolumeDao.findAllByIdVolumeId(volume.getId());
+	    Map<Integer, FileVolume> fileId_FileVolumeObj_Map = new HashMap<Integer, FileVolume>();
+	    for (FileVolume nthFileVolume : fileVolumeEntries) {
+	    	fileId_FileVolumeObj_Map.put(nthFileVolume.getId().getFileId(), nthFileVolume);
 		}
 
 	    ArrayList<String> junkFilepathnameList = new ArrayList<String>();
@@ -929,7 +935,7 @@ public class ImportService extends DwaraService {
 			byte[] filePathnameChecksum = ChecksumUtil.getChecksum(filePathname);
 			org.ishafoundation.dwaraapi.db.model.transactional.File file = null;
 			if(artifactAlreadyExists) { // if artifactAlreadyExists - file would also exist already - copy / rerun scenario
-				file = fileDao.findByPathnameChecksum(filePathnameChecksum); // filePathnameChecksum_FileObj_Map.get(filePathnameChecksum);
+				file = filePathname_FileObj_Map.get(filePathname);// fileDao.findByPathnameChecksum(filePathnameChecksum); // filePathnameChecksum_FileObj_Map.get(filePathnameChecksum);
 				// Maybe we should import oldest tapes first
 				// for eg., if P16539L6 is imported first followed by CA4485L4 which is the oldest of 2 then we would face this situation as
 				// sequence codes 6028/9 and 30 has differences in the file count...
@@ -1026,7 +1032,7 @@ public class ImportService extends DwaraService {
 				fileVolumeRecordsImportStatus.add(ImportStatus.failed);
 			}
 			else {
-				FileVolume fileVolume = fileVolumeDao.findByIdFileIdAndIdVolumeId(file.getId(), volume.getId());
+				FileVolume fileVolume = fileId_FileVolumeObj_Map.get(file.getId()); // fileVolumeDao.findByIdFileIdAndIdVolumeId(file.getId(), volume.getId());
 				if(fileVolume == null) {
 					/*
 					 * file1_volume

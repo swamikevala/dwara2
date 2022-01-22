@@ -26,7 +26,7 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 	
 	private static final Logger logger = LoggerFactory.getLogger(DefaultArtifactclassImpl.class);
 	
-	private static final String NUMBER_REGEX = "^[\\d]+";
+	public static final String NUMBER_REGEX = "^[\\d]+";
 	private static final String ORIGINAL_REGEX = "^V[\\d]+";
 	private static final String EDITED_REGEX = "^Z[\\d]+";
 	private static final String EDITED_PRIV2_REGEX = "^ZX[\\d]+";
@@ -120,7 +120,6 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 				artifactAttributes.setMatchCode(extractedCode); // TODO @Swami K why do we need this for keep code scenario?
 			}
 			else if(extractedCode.matches(BR_CODE_REGEX)){  
-				String brCode = StringUtils.substringBefore(proposedName, "_");
 				int idx = ordinalIndexOf(proposedName, "_", 2);
 				if( idx > -1 ) {
 					String prefix = proposedName.substring(0, idx); //BR00326_2283 
@@ -141,7 +140,8 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 						artifactAttributes.setReplaceCode(true);
 					}	
 					else {
-						artifactAttributes.setPreviousCode(brCode); //BR00326
+						artifactAttributes.setMatchCode(extractedCode); //BR00326
+						artifactAttributes.setPreviousCode(extractedCode); //BR00326
 						artifactAttributes.setReplaceCode(true);
 					}
 				}
@@ -166,11 +166,13 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 		}
 		
 		if(ARTIFACTNAME_SEQUENCENUMBER_MAP.get(proposedName) != null){ // get the seqNumber from the list... NOTE: There are some range of sequences left for some artifacts missing out sequences - use them here
-			if(Boolean.TRUE.equals(artifactAttributes.getKeepCode()))
+			if(Boolean.TRUE.equals(artifactAttributes.getKeepCode())) {
+				artifactAttributes.setKeepCode(false);
 				artifactAttributes.setPreviousCode(extractedCode);
+				if(artifactAttributes.getMatchCode() != null)
+					artifactAttributes.setReplaceCode(true);
+			}
 			artifactAttributes.setSequenceNumber(ARTIFACTNAME_SEQUENCENUMBER_MAP.get(proposedName));
-			artifactAttributes.setKeepCode(false);
-			artifactAttributes.setReplaceCode(false);
 		}
 
 		return artifactAttributes;
@@ -188,26 +190,41 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 		Artifactclass ac = new DefaultArtifactclassImpl();
 		
 		String artifactName = "2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2";
-		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
+		System.out.println(artifactName + "\n" + ac.getArtifactAttributes(artifactName) + "\n\n");
 		
 		artifactName = "Z2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2";
-		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
+		System.out.println(artifactName + "\n" + ac.getArtifactAttributes(artifactName) + "\n\n");
 		
 		artifactName = "BR00326_2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2";
-		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
+		System.out.println(artifactName + "\n" + ac.getArtifactAttributes(artifactName) + "\n\n");
 		
 		artifactName = "BR00326_Z2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2";
-		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
+		System.out.println(artifactName + "\n" + ac.getArtifactAttributes(artifactName) + "\n\n");
+		
+		artifactName = "BR00326_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2";
+		System.out.println(artifactName + "\n" + ac.getArtifactAttributes(artifactName) + "\n\n");
 		
 		artifactName = "V2283_BR-Meet-Day1-SG-SPH_18-Oct-09_Cam2";
-		System.out.println(ac.getArtifactAttributes(artifactName) + "\n\n");
+		System.out.println(artifactName + "\n" + ac.getArtifactAttributes(artifactName) + "\n\n");
 		
 		ARTIFACTNAME_SEQUENCENUMBER_MAP.put("Ananda-Alai-Sathsang-Kothagiri_10-May-09_Cam1", 450);
 		ARTIFACTNAME_SEQUENCENUMBER_MAP.put("Coimbatore-Mayor-Visit-to-IYC_26-Jun-09", 454);
+		ARTIFACTNAME_SEQUENCENUMBER_MAP.put("7231_IE_Day1_Urban-Zen_New-York_2-May-14_Cam1", 22752);
+		ARTIFACTNAME_SEQUENCENUMBER_MAP.put("Z2012_Br-Meet_HD_2009-Mar-10-Afternoon_Edited-Files", 712);
+		ARTIFACTNAME_SEQUENCENUMBER_MAP.put("BR00402_Z2504_Br-Trip_Sadhguru-Sri-Brahma-Disciple-Guruvel-Ashram_Palani_30-Jul-2013_Edited-Files",910);
 		
 		artifactName = "Ananda-Alai-Sathsang-Kothagiri_10-May-09_Cam1";
-		System.out.println(ac.getArtifactAttributes(artifactName));
+		System.out.println(artifactName + "\n" + ac.getArtifactAttributes(artifactName) + "\n\n");
 		
+		artifactName = "7231_IE_Day1_Urban-Zen_New-York_2-May-14_Cam1";
+		System.out.println(artifactName + "\n" + ac.getArtifactAttributes(artifactName) + "\n\n");
+
+		artifactName = "Z2012_Br-Meet_HD_2009-Mar-10-Afternoon_Edited-Files";
+		System.out.println(artifactName + "\n" + ac.getArtifactAttributes(artifactName) + "\n\n");
+
+		artifactName = "BR00402_Z2504_Br-Trip_Sadhguru-Sri-Brahma-Disciple-Guruvel-Ashram_Palani_30-Jul-2013_Edited-Files";
+		System.out.println(artifactName + "\n" + ac.getArtifactAttributes(artifactName) + "\n\n");
+
 		HYPHENATED_ARTIFACTS_SET.add("863-Isha-Samskiriti-Krishna-Janmasti-Day-1-Aug-10");
 		artifactName = "863-Isha-Samskiriti-Krishna-Janmasti-Day-1-Aug-10";
 		Artifact artifact = new Artifact();
@@ -221,10 +238,10 @@ public class DefaultArtifactclassImpl implements Artifactclass{
 		System.out.println(artifact);
 		
 		artifactName = "ZG72_SGCknYT001555_How-To-Simplify-&-Declutter-Your-Life-Sadhguru_Kannada_16-Oct-2019";
-		System.out.println(ac.getArtifactAttributes(artifactName));
+		System.out.println(artifactName + "\n" + ac.getArtifactAttributes(artifactName) + "\n\n");
 		
 		artifactName = "ZR17_One-Drop-Of-Spirituality_Athur-Volunteers-Meet_29-Nov-2010_Edited-Files";
-		System.out.println(ac.getArtifactAttributes(artifactName));
+		System.out.println(artifactName + "\n" + ac.getArtifactAttributes(artifactName) + "\n\n");
 	}
 
 }

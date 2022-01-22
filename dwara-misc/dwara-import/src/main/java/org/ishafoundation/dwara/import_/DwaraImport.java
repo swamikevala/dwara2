@@ -350,8 +350,8 @@ public class DwaraImport {
 	}
 
 	private String massageFileName(String fileName) {
-		if(fileName.contains("\0"))
-			fileName = fileName.replace("\0", "");
+		if(fileName.contains("\0") || fileName.contains("\65534") || fileName.contains("\65535"))
+			fileName = fileName.replace("\\x00", "");
 		//fileName = StringEscapeUtils.escapeXml(fileName);
 		return fileName;
 	}

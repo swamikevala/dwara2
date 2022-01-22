@@ -1,5 +1,7 @@
 SET foreign_key_checks = 0; 
 
+use dwara_preprod; 
+
 update artifactclass set path_prefix = replace(path_prefix, '/dwara/', '/dwara-preprod/'); 
 
 -- change volume barcode sequences R -> S, G -> H, X -> W, E -> F
@@ -35,15 +37,15 @@ drop table artifact_sequence;
 drop table file_sequence;
 
 truncate artifact1;
-truncate artifact1_volume;
+truncate artifact_volume;
 truncate artifact2;
 truncate artifact2_volume;
 truncate artifact1_label;
 truncate file1;
-truncate file1_volume;
+truncate file_volume;
 truncate file2;
 truncate file2_volume;
-truncate file1_volume;
+truncate file_volume;
 truncate job;
 truncate jobrun;
 truncate request;
@@ -74,16 +76,16 @@ update job set group_volume_id = replace(group_volume_id, 'G', 'H');
 update job set group_volume_id = replace(group_volume_id, 'X', 'W');
 update job set group_volume_id = replace(group_volume_id, 'E', 'F');
 
-update artifact1_volume set volume_id = replace(volume_id, 'R', 'S');
-update artifact1_volume set volume_id = replace(volume_id, 'G', 'H');
-update artifact1_volume set volume_id = replace(volume_id, 'X', 'W');
-update artifact1_volume set volume_id = replace(volume_id, 'E', 'F');
+update artifact_volume set volume_id = replace(volume_id, 'R', 'S');
+update artifact_volume set volume_id = replace(volume_id, 'G', 'H');
+update artifact_volume set volume_id = replace(volume_id, 'X', 'W');
+update artifact_volume set volume_id = replace(volume_id, 'E', 'F');
 
 
-update file1_volume set volume_id = replace(volume_id, 'R', 'S');
-update file1_volume set volume_id = replace(volume_id, 'G', 'H');
-update file1_volume set volume_id = replace(volume_id, 'X', 'W');
-update file1_volume set volume_id = replace(volume_id, 'E', 'F');
+update file_volume set volume_id = replace(volume_id, 'R', 'S');
+update file_volume set volume_id = replace(volume_id, 'G', 'H');
+update file_volume set volume_id = replace(volume_id, 'X', 'W');
+update file_volume set volume_id = replace(volume_id, 'E', 'F');
 
 
 update t_file_volume set volume_id = replace(volume_id, 'R', 'S');
