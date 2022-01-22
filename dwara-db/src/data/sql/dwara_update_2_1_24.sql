@@ -6,6 +6,8 @@ INSERT INTO `volume` (`id`, `checksumtype`, `details`, `finalized`, `imported`, 
 INSERT INTO `volume` (`id`, `checksumtype`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `type`, `archiveformat_id`, `copy_id`) VALUES ('BA', 'sha256', '{\"blocksize\": 1048576, \"minimum_free_space\": 1099511627776}', 0, 1, 'block', 'tape', 'group', 'bru', '1');
 INSERT INTO `volume` (`id`, `checksumtype`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `type`, `archiveformat_id`, `copy_id`) VALUES ('PA', 'sha256', '{\"blocksize\": 1048576, \"minimum_free_space\": 1099511627776}', 0, 1, 'block', 'tape', 'group', 'bru', '1');
 
+UPDATE `sequence` SET `sequence_ref_id`='audio-grp' WHERE `id`='audio-priv3';
+
 -- Adding config for our very own Archives dept
 INSERT INTO `sequence` (`id`, `type`, `prefix`, `group`, `starting_number`, `ending_number`, `current_number`, `sequence_ref_id`) VALUES 
 ('dept-archives', 'artifact', 'BA', 0, 1, -1, 0, null);
