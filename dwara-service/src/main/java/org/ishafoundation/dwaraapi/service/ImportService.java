@@ -617,13 +617,13 @@ public class ImportService extends DwaraService {
 						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
 					}
 					else {
-						artifact = artifactDao.findByNameEndsWithAndArtifactclassSourceIsTrueAndDeletedIsFalse(artifactNameProposed);
+						artifact = artifactDao.findByNameEndsWithAndArtifactclassSourceIsTrueAndDeletedIsFalse("_" + artifactNameProposed);
 					}
 				
 					if(artifact != null) { 
 						// check if catalog artifactclass is same as existing artifact's artifactclass
 						if(!artifact.getArtifactclass().getId().equals(artifactclass.getId())) {
-							 String errMsg = "Different Artifactclasses for same artifact : ArtifactId " + artifact.getId() + " - " + artifactNameAsInCatalog + ". Expected - " + artifact.getArtifactclass().getId() + " Actual - " + artifactclass.getId();
+							 String errMsg = "Different Artifactclasses for same artifact : Existing ArtifactId " + artifact.getId() + ". Expected artifactclass - " + artifact.getArtifactclass().getId() + " Actual - " + artifactclass.getId();
 							 throw new Exception (errMsg);
 						}	
 						
