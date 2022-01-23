@@ -1,5 +1,17 @@
 SET foreign_key_checks = 0;
 
+-- wrong volume barcode used
+UPDATE `file_volume_diff` SET `volume_id`='C17027L7' WHERE `volume_id`='C17027L6';
+UPDATE `file_volume` SET `volume_id`='C17027L7' WHERE `volume_id`='C17027L6';
+UPDATE `artifact_volume` SET `volume_id`='C17027L7' WHERE `volume_id`='C17027L6';
+UPDATE `import` SET `volume_id`='C17027L7' WHERE `volume_id`='C17027L6';
+UPDATE `request` SET `details`='{\"body\": {\"xmlPathname\": \"/data/dwara/import-staging/todo/C17027L7.xml\"}}' WHERE `id` IN (SELECT `request_id` FROM `import` where `volume_id`='C17027L7');
+UPDATE `volume` SET `id`='C17027L7', `capacity`='6000000000000', `storagesubtype`='LTO-7', `finalized`=0, `first_written_at`='2020-05-06 00:00:00.000000' WHERE `id`='C17027L6';
+UPDATE `volume` SET `finalized`=0, `first_written_at`='2017-12-31 00:00:00.000000' WHERE `id`='C16139L6';
+UPDATE `volume` SET `finalized`=0, `first_written_at`='2020-05-16 00:00:00.000000' WHERE `id`='C17031L7';
+UPDATE `volume` SET `finalized`=0, `first_written_at`='2010-12-29 00:00:00.000000' WHERE `id`='CA4220L4';
+UPDATE `volume` SET `finalized`=0, `first_written_at`='2020-05-14 00:00:00.000000' WHERE `id`='P17023L6';
+
 -- new volume groups
 INSERT INTO `volume` (`id`, `checksumtype`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `type`, `archiveformat_id`, `copy_id`) VALUES ('B1', 'sha256', '{\"blocksize\": 1048576, \"minimum_free_space\": 1099511627776}', 0, 1, 'block', 'tape', 'group', 'bru', '1');
 INSERT INTO `volume` (`id`, `checksumtype`, `details`, `finalized`, `imported`, `storagelevel`, `storagetype`, `type`, `archiveformat_id`, `copy_id`) VALUES ('B2', 'sha256', '{\"blocksize\": 1048576, \"minimum_free_space\": 1099511627776}', 0, 1, 'block', 'tape', 'group', 'bru', '2');

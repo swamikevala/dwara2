@@ -891,6 +891,7 @@ public class ImportService extends DwaraService {
 	    ArrayList<org.ishafoundation.dwaraapi.db.model.transactional.File> toBeSavedFileList = new ArrayList<org.ishafoundation.dwaraapi.db.model.transactional.File>();
 	    ArrayList<FileVolume> toBeSavedFileVolumeList = new ArrayList<FileVolume>();
 	    ArrayList<String> junkFilepathnameList = new ArrayList<String>();
+	    Map<String, org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> filePathname_CatalogFileObj_Map = new HashMap<String, org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File>();
 		for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
 				
 			boolean fileChildOfJunkFolder = false;
@@ -911,7 +912,7 @@ public class ImportService extends DwaraService {
 				continue;
 			}
 			
-			String filePathname = nthFile.getName().replace(artifactNameAsInCatalog, toBeArtifactName);
+			String filePathname = StringUtils.replace(nthFile.getName(), artifactNameAsInCatalog, toBeArtifactName,1);
 			String linkName = null;
 			if(filePathname.contains(bruLinkSeparator)) {
 				linkName = StringUtils.substringAfter(filePathname, bruLinkSeparator);
@@ -921,10 +922,11 @@ public class ImportService extends DwaraService {
 				logger.trace("linkName "+ linkName);
 			}
 			
+			filePathname_CatalogFileObj_Map.put(filePathname, nthFile);
 			if(artifactclass.getConfig() != null) {
 				String pathnameRegex = artifactclass.getConfig().getPathnameRegex();
 				
-				String filePathnameMinusArtifactName = filePathname.replace(toBeArtifactName, "");
+				String filePathnameMinusArtifactName = StringUtils.replace(filePathname,toBeArtifactName, "",1);
 				if(StringUtils.isNotBlank(filePathnameMinusArtifactName)) { // artifact folder needed to be added - hence the notblank condition
 					if(filePathnameMinusArtifactName.startsWith(FilenameUtils.separatorsToUnix(File.separator))) {
 						filePathnameMinusArtifactName = filePathnameMinusArtifactName.substring(1);
@@ -1113,7 +1115,7 @@ public class ImportService extends DwaraService {
 		
 		FileMeta fm = null;
 		if(isToBeImportedVolumeMaster)
-			fm = calculateAndSetFolderSizes(artifact);
+			fm = calculateAndSetFolderSizes(artifact, filePathname_CatalogFileObj_Map);
     	
     	return fm;
 	}
@@ -1231,19 +1233,19 @@ public class ImportService extends DwaraService {
 	}
 	
 	
-	private FileMeta calculateAndSetFolderSizes(org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact) {	
-	    List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
-
+	private FileMeta calculateAndSetFolderSizes(org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact, Map<String, org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> filePathname_CatalogFileObj_Map) {	
+	    Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
+	    Set<String> filePathnames = filePathname_CatalogFileObj_Map.keySet();
+	    
 		// now lets calculate and collect subfolders size
-		Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
-		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : masterFileList) {
-			String nthFilepathname = nthFile.getPathname();
-			if(Boolean.TRUE.equals(nthFile.isDirectory())){
+	    for (String nthFilepathname : filePathnames) {
+	    	org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile = filePathname_CatalogFileObj_Map.get(nthFilepathname);
+			if(Boolean.TRUE.equals(nthFile.getDirectory())){
 				filePathnameVsSize_Map.put(nthFilepathname,0L);
 			}else {
 				String nthFileDirectoryName = FilenameUtils.getFullPathNoEndSeparator(nthFilepathname);
 	
-				for (String nthArtifactSubDirectory : filePathnameVsSize_Map.keySet()) {
+				for (String nthArtifactSubDirectory : filePathnameVsSize_Map.keySet()) { // iterating through folder within folders and recalculating all containing folders at all depths
 					if(nthFileDirectoryName.contains(nthArtifactSubDirectory)) {
 						Long size = filePathnameVsSize_Map.get(nthArtifactSubDirectory);
 						size += nthFile.getSize();
@@ -1254,8 +1256,9 @@ public class ImportService extends DwaraService {
 		}                 
 	
 		long artifactSize = 0L;
-		int fileCount = masterFileList.size();
+		int fileCount = filePathnames.size();
 		List<org.ishafoundation.dwaraapi.db.model.transactional.File> fileListToBeDbUpdated = new ArrayList<org.ishafoundation.dwaraapi.db.model.transactional.File>();
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
 		// now lets make use of the collected subfolder size 
 		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : masterFileList) {
 			if(Boolean.TRUE.equals(nthFile.isDirectory())){
