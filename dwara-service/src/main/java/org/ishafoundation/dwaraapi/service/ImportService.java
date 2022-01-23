@@ -875,10 +875,10 @@ public class ImportService extends DwaraService {
 	    // caching the file entries to avoid repeated queries...
 	    List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
 	    // collection to cache the file Objects
-	    Map<String, org.ishafoundation.dwaraapi.db.model.transactional.File> filePathname_FileObj_Map = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File>();
+	    Map<String, org.ishafoundation.dwaraapi.db.model.transactional.File> master_filePathname_FileObj_Map = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File>();
 	    for (org.ishafoundation.dwaraapi.db.model.transactional.File nthMasterFile : masterFileList) {
 	    	fileId_FileObj_Map.put(nthMasterFile.getId(), nthMasterFile);
-	    	filePathname_FileObj_Map.put(nthMasterFile.getPathname(), nthMasterFile);
+	    	master_filePathname_FileObj_Map.put(nthMasterFile.getPathname(), nthMasterFile);
 		}
 	    
 	    List<FileVolume> fileVolumeEntries = fileVolumeDao.findAllByIdVolumeId(volume.getId());
@@ -887,6 +887,9 @@ public class ImportService extends DwaraService {
 	    	fileId_FileVolumeObj_Map.put(nthFileVolume.getId().getFileId(), nthFileVolume);
 		}
 
+	    Map<String, DiffValues> filePathname_DiffValueToBeUsedForFileVolume_Map = new HashMap<String, DiffValues>();
+	    ArrayList<org.ishafoundation.dwaraapi.db.model.transactional.File> toBeSavedFileList = new ArrayList<org.ishafoundation.dwaraapi.db.model.transactional.File>();
+	    ArrayList<FileVolume> toBeSavedFileVolumeList = new ArrayList<FileVolume>();
 	    ArrayList<String> junkFilepathnameList = new ArrayList<String>();
 		for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
 				
@@ -933,10 +936,10 @@ public class ImportService extends DwaraService {
 				}
 			}
 			
-			byte[] filePathnameChecksum = ChecksumUtil.getChecksum(filePathname);
+			
 			org.ishafoundation.dwaraapi.db.model.transactional.File file = null;
 			if(artifactAlreadyExists) { // if artifactAlreadyExists - file would also exist already - copy / rerun scenario
-				file = filePathname_FileObj_Map.get(filePathname);// fileDao.findByPathnameChecksum(filePathnameChecksum); // filePathnameChecksum_FileObj_Map.get(filePathnameChecksum);
+				file = master_filePathname_FileObj_Map.get(filePathname);// fileDao.findByPathnameChecksum(filePathnameChecksum); // filePathnameChecksum_FileObj_Map.get(filePathnameChecksum);
 				// Maybe we should import oldest tapes first
 				// for eg., if P16539L6 is imported first followed by CA4485L4 which is the oldest of 2 then we would face this situation as
 				// sequence codes 6028/9 and 30 has differences in the file count...
@@ -984,6 +987,7 @@ public class ImportService extends DwaraService {
 	
 	
 				file.setPathname(filePathname);
+				byte[] filePathnameChecksum = ChecksumUtil.getChecksum(filePathname);
 				file.setPathnameChecksum(filePathnameChecksum);
 				file.setSize(nthFile.getSize()); // TODO Note junk file size is not reduced.
 				//file.setSymlinkFileId();
@@ -998,7 +1002,9 @@ public class ImportService extends DwaraService {
 					diffValueToBeUsedForFileVolume = DiffValues.a;
 					file.setDiff(diffValueToBeUsedForFileVolume);
 				}
-				file = fileDao.save(file);
+				
+				toBeSavedFileList.add(file);
+				// file = fileDao.save(file);
 				fileRecordsImportStatus.add(ImportStatus.completed);
 				logger.debug("File " + filePathname + "  created successfully");
 			}else { // file already in DB check if size differs
@@ -1028,56 +1034,75 @@ public class ImportService extends DwaraService {
 					}
 				}
 			}
-			
-			if(file == null) {
-				fileVolumeRecordsImportStatus.add(ImportStatus.failed);
+			filePathname_DiffValueToBeUsedForFileVolume_Map.put(filePathname, diffValueToBeUsedForFileVolume);
+			if(toBeSavedFileList.size() > 0)
+				fileDao.saveAll(toBeSavedFileList);
+	    }
+
+		Map<String, org.ishafoundation.dwaraapi.db.model.transactional.File> filePathname_FileObj_Map = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File>();
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> allFilesList = fileDao.findAllByArtifactId(artifact.getId());
+		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : allFilesList) {
+			filePathname_FileObj_Map.put(nthFile.getPathname(), nthFile);
+		}
+		
+		for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
+			String filePathname = nthFile.getName().replace(artifactNameAsInCatalog, toBeArtifactName);
+			if(filePathname.contains(bruLinkSeparator)) {
+				filePathname = StringUtils.substringBefore(filePathname, bruLinkSeparator);
+			}
+
+			org.ishafoundation.dwaraapi.db.model.transactional.File file = filePathname_FileObj_Map.get(filePathname);
+			if(file == null) // possibly a junk file not inserted to DB
+				continue;
+			DiffValues diffValueToBeUsedForFileVolume = filePathname_DiffValueToBeUsedForFileVolume_Map.get(filePathname);
+			FileVolume fileVolume = fileId_FileVolumeObj_Map.get(file.getId()); // fileVolumeDao.findByIdFileIdAndIdVolumeId(file.getId(), volume.getId());
+			if(fileVolume == null) {
+				/*
+				 * file1_volume
+				 *
+
+				  `file_id` int(11) NOT NULL,
+				  `archive_block` bigint(20) DEFAULT NULL, 
+				  `deleted` bit(1) DEFAULT NULL, *** - *** 0
+				  `encrypted` bit(1) DEFAULT NULL, *** - *** null
+				  `verified_at` datetime(6) DEFAULT NULL, *** - *** null
+				  `volume_start_block` int(11) DEFAULT NULL, *** - *** dynamic
+				  `volume_end_block` int(11) DEFAULT NULL, *** - *** dynamic
+				  `volume_id` varchar(255) COLLATE utf8mb4_unicode_520_ci NOT NULL, 
+				  `header_blocks` int(11) DEFAULT NULL, *** - *** null
+				  `hardlink_file_id` int(11) DEFAULT NULL, *** - *** null???
+				 */
+				fileVolume = new FileVolume(file.getId(), volume);// lets just let users use the util consistently
+				fileVolume.setArchiveBlock(nthFile.getArchiveblock());
+				fileVolume.setVolumeStartBlock(nthFile.getVolumeStartBlock());
+				fileVolume.setVolumeEndBlock(nthFile.getVolumeEndBlock());
+
+				//fileVolume.setHardlinkFileId(file.getId());
+				if(diffValueToBeUsedForFileVolume != null && !isToBeImportedVolumeMaster) {
+					fileVolume.setDiff(diffValueToBeUsedForFileVolume);
+					
+					if(diffValueToBeUsedForFileVolume == DiffValues.c) {
+						FileVolumeDiff fileVolumeDiff = new FileVolumeDiff(file.getId(), volume.getId());
+						fileVolumeDiff.setSize(nthFile.getSize());
+						fileVolumeDiffDao.save(fileVolumeDiff);
+					}
+				}
+					
+				toBeSavedFileVolumeList.add(fileVolume);
+				// fileVolumeDao.save(fileVolume);
+				fileVolumeRecordsImportStatus.add(ImportStatus.completed);
+				logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " record created successfully");
 			}
 			else {
-				FileVolume fileVolume = fileId_FileVolumeObj_Map.get(file.getId()); // fileVolumeDao.findByIdFileIdAndIdVolumeId(file.getId(), volume.getId());
-				if(fileVolume == null) {
-					/*
-					 * file1_volume
-					 *
-	
-					  `file_id` int(11) NOT NULL,
-					  `archive_block` bigint(20) DEFAULT NULL, 
-					  `deleted` bit(1) DEFAULT NULL, *** - *** 0
-					  `encrypted` bit(1) DEFAULT NULL, *** - *** null
-					  `verified_at` datetime(6) DEFAULT NULL, *** - *** null
-					  `volume_start_block` int(11) DEFAULT NULL, *** - *** dynamic
-					  `volume_end_block` int(11) DEFAULT NULL, *** - *** dynamic
-					  `volume_id` varchar(255) COLLATE utf8mb4_unicode_520_ci NOT NULL, 
-					  `header_blocks` int(11) DEFAULT NULL, *** - *** null
-					  `hardlink_file_id` int(11) DEFAULT NULL, *** - *** null???
-					 */
-					fileVolume = new FileVolume(file.getId(), volume);// lets just let users use the util consistently
-					fileVolume.setArchiveBlock(nthFile.getArchiveblock());
-					fileVolume.setVolumeStartBlock(nthFile.getVolumeStartBlock());
-					fileVolume.setVolumeEndBlock(nthFile.getVolumeEndBlock());
-	
-					//fileVolume.setHardlinkFileId(file.getId());
-					if(diffValueToBeUsedForFileVolume != null && !isToBeImportedVolumeMaster) {
-						fileVolume.setDiff(diffValueToBeUsedForFileVolume);
-						
-						if(diffValueToBeUsedForFileVolume == DiffValues.c) {
-							FileVolumeDiff fileVolumeDiff = new FileVolumeDiff(file.getId(), volume.getId());
-							fileVolumeDiff.setSize(nthFile.getSize());
-							fileVolumeDiffDao.save(fileVolumeDiff);
-						}
-					}
-						
-	
-					fileVolumeDao.save(fileVolume);
-					fileVolumeRecordsImportStatus.add(ImportStatus.completed);
-					logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " record created successfully");
-				}
-				else {
-					logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
-					fileVolumeRecordsImportStatus.add(ImportStatus.skipped);
-					// break; // This means this is a rerun scenario and so the rest of the files can be skipped....
-				}
+				logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
+				fileVolumeRecordsImportStatus.add(ImportStatus.skipped);
+				// break; // This means this is a rerun scenario and so the rest of the files can be skipped....
 			}
-	    }
+		}
+		
+		if(toBeSavedFileVolumeList.size() > 0)
+			fileVolumeDao.saveAll(toBeSavedFileVolumeList);
+
 		
 	    // update the extra files in DB but not in current catalog appropriately
 		dealExtraFilesInDBButNotInCatalog(fileId_FileObj_Map, masterVolume, isToBeImportedVolumeMaster);
