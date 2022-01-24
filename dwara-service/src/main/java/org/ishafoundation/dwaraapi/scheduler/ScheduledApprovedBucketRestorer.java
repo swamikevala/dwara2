@@ -39,7 +39,7 @@ private UserDao userDao;
     @Scheduled(cron ="0 0/5 * * * ?")
     public void restoreApproved() {
         List<TRestoreBucket> tRestoreBucketList = tRestoreBucketDao.findByApprovalStatus("approved");
-        System.out.println("Started restore Approver");
+        //System.out.println("Started restore Approver");
         for (TRestoreBucket tRestoreBucket : tRestoreBucketList) {
             RestoreUserRequest restoreUserRequest = new RestoreUserRequest();
             restoreUserRequest.setCopy(1);
@@ -53,12 +53,12 @@ private UserDao userDao;
                 fileIds.add(file.getFileID());
             }
             restoreUserRequest.setFileIds(fileIds);
-            System.out.println("File Id " +restoreUserRequest.getFileIds());
+           // System.out.println("File Id " +restoreUserRequest.getFileIds());
             restoreUserRequest.setFlow("restore-flow");
-            System.out.println("restoreUserRequest.Copy " +restoreUserRequest.getCopy());
+           // System.out.println("restoreUserRequest.Copy " +restoreUserRequest.getCopy());
             //System.out.println(restoreUserRequest.toString());
-            System.out.println("restoreUserRequest.DestinationPAth " +restoreUserRequest.getDestinationPath());
-            System.out.println("restoreUserRequest.OutputFolder " +restoreUserRequest.getOutputFolder());
+           // System.out.println("restoreUserRequest.DestinationPAth " +restoreUserRequest.getDestinationPath());
+            //System.out.println("restoreUserRequest.OutputFolder " +restoreUserRequest.getOutputFolder());
 
             RestoreResponse restoreResponse;
             try {

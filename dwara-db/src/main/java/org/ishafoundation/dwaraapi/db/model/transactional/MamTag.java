@@ -6,7 +6,7 @@ import javax.persistence.*;
 @Table(name ="mamtag")
 public class MamTag {
     @Id
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator = "t_file_sequence")
+    @GeneratedValue(strategy= GenerationType.SEQUENCE)
     @Column(name="id")
     private int id;
     private String name;

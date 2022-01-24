@@ -112,12 +112,12 @@ public class EmailerService {
                  message.setContent(mailBody, "text/html");
 
 
-                System.out.println("sending...");
+               // System.out.println("sending...");
 // Send message
                 Transport.send(message);
-                System.out.println("Sent message successfully....");
+                //System.out.println("Sent message successfully....");
             } catch (MessagingException mex) {
-                System.out.println(mex.getMessage());
+                //System.out.println(mex.getMessage());
             }
 
         }
@@ -156,24 +156,24 @@ public class EmailerService {
             FlagTerm unseenFlagTerm = new FlagTerm(seen, false);*/
             Message[] messages = inbox.getMessages();
             int messageCount = messages.length;
-            logger.info("Total Messages:- " + messageCount);
+            //logger.info("Total Messages:- " + messageCount);
             // inbox.getMessages();
 
-            System.out.println("-------------- Program scans for messages every 10 second ----------------");
+           // System.out.println("-------------- Program scans for messages every 10 second ----------------");
             boolean found = false;
             String dateSent="";
             for (int i = 0; i < messageCount; i++) {
                 Message message = messages[i];
-                System.out.println(message.getSubject());
-                System.out.println(message.getFrom()[0].toString());
+               // System.out.println(message.getSubject());
+               // System.out.println(message.getFrom()[0].toString());
                 Address from =message.getFrom()[0];
                 String fromEmail= from.toString().substring(from.toString().indexOf("<")+1,from.toString().indexOf(">"));
 
-                System.out.println(fromEmail);
+               // System.out.println(fromEmail);
                 //String extractedASD = extractASDFromSubject(message.getSubject());
                 if (checkBucketIdInSubject(message.getSubject(),bucketId) && fromEmail.equals(approver_email)) {
 
-                logger.info("Inside message");
+                //logger.info("Inside message");
 
                 originalMsg = getTextFromMessage(message).trim();
                 List<String> originalMsgArray =Arrays.asList( originalMsg.split("\n"));
@@ -202,9 +202,9 @@ public class EmailerService {
                     return dateSent;
                 }
 
-                System.out.println("Mail Subject:- " + message.getSubject());
+                //System.out.println("Mail Subject:- " + message.getSubject());
                // changeJiraStatus(extractedASD);
-                System.out.println("---------------------------------");
+                //System.out.println("---------------------------------");
 
             }}
 

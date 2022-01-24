@@ -54,9 +54,13 @@ public class RestoreBucketController {
 
     @PostMapping("/buckets")
     public ResponseEntity<TRestoreBucket> createBucket(@RequestBody Map<String,String> map){
-        TRestoreBucket tRestoreBucket =restoreBucketService.createBucket((String)map.get("id"));
-        return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucket);
-    }
+       try {
+           TRestoreBucket tRestoreBucket = restoreBucketService.createBucket((String) map.get("id"));
+           return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucket);
+       } catch(Exception e){
+            return ResponseEntity.status(HttpStatus.OK).body(null);
+           }
+       }
 
     @DeleteMapping("/buckets/{id}")
     public ResponseEntity deleteBucket(@PathVariable String id){
