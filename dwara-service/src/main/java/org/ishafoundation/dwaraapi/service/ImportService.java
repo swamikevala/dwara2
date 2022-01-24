@@ -1048,7 +1048,7 @@ public class ImportService extends DwaraService {
 		}
 		
 		for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
-			String filePathname = nthFile.getName().replace(artifactNameAsInCatalog, toBeArtifactName);
+			String filePathname = StringUtils.replace(nthFile.getName(), artifactNameAsInCatalog, toBeArtifactName,1);
 			if(filePathname.contains(bruLinkSeparator)) {
 				filePathname = StringUtils.substringBefore(filePathname, bruLinkSeparator);
 			}
