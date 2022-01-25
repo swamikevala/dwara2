@@ -354,8 +354,15 @@ public class FileService extends DwaraService{
     		if(fileFromDB == null) {
     			errorFileList.add(nthFileId + " is invalid");
     			hasErrors = true;
+    			continue;
     		} 
     		
+    		if(fileFromDB.isDeleted()) {
+    			errorFileList.add(nthFileId + " is deleted.");
+    			hasErrors = true;
+    			continue;
+    		} 
+    			
     		fileId_FileObj_Map.put(nthFileId, fileFromDB);
     		
     		// Getting the artifactname from artifactvolume as the artifact could have been softRenamed...
