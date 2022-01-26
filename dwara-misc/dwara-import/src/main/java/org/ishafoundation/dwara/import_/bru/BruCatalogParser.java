@@ -22,7 +22,12 @@ public class BruCatalogParser {
 		String bruArchiveId = null;
 		String volumeId = null;
 		List<BruFile> bruFileList = new ArrayList<>();
-		
+		Long fileCount = 0L;
+		// This is starting volume block of the entire tape. Some time it starts with 0 and some starts with -1
+		// e.g., -1 start === VL:c|0|1|136|-1|10751_21-Foot-Adiyogi_Face-And-Neck-Seperation-For-Packing_Helipad-Near-Chamundi-IYC_30-Aug-2014/ === PA4749L4_15-Oct-2016-16-36-45_15-Oct-2016-19-17-30
+		// e.g., 0 start === VL:c|0|1|102|0|1Day-Sathsang_The-Decorum-London_13-March-10_Session1-Cam1/ === CA4065L4_02-Jun-2010-04-55-55_02-Jun-2010-07-28-39
+		int startVolumeBlock = 0;  
+		 
 		LineIterator it = FileUtils.lineIterator(bruCatalogFile, "UTF-8");
 		while (it.hasNext()) {
 			String line = it.nextLine();
@@ -39,7 +44,6 @@ public class BruCatalogParser {
 				}
 			}			
 			if (line.contains("VL:c")) {
-	
 				String[] arrValues = line.split("\\|");
 				BruFile b = new BruFile();
 				if (arrValues[0].equals("VL:c")) {
@@ -51,7 +55,11 @@ public class BruCatalogParser {
 						temp = temp.replace("./", "");
 					}
 	
-					b.startVolumeBlock = Long.parseLong(arrValues[4]) + 1;
+					
+					if(fileCount == 0)
+						startVolumeBlock = Integer.parseInt(arrValues[4]);
+					
+					b.startVolumeBlock = Long.parseLong(arrValues[4]) + (startVolumeBlock == -1 ? 1 : 0);
 					b.size = Long.parseLong(arrValues[3]);
 	
 					if (!temp.contains("/")) {
@@ -78,7 +86,10 @@ public class BruCatalogParser {
 					b.archiveId = "";
 	
 					bruFileList.add(b);
+						
+					fileCount++;
 				}
+
 			}
 		}
 		LineIterator.closeQuietly(it);
@@ -87,6 +98,7 @@ public class BruCatalogParser {
 		brc.setArchiveId(bruArchiveId);
 		brc.setVolumeId(volumeId);
 		brc.setBruFileList(bruFileList);
+		
 		return brc;
 	}
 }
