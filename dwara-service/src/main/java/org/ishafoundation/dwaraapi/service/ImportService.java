@@ -9,7 +9,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -78,7 +77,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -512,7 +510,6 @@ public class ImportService extends DwaraService {
 		volume.setCapacity(storagesubtypeImpl.getCapacity());
 		
 		Location location = volume.getGroupRef().getCopy().getLocation(); // configurationTablesUtil.getDefaultLocation(); // setting to default location
-		logger.trace(volume.getGroupRef().getId() + ":" + volume.getGroupRef().getCopy().getId() + ":" + location.getId());
 		volume.setLocation(location);
 
 		// Inherited from group
@@ -607,6 +604,8 @@ public class ImportService extends DwaraService {
 					String prevSeqCode = am.getPrevSequenceCode();
 					String sequenceCode =  am.getSequenceCode();
 					String artifactNameMinusSequence = am.getArtifactNameMinusSequence();
+					
+					logger.trace("toBeArtifactName - " + toBeArtifactName + " prevSeqCode - " + prevSeqCode + " sequenceCode - " + sequenceCode + " artifactNameMinusSequence - " + artifactNameMinusSequence);
 //					We are doing this on the custom class by figuring out all the missing sequencecodes one and assigning them some values or generating new sequence - check DefaultArtifactclassImpl custom Artifactclass 
 //					if(sequenceCode == null) {
 //						throw new Exception("Missing expected code : " + artifactNameProposed);
@@ -619,9 +618,9 @@ public class ImportService extends DwaraService {
 						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
 					}
 					else {
-						List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactByNameList = artifactDao.findAllByNameEndsWithAndArtifactclassSourceIsTrueAndDeletedIsFalse(artifactNameProposed);
+						List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactByNameList = artifactDao.findAllByNameEndsWithAndArtifactclassSourceIsTrueAndDeletedIsFalse(artifactNameMinusSequence);
 						for (org.ishafoundation.dwaraapi.db.model.transactional.Artifact nthArtifactByName : artifactByNameList) {
-							logger.trace("nthArtifactByName.getName() " + nthArtifactByName.getName() + ": artifactNameMinusSequence - " + artifactNameMinusSequence);
+							logger.trace("nthArtifactByName.getName() - " + nthArtifactByName.getName() + ": artifactNameMinusSequence - " + artifactNameMinusSequence);
 							if(StringUtils.substringAfter(nthArtifactByName.getName(),"_").equals(artifactNameMinusSequence)) {
 								artifact = nthArtifactByName;
 								logger.trace(artifact.getId()+"");
