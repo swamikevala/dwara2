@@ -301,7 +301,7 @@ public class DwaraImport {
 				
 				// if the artifact is a file reset the artifact as non-directory
 				if(fileList.size() == 1)
-					fileList.get(0).setDirectory(false);
+					fileList.get(0).setDirectory(null);
 				artifact.setFile(fileList);
 				
 				//errorList.addAll(basicArtifactValidator.validateFileCount(fileList.size()));
