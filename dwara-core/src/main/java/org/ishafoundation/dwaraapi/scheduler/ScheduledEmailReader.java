@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -76,15 +78,19 @@ public class ScheduledEmailReader {
                 String sendUrlTemplate= UriComponentsBuilder.fromHttpUrl(sendUrl)
                         .queryParam("concernedEmail" , requesterEmail )
                         .queryParam("subject","Need Approval for project: _"+tRestoreBucket.getId()+"_")
-                        .queryParam("emailBody", emailBody)
                         .encode()
                         .toUriString();
                 /*emailerService.setConcernedEmail(requesterEmail);
                // logger.info(requesterEmail);
                 emailerService.setSubject("Need Approval for project: _"+tRestoreBucket.getId()+"_");
                 emailerService.sendEmail(emailBody);*/
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("X-COM-PERSIST", "true");
+                headers.set("X-COM-LOCATION", "USA");
+
+                HttpEntity<String> request = new HttpEntity<>(emailBody, headers);
                 ResponseEntity<String> response1
-                        = restTemplate.getForEntity( sendUrlTemplate, String.class);
+                        = restTemplate.postForEntity( sendUrlTemplate,request, String.class);
                 }
 
         }

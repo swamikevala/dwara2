@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -213,14 +215,20 @@ public class RestoreBucketService extends DwaraService {
 		String sendUrlTemplate= UriComponentsBuilder.fromHttpUrl(sendUrl)
 				.queryParam("concernedEmail" , tRestoreBucket.getApproverEmail() )
 				.queryParam("subject","Need Approval for project: _"+tRestoreBucket.getId()+"_. Priority: "+ tRestoreBucket.getPriority())
-				.queryParam("emailBody", emailBody)
+
 				.queryParam("requesterEmail" , requester.getEmail())
 				.encode()
 				.toUriString();
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("X-COM-PERSIST", "true");
+		headers.set("X-COM-LOCATION", "USA");
 
+		HttpEntity<String> request = new HttpEntity<>(emailBody, headers);
 		ResponseEntity<String> response1
-				= restTemplate.getForEntity( sendUrlTemplate, String.class);
+				= restTemplate.postForEntity( sendUrlTemplate,request, String.class);
 	}
+
+
 
 
 	public String getElapsedTime(LocalDateTime createdTime){
