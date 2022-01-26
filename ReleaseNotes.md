@@ -3,6 +3,10 @@
 ### Bug fixes
 1) Import
 
+2) Restore report
+
+3) Restore private content
+
 ### Upgrade steps
 
 1) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_24.sql)
