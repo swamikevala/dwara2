@@ -192,8 +192,8 @@ public class RestoreBucketService extends DwaraService {
 	}
 
 	public void sendMail(TRestoreBucket tRestoreBucket) {
-		//String sendUrl= "http://localhost:9090/dwarahelper/sendEmail";
-		String sendUrl= "http://localhost:9090/dwarahelper/sendEmail";
+		// String sendUrl= "http://localhost:9090/dwarahelper/sendEmail";
+		String sendUrl= "http://172.18.1.24:9090/dwarahelper/sendEmail";
 		String emailBody = "<p>Namaskaram</p>";
 		User requester= userDao.findById(tRestoreBucket.getRequestedBy()).get();
         String requesterName= requester.getName();

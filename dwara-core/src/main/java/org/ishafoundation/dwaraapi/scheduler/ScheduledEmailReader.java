@@ -41,9 +41,9 @@ public class ScheduledEmailReader {
     @Scheduled(cron ="0 0/5 * * * ?")
     public void readEmail(){
         //hoe to find by approvestatus can't take input
-           /* String sendUrl= "http://localhost:9090/dwarahelper/sendEmail";
-            String readUrl ="http://localhost:9090/dwarahelper/readEmail";*/
-         String sendUrl= "http://172.18.1.24:9090/dwarahelper/sendEmail";
+        // String sendUrl= "http://localhost:9090/dwarahelper/sendEmail";
+        // String readUrl ="http://localhost:9090/dwarahelper/readEmail";
+        String sendUrl= "http://172.18.1.24:9090/dwarahelper/sendEmail";
         String readUrl ="http://172.18.1.24:9090/dwarahelper/readEmail";
 
 
