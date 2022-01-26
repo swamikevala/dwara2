@@ -8,7 +8,7 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 
 public interface ClipTagDao extends CrudRepository<ClipTag,Integer>{
-    List<ClipTag> findByTagIdIn(List<Integer> tagIds);
+    List<ClipTag> findByMamtagIdIn(List<Integer> tagIds);
     List<ClipTag> findAllByClipId(int clipId);
 }
 
