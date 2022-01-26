@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -509,9 +510,8 @@ public class ImportService extends DwaraService {
 		
 		AbstractStoragesubtype storagesubtypeImpl = storagesubtypeMap.get(storagesubtype);
 		volume.setCapacity(storagesubtypeImpl.getCapacity());
-	
-		// setting to default location
-		Location location = configurationTablesUtil.getDefaultLocation();
+		
+		Location location = volume.getGroupRef().getCopy().getLocation(); // configurationTablesUtil.getDefaultLocation(); // setting to default location
 		volume.setLocation(location);
 
 		// Inherited from group
@@ -605,6 +605,7 @@ public class ImportService extends DwaraService {
 					toBeArtifactName = am.getArtifactName();
 					String prevSeqCode = am.getPrevSequenceCode();
 					String sequenceCode =  am.getSequenceCode();
+					String artifactNameMinusSequence = am.getArtifactNameMinusSequence();
 //					We are doing this on the custom class by figuring out all the missing sequencecodes one and assigning them some values or generating new sequence - check DefaultArtifactclassImpl custom Artifactclass 
 //					if(sequenceCode == null) {
 //						throw new Exception("Missing expected code : " + artifactNameProposed);
@@ -617,7 +618,12 @@ public class ImportService extends DwaraService {
 						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
 					}
 					else {
-						artifact = artifactDao.findByNameEndsWithAndArtifactclassSourceIsTrueAndDeletedIsFalse("_" + artifactNameProposed);
+						List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactByNameList = artifactDao.findAllByNameEndsWithAndArtifactclassSourceIsTrueAndDeletedIsFalse(artifactNameProposed);
+						for (org.ishafoundation.dwaraapi.db.model.transactional.Artifact nthArtifactByName : artifactByNameList) {
+							if(StringUtils.substringAfter(nthArtifactByName.getName(),"_").equals(artifactNameMinusSequence)) {
+								artifact = nthArtifactByName;
+							}
+						}
 					}
 				
 					if(artifact != null) { 
@@ -1236,9 +1242,11 @@ public class ImportService extends DwaraService {
 	private FileMeta calculateAndSetFolderSizes(org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact, Map<String, org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> filePathname_CatalogFileObj_Map) {	
 	    Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
 	    Set<String> filePathnames = filePathname_CatalogFileObj_Map.keySet();
+	    Set<String> filePathnamesSorted = new TreeSet<String>();
+	    filePathnamesSorted.addAll(filePathnames);
 	    
 		// now lets calculate and collect subfolders size
-	    for (String nthFilepathname : filePathnames) {
+	    for (String nthFilepathname : filePathnamesSorted) {
 	    	org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile = filePathname_CatalogFileObj_Map.get(nthFilepathname);
 			if(Boolean.TRUE.equals(nthFile.getDirectory())){
 				filePathnameVsSize_Map.put(nthFilepathname,0L);

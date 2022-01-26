@@ -1,10 +1,12 @@
 package org.ishafoundation.dwaraapi.artifact;
 
 public class ArtifactMeta {
+	
 	private String artifactName = null;
 	private String sequenceCode =  null;
 	private String prevSequenceCode =  null;
-
+	private String artifactNameMinusSequence = null;
+	
 	public String getArtifactName() {
 		return artifactName;
 	}
@@ -22,5 +24,11 @@ public class ArtifactMeta {
 	}
 	public void setPrevSequenceCode(String prevSequenceCode) {
 		this.prevSequenceCode = prevSequenceCode;
+	}
+	public String getArtifactNameMinusSequence() {
+		return artifactNameMinusSequence;
+	}
+	public void setArtifactNameMinusSequence(String artifactNameMinusSequence) {
+		this.artifactNameMinusSequence = artifactNameMinusSequence;
 	}
 }

@@ -40,5 +40,5 @@ public interface ArtifactDao extends CrudRepository<Artifact,Integer> {
 
 	Artifact findBySequenceCodeAndDeletedIsFalseAndArtifactclassId(String sequenceCode, String sequenceId);
 
-	Artifact findByNameEndsWithAndArtifactclassSourceIsTrueAndDeletedIsFalse(String artifactNameProposed);
+	List<Artifact> findAllByNameEndsWithAndArtifactclassSourceIsTrueAndDeletedIsFalse(String artifactNameProposed);
 }

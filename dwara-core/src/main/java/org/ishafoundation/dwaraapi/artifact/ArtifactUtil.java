@@ -64,14 +64,13 @@ public class ArtifactUtil {
 
 		boolean keepCode = Boolean.TRUE.equals(artifactAttributes.getKeepCode());
 		boolean replaceCode = Boolean.TRUE.equals(artifactAttributes.getReplaceCode());
-		
+
+		String artifactNameMinusSequence = matchCode != null ? artifactName.replace(matchCode, "") : artifactName;
 		String toBeArtifactName = null;
-		String extractedCodeFromProposedArtifactName = StringUtils.substringBefore(artifactName, "_");
-		
 		String sequenceCode =  null;
 		
 		if(keepCode) {
-			sequenceCode = extractedCodeFromProposedArtifactName;
+			sequenceCode = StringUtils.substringBefore(artifactName, "_");
 			toBeArtifactName = artifactName; // retaining the same name
 			previousCode = null;
 		}
@@ -92,6 +91,7 @@ public class ArtifactUtil {
 		am.setArtifactName(toBeArtifactName);
 		am.setSequenceCode(sequenceCode);				
 		am.setPrevSequenceCode(previousCode);
+		am.setArtifactNameMinusSequence(artifactNameMinusSequence);
 		
 		if(sequenceCode == null) {
 			if(generateSequence) {
