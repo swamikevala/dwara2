@@ -648,8 +648,8 @@ public class ImportService extends DwaraService {
 						} else {
 							// even if artifact extracted code matches - double check for name - and if name differs flag it
 							String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
-							if(!artifactNameProposed.equals(artifactNameShavedOffPrefix)) {
-								String errMsg = "Different codes but same artifact name : ArtifactId - " + artifact.getId() + " - " + artifactNameProposed + ". Expected code - " + artifact.getSequenceCode() + " Actual - " + sequenceCode;//(prevSeqCode != null ? prevSeqCode : sequenceCode);
+							if(!artifactNameMinusSequence.equals(artifactNameShavedOffPrefix)) {
+								String errMsg = "Different codes but same artifact name : ArtifactId - " + artifact.getId() + " - " + artifactNameMinusSequence + ". Expected code - " + artifact.getSequenceCode() + " Actual - " + sequenceCode;//(prevSeqCode != null ? prevSeqCode : sequenceCode);
 								throw new Exception (errMsg);
 							}
 						}
