@@ -11,6 +11,7 @@ import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TRestoreBucketDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.RestoreBucketFile;
@@ -189,9 +190,11 @@ public class RestoreBucketService extends DwaraService {
 	}
 
 	public void sendMail(TRestoreBucket tRestoreBucket) {
-		String sendUrl= "http://localhost:9090/dwarahelper/sendEmail";
+		//String sendUrl= "http://localhost:9090/dwarahelper/sendEmail";
+		String sendUrl= "http://172.18.1.24:9090/dwarahelper/sendEmail";
 		String emailBody = "<p>Namaskaram</p>";
-        String requesterName= userDao.findById(tRestoreBucket.getRequestedBy()).get().getName();
+		User requester= userDao.findById(tRestoreBucket.getRequestedBy()).get();
+        String requesterName= requester.getName();
         emailBody += "<p>A private request has been raised by"+requesterName+"</p>";
         emailBody += "<p>The following folders in <span style='color:red'>red</span> need your approval.</p>";
 		List<String> fileName = new ArrayList<>();
@@ -211,7 +214,7 @@ public class RestoreBucketService extends DwaraService {
 				.queryParam("concernedEmail" , tRestoreBucket.getApproverEmail() )
 				.queryParam("subject","Need Approval for project: _"+tRestoreBucket.getId()+"_. Priority: "+ tRestoreBucket.getPriority())
 				.queryParam("emailBody", emailBody)
-				.queryParam("requesterEmail" , requesterName)
+				.queryParam("requesterEmail" , requester.getEmail())
 				.encode()
 				.toUriString();
 
