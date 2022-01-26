@@ -1,3 +1,13 @@
+# Dwara App Version - 2.1.36 (26th Jan 2022)
+
+### Bug fixes
+1) Import
+
+### Upgrade steps
+
+1) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_24.sql)
+
+
 # Dwara App Version - 2.1.35 (6th Jan 2022)
 ### New features
 
@@ -6,6 +16,10 @@
 ### Bug fixes
 
 1) Download tape catalog
+
+### Upgrade steps
+
+1) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_23.sql)
 
 
 # Dwara App Version - 2.1.34 (3rd Dec 2021)
