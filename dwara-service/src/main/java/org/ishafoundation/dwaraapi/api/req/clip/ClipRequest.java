@@ -5,6 +5,15 @@ import java.util.List;
 public class ClipRequest {
     String type;
     List<String> keyWords;
+    String operator;
+
+    public String getOperator() {
+        return operator;
+    }
+
+    public void setOperator(String operator) {
+        this.operator = operator;
+    }
 
     public String getType() {
         return type;

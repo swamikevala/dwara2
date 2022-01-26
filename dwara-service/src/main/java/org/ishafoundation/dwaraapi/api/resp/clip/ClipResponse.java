@@ -3,9 +3,10 @@ package org.ishafoundation.dwaraapi.api.resp.clip;
 import java.util.List;
 
 public class ClipResponse {
+
+
     String proxyPath;
     List<String> tagList;
-    String artifactName;
     int clipId;
     String clipName;
 
@@ -25,13 +26,6 @@ public class ClipResponse {
         this.tagList = tagList;
     }
 
-    public String getArtifactName() {
-        return artifactName;
-    }
-
-    public void setArtifactName(String artifactName) {
-        this.artifactName = artifactName;
-    }
 
     public int getClipId() {
         return clipId;

@@ -132,6 +132,7 @@ public class RestoreBucketController {
         }
         return ResponseEntity.status(HttpStatus.OK).body(restoreBucketResponses);
     }
+
     @PutMapping("/bucket/approval")
     public ResponseEntity<TRestoreBucket> getApproval(@RequestBody TRestoreBucket tRestoreBucket){
         TRestoreBucket tRestoreBucketFromDb = tRestoreBucketDao.findById(tRestoreBucket.getId()).get();

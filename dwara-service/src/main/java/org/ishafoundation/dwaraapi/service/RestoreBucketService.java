@@ -11,6 +11,7 @@ import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TRestoreBucketDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.RestoreBucketFile;
@@ -18,7 +19,13 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 public class RestoreBucketService extends DwaraService {
@@ -33,7 +40,11 @@ public class RestoreBucketService extends DwaraService {
 	EmailerService emailerService;
     @Autowired
     UserDao userDao;
+	RestTemplate restTemplate;
 
+	public RestoreBucketService(RestTemplateBuilder restTemplateBuilder) {
+		this.restTemplate = restTemplateBuilder.build();
+	}
 	public TRestoreBucket createBucket(String id) {
 		int createdBy = getUserObjFromContext().getId();
 		TRestoreBucket tRestoreBucket = new TRestoreBucket(id, createdBy, LocalDateTime.now());
@@ -181,9 +192,12 @@ public class RestoreBucketService extends DwaraService {
 	}
 
 	public void sendMail(TRestoreBucket tRestoreBucket) {
+		// String sendUrl= "http://localhost:9090/dwarahelper/sendEmail";
+		String sendUrl= "http://172.18.1.24:9090/dwarahelper/sendEmail";
 		String emailBody = "<p>Namaskaram</p>";
-        String requesterName= userDao.findById(tRestoreBucket.getRequestedBy()).get().getName();
-        emailBody += "<p>A private request has been raised by"+requesterName+"</p>";
+		User requester= userDao.findById(tRestoreBucket.getRequestedBy()).get();
+        String requesterName= requester.getName();
+        emailBody += "<p>A private request has been raised by "+requesterName+"</p>";
         emailBody += "<p>The following folders in <span style='color:red'>red</span> need your approval.</p>";
 		List<String> fileName = new ArrayList<>();
 		for (RestoreBucketFile file : tRestoreBucket.getDetails()) {
@@ -193,12 +207,30 @@ public class RestoreBucketService extends DwaraService {
             }
             emailBody +="<div style='"+css+"'> "+ file.getFilePathName()  +"</div>";
 		}
-		emailBody += "<p>Please reply with <b><approved></b> if you wish to approve </p>";
-		emailerService.setConcernedEmail(tRestoreBucket.getApproverEmail());
+		emailBody += "<p>Please reply with <b>approved</b> if you wish to approve </p>";
+		/*emailerService.setConcernedEmail(tRestoreBucket.getApproverEmail());
         emailerService.setSubject("Need Approval for project: _"+tRestoreBucket.getId()+"_. Priority: "+ tRestoreBucket.getPriority());
         emailerService.setRequesterEmail(requesterName);
-		emailerService.sendEmail(emailBody);
+		emailerService.sendEmail(emailBody);*/
+		String sendUrlTemplate= UriComponentsBuilder.fromHttpUrl(sendUrl)
+				.queryParam("concernedEmail" , tRestoreBucket.getApproverEmail() )
+
+				.queryParam("requesterEmail" , requester.getEmail())
+				.encode()
+				.toUriString();
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("X-COM-PERSIST", "true");
+		headers.set("X-COM-LOCATION", "USA");
+		List<String> emailArguments= new ArrayList<>();
+		emailArguments.add("Need Approval for project: _"+tRestoreBucket.getId()+"_. Priority: "+ tRestoreBucket.getPriority());
+		emailArguments.add(emailBody);
+		HttpEntity<List<String>> request = new HttpEntity<>(emailArguments, headers);
+		ResponseEntity<String> response1
+				= restTemplate.postForEntity( sendUrlTemplate,request, String.class);
 	}
+
+
+
 
 	public String getElapsedTime(LocalDateTime createdTime){
 
