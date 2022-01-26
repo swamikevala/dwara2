@@ -65,7 +65,7 @@ public class ArtifactUtil {
 		boolean keepCode = Boolean.TRUE.equals(artifactAttributes.getKeepCode());
 		boolean replaceCode = Boolean.TRUE.equals(artifactAttributes.getReplaceCode());
 
-		String artifactNameMinusSequence = matchCode != null ? artifactName.replace(matchCode, "") : artifactName;
+		String artifactNameMinusSequence = matchCode != null ? artifactName.replace(matchCode + "_", "") : artifactName;
 		String toBeArtifactName = null;
 		String sequenceCode =  null;
 		
