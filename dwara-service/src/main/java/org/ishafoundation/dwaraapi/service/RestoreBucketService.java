@@ -193,11 +193,11 @@ public class RestoreBucketService extends DwaraService {
 
 	public void sendMail(TRestoreBucket tRestoreBucket) {
 		//String sendUrl= "http://localhost:9090/dwarahelper/sendEmail";
-		String sendUrl= "http://172.18.1.24:9090/dwarahelper/sendEmail";
+		String sendUrl= "http://localhost:9090/dwarahelper/sendEmail";
 		String emailBody = "<p>Namaskaram</p>";
 		User requester= userDao.findById(tRestoreBucket.getRequestedBy()).get();
         String requesterName= requester.getName();
-        emailBody += "<p>A private request has been raised by"+requesterName+"</p>";
+        emailBody += "<p>A private request has been raised by "+requesterName+"</p>";
         emailBody += "<p>The following folders in <span style='color:red'>red</span> need your approval.</p>";
 		List<String> fileName = new ArrayList<>();
 		for (RestoreBucketFile file : tRestoreBucket.getDetails()) {
@@ -207,7 +207,7 @@ public class RestoreBucketService extends DwaraService {
             }
             emailBody +="<div style='"+css+"'> "+ file.getFilePathName()  +"</div>";
 		}
-		emailBody += "<p>Please reply with <b><approved></b> if you wish to approve </p>";
+		emailBody += "<p>Please reply with <b>approved</b> if you wish to approve </p>";
 		/*emailerService.setConcernedEmail(tRestoreBucket.getApproverEmail());
         emailerService.setSubject("Need Approval for project: _"+tRestoreBucket.getId()+"_. Priority: "+ tRestoreBucket.getPriority());
         emailerService.setRequesterEmail(requesterName);
