@@ -1,6 +1,6 @@
-package org.isha.dwaraimport;
+package org.ishafoundation.dwara.import_.bru;
 
-public class BruData {
+public class BruFile {
     public long size;
     public String name;
     public String category;
@@ -15,11 +15,10 @@ public class BruData {
     public String artifactName;
 	public String sequenceCode;
 	public String prevSequenceCode;
-    public Long totalSize;
     
     public String toString() {
         return "name: " + name + ", category: " + category + ",size: " + size + ", startVolumeBlock: " + startVolumeBlock + "archiveBlock: " + archiveBlock + ", archiveId: " + archiveId +
         ", isDirectory: " + isArtifact + ", numFiles: " + numFiles + ", endVolumeBlock: " + endVolumeBlock + ", artifactName: " + artifactName + ", prevSequence: "
-        + prevSequenceCode + ", sequenceCode: " + sequenceCode + ", totalSize: " + totalSize;
+        + prevSequenceCode + ", sequenceCode: " + sequenceCode;
     }
 }

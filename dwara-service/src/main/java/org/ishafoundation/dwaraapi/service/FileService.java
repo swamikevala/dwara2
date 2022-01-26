@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -38,7 +39,6 @@ import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.job.JobCreator;
-import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,10 +73,8 @@ public class FileService extends DwaraService{
 	
 	@Autowired
 	private TFileDao tfileDao; 
-	
-	@Autowired
-	private Restore restoreStorageTask;
 
+	private Pattern allowedChrsInOutputFolderPattern = Pattern.compile("[\\w-]*");
 	
 	@Deprecated
 //	public List<File> list(List<Integer> fileIds){
@@ -171,6 +169,10 @@ public class FileService extends DwaraService{
     	
     	if(fileIds.size() == 0)
     		throw new Exception("Invalid request.  No File Id passed");
+    	
+    	
+    	if(!allowedChrsInOutputFolderPattern.matcher(outputFolder).matches())
+    		throw new Exception("Output folder has unsupported characters");
     	
     	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File>();
     	validate(fileIds, copyNumber != null ? copyNumber : 1, destinationPath, outputFolder, fileId_FileObj_Map);
@@ -352,8 +354,15 @@ public class FileService extends DwaraService{
     		if(fileFromDB == null) {
     			errorFileList.add(nthFileId + " is invalid");
     			hasErrors = true;
+    			continue;
     		} 
     		
+    		if(fileFromDB.isDeleted()) {
+    			errorFileList.add(nthFileId + " is deleted.");
+    			hasErrors = true;
+    			continue;
+    		} 
+    			
     		fileId_FileObj_Map.put(nthFileId, fileFromDB);
     		
     		// Getting the artifactname from artifactvolume as the artifact could have been softRenamed...

@@ -1,4 +1,4 @@
-package org.isha.dwaraimport;
+package org.ishafoundation.dwara.import_;
 
 import java.io.File;
 import java.io.FileFilter;

@@ -72,10 +72,10 @@ public class Volume {
 	@Column(name="checksumtype")
 	private Checksumtype checksumtype;
 	
-	@Column(name="initialized_at")
+	@Column(name="first_written_at")
 	private LocalDateTime initializedAt;
 
-	@Column(name="finalized_at")
+	@Column(name="last_written_at")
 	private LocalDateTime finalizedAt;
 	
 	@Column(name="finalized")

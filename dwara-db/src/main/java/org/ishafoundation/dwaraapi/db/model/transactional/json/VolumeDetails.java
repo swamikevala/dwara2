@@ -18,8 +18,6 @@ public class VolumeDetails {
 	private Boolean removeAfterJob; // Set this for tapes which should be removed from the autoloader as soon as any job is completed. Used for managing the security of tapes that hold confidential data.
 	@JsonProperty("minimum_free_space")
 	private Long minimumFreeSpace; 
-	@JsonProperty("written_at")
-	private String writtenAt; 
 	
 	public Boolean getBarcoded() {
 		return barcoded;
@@ -62,12 +60,6 @@ public class VolumeDetails {
 	}
 	public void setMinimumFreeSpace(Long minimumFreeSpace) {
 		this.minimumFreeSpace = minimumFreeSpace;
-	}
-	public String getWrittenAt() {
-		return writtenAt;
-	}
-	public void setWrittenAt(String writtenAt) {
-		this.writtenAt = writtenAt;
 	}
 	// TODO : equals and hashCode
 }

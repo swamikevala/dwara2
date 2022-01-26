@@ -196,15 +196,15 @@ public class CatalogService extends DwaraService{
             condition += ")";
         }
         if(startDate != "")
-            condition += " and a.finalized_at >= '" + startDate + "'";
+            condition += " and a.last_written_at >= '" + startDate + "'";
         if(endDate != "")
-            condition += " and a.finalized_at <= '" + endDate + "'";
-        String query = "select group_concat(distinct c.artifactclass_id order by c.artifactclass_id separator ','), a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.initialized_at, a.capacity, a.imported, a.finalized, a.healthstatus, a.lifecyclestage, a.finalized_at, a.used_capacity" 
+            condition += " and a.last_written_at <= '" + endDate + "'";
+        String query = "select group_concat(distinct c.artifactclass_id order by c.artifactclass_id separator ','), a.group_ref_id, a.id, a.archiveformat_id, a.location_id, a.first_written_at, a.capacity, a.imported, a.finalized, a.healthstatus, a.lifecyclestage, a.last_written_at, a.used_capacity" 
         + " from volume a join artifact_volume b join artifact c"
         + " where a.id = b.volume_id and b.artifact_id = c.id"
         + condition
         + " group by a.id"
-        + " order by a.finalized_at desc";
+        + " order by a.last_written_at desc";
         Query q = entityManager.createNativeQuery(query);
         // logger.info("mysql query: " + query);
         List<Object[]> results = q.getResultList();

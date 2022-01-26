@@ -1,7 +1,9 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -14,19 +16,23 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
 import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamWriter;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
+import org.ishafoundation.dwaraapi.api.req._import.SetSequenceImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
+import org.ishafoundation.dwaraapi.artifact.ArtifactAttributes;
+import org.ishafoundation.dwaraapi.artifact.ArtifactMeta;
+import org.ishafoundation.dwaraapi.artifact.ArtifactUtil;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
@@ -36,7 +42,6 @@ import org.ishafoundation.dwaraapi.db.dao.transactional._import.jointables.FileV
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ImportDao;
-import org.ishafoundation.dwaraapi.db.keys.ImportKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Sequence;
@@ -49,7 +54,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
-import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.DiffValues;
@@ -73,6 +77,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -117,9 +122,9 @@ public class ImportService extends DwaraService {
 	
 	@Autowired
 	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
-	
+		
 	@Autowired
-	protected SequenceUtil sequenceUtil;
+	private ArtifactUtil artifactUtil;
 	
 	@Autowired
 	private BasicArtifactValidator basicArtifactValidator;
@@ -130,11 +135,11 @@ public class ImportService extends DwaraService {
 	
 	private String bruLinkSeparator = Character.toString(Character.MIN_VALUE);
 	
-	private Map<String, Artifactclass> id_artifactclassMap = null;
+	private Map<String, Artifactclass> id_artifactclassMap = new HashMap<String, Artifactclass>();
 	private List<Error> errorList = null;
 	private List<org.ishafoundation.dwaraapi.api.resp._import.Artifact> artifacts = null;
 	private Pattern allowedChrsInFileNamePattern = null;
-	
+    
 	@PostConstruct
 	public void getExcludedFileNamesRegexList() {
 		String regexAllowedChrsInFileName = configuration.getRegexAllowedChrsInFileName();
@@ -144,6 +149,11 @@ public class ImportService extends DwaraService {
 		for (int i = 0; i < junkFilesFinderRegexPatternList.length; i++) {
 			Pattern nthJunkFilesFinderRegexPattern = Pattern.compile(junkFilesFinderRegexPatternList[i]);
 			excludedFileNamesRegexList.add(nthJunkFilesFinderRegexPattern);
+		}
+		
+		List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
+		for (Artifactclass nthArtifactclass : artifactclassList) {
+			id_artifactclassMap.put(nthArtifactclass.getId(), nthArtifactclass);
 		}
 	}
 	
@@ -219,7 +229,6 @@ public class ImportService extends DwaraService {
 	}
 
 	public ImportResponse importCatalog(ImportRequest importRequest) throws Exception{	
-		id_artifactclassMap = new HashMap<String, Artifactclass>();
 		errorList = new ArrayList<Error>();
 		artifacts = new ArrayList<org.ishafoundation.dwaraapi.api.resp._import.Artifact>();
 		
@@ -231,7 +240,7 @@ public class ImportService extends DwaraService {
 	
 			Volumeindex volumeindex = getVolumeindex(xmlFile);	
 			Volumeinfo volumeInfo = volumeindex.getVolumeinfo();
-			String volumeId = volumeInfo.getVolumeuid();
+			String volumeId = volumeInfo.getVolume();
 			ir.setVolumeId(volumeId);
 			
 			validate(volumeindex);
@@ -277,7 +286,7 @@ public class ImportService extends DwaraService {
 			iterateCatalogArtifacts(volumeindex, volume, runId, request);
 			
 			Map<String,Integer> sameErrorMsg_Cnt = new HashMap<String, Integer>();
-			List<Import> importList = importDao.findAllByIdVolumeIdAndIdRequeueId(volumeId, runId);
+			List<Import> importList = importDao.findAllByVolumeIdAndRequeueId(volumeId, runId);
 			List<Status> statusList = new ArrayList<Status>();
 			for (Import nthImport : importList) {
 				Status nthImportStatus = nthImport.getStatus();
@@ -350,20 +359,13 @@ public class ImportService extends DwaraService {
 	}
 	
 	private void validate(Volumeindex volumeindex) throws Exception {
-	    
-	    // More validation on values...
-		List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
-		for (Artifactclass nthArtifactclass : artifactclassList) {
-			id_artifactclassMap.put(nthArtifactclass.getId(), nthArtifactclass);
-		}
-
 		// validate volumeInfo
 		Volumeinfo volumeinfo = volumeindex.getVolumeinfo();
 		
 	    // validate barcode
-		String regEx = "(C|P)([A-Z])?([0-9]*)L[0-9]";
+		String regEx = "(C|P|B)([A-Z])?([0-9]*)L[0-9]";
 		Pattern regExPattern = Pattern.compile(regEx);
-		String volumeBarcode = volumeinfo.getVolumeuid();
+		String volumeBarcode = volumeinfo.getVolume();
 		Matcher regExMatcher = regExPattern.matcher(volumeBarcode);
 		if(!regExMatcher.matches()) {
 			throw new DwaraException("Volume barcode should be in " + regEx + " format");
@@ -380,45 +382,45 @@ public class ImportService extends DwaraService {
 	    // validate artifactclass in all artifacts - get size too
 		List<Artifact> artifactList = volumeindex.getArtifact();
 		for (Artifact artifact : artifactList) {
-			Artifactclass artifactclass = id_artifactclassMap.get(artifact.getArtifactclassuid());
+			Artifactclass artifactclass = id_artifactclassMap.get(artifact.getArtifactclass());
 			if(artifactclass == null) {
 				Error err = new Error();
 				err.setType(Errortype.Error);
-				err.setMessage(artifact.getName() + " has invalid artifactclass " + artifact.getArtifactclassuid());
+				err.setMessage(artifact.getName() + " has invalid artifactclass " + artifact.getArtifactclass());
 				errorList.add(err);
 			}
-			else {
-				String fileName = artifact.getRename() != null ? artifact.getRename() : artifact.getName();
-				if(!artifactclass.getId().startsWith("photo")) { // validation only for photo* artifactclass
-					// 1- validateName
-					List<Error> errorListFromValidator = basicArtifactValidator.validateName(fileName, allowedChrsInFileNamePattern);
-					for (Error nthError : errorListFromValidator) {
-						nthError.setMessage(fileName + " - " + nthError.getMessage());
-						errorList.add(nthError);
-					}
-				}
-				else {
-					// 1a - validateName for photo* artifactclass
-					//errorList.addAll(basicArtifactValidator.validatePhotoName(fileName, allowedChrsInFileNamePattern, (sfv != null && sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0 ? sfv.getPhotoSeriesFileNameValidationFailedFileNames() : null)));
-				}
-// not needed				
-//				// 2- validateCount
-//				errorList.addAll(basicArtifactValidator.validateFileCount(fileCount));
-//	
-//				// 3- validateSize
-//				errorList.addAll(basicArtifactValidator.validateFileSize(size));
-			}
+//			else {
+//				String fileName = artifact.getRename() != null ? artifact.getRename() : artifact.getName();
+//				if(!artifactclass.getId().startsWith("photo")) { // validation only for photo* artifactclass
+//					// 1- validateName
+//					List<Error> errorListFromValidator = basicArtifactValidator.validateName(fileName, allowedChrsInFileNamePattern);
+//					for (Error nthError : errorListFromValidator) {
+//						nthError.setMessage(fileName + " - " + nthError.getMessage());
+//						errorList.add(nthError);
+//					}
+//				}
+//				else {
+//					// 1a - validateName for photo* artifactclass
+//					//errorList.addAll(basicArtifactValidator.validatePhotoName(fileName, allowedChrsInFileNamePattern, (sfv != null && sfv.getPhotoSeriesFileNameValidationFailedFileNames().size() > 0 ? sfv.getPhotoSeriesFileNameValidationFailedFileNames() : null)));
+//				}
+//// not needed				
+////				// 2- validateCount
+////				errorList.addAll(basicArtifactValidator.validateFileCount(fileCount));
+////	
+////				// 3- validateSize
+////				errorList.addAll(basicArtifactValidator.validateFileSize(size));
+//			}
 		}
 
 		if(errorList.size() > 0)
-			throw new Exception("XML has invalid artifacts");
+			throw new Exception("XML has invalid artifacts - " + errorList);
 
 	}
 	
 	private void createImportEntries(Volumeindex volumeindex, String volumeId, Request request, int runId){	
 		List<Artifact> artifactList = volumeindex.getArtifact();
 		for (Artifact nthArtifact : artifactList) {
-			List<Import> artifactImportList = importDao.findAllByIdVolumeIdAndIdArtifactName(volumeId, nthArtifact.getName());
+			List<Import> artifactImportList = importDao.findAllByVolumeIdAndArtifactName(volumeId, nthArtifact.getName());
 			boolean isArtifactAlreadyComplete = false;
 			if(artifactImportList!= null && artifactImportList.size() > 0) {
 				for (Import nthArtifactImport : artifactImportList) {
@@ -430,9 +432,10 @@ public class ImportService extends DwaraService {
 			}
 			
 			if(!isArtifactAlreadyComplete) { 
-				ImportKey importKey = new ImportKey(volumeId, nthArtifact.getName(), runId);
 				Import importDBRecord = new Import();				
-				importDBRecord.setId(importKey);
+				importDBRecord.setVolumeId(volumeId);
+				importDBRecord.setArtifactName(nthArtifact.getName());
+				importDBRecord.setRequeueId(runId);
 				importDBRecord.setStatus(Status.in_progress);
 				importDBRecord.setRequest(request);
 				importDao.save(importDBRecord);
@@ -471,9 +474,9 @@ public class ImportService extends DwaraService {
 	private Volume getVolume(Volumeinfo volumeinfo) throws Exception {
 		Volume volume = new Volume();
 		
-		String volumeBarcode = volumeinfo.getVolumeuid();
+		String volumeBarcode = volumeinfo.getVolume();
 		volume.setId(volumeBarcode);
-		volume.setUuid(UUID.randomUUID().toString());
+		volume.setUuid(volumeinfo.getVolumeuuid());
 		volume.setType(Volumetype.physical);
 		String volumeGroupId = StringUtils.substring(volumeBarcode, 0, 2); 
 		Optional<Volume> volOptional = volumeDao.findById(volumeGroupId);
@@ -516,13 +519,16 @@ public class ImportService extends DwaraService {
 		volume.setStoragelevel(Storagelevel.block);
 		volume.setArchiveformat(configurationTablesUtil.getArchiveformat(volumeinfo.getArchiveformat()));
 		
-//		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-//		LocalDateTime writtenAt = LocalDateTime.parse(volumeinfo.getImported().getWrittenAt(), formatter);
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+		LocalDateTime firstWrittenAt = LocalDateTime.parse(volumeinfo.getFirstWrittenAt(), formatter);
+		volume.setInitializedAt(firstWrittenAt);
+		
+		LocalDateTime lastWrittenAt = LocalDateTime.parse(volumeinfo.getLastWrittenAt(), formatter);
+		volume.setFinalizedAt(lastWrittenAt);
 		
 		VolumeDetails volumeDetails = new VolumeDetails();
 		volumeDetails.setBarcoded(true);
 		volumeDetails.setBlocksize(volumeinfo.getVolumeblocksize());
-		volumeDetails.setWrittenAt(volumeinfo.getImported().getWrittenAt());
 
 		volume.setDetails(volumeDetails);
 		return volume;
@@ -534,9 +540,9 @@ public class ImportService extends DwaraService {
 		List<Artifact> artifactList = volumeindex.getArtifact();
 		for (Artifact nthArtifact : artifactList) {
 			String artifactNameAsInCatalog = nthArtifact.getName(); // Name thats in tape
+			logger.debug("Now importing " + artifactNameAsInCatalog);
 			String artifactNameProposed = nthArtifact.getRename() != null ? nthArtifact.getRename() : artifactNameAsInCatalog; // Proposed new name thats in tape
 			String toBeArtifactName = null; // Name that needs to be saved in Artifact/File tables in DB
-			logger.debug("Now importing " + artifactNameAsInCatalog);				
 			
 			ImportStatus artifactImportStatus = ImportStatus.failed; 
 			ImportStatus artifactVolumeImportStatus = ImportStatus.failed;
@@ -546,10 +552,8 @@ public class ImportService extends DwaraService {
 			org.ishafoundation.dwaraapi.api.resp._import.Artifact respArtifact = new org.ishafoundation.dwaraapi.api.resp._import.Artifact();
 			respArtifact.setName(artifactNameAsInCatalog);
 	
-			ImportKey importKey = new ImportKey(volumeId, artifactNameAsInCatalog, runId);
-			Optional<Import> aviImport = importDao.findById(importKey);
-			
-			Import importTable = aviImport.isPresent() ? aviImport.get() : null;
+			Import importTable = importDao.findByVolumeIdAndArtifactNameAndRequeueId(volumeId, artifactNameAsInCatalog, runId);
+
 			if(importTable == null || importTable.getStatus() == Status.completed) { // already completed - so skip it
 				// continue;
 				artifactImportStatus = ImportStatus.skipped; 
@@ -559,89 +563,121 @@ public class ImportService extends DwaraService {
 			}
 			else {
 				try {
-					
 					/*
 					 * 
 					*** dealing with artifact ***
 					*
 					*/
-					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclassuid());
-					Sequence sequence = artifactclass.getSequence();
-					String extractedCode = sequenceUtil.getExtractedCode(sequence, artifactNameProposed);
-					boolean isForceMatch = (sequence.getForceMatch() != null && sequence.getForceMatch() >= 1)  ? true : false;
-					if(isForceMatch && extractedCode == null) {
-						throw new Exception("Missing expected PreviousSeqCode : " + artifactNameProposed);
-					}
-					String sequenceCode = null;
-					String prevSeqCode = null;
-					if(extractedCode != null) {
-						if(sequence.isKeepCode()) {
-							// retaining the same name
-							toBeArtifactName = artifactNameProposed;
-							sequenceCode = extractedCode;
-						}
-						else {
-							prevSeqCode = extractedCode;
+					
+					String extractedCodeFromProposedArtifactName = StringUtils.substringBefore(artifactNameProposed, "_");
+					if(!artifactNameAsInCatalog.equals(artifactNameProposed) && !StringUtils.substringBefore(artifactNameAsInCatalog, "_").equals(extractedCodeFromProposedArtifactName))
+						throw new Exception ("Different sequences in name and rename attributes not supported. @name - " + artifactNameAsInCatalog + " @rename - " + artifactNameProposed);
+					
+					artifactUtil.preImport(nthArtifact);		
+					
+					artifactNameProposed = nthArtifact.getRename() != null ? nthArtifact.getRename() : artifactNameAsInCatalog;
+					
+					Artifactclass artifactclass = id_artifactclassMap.get(nthArtifact.getArtifactclass());
+					if(!artifactclass.getId().startsWith("photo")) { // validation only for photo* artifactclass
+						// 1- validateName
+						List<Error> errorListFromValidator = basicArtifactValidator.validateName(artifactNameProposed, allowedChrsInFileNamePattern);
+						for (Error nthError : errorListFromValidator) {
+							nthError.setMessage(artifactNameProposed + " - " + nthError.getMessage());
+							errorList.add(nthError);
 						}
 					}
 					
+				    List<org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> artifactFileList = nthArtifact.getFile();
+				    int fileCount = 0;
+				    if(artifactFileList != null) {
+					    fileCount = artifactFileList.size();
+				    }
+
+				    if(fileCount == 0)// empty folder
+				    	throw new Exception ("Empty folder");
+				    
+				    artifactUtil.validateImport(nthArtifact);
+				    
+					Sequence sequence = artifactclass.getSequence();
+					
+					// Checks if there is a custom artifactclass impl, else applies default extraction logic but doesnt generate new sequence
+					ArtifactMeta am = artifactUtil.getArtifactMeta(artifactNameProposed, artifactclass.getId(), sequence, false);
+					toBeArtifactName = am.getArtifactName();
+					String prevSeqCode = am.getPrevSequenceCode();
+					String sequenceCode =  am.getSequenceCode();
+//					We are doing this on the custom class by figuring out all the missing sequencecodes one and assigning them some values or generating new sequence - check DefaultArtifactclassImpl custom Artifactclass 
+//					if(sequenceCode == null) {
+//						throw new Exception("Missing expected code : " + artifactNameProposed);
+//					}
+
 					boolean artifactAlreadyExists = true;
+					
 					org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = null;
-					if(prevSeqCode != null) {
-						if(artifactclass.getSequence().getSequenceRef() != null)
-							artifact = artifactDao.findByPrevSequenceCodeAndDeletedIsFalseAndArtifactclassSequenceSequenceRefId(prevSeqCode, artifactclass.getSequence().getSequenceRef().getId());
-						else
-							artifact = artifactDao.findByPrevSequenceCodeAndDeletedIsFalseAndArtifactclassId(prevSeqCode, artifactclass.getId());
-					}else if(sequenceCode != null){
-						if(artifactclass.getSequence().getSequenceRef() != null)
-							artifact = artifactDao.findBySequenceCodeAndDeletedIsFalseAndArtifactclassSequenceSequenceRefId(sequenceCode, artifactclass.getSequence().getSequenceRef().getId());
-						else
-							artifact = artifactDao.findBySequenceCodeAndDeletedIsFalseAndArtifactclassId(sequenceCode, artifactclass.getId());
+					if(sequenceCode != null) {
+						artifact = artifactDao.findBySequenceCodeAndDeletedIsFalse(sequenceCode);
 					}
-	
-					if(artifact != null) { // even if artifact extracted code matches - double check for name - and if name differs flag it
-						String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
-						String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
-						if(!artifactNameProposedShavedOffPrefix.equals(artifactNameShavedOffPrefix))
-							throw new Exception ("Same extractedCode but different artifact names : extractedCode - " + extractedCode + " ArtifactId " + artifact.getId() + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposedShavedOffPrefix);
+					else {
+						artifact = artifactDao.findByNameEndsWithAndArtifactclassSourceIsTrueAndDeletedIsFalse("_" + artifactNameProposed);
 					}
-	
+				
+					if(artifact != null) { 
+						// check if catalog artifactclass is same as existing artifact's artifactclass
+						if(!artifact.getArtifactclass().getId().equals(artifactclass.getId())) {
+							 String errMsg = "Different Artifactclasses for same artifact : Existing ArtifactId " + artifact.getId() + ". Expected artifactclass - " + artifact.getArtifactclass().getId() + " Actual - " + artifactclass.getId();
+							 throw new Exception (errMsg);
+						}	
+						
+						if(sequenceCode != null) {
+							// even if artifact extracted code matches - double check for name - and if name differs flag it
+							String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
+							String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(toBeArtifactName,"_");
+							if(!artifactNameProposedShavedOffPrefix.equals(artifactNameShavedOffPrefix))
+								throw new Exception ("Same code but different artifact names : code - " + sequenceCode + " ArtifactId " + artifact.getId() + ". Expected - " + artifactNameShavedOffPrefix + " Actual - " + artifactNameProposedShavedOffPrefix);
+							
+							String sequenceCodeFromDB = StringUtils.substringBefore(artifact.getName(),"_");
+							if(!sequenceCode.equals(sequenceCodeFromDB)) {
+								String errMsg = "Different codes but same artifact name : ArtifactId - " + artifact.getId() + " - " + artifactNameProposed + ". Expected code - " + artifact.getSequenceCode() + " Actual - " + sequenceCode;//(prevSeqCode != null ? prevSeqCode : sequenceCode);
+								throw new Exception (errMsg);
+							}
+						} else {
+							// even if artifact extracted code matches - double check for name - and if name differs flag it
+							String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
+							if(!artifactNameProposed.equals(artifactNameShavedOffPrefix)) {
+								String errMsg = "Different codes but same artifact name : ArtifactId - " + artifact.getId() + " - " + artifactNameProposed + ". Expected code - " + artifact.getSequenceCode() + " Actual - " + sequenceCode;//(prevSeqCode != null ? prevSeqCode : sequenceCode);
+								throw new Exception (errMsg);
+							}
+						}
+					}
 					
 					if(artifact == null) { // Some imported artifacts has same name but different extracted codes... if so flag it
 						String artifactNameProposedShavedOffPrefix = StringUtils.substringAfter(artifactNameProposed,"_");
-						 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(artifactNameProposedShavedOffPrefix,artifactclass.getId());
+						String an = sequenceCode != null ? artifactNameProposedShavedOffPrefix : artifactNameProposed;
+						 List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactsEndingWithSameName = artifactDao.findByNameEndsWithAndArtifactclassId(an,artifactclass.getId());
 						 for (org.ishafoundation.dwaraapi.db.model.transactional.Artifact nthArtifactEndingWithSameName : artifactsEndingWithSameName) {
 							 String artifactNameShavedOffPrefix = StringUtils.substringAfter(nthArtifactEndingWithSameName.getName(),"_");
-							 if(artifactNameShavedOffPrefix.equals(artifactNameProposedShavedOffPrefix)) {
+							 if(artifactNameShavedOffPrefix.equals(an)) {
 								 artifact = nthArtifactEndingWithSameName;
-								 String errMsg = "Different extractedCodes but same artifact name : ArtifactId " + artifact.getId() + " - " + artifactNameProposedShavedOffPrefix + ". Expected code - " + (artifact.getPrevSequenceCode() !=null ? artifact.getPrevSequenceCode() : artifact.getSequenceCode()) + " Actual - " + extractedCode;
+								 String errMsg = "Different codes but same artifact name : ArtifactId - " + artifact.getId() + " - " + an + ". Expected code - " + artifact.getSequenceCode() + " Actual - " + sequenceCode;//(prevSeqCode != null ? prevSeqCode : sequenceCode);
 								 throw new Exception (errMsg);
 							 }
 						}
 					}
-					
+
+
 					//TODO - should we double check with size too??? domainSpecificArtifactRepository.findAllByTotalSizeAndDeletedIsFalse(size);
 					if(artifact == null) {
 						artifactAlreadyExists = false;
+
+//						org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);// findBySequenceCodeAndDeletedIsFalse(sequenceCode);
+//						if(alreadyExistingArtifactWithSameSequenceCode != null)
+//							throw new Exception("An artifact already exists with sequenceCode : " + sequenceCode + ". Already existing artifactId with same sequenceCode - " + alreadyExistingArtifactWithSameSequenceCode.getId());
+						
 						if(sequenceCode == null) {
-	//						String overrideSequenceRefId = null;
-	//						if(artifactclass.getId().startsWith("video") && !artifactclass.getId().startsWith("video-digi")) {
-	//		    				Sequence importSequenceGrp = sequenceDao.findById("video-imported-grp").get();
-	//							if(importSequenceGrp.getCurrrentNumber() <= 27000) 
-	//								overrideSequenceRefId = "video-imported-grp";
-	//						}
-	//						sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactName, overrideSequenceRefId);	
-							sequenceCode = sequenceUtil.getSequenceCode(sequence, artifactNameProposed);
-							org.ishafoundation.dwaraapi.db.model.transactional.Artifact alreadyExistingArtifactWithSameSequenceCode = artifactDao.findBySequenceCode(sequenceCode);// findBySequenceCodeAndDeletedIsFalse(sequenceCode);
-							if(alreadyExistingArtifactWithSameSequenceCode != null)
-								throw new Exception("An artifact already exists with sequenceCode : " + sequenceCode + ". Already existing artifactId with same sequenceCode - " + alreadyExistingArtifactWithSameSequenceCode.getId());
-							
-							if(extractedCode != null && sequence.isReplaceCode())
-								toBeArtifactName = artifactNameProposed.replace(extractedCode, sequenceCode);
-							else
-								toBeArtifactName = sequenceCode + "_" + artifactNameProposed;
+							ArtifactAttributes aa = artifactUtil.getArtifactAttributes(artifactclass.getId(), artifactNameProposed, sequence.getPrefix());
+							am = artifactUtil.generateSequenceCodeAndPrefixToName(artifactNameProposed, aa.getReplaceCode(), aa.getMatchCode(), sequence);
+							sequenceCode = am.getSequenceCode();
+							toBeArtifactName = am.getArtifactName();
 						}
-			
 						/*
 						 *** Creating artifact if not already in DB ***
 						 * 
@@ -671,6 +707,14 @@ public class ImportService extends DwaraService {
 						artifactImportStatus = ImportStatus.completed;
 						logger.debug("Artifact " + artifact.getId() + " imported to dwara succesfully");
 					}else {
+						String prevSeqCodeFromDB = artifact.getPrevSequenceCode();
+						if(prevSeqCode != null && !prevSeqCode.equals(prevSeqCodeFromDB)) {
+							String prevSeqCodeTmp = getUnionPrevSeqCode(prevSeqCodeFromDB, prevSeqCodeFromDB);
+							artifact.setPrevSequenceCode(prevSeqCodeTmp);
+							artifact = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.save(artifact);
+							logger.debug("Artifact " + artifact.getId() + " updated with PrevSequenceCode succesfully");
+						}
+							
 						toBeArtifactName = artifact.getName();
 						artifactImportStatus = ImportStatus.skipped;
 						logger.debug("Artifact " + artifact.getId() + " already exists, so skipping updating DB");  // artifact nth copy / rerun scenario
@@ -791,6 +835,31 @@ public class ImportService extends DwaraService {
 		toBeImportedVolume = volumeDao.save(toBeImportedVolume);
 	}
 	
+	private String getUnionPrevSeqCode(String prevSeqCodeFromDB, String prevSeqCode) {
+		Set<String> prevSeqCodeSet = new TreeSet<String>();
+		
+		String[] prevSeqCodeParts = prevSeqCode.split("_");
+		
+		for (int i = 0; i < prevSeqCodeParts.length; i++) {
+			prevSeqCodeSet.add(prevSeqCodeParts[i]);
+		}
+		
+		if(prevSeqCodeFromDB != null) {
+			String[] prevSeqCodeFromDBParts = prevSeqCodeFromDB.split("_");
+			
+			for (int i = 0; i < prevSeqCodeFromDBParts.length; i++) {
+				prevSeqCodeSet.add(prevSeqCodeFromDBParts[i]);
+			}
+		}
+		String prevSeqCodeTmp = "";
+		for (String nthPrevSeqCode : prevSeqCodeSet) {
+			if(StringUtils.isNotBlank(prevSeqCodeTmp))
+				prevSeqCodeTmp = prevSeqCodeTmp + "_";
+			prevSeqCodeTmp = prevSeqCodeTmp + nthPrevSeqCode;
+		}
+		return prevSeqCodeTmp;
+	}
+
 	private FileMeta dealCatalogFiles(Artifact nthArtifact, org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact, 
 			String artifactNameAsInCatalog, String toBeArtifactName, Artifactclass artifactclass, 
 			Volume volume, Volume masterVolume, boolean isToBeImportedVolumeMaster, boolean artifactAlreadyExists,
@@ -806,13 +875,23 @@ public class ImportService extends DwaraService {
 	    // caching the file entries to avoid repeated queries...
 	    List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
 	    // collection to cache the file Objects
-	    Map<byte[], org.ishafoundation.dwaraapi.db.model.transactional.File> filePathnameChecksum_FileObj_Map = new HashMap<byte[], org.ishafoundation.dwaraapi.db.model.transactional.File>();
+	    Map<String, org.ishafoundation.dwaraapi.db.model.transactional.File> master_filePathname_FileObj_Map = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File>();
 	    for (org.ishafoundation.dwaraapi.db.model.transactional.File nthMasterFile : masterFileList) {
 	    	fileId_FileObj_Map.put(nthMasterFile.getId(), nthMasterFile);
-	    	filePathnameChecksum_FileObj_Map.put(nthMasterFile.getPathnameChecksum(), nthMasterFile);
+	    	master_filePathname_FileObj_Map.put(nthMasterFile.getPathname(), nthMasterFile);
+		}
+	    
+	    List<FileVolume> fileVolumeEntries = fileVolumeDao.findAllByIdVolumeId(volume.getId());
+	    Map<Integer, FileVolume> fileId_FileVolumeObj_Map = new HashMap<Integer, FileVolume>();
+	    for (FileVolume nthFileVolume : fileVolumeEntries) {
+	    	fileId_FileVolumeObj_Map.put(nthFileVolume.getId().getFileId(), nthFileVolume);
 		}
 
+	    Map<String, DiffValues> filePathname_DiffValueToBeUsedForFileVolume_Map = new HashMap<String, DiffValues>();
+	    ArrayList<org.ishafoundation.dwaraapi.db.model.transactional.File> toBeSavedFileList = new ArrayList<org.ishafoundation.dwaraapi.db.model.transactional.File>();
+	    ArrayList<FileVolume> toBeSavedFileVolumeList = new ArrayList<FileVolume>();
 	    ArrayList<String> junkFilepathnameList = new ArrayList<String>();
+	    Map<String, org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> filePathname_CatalogFileObj_Map = new HashMap<String, org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File>();
 		for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
 				
 			boolean fileChildOfJunkFolder = false;
@@ -833,7 +912,7 @@ public class ImportService extends DwaraService {
 				continue;
 			}
 			
-			String filePathname = nthFile.getName().replace(artifactNameAsInCatalog, toBeArtifactName);
+			String filePathname = StringUtils.replace(nthFile.getName(), artifactNameAsInCatalog, toBeArtifactName,1);
 			String linkName = null;
 			if(filePathname.contains(bruLinkSeparator)) {
 				linkName = StringUtils.substringAfter(filePathname, bruLinkSeparator);
@@ -843,10 +922,11 @@ public class ImportService extends DwaraService {
 				logger.trace("linkName "+ linkName);
 			}
 			
+			filePathname_CatalogFileObj_Map.put(filePathname, nthFile);
 			if(artifactclass.getConfig() != null) {
 				String pathnameRegex = artifactclass.getConfig().getPathnameRegex();
 				
-				String filePathnameMinusArtifactName = filePathname.replace(toBeArtifactName, "");
+				String filePathnameMinusArtifactName = StringUtils.replace(filePathname,toBeArtifactName, "",1);
 				if(StringUtils.isNotBlank(filePathnameMinusArtifactName)) { // artifact folder needed to be added - hence the notblank condition
 					if(filePathnameMinusArtifactName.startsWith(FilenameUtils.separatorsToUnix(File.separator))) {
 						filePathnameMinusArtifactName = filePathnameMinusArtifactName.substring(1);
@@ -858,10 +938,10 @@ public class ImportService extends DwaraService {
 				}
 			}
 			
-			byte[] filePathnameChecksum = ChecksumUtil.getChecksum(filePathname);
+			
 			org.ishafoundation.dwaraapi.db.model.transactional.File file = null;
 			if(artifactAlreadyExists) { // if artifactAlreadyExists - file would also exist already - copy / rerun scenario
-				file = fileDao.findByPathnameChecksum(filePathnameChecksum); // filePathnameChecksum_FileObj_Map.get(filePathnameChecksum);
+				file = master_filePathname_FileObj_Map.get(filePathname);// fileDao.findByPathnameChecksum(filePathnameChecksum); // filePathnameChecksum_FileObj_Map.get(filePathnameChecksum);
 				// Maybe we should import oldest tapes first
 				// for eg., if P16539L6 is imported first followed by CA4485L4 which is the oldest of 2 then we would face this situation as
 				// sequence codes 6028/9 and 30 has differences in the file count...
@@ -909,6 +989,7 @@ public class ImportService extends DwaraService {
 	
 	
 				file.setPathname(filePathname);
+				byte[] filePathnameChecksum = ChecksumUtil.getChecksum(filePathname);
 				file.setPathnameChecksum(filePathnameChecksum);
 				file.setSize(nthFile.getSize()); // TODO Note junk file size is not reduced.
 				//file.setSymlinkFileId();
@@ -923,7 +1004,9 @@ public class ImportService extends DwaraService {
 					diffValueToBeUsedForFileVolume = DiffValues.a;
 					file.setDiff(diffValueToBeUsedForFileVolume);
 				}
-				file = fileDao.save(file);
+				
+				toBeSavedFileList.add(file);
+				// file = fileDao.save(file);
 				fileRecordsImportStatus.add(ImportStatus.completed);
 				logger.debug("File " + filePathname + "  created successfully");
 			}else { // file already in DB check if size differs
@@ -953,56 +1036,75 @@ public class ImportService extends DwaraService {
 					}
 				}
 			}
-			
-			if(file == null) {
-				fileVolumeRecordsImportStatus.add(ImportStatus.failed);
+			filePathname_DiffValueToBeUsedForFileVolume_Map.put(filePathname, diffValueToBeUsedForFileVolume);
+			if(toBeSavedFileList.size() > 0)
+				fileDao.saveAll(toBeSavedFileList);
+	    }
+
+		Map<String, org.ishafoundation.dwaraapi.db.model.transactional.File> filePathname_FileObj_Map = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File>();
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> allFilesList = fileDao.findAllByArtifactId(artifact.getId());
+		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : allFilesList) {
+			filePathname_FileObj_Map.put(nthFile.getPathname(), nthFile);
+		}
+		
+		for (org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile : artifactFileList) {
+			String filePathname = StringUtils.replace(nthFile.getName(), artifactNameAsInCatalog, toBeArtifactName,1);
+			if(filePathname.contains(bruLinkSeparator)) {
+				filePathname = StringUtils.substringBefore(filePathname, bruLinkSeparator);
+			}
+
+			org.ishafoundation.dwaraapi.db.model.transactional.File file = filePathname_FileObj_Map.get(filePathname);
+			if(file == null) // possibly a junk file not inserted to DB
+				continue;
+			DiffValues diffValueToBeUsedForFileVolume = filePathname_DiffValueToBeUsedForFileVolume_Map.get(filePathname);
+			FileVolume fileVolume = fileId_FileVolumeObj_Map.get(file.getId()); // fileVolumeDao.findByIdFileIdAndIdVolumeId(file.getId(), volume.getId());
+			if(fileVolume == null) {
+				/*
+				 * file1_volume
+				 *
+
+				  `file_id` int(11) NOT NULL,
+				  `archive_block` bigint(20) DEFAULT NULL, 
+				  `deleted` bit(1) DEFAULT NULL, *** - *** 0
+				  `encrypted` bit(1) DEFAULT NULL, *** - *** null
+				  `verified_at` datetime(6) DEFAULT NULL, *** - *** null
+				  `volume_start_block` int(11) DEFAULT NULL, *** - *** dynamic
+				  `volume_end_block` int(11) DEFAULT NULL, *** - *** dynamic
+				  `volume_id` varchar(255) COLLATE utf8mb4_unicode_520_ci NOT NULL, 
+				  `header_blocks` int(11) DEFAULT NULL, *** - *** null
+				  `hardlink_file_id` int(11) DEFAULT NULL, *** - *** null???
+				 */
+				fileVolume = new FileVolume(file.getId(), volume);// lets just let users use the util consistently
+				fileVolume.setArchiveBlock(nthFile.getArchiveblock());
+				fileVolume.setVolumeStartBlock(nthFile.getVolumeStartBlock());
+				fileVolume.setVolumeEndBlock(nthFile.getVolumeEndBlock());
+
+				//fileVolume.setHardlinkFileId(file.getId());
+				if(diffValueToBeUsedForFileVolume != null && !isToBeImportedVolumeMaster) {
+					fileVolume.setDiff(diffValueToBeUsedForFileVolume);
+					
+					if(diffValueToBeUsedForFileVolume == DiffValues.c) {
+						FileVolumeDiff fileVolumeDiff = new FileVolumeDiff(file.getId(), volume.getId());
+						fileVolumeDiff.setSize(nthFile.getSize());
+						fileVolumeDiffDao.save(fileVolumeDiff);
+					}
+				}
+					
+				toBeSavedFileVolumeList.add(fileVolume);
+				// fileVolumeDao.save(fileVolume);
+				fileVolumeRecordsImportStatus.add(ImportStatus.completed);
+				logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " record created successfully");
 			}
 			else {
-				FileVolume fileVolume = fileVolumeDao.findByIdFileIdAndIdVolumeId(file.getId(), volume.getId());
-				if(fileVolume == null) {
-					/*
-					 * file1_volume
-					 *
-	
-					  `file_id` int(11) NOT NULL,
-					  `archive_block` bigint(20) DEFAULT NULL, 
-					  `deleted` bit(1) DEFAULT NULL, *** - *** 0
-					  `encrypted` bit(1) DEFAULT NULL, *** - *** null
-					  `verified_at` datetime(6) DEFAULT NULL, *** - *** null
-					  `volume_start_block` int(11) DEFAULT NULL, *** - *** dynamic
-					  `volume_end_block` int(11) DEFAULT NULL, *** - *** dynamic
-					  `volume_id` varchar(255) COLLATE utf8mb4_unicode_520_ci NOT NULL, 
-					  `header_blocks` int(11) DEFAULT NULL, *** - *** null
-					  `hardlink_file_id` int(11) DEFAULT NULL, *** - *** null???
-					 */
-					fileVolume = new FileVolume(file.getId(), volume);// lets just let users use the util consistently
-					fileVolume.setArchiveBlock(nthFile.getArchiveblock());
-					fileVolume.setVolumeStartBlock(nthFile.getVolumeStartBlock());
-					fileVolume.setVolumeEndBlock(nthFile.getVolumeEndBlock());
-	
-					//fileVolume.setHardlinkFileId(file.getId());
-					if(diffValueToBeUsedForFileVolume != null && !isToBeImportedVolumeMaster) {
-						fileVolume.setDiff(diffValueToBeUsedForFileVolume);
-						
-						if(diffValueToBeUsedForFileVolume == DiffValues.c) {
-							FileVolumeDiff fileVolumeDiff = new FileVolumeDiff(file.getId(), volume.getId());
-							fileVolumeDiff.setSize(nthFile.getSize());
-							fileVolumeDiffDao.save(fileVolumeDiff);
-						}
-					}
-						
-	
-					fileVolumeDao.save(fileVolume);
-					fileVolumeRecordsImportStatus.add(ImportStatus.completed);
-					logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " record created successfully");
-				}
-				else {
-					logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
-					fileVolumeRecordsImportStatus.add(ImportStatus.skipped);
-					// break; // This means this is a rerun scenario and so the rest of the files can be skipped....
-				}
+				logger.debug("FileVolume for " + file.getId() + ":" + volume.getId() + " already exists, so skipping updating DB"); // rerun scenario
+				fileVolumeRecordsImportStatus.add(ImportStatus.skipped);
+				// break; // This means this is a rerun scenario and so the rest of the files can be skipped....
 			}
-	    }
+		}
+		
+		if(toBeSavedFileVolumeList.size() > 0)
+			fileVolumeDao.saveAll(toBeSavedFileVolumeList);
+
 		
 	    // update the extra files in DB but not in current catalog appropriately
 		dealExtraFilesInDBButNotInCatalog(fileId_FileObj_Map, masterVolume, isToBeImportedVolumeMaster);
@@ -1013,7 +1115,7 @@ public class ImportService extends DwaraService {
 		
 		FileMeta fm = null;
 		if(isToBeImportedVolumeMaster)
-			fm = calculateAndSetFolderSizes(artifact);
+			fm = calculateAndSetFolderSizes(artifact, filePathname_CatalogFileObj_Map);
     	
     	return fm;
 	}
@@ -1065,13 +1167,8 @@ public class ImportService extends DwaraService {
 	}
 	
 	private boolean isOlder(Volume volume1, Volume volume2) { // is Volume1 Older than Volume2
-		DateTimeFormatter formatterISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-		
-		String volume1WrittenAt = volume1.getDetails().getWrittenAt(); // lets be consistent in using volume - volumeInfo.getImported().getWrittenAt();
-		LocalDateTime volume1DateTime = LocalDateTime.parse(volume1WrittenAt, formatterISO);
-	
-		String volume2WrittenAt = volume2.getDetails().getWrittenAt();
-		LocalDateTime volume2DateTime = LocalDateTime.parse(volume2WrittenAt, formatterISO);
+		LocalDateTime volume1DateTime = volume1.getFinalizedAt();
+		LocalDateTime volume2DateTime = volume2.getFinalizedAt();
 	
 		if(volume1DateTime.isEqual(volume2DateTime)) {
 			if(volume1.getId().compareTo(volume2.getId()) < 0)
@@ -1136,19 +1233,19 @@ public class ImportService extends DwaraService {
 	}
 	
 	
-	private FileMeta calculateAndSetFolderSizes(org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact) {	
-	    List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
-
+	private FileMeta calculateAndSetFolderSizes(org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact, Map<String, org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File> filePathname_CatalogFileObj_Map) {	
+	    Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
+	    Set<String> filePathnames = filePathname_CatalogFileObj_Map.keySet();
+	    
 		// now lets calculate and collect subfolders size
-		Map<String,Long> filePathnameVsSize_Map = new HashMap<String, Long>();
-		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : masterFileList) {
-			String nthFilepathname = nthFile.getPathname();
-			if(Boolean.TRUE.equals(nthFile.isDirectory())){
+	    for (String nthFilepathname : filePathnames) {
+	    	org.ishafoundation.dwaraapi.storage.storagelevel.block.index.File nthFile = filePathname_CatalogFileObj_Map.get(nthFilepathname);
+			if(Boolean.TRUE.equals(nthFile.getDirectory())){
 				filePathnameVsSize_Map.put(nthFilepathname,0L);
 			}else {
 				String nthFileDirectoryName = FilenameUtils.getFullPathNoEndSeparator(nthFilepathname);
 	
-				for (String nthArtifactSubDirectory : filePathnameVsSize_Map.keySet()) {
+				for (String nthArtifactSubDirectory : filePathnameVsSize_Map.keySet()) { // iterating through folder within folders and recalculating all containing folders at all depths
 					if(nthFileDirectoryName.contains(nthArtifactSubDirectory)) {
 						Long size = filePathnameVsSize_Map.get(nthArtifactSubDirectory);
 						size += nthFile.getSize();
@@ -1159,8 +1256,9 @@ public class ImportService extends DwaraService {
 		}                 
 	
 		long artifactSize = 0L;
-		int fileCount = masterFileList.size();
+		int fileCount = filePathnames.size();
 		List<org.ishafoundation.dwaraapi.db.model.transactional.File> fileListToBeDbUpdated = new ArrayList<org.ishafoundation.dwaraapi.db.model.transactional.File>();
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
 		// now lets make use of the collected subfolder size 
 		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : masterFileList) {
 			if(Boolean.TRUE.equals(nthFile.isDirectory())){
@@ -1217,52 +1315,6 @@ public class ImportService extends DwaraService {
 			}
 		return artifactVolumeStatus;
 	}
-		
-		
-//		List<ArtifactVolume> alreadyExistingMasterArtifactVolumeList = artifactVolumeDao.findAllByIdArtifactIdAndStatus(artifactId, ArtifactVolumeStatus.current);
-//		for (ArtifactVolume alreadyExistingMasterArtifactVolume : alreadyExistingMasterArtifactVolumeList) {
-//			
-//			if(volumeToBeImported.getGroupRef().getCopy().getId() == alreadyExistingMasterArtifactVolume.getVolume().getGroupRef().getCopy().getId()){ // same copy pool need to handle current/previous etc
-//				if(isNewer(volumeToBeImported, alreadyExistingMasterArtifactVolume.getVolume())) {
-//					if(hasDiffs)
-//						artifactVolumeStatus = ArtifactVolumeStatus.diffs;
-//					else {
-//						artifactVolumeStatus = ArtifactVolumeStatus.current;
-//						
-//						// flagging the older generation as previous
-//						alreadyExistingMasterArtifactVolume.setStatus(ArtifactVolumeStatus.previous);
-//						artifactVolumeDao.save(alreadyExistingMasterArtifactVolume);
-//					}
-//				}else { // means volumeToBeImported is master // swapping the master here - existing master is either set to previous or diffs (if there are diffs)
-//					if(hasDiffs) { 
-//						artifactVolumeStatus = ArtifactVolumeStatus.current;
-//						
-//						
-//						alreadyExistingMasterArtifactVolume.setStatus(ArtifactVolumeStatus.diffs);
-//						artifactVolumeDao.save(alreadyExistingMasterArtifactVolume);
-//					}else  // flagging the older generation as previous
-//						artifactVolumeStatus = ArtifactVolumeStatus.previous;
-//				}
-//			}else {
-//				if(isToBeImportedVolumeMaster) { // Master of all pools
-//					artifactVolumeStatus = ArtifactVolumeStatus.current;
-//					
-//					if(hasDiffs) { // if master has diffs even other pool masters need to be set with diffs
-//						alreadyExistingMasterArtifactVolume.setStatus(ArtifactVolumeStatus.diffs);
-//						artifactVolumeDao.save(alreadyExistingMasterArtifactVolume);
-//					}
-//				} else {
-//					if(hasDiffs) {
-//						artifactVolumeStatus = ArtifactVolumeStatus.diffs;
-//					}	
-//				}
-//			}
-//			
-//		}
-//	
-//		return artifactVolumeStatus;
-//	}
-
 	
 	private void moveFileNLogToOutputFolder(Path destDir, File nthXmlFile, String volumeName, ImportResponse importResponse) throws IOException {
 		destDir = Paths.get(destDir.toString(), volumeName); // create a directory and put the source xml file and its logs...
@@ -1295,5 +1347,143 @@ public class ImportService extends DwaraService {
 		public void setTotalSize(long totalSize) {
 			this.totalSize = totalSize;
 		}
-	} 
+	}
+
+	public ImportResponse markedCompletedImport(int importId, String reason) {
+		ImportResponse importResponse = new ImportResponse();	
+		Request userRequest = null;
+		Import importTable = null;
+		try {		
+			importTable = importDao.findById(importId).get();
+			if(importTable.getStatus() != Status.failed)
+				throw new DwaraException("Import cannot be marked completed. Only failed Import records can be marked_completed"); //
+
+			HashMap<String, Object> data = new HashMap<String, Object>();
+	    	data.put("importId", importId);
+			
+			userRequest = createUserRequest(Action.marked_completed, data);
+			
+			Import importDBRecord = new Import();				
+			importDBRecord.setVolumeId(importTable.getVolumeId());
+			importDBRecord.setArtifactName(importTable.getArtifactName());
+			importDBRecord.setRequeueId(importTable.getRequeueId() + 1);
+			importDBRecord.setArtifactId(importTable.getArtifactId());
+			importDBRecord.setMessage(reason);
+			importDBRecord.setStatus(Status.marked_completed);
+			importDBRecord.setRequest(userRequest);
+			
+			importDBRecord = importDao.save(importDBRecord);
+			logger.info("Import marked as completed successfully " + importDBRecord);
+			
+			userRequest.setStatus(Status.completed);
+			userRequest = requestDao.save(userRequest);
+			
+//			Request origUserRequest = importTable.getRequest();
+//			List<Import> importVolumeList = importDao.findAllByVolumeId(importTable.getVolumeId());
+//			 
+//			Map<String, Status> artifactName_Status = new HashMap<String, Status>();
+//			Map<String, Integer> artifactName_RequeueId = new HashMap<String, Integer>();
+//			for (Import nthImport : importVolumeList) {
+//				Integer existingRequeueId = artifactName_RequeueId.get(nthImport.getArtifactName());
+//				if(existingRequeueId == null || nthImport.getRequeueId() > existingRequeueId) {
+//					artifactName_RequeueId.put(nthImport.getArtifactName(), nthImport.getRequeueId());
+//					artifactName_Status.put(nthImport.getArtifactName(), nthImport.getStatus());
+//				}
+//			}
+//			
+//			Set<String> keySet = artifactName_Status.keySet();
+//			List<Status> importStatusList = new ArrayList<Status>();
+//			for (String nthArtifactName : keySet) {
+//				importStatusList.add(artifactName_Status.get(nthArtifactName));
+//			}
+//			
+//			origUserRequest.setStatus(StatusUtil.getStatus(importStatusList));
+			
+			
+			importResponse.setUserRequestId(userRequest.getId());
+			importResponse.setAction(Action.marked_completed.name());
+			importResponse.setRequestedBy(userRequest.getRequestedBy().getName());
+			importResponse.setRequestedAt(userRequest.getRequestedAt().toString());
+			importResponse.setRunCount(importDBRecord.getRequeueId());
+			importResponse.setVolumeId(importTable.getVolumeId());
+			
+			
+			
+		} catch (Exception e) {
+			if(userRequest != null && userRequest.getId() != 0) {
+				userRequest.setStatus(Status.failed);
+				userRequest = requestDao.save(userRequest);
+				importResponse.setUserRequestId(userRequest.getId());
+			}
+			throw e;
+		}
+		return importResponse;
+	}
+	
+	public ArtifactAttributes getArtifactAttributes(String artifactNameProposed, String artifactclassId){
+		Artifactclass artifactclass = id_artifactclassMap.get(artifactclassId);
+		
+		ArtifactAttributes aa = null;
+		try {
+			aa = artifactUtil.getArtifactAttributes(artifactclassId, artifactNameProposed, artifactclass.getSequence().getPrefix());
+			String matchCode = aa.getMatchCode();
+			Boolean kc = aa.getKeepCode();
+			Boolean rc = aa.getReplaceCode();
+			String prevSeqCode = aa.getPreviousCode();
+			Integer sequenceNum =  aa.getSequenceNumber();
+			
+			logger.info("matchCode -" + matchCode + " : keepCode " + kc + " : replaceCode " + rc + " : previousCode " + prevSeqCode + " : sequenceNumber " + sequenceNum);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return aa;
+	}
+
+	
+	public ArtifactMeta getArtifactMeta(String artifactNameProposed, String artifactclassId){
+		Artifactclass artifactclass = id_artifactclassMap.get(artifactclassId);
+		
+		ArtifactMeta am = null;
+		try {
+			am = artifactUtil.getArtifactMeta(artifactNameProposed, artifactclassId, artifactclass.getSequence(), false);
+			String toBeArtifactName = am.getArtifactName();
+			String prevSeqCode = am.getPrevSequenceCode();
+			String sequenceCode =  am.getSequenceCode();
+			
+			logger.info(toBeArtifactName + ":" + prevSeqCode + ":" + sequenceCode);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return am;
+	}
+	
+	public String setSequence(SetSequenceImportRequest importRequest) throws Exception {
+		File xmlFile = FileUtils.getFile(importRequest.getXmlPathname());
+		int counter = importRequest.getStartingNumber();
+		Volumeindex volumeindex = getVolumeindex(xmlFile);
+		List<Artifact> artifactList = volumeindex.getArtifact();
+		for (Artifact artifact : artifactList) {
+			artifact.setRename(counter + "_" + artifact.getName());
+			counter++;
+		}
+		
+	    XmlMapper xmlMapper = new XmlMapper();
+		//Get XMLOutputFactory instance.
+		XMLOutputFactory xmlOutputFactory = xmlMapper.getFactory().getXMLOutputFactory();
+	    String propName = com.ctc.wstx.api.WstxOutputProperties.P_USE_DOUBLE_QUOTES_IN_XML_DECL;
+	    xmlOutputFactory.setProperty(propName, true);
+	    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_1_1, true);
+	    xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+		//Create FileWriter object.
+		Writer fileWriter = new FileWriter(xmlFile.getAbsolutePath()+"_new");
+		//Create XMLStreamWriter object from xmlOutputFactory.
+		XMLStreamWriter xmlStreamWriter = xmlOutputFactory.createXMLStreamWriter(fileWriter);
+
+	    xmlMapper.writeValue(xmlStreamWriter, volumeindex);
+
+		return "Done";
+	}
 }

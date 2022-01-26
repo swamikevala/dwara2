@@ -4,10 +4,18 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JacksonXmlRootElement(localName="VolumeInfo")
 public class Volumeinfo {
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
+	@JacksonXmlProperty(localName="VolumeUuid")
+	private String volumeuuid;
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
 	@JacksonXmlProperty(localName="VolumeUid")
 	private String volumeuid;
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
+	@JacksonXmlProperty(localName="Volume")
+	private String volume;
 	@JacksonXmlProperty(localName="VolumeBlocksize")
 	private int volumeblocksize;
 	@JacksonXmlProperty(localName="ArchiveFormat")
@@ -21,16 +29,34 @@ public class Volumeinfo {
 	@JsonInclude(JsonInclude.Include.NON_EMPTY) 
 	@JacksonXmlProperty(localName="ArtifactclassUid")
 	private String artifactclassuid;
+	@JsonInclude(JsonInclude.Include.NON_EMPTY) 
+	@JacksonXmlProperty(localName="ArtifactclassId")
+	private String artifactclassid;	
 	@JacksonXmlProperty(localName="FinalizedAt")
 	private String finalizedAt;	 
-	@JacksonXmlProperty(localName="Imported")
-	private Imported imported;
+	@JacksonXmlProperty(localName="FirstWrittenAt")
+	private String firstWrittenAt;	 
+	@JacksonXmlProperty(localName="LastWrittenAt")
+	private String lastWrittenAt;	 
 	
+	
+	public String getVolumeuuid() {
+		return volumeuuid;
+	}
+	public void setVolumeuuid(String volumeuuid) {
+		this.volumeuuid = volumeuuid;
+	}
 	public String getVolumeuid() {
 		return volumeuid;
 	}
 	public void setVolumeuid(String volumeuid) {
 		this.volumeuid = volumeuid;
+	}
+	public String getVolume() {
+		return volume;
+	}
+	public void setVolume(String volume) {
+		this.volume = volume;
 	}
 	public int getVolumeblocksize() {
 		return volumeblocksize;
@@ -68,17 +94,29 @@ public class Volumeinfo {
 	public void setArtifactclassuid(String artifactclassuid) {
 		this.artifactclassuid = artifactclassuid;
 	}
+	public String getArtifactclassid() {
+		return artifactclassid;
+	}
+	public void setArtifactclassid(String artifactclassid) {
+		this.artifactclassid = artifactclassid;
+	}
 	public String getFinalizedAt() {
 		return finalizedAt;
 	}
 	public void setFinalizedAt(String finalizedAt) {
 		this.finalizedAt = finalizedAt;
 	}
-	public Imported getImported() {
-		return imported;
+	public String getFirstWrittenAt() {
+		return firstWrittenAt;
 	}
-	public void setImported(Imported imported) {
-		this.imported = imported;
-	}	
+	public void setFirstWrittenAt(String firstWrittenAt) {
+		this.firstWrittenAt = firstWrittenAt;
+	}
+	public String getLastWrittenAt() {
+		return lastWrittenAt;
+	}
+	public void setLastWrittenAt(String lastWrittenAt) {
+		this.lastWrittenAt = lastWrittenAt;
+	}
 }
 

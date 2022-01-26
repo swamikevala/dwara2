@@ -322,6 +322,12 @@ public class ScheduledStatusUpdater {
 					    			if(file != null)
 					    				restoredFilePathName = file.getPathname();
 					    			
+					    			// TODO - SuPeR HaCk - Need to bring this into f/w scheme of things properly
+					    			String lastJobProcessingTask = job.getProcessingtaskId();
+					    			if(lastJobProcessingTask != null && lastJobProcessingTask.equals("video-digi-2020-mkv-mov-gen") && restoredFilePathName.endsWith(".mkv")) {
+					    				restoredFilePathName = restoredFilePathName.replace(".mkv", ".mov");
+					    			}
+					    			
 									// inputPath = something like - /data/restored/someoutputfolder/.restoring
 									String srcPath = inputPath + java.io.File.separator + restoredFilePathName;
 									String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");	

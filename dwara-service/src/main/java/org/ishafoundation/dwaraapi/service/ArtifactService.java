@@ -156,11 +156,13 @@ public class ArtifactService extends DwaraService{
 		if(request == null)
 			throw new Exception("No request attached to " + artifactId + ". Wont be able to rename.");
 		
-		Status requestStatus =  request.getStatus();
-		if (!Boolean.TRUE.equals(force) && requestStatus != Status.completed && requestStatus != Status.marked_completed) {
-			throw new Exception("System request " + request.getId() + " not yet completed");
+		if(request.getType() == RequestType.system) {
+			Status requestStatus =  request.getStatus();
+			if (!Boolean.TRUE.equals(force) && requestStatus != Status.completed && requestStatus != Status.marked_completed) {
+				throw new Exception("System request " + request.getId() + " not yet completed");
+			}
 		}
-
+		
 		List<Job> jobList = jobDao.findAllByRequestId(request.getId());
 		boolean queued = false;
 		boolean inProgress = false;
@@ -409,7 +411,7 @@ public class ArtifactService extends DwaraService{
 
 					// just replace the sequence number with the correct prefix
 					// newSeqCode = currentSeqCode.replace(currentArtifactclass.getSequence().getPrefix(), newArtifactclass.getSequence().getPrefix());
-					newSeqCode = sequenceUtil.getSequenceCode(newArtifactclass.getSequence(), artifactDao.findByArtifactRef(nthArtifact).getName());	
+					newSeqCode = sequenceUtil.generateSequenceCode(newArtifactclass.getSequence(), artifactDao.findByArtifactRef(nthArtifact).getName());	
 				}
 				else {
 					currentSequenceRefId = currentArtifactclass.getSequence().getSequenceRef().getId();
@@ -420,7 +422,7 @@ public class ArtifactService extends DwaraService{
 						newSeqCode = currentSeqCode.replace(currentArtifactclass.getSequence().getPrefix(), newArtifactclass.getSequence().getPrefix());
 					}
 					else if(force) {
-						newSeqCode = sequenceUtil.getSequenceCode(newArtifactclass.getSequence(), artifactNameWithoutSequence);	
+						newSeqCode = sequenceUtil.generateSequenceCode(newArtifactclass.getSequence(), artifactNameWithoutSequence);	
 					}
 				}
 		
