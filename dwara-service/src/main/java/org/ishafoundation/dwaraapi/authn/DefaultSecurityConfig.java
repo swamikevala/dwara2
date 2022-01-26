@@ -103,7 +103,7 @@ public class DefaultSecurityConfig extends WebSecurityConfigurerAdapter {
     {
         CorsConfiguration configuration = new CorsConfiguration();
         List<String> allowedMethod = Collections.unmodifiableList(
-			Arrays.asList(HttpMethod.GET.name(), HttpMethod.HEAD.name(), HttpMethod.POST.name(), HttpMethod.DELETE.name()));
+			Arrays.asList(HttpMethod.GET.name(), HttpMethod.HEAD.name(), HttpMethod.POST.name(), HttpMethod.DELETE.name(), HttpMethod.PUT.name()));
         configuration.setAllowedMethods(allowedMethod);
 	    configuration.applyPermitDefaultValues();
 	    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
