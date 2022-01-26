@@ -77,7 +77,7 @@ public class ScheduledEmailReader {
                 String requesterEmail = userDao.findById(requsterId).get().getEmail();
                 String sendUrlTemplate= UriComponentsBuilder.fromHttpUrl(sendUrl)
                         .queryParam("concernedEmail" , requesterEmail )
-                        .queryParam("subject","Need Approval for project: _"+tRestoreBucket.getId()+"_")
+                        //.queryParam("subject","Need Approval for project: _"+tRestoreBucket.getId()+"_")
                         .encode()
                         .toUriString();
                 /*emailerService.setConcernedEmail(requesterEmail);
@@ -87,8 +87,10 @@ public class ScheduledEmailReader {
                 HttpHeaders headers = new HttpHeaders();
                 headers.set("X-COM-PERSIST", "true");
                 headers.set("X-COM-LOCATION", "USA");
-
-                HttpEntity<String> request = new HttpEntity<>(emailBody, headers);
+                List<String> emailArguments= new ArrayList<>();
+                emailArguments.add("Need Approval for project: _"+tRestoreBucket.getId()+"_. Priority: "+ tRestoreBucket.getPriority());
+                emailArguments.add(emailBody);
+                HttpEntity<List<String>> request = new HttpEntity<>(emailArguments, headers);
                 ResponseEntity<String> response1
                         = restTemplate.postForEntity( sendUrlTemplate,request, String.class);
                 }
