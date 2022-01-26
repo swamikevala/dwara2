@@ -104,7 +104,7 @@ public class ReportService extends DwaraService {
 
         String query = "SELECT sum(a.total_size), a.artifactclass_id, date_format(r.requested_at, '" + request.formatDate + "') as timeStone" 
         + " FROM artifact a join request r on a.write_request_id=r.id join user u on r.requested_by_id=u.id"
-        + " where r.status='completed' and a.artifactclass_id not like '%proxy%'"
+        + " where (r.status='completed' or r.status='marked_completed') and r.action_id='ingest' and a.artifactclass_id not like '%proxy%'"
         + condition
         + " group by timeStone, a.artifactclass_id"
         + " order by timeStone asc, a.artifactclass_id asc;";
@@ -153,9 +153,9 @@ public class ReportService extends DwaraService {
             condition += ")";
         }
 
-        String query = "SELECT sum(a.total_size), a.artifactclass_id, date_format(r.requested_at, '" + request.formatDate + "') as timeStone" 
+        String query = "SELECT sum(f.size), a.artifactclass_id, date_format(r.requested_at, '" + request.formatDate + "') as timeStone" 
         + " FROM request r join file f on r.file_id=f.id join artifact a on a.id=f.artifact_id join user u on r.requested_by_id=u.id"
-        + " where r.status='completed' and a.artifactclass_id not like '%proxy%'"
+        + " where (r.status='completed' or r.status='marked_completed') and r.action_id like 'restore%' and a.artifactclass_id not like '%proxy%'"
         + condition
         + " group by timeStone, a.artifactclass_id"
         + " order by timeStone asc, a.artifactclass_id asc;";
