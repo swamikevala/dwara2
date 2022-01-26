@@ -512,6 +512,7 @@ public class ImportService extends DwaraService {
 		volume.setCapacity(storagesubtypeImpl.getCapacity());
 		
 		Location location = volume.getGroupRef().getCopy().getLocation(); // configurationTablesUtil.getDefaultLocation(); // setting to default location
+		logger.trace(volume.getGroupRef().getId() + ":" + volume.getGroupRef().getCopy().getId() + ":" + location.getId());
 		volume.setLocation(location);
 
 		// Inherited from group
@@ -620,8 +621,11 @@ public class ImportService extends DwaraService {
 					else {
 						List<org.ishafoundation.dwaraapi.db.model.transactional.Artifact> artifactByNameList = artifactDao.findAllByNameEndsWithAndArtifactclassSourceIsTrueAndDeletedIsFalse(artifactNameProposed);
 						for (org.ishafoundation.dwaraapi.db.model.transactional.Artifact nthArtifactByName : artifactByNameList) {
+							logger.trace("nthArtifactByName.getName() " + nthArtifactByName.getName() + ": artifactNameMinusSequence - " + artifactNameMinusSequence);
 							if(StringUtils.substringAfter(nthArtifactByName.getName(),"_").equals(artifactNameMinusSequence)) {
 								artifact = nthArtifactByName;
+								logger.trace(artifact.getId()+"");
+								break;
 							}
 						}
 					}
@@ -648,6 +652,7 @@ public class ImportService extends DwaraService {
 						} else {
 							// even if artifact extracted code matches - double check for name - and if name differs flag it
 							String artifactNameShavedOffPrefix = StringUtils.substringAfter(artifact.getName(),"_");
+							logger.trace("artifactNameShavedOffPrefix - " + artifactNameShavedOffPrefix + " - artifactNameMinusSequence " + artifactNameMinusSequence );
 							if(!artifactNameMinusSequence.equals(artifactNameShavedOffPrefix)) {
 								String errMsg = "Different codes but same artifact name : ArtifactId - " + artifact.getId() + " - " + artifactNameMinusSequence + ". Expected code - " + artifact.getSequenceCode() + " Actual - " + sequenceCode;//(prevSeqCode != null ? prevSeqCode : sequenceCode);
 								throw new Exception (errMsg);
