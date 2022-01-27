@@ -10,6 +10,7 @@ import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreBucketResponse;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.RequestApprovalDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TRestoreBucketDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -38,6 +39,8 @@ public class RestoreBucketController {
     @Autowired
     TRestoreBucketDao tRestoreBucketDao;
     @Autowired
+    private RequestApprovalDao requestApprovalDao;
+    @Autowired
     FileService fileService;
     @Autowired
     UserDao userDao;
@@ -63,7 +66,7 @@ public class RestoreBucketController {
     @PostMapping("/buckets")
     public ResponseEntity<TRestoreBucket> createBucket(@RequestBody Map<String,String> map){
         String id = (String)map.get("id");
-        boolean isExisted = tRestoreBucketDao.existsById(id);
+        boolean isExisted = tRestoreBucketDao.existsById(id) || requestApprovalDao.existsById(id);
         if(!isExisted) {
             TRestoreBucket tRestoreBucket =restoreBucketService.createBucket(id);
             return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucket);
