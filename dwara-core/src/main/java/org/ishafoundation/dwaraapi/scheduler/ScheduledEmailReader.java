@@ -88,7 +88,7 @@ public class ScheduledEmailReader {
                 headers.set("X-COM-PERSIST", "true");
                 headers.set("X-COM-LOCATION", "USA");
                 List<String> emailArguments= new ArrayList<>();
-                emailArguments.add("Need Approval for project: _"+tRestoreBucket.getId()+"_. Priority: "+ tRestoreBucket.getPriority());
+                emailArguments.add("Need Approval for project: ["+tRestoreBucket.getId()+"]. Priority: "+ tRestoreBucket.getPriority());
                 emailArguments.add(emailBody);
                 HttpEntity<List<String>> request = new HttpEntity<>(emailArguments, headers);
                 ResponseEntity<String> response1
