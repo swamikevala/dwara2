@@ -14,6 +14,8 @@ import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.FileService;
 import org.ishafoundation.dwaraapi.service.RestoreBucketService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -25,7 +27,7 @@ import java.util.Objects;
 
 @Component
 public class ScheduledApprovedBucketRestorer {
-
+    private static final Logger logger = LoggerFactory.getLogger(ScheduledApprovedBucketRestorer.class);
     @Autowired
     private TRestoreBucketDao tRestoreBucketDao;
     @Autowired
@@ -41,6 +43,7 @@ private UserDao userDao;
         List<TRestoreBucket> tRestoreBucketList = tRestoreBucketDao.findByApprovalStatus("approved");
         //System.out.println("Started restore Approver");
         for (TRestoreBucket tRestoreBucket : tRestoreBucketList) {
+            logger.info("Start restoring approved bucket " + tRestoreBucket.getId());
             RestoreUserRequest restoreUserRequest = new RestoreUserRequest();
             restoreUserRequest.setCopy(1);
 
@@ -70,6 +73,7 @@ private UserDao userDao;
                     restoreBucketService.deleteBucket(tRestoreBucket.getId());
                 }
             } catch (Exception e) {
+                logger.error("Restore bucket " + tRestoreBucket.getId() + " failed");
                 String errorMsg = "Unable to restore - " + e.getMessage();
 
                 if (e instanceof DwaraException)
