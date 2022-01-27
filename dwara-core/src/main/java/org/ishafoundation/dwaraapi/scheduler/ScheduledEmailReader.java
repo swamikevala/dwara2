@@ -60,7 +60,7 @@ public class ScheduledEmailReader {
                     = restTemplate.getForEntity( readUrlTemplate, String.class);
             String dateSent = response.getBody();
           // logger.info("found " +dateSent);
-            if(!dateSent.equals("")){
+            if(dateSent != null && !dateSent.equals("")){
              //   logger.info("Found" + dateSent);
                 tRestoreBucket.setApprovalStatus("approved");
                 tRestoreBucket.setApprovalDate(dateSent);
