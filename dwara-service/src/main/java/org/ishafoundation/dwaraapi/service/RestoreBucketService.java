@@ -19,9 +19,11 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TRestoreBucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -41,6 +43,9 @@ public class RestoreBucketService extends DwaraService {
     @Autowired
     UserDao userDao;
 	RestTemplate restTemplate;
+
+	@Value("${emailHelperServer}")
+    private String emailHelperServer;
 
 	public RestoreBucketService(RestTemplateBuilder restTemplateBuilder) {
 		this.restTemplate = restTemplateBuilder.build();
@@ -191,15 +196,13 @@ public class RestoreBucketService extends DwaraService {
         return tRestoreBucketDao.findByApprovalStatusNullAndCreatedBy(userId);
 	}
 
-	public void sendMail(TRestoreBucket tRestoreBucket) {
-		// String sendUrl= "http://localhost:9090/dwarahelper/sendEmail";
-		String sendUrl= "http://172.18.1.24:9090/dwarahelper/sendEmail";
+	public boolean sendMail(TRestoreBucket tRestoreBucket) {
+		String sendUrl= emailHelperServer + "/dwarahelper/sendEmail";
 		String emailBody = "<p>Namaskaram</p>";
 		User requester= userDao.findById(tRestoreBucket.getRequestedBy()).get();
         String requesterName= requester.getName();
         emailBody += "<p>A private request has been raised by "+requesterName+"</p>";
         emailBody += "<p>The following folders in <span style='color:red'>red</span> need your approval.</p>";
-		List<String> fileName = new ArrayList<>();
 		for (RestoreBucketFile file : tRestoreBucket.getDetails()) {
             String css ="";
             if(file.getArtifactClass().contains("priv")){
@@ -207,7 +210,9 @@ public class RestoreBucketService extends DwaraService {
             }
             emailBody +="<div style='"+css+"'> "+ file.getFilePathName()  +"</div>";
 		}
-		emailBody += "<p>Please reply with <b>approved</b> if you wish to approve </p>";
+		emailBody += "<p>Please reply with <b>'Approved'</b> if you wish to approve. Reply <b>'Declined'</b> if you wish you to decline this request </p>";
+		emailBody += "<p>Pranam , </p>";
+        emailBody += "<p>Dwara Admin </p>";
 		/*emailerService.setConcernedEmail(tRestoreBucket.getApproverEmail());
         emailerService.setSubject("Need Approval for project: _"+tRestoreBucket.getId()+"_. Priority: "+ tRestoreBucket.getPriority());
         emailerService.setRequesterEmail(requesterName);
@@ -225,8 +230,11 @@ public class RestoreBucketService extends DwaraService {
 		emailArguments.add("Need Approval for project: ["+tRestoreBucket.getId()+"]. Priority: "+ tRestoreBucket.getPriority());
 		emailArguments.add(emailBody);
 		HttpEntity<List<String>> request = new HttpEntity<>(emailArguments, headers);
-		ResponseEntity<String> response1
-				= restTemplate.postForEntity( sendUrlTemplate,request, String.class);
+		ResponseEntity<String> response = restTemplate.postForEntity( sendUrlTemplate,request, String.class);
+		if(response != null && response.getStatusCode() == HttpStatus.OK) {
+			return true;
+		}
+		return false;
 	}
 
 
