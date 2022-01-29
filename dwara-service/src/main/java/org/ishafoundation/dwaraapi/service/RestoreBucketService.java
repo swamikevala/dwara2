@@ -207,7 +207,9 @@ public class RestoreBucketService extends DwaraService {
             }
             emailBody +="<div style='"+css+"'> "+ file.getFilePathName()  +"</div>";
 		}
-		emailBody += "<p>Please reply with <b>approved</b> if you wish to approve </p>";
+		emailBody += "<p>Please reply with <b>'Approved'</b> if you wish to approve. Reply <b>'Declined'</b> if you wish you to decline this request </p>";
+		emailBody += "<p>Pranam , </p>";
+        emailBody += "<p>Dwara Admin </p>";
 		/*emailerService.setConcernedEmail(tRestoreBucket.getApproverEmail());
         emailerService.setSubject("Need Approval for project: _"+tRestoreBucket.getId()+"_. Priority: "+ tRestoreBucket.getPriority());
         emailerService.setRequesterEmail(requesterName);
