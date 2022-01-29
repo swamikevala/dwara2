@@ -143,12 +143,15 @@ public class RestoreBucketController {
         tRestoreBucketFromDb.setDestinationPath(tRestoreBucket.getDestinationPath());
         tRestoreBucketFromDb.setApprover(tRestoreBucket.getApprover());
         tRestoreBucketFromDb.setPriority(tRestoreBucket.getPriority());
-        tRestoreBucketFromDb.setApprovalStatus(tRestoreBucket.getApprovalStatus());
         tRestoreBucketFromDb.setRequestedBy(restoreBucketService.getUserObjFromContext().getId());
-        tRestoreBucketDao.save(tRestoreBucketFromDb);
-        restoreBucketService.sendMail(tRestoreBucketFromDb);
+        boolean isSuccess = restoreBucketService.sendMail(tRestoreBucketFromDb);
+        if(isSuccess) {
+            tRestoreBucketFromDb.setApprovalStatus(tRestoreBucket.getApprovalStatus());
+            tRestoreBucketDao.save(tRestoreBucketFromDb);
 
-        return ResponseEntity.status(HttpStatus.OK).body(new TRestoreBucket());
+            return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucketFromDb);
+        }
+        return ResponseEntity.status(HttpStatus.FAILED_DEPENDENCY).body(null);
     }
 
 }

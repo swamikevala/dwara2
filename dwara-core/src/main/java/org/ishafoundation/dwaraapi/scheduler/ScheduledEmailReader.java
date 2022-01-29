@@ -9,6 +9,7 @@ import org.ishafoundation.dwaraapi.service.EmailerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -32,6 +33,9 @@ public class ScheduledEmailReader {
     @Autowired
     UserDao userDao;
 
+    @Value("${emailHelperServer}")
+    private String emailHelperServer;
+
     RestTemplate restTemplate;
 
     public ScheduledEmailReader(RestTemplateBuilder restTemplateBuilder) {
@@ -41,10 +45,8 @@ public class ScheduledEmailReader {
     @Scheduled(cron = "0 0/5 * * * ?")
     public void readEmail() {
         // hoe to find by approvestatus can't take input
-        // String sendUrl = "http://localhost:9090/dwarahelper/sendEmail";
-        // String readUrl = "http://localhost:9090/dwarahelper/readEmail";
-        String sendUrl= "http://172.18.1.24:9090/dwarahelper/sendEmail";
-        String readUrl ="http://172.18.1.24:9090/dwarahelper/readEmail";
+        String sendUrl = emailHelperServer + "/dwarahelper/sendEmail";
+        String readUrl = emailHelperServer + "/dwarahelper/readEmail";
 
         List<TRestoreBucket> tRestoreBucketfromDbs = tRestoreBucketDao.findByApprovalStatus("in_progress");
         // logger.info("Started email reading");
