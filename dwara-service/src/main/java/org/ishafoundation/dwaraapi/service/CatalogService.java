@@ -13,6 +13,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.ArtifactclassDao;
 import org.ishafoundation.dwaraapi.db.dao.master.LocationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
@@ -409,7 +410,7 @@ public class CatalogService extends DwaraService{
         if(record[i] != null)
 //            _finalizedAt = ((Timestamp) record[i]).toLocalDateTime().toString();
 //        i++;
-        	_finalizedAt = (String) record[i++];
+        	_finalizedAt = StringUtils.substringBefore((String) record[i++], "," ) ;
         
         String _requestDate = ""; // could be either request.requested_at or request.completed_at depeding on context of the method call
         if(record[i] != null)
