@@ -873,7 +873,7 @@ public class ImportService extends DwaraService {
 	private FileMeta dealCatalogFiles(Artifact nthArtifact, org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact, 
 			String artifactNameAsInCatalog, String toBeArtifactName, Artifactclass artifactclass, 
 			Volume volume, Volume masterVolume, boolean isToBeImportedVolumeMaster, boolean artifactAlreadyExists,
-	    Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File> fileId_FileObj_Map,
+	    Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File> master_fileId_FileObj_Map,
 	    ArrayList<ImportStatus> fileRecordsImportStatus,
 	    ArrayList<ImportStatus> fileVolumeRecordsImportStatus,
 	    ArrayList<String> missingFilepathnameList,
@@ -883,13 +883,25 @@ public class ImportService extends DwaraService {
 	    int fileCount = artifactFileList.size();
 
 	    // caching the file entries to avoid repeated queries...
-	    List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
 	    // collection to cache the file Objects
-	    Map<String, org.ishafoundation.dwaraapi.db.model.transactional.File> master_filePathname_FileObj_Map = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File>();
-	    for (org.ishafoundation.dwaraapi.db.model.transactional.File nthMasterFile : masterFileList) {
-	    	fileId_FileObj_Map.put(nthMasterFile.getId(), nthMasterFile);
-	    	master_filePathname_FileObj_Map.put(nthMasterFile.getPathname(), nthMasterFile);
+//	    Map<String, org.ishafoundation.dwaraapi.db.model.transactional.File> master_filePathname_FileObj_Map = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File>();
+//	    List<org.ishafoundation.dwaraapi.db.model.transactional.File> allFileList = fileDao.findAllByArtifactIdAndDeletedFalse(artifact.getId());
+//	    for (org.ishafoundation.dwaraapi.db.model.transactional.File nthMasterFile : allFileList) {
+//	    	master_filePathname_FileObj_Map.put(nthMasterFile.getPathname(), nthMasterFile);	
+//		}
+	    
+		Map<String, org.ishafoundation.dwaraapi.db.model.transactional.File> filePathname_FileObj_Map = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File>();
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> allFilesList = fileDao.findAllByArtifactIdAndDeletedFalse(artifact.getId());
+		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : allFilesList) {
+			filePathname_FileObj_Map.put(nthFile.getPathname(), nthFile);
+			if(nthFile.getDiff() == null)
+				master_fileId_FileObj_Map.put(nthFile.getId(), nthFile);
 		}
+		
+//	    List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
+//	    for (org.ishafoundation.dwaraapi.db.model.transactional.File nthMasterFile : masterFileList) {
+//	    	master_fileId_FileObj_Map.put(nthMasterFile.getId(), nthMasterFile);
+//		}
 	    
 	    List<FileVolume> fileVolumeEntries = fileVolumeDao.findAllByIdVolumeId(volume.getId());
 	    Map<Integer, FileVolume> fileId_FileVolumeObj_Map = new HashMap<Integer, FileVolume>();
@@ -951,7 +963,7 @@ public class ImportService extends DwaraService {
 			
 			org.ishafoundation.dwaraapi.db.model.transactional.File file = null;
 			if(artifactAlreadyExists) { // if artifactAlreadyExists - file would also exist already - copy / rerun scenario
-				file = master_filePathname_FileObj_Map.get(filePathname);// fileDao.findByPathnameChecksum(filePathnameChecksum); // filePathnameChecksum_FileObj_Map.get(filePathnameChecksum);
+				file = filePathname_FileObj_Map.get(filePathname);// fileDao.findByPathnameChecksum(filePathnameChecksum); // filePathnameChecksum_FileObj_Map.get(filePathnameChecksum);
 				// Maybe we should import oldest tapes first
 				// for eg., if P16539L6 is imported first followed by CA4485L4 which is the oldest of 2 then we would face this situation as
 				// sequence codes 6028/9 and 30 has differences in the file count...
@@ -963,7 +975,7 @@ public class ImportService extends DwaraService {
 					fileRecordsImportStatus.add(ImportStatus.failed);
 					logger.error("Already existing artifact " + artifact.getId() + " supposed to have but missing " + filePathname);
 				}else {
-					fileId_FileObj_Map.remove(file.getId()); // removing files already there and matches...
+					master_fileId_FileObj_Map.remove(file.getId()); // removing files already there and matches...
 					if (file.getSize() != nthFile.getSize() && !file.isDirectory()){
 						differingSizeList.add(filePathname);
 						fileRecordsImportStatus.add(ImportStatus.failed);
@@ -1050,9 +1062,8 @@ public class ImportService extends DwaraService {
 			if(toBeSavedFileList.size() > 0)
 				fileDao.saveAll(toBeSavedFileList);
 	    }
-
-		Map<String, org.ishafoundation.dwaraapi.db.model.transactional.File> filePathname_FileObj_Map = new HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File>();
-		List<org.ishafoundation.dwaraapi.db.model.transactional.File> allFilesList = fileDao.findAllByArtifactId(artifact.getId());
+		
+		allFilesList = fileDao.findAllByArtifactIdAndDeletedFalse(artifact.getId()); // Get the data from DB again as there could be some change...
 		for (org.ishafoundation.dwaraapi.db.model.transactional.File nthFile : allFilesList) {
 			filePathname_FileObj_Map.put(nthFile.getPathname(), nthFile);
 		}
@@ -1117,10 +1128,10 @@ public class ImportService extends DwaraService {
 
 		
 	    // update the extra files in DB but not in current catalog appropriately
-		dealExtraFilesInDBButNotInCatalog(fileId_FileObj_Map, masterVolume, isToBeImportedVolumeMaster);
+		dealExtraFilesInDBButNotInCatalog(master_fileId_FileObj_Map, masterVolume, isToBeImportedVolumeMaster);
 		
 		// find the missing ones and create filevolume entries
-		masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId());
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> masterFileList = fileDao.findAllByArtifactIdAndDeletedFalseAndDiffIsNull(artifact.getId()); // Get it from the DB again and dont be tempted to use the collections from above as there could be change in DB 
 		dealMissingFilesInDBButPresentInCatalog(artifact.getId(), masterFileList, masterVolume);
 		
 		FileMeta fm = null;
