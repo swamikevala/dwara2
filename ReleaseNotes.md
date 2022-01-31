@@ -3,9 +3,14 @@
 ### Bug fixes
 1) Restore private content
 
+2) Import fixes - Writtendate for import in Catalog, File Diff across mulitple copies fix
+
+3) Mam - Fix for start_times with multiple decimal getting parsed to exponential
+
 ### Upgrade steps
 
 1) Add below line to application.properties
+
 #Email helper address
 emailHelperServer=http://172.18.1.24:9090
 
