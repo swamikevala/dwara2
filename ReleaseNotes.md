@@ -1,3 +1,15 @@
+# Dwara App Version - 2.1.37 (31st Jan 2022)
+
+### Bug fixes
+1) Restore private content
+
+### Upgrade steps
+
+1) Add below line to application.properties
+#Email helper address
+emailHelperServer=http://172.18.1.24:9090
+
+
 # Dwara App Version - 2.1.36 (26th Jan 2022)
 
 ### Bug fixes
