@@ -156,9 +156,9 @@ public class ClipInserter extends CatDVInteractor {
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "format", format);
 		 
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "in.fmt", tcFmt);
-		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "in.secs", in);
+		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "in.secs", new DecimalFormat("#.#########").format(in));
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "out.fmt", tcFmt);
-		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "out.secs", out);
+		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "out.secs", new DecimalFormat("#.#########").format(out));
 
 		jsonDataSourceString = JsonPathUtil.setValue(jsonDataSourceString, "recordedDate", recordedDate);// TODO need customisation
 		
