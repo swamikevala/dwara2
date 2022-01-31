@@ -45,7 +45,11 @@ public class RestoreBucketController {
     @Autowired
     UserDao userDao;
 
-
+    @GetMapping("/buckets/getApproversEmail")
+    public ResponseEntity<List<String>> getApproversEmail() {
+        List<String> listEmails = restoreBucketService.getApproversEmail();
+        return ResponseEntity.status(HttpStatus.OK).body(listEmails);
+    }
 
     @GetMapping("/buckets")
     public ResponseEntity<List<RestoreBucketResponse>> getAllBuckets(){

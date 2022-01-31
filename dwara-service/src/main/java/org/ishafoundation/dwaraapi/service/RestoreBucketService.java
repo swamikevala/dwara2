@@ -3,6 +3,7 @@ package org.ishafoundation.dwaraapi.service;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -47,9 +48,18 @@ public class RestoreBucketService extends DwaraService {
 	@Value("${emailHelperServer}")
     private String emailHelperServer;
 
+	@Value("${approversEmail}")
+    private String APPROVERS_EMAIL;
+
 	public RestoreBucketService(RestTemplateBuilder restTemplateBuilder) {
 		this.restTemplate = restTemplateBuilder.build();
 	}
+
+	public List<String> getApproversEmail() {
+        String[] arr = APPROVERS_EMAIL.split(",");
+		return Arrays.asList(arr);
+    }
+
 	public TRestoreBucket createBucket(String id) {
 		int createdBy = getUserObjFromContext().getId();
 		TRestoreBucket tRestoreBucket = new TRestoreBucket(id, createdBy, LocalDateTime.now());
@@ -197,6 +207,9 @@ public class RestoreBucketService extends DwaraService {
 	}
 
 	public boolean sendMail(TRestoreBucket tRestoreBucket) {
+		if(!getApproversEmail().contains(tRestoreBucket.getApproverEmail())) {
+			return false;
+		}
 		String sendUrl= emailHelperServer + "/dwarahelper/sendEmail";
 		String emailBody = "<p>Namaskaram</p>";
 		User requester= userDao.findById(tRestoreBucket.getRequestedBy()).get();
