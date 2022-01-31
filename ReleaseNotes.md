@@ -10,9 +10,9 @@
 ### Upgrade steps
 
 1) Add below line to application.properties
-
-#Email helper address
+#Email helper
 emailHelperServer=http://172.18.1.24:9090
+approversEmail=swami.sukhada@ishafoundation.org,maa.dakshina@ishafoundation.org,swami.vidhyavasanta@ishafoundation.org
 
 
 # Dwara App Version - 2.1.36 (26th Jan 2022)
