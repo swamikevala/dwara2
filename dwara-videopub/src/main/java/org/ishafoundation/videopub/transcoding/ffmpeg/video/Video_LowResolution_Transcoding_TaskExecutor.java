@@ -150,6 +150,7 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		List<String> thumbnailGenerationCommandParamsList = new ArrayList<String>();
 		thumbnailGenerationCommandParamsList.add("ffmpeg");
 		thumbnailGenerationCommandParamsList.add("-y");
+		thumbnailGenerationCommandParamsList.add("-nostdin");
 		thumbnailGenerationCommandParamsList.add("-i");
 		thumbnailGenerationCommandParamsList.add(sourceFilePathname);
 		thumbnailGenerationCommandParamsList.add("-ss");
@@ -193,6 +194,7 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 //		proxyGenerationCommandParamsList.add(factory.getPriority()+"");
 		proxyGenerationCommandParamsList.add("ffmpeg");
 		proxyGenerationCommandParamsList.add("-y");
+		proxyGenerationCommandParamsList.add("-nostdin");
 		proxyGenerationCommandParamsList.add("-i");
 		proxyGenerationCommandParamsList.add(sourceFilePathname);
 		proxyGenerationCommandParamsList.add("-map");

@@ -188,6 +188,7 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		
 		compressionCommandParamsList.add("ffmpeg");
 		compressionCommandParamsList.add("-y");
+		compressionCommandParamsList.add("-nostdin");
 		compressionCommandParamsList.add("-i");
 		compressionCommandParamsList.add(sourceFilePathname);
 		compressionCommandParamsList.add("-map");
