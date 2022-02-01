@@ -10,9 +10,9 @@
 ### Upgrade steps
 
 1) Add below line to application.properties
-
-#Email helper address
+#Email helper
 emailHelperServer=http://172.18.1.24:9090
+approversEmail=swami.sukhada@ishafoundation.org,maa.dakshina@ishafoundation.org,swami.vidhyavasanta@ishafoundation.org
 
 2) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_25.sql)
 

@@ -459,7 +459,7 @@ public class DwaraHoverService extends DwaraService {
 				output.add(dwaraHoverTranscriptListDTO);
 			}
 		} catch (UnirestException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 		}
 		return output;
 	}
