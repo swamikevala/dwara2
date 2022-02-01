@@ -14,6 +14,7 @@
 #Email helper address
 emailHelperServer=http://172.18.1.24:9090
 
+2) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_25.sql)
 
 # Dwara App Version - 2.1.36 (26th Jan 2022)
 
