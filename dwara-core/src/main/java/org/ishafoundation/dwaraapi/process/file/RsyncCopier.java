@@ -63,8 +63,7 @@ public class RsyncCopier implements IProcessingTask {
 		}
 		else {
 			destinationFilePathname = destinationDirPath;
-			// String parentDir = FilenameUtils.getFullPathNoEndSeparator(destinationDirPath);
-			String command1 = "mkdir -p \"" + destinationDirPath + "\"";
+			String command1 = "mkdir -p \"" + StringUtils.substringAfter(destinationDirPath, ":") + "\"";
 			
 			processingtaskResponse = executeCommandRemotely(host, sshUser, command1, jobId, processingtaskResponse);
 			if(!processingtaskResponse.isComplete())
