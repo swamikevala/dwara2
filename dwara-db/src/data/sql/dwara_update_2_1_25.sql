@@ -51,7 +51,7 @@ INSERT INTO `action_artifactclass_flow` (`action_id`, `artifactclass_id`, `flow_
 
 
 INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `flow_ref_id`, `processingtask_id`, `storagetask_action_id`, `task_config`) VALUES
-('U31', 1, null, 0, 1, 'audio-proxy-flow', null, 'audio-proxy-gen', null, null),
+('U31', 1, null, 0, 1, 'audio-proxy-flow', null, 'audio-proxy-low-gen', null, null),
 ('U32', 1, '["U31"]', 0, 2, 'audio-proxy-flow', null, 'file-copy', null, '{\"exclude_if\":{\"artifactclass_regex\":\".*-priv2.*\"}, \"destination_id\": \"catdv-audio-proxy\", \"pathname_regex\": \"[^/]+\\\\.mp3\"}'),
 ('U33', 1, '["U31"]', 0, 3, 'audio-proxy-flow', 'archive-flow', null, null, null);
 
