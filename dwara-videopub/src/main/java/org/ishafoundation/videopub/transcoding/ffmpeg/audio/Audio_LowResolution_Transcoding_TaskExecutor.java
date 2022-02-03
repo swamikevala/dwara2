@@ -57,11 +57,17 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		Integer fileId = processContext.getFile().getId();
 		String destinationDirPath = processContext.getOutputDestinationDirPath();
+
+		Artifact inputArtifact = processContext.getJob().getInputArtifact();
+		String inputArtifactName = inputArtifact.getName();
+		
+		Artifact outputArtifact = processContext.getJob().getOutputArtifact();
+		String outputArtifactName = outputArtifact.getName();
 		
 		if(logger.isTraceEnabled()) {
 			logger.trace("taskName " + taskName);
-//			logger.trace("inputArtifactName " + inputArtifactName); // V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
-//			logger.trace("outputArtifactName " + outputArtifactName); // VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
+			logger.trace("inputArtifactName " + inputArtifactName); // V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
+			logger.trace("outputArtifactName " + outputArtifactName); // VL22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12
 			logger.trace("fileId " + fileId);
 //			logger.trace("domain " + domain.name()); 
 			logger.trace("logicalFile " + logicalFile.getAbsolutePath()); // /data/ingested/V22205_Test_5D-Camera_Mahabharat_Day7-Morning_Isha-Samskriti-Singing_AYA_17-Feb-12/DCIM/100EOS5D/MVI_5594.MOV
@@ -74,6 +80,11 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		FileUtils.forceMkdir(new File(destinationDirPath));
 		
 		String fileName = FilenameUtils.getBaseName(sourceFilePathname);
+		
+		if(fileName.equals(FilenameUtils.getBaseName(inputArtifactName))) {
+			fileName = outputArtifactName;
+		}
+			
 		String proxyTargetLocation = destinationDirPath + File.separator + fileName + ".mp3";
 
 		// TODO : better this...
@@ -84,8 +95,7 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		String nonDwaraGeneratedProxyFilepathname = null;
 		boolean proxyAlreadyAvailable = false;
 		if(Boolean.TRUE.equals(audioConfiguration.getCheck())) {
-			Artifact inputArtifact = processContext.getJob().getInputArtifact();
-			String inputArtifactName = inputArtifact.getName();
+
 			String sequenceShavedOffInputArtifactName = StringUtils.substringAfter(inputArtifactName, "_");
 			
 			String rootLocation = null;
@@ -95,16 +105,22 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 				rootLocation = audioConfiguration.getLocalRootLocation();
 			
 			nonDwaraGeneratedProxyFilepathname = rootLocation + File.separator + sequenceShavedOffInputArtifactName + StringUtils.substringAfter(sourceFilePathname, sequenceShavedOffInputArtifactName);
+			nonDwaraGeneratedProxyFilepathname = nonDwaraGeneratedProxyFilepathname.replace(FilenameUtils.getName(nonDwaraGeneratedProxyFilepathname), FilenameUtils.getBaseName(nonDwaraGeneratedProxyFilepathname) + ".mp3");
 			
-			if(Boolean.TRUE.equals(audioConfiguration.getRemote())) 
+			if(Boolean.TRUE.equals(audioConfiguration.getRemote())) { 
 				session = sshSessionHelper.getSession(audioConfiguration.getHost(), audioConfiguration.getSshSystemUser());
 			
-			String command = "test -f " + nonDwaraGeneratedProxyFilepathname + " && echo \"YES\" || echo \"NO\"";
-			logger.debug("File exist command - " + command);
+				String command = "test -f " + nonDwaraGeneratedProxyFilepathname + " && echo \"YES\" || echo \"NO\"";
+				logger.debug("File exist command - " + command);
+				
+				// check if file exist
+				proxyAlreadyAvailable = fileExist(session, command, fileId + ".out_audio_proxy_check");
+			}else {
+				if(new File(nonDwaraGeneratedProxyFilepathname).exists())
+					proxyAlreadyAvailable = true;	
+			}
 			
-			// check if file exist
-			proxyAlreadyAvailable = fileExist(session, command, fileId + ".out_audio_proxy_check");
-			
+			logger.debug("proxyAlreadyAvailable - " + proxyAlreadyAvailable);
 //			if(!proxyAlreadyAvailable) {
 //				command = "test -d " + nonDwaraGeneratedProxyFilepathname + " && echo \"YES\" || echo \"NO\""; // check if directory exist
 //				logger.debug("Directory exist command - " + command);
@@ -117,11 +133,13 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		if(proxyAlreadyAvailable) {
 			// TODO put it in destination location.. move or copy???
 			if(Boolean.TRUE.equals(audioConfiguration.getRemote())) {
-				logger.info("Now Copying the Proxy file from " + audioConfiguration.getHost() + "@" + nonDwaraGeneratedProxyFilepathname + " to " +   destinationDirPath);
-				securedCopier.copyFrom(session, nonDwaraGeneratedProxyFilepathname, destinationDirPath);
+				logger.info("Now Copying the Proxy file from " + audioConfiguration.getHost() + "@" + nonDwaraGeneratedProxyFilepathname + " to " +  proxyTargetLocation);
+				securedCopier.copyFrom(session, nonDwaraGeneratedProxyFilepathname, proxyTargetLocation);
 			}else {
-				FileUtils.copyFile(new File(nonDwaraGeneratedProxyFilepathname), new File(destinationDirPath));
+				logger.info("Now Copying the Proxy file from " + nonDwaraGeneratedProxyFilepathname + " to " +  proxyTargetLocation);
+				FileUtils.copyFile(new File(nonDwaraGeneratedProxyFilepathname), new File(proxyTargetLocation));
 			}
+			processingtaskResponse.setIsComplete(true);
 		}
 		else {
 			/*************** PROXY GENERATION ***************/
@@ -151,9 +169,9 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		if(Boolean.TRUE.equals(audioConfiguration.getRemote())) {
 			try {
 				cler = remoteCommandLineExecuter.executeCommandRemotelyOnServer(session, command, commandOutputFilePathName);
-				logger.debug("File exist - executed successfully");
+				logger.debug("Remote file exist - executed successfully");
 			} catch (Exception e) {
-				logger.error("File exist - Unable to execute" + e.getMessage());
+				logger.error("Remote file exist - Unable to execute" + e.getMessage());
 			}
 		}else {
 			try {
@@ -166,7 +184,8 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 			
 		if(cler.isComplete()) {
 			String resp = cler.getStdOutResponse();
-			if(resp.equals("YES"))
+			logger.debug(resp);
+			if(resp.trim().equals("YES"))
 				proxyAlreadyAvailable = true;
 			else {
 	    		if (session != null) 

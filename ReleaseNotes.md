@@ -13,12 +13,12 @@
 
 1) Add below line to application.properties
 
-nonDwaraAudioProxy.check=true
-nonDwaraAudioProxy.remote=true
-nonDwaraAudioProxy.localRootLocation=/data/non-dwara/AudioProxy
-nonDwaraAudioProxy.host=172.18.1.24
-nonDwaraAudioProxy.sshSystemUser=dwara
-nonDwaraAudioProxy.sshRootLocation=/data/non-dwara/AudioProxy
+non-dwara-audio-proxy.check=true
+non-dwara-audio-proxy.remote=true
+non-dwara-audio-proxy.localRootLocation=/data/non-dwara/AudioProxy
+non-dwara-audio-proxy.host=172.18.1.24
+non-dwara-audio-proxy.sshSystemUser=dwara
+non-dwara-audio-proxy.sshRootLocation=/data/non-dwara/AudioProxy
 
 2) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_25.sql)
 
