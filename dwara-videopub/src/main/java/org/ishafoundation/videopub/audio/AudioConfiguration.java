@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties(prefix="nonDwaraAudioProxy")
+@ConfigurationProperties(prefix="non-dwara-audio-proxy")
 public class AudioConfiguration {
 	
 	private Boolean check; // should the existence of nonDwara proxy be checked and generated or can be generated straight
