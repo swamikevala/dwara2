@@ -99,7 +99,7 @@ public class VolumeService extends DwaraService {
 			Volumetype neededVolumetype = Volumetype.valueOf(volumetype);
 			
 			volumeResponseList = new ArrayList<VolumeResponse>();
-			List<Volume> volumeGroupList = volumeDao.findAllByType(neededVolumetype);
+			List<Volume> volumeGroupList = volumeDao.findAllByTypeAndImportedIsFalse(neededVolumetype);
 			for (Volume volume : volumeGroupList) {
 				volumeResponseList.add(getVolume_Internal(volume));
 			}
