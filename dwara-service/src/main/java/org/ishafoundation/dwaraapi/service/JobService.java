@@ -96,7 +96,12 @@ public class JobService extends DwaraService{
 	@Autowired
 	private ArtifactVolumeDao artifactVolumeDao;
 	
+	
 	public List<JobResponse> getJobs(Integer systemRequestId, List<Status> statusList) {
+		return getJobs(systemRequestId, statusList, true);
+	}
+	
+	public List<JobResponse> getJobs(Integer systemRequestId, List<Status> statusList, boolean filterCancelledAndDeletedOnes) {
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
 		
 		List<Job> jobList = jobDao.findAllDynamicallyBasedOnParamsOrderByLatest(systemRequestId, statusList);

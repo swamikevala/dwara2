@@ -516,7 +516,7 @@ public class RequestService extends DwaraService{
 				}
 				if(jobDetailsType != null) {
 					if(jobDetailsType == JobDetailsType.vanilla)
-						requestResponse.setJob(jobService.getJobs(request.getId(), null));
+						requestResponse.setJob(jobService.getJobs(request.getId(), null, false));
 					else if(jobDetailsType == JobDetailsType.placeholder)
 						requestResponse.setJob(jobService.getPlaceholderJobs(request));
 					else if(jobDetailsType == JobDetailsType.grouped_placeholder)
