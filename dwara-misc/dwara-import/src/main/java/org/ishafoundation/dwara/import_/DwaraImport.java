@@ -357,14 +357,14 @@ public class DwaraImport {
 			System.err.println(fileName + " contains invalid xml character \0. Character removed");
 			fileName = fileName.replace("\0", "");
 		}
-		if(fileName.contains("\65534")) {
-			System.err.println(fileName + " contains invalid xml character \65534. Character removed");
-			fileName = fileName.replace("\65534", "");
-		}
-		if(fileName.contains("\65535")) {
-			System.err.println(fileName + " contains invalid xml character \65535. Character removed");
-			fileName = fileName.replace("\65535", "");
-		}
+//		if(fileName.contains("\65534")) {
+//			System.err.println(fileName + " contains invalid xml character \65534. Character removed");
+//			fileName = fileName.replace("\65534", "");
+//		}
+//		if(fileName.contains("\65535")) {
+//			System.err.println(fileName + " contains invalid xml character \65535. Character removed");
+//			fileName = fileName.replace("\65535", "");
+//		}
 		//fileName = StringEscapeUtils.escapeXml(fileName);
 		return fileName;
 	}
