@@ -6,17 +6,27 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.commandline.remote.sch.RemoteCommandLineExecuter;
+import org.ishafoundation.dwaraapi.commandline.remote.sch.SshSessionHelper;
+import org.ishafoundation.dwaraapi.commandline.remote.scp.SecuredCopier;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
+import org.ishafoundation.dwaraapi.process.request.Artifact;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
+import org.ishafoundation.videopub.audio.AudioConfiguration;
 import org.ishafoundation.videopub.transcoding.ffmpeg.MediaTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+
+import com.jcraft.jsch.Session;
 
 @Component("audio-proxy-low-gen")
 @Primary
@@ -24,7 +34,22 @@ import org.springframework.stereotype.Component;
 public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
 
 	private static final Logger logger = LoggerFactory.getLogger(Audio_LowResolution_Transcoding_TaskExecutor.class);
-
+	
+	@Autowired
+	private AudioConfiguration audioConfiguration;
+	
+	@Autowired
+	private CommandLineExecuter commandLineExecuter;
+	
+	@Autowired
+	private SshSessionHelper sshSessionHelper;
+	
+	@Autowired
+	private RemoteCommandLineExecuter remoteCommandLineExecuter;
+	
+	@Autowired
+	private SecuredCopier securedCopier;
+	
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
 		
@@ -46,35 +71,111 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		
 		String sourceFilePathname = logicalFile.getAbsolutePath();
 		
-		String identifierSuffix = "";//mediaFileId+"";//  +  "-" + VideoProcessingSteps.PROXY_GENERATION.toString();
-		String containerName = identifierSuffix;	
-		
 		FileUtils.forceMkdir(new File(destinationDirPath));
-	
-		String fileName = FilenameUtils.getBaseName(sourceFilePathname);
-		String proxyTargetLocation = destinationDirPath + File.separator + fileName + ".mp3";		
 		
-		/*************** PROXY GENERATION ***************/
-		long proxyStartTime = System.currentTimeMillis();
-		logger.info("Proxy Generation start for " + containerName + " - targetLocation is - " + proxyTargetLocation);
-	
-		// Doing this command creation and execution in 2 steps so that the process can be referenced in memory and so if cancel command for a specific medialibrary is issued the specific process(es) can be destroyed/killed referencing this...
-		// mapping only for proxy generation commands which are slightly heavy and time consuming than the thumbnail and metadata extraction...
-		List<String> proxyGenerationCommandParamsList = getProxyGenCommand(sourceFilePathname, proxyTargetLocation);
-		CommandLineExecutionResponse proxyCommandLineExecutionResponse = createProcessAndExecuteCommand(fileId+"~"+taskName , proxyGenerationCommandParamsList);
-		long proxyEndTime = System.currentTimeMillis();
-	
+		String fileName = FilenameUtils.getBaseName(sourceFilePathname);
+		String proxyTargetLocation = destinationDirPath + File.separator + fileName + ".mp3";
+
 		// TODO : better this...
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 		processingtaskResponse.setDestinationPathname(proxyTargetLocation);
-		processingtaskResponse.setIsComplete(proxyCommandLineExecutionResponse.isComplete());
-		processingtaskResponse.setIsCancelled(proxyCommandLineExecutionResponse.isCancelled());
-		processingtaskResponse.setStdOutResponse(proxyCommandLineExecutionResponse.getStdOutResponse());
-		processingtaskResponse.setFailureReason(proxyCommandLineExecutionResponse.getFailureReason());
+
+		Session session = null;
+		String nonDwaraGeneratedProxyFilepathname = null;
+		boolean proxyAlreadyAvailable = false;
+		if(Boolean.TRUE.equals(audioConfiguration.getCheck())) {
+			Artifact inputArtifact = processContext.getJob().getInputArtifact();
+			String inputArtifactName = inputArtifact.getName();
+			String sequenceShavedOffInputArtifactName = StringUtils.substringAfter(inputArtifactName, "_");
+			
+			String rootLocation = null;
+			if(Boolean.TRUE.equals(audioConfiguration.getRemote())) 
+				rootLocation = audioConfiguration.getSshRootLocation();
+			else
+				rootLocation = audioConfiguration.getLocalRootLocation();
+			
+			nonDwaraGeneratedProxyFilepathname = rootLocation + File.separator + sequenceShavedOffInputArtifactName + StringUtils.substringAfter(sourceFilePathname, sequenceShavedOffInputArtifactName);
+			
+			if(Boolean.TRUE.equals(audioConfiguration.getRemote())) 
+				session = sshSessionHelper.getSession(audioConfiguration.getHost(), audioConfiguration.getSshSystemUser());
+			
+			String command = "test -f " + nonDwaraGeneratedProxyFilepathname + " && echo \"YES\" || echo \"NO\"";
+			logger.debug("File exist command - " + command);
+			
+			// check if file exist
+			proxyAlreadyAvailable = fileExist(session, command, fileId + ".out_audio_proxy_check");
+			
+//			if(!proxyAlreadyAvailable) {
+//				command = "test -d " + nonDwaraGeneratedProxyFilepathname + " && echo \"YES\" || echo \"NO\""; // check if directory exist
+//				logger.debug("Directory exist command - " + command);
+//				
+//				proxyAlreadyAvailable = abc(session, command, fileId + ".out_audio_proxy_check");
+//			}
+		}
+		
+		
+		if(proxyAlreadyAvailable) {
+			// TODO put it in destination location.. move or copy???
+			if(Boolean.TRUE.equals(audioConfiguration.getRemote())) {
+				logger.info("Now Copying the Proxy file from " + audioConfiguration.getHost() + "@" + nonDwaraGeneratedProxyFilepathname + " to " +   destinationDirPath);
+				securedCopier.copyFrom(session, nonDwaraGeneratedProxyFilepathname, destinationDirPath);
+			}else {
+				FileUtils.copyFile(new File(nonDwaraGeneratedProxyFilepathname), new File(destinationDirPath));
+			}
+		}
+		else {
+			/*************** PROXY GENERATION ***************/
+			long proxyStartTime = System.currentTimeMillis();
+			logger.info("Proxy Generation start - targetLocation is - " + proxyTargetLocation);
+		
+			// Doing this command creation and execution in 2 steps so that the process can be referenced in memory and so if cancel command for a specific medialibrary is issued the specific process(es) can be destroyed/killed referencing this...
+			// mapping only for proxy generation commands which are slightly heavy and time consuming than the thumbnail and metadata extraction...
+			List<String> proxyGenerationCommandParamsList = getProxyGenCommand(sourceFilePathname, proxyTargetLocation);
+			CommandLineExecutionResponse proxyCommandLineExecutionResponse = createProcessAndExecuteCommand(fileId+"~"+taskName , proxyGenerationCommandParamsList);
+			long proxyEndTime = System.currentTimeMillis();
+
+			processingtaskResponse.setIsComplete(proxyCommandLineExecutionResponse.isComplete());
+			processingtaskResponse.setIsCancelled(proxyCommandLineExecutionResponse.isCancelled());
+			processingtaskResponse.setStdOutResponse(proxyCommandLineExecutionResponse.getStdOutResponse());
+			processingtaskResponse.setFailureReason(proxyCommandLineExecutionResponse.getFailureReason());
+		}
 
 		return processingtaskResponse;
 	}
+
 	
+	private boolean fileExist(Session session, String command, String commandOutputFilePathName) {
+		
+		boolean proxyAlreadyAvailable = false;
+		CommandLineExecutionResponse cler = null;
+		if(Boolean.TRUE.equals(audioConfiguration.getRemote())) {
+			try {
+				cler = remoteCommandLineExecuter.executeCommandRemotelyOnServer(session, command, commandOutputFilePathName);
+				logger.debug("File exist - executed successfully");
+			} catch (Exception e) {
+				logger.error("File exist - Unable to execute" + e.getMessage());
+			}
+		}else {
+			try {
+				cler = commandLineExecuter.executeCommand(command);
+				logger.debug("File exist - executed successfully");
+			} catch (Exception e) {
+				logger.error("File exist - Unable to execute" + e.getMessage());
+			}
+		}
+			
+		if(cler.isComplete()) {
+			String resp = cler.getStdOutResponse();
+			if(resp.equals("YES"))
+				proxyAlreadyAvailable = true;
+			else {
+	    		if (session != null) 
+	    			sshSessionHelper.disconnectSession(session);
+			}
+		}
+
+		return proxyAlreadyAvailable;
+	}
 
 	// ffmpeg -y -nostdin -i <<sourceFilePathname>> -b:a 64k <<proxyTargetLocation>> 
 	// ffmpeg -y -nostdin -i file.wav -b:a 64k file.mp3
