@@ -143,7 +143,18 @@ public abstract class AbstractStoragetypeJobProcessor {
 		logger.trace("Job " + job.getId() + " updated with the formatted Volume " + volume.getId() + " succesfully");
 	}
 
-	
+    public StorageResponse copy(SelectedStorageJob selectedStorageJob) throws Throwable{
+    	logger.info("Copying job " + selectedStorageJob.getStorageJob().getJob().getId());
+    	StorageResponse storageResponse = null;
+//    	beforeWrite(selectedStorageJob);
+    	
+    	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
+    	storageResponse = iStoragelevel.copy(selectedStorageJob);
+
+//    	afterWrite(selectedStorageJob, storageResponse);
+    	return storageResponse; 
+    }
+    
     protected void beforeWrite(SelectedStorageJob selectedStorageJob) throws Exception {
     	
     	labelManager.writeArtifactLabelTemporarilyOnDisk(selectedStorageJob);
@@ -332,19 +343,23 @@ public abstract class AbstractStoragetypeJobProcessor {
 		    artifactVolume.setDetails(artifactVolumeDetails);
 	    }
 	    artifactVolume = artifactVolumeDao.save(artifactVolume);
-	    
-		selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStartVolumeBlock());
-		selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEndVolumeBlock());
-		
-		logger.info("ArtifactVolume - " + artifactVolume.getId().getArtifactId() + " " + artifactVolume.getName() + " " + artifactVolume.getId().getVolumeId() + " " + artifactVolume.getDetails().getStartVolumeBlock() + " " + artifactVolume.getDetails().getEndVolumeBlock());
-    	int lastArtifactOnVolumeEndVolumeBlock = artifactVolume.getDetails().getEndVolumeBlock();
-    	logger.trace("lastArtifactOnVolumeEndVolumeBlock " + lastArtifactOnVolumeEndVolumeBlock);
-    	logger.trace("volume.getDetails().getBlocksize() - " + volume.getDetails().getBlocksize());
-    	long usedCapacity = (long) volume.getDetails().getBlocksize() * lastArtifactOnVolumeEndVolumeBlock;
+	    long usedCapacity = 0L;
+	    if(volume.getStoragelevel() == Storagelevel.block) {
+			selectedStorageJob.setArtifactStartVolumeBlock(artifactVolume.getDetails().getStartVolumeBlock());
+			selectedStorageJob.setArtifactEndVolumeBlock(artifactVolume.getDetails().getEndVolumeBlock());
+			
+			logger.info("ArtifactVolume - " + artifactVolume.getId().getArtifactId() + " " + artifactVolume.getName() + " " + artifactVolume.getId().getVolumeId() + " " + artifactVolume.getDetails().getStartVolumeBlock() + " " + artifactVolume.getDetails().getEndVolumeBlock());
+	    	int lastArtifactOnVolumeEndVolumeBlock = artifactVolume.getDetails().getEndVolumeBlock();
+	    	logger.trace("lastArtifactOnVolumeEndVolumeBlock " + lastArtifactOnVolumeEndVolumeBlock);
+	    	logger.trace("volume.getDetails().getBlocksize() - " + volume.getDetails().getBlocksize());
+	    	usedCapacity = (long) volume.getDetails().getBlocksize() * lastArtifactOnVolumeEndVolumeBlock;
+	    }else {
+	    	
+	    }
     	logger.trace("usedCapacity - " + usedCapacity);
 		volume.setUsedCapacity(usedCapacity);
 		volumeDao.save(volume);
-		
+
 		labelManager.writeArtifactLabel(selectedStorageJob);
 
     	boolean isVolumeNeedToBeFinalized = volumeUtil.isVolumeNeedToBeFinalized(volume, usedCapacity);

@@ -38,10 +38,11 @@ public class VolumeUtil {
 	private float watermarkHigh;
 	
 	public long getVolumeUsedCapacity(Volume volume){ 
+		/*
 		// works only for blocks - TODO need to address other storagelevels...
 		int lastArtifactOnVolumeEndVolumeBlock = artifactVolumeRepositoryUtil.getLastArtifactOnVolumeEndVolumeBlock(volume);
 		logger.trace("lastArtifactOnVolumeEndVolumeBlock " + lastArtifactOnVolumeEndVolumeBlock);
-		int volumeBlocksize = volume.getDetails().getBlocksize();
+		Integer volumeBlocksize = volume.getDetails().getBlocksize();
 		logger.trace("volumeBlocksize " + volumeBlocksize);
 //		ArtifactVolumeRepository<ArtifactVolume> artifactVolumeDao = domainUtil.getDomainSpecificArtifactVolumeRepository(domain);
 //		List<ArtifactVolume> artifactVolumeList = artifactVolumeDao.findAllByIdVolumeId(volume.getId());
@@ -53,6 +54,8 @@ public class VolumeUtil {
 		long volumeUsedCapacity = (long) lastArtifactOnVolumeEndVolumeBlock * volumeBlocksize; 
 		logger.trace("volumeUsedCapacity " + volumeUsedCapacity);
 		return volumeUsedCapacity;
+		*/
+		return volume.getUsedCapacity();
 	}
 
 	// returns - in bytes...

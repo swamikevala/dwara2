@@ -30,7 +30,8 @@ public class DiskJobManager extends AbstractStoragetypeJobManager {
 		Volume volume = storageJob.getVolume();
 		DiskJob dj = new DiskJob();
 		dj.setStorageJob(storageJob);
-		dj.setDeviceWwnId(volume.getDetails().getMountpoint());
+		dj.setMountPoint(volume.getDetails().getMountpoint());
+		// dj.setDeviceWwnId();
 		
 		Job job = storageJob.getJob();
 		job.setDevice(null);// TODO "???"

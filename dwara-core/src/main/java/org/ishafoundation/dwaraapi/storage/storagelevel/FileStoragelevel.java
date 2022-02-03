@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
@@ -20,6 +21,7 @@ import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.exception.StorageException;
 import org.ishafoundation.dwaraapi.process.helpers.LogicalFileHelper;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
+import org.ishafoundation.dwaraapi.storage.model.DiskJob;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
@@ -57,6 +59,40 @@ public class FileStoragelevel implements IStoragelevel {
 
 	@Override
 	public StorageResponse copy(SelectedStorageJob selectedStorageJob) throws Exception{
+    	DiskJob diskJob = (DiskJob) selectedStorageJob;
+		StorageJob storageJob = diskJob.getStorageJob();
+		
+    	int jobId = storageJob.getJob().getId();
+    	logger.info("Copying job " + jobId);
+
+    	StorageResponse storageResponse = null;
+//    	beforeWrite(selectedStorageJob);
+    
+    	Path srcFilepath = Paths.get(storageJob.getArtifactPrefixPath(), storageJob.getArtifactName());
+    	Path destDiskpath = Paths.get(diskJob.getMountPoint(), storageJob.getVolume().getId());
+    	if(!destDiskpath.toFile().exists())
+    		throw new DwaraException("Disk " + destDiskpath + " not found");
+    	
+    	
+//    	Files.copy(srcFilepath, destPath);
+    	
+    	FileUtils.copyDirectory(srcFilepath.toFile(), Paths.get(destDiskpath.toString(), storageJob.getArtifactName()).toFile());
+    	
+//    	String command = "cp -r \"" + srcFilepath.toString() + "\" " + "\"" +  destPath.toString() +"\"";
+//    	CommandLineExecutionResponse cler = null;
+//    	
+//
+//		cler = commandLineExecuter.executeCommand(command);
+//		if(cler.isComplete())
+//			logger.debug("Job " + jobId + " completed succesfully - " + cler.getStdOutResponse());
+
+
+//    	afterWrite(selectedStorageJob, storageResponse);
+		storageResponse = new StorageResponse();
+    	return storageResponse; 
+	}
+	
+	public StorageResponse remoteCopy(SelectedStorageJob selectedStorageJob) throws Exception{
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
 		Artifact inputArtifact = storageJob.getArtifact();
 

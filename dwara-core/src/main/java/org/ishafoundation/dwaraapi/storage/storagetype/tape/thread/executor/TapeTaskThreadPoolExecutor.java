@@ -26,7 +26,7 @@ public class TapeTaskThreadPoolExecutor {
 	public void init() throws Exception {
 		List<Device> tapedriveList = (List<Device>) deviceDao.findAllByType(Devicetype.tape_drive);
 		if(tapedriveList.size() ==  0)
-			throw new Exception("Please configure devices table properly");
+			return;// throw new Exception("Please configure devices table properly");
 		int corePoolSize = tapedriveList.size() + 2; // extra buffer 2, so even when we bump extra drives(assumption - not expecting to add more than 2) we dont need to restart app
 		int maxPoolSize = corePoolSize;
         executor = new ThreadPoolExecutor(corePoolSize, maxPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());

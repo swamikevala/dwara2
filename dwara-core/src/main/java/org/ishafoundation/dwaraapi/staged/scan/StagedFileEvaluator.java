@@ -90,7 +90,8 @@ public class StagedFileEvaluator {
 			supportedExtns.add(extension.getId().toLowerCase());
 		}
 		Flowelement flowelement =  flowelementDao.findByFlowIdAndProcessingtaskIdAndDeprecatedFalseAndActiveTrueOrderByDisplayOrderAsc("video-edit-tr-proxy-flow", "video-proxy-low-gen");
-		editedTrSeriesFlowelementTaskconfigPathnameRegex = flowelement.getTaskconfig().getPathnameRegex();
+		if(flowelement != null)
+			editedTrSeriesFlowelementTaskconfigPathnameRegex = flowelement.getTaskconfig().getPathnameRegex();
 	}
 
 	public void getExcludedFileNamesRegexList() {

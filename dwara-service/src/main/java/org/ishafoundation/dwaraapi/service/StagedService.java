@@ -342,6 +342,7 @@ public class StagedService extends DwaraService{
 					}
 		    	}
 	    	}
+	    	logger.trace("isLevel1Pass - " + isLevel1Pass);
 	    	
 	    	boolean isLevel2Pass = true;
 	    	if(!isLevel1Pass) {
@@ -349,42 +350,45 @@ public class StagedService extends DwaraService{
 	    		isLevel2Pass = false;
 	    	}
 	    	else { // Validation Level 2 - Set permissions - Only when level 1 is success we continue...
-		    	for (StagedFile stagedFile : stagedFileList) {
-		    		
-					String artifactName = stagedFile.getName();
-					String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
-					Error error = stagedFileOperations.setPermissions(path, true, artifactName);
-					if(error != null) {
-						isLevel2Pass = false;
-						StagedFileDetails sfd = null;
-				    	for (StagedFileDetails stagedFileDetails : stagedFileDetailsList) {
-				    		if(stagedFileDetails.getName().equals(artifactName)) {
-				    			List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = stagedFileDetails.getErrors();
-				    			if(errorList == null)
-				    				errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
-				    			
-								errorList.add(error);
-								sfd = stagedFileDetails;
-								break;
-				    		}
-						}
-						
-				    	if(sfd == null) {
-							sfd = new StagedFileDetails();
+	    		if(configuration.isSetArtifactFileSystemPermissions()) {
+			    	for (StagedFile stagedFile : stagedFileList) {
+			    		
+						String artifactName = stagedFile.getName();
+						String path = stagedFile.getPath();// holds something like /data/user/pgurumurthy/ingest/pub-video
+						Error error = stagedFileOperations.setPermissions(path, true, artifactName);
+						if(error != null) {
+							isLevel2Pass = false;
+							StagedFileDetails sfd = null;
+					    	for (StagedFileDetails stagedFileDetails : stagedFileDetailsList) {
+					    		if(stagedFileDetails.getName().equals(artifactName)) {
+					    			List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = stagedFileDetails.getErrors();
+					    			if(errorList == null)
+					    				errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
+					    			
+									errorList.add(error);
+									sfd = stagedFileDetails;
+									break;
+					    		}
+							}
 							
-							sfd.setPath(path);
-							sfd.setName(artifactName);
-
-							List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
-							errorList.add(error);
-
-							sfd.setErrors(errorList);
-				    	}
-						stagedFileDetailsList.add(sfd);
+					    	if(sfd == null) {
+								sfd = new StagedFileDetails();
+								
+								sfd.setPath(path);
+								sfd.setName(artifactName);
+	
+								List<org.ishafoundation.dwaraapi.staged.scan.Error> errorList = new ArrayList<org.ishafoundation.dwaraapi.staged.scan.Error>();
+								errorList.add(error);
+	
+								sfd.setErrors(errorList);
+					    	}
+							stagedFileDetailsList.add(sfd);
+						}
 					}
-				}
+	    		}
 	    	}
 	    	
+	    	logger.trace("isLevel2Pass - " + isLevel2Pass);
 	    	// TODO : If we decide to scan for "Multiple Artifactclass directories" at one shot we might then need to have rollback of moved files if there is a failure... 
 	    	// Usecase: If the artifactclass directory is not owned by dwara and dont have write permissions for group, then the move fails. Right now since its just one Artifactclass scan its all or none failure scenario
 	    	// If multiple artifactclass scenario comes then there might be artifacts belonging to artifactclasses directory with the right permissions which succeed and some artifacts belonging to artifactclass directory without the right ownership/permissions failing
@@ -444,6 +448,7 @@ public class StagedService extends DwaraService{
 				}
 	    	}	    	
 	    	
+	    	logger.trace("isLevel3Pass - " + isLevel3Pass);
 	    	if(!isLevel3Pass) {
 	    		ingestResponse.setStagedFiles(stagedFileDetailsList);
 	    		userRequest.setStatus(Status.failed);
