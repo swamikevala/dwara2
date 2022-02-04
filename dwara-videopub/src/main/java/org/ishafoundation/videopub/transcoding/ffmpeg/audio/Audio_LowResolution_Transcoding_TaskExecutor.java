@@ -104,7 +104,7 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 			else
 				rootLocation = audioConfiguration.getLocalRootLocation();
 			
-			nonDwaraGeneratedProxyFilepathname = rootLocation + File.separator + sequenceShavedOffInputArtifactName + StringUtils.substringAfter(sourceFilePathname, sequenceShavedOffInputArtifactName);
+			nonDwaraGeneratedProxyFilepathname = rootLocation + File.separator + outputArtifact.getArtifactclass().getId() + File.separator + sequenceShavedOffInputArtifactName + StringUtils.substringAfter(sourceFilePathname, sequenceShavedOffInputArtifactName);
 			nonDwaraGeneratedProxyFilepathname = nonDwaraGeneratedProxyFilepathname.replace(FilenameUtils.getName(nonDwaraGeneratedProxyFilepathname), FilenameUtils.getBaseName(nonDwaraGeneratedProxyFilepathname) + ".mp3");
 			
 			if(Boolean.TRUE.equals(audioConfiguration.getRemote())) { 
@@ -120,7 +120,7 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 					proxyAlreadyAvailable = true;	
 			}
 			
-			logger.debug("proxyAlreadyAvailable - " + proxyAlreadyAvailable);
+			logger.debug("proxyAlreadyAvailable in " + nonDwaraGeneratedProxyFilepathname + " - " + proxyAlreadyAvailable);
 //			if(!proxyAlreadyAvailable) {
 //				command = "test -d " + nonDwaraGeneratedProxyFilepathname + " && echo \"YES\" || echo \"NO\""; // check if directory exist
 //				logger.debug("Directory exist command - " + command);
