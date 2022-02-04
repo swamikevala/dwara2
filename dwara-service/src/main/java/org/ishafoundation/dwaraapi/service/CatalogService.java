@@ -409,9 +409,9 @@ public class CatalogService extends DwaraService{
         String _finalizedAt = "";
         if(record[i] != null)
 //            _finalizedAt = ((Timestamp) record[i]).toLocalDateTime().toString();
-//        i++;
-        	_finalizedAt = StringUtils.substringBefore((String) record[i++], "," ) ;
-        
+        	_finalizedAt = StringUtils.substringBefore((String) record[i], "," ) ;
+        i++;
+
         String _requestDate = ""; // could be either request.requested_at or request.completed_at depeding on context of the method call
         if(record[i] != null)
         	_requestDate = ((Timestamp) record[i]).toLocalDateTime().toString();
