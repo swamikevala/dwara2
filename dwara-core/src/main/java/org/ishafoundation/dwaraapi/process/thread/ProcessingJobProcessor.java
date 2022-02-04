@@ -172,6 +172,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 //			}
 //		}
 		LogicalFile logicalFile = processContext.getLogicalFile();
+		String inputArtifactName = processContext.getJob().getInputArtifact().getName();
 		String outputArtifactName = processContext.getJob().getOutputArtifact().getName();
 		int fileId = tFile != null ? tFile.getId() : file.getId();
 		ThreadNameHelper threadNameHelper = new ThreadNameHelper();
@@ -250,15 +251,21 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 						String srcFileBaseName = FilenameUtils.getBaseName(logicalFile.getAbsolutePath());
 						ArrayList<String> processedFileNames = new ArrayList<String>();
 						if(processingtask != null && processingtask.getOutputFiletypeId() != null) {
+							String fileBaseName = srcFileBaseName;
+							if(fileBaseName.equals(FilenameUtils.getBaseName(inputArtifactName))) {
+								fileBaseName = outputArtifactName;
+							}
+							
 							Filetype filetype = getFiletype(processingtask.getOutputFiletypeId());
 							List<ExtensionFiletype> extn_Filetype_List = filetype.getExtensions(); //extensionFiletypeDao.findAllByFiletypeId(filetype.getId());
 							for (ExtensionFiletype extensionFiletype : extn_Filetype_List) {
 								String suffix = extensionFiletype.getSuffix();
-								String fileName = srcFileBaseName;
+								String fileName = fileBaseName;
 								if(suffix != null)
 									fileName = srcFileBaseName + suffix;
 								fileName = fileName + "." + extensionFiletype.getExtension().getId().toLowerCase();
 								
+								logger.debug("fileName - " + fileName);
 								File nthProcessedFile = new File(destinationDirPath + File.separator + fileName);
 								if(nthProcessedFile.exists()) {
 									processedFileNames.add(fileName);
@@ -393,6 +400,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 //						logger.info("destinationDirPath " + destinationDirPath);
 //						logger.info("proxyFilePath" +  proxyFilePath);
 						// creating File records for the process generated files
+						logger.debug("processedFileNames " +  processedFileNames);
 						for (String nthFileName : processedFileNames) {
 							String filepathName = destinationDirPath.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "") + File.separator + nthFileName;
 //							logger.info("filepathName using destinationDirPath " + filepathName);
