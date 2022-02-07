@@ -96,11 +96,26 @@ public class JobService extends DwaraService{
 	@Autowired
 	private ArtifactVolumeDao artifactVolumeDao;
 	
+	
 	public List<JobResponse> getJobs(Integer systemRequestId, List<Status> statusList) {
+		return getJobs(systemRequestId, statusList, true);
+	}
+	
+	public List<JobResponse> getJobs(Integer systemRequestId, List<Status> statusList, boolean filterCancelledAndDeletedOnes) {
 		List<JobResponse> jobResponseList = new ArrayList<JobResponse>();
 		
 		List<Job> jobList = jobDao.findAllDynamicallyBasedOnParamsOrderByLatest(systemRequestId, statusList);
 		for (Job job : jobList) {
+			if(job.getRequest().getStatus() == Status.cancelled) // skip jobs whose requests are cancelled
+				continue;
+			
+			Integer artifactId = job.getInputArtifactId();
+			if(artifactId != null) { 
+				Artifact artifact = artifactDao.findById(artifactId).get();
+				if(artifact.isDeleted()) // skip jobs related to artifacts which are deleted...
+					continue;
+			}
+			
 			JobResponse jobResponse = frameJobResponse(job);
 
 			jobResponseList.add(jobResponse);

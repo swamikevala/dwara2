@@ -73,7 +73,7 @@ public class UserAdminController {
 			FileUtils.forceMkdir(userSpecificIngestContentGroupDirPath);
 			logger.trace(userSpecificIngestContentGroupDirPath.getAbsolutePath() + " created");
 			
-			FilePermissionsUtil.changePermissions(FileUtils.getFile(configuration.getReadyToIngestSrcDirRoot(), username), "rwxrwxrwx", "rwxrwxrwx");
+			FilePermissionsUtil.changePermissions(FileUtils.getFile(configuration.getReadyToIngestSrcDirRoot(), username, action, artifactclassId), "rwxrwxrwx", "rwxrwxrwx");
 			logger.trace(userSpecificIngestContentGroupDirPath.getAbsolutePath() + " permissions set");
 		}catch (Exception e) {
 			logger.error("unable to addUserToArtifactclassAndCreateDir" ,e);

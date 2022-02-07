@@ -1,4 +1,31 @@
-# Dwara App Version - 2.1.37 (31st Jan 2022)
+# Dwara App Version - 2.1.38 (7th Feb 2022)
+
+### Bug fixes
+1) Filter cancelled requests' and deleted artifacts' jobs from AllJobs dashboard 
+
+2) Filter imported volumes from volume dashboard
+
+3) Audio ingest - Changes
+
+4) Single file restore Fixes...
+
+### Upgrade steps
+
+1) Add below line to application.properties
+
+non-dwara-audio-proxy.check=true
+non-dwara-audio-proxy.remote=false
+non-dwara-audio-proxy.localRootLocation=/data/non-dwara/AudioProxy
+non-dwara-audio-proxy.host=172.18.1.24
+non-dwara-audio-proxy.sshSystemUser=dwara
+non-dwara-audio-proxy.sshRootLocation=/data/non-dwara/AudioProxy
+
+2) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_26.sql)
+
+3) Create folders for ram and naveen annas
+
+
+# Dwara App Version - 2.1.37 (1st Feb 2022)
 
 ### Bug fixes
 1) Restore private content

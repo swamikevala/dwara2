@@ -11,7 +11,7 @@
 
 	<groupId>org.isha</groupId>
 	<artifactId>dwara-import</artifactId>
-	<version>2.10</version>
+	<version>2.11</version>
 	<packaging>jar</packaging>
 	<name>dwara-import</name>
 	<description>Import data to dwara from BRU.gz</description>

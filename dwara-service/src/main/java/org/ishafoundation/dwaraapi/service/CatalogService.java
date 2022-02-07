@@ -359,7 +359,7 @@ public class CatalogService extends DwaraService{
         //Query proxy
         String query3 = "select a.artifact_ref_id, group_concat(b.volume_id order by b.volume_id separator ',') as volumeId, group_concat(f.status order by b.volume_id separator ',') as proxyStatus" 
         + " from artifact a join artifact_volume b on a.id=b.artifact_id join job f on f.input_artifact_id=a.artifact_ref_id"
-        + " where f.processingtask_id='video-proxy-low-gen'"
+        + " where f.processingtask_id like '%proxy%'"
         + " and a.artifact_ref_id in (" + query + ")"
         + " group by a.artifact_ref_id";
         Query qProxy = entityManager.createNativeQuery(query3);
@@ -409,9 +409,9 @@ public class CatalogService extends DwaraService{
         String _finalizedAt = "";
         if(record[i] != null)
 //            _finalizedAt = ((Timestamp) record[i]).toLocalDateTime().toString();
-//        i++;
-        	_finalizedAt = StringUtils.substringBefore((String) record[i++], "," ) ;
-        
+        	_finalizedAt = StringUtils.substringBefore((String) record[i], "," ) ;
+        i++;
+
         String _requestDate = ""; // could be either request.requested_at or request.completed_at depeding on context of the method call
         if(record[i] != null)
         	_requestDate = ((Timestamp) record[i]).toLocalDateTime().toString();

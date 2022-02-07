@@ -393,8 +393,9 @@ public class ScheduledStatusUpdater {
 	        artifactFileCount = afd.getCount();
 	        artifactSize = afd.getTotalSize();
 	    }
-	    else {
-	    	// TODO for single file artifacts...
+	    else { // for single file artifacts...
+	        artifactFileCount = 1;
+	        artifactSize = artifact.getTotalSize();
 	    }
 	    logger.debug("artifactSize old " + artifact.getTotalSize() + " artifactSize new " + artifactSize);
 	    artifact.setTotalSize(artifactSize);

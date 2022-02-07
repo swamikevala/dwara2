@@ -510,13 +510,20 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			}
 			 
 		}else {
-//			int fileEndArchiveBlock = TarBlockCalculatorUtil.getFileArchiveBlocksCount(fileSize, archiveBlocksize);
-//			noOfBlocksToBeRead = TarBlockCalculatorUtil.getFileVolumeBlocksCount(fileEndArchiveBlock, blockingFactor);
-			FileVolume fileVolume = fileVolumeDao.findByIdFileIdAndIdVolumeId(fileIdToBeRestored, volume.getId());// lets just let users use the util consistently
-			Long filearchiveBlock = fileVolume.getArchiveBlock();
-			Integer headerBlocks = fileVolume.getHeaderBlocks();
-			noOfBlocksToBeRead = artifactVolume.getDetails().getStartVolumeBlock() + TarBlockCalculatorUtil.getFileVolumeEndBlock(filearchiveBlock, headerBlocks, fileSize, archiveformatBlocksize, blockingFactor) - seekedVolumeBlock;
-			skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filearchiveBlock, archiveformatBlocksize, blockingFactor); 		
+			if(filePathname.equals(artifact.getName())) { // single file artifact and not a folder ...
+				noOfBlocksToBeRead = getNoOfTapeBlocksToBeReadForArtifact(artifactVolume.getDetails().getStartVolumeBlock(), artifactVolume.getDetails().getEndVolumeBlock());
+				skipByteCount = 0; // bang on artifact
+			}
+			else {
+	//			int fileEndArchiveBlock = TarBlockCalculatorUtil.getFileArchiveBlocksCount(fileSize, archiveBlocksize);
+	//			noOfBlocksToBeRead = TarBlockCalculatorUtil.getFileVolumeBlocksCount(fileEndArchiveBlock, blockingFactor);
+				FileVolume fileVolume = fileVolumeDao.findByIdFileIdAndIdVolumeId(fileIdToBeRestored, volume.getId());// lets just let users use the util consistently
+				Long filearchiveBlock = fileVolume.getArchiveBlock();
+				Integer headerBlocks = fileVolume.getHeaderBlocks();
+				
+				noOfBlocksToBeRead = artifactVolume.getDetails().getStartVolumeBlock() + TarBlockCalculatorUtil.getFileVolumeEndBlock(filearchiveBlock, headerBlocks, fileSize, archiveformatBlocksize, blockingFactor) - seekedVolumeBlock;
+				skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filearchiveBlock, archiveformatBlocksize, blockingFactor);
+			}
 		}
 		
 		archiveformatJob.setNoOfBlocksToBeRead(noOfBlocksToBeRead);

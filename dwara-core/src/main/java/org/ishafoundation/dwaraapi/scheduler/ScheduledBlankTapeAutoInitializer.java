@@ -63,8 +63,10 @@ public class ScheduledBlankTapeAutoInitializer {
 				List<Tape> blankTapesList = autoloaderService.getLoadedTapesInLibrary(autoloaderDevice, true); // get only blank tapes from library
 				for (Tape tape : blankTapesList) {
 					String barcode = tape.getBarcode();
-					if(barcode.startsWith(DwaraConstants.CLEANUP_TAPE_PREFIX)) // Dont load clean up tapes
+					if(barcode.startsWith(DwaraConstants.CLEANUP_TAPE_PREFIX)) { // Dont load clean up tapes
+						logger.debug("Cleanup Volume. Skipping " + barcode);
 						continue;
+					}
 					
 					String volumeGroupId = tape.getVolumeGroup();
 					Volume volumeGroup = volumeGroupId_Volume_Map.get(volumeGroupId);
@@ -73,6 +75,11 @@ public class ScheduledBlankTapeAutoInitializer {
 						continue;
 					}
 					
+					if(volumeGroup.isImported()){
+						logger.debug("Imported Volume. Skipping " + barcode);
+						continue;
+					}
+						
 					InitializeUserRequest initializeUserRequest = new InitializeUserRequest();
 					initializeUserRequest.setForce(false);
 					initializeUserRequest.setStoragesubtype(tape.getStoragesubtype());
