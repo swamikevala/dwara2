@@ -359,7 +359,7 @@ public class CatalogService extends DwaraService{
         //Query proxy
         String query3 = "select a.artifact_ref_id, group_concat(b.volume_id order by b.volume_id separator ',') as volumeId, group_concat(f.status order by b.volume_id separator ',') as proxyStatus" 
         + " from artifact a join artifact_volume b on a.id=b.artifact_id join job f on f.input_artifact_id=a.artifact_ref_id"
-        + " where f.processingtask_id='video-proxy-low-gen'"
+        + " where f.processingtask_id like '%proxy%'"
         + " and a.artifact_ref_id in (" + query + ")"
         + " group by a.artifact_ref_id";
         Query qProxy = entityManager.createNativeQuery(query3);

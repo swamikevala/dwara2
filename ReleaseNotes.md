@@ -22,6 +22,8 @@ non-dwara-audio-proxy.sshRootLocation=/data/non-dwara/AudioProxy
 
 2) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_26.sql)
 
+3) Create folders for ram and naveen annas
+
 
 # Dwara App Version - 2.1.37 (31st Jan 2022)
 
