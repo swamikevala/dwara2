@@ -36,6 +36,7 @@ public class SequenceUtil {
     			sequenceDao.save(sequenceRef);
     		}
     		else {
+    			sequence = sequenceDao.findById(sequence.getId()).get(); // get the sequence from DB again so its thread safe[even if other thread had got that object with same value]
     			incrementedCurrentNumber = sequence.incrementCurrentNumber();
     			sequenceDao.save(sequence);
     		}
