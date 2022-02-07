@@ -1,4 +1,4 @@
-# Dwara App Version - 2.1.38 (4th Feb 2022)
+# Dwara App Version - 2.1.38 (7th Feb 2022)
 
 ### Bug fixes
 1) Filter cancelled requests' and deleted artifacts' jobs from AllJobs dashboard 
@@ -25,7 +25,7 @@ non-dwara-audio-proxy.sshRootLocation=/data/non-dwara/AudioProxy
 3) Create folders for ram and naveen annas
 
 
-# Dwara App Version - 2.1.37 (31st Jan 2022)
+# Dwara App Version - 2.1.37 (1st Feb 2022)
 
 ### Bug fixes
 1) Restore private content
