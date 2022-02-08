@@ -12,12 +12,16 @@ public class ArtifactclassUtil {
 	@Value("${filesystem.rootlocation}")
 	private String appRootlocation;
 	
+	public String getPathPrefix(Artifactclass artifactClass) {
+		return appRootlocation + File.separator + artifactClass.getPathPrefixForArtifactclassUtil();
+	}
+	
 	public String getPath(Artifactclass artifactClass) {
 		String pathWithOutLibrary = null;
 		if(artifactClass.isSource())
-			pathWithOutLibrary = appRootlocation + File.separator + artifactClass.getPathPrefix();
+			pathWithOutLibrary = getPathPrefix(artifactClass);
 		else
-			pathWithOutLibrary = appRootlocation + File.separator + artifactClass.getPathPrefix() + java.io.File.separator + artifactClass.getCategory();// getId();//getCategory();
+			pathWithOutLibrary = getPathPrefix(artifactClass) + java.io.File.separator + artifactClass.getCategory();// getId();//getCategory();
 
 		return pathWithOutLibrary;
 	}

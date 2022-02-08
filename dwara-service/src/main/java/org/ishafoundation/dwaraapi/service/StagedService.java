@@ -55,6 +55,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -141,6 +142,9 @@ public class StagedService extends DwaraService{
 
 	@Autowired
 	private ArtifactUtil artifactUtil;
+	
+	@Autowired
+	private ArtifactclassUtil artifactclassUtil;
 	
 	private Map<String, List<String>> artifactClass_volumeGroups_Map = new HashMap<String, List<String>>();
 	
@@ -403,7 +407,7 @@ public class StagedService extends DwaraService{
 		    	for (StagedFile stagedFile : stagedFileList) {
 					String artifactclassId = stagedFile.getArtifactclass();
 					Artifactclass artifactclass = id_artifactclassMap.get(artifactclassId);
-					String readyToIngestPath =  artifactclass.getPathPrefix();
+					String readyToIngestPath =  artifactclassUtil.getPathPrefix(artifactclass);
 					
 		    		String stagedFileName = stagedFile.getName();
 		    		String stagedFilePath = stagedFile.getPath();
@@ -459,7 +463,7 @@ public class StagedService extends DwaraService{
 		    	for (StagedFile stagedFile : stagedFileList) {
 					String artifactclassId = stagedFile.getArtifactclass();
 					Artifactclass artifactclass = id_artifactclassMap.get(artifactclassId);
-					String readyToIngestPath =  artifactclass.getPathPrefix();
+					String readyToIngestPath =  artifactclassUtil.getPathPrefix(artifactclass);
 					Sequence sequence = artifactclass.getSequence();
 					String stagedFileName = stagedFile.getName();
 	

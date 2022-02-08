@@ -274,7 +274,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				org.ishafoundation.dwaraapi.process.request.Artifactclass inputArtifactclassForProcess = inputArtifactForProcess.getArtifactclass();
 				inputArtifactclassForProcess.setId(inputArtifactclassId);
 				inputArtifactclassForProcess.setSource(inputArtifact.getArtifactclass().getSource());
-				inputArtifactclassForProcess.setPathPrefix(inputArtifact.getArtifactclass().getPathPrefix());
+				inputArtifactclassForProcess.setPathPrefix(artifactclassUtil.getPathPrefix(inputArtifact.getArtifactclass()));
 				inputArtifactclassForProcess.setCategory(inputArtifact.getArtifactclass().getCategory());
 				
 				org.ishafoundation.dwaraapi.process.request.Artifact outputArtifactForProcess = jobForProcess.getOutputArtifact();
@@ -285,7 +285,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					if(outputArtifactclass != null) {
 						outputArtifactclassForProcess.setId(outputArtifactclass.getId());
 						outputArtifactclassForProcess.setSource(outputArtifactclass.getSource());
-						outputArtifactclassForProcess.setPathPrefix(outputArtifactclass.getPathPrefix());
+						outputArtifactclassForProcess.setPathPrefix(artifactclassUtil.getPathPrefix(outputArtifactclass));
 						outputArtifactclassForProcess.setCategory(outputArtifactclass.getCategory());
 					}
 				}

@@ -132,7 +132,7 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 		return source;
 	}
 	
-	public String getPathPrefix() {
+	public String getPathPrefixForArtifactclassUtil() {
 		return pathPrefix;
 	}
 
