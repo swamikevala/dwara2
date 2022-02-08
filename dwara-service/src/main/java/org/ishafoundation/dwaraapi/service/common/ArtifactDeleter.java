@@ -21,6 +21,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -57,6 +58,10 @@ public class ArtifactDeleter {
 	
 	@Autowired
 	private TFileVolumeDeleter tFileVolumeDeleter;
+	
+	@Autowired
+	private ArtifactclassUtil artifactclassUtil;
+	
 //	@Autowired
 //	private Map<String, IProcessingTask> processingtaskActionMap;
 
@@ -163,7 +168,7 @@ public class ArtifactDeleter {
 	    	if(nthArtifact.getArtifactclass().getId().startsWith(DwaraConstants.VIDEO_DIGI_ARTIFACTCLASS_PREFIX))
 	    		shouldWeDelete = true;
 	    	if(shouldWeDelete) {
-		    	String artifactFilepathName = nthArtifact.getArtifactclass().getPath() + java.io.File.separator + nthArtifact.getName(); 
+		    	String artifactFilepathName = artifactclassUtil.getPath(nthArtifact.getArtifactclass()) + java.io.File.separator + nthArtifact.getName(); 
 		    	
 	    		logger.info("Now deleting the artifact from file system " + artifactFilepathName);
 	    		java.io.File artifactFile = new java.io.File(artifactFilepathName);
@@ -179,7 +184,7 @@ public class ArtifactDeleter {
 				String destRootLocation = requestToBeActioned.getDetails().getStagedFilepath();
 				if(destRootLocation != null) {
 					try {
-						java.io.File srcFile = FileUtils.getFile(nthArtifact.getArtifactclass().getPath(), nthArtifact.getName());
+						java.io.File srcFile = FileUtils.getFile(artifactclassUtil.getPath(nthArtifact.getArtifactclass()), nthArtifact.getName());
 						java.io.File destFile = FileUtils.getFile(destRootLocation, Status.cancelled.name(), StringUtils.substringAfter(nthArtifact.getName(), "_"));
 	
 						if(srcFile.isFile())

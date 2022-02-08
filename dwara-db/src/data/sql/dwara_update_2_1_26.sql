@@ -27,5 +27,8 @@ UPDATE `flowelement` SET `task_config`='{\"destination_id\": \"catdv-audio-proxy
 UPDATE `volume` SET `copy_id`='1' WHERE `id`='XX1';
 UPDATE `volume` SET `copy_id`='2' WHERE `id`='XX2';
 
+-- Sequence reset - Import and Ingest had sequence conflict - Fixed now but had to hard reset the sequence 
+UPDATE `sequence` SET `current_number`='32658' WHERE `id`='video-grp';
+
 SET foreign_key_checks = 1;
 

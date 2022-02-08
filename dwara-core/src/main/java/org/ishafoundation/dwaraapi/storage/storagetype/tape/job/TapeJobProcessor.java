@@ -14,6 +14,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
+import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -58,6 +59,8 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	@Autowired
 	private FileVolumeDao fileVolumeDao;
 
+	@Autowired
+	private ArtifactclassUtil artifactclassUtil;
 	
 	public StorageResponse map_tapedrives(SelectedStorageJob selectedStorageJob) throws Exception {
 		String tapelibraryId = selectedStorageJob.getStorageJob().getJob().getRequest().getDetails().getAutoloaderId();
@@ -234,7 +237,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 			// skip = ((archive_block + header_block) * archiveformatblocksize) + starttimecode's clusterpos - 1 byte[excluding the start byte]
 			//skip = ((12 + 3) * 512) + 5840030 - 1 = 5847709
 			org.ishafoundation.dwaraapi.db.model.transactional.File file = selectedStorageJob.getFile();
-			String path = storageJob.getArtifact().getArtifactclass().getPath();
+			String path = artifactclassUtil.getPath(storageJob.getArtifact().getArtifactclass());
 			logger.trace("path " + path);
 			String filePathname = path + File.separator + file.getPathname();
 			logger.trace("filePathname " + filePathname);

@@ -34,6 +34,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
+import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -90,6 +91,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	
 	@Autowired
 	private FileEntityToFileForProcessConverter fileEntityToFileForProcessConverter;
+	
+	@Autowired
+	private ArtifactclassUtil artifactclassUtil;
 	
 	@Value("${wowo.useNewJobManagementLogic:true}")
 	private boolean useNewJobManagementLogic;
@@ -212,7 +216,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			String inputArtifactclassId = inputArtifactclass.getId();
 			String inputPath = getInputPath(job); 
 			if(inputPath == null)
-				inputPath = inputArtifactclass.getPath();
+				inputPath = artifactclassUtil.getPath(inputArtifactclass);
 			String inputArtifactPathname =  inputPath + File.separator + inputArtifactName;
 			
 	
@@ -480,7 +484,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	}
 
 	private String getOutputArtifactPathname(Artifactclass outputArtifactclass, String outputArtifactName) {
-		return outputArtifactclass.getPath() + java.io.File.separator + outputArtifactName;
+		return artifactclassUtil.getPath(outputArtifactclass) + java.io.File.separator + outputArtifactName;
 	}
 
 }

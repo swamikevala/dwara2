@@ -7,6 +7,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
@@ -25,6 +26,9 @@ public class Copy extends AbstractStoragetaskAction{
 	
 	@Autowired
 	private ConfigurationTablesUtil configurationTablesUtil;
+	
+	@Autowired
+	private ArtifactclassUtil artifactclassUtil;
 
 	
 	public StorageJob buildStorageJob(Job job) throws Exception{
@@ -50,7 +54,7 @@ public class Copy extends AbstractStoragetaskAction{
 			artifactclassId = request.getDetails().getArtifactclassId();
 
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
-		String pathPrefix = artifactclass.getPath();
+		String pathPrefix = artifactclassUtil.getPath(artifactclass);
 		storageJob.setArtifactPrefixPath(pathPrefix);
 		
 		String artifactName = artifact.getName();

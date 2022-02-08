@@ -21,6 +21,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
+import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobHelper;
@@ -54,6 +55,9 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 	
 	@Autowired
 	private FileDao fileDao;
+	
+	@Autowired
+	private ArtifactclassUtil artifactclassUtil;
 	
 	private boolean dryRun = true;
 	TFile tFileRef = null;
@@ -90,10 +94,10 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 				
 				Artifactclass inputArtifactclass = inputArtifact.getArtifactclass();
 				
-				String inputArtifactPathname =  inputArtifactclass.getPath() + File.separator + inputArtifactName;
+				String inputArtifactPathname =  artifactclassUtil.getPath(inputArtifactclass) + File.separator + inputArtifactName;
 				
 				logger.info("Now updating Output Artifact as tfile and file records");
-				String outputArtifactPathname = outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName;
+				String outputArtifactPathname = artifactclassUtil.getPath(outputArtifact.getArtifactclass()) + File.separator + outputArtifactName;
 				
 				HashMap<String, TFile> inputFilePathToTFileObj = getFilePathToTFileObj(inputArtifactId);
 				HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File> inputFilePathToFileObj = getFilePathToFileObj(inputArtifact);
@@ -127,7 +131,7 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 		        Collection<File> fileList = FileUtils.listFiles(new File(outputArtifactPathname), TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
 				for (File nthProcessedFile : fileList) {
 					String fileAbsolutePathName = nthProcessedFile.getAbsolutePath();
-					String filepathName = fileAbsolutePathName.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "");
+					String filepathName = fileAbsolutePathName.replace(artifactclassUtil.getPath(outputArtifact.getArtifactclass()) + File.separator, "");
 					logger.trace("filepathName - " + filepathName);
 //					logger.info("filepathName using destinationDirPath " + filepathName);
 //					filepathName = proxyFilePath.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "") + File.separator + nthFileName;
@@ -186,7 +190,7 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 		nthTFileRowToBeInserted.setArtifactId(outputArtifact.getId());
 		nthTFileRowToBeInserted.setFileRefId(tFileRef.getId());
 		
-	    String filePathname = fileAbsolutePathName.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "");
+	    String filePathname = fileAbsolutePathName.replace(artifactclassUtil.getPath(outputArtifact.getArtifactclass()) + File.separator, "");
 	    nthTFileRowToBeInserted.setPathname(filePathname);
 	    
 	    byte[] filePathChecksum = ChecksumUtil.getChecksum(filePathname);

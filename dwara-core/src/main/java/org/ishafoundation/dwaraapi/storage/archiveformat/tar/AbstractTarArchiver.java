@@ -17,6 +17,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
+import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.exception.StorageException;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
@@ -100,6 +101,9 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 	
 	@Autowired
 	private TapeDriveManager tapeDriveManager;
+	
+	@Autowired
+	private ArtifactclassUtil artifactclassUtil;
 	
 	@Override
 	public ArchiveResponse write(ArchiveformatJob archiveformatJob) throws StorageException {
@@ -265,8 +269,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 				FileUtils.forceMkdir(new java.io.File(targetLocationPath + java.io.File.separator + parentDir));
 				String partialFileFromTapeOutputFilePathName = filePathNameToBeRestored.replace(PfrConstants.MKV_EXTN, "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + PfrConstants.RESTORED_FROM_TAPE_BIN);
 				
-
-				String path = file.getArtifact().getArtifactclass().getPath();
+				String path = artifactclassUtil.getPath(file.getArtifact().getArtifactclass());
 				logger.trace("path " + path);
 				String filePathname = path + java.io.File.separator + file.getPathname();
 				logger.trace("filePathname " + filePathname);

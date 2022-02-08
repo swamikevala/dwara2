@@ -34,6 +34,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
@@ -110,6 +111,9 @@ public class ScheduledStatusUpdater {
 	
 	@Autowired
 	private UserRequestHelper userRequestHelper;
+	
+	@Autowired
+	private ArtifactclassUtil artifactclassUtil;
 		
 	@Value("${scheduler.statusUpdater.enabled:true}")
 	private boolean isEnabled;
@@ -245,7 +249,7 @@ public class ScheduledStatusUpdater {
 							// TODO : Digi hack - the permissions script assumes the input artifact folder is "staged" and hence only supports Digitization A/Cs
 							if(outputArtifactId != null) {
 								org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = artifactDao.findById(outputArtifactId).get();
-								String pathPrefix = artifact.getArtifactclass().getPath();
+								String pathPrefix = artifactclassUtil.getPath(artifact.getArtifactclass());
 								String staged = "/staged";
 								if(pathPrefix.contains(staged))
 									stagedFileOperations.setPermissions(StringUtils.substringBefore(pathPrefix, staged), false, artifact.getName());
@@ -383,7 +387,7 @@ public class ScheduledStatusUpdater {
 	private void updateArtifactSizeAndCount(Job job, int artifactId) {
 		org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = artifactDao.findById(artifactId).get();
 		
-		Path artifactPath = Paths.get(artifact.getArtifactclass().getPath(), artifact.getName());
+		Path artifactPath = Paths.get(artifactclassUtil.getPath(artifact.getArtifactclass()), artifact.getName());
 		File artifactFileObj = artifactPath.toFile();
 		long artifactSize = 0;
 		int artifactFileCount = 0;
@@ -462,7 +466,7 @@ public class ScheduledStatusUpdater {
 		    	List<Artifact> artifactList = artifactDao.findAllByWriteRequestId(nthRequest.getId());
 		    	for (Artifact artifact : artifactList) {
 					Artifactclass artifactclass = artifact.getArtifactclass();
-					String srcRootLocation = artifactclass.getPath();
+					String srcRootLocation = artifactclassUtil.getPath(artifactclass);
 
 					if(artifactclass.isSource()){ // source artifacts need to be moved to configured ingest completed location something like "/data/ingested" 
 						if(srcRootLocation != null) {

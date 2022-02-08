@@ -163,7 +163,6 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 		this.source = source;
 	}
 
-
 	public Integer getDisplayOrder() {
 		return displayOrder;
 	}
@@ -210,7 +209,6 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 		this.artifactclassVolume = artifactclassVolume;
 	}
 	
-	//@JsonIgnore
 	public String getCategory() {
 		String category = "public";
 		// TODO : should this be private1/2/3 
@@ -218,17 +216,6 @@ public class Artifactclass implements Cacheable, Comparable<Artifactclass>{
 			category = "private";
 		}
 		return category;
-	}
-
-	//@JsonIgnore
-	public String getPath() {
-		String pathWithOutLibrary = null;
-		if(isSource())
-			pathWithOutLibrary = getPathPrefix();
-		else
-			pathWithOutLibrary = getPathPrefix() + java.io.File.separator + getCategory();// getId();//getCategory();
-
-		return pathWithOutLibrary;
 	}
 	
     public void addDestinationpath(Destination destinationpath) {

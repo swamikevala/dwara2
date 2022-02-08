@@ -30,6 +30,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
+import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.SequenceUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -98,6 +99,9 @@ public class ArtifactService extends DwaraService{
 	
 	@Autowired
 	private CatDVConfiguration catDVConfiguration;
+	
+	@Autowired
+	private ArtifactclassUtil artifactclassUtil;
 
 	public ArtifactResponse deleteArtifact(int artifactId, String reason) throws Exception{
 		Artifact artifact = artifactDao.findById(artifactId).get(); // get the artifact details from DB
@@ -491,8 +495,8 @@ public class ArtifactService extends DwaraService{
 					}
 					
 					// mv the physical folder
-					String readyToIngestPath =  currentArtifactclass.getPath();
-					String newReadyToIngestPath =  newArtifactclass.getPath();
+					String readyToIngestPath =  artifactclassUtil.getPath(currentArtifactclass);
+					String newReadyToIngestPath =  artifactclassUtil.getPath(newArtifactclass);
 					Files.move(Paths.get(readyToIngestPath, artifactName), Paths.get(newReadyToIngestPath, toBeArtifactName), StandardCopyOption.ATOMIC_MOVE);
 					logger.info("Physical folder renamed");
 				}

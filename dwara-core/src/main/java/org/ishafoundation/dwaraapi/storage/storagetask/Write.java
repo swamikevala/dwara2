@@ -16,6 +16,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
@@ -57,6 +58,9 @@ public class Write extends AbstractStoragetaskAction{
 	
 	@Autowired
 	private Restore restore;
+	
+	@Autowired
+	private ArtifactclassUtil artifactclassUtil;
 		
 	@Override
 	public StorageJob buildStorageJob(Job job) throws Exception{
@@ -98,7 +102,7 @@ public class Write extends AbstractStoragetaskAction{
 			logger.trace("artifactclassId for getting domain - " + artifactclassId);
 			
 			Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
-			pathPrefix = artifactclass.getPath();
+			pathPrefix = artifactclassUtil.getPath(artifactclass);
 			
 			Integer inputArtifactId = job.getInputArtifactId();
 			artifact = artifactDao.findById(inputArtifactId).get();

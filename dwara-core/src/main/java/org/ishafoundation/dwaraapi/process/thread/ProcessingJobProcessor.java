@@ -32,6 +32,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.ProcessingFailure;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
+import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -94,6 +95,9 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	
 	@Autowired
 	private Configuration configuration;
+	
+	@Autowired
+	private ArtifactclassUtil artifactclassUtil;
 	
 	private ProcessContext processContext;
 
@@ -363,7 +367,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 						}
 						
 						// Output Artifact as a file record
-						String artifactFileAbsolutePathName = outputArtifact.getArtifactclass().getPath() + File.separator + outputArtifactName;
+						String artifactFileAbsolutePathName = artifactclassUtil.getPath(outputArtifact.getArtifactclass()) + File.separator + outputArtifactName;
 						HashMap<String, TFile> filePathToTFileObj = getFilePathToTFileObj(outputArtifact.getId());
 						HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File> filePathToFileObj = getFilePathToFileObj(outputArtifact);
 						
@@ -402,7 +406,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 						// creating File records for the process generated files
 						logger.debug("processedFileNames " +  processedFileNames);
 						for (String nthFileName : processedFileNames) {
-							String filepathName = destinationDirPath.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "") + File.separator + nthFileName;
+							String filepathName = destinationDirPath.replace(artifactclassUtil.getPath(outputArtifact.getArtifactclass()) + File.separator, "") + File.separator + nthFileName;
 //							logger.info("filepathName using destinationDirPath " + filepathName);
 //							filepathName = proxyFilePath.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "") + File.separator + nthFileName;
 //							logger.info("filepathName using proxyFilePath " + filepathName);
@@ -410,12 +414,12 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 							org.ishafoundation.dwaraapi.db.model.transactional.TFile nthTFile = filePathToTFileObj.get(filepathName);
 							if(nthTFile == null) { // only if not already created... 
 								logger.trace("Now creating T file record for - " + filepathName);
-								nthTFile = createTFile(outputArtifact.getArtifactclass().getPath() + File.separator + filepathName, outputArtifact);	
+								nthTFile = createTFile(artifactclassUtil.getPath(outputArtifact.getArtifactclass()) + File.separator + filepathName, outputArtifact);	
 							}							
 							org.ishafoundation.dwaraapi.db.model.transactional.File nthFile = filePathToFileObj.get(filepathName);
 							//org.ishafoundation.dwaraapi.db.model.transactional.File nthFile = domainSpecificFileRepository.findByPathname(filepathName);
 							if(nthFile == null) { // only if not already created... 
-								String fullFilepathname =  outputArtifact.getArtifactclass().getPath() + File.separator + filepathName;
+								String fullFilepathname =  artifactclassUtil.getPath(outputArtifact.getArtifactclass()) + File.separator + filepathName;
 								boolean addFileRecords = true;
 								
 								ArtifactclassConfig artifactclassConfig = outputArtifact.getArtifactclass().getConfig();
@@ -489,7 +493,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 		nthTFileRowToBeInserted.setArtifactId(outputArtifact.getId());
 		nthTFileRowToBeInserted.setFileRefId(tFile.getId());
 		
-	    String filePathname = fileAbsolutePathName.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "");
+	    String filePathname = fileAbsolutePathName.replace(artifactclassUtil.getPath(outputArtifact.getArtifactclass()) + File.separator, "");
 	    nthTFileRowToBeInserted.setPathname(filePathname);
 	    
 	    byte[] filePathChecksum = ChecksumUtil.getChecksum(filePathname);

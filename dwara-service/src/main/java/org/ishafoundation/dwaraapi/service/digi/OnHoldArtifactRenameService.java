@@ -16,6 +16,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
+import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.resource.mapper.MiscObjectMapper;
@@ -48,6 +49,9 @@ public class OnHoldArtifactRenameService extends DwaraService{
 
 	@Autowired
 	private FileDao fileDao;
+	
+	@Autowired
+	private ArtifactclassUtil artifactclassUtil;
 
 	// Artifact rename function to rename artifacts - 1) Soft rename 2) hard rename for held jobs (renames the folder also)
 	public ArtifactResponse hardSoftrenameArtifact(int artifactId, String newName) throws Exception {	
@@ -160,7 +164,7 @@ public class OnHoldArtifactRenameService extends DwaraService{
 			
 			//Change the filename
 			try {
-				fileRename(artifact.getArtifactclass().getPath(), artifactName, artifactNewName);
+				fileRename(artifactclassUtil.getPath(artifact.getArtifactclass()), artifactName, artifactNewName);
 			}catch (Exception e) {
 				// Roll-back the artifact table update change and the file table update change
 				artifact.setName(artifactName);

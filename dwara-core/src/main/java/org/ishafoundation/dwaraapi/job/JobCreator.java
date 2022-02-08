@@ -28,6 +28,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -89,6 +90,9 @@ public class JobCreator {
 	
 	@Autowired
 	private JobServiceRequeueHelper jobServiceRequeueHelper;
+	
+	@Autowired
+	private ArtifactclassUtil artifactclassUtil;
 
 	// only if action is async create job should be called...
 	public List<Job> createJobs(Request request, Artifact sourceArtifact){
@@ -465,7 +469,7 @@ public class JobCreator {
 		logger.trace("Creating processing Job for " + flowelement.getId() + ":" + processingtaskId);
 		String inputArtifactName = artifact.getName();
 		Artifactclass inputArtifactclass = artifact.getArtifactclass();
-		String inputArtifactPath = inputArtifactclass.getPath() + File.separator + inputArtifactName;
+		String inputArtifactPath = artifactclassUtil.getPath(inputArtifactclass) + File.separator + inputArtifactName;
 		Volume groupVolume = null;
 		Volume volume = null;
 		String groupVolumeId = null;
