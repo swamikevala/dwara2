@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.storage.storagetype;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
@@ -10,10 +11,15 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
+import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
@@ -39,10 +45,12 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDet
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
+import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
+import org.ishafoundation.dwaraapi.storage.model.DiskJob;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagelevel.IStoragelevel;
@@ -101,6 +109,9 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private JobCreator jobCreator;
+	
+	@Autowired
+	private CommandLineExecuter commandLineExecutor;
 	
 	public AbstractStoragetypeJobProcessor() {
 		logger.debug(this.getClass().getName());
@@ -354,6 +365,22 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    	logger.trace("volume.getDetails().getBlocksize() - " + volume.getDetails().getBlocksize());
 	    	usedCapacity = (long) volume.getDetails().getBlocksize() * lastArtifactOnVolumeEndVolumeBlock;
 	    }else {
+	    	if(volume.getStoragetype() == Storagetype.disk) {
+	    		DiskJob diskJob = (DiskJob) selectedStorageJob;
+	    		if(System.getProperty("os.name").toLowerCase().indexOf("mac") >= 0) {
+	    			Path destDiskpath = Paths.get(diskJob.getMountPoint(), volume.getId());
+	    			try {
+	    				CommandLineExecutionResponse cler = commandLineExecutor.executeCommand("diskutil info " + destDiskpath.toString());
+	    				if(cler.isComplete())
+	    					usedCapacity = getUsedSpace(cler.getStdOutResponse());
+	    			}catch (Exception e) {
+						// TODO: handle exception
+					}
+	    		}else
+	    			throw new Exception("OS not supported to find used space...");
+	    	}
+	    	
+	    	
 	    	
 	    }
     	logger.trace("usedCapacity - " + usedCapacity);
@@ -369,7 +396,36 @@ public abstract class AbstractStoragetypeJobProcessor {
     		volumeFinalizer.finalize(volume.getId(), DwaraConstants.SYSTEM_USER_NAME);
     	}
     }
+    
+    // TODO - Move this to Disk specific utility
+    private String usedSpaceRegex = "(.*) Used Space:(.*)\\((.*) Bytes\\)";
+    private String totalSpaceRegex = "(.*) Total Space:(.*)\\((.*) Bytes\\)";
+    private String freeSpaceRegex = "(.*) Free Space:(.*)\\((.*) Bytes\\)";
+    
+    private Pattern usedSpaceRegexPattern = Pattern.compile(usedSpaceRegex);
+    private Pattern totalSpaceRegexPattern = Pattern.compile(totalSpaceRegex);
+    private Pattern freeSpaceRegexPattern = Pattern.compile(freeSpaceRegex);
 
+    private long getUsedSpace(String response) {
+    	Long usedSpace = 0L;
+		Matcher m = usedSpaceRegexPattern.matcher(response);
+		if(m.find()) {
+			usedSpace = Long.parseLong(m.group(3));
+		}else {
+			m = totalSpaceRegexPattern.matcher(response);
+			
+			if(m.find()) {
+				long totalSpace = Long.parseLong(m.group(3));
+				m = freeSpaceRegexPattern.matcher(response);
+				if(m.find()) {
+					long freeSpace = Long.parseLong(m.group(3));
+					usedSpace = totalSpace - freeSpace;
+				}
+			}
+		}
+				
+    	return usedSpace;
+    }
     private void updateFileVolumeTable(SelectedStorageJob selectedStorageJob, StorageResponse storageResponse) {
     	StorageJob storageJob = selectedStorageJob.getStorageJob();
 	
