@@ -70,6 +70,9 @@ public class ReportService extends DwaraService {
     @Value("${confluenceMountedOn}")
     private String CONFLUENCE_MOUNTED_ON;
 
+    @Value("${filesystem.rootlocation}")
+    private String DWARA_ROOT;
+
     @Autowired
     SshSessionHelper sshSessionHelper;
 
@@ -238,7 +241,7 @@ public class ReportService extends DwaraService {
         // ingestPipelineReport.put("l.Mam Update Failed", entityManager.createNativeQuery(mamUpdateFailedQuery).getResultList());
 
         List<String> inStaged3Days = new ArrayList<String>();
-        File stagedFile = new File("/data/dwara/staged");
+        File stagedFile = new File(DWARA_ROOT + "/staged");
         LocalDateTime threeDaysAgo = LocalDateTime.now().minusDays(3);
         for(String p: stagedFile.list()) {
             try {
