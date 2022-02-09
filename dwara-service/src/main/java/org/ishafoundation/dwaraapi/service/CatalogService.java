@@ -272,8 +272,9 @@ public class CatalogService extends DwaraService{
 
         String query = "select a.id, d.id as requestId, a.artifactclass_id, a.name, a.total_size, b.volume_id, d.status, c.imported, group_concat(c.last_written_at order by c.id separator ',') as last_written_at, d.completed_at, e.name as ingestedBy, b.name as oldName, a.file_count" 
         + " from artifact a join artifact_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and ((a.write_request_id is not null and a.write_request_id=d.id) or (a.write_request_id is null and a.q_latest_request_id=d.id)) and d.requested_by_id=e.id and a.deleted=0"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and (a.write_request_id=d.id or a.q_latest_request_id=d.id) and d.requested_by_id=e.id and a.deleted=0"
         + condition
+        + " group by a.id, d.id "
         + "order by b.volume_id asc, d.completed_at desc";
                 
         Query q = entityManager.createNativeQuery(query);
@@ -338,16 +339,16 @@ public class CatalogService extends DwaraService{
         }
         String query = "select distinct a.id" 
         + " from artifact a join artifact_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and ((a.write_request_id is not null and a.write_request_id=d.id) or (a.write_request_id is null and a.q_latest_request_id=d.id)) and d.requested_by_id=e.id and a.artifact_ref_id is null and a.deleted=" + deleted
+        + " where a.id=b.artifact_id and b.volume_id=c.id and (a.write_request_id=d.id or a.q_latest_request_id=d.id) and d.requested_by_id=e.id and a.artifact_ref_id is null and a.deleted=" + deleted
         + condition;
 
         String query2 = "select a.id, d.id as requestId, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, c.imported, group_concat(c.last_written_at order by c.id separator ',') as last_written_at, d.requested_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName, a.file_count" 
         + " from artifact a join artifact_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and ((a.write_request_id is not null and a.write_request_id=d.id) or (a.write_request_id is null and a.q_latest_request_id=d.id)) and d.requested_by_id=e.id"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and (a.write_request_id=d.id or a.q_latest_request_id=d.id) and d.requested_by_id=e.id"
         + " and a.id in (" + query + ")"
         + " group by a.id, d.id, c.imported order by requested_at desc";
         Query q = entityManager.createNativeQuery(query2);
-        logger.info("artifact query: " + query2);
+        //logger.info("artifact query: " + query2);
         List<Object[]> results = q.getResultList();
         HashMap<Integer, ArtifactCatalog> mapArtifact = new HashMap<Integer, ArtifactCatalog>();
         results.stream().forEach((record) -> {
