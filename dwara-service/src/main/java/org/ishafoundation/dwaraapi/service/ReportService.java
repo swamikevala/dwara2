@@ -70,6 +70,9 @@ public class ReportService extends DwaraService {
     @Value("${confluenceMountedOn}")
     private String CONFLUENCE_MOUNTED_ON;
 
+    @Value("${filesystem.rootlocation}")
+    private String DWARA_ROOT;
+
     @Autowired
     SshSessionHelper sshSessionHelper;
 
@@ -225,20 +228,20 @@ public class ReportService extends DwaraService {
         + condition;
         ingestPipelineReport.put("i.Copy3 Write Failed", entityManager.createNativeQuery(copy3WriteFailedQuery).getResultList());
 
-        String proxyGenFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact a on a.q_latest_request_id=r.id where a.deleted=0 and j.processingtask_id='video-proxy-low-gen' and (j.status='failed' or j.status='completed_failures')"
-        + condition;
-        ingestPipelineReport.put("j.Proxy Gen Failed", entityManager.createNativeQuery(proxyGenFailedQuery).getResultList());
+        // String proxyGenFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact a on a.q_latest_request_id=r.id where a.deleted=0 and j.processingtask_id='video-proxy-low-gen' and (j.status='failed' or j.status='completed_failures')"
+        // + condition;
+        // ingestPipelineReport.put("j.Proxy Gen Failed", entityManager.createNativeQuery(proxyGenFailedQuery).getResultList());
 
-        String photoProxyGenFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact a on a.q_latest_request_id=r.id where a.deleted=0 and j.processingtask_id='photo-proxy-gen' and (j.status='failed' or j.status='completed_failures')"
-        + condition;
-        ingestPipelineReport.put("k.Photo Proxy Gen Failed", entityManager.createNativeQuery(photoProxyGenFailedQuery).getResultList());
+        // String photoProxyGenFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact a on a.q_latest_request_id=r.id where a.deleted=0 and j.processingtask_id='photo-proxy-gen' and (j.status='failed' or j.status='completed_failures')"
+        // + condition;
+        // ingestPipelineReport.put("k.Photo Proxy Gen Failed", entityManager.createNativeQuery(photoProxyGenFailedQuery).getResultList());
 
-        String mamUpdateFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact a on a.q_latest_request_id=r.id where a.deleted=0 and j.processingtask_id='video-mam-update' and (j.status='failed' or j.status='completed_failures')"
-        + condition;
-        ingestPipelineReport.put("l.Mam Update Failed", entityManager.createNativeQuery(mamUpdateFailedQuery).getResultList());
+        // String mamUpdateFailedQuery = "SELECT distinct(r.details->>'$.staged_filename') FROM job j join request r on j.request_id=r.id join artifact a on a.q_latest_request_id=r.id where a.deleted=0 and j.processingtask_id='video-mam-update' and (j.status='failed' or j.status='completed_failures')"
+        // + condition;
+        // ingestPipelineReport.put("l.Mam Update Failed", entityManager.createNativeQuery(mamUpdateFailedQuery).getResultList());
 
         List<String> inStaged3Days = new ArrayList<String>();
-        File stagedFile = new File("/data/dwara/staged");
+        File stagedFile = new File(DWARA_ROOT + "/staged");
         LocalDateTime threeDaysAgo = LocalDateTime.now().minusDays(3);
         for(String p: stagedFile.list()) {
             try {
@@ -256,7 +259,7 @@ public class ReportService extends DwaraService {
         }
         ingestPipelineReport.put("l.In Staged > 3Days", inStaged3Days);
 
-        HashMap<String, List<String>> restorePipelineReport = new HashMap<String, List<String>>();
+        /* HashMap<String, List<String>> restorePipelineReport = new HashMap<String, List<String>>();
         String restoreQuery = "select f.pathname from request r join file f on r.file_id=f.id where r.action_id like 'restore%' and r.type='system'"
         + condition;
         restorePipelineReport.put("a.Restore Request", entityManager.createNativeQuery(restoreQuery).getResultList());
@@ -279,11 +282,11 @@ public class ReportService extends DwaraService {
 
         String restoreMovConversionFailedQuery = "SELECT f.pathname FROM job j join request r on r.id = j.request_id join file f on r.file_id=f.id where j.processingtask_id = 'video-digi-2020-mkv-mov-gen' and (j.status='failed' or j.status='completed_failures')"
         + condition;
-        restorePipelineReport.put("g.Mov Conversion Failed", entityManager.createNativeQuery(restoreMovConversionFailedQuery).getResultList());
+        restorePipelineReport.put("g.Mov Conversion Failed", entityManager.createNativeQuery(restoreMovConversionFailedQuery).getResultList()); */
 
         HashMap<String, HashMap<String, List<String>>> pipelineReport = new HashMap<String, HashMap<String, List<String>>>();
         pipelineReport.put("1.Ingest", ingestPipelineReport);
-        pipelineReport.put("2.Restore", restorePipelineReport);
+        // pipelineReport.put("2.Restore", restorePipelineReport);
 
         return pipelineReport;
     }
