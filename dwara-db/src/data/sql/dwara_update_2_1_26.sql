@@ -34,5 +34,7 @@ UPDATE `t_file` SET bad=1 and reason='[PG] Invalid filename. Write jobs(520903/4
 -- still write jobs were failing as we had another invalid filename \.mov which is hard renamed to karthigai.mov - pls refer email sub "Dwara Ingest - few things"
 UPDATE `t_file` SET `pathname`='Z10732_Talk_Sadhguru-About-Karthigai-Deepam_Tamil_06Min-16Secs_Stems/Project/karthigai deepam.fcpbundle/8-11-21/Transcoded Media/High Quality Media/karthigai.mov' WHERE `id`='3470984';
 
+UPDATE `volume` SET `lifecyclestage`='retired' WHERE `id`='G10002L7';
+
 SET foreign_key_checks = 1;
 

@@ -656,11 +656,11 @@ public class RequestService extends DwaraService{
 
 						if (job.getStatus().equals(Status.in_progress)) {
 							startTime = job.getStartedAt().toEpochSecond(ZoneOffset.of("+05:30"));
-							restoreETA = fileETARestoreCalculator(restoreTaskAction.getRestoreLocation(job), file, startTime, "restore");
+							restoreETA = fileETARestoreCalculator(restoreTaskAction.getArtifactRootLocation(job), file, startTime, "restore");
 							userRequestEta += restoreETA;
-							restoredSize += getTargetSize(restoreTaskAction.getRestoreLocation(job), file);
+							restoredSize += getTargetSize(restoreTaskAction.getArtifactRootLocation(job), file);
 						} else if (job.getStatus().equals(Status.queued)) {
-							long expectedRestoreETA = fileETARestoreCalculator(restoreTaskAction.getRestoreLocation(job), file, startTime, "restore");
+							long expectedRestoreETA = fileETARestoreCalculator(restoreTaskAction.getArtifactRootLocation(job), file, startTime, "restore");
 							userRequestEta += expectedRestoreETA;
 						} else if (!job.getStatus().equals(Status.completed)) {
 
@@ -689,7 +689,7 @@ public class RequestService extends DwaraService{
 						// If its completed. Do nothing.
 						if (job.getStatus().equals(Status.in_progress)) {
 							// Get the .mov path from the target folder
-							postProcessETA = fileETARestoreCalculator(restoreTaskAction.getRestoreLocation(job), file, startTime,
+							postProcessETA = fileETARestoreCalculator(restoreTaskAction.getArtifactRootLocation(job), file, startTime,
 									"video-digi-2020-mkv-mov-gen");
 							userRequestEta += postProcessETA;
 						} else if (job.getStatus().equals(Status.queued)) {

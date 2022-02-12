@@ -39,6 +39,7 @@ import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.process.checksum.ChecksumVerifier;
 import org.ishafoundation.dwaraapi.process.thread.ProcessingJobManager;
 import org.ishafoundation.dwaraapi.service.JobServiceRequeueHelper;
+import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.slf4j.Logger;
@@ -81,9 +82,6 @@ public class JobCreator {
 
 	@Autowired
 	private ApplicationContext applicationContext;
-	
-	@Autowired
-	private Restore restoreStorageTask;
 	
 	@Autowired
 	private TagDao tagDao;
@@ -473,11 +471,15 @@ public class JobCreator {
 		Volume groupVolume = null;
 		Volume volume = null;
 		String groupVolumeId = null;
-		// If sourceJob of this processing flowelement is restore then the processing f/w should pick up the file from the restored tmp location instead of the artifactclass.pathprefix 
-		if(sourceJob != null && sourceJob.getStoragetaskActionId() == Action.restore) {
-			inputArtifactPath = restoreStorageTask.getRestoreLocation(sourceJob) + File.separator + inputArtifactName;
-			groupVolume = sourceJob.getGroupVolume();
-			volume = sourceJob.getVolume();
+		if(sourceJob != null && sourceJob.getStoragetaskActionId() != null) {
+			// If sourceJob of this processing flowelement is restore/copy then the processing f/w should pick up the file from the restored tmp/copied location instead of the artifactclass.pathprefix
+			AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(sourceJob.getStoragetaskActionId().name());
+			String artifactRootLocation = storagetaskActionImpl.getArtifactRootLocation(sourceJob);
+			if(artifactRootLocation != null ) {		
+				inputArtifactPath = artifactRootLocation + File.separator + inputArtifactName;
+				groupVolume = sourceJob.getGroupVolume();
+				volume = sourceJob.getVolume();
+			}
 			//groupVolumeId = groupVolume != null ? groupVolume.getId() : null;
 		}
 		// TODO : What if the first parent job is a processing that has no files to process and hence no job created. So DependentJobs wont be created. Fine. So there is no Job in the request. Is it ok to create a request with no Jobs

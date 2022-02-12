@@ -57,6 +57,11 @@ public abstract class AbstractStoragetaskAction{
 		job.setStatus(Status.queued);
 		return saveJob(job);
 	}
+	
+	// If sourceJob of this processing flowelement is restore/copy then the processing f/w should pick up the file from the restored tmp/copied location instead of the artifactclass.pathprefix
+	public String getArtifactRootLocation(Job sourceJob){ 
+		return null;
+	} 
 
 	// Only the information absolutely needed for tape job selection is set here - rest is all lazy loaded after the job is selected, so we dont load up all info upfront, only to be not used later...
 	public StorageJob buildStorageJob(Job job) throws Exception{

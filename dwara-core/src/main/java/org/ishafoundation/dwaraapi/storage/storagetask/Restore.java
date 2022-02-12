@@ -50,10 +50,11 @@ public class Restore extends AbstractStoragetaskAction{
 	@Autowired
 	private Configuration configuration;
 	
-	public String getRestoreLocation(Job job) {
+	@Override
+	public String getArtifactRootLocation(Job sourceJob) {
 		String restoreLocation = null;
 	
-		Request request = job.getRequest();
+		Request request = sourceJob.getRequest();
 		RequestDetails requestDetails = request.getDetails();
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 		if(requestedAction == Action.restore || requestedAction == Action.restore_process){
@@ -63,7 +64,7 @@ public class Restore extends AbstractStoragetaskAction{
 			restoreLocation = destinationPath + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier() + java.io.File.separator + outputFolder;
 		}
 		else if(requestedAction == Action.ingest || requestedAction == Action.rewrite)
-			restoreLocation = configuration.getRestoreTmpLocationForVerification() + File.separator + "job-" + job.getId();
+			restoreLocation = configuration.getRestoreTmpLocationForVerification() + File.separator + "job-" + sourceJob.getId();
 		
 		return restoreLocation;
 	}
@@ -104,7 +105,7 @@ public class Restore extends AbstractStoragetaskAction{
 			storageJob.setArchiveBlock(fileVolume.getArchiveBlock());
 			
 			// to where
-			String targetLocationPath = getRestoreLocation(job);
+			String targetLocationPath = getArtifactRootLocation(job);
 			storageJob.setTargetLocationPath(targetLocationPath);					
 			
 		}
@@ -147,7 +148,7 @@ public class Restore extends AbstractStoragetaskAction{
 			storageJob.setArchiveBlock(fileVolume.getArchiveBlock());
 			
 			// to where
-			String targetLocationPath = getRestoreLocation(job);
+			String targetLocationPath = getArtifactRootLocation(job);
 			storageJob.setTargetLocationPath(targetLocationPath);
 		}
 		else {
@@ -195,7 +196,7 @@ public class Restore extends AbstractStoragetaskAction{
 				storageJob.setDestinationPath(destinationPath);
 				String outputFolder = requestDetails.getOutputFolder();
 				storageJob.setOutputFolder(outputFolder);
-				String targetLocationPath = getRestoreLocation(job);
+				String targetLocationPath = getArtifactRootLocation(job);
 				storageJob.setTargetLocationPath(targetLocationPath);
 				
 				Priority requestPriority = request.getPriority();
@@ -203,7 +204,7 @@ public class Restore extends AbstractStoragetaskAction{
 					storageJob.setPriority(requestPriority.getPriorityValue());
 			}
 //			else if(requestedAction == Action.restore_process) {
-//				String targetLocationPath = getRestoreLocation(job);
+//				String targetLocationPath = getArtifactRootLocation(job);
 //				storageJob.setTargetLocationPath(targetLocationPath);
 //			}
 		}

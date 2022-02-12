@@ -153,7 +153,7 @@ public class Write extends AbstractStoragetaskAction{
 		
 			// get write job's storage dependency - can't be anything but restore, but looping for making the code generic giving some flexibility
 			Job restoreJob = getGoodCopyRestoreJob(job);
-			pathPrefix = restore.getRestoreLocation(restoreJob); 
+			pathPrefix = restore.getArtifactRootLocation(restoreJob); 
 		}
 
 		

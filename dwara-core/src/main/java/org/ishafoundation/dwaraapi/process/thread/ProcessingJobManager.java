@@ -44,6 +44,7 @@ import org.ishafoundation.dwaraapi.helpers.ThreadNameHelper;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
+import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +85,7 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	private Configuration configuration;
 	
 	@Autowired
-	private Restore restoreStorageTask;
+	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
 
 	@Autowired
 	private JobEntityToJobForProcessConverter jobEntityToJobForProcessConverter;
@@ -142,9 +143,15 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 		if(jobDependencyList != null) {
 			for (Integer nthDependentJobId : jobDependencyList) {
 				Job nthDependentJob = jobDao.findById(nthDependentJobId).get();
-				if(nthDependentJob.getStoragetaskActionId() == Action.restore) {
-					inputPath = restoreStorageTask.getRestoreLocation(nthDependentJob);
-					break;
+				
+				if(nthDependentJob.getStoragetaskActionId() != null) {
+					// If sourceJob of this processing flowelement is restore/copy then the processing f/w should pick up the file from the restored tmp/copied location instead of the artifactclass.pathprefix
+					AbstractStoragetaskAction storagetaskActionImpl = storagetaskActionMap.get(nthDependentJob.getStoragetaskActionId().name());
+					String artifactRootLocation = storagetaskActionImpl.getArtifactRootLocation(nthDependentJob);
+					if(artifactRootLocation != null) { 	
+						inputPath = artifactRootLocation;
+						break;
+					}
 				}
 			}
 		}
