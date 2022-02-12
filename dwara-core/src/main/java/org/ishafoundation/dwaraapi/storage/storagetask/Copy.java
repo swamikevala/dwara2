@@ -56,6 +56,7 @@ public class Copy extends AbstractStoragetaskAction{
 
 		Integer inputArtifactId = job.getInputArtifactId();
 		Artifact artifact = artifactDao.findById(inputArtifactId).get();
+		storageJob.setArtifact(artifact);
 		//String artifactpathToBeCopied = pathPrefix + java.io.File.separator + artifactName;
 		long artifactSize = artifact.getTotalSize();//FileUtils.sizeOf(new java.io.File(artifactpathToBeCopied)); 
 

@@ -162,7 +162,7 @@ public abstract class AbstractStoragetypeJobProcessor {
     	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
     	storageResponse = iStoragelevel.copy(selectedStorageJob);
 
-//    	afterWrite(selectedStorageJob, storageResponse);
+    	afterWrite(selectedStorageJob, storageResponse);
     	return storageResponse; 
     }
     
@@ -376,8 +376,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 	    			}catch (Exception e) {
 						// TODO: handle exception
 					}
-	    		}else
-	    			throw new Exception("OS not supported to find used space...");
+	    		}else {
+    				// throw new Exception("OS not supported to find used space...");
+	    		}
+	    			
 	    	}
 	    	
 	    	
@@ -387,7 +389,8 @@ public abstract class AbstractStoragetypeJobProcessor {
 		volume.setUsedCapacity(usedCapacity);
 		volumeDao.save(volume);
 
-		labelManager.writeArtifactLabel(selectedStorageJob);
+		if(volume.getStoragetype() == Storagetype.tape) 
+			labelManager.writeArtifactLabel(selectedStorageJob);
 
     	boolean isVolumeNeedToBeFinalized = volumeUtil.isVolumeNeedToBeFinalized(volume, usedCapacity);
     	if(isVolumeNeedToBeFinalized) {
