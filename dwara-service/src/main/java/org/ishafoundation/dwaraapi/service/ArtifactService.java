@@ -115,7 +115,7 @@ public class ArtifactService extends DwaraService{
 		data.put("artifactId", artifactId);
 		Request userRequest = createUserRequest(Action.delete, Status.in_progress, data);
 		userRequest.setMessage(reason);
-		artifactDeleter.cleanUp(userRequest, request);
+		artifactDeleter.cleanUp(userRequest, request, artifact);
 
 		userRequest.setStatus(Status.completed);
 		requestDao.save(userRequest);
