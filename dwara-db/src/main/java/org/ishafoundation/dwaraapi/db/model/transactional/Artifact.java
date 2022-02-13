@@ -62,7 +62,7 @@ public class Artifact {
  	// Many subrequest could have happened on the same library. Like rerun etc., But this holds the most recent subrequest so that it can be queried easily
 	@OneToOne
 	@JoinColumn(name="q_latest_request_id") 
-	private Request qLatestRequest;
+	private Request queryLatestRequest;
 
 	@ManyToMany(mappedBy = "artifacts")
 	Set<Tag> tags;
@@ -164,13 +164,13 @@ public class Artifact {
 	}
 
 	@JsonIgnore
-	public Request getqLatestRequest() {
-		return qLatestRequest;
+	public Request getQueryLatestRequest() {
+		return queryLatestRequest;
 	}
 
 	@JsonIgnore
-	public void setqLatestRequest(Request qLatestRequest) {
-		this.qLatestRequest = qLatestRequest;
+	public void setQueryLatestRequest(Request qLatestRequest) {
+		this.queryLatestRequest = qLatestRequest;
 	}
 
 	public Set<Tag> getTags() {

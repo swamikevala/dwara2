@@ -107,7 +107,11 @@ public class ArtifactDeleter {
 		jobDao.saveAll(jobList);
 	}
     
-	public void cleanUp(Request userRequest, Request requestToBeActioned) throws Exception{	
+	public void cleanUp(Request userRequest, Request requestToBeActioned) throws Exception{
+		cleanUp(userRequest, requestToBeActioned, null);
+	}
+	
+	public void cleanUp(Request userRequest, Request requestToBeActioned, Artifact artifactToBeDeleted) throws Exception{	
 		int requestId = requestToBeActioned.getId();
 		HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.File>> artifactId_ArtifactFileList = new HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.File>>();
 		HashMap<Integer, List<TFile>> artifactId_ArtifactTFileList = new HashMap<Integer, List<TFile>>();
@@ -115,8 +119,10 @@ public class ArtifactDeleter {
 		
     	// Step 3 - Find all artifacts involved
     	List<Artifact> artifactList = artifactDao.findAllByWriteRequestId(requestId);
-    	for (Iterator iterator = artifactList.iterator(); iterator.hasNext();) {
-			Artifact nthArtifact = (Artifact) iterator.next();
+    	if(artifactList.size() == 0 && artifactToBeDeleted != null)
+    		artifactList.add(artifactToBeDeleted);
+
+    	for (Artifact nthArtifact : artifactList) {
 			logger.info("Now deleting " + nthArtifact.getName() + "[" + nthArtifact.getId() + "] related File/Artifact DB entries and Filesystem files");
 			
 			artifactId_Artifact.put(nthArtifact.getId(), nthArtifact);
@@ -144,7 +150,7 @@ public class ArtifactDeleter {
 			}
 			
 	    	// Step 5 - Flag the artifact as softdeleted
-			nthArtifact.setqLatestRequest(userRequest);
+			nthArtifact.setQueryLatestRequest(userRequest);
 			nthArtifact.setDeleted(true);
 	    	artifactDao.save(nthArtifact);
 	    	logger.info("Artifact flagged Deleted");
@@ -159,7 +165,7 @@ public class ArtifactDeleter {
 				
 				artifactVolumeDao.saveAll(artifactVolumeList);
 			}
-			
+			logger.info("ArtifactVolume records flagged Deleted");
 			
 	    	
 	    	// Step 7 - Move/Delete the file system files
@@ -204,29 +210,36 @@ public class ArtifactDeleter {
     	
     	//boolean any 
     	List<Job> jobList = jobDao.findAllByRequestId(requestId);
-		for (Job nthJob : jobList) {
-			if(nthJob.getStatus() != Status.cancelled) {
-				List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = artifactId_ArtifactFileList.get(nthJob.getInputArtifactId());
-				List<TFile> artifactTFileList = artifactId_ArtifactTFileList.get(nthJob.getInputArtifactId());
-				
-				Action storagetaskAction = nthJob.getStoragetaskActionId();
-				String processingtaskId = nthJob.getProcessingtaskId();
-				Integer artifactId = nthJob.getInputArtifactId();
-				Artifact artifact = artifactId_Artifact.get(artifactId);
-				
-				if(storagetaskAction != null && storagetaskAction == Action.write) {
-					tFileVolumeDeleter.softDeleteTFileVolumeEntries(artifactFileList, artifactTFileList, artifact, nthJob.getVolume().getId());
-				}
-				else if(processingtaskId != null) {
-					// TODO - Need to call processingTask specific delete method here 
-					// Tentatively calling hardcoded
-					//processingtaskActionMap.get(processingtaskName)
-					if(processingtaskId.equals("video-mam-update")) {
-						mamUpdateTaskExecutor.cleanUp(nthJob.getId(), artifact.getName(), artifact.getArtifactclass().getCategory());
+    	if(jobList.size() == 0) {
+			List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = artifactId_ArtifactFileList.get(artifactToBeDeleted.getId());
+			List<TFile> artifactTFileList = artifactId_ArtifactTFileList.get(artifactToBeDeleted.getId());
+			
+    		tFileVolumeDeleter.softDeleteTFileVolumeEntries(artifactFileList, artifactTFileList, artifactToBeDeleted);
+    	}else {
+			for (Job nthJob : jobList) {
+				if(nthJob.getStatus() != Status.cancelled) {
+					List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = artifactId_ArtifactFileList.get(nthJob.getInputArtifactId());
+					List<TFile> artifactTFileList = artifactId_ArtifactTFileList.get(nthJob.getInputArtifactId());
+					
+					Action storagetaskAction = nthJob.getStoragetaskActionId();
+					String processingtaskId = nthJob.getProcessingtaskId();
+					Integer artifactId = nthJob.getInputArtifactId();
+					Artifact artifact = artifactId_Artifact.get(artifactId);
+					
+					if(storagetaskAction != null && storagetaskAction == Action.write) {
+						tFileVolumeDeleter.softDeleteTFileVolumeEntries(artifactFileList, artifactTFileList, artifact, nthJob.getVolume().getId());
+					}
+					else if(processingtaskId != null) {
+						// TODO - Need to call processingTask specific delete method here 
+						// Tentatively calling hardcoded
+						//processingtaskActionMap.get(processingtaskName)
+						if(processingtaskId.equals("video-mam-update")) {
+							mamUpdateTaskExecutor.cleanUp(nthJob.getId(), artifact.getName(), artifact.getArtifactclass().getCategory());
+						}
 					}
 				}
 			}
-		}
+    	}
     }
 }
 

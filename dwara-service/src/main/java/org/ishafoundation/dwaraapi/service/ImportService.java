@@ -711,7 +711,7 @@ public class ImportService extends DwaraService {
 						artifact.setSequenceCode(sequenceCode);
 		//				artifact1.setTotalSize(size);
 						artifact.setArtifactclass(artifactclass);
-						artifact.setqLatestRequest(request);
+						artifact.setQueryLatestRequest(request);
 						
 						artifact = (org.ishafoundation.dwaraapi.db.model.transactional.Artifact) artifactDao.save(artifact);
 						artifactImportStatus = ImportStatus.completed;

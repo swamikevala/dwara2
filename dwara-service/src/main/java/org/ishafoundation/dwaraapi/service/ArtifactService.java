@@ -109,7 +109,7 @@ public class ArtifactService extends DwaraService{
 		artifactDeleter.validateArtifactclass(artifact.getArtifactclass().getId());
 
 		Request request = artifact.getWriteRequest();
-		request = request != null ? request : artifact.getqLatestRequest();
+		request = request != null ? request : artifact.getQueryLatestRequest();
 		artifactDeleter.validateRequest(request);
 
 		artifactDeleter.validateJobsAndUpdateStatus(request);
@@ -119,7 +119,7 @@ public class ArtifactService extends DwaraService{
 		data.put("artifactId", artifactId);
 		Request userRequest = createUserRequest(Action.delete, Status.in_progress, data);
 		userRequest.setMessage(reason);
-		artifactDeleter.cleanUp(userRequest, request);
+		artifactDeleter.cleanUp(userRequest, request, artifact);
 
 		userRequest.setStatus(Status.completed);
 		requestDao.save(userRequest);
@@ -155,7 +155,7 @@ public class ArtifactService extends DwaraService{
 		// Check if the system request is completed - only allow softrename on completed requests - NOTE with force option even when the request is not completed we allow softrename 
 		Request request = artifactToBeRenamed.getWriteRequest();
 		if(request == null)
-			request = artifactToBeRenamed.getqLatestRequest(); // For import there is no write request
+			request = artifactToBeRenamed.getQueryLatestRequest(); // For import there is no write request
 		
 		if(request == null)
 			throw new Exception("No request attached to " + artifactId + ". Wont be able to rename.");

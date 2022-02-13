@@ -530,7 +530,7 @@ public class StagedService extends DwaraService{
 	
 					Artifact artifact = new Artifact();
 					artifact.setWriteRequest(systemrequest);
-					artifact.setqLatestRequest(systemrequest);
+					artifact.setQueryLatestRequest(systemrequest);
 					artifact.setName(toBeArtifactName);
 					artifact.setArtifactclass(artifactclass);
 					artifact.setFileCount(fileCount);
