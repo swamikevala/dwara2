@@ -113,7 +113,7 @@ public class TagController {
                 }
             }
             for (Artifact artifact: listArtifact) {
-                Request request = artifact.getqLatestRequest();
+                Request request = artifact.getQueryLatestRequest();
                 RequestResponse requestResponse = requestService.frameRequestResponse(request, request.getType());
                 l.add(requestResponse);
             }

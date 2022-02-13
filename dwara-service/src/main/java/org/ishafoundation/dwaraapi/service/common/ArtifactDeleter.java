@@ -109,7 +109,7 @@ public class ArtifactDeleter {
 		HashMap<Integer, Artifact> artifactId_Artifact = new HashMap<Integer, Artifact>();
 		
     	// Step 3 - Find all artifacts involved
-    	List<Artifact> artifactList = artifactDao.findAllByWriteRequestIdOrQLatestRequestId(requestId, requestId);
+    	List<Artifact> artifactList = artifactDao.findAllByWriteRequestIdOrQueryLatestRequestId(requestId, requestId);
     	for (Iterator iterator = artifactList.iterator(); iterator.hasNext();) {
 			Artifact nthArtifact = (Artifact) iterator.next();
 			logger.info("Now deleting " + nthArtifact.getName() + "[" + nthArtifact.getId() + "] related File/Artifact DB entries and Filesystem files");
@@ -139,7 +139,7 @@ public class ArtifactDeleter {
 			}
 			
 	    	// Step 5 - Flag the artifact as softdeleted
-			nthArtifact.setqLatestRequest(userRequest);
+			nthArtifact.setQueryLatestRequest(userRequest);
 			nthArtifact.setDeleted(true);
 	    	artifactDao.save(nthArtifact);
 	    	logger.info("Artifact flagged Deleted");

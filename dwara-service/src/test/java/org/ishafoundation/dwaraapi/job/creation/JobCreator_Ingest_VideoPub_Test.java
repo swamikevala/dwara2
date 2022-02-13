@@ -133,7 +133,7 @@ public class JobCreator_Ingest_VideoPub_Test extends DwaraService {
 	
 			Artifact artifact = new Artifact();
 			artifact.setWriteRequest(systemrequest);
-			artifact.setqLatestRequest(systemrequest);
+			artifact.setQueryLatestRequest(systemrequest);
 			artifact.setName(stagedFile.getName());
 			artifact.setArtifactclass(artifactclass);
 			artifact.setFileCount(5);

@@ -327,7 +327,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 								throw new Exception("Artifact with sequenceCode " + sequenceCode + " already exists - " + alreadyExistingArtifactWithSameSequenceCode.getId());
 
 						    outputArtifact.setSequenceCode(sequenceCode);
-						    outputArtifact.setqLatestRequest(inputArtifact.getqLatestRequest());
+						    outputArtifact.setQueryLatestRequest(inputArtifact.getQueryLatestRequest());
 						    outputArtifact.setWriteRequest(inputArtifact.getWriteRequest());
 						    
 						    try {
