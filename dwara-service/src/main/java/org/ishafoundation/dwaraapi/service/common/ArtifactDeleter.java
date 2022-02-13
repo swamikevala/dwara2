@@ -109,7 +109,7 @@ public class ArtifactDeleter {
 		HashMap<Integer, Artifact> artifactId_Artifact = new HashMap<Integer, Artifact>();
 		
     	// Step 3 - Find all artifacts involved
-    	List<Artifact> artifactList = artifactDao.findAllByWriteRequestId(requestId);
+    	List<Artifact> artifactList = artifactDao.findAllByWriteRequestIdOrQLatestRequest(requestId);
     	for (Iterator iterator = artifactList.iterator(); iterator.hasNext();) {
 			Artifact nthArtifact = (Artifact) iterator.next();
 			logger.info("Now deleting " + nthArtifact.getName() + "[" + nthArtifact.getId() + "] related File/Artifact DB entries and Filesystem files");
