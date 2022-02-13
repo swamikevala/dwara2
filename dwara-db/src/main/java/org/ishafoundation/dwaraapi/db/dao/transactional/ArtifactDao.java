@@ -9,7 +9,7 @@ public interface ArtifactDao extends CrudRepository<Artifact,Integer> {
 
 	List<Artifact> findAllByWriteRequestId(int ingestRequestId);
 	
-	List<Artifact> findAllByWriteRequestIdOrQLatestRequestId(int ingestRequestId);
+	List<Artifact> findAllByWriteRequestIdOrQLatestRequestId(int writeRequestId, int qLatestRequestId);
 	
 	Artifact findTopByWriteRequestIdOrderByIdAsc(int ingestRequestId); // TODO use Artifactclass().isSource() instead of orderBy
 
