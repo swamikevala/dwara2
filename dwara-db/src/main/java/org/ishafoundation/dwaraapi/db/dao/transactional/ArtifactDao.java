@@ -8,11 +8,7 @@ import org.springframework.data.repository.CrudRepository;
 public interface ArtifactDao extends CrudRepository<Artifact,Integer> {
 
 	List<Artifact> findAllByWriteRequestId(int requestId);
-	
-	List<Artifact> findAllByQueryLatestRequestId(int requestId);
-	
-	List<Artifact> findAllByWriteRequestIdOrQueryLatestRequestId(int writeRequestId, int qLatestRequestId);
-	
+
 	Artifact findTopByWriteRequestIdOrderByIdAsc(int ingestRequestId); // TODO use Artifactclass().isSource() instead of orderBy
 
 	Artifact findByName(String artifactName);

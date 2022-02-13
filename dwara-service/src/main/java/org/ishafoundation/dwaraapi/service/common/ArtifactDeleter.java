@@ -102,16 +102,22 @@ public class ArtifactDeleter {
 		jobDao.saveAll(jobList);
 	}
     
-	public void cleanUp(Request userRequest, Request requestToBeActioned) throws Exception{	
+	public void cleanUp(Request userRequest, Request requestToBeActioned) throws Exception{
+		cleanUp(userRequest, requestToBeActioned, null);
+	}
+	
+	public void cleanUp(Request userRequest, Request requestToBeActioned, Artifact artifactToBeDeleted) throws Exception{	
 		int requestId = requestToBeActioned.getId();
 		HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.File>> artifactId_ArtifactFileList = new HashMap<Integer, List<org.ishafoundation.dwaraapi.db.model.transactional.File>>();
 		HashMap<Integer, List<TFile>> artifactId_ArtifactTFileList = new HashMap<Integer, List<TFile>>();
 		HashMap<Integer, Artifact> artifactId_Artifact = new HashMap<Integer, Artifact>();
 		
     	// Step 3 - Find all artifacts involved
-    	List<Artifact> artifactList = artifactDao.findAllByWriteRequestIdOrQueryLatestRequestId(requestId, requestId);
-    	for (Iterator iterator = artifactList.iterator(); iterator.hasNext();) {
-			Artifact nthArtifact = (Artifact) iterator.next();
+    	List<Artifact> artifactList = artifactDao.findAllByWriteRequestId(requestId);
+    	if(artifactList.size() == 0 && artifactToBeDeleted != null)
+    		artifactList.add(artifactToBeDeleted);
+
+    	for (Artifact nthArtifact : artifactList) {
 			logger.info("Now deleting " + nthArtifact.getName() + "[" + nthArtifact.getId() + "] related File/Artifact DB entries and Filesystem files");
 			
 			artifactId_Artifact.put(nthArtifact.getId(), nthArtifact);
