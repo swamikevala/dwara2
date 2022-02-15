@@ -128,8 +128,7 @@ public class JobManipulator {
 			String outputArtifactclassId = null;
 			boolean processingtaskWithDependencyStoragetask = false;
 			if(flowelementDepsList != null) {
-				String outputArtifactclassSuffix = null;
-				
+
 				for (String nthFlowelementDependencyId : flowelementDepsList) {
 					Flowelement prereqFlowelement = flowelementUtil.findById(nthFlowelementDependencyId);
 					
@@ -137,7 +136,7 @@ public class JobManipulator {
 					if(storagetaskDependency != null) // Is the dependency a Storage task?
 						processingtaskWithDependencyStoragetask = true;
 					else { // Is the dependency a processing task?
-						if(outputArtifactclassSuffix != null) // if outputArtifactclassSuffix is already set 
+						if(outputArtifactclassId != null) // if outputArtifactclassSuffix is already set 
 							continue; // Dont break it, as we need to loop through the entire dependencies to see if any processingtaskWithDependencyStoragetask
 						else { // Now use a processing task that generates an output [NOTE ONLY ONE PROCESSING TASK CAN GENERATE AN OUTPUT ARTIFACT IN A DEPENDENCY LIST - TODO: REASON OUT WHY?]
 							String processingtaskId = prereqFlowelement.getProcessingtaskId();
@@ -148,14 +147,10 @@ public class JobManipulator {
 							if(processingtaskOpt.isPresent())
 								processingtask = processingtaskOpt.get();
 							
-							outputArtifactclassSuffix = processingtask != null ? processingtask.getOutputArtifactclassSuffix() : null; // Does the dependent processing task generate an output?
+							outputArtifactclassId = processingtask != null ? processingtask.getOutputArtifactclass() : artifactclassId; // Does the dependent processing task generate an output?
 						}
 					}
 				}
-				if(outputArtifactclassSuffix != null)
-					outputArtifactclassId = artifactclassId + outputArtifactclassSuffix;
-				else
-					outputArtifactclassId = artifactclassId;
 			}
 			
 			String referredFlowId = nthFlowelement.getFlowRefId(); 

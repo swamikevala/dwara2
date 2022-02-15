@@ -25,9 +25,9 @@ public class Processingtask{
 	@Column(name="filetype_id")
 	private String filetypeId;
 	
-	@Column(name="output_artifactclass_suffix")
-	private String outputArtifactclassSuffix;
-	
+	@Column(name="output_artifactclass")
+	private String outputArtifactclass;
+
 	@Column(name="output_filetype_id")
 	private String outputFiletypeId;
 	
@@ -63,14 +63,14 @@ public class Processingtask{
 		this.filetypeId = filetypeId;
 	}
 	
-    public String getOutputArtifactclassSuffix() {
-		return outputArtifactclassSuffix;
+	public String getOutputArtifactclass() {
+		return outputArtifactclass;
 	}
 
-	public void setOutputArtifactclassSuffix(String outputArtifactclassSuffix) {
-		this.outputArtifactclassSuffix = outputArtifactclassSuffix;
+	public void setOutputArtifactclass(String outputArtifactclass) {
+		this.outputArtifactclass = outputArtifactclass;
 	}
-	
+
 	public String getOutputFiletypeId() {
 		return outputFiletypeId;
 	}

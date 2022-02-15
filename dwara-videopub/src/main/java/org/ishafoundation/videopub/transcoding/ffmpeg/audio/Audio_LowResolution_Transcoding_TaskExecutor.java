@@ -94,41 +94,47 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		Session session = null;
 		String nonDwaraGeneratedProxyFilepathname = null;
 		boolean proxyAlreadyAvailable = false;
-		if(Boolean.TRUE.equals(audioConfiguration.getCheck())) {
-
-			String sequenceShavedOffInputArtifactName = StringUtils.substringAfter(inputArtifactName, "_");
-			
-			String rootLocation = null;
-			if(Boolean.TRUE.equals(audioConfiguration.getRemote())) 
-				rootLocation = audioConfiguration.getSshRootLocation();
-			else
-				rootLocation = audioConfiguration.getLocalRootLocation();
-			
-			nonDwaraGeneratedProxyFilepathname = rootLocation + File.separator + outputArtifact.getArtifactclass().getId() + File.separator + sequenceShavedOffInputArtifactName + StringUtils.substringAfter(sourceFilePathname, sequenceShavedOffInputArtifactName);
-			nonDwaraGeneratedProxyFilepathname = nonDwaraGeneratedProxyFilepathname.replace(FilenameUtils.getName(nonDwaraGeneratedProxyFilepathname), FilenameUtils.getBaseName(nonDwaraGeneratedProxyFilepathname) + ".mp3");
-			
-			if(Boolean.TRUE.equals(audioConfiguration.getRemote())) { 
-				session = sshSessionHelper.getSession(audioConfiguration.getHost(), audioConfiguration.getSshSystemUser());
-			
-				String command = "test -f " + nonDwaraGeneratedProxyFilepathname + " && echo \"YES\" || echo \"NO\"";
-				logger.debug("File exist command - " + command);
-				
-				// check if file exist
-				proxyAlreadyAvailable = fileExist(session, command, fileId + ".out_audio_proxy_check");
-			}else {
-				if(new File(nonDwaraGeneratedProxyFilepathname).exists())
-					proxyAlreadyAvailable = true;	
-			}
-			
-			logger.debug("proxyAlreadyAvailable in " + nonDwaraGeneratedProxyFilepathname + " - " + proxyAlreadyAvailable);
-//			if(!proxyAlreadyAvailable) {
-//				command = "test -d " + nonDwaraGeneratedProxyFilepathname + " && echo \"YES\" || echo \"NO\""; // check if directory exist
-//				logger.debug("Directory exist command - " + command);
-//				
-//				proxyAlreadyAvailable = abc(session, command, fileId + ".out_audio_proxy_check");
-//			}
-		}
+		boolean extractedFromVideo = false;
 		
+		String inputArtifactclass = inputArtifact.getArtifactclass().getId();
+		if(inputArtifactclass.startsWith("audio")) {
+			if(Boolean.TRUE.equals(audioConfiguration.getCheck())) {
+	
+				String sequenceShavedOffInputArtifactName = StringUtils.substringAfter(inputArtifactName, "_");
+				
+				String rootLocation = null;
+				if(Boolean.TRUE.equals(audioConfiguration.getRemote())) 
+					rootLocation = audioConfiguration.getSshRootLocation();
+				else
+					rootLocation = audioConfiguration.getLocalRootLocation();
+				
+				nonDwaraGeneratedProxyFilepathname = rootLocation + File.separator + outputArtifact.getArtifactclass().getId() + File.separator + sequenceShavedOffInputArtifactName + StringUtils.substringAfter(sourceFilePathname, sequenceShavedOffInputArtifactName);
+				nonDwaraGeneratedProxyFilepathname = nonDwaraGeneratedProxyFilepathname.replace(FilenameUtils.getName(nonDwaraGeneratedProxyFilepathname), FilenameUtils.getBaseName(nonDwaraGeneratedProxyFilepathname) + ".mp3");
+				
+				if(Boolean.TRUE.equals(audioConfiguration.getRemote())) { 
+					session = sshSessionHelper.getSession(audioConfiguration.getHost(), audioConfiguration.getSshSystemUser());
+				
+					String command = "test -f " + nonDwaraGeneratedProxyFilepathname + " && echo \"YES\" || echo \"NO\"";
+					logger.debug("File exist command - " + command);
+					
+					// check if file exist
+					proxyAlreadyAvailable = fileExist(session, command, fileId + ".out_audio_proxy_check");
+				}else {
+					if(new File(nonDwaraGeneratedProxyFilepathname).exists())
+						proxyAlreadyAvailable = true;	
+				}
+				
+				logger.debug("proxyAlreadyAvailable in " + nonDwaraGeneratedProxyFilepathname + " - " + proxyAlreadyAvailable);
+	//			if(!proxyAlreadyAvailable) {
+	//				command = "test -d " + nonDwaraGeneratedProxyFilepathname + " && echo \"YES\" || echo \"NO\""; // check if directory exist
+	//				logger.debug("Directory exist command - " + command);
+	//				
+	//				proxyAlreadyAvailable = abc(session, command, fileId + ".out_audio_proxy_check");
+	//			}
+			}
+		}
+		else
+			extractedFromVideo = true;
 		
 		if(proxyAlreadyAvailable) {
 			// TODO put it in destination location.. move or copy???
@@ -148,7 +154,7 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		
 			// Doing this command creation and execution in 2 steps so that the process can be referenced in memory and so if cancel command for a specific medialibrary is issued the specific process(es) can be destroyed/killed referencing this...
 			// mapping only for proxy generation commands which are slightly heavy and time consuming than the thumbnail and metadata extraction...
-			List<String> proxyGenerationCommandParamsList = getProxyGenCommand(sourceFilePathname, proxyTargetLocation);
+			List<String> proxyGenerationCommandParamsList = getProxyGenCommand(sourceFilePathname, proxyTargetLocation, extractedFromVideo);
 			CommandLineExecutionResponse proxyCommandLineExecutionResponse = createProcessAndExecuteCommand(fileId+"~"+taskName , proxyGenerationCommandParamsList);
 			long proxyEndTime = System.currentTimeMillis();
 
@@ -199,7 +205,7 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	// ffmpeg -y -nostdin -i <<sourceFilePathname>> -b:a 64k <<proxyTargetLocation>> 
 	// ffmpeg -y -nostdin -i file.wav -b:a 64k file.mp3
 	// ffmpeg -y -nostdin -i "Tel Dub.wav" -b:a 64000 "output/Tel Dub.mp3" 
-	private List<String> getProxyGenCommand(String sourceFilePathname, String proxyTargetLocation) {
+	private List<String> getProxyGenCommand(String sourceFilePathname, String proxyTargetLocation, boolean extractedFromVideo) {
 		List<String> proxyGenerationCommandParamsList = new ArrayList<String>();
 		
 		proxyGenerationCommandParamsList.add("ffmpeg");
@@ -209,6 +215,10 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		proxyGenerationCommandParamsList.add(sourceFilePathname);
 		proxyGenerationCommandParamsList.add("-b:a");
 		proxyGenerationCommandParamsList.add("64k");
+		if(extractedFromVideo) {
+			proxyGenerationCommandParamsList.add("-map");
+			proxyGenerationCommandParamsList.add("0:a:0");
+		}
 		proxyGenerationCommandParamsList.add(proxyTargetLocation);
 	
 		return proxyGenerationCommandParamsList;

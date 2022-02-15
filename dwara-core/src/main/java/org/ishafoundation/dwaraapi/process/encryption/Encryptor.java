@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.process.encryption;
 
 import java.io.File;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.configuration.CryptoConfiguration;
 import org.ishafoundation.dwaraapi.context.CryptoContext;
@@ -31,8 +32,10 @@ public class Encryptor implements IProcessingTask {
 		String sourceFilePathname = logicalFile.getAbsolutePath();
 		String destinationDirPath = processContext.getOutputDestinationDirPath();
 		
+		FileUtils.forceMkdir(new File(destinationDirPath));
+		
 		String fileName = FilenameUtils.getName(sourceFilePathname);
-		String outputFilepathname = destinationDirPath + File.separator + fileName + ".enc";
+		String outputFilepathname = destinationDirPath + File.separator + fileName;
 		
 		if(logicalFile.isFile()) {
 			CryptoContext cryptoContext = new CryptoContext();

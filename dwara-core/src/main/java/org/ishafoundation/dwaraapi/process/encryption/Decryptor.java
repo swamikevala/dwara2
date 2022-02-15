@@ -2,6 +2,7 @@ package org.ishafoundation.dwaraapi.process.encryption;
 
 import java.io.File;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.configuration.CryptoConfiguration;
 import org.ishafoundation.dwaraapi.context.CryptoContext;
@@ -30,7 +31,12 @@ public class Decryptor implements IProcessingTask {
 		LogicalFile logicalFile = processContext.getLogicalFile();
 		String sourceFilePathname = logicalFile.getAbsolutePath();
 		String destinationDirPath = processContext.getOutputDestinationDirPath();
-		
+		try {
+			FileUtils.forceMkdir(new File(destinationDirPath));
+		}
+		catch (Exception e) {
+			// just swallow it
+		}
 		String fileName = FilenameUtils.getName(sourceFilePathname);
 		String outputFilepathname = destinationDirPath + File.separator + fileName + ".dec";
 		

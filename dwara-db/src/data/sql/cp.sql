@@ -36,7 +36,29 @@ CREATE TABLE `action` (
 
 LOCK TABLES `action` WRITE;
 /*!40000 ALTER TABLE `action` DISABLE KEYS */;
-INSERT INTO `action` (`id`, `description`, `type`) VALUES ('abort',NULL,'sync'),('cancel',NULL,'sync'),('change_artifactclass',NULL,'sync'),('delete',NULL,'sync'),('diagnostics',NULL,'sync'),('finalize',NULL,'storage_task'),('hold',NULL,'sync'),('import',NULL,'storage_task'),('ingest',NULL,'complex'),('initialize',NULL,'storage_task'),('list',NULL,'sync'),('map_tapedrives',NULL,'storage_task'),('marked_completed',NULL,'sync'),('migrate',NULL,'storage_task'),('process',NULL,'complex'),('release',NULL,'sync'),('rename',NULL,'sync'),('restore',NULL,'storage_task'),('restore_process',NULL,'complex'),('rewrite',NULL,'complex'),('verify',NULL,'storage_task'),('write',NULL,'storage_task');
+INSERT INTO `action` (`id`, `description`, `type`) VALUES 
+('abort',NULL,'sync'),
+('cancel',NULL,'sync'),
+('change_artifactclass',NULL,'sync'),
+('delete',NULL,'sync'),
+('diagnostics',NULL,'sync'),
+('finalize',NULL,'storage_task'),
+('hold',NULL,'sync'),
+('import',NULL,'storage_task'),
+('ingest',NULL,'complex'),
+('initialize',NULL,'storage_task'),
+('list',NULL,'sync'),
+('map_tapedrives',NULL,'storage_task'),
+('marked_completed',NULL,'sync'),
+('migrate',NULL,'storage_task'),
+('process',NULL,'complex'),
+('release',NULL,'sync'),
+('rename',NULL,'sync'),
+('restore',NULL,'storage_task'),
+('restore_process',NULL,'complex'),
+('rewrite',NULL,'complex'),
+('checksum-verify',NULL,'storage_task'),
+('write',NULL,'storage_task');
 /*!40000 ALTER TABLE `action` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -63,7 +85,13 @@ CREATE TABLE `action_artifactclass_flow` (
 
 LOCK TABLES `action_artifactclass_flow` WRITE;
 /*!40000 ALTER TABLE `action_artifactclass_flow` DISABLE KEYS */;
-INSERT INTO `action_artifactclass_flow` (`artifactclass_id`, `flow_id`, `active`, `action_id`) VALUES ('video-edit-priv1','cp-archive-flow','','ingest'),('video-edit-priv1','video-edit-proxy-flow','\0','ingest'),('video-edit-priv2','cp-archive-flow','','ingest'),('video-edit-priv2','video-edit-proxy-flow','\0','ingest'),('video-edit-pub','cp-archive-flow','','ingest'),('video-edit-pub','video-edit-proxy-flow','\0','ingest'),('video-priv1','cp-archive-flow','','ingest'),('video-priv1','video-proxy-flow','\0','ingest'),('video-priv2','cp-archive-flow','','ingest'),('video-priv2','video-proxy-flow','\0','ingest'),('video-priv3','cp-archive-flow','','ingest'),('video-pub','cp-archive-flow','','ingest'),('video-pub','video-proxy-flow','\0','ingest');
+INSERT INTO `action_artifactclass_flow` (`artifactclass_id`, `flow_id`, `active`, `action_id`) VALUES 
+('video','cp-archive-flow',1,'ingest'),
+('video','video-mezz-proxy-flow',1,'ingest'),
+('video', 'audio-extraction-flow', 1, 'ingest'),
+('audio','cp-archive-flow',1,'ingest'),
+('audio','audio-proxy-flow',1,'ingest'),
+('photo','cp-archive-flow',1,'ingest');
 /*!40000 ALTER TABLE `action_artifactclass_flow` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -93,7 +121,10 @@ CREATE TABLE `action_artifactclass_user` (
 
 LOCK TABLES `action_artifactclass_user` WRITE;
 /*!40000 ALTER TABLE `action_artifactclass_user` DISABLE KEYS */;
-INSERT INTO `action_artifactclass_user` (`action_id`, `artifactclass_id`, `user_id`) VALUES ('ingest','video-edit-priv1',2),('ingest','video-edit-priv2',2),('ingest','video-edit-pub',2),('ingest','video-priv1',2),('ingest','video-priv2',2),('ingest','video-pub',2);
+INSERT INTO `action_artifactclass_user` (`action_id`, `artifactclass_id`, `user_id`) VALUES 
+('ingest','photo',2),
+('ingest','audio',2),
+('ingest','video',2);
 /*!40000 ALTER TABLE `action_artifactclass_user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -212,7 +243,9 @@ CREATE TABLE `artifact_sequence` (
 
 LOCK TABLES `artifact_sequence` WRITE;
 /*!40000 ALTER TABLE `artifact_sequence` DISABLE KEYS */;
-INSERT INTO `artifact_sequence` (`next_val`) VALUES (45391),(45391);
+INSERT INTO `artifact_sequence` (`next_val`) VALUES 
+(45391),
+(45391);
 /*!40000 ALTER TABLE `artifact_sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -244,7 +277,8 @@ CREATE TABLE `artifact_volume` (
 
 LOCK TABLES `artifact_volume` WRITE;
 /*!40000 ALTER TABLE `artifact_volume` DISABLE KEYS */;
-INSERT INTO `artifact_volume` (`artifact_id`, `details`, `name`, `volume_id`, `job_id`, `status`) VALUES (45387,NULL,'V32644_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9','R10001L7',532482,'current');
+INSERT INTO `artifact_volume` (`artifact_id`, `details`, `name`, `volume_id`, `job_id`, `status`) VALUES 
+(45387,NULL,'V32644_Guru-Pooja-Offerings-Close-up-Shot_AYA-IYC_15-Dec-2019_X70_9','R10001L7',532482,'current');
 /*!40000 ALTER TABLE `artifact_volume` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -281,7 +315,15 @@ CREATE TABLE `artifactclass` (
 
 LOCK TABLES `artifactclass` WRITE;
 /*!40000 ALTER TABLE `artifactclass` DISABLE KEYS */;
-INSERT INTO `artifactclass` (`id`, `concurrent_volume_copies`, `description`, `display_order`, `import_only`, `path_prefix`, `source`, `artifactclass_ref_id`, `sequence_id`, `config`, `auto_ingest`) VALUES ('video-edit-priv1','','edited video',5,'\0','staged','',NULL,'video-edit-pub','{\"pathname_regex\": \"[^/]+|Outputs?/[^/]+\\\\.mov\"}',NULL),('video-edit-priv1-proxy-low','','edited video proxy',5,'\0','transcoded','\0','video-edit-priv1','video-edit-pub-proxy-low',NULL,NULL),('video-edit-priv2','','edited video',5,'\0','staged','',NULL,'video-edit-priv2','{\"pathname_regex\": \"[^/]+|Outputs?/[^/]+\\\\.mov\"}',NULL),('video-edit-priv2-proxy-low','','edited video proxy',5,'\0','transcoded','\0','video-edit-priv2','video-edit-priv2-proxy-low',NULL,NULL),('video-edit-pub','','edited video',5,'\0','staged','',NULL,'video-edit-pub','{\"pathname_regex\": \"[^/]+|Outputs?/[^/]+\\\\.mov\"}',NULL),('video-edit-pub-proxy-low','','edited video proxy',5,'\0','transcoded','\0','video-edit-pub','video-edit-pub-proxy-low',NULL,NULL),('video-priv1','','video',2,'\0','staged','',NULL,'video-pub',NULL,NULL),('video-priv1-proxy-low','','video proxy',2,'\0','transcoded','\0','video-priv1','video-pub-proxy-low',NULL,NULL),('video-priv2','','video',2,'\0','staged','',NULL,'video-priv2',NULL,NULL),('video-priv2-proxy-low','','video proxy',2,'\0','transcoded','\0','video-priv2','video-priv2-proxy-low',NULL,NULL),('video-priv3','','video',2,'\0','staged','',NULL,'video-priv3',NULL,NULL),('video-pub','','video',2,'\0','staged','',NULL,'video-pub',NULL,NULL),('video-pub-proxy-low','','video proxy',2,'\0','transcoded','\0','video-pub','video-pub-proxy-low',NULL,NULL);
+INSERT INTO `artifactclass` (`id`, `concurrent_volume_copies`, `description`, `display_order`, `import_only`, `path_prefix`, `source`, `artifactclass_ref_id`, `sequence_id`, `config`, `auto_ingest`) VALUES 
+('video',0,'high resolution video',1,0,'staged',1,NULL,'video',NULL,NULL),
+('video-encrypt',0,'encrypted high resolution video',2,0,'encrypted',0,'video','video-encrypt',NULL,NULL),
+('video-mezz-proxy',0,'mezzanine proxy video',3,0,'proxy',0,'video','video-mezz-proxy',NULL,NULL),
+('audio',0,'audio',4,0,'staged',1,NULL,'audio',NULL,NULL),
+('audio-encrypt',0,'encrypted audio',5,0,'encrypted',0,'audio','audio-encrypt',NULL,NULL),
+('audio-proxy',0,'audio proxy',6,0,'transcoded',0,'audio','audio-proxy',NULL,NULL),
+('photo',0,'photo',7,0,'staged',1,NULL,'photo',NULL,NULL),
+('photo-encrypt',0,'photo',8,0,'encrypted',0,'photo','photo-encrypt',NULL,NULL);
 /*!40000 ALTER TABLE `artifactclass` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -336,7 +378,16 @@ CREATE TABLE `artifactclass_volume` (
 
 LOCK TABLES `artifactclass_volume` WRITE;
 /*!40000 ALTER TABLE `artifactclass_volume` DISABLE KEYS */;
-INSERT INTO `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) VALUES ('','\0','video-edit-priv1','E1'),('','\0','video-edit-priv1','E2'),('','\0','video-edit-priv1','E3'),('','\0','video-edit-priv1-proxy-low','G1'),('','\0','video-edit-priv1-proxy-low','G2'),('','\0','video-edit-priv2','X1'),('','\0','video-edit-priv2','X2'),('','\0','video-edit-priv2','X3'),('','\0','video-edit-priv2-proxy-low','X1'),('','\0','video-edit-priv2-proxy-low','X2'),('','\0','video-edit-pub','E1'),('','\0','video-edit-pub','E2'),('','\0','video-edit-pub','E3'),('','\0','video-edit-pub-proxy-low','G1'),('','\0','video-edit-pub-proxy-low','G2'),('','\0','video-priv1','R1'),('','\0','video-priv1','R2'),('','\0','video-priv1','R3'),('','\0','video-priv1-proxy-low','G1'),('','\0','video-priv1-proxy-low','G2'),('','\0','video-priv2','X1'),('','\0','video-priv2','X2'),('','\0','video-priv2','X3'),('','\0','video-priv2-proxy-low','X1'),('','\0','video-priv2-proxy-low','X2'),('','\0','video-priv3','XX1'),('','\0','video-priv3','XX2'),('','\0','video-pub','R1'),('','\0','video-pub','R2'),('\0','\0','video-pub','R3'),('','\0','video-pub-proxy-low','G1'),('','\0','video-pub-proxy-low','G2');
+INSERT INTO `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `volume_id`) VALUES 
+(1,0,'video','A'),
+(0,0,'video-encrypt','B'),
+(1, 0, 'video', 'B'),
+(1,0,'video-mezz-proxy','C'),
+(1,0,'audio','A'),
+(1,0,'audio-encrypt','B'),
+(1,0,'audio-proxy','C'),
+(1,0,'photo','A'),
+(1,0,'photo-encrypt','B');
 /*!40000 ALTER TABLE `artifactclass_volume` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -512,7 +563,10 @@ CREATE TABLE `copy` (
 
 LOCK TABLES `copy` WRITE;
 /*!40000 ALTER TABLE `copy` DISABLE KEYS */;
-INSERT INTO `copy` (`id`, `location_id`) VALUES (1,'sk-office1'),(2,'t-block2'),(3,'t-block3');
+INSERT INTO `copy` (`id`, `location_id`) VALUES 
+(1,'sk-office1'),
+(2,'t-block2'),
+(3,'t-block3');
 /*!40000 ALTER TABLE `copy` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -538,7 +592,19 @@ CREATE TABLE `destination` (
 
 LOCK TABLES `destination` WRITE;
 /*!40000 ALTER TABLE `destination` DISABLE KEYS */;
-INSERT INTO `destination` (`id`, `path`, `use_buffering`) VALUES ('bru-ffv1','/mnt/bru/ffv1','\0'),('bru-qc','172.18.1.21:/data/ffv1-samples','\0'),('bru-restored','/mnt/bru/restored','\0'),('catdv-audio-proxy','172.18.1.24:/data/audio/ArchivesAudio','\0'),('catdv-photo-proxy','172.18.1.24:/data/photo-proxy','\0'),('ddp-test','/mnt/ddptest',''),('local','/data/dwara/restored','\0'),('san-smb-test','/mnt/sansmb/LTO_Restore/public',''),('san-video','/mnt/san/video/LTO_Restore/public',''),('san-video1','/mnt/san/video1',''),('test-ffv1','/mnt/test/ffv1','\0'),('test-qc','172.18.1.200:/data/modified-to-fail-qc','\0');
+INSERT INTO `destination` (`id`, `path`, `use_buffering`) VALUES 
+('bru-ffv1','/mnt/bru/ffv1','\0'),
+('bru-qc','172.18.1.21:/data/ffv1-samples','\0'),
+('bru-restored','/mnt/bru/restored','\0'),
+('catdv-audio-proxy','172.18.1.24:/data/audio/ArchivesAudio','\0'),
+('catdv-photo-proxy','172.18.1.24:/data/photo-proxy','\0'),
+('ddp-test','/mnt/ddptest','\1'),
+('local','/data/dwara/restored','\0'),
+('san-smb-test','/mnt/sansmb/LTO_Restore/public','\1'),
+('san-video','/mnt/san/video/LTO_Restore/public','\1'),
+('san-video1','/mnt/san/video1','\1'),
+('test-ffv1','/mnt/test/ffv1','\0'),
+('test-qc','172.18.1.200:/data/modified-to-fail-qc','\0');
 /*!40000 ALTER TABLE `destination` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -597,7 +663,11 @@ CREATE TABLE `dwara_sequences` (
 
 LOCK TABLES `dwara_sequences` WRITE;
 /*!40000 ALTER TABLE `dwara_sequences` DISABLE KEYS */;
-INSERT INTO `dwara_sequences` (`primary_key_fields`, `current_val`) VALUES ('import_id',27184),('job_id',532494),('request_id',83245),('t_activedevice_id',249841);
+INSERT INTO `dwara_sequences` (`primary_key_fields`, `current_val`) VALUES 
+('import_id',27184),
+('job_id',532494),
+('request_id',83245),
+('t_activedevice_id',249841);
 /*!40000 ALTER TABLE `dwara_sequences` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -645,7 +715,231 @@ CREATE TABLE `extension` (
 
 LOCK TABLES `extension` WRITE;
 /*!40000 ALTER TABLE `extension` DISABLE KEYS */;
-INSERT INTO `extension` (`id`, `description`, `ignore`) VALUES ('',NULL,NULL),('~dbf',NULL,NULL),('~prj',NULL,NULL),('~rtree',NULL,NULL),('~shp',NULL,NULL),('~shx',NULL,NULL),('050f',NULL,NULL),('0538',NULL,NULL),('1',NULL,NULL),('16 In Conversation 98055269794',NULL,NULL),('2',NULL,NULL),('360',NULL,NULL),('37 Dry Run Sakshi TV 98947221568',NULL,NULL),('39 Dry Run Sakshi TV 98947221568',NULL,NULL),('3gp',NULL,NULL),('45 Dry Run Sakshi TV 98947221568',NULL,NULL),('46 In Conversation 98055269794',NULL,NULL),('47 Dry Run Sakshi TV 98947221568',NULL,NULL),('51',NULL,NULL),('aac',NULL,NULL),('AAE',NULL,NULL),('aecb',NULL,NULL),('aep',NULL,NULL),('ai',NULL,NULL),('AIS',NULL,NULL),('apk',NULL,NULL),('arw','Image captured by a Sony digital camera, based on the TIFF specification; contains raw, uncompressed image data. (Different Sony camera models may store raw images using the same \".arw\" file extension, but with a different format).','\0'),('avi',NULL,NULL),('avj',NULL,NULL),('avu',NULL,NULL),('backup',NULL,NULL),('BAK',NULL,NULL),('bdm','Sony binary information file created by AVCHD video camera',''),('bim','Sony XDCAM real-time metadata file, which contains timecode and codec information designed to be read by an application during playback and, as such, is not human readable.',''),('bin','Generic binary file',''),('bk',NULL,NULL),('BNP',NULL,NULL),('BridgeLabelsAndRatings',NULL,NULL),('BridgeSort',NULL,NULL),('BUP',NULL,NULL),('Cab',NULL,NULL),('caf',NULL,NULL),('calib',NULL,NULL),('camcalib',NULL,NULL),('CED',NULL,NULL),('CFG',NULL,NULL),('classid',NULL,NULL),('conf',NULL,NULL),('CPF',NULL,NULL),('cpg',NULL,NULL),('cpi','Sony binary metadata file corresponding to an AVCHD video clip',''),('cr2','Canon RAW Image file','\0'),('cr3','Canon Raw image format - introduced in 2018',NULL),('created',NULL,NULL),('crw','Canon Raw image format - superceded by CR2 format',NULL),('csv',NULL,NULL),('ctg','Catalog index file created by Canon cameras. Contains info about the number of images stored in each folder on a memory card',''),('cube',NULL,NULL),('DAT',NULL,NULL),('db',NULL,NULL),('dbf',NULL,NULL),('device',NULL,NULL),('directoryStoreFile',NULL,NULL),('divx',NULL,NULL),('dng','Universal RAW image format for saving digital photos in an uncompressed format','\0'),('doc',NULL,NULL),('docx',NULL,NULL),('download',NULL,NULL),('drp',NULL,NULL),('drx',NULL,NULL),('ds_store',NULL,NULL),('dvd',NULL,NULL),('evt',NULL,NULL),('exe',NULL,NULL),('fcp',NULL,NULL),('fcpbun-BwPkvs',NULL,NULL),('fcpbun-StHtLV',NULL,NULL),('fcpbundl-2yerjl',NULL,NULL),('fcpevent',NULL,NULL),('fcpxml',NULL,NULL),('fff','Hasselblad Raw image format',NULL),('flexolibrary',NULL,NULL),('fls',NULL,NULL),('ftr','File footer','\0'),('gif',NULL,NULL),('gis',NULL,NULL),('gps',NULL,NULL),('hdr','File header','\0'),('heic','High Efficiency Image Format (HEIF), a file format commonly used to store photos on mobile devices. It may contain a single image or a sequence of images along with corresponding metadata. HEIC files may also appear as .HEIF files.','\0'),('HIF',NULL,NULL),('hls',NULL,NULL),('hprj',NULL,NULL),('htm',NULL,NULL),('html',NULL,NULL),('hvc1',NULL,NULL),('idx','PFR index file','\0'),('IFO',NULL,NULL),('img',NULL,NULL),('ind','Sony file placed on a media card when formatted with a Sony device',''),('indexArrays',NULL,NULL),('indexCompactDirectory',NULL,NULL),('indexDirectory',NULL,NULL),('indexGroups',NULL,NULL),('indexHead',NULL,NULL),('indexIds',NULL,NULL),('indexPositions',NULL,NULL),('indexPositionTable',NULL,NULL),('indexPostings',NULL,NULL),('indexTermIds',NULL,NULL),('indexUpdates',NULL,NULL),('ini',NULL,NULL),('INP',NULL,NULL),('insp',NULL,NULL),('insv',NULL,NULL),('INT',NULL,NULL),('intermediate',NULL,NULL),('jfif',NULL,NULL),('jpeg',NULL,NULL),('jpg','','\0'),('JSN',NULL,NULL),('Lion',NULL,NULL),('list',NULL,NULL),('lnk',NULL,NULL),('loc',NULL,NULL),('lock',NULL,NULL),('lock-info',NULL,NULL),('log','Log file','\0'),('lpcontainer',NULL,NULL),('lpindex',NULL,NULL),('LRF',NULL,NULL),('lrtpreview',NULL,NULL),('lrv','GoPro low resolution video proxy',''),('m3u','Multimedia playlist',''),('m4a','MPEG-4 format audio file encoded with Advanced Audio Coding (AAC) codec','\0'),('m4v',NULL,NULL),('map',NULL,NULL),('md5','MD5 checksum','\0'),('mhl',NULL,NULL),('MIF',NULL,NULL),('mkv','Matroska','\0'),('modified',NULL,NULL),('mov','','\0'),('mov_thumbnail','Thumbnail picture for a mov video file',''),('MP2',NULL,NULL),('mp3','','\0'),('mp4',NULL,NULL),('mp4_ffprobe_out','','\0'),('mpeg',NULL,NULL),('mpg',NULL,NULL),('mpl','Sony binary playlist file created by AVCHD video camera',''),('mts','Advanced Video Coding High Definition (AVCHD) video file','\0'),('mxf','','\0'),('NEF',NULL,NULL),('nrw','Nikon Raw image format - similar to NEF but supports more features',NULL),('ogg','',NULL),('opt',NULL,NULL),('ort',NULL,NULL),('orttrj',NULL,NULL),('otf',NULL,NULL),('pdf',NULL,NULL),('pfncopy',NULL,NULL),('pkf',NULL,NULL),('plist',NULL,NULL),('png',' Portable Network Graphic (PNG) format. Contains a bitmap compressed with lossless compression similar to a .GIF file.  ','\0'),('ppn','Sony picture pointer file, not human readable, which includes the position of each frame. The MPEG-2 codec used by XDCAM EX, utilizes variable bit rate encoding, so the positions of frames are not as easy to determine as with constant bit rate encoding.',''),('pptx',NULL,NULL),('prj',NULL,NULL),('properties',NULL,NULL),('prproj',NULL,NULL),('psd','photoshop image',NULL),('qc','Digitization Quality Control file','\0'),('RAF',NULL,NULL),('reapeaks',NULL,NULL),('report',NULL,NULL),('RPL',NULL,NULL),('rtree',NULL,NULL),('sav','GoPro file (purpose unknown)',''),('SCR',NULL,NULL),('ses',NULL,NULL),('sha',NULL,NULL),('shadow',NULL,NULL),('shadowIndexArrays',NULL,NULL),('shadowIndexCompactDirectory',NULL,NULL),('shadowIndexDirectory',NULL,NULL),('shadowIndexGroups',NULL,NULL),('shadowIndexHead',NULL,NULL),('shadowIndexPositionTable',NULL,NULL),('shadowIndexTermIds',NULL,NULL),('shp',NULL,NULL),('shx',NULL,NULL),('sig',NULL,NULL),('smbdeleteAAA100000005d9f0b',NULL,NULL),('smbdeleteAAA230000004fd4da',NULL,NULL),('smbdeleteAAA380000005207b9',NULL,NULL),('smi','Sony XDCAM clip information file: contains links to the mp4 and bim files, information on the audio and video codecs, and the clip\'s starting and ending timecode values',''),('SnowLeopard',NULL,NULL),('spu',NULL,NULL),('sr2','One of the Sony Raw image file formats',NULL),('srf','One of the Sony Raw image file formats',NULL),('SRT',NULL,NULL),('state',NULL,NULL),('supported',NULL,NULL),('tag',NULL,NULL),('thm','GoPro thumbnail image',''),('tif','tagged image file format',NULL),('tiff',NULL,NULL),('tmRecordhdr',NULL,NULL),('trg',NULL,NULL),('ts',NULL,NULL),('ttf',NULL,NULL),('txt',NULL,NULL),('updates',NULL,NULL),('url',NULL,NULL),('VOB',NULL,NULL),('VR_dji_iILZy7',NULL,NULL),('vtt',NULL,NULL),('wav','','\0'),('webm',NULL,NULL),('xlsx',NULL,NULL),('xml','Extensible Metadata Language format commonly used for metadata',''),('xmp',NULL,NULL),('zfs',NULL,NULL),('zip',NULL,NULL),('zoom',NULL,NULL);
+INSERT INTO `extension` (`id`, `description`, `ignore`) VALUES 
+('',NULL,NULL),
+('~dbf',NULL,NULL),
+('~prj',NULL,NULL),
+('~rtree',NULL,NULL),
+('~shp',NULL,NULL),
+('~shx',NULL,NULL),
+('050f',NULL,NULL),
+('0538',NULL,NULL),
+('1',NULL,NULL),
+('16 In Conversation 98055269794',NULL,NULL),
+('2',NULL,NULL),
+('360',NULL,NULL),
+('37 Dry Run Sakshi TV 98947221568',NULL,NULL),
+('39 Dry Run Sakshi TV 98947221568',NULL,NULL),
+('3gp',NULL,NULL),
+('45 Dry Run Sakshi TV 98947221568',NULL,NULL),
+('46 In Conversation 98055269794',NULL,NULL),
+('47 Dry Run Sakshi TV 98947221568',NULL,NULL),
+('51',NULL,NULL),
+('aac',NULL,NULL),
+('AAE',NULL,NULL),
+('aecb',NULL,NULL),
+('aep',NULL,NULL),
+('ai',NULL,NULL),
+('AIS',NULL,NULL),
+('apk',NULL,NULL),
+('arw','Image captured by a Sony digital camera, based on the TIFF specification; contains raw, uncompressed image data. (Different Sony camera models may store raw images using the same \".arw\" file extension, but with a different format).','\0'),
+('avi',NULL,NULL),
+('avj',NULL,NULL),
+('avu',NULL,NULL),
+('backup',NULL,NULL),
+('BAK',NULL,NULL),
+('bdm','Sony binary information file created by AVCHD video camera','\1'),
+('bim','Sony XDCAM real-time metadata file, which contains timecode and codec information designed to be read by an application during playback and, as such, is not human readable.','\1'),
+('bin','Generic binary file','\1'),
+('bk',NULL,NULL),
+('BNP',NULL,NULL),
+('BridgeLabelsAndRatings',NULL,NULL),
+('BridgeSort',NULL,NULL),
+('BUP',NULL,NULL),
+('Cab',NULL,NULL),
+('caf',NULL,NULL),
+('calib',NULL,NULL),
+('camcalib',NULL,NULL),
+('CED',NULL,NULL),
+('CFG',NULL,NULL),
+('classid',NULL,NULL),
+('conf',NULL,NULL),
+('CPF',NULL,NULL),
+('cpg',NULL,NULL),
+('cpi','Sony binary metadata file corresponding to an AVCHD video clip','\1'),
+('cr2','Canon RAW Image file','\0'),
+('cr3','Canon Raw image format - introduced in 2018',NULL),
+('created',NULL,NULL),
+('crw','Canon Raw image format - superceded by CR2 format',NULL),
+('csv',NULL,NULL),
+('ctg','Catalog index file created by Canon cameras. Contains info about the number of images stored in each folder on a memory card','\1'),
+('cube',NULL,NULL),
+('DAT',NULL,NULL),
+('db',NULL,NULL),
+('dbf',NULL,NULL),
+('device',NULL,NULL),
+('directoryStoreFile',NULL,NULL),
+('divx',NULL,NULL),
+('dng','Universal RAW image format for saving digital photos in an uncompressed format','\0'),
+('doc',NULL,NULL),
+('docx',NULL,NULL),
+('download',NULL,NULL),
+('drp',NULL,NULL),
+('drx',NULL,NULL),
+('ds_store',NULL,NULL),
+('dvd',NULL,NULL),
+('evt',NULL,NULL),
+('exe',NULL,NULL),
+('fcp',NULL,NULL),
+('fcpbun-BwPkvs',NULL,NULL),
+('fcpbun-StHtLV',NULL,NULL),
+('fcpbundl-2yerjl',NULL,NULL),
+('fcpevent',NULL,NULL),
+('fcpxml',NULL,NULL),
+('fff','Hasselblad Raw image format',NULL),
+('flexolibrary',NULL,NULL),
+('fls',NULL,NULL),
+('ftr','File footer','\0'),
+('gif',NULL,NULL),
+('gis',NULL,NULL),
+('gps',NULL,NULL),
+('hdr','File header','\0'),
+('heic','High Efficiency Image Format (HEIF), a file format commonly used to store photos on mobile devices. It may contain a single image or a sequence of images along with corresponding metadata. HEIC files may also appear as .HEIF files.','\0'),
+('HIF',NULL,NULL),
+('hls',NULL,NULL),
+('hprj',NULL,NULL),
+('htm',NULL,NULL),
+('html',NULL,NULL),
+('hvc1',NULL,NULL),
+('idx','PFR index file','\0'),
+('IFO',NULL,NULL),
+('img',NULL,NULL),
+('ind','Sony file placed on a media card when formatted with a Sony device','\1'),
+('indexArrays',NULL,NULL),
+('indexCompactDirectory',NULL,NULL),
+('indexDirectory',NULL,NULL),
+('indexGroups',NULL,NULL),
+('indexHead',NULL,NULL),
+('indexIds',NULL,NULL),
+('indexPositions',NULL,NULL),
+('indexPositionTable',NULL,NULL),
+('indexPostings',NULL,NULL),
+('indexTermIds',NULL,NULL),
+('indexUpdates',NULL,NULL),
+('ini',NULL,NULL),
+('INP',NULL,NULL),
+('insp',NULL,NULL),
+('insv',NULL,NULL),
+('INT',NULL,NULL),
+('intermediate',NULL,NULL),
+('jfif',NULL,NULL),
+('jpeg',NULL,NULL),
+('jpg','','\0'),
+('JSN',NULL,NULL),
+('Lion',NULL,NULL),
+('list',NULL,NULL),
+('lnk',NULL,NULL),
+('loc',NULL,NULL),
+('lock',NULL,NULL),
+('lock-info',NULL,NULL),
+('log','Log file','\0'),
+('lpcontainer',NULL,NULL),
+('lpindex',NULL,NULL),
+('LRF',NULL,NULL),
+('lrtpreview',NULL,NULL),
+('lrv','GoPro low resolution video proxy','\1'),
+('m3u','Multimedia playlist','\1'),
+('m4a','MPEG-4 format audio file encoded with Advanced Audio Coding (AAC) codec','\0'),
+('m4v',NULL,NULL),
+('map',NULL,NULL),
+('md5','MD5 checksum','\0'),
+('mhl',NULL,NULL),
+('MIF',NULL,NULL),
+('mkv','Matroska','\0'),
+('modified',NULL,NULL),
+('mov','','\0'),
+('mov_thumbnail','Thumbnail picture for a mov video file','\1'),
+('MP2',NULL,NULL),
+('mp3','','\0'),
+('mp4',NULL,NULL),
+('mp4_ffprobe_out','','\0'),
+('mpeg',NULL,NULL),
+('mpg',NULL,NULL),
+('mpl','Sony binary playlist file created by AVCHD video camera','\1'),
+('mts','Advanced Video Coding High Definition (AVCHD) video file','\0'),
+('mxf','','\0'),
+('NEF',NULL,NULL),
+('nrw','Nikon Raw image format - similar to NEF but supports more features',NULL),
+('ogg','',NULL),
+('opt',NULL,NULL),
+('ort',NULL,NULL),
+('orttrj',NULL,NULL),
+('otf',NULL,NULL),
+('pdf',NULL,NULL),
+('pfncopy',NULL,NULL),
+('pkf',NULL,NULL),
+('plist',NULL,NULL),
+('png',' Portable Network Graphic (PNG) format. Contains a bitmap compressed with lossless compression similar to a .GIF file.  ','\0'),
+('ppn','Sony picture pointer file, not human readable, which includes the position of each frame. The MPEG-2 codec used by XDCAM EX, utilizes variable bit rate encoding, so the positions of frames are not as easy to determine as with constant bit rate encoding.','\1'),
+('pptx',NULL,NULL),
+('prj',NULL,NULL),
+('properties',NULL,NULL),
+('prproj',NULL,NULL),
+('psd','photoshop image',NULL),
+('qc','Digitization Quality Control file','\0'),
+('RAF',NULL,NULL),
+('reapeaks',NULL,NULL),
+('report',NULL,NULL),
+('RPL',NULL,NULL),
+('rtree',NULL,NULL),
+('sav','GoPro file (purpose unknown)','\1'),
+('SCR',NULL,NULL),
+('ses',NULL,NULL),
+('sha',NULL,NULL),
+('shadow',NULL,NULL),
+('shadowIndexArrays',NULL,NULL),
+('shadowIndexCompactDirectory',NULL,NULL),
+('shadowIndexDirectory',NULL,NULL),
+('shadowIndexGroups',NULL,NULL),
+('shadowIndexHead',NULL,NULL),
+('shadowIndexPositionTable',NULL,NULL),
+('shadowIndexTermIds',NULL,NULL),
+('shp',NULL,NULL),
+('shx',NULL,NULL),
+('sig',NULL,NULL),
+('smbdeleteAAA100000005d9f0b',NULL,NULL),
+('smbdeleteAAA230000004fd4da',NULL,NULL),
+('smbdeleteAAA380000005207b9',NULL,NULL),
+('smi','Sony XDCAM clip information file: contains links to the mp4 and bim files, information on the audio and video codecs, and the clip\'s starting and ending timecode values','\1'),
+('SnowLeopard',NULL,NULL),
+('spu',NULL,NULL),
+('sr2','One of the Sony Raw image file formats',NULL),
+('srf','One of the Sony Raw image file formats',NULL),
+('SRT',NULL,NULL),
+('state',NULL,NULL),
+('supported',NULL,NULL),
+('tag',NULL,NULL),
+('thm','GoPro thumbnail image','\1'),
+('tif','tagged image file format',NULL),
+('tiff',NULL,NULL),
+('tmRecordhdr',NULL,NULL),
+('trg',NULL,NULL),
+('ts',NULL,NULL),
+('ttf',NULL,NULL),
+('txt',NULL,NULL),
+('updates',NULL,NULL),
+('url',NULL,NULL),
+('VOB',NULL,NULL),
+('VR_dji_iILZy7',NULL,NULL),
+('vtt',NULL,NULL),
+('wav','','\0'),
+('webm',NULL,NULL),
+('xlsx',NULL,NULL),
+('xml','Extensible Metadata Language format commonly used for metadata','\1'),
+('xmp',NULL,NULL),
+('zfs',NULL,NULL),
+('zip',NULL,NULL),
+('zoom',NULL,NULL);
 /*!40000 ALTER TABLE `extension` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -674,10 +968,69 @@ CREATE TABLE `extension_filetype` (
 
 LOCK TABLES `extension_filetype` WRITE;
 /*!40000 ALTER TABLE `extension_filetype` DISABLE KEYS */;
-INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`, `suffix`) VALUES ('\0','aac','audio',NULL),('\0','arw','image',NULL),('\0','avi','video',NULL),('\0','cr2','image',NULL),('\0','cr3','image',NULL),('\0','crw','image',NULL),('\0','dng','image',NULL),('\0','fff','image',NULL),('','ftr','video-digi-2020-src',NULL),('','hdr','video-digi-2020-mkv-ffv1',NULL),('','hdr','video-digi-2020-src',NULL),('','hdr','video-proxy',NULL),('\0','heic','image',NULL),('','idx','video-digi-2020-mkv-ffv1',NULL),('','idx','video-proxy',NULL),('\0','jpg','image',NULL),('\0','jpg','photo-proxy','_p'),('','jpg','video-proxy',NULL),('','log','video-digi-2020-src',NULL),('\0','m4a','audio',NULL),('','md5','video-digi-2020-src',NULL),('\0','mkv','mkv',NULL),('\0','mkv','video',NULL),('\0','mkv','video-digi-2020-mkv-ffv1',NULL),('\0','mkv','video-digi-2020-mkv-h264',NULL),('\0','mov','video',NULL),('\0','mov','video-digi-2020-src',NULL),('\0','mp3','audio',NULL),('\0','mp3','audio-proxy',NULL),('\0','mp4','video',NULL),('\0','mp4','video-proxy',NULL),('','mp4_ffprobe_out','video-proxy',NULL),('\0','mts','video',NULL),('\0','mxf','mxf',NULL),('\0','mxf','video',NULL),('\0','mxf','video-digi-2020-src',NULL),('\0','nef','image',NULL),('\0','nrw','image',NULL),('\0','ogg','audio',NULL),('\0','png','image',NULL),('\0','psd','image',NULL),('','qc','video-digi-2020-src',NULL),('\0','sr2','image',NULL),('\0','srf','image',NULL),('','thm','photo-proxy',NULL),('\0','tif','image',NULL),('\0','wav','audio',NULL),('','xmp','image',NULL),('','xmp','photo-proxy',NULL);
+INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`, `suffix`) VALUES 
+(0,'aac','audio-video',NULL),
+(0,'avi','audio-video',NULL),
+(0,'m4a','audio-video',NULL),
+(0,'mkv','audio-video',NULL),
+(0,'mov','audio-video',NULL),
+(0,'mp3','audio-video',NULL),
+(0,'mp4','audio-video',NULL),
+(0,'mts','audio-video',NULL),
+(0,'mxf','audio-video',NULL),
+(0,'ogg','audio-video',NULL),
+(0,'wav','audio-video',NULL),
+(0,'aac','audio',NULL),
+(0,'arw','image',NULL),
+(0,'avi','video',NULL),
+(0,'cr2','image',NULL),
+(0,'cr3','image',NULL),
+(0,'crw','image',NULL),
+(0,'dng','image',NULL),
+(0,'fff','image',NULL),
+(1,'ftr','video-digi-2020-src',NULL),
+(1,'hdr','video-digi-2020-mkv-ffv1',NULL),
+(1,'hdr','video-digi-2020-src',NULL),
+(1,'hdr','video-proxy',NULL),
+(0,'heic','image',NULL),
+(1,'idx','video-digi-2020-mkv-ffv1',NULL),
+(1,'idx','video-proxy',NULL),
+(0,'jpg','image',NULL),
+(0,'jpg','photo-proxy','_p'),
+(1,'jpg','video-proxy',NULL),
+(1,'log','video-digi-2020-src',NULL),
+(0,'m4a','audio',NULL),
+(1,'md5','video-digi-2020-src',NULL),
+(0,'mkv','mkv',NULL),
+(0,'mkv','video',NULL),
+(0,'mkv','video-digi-2020-mkv-ffv1',NULL),
+(0,'mkv','video-digi-2020-mkv-h264',NULL),
+(0,'mov','video',NULL),
+(0,'mov','video-digi-2020-src',NULL),
+(0,'mp3','audio',NULL),
+(0,'mp3','audio-proxy',NULL),
+(0,'mp4','video',NULL),
+(0,'mp4','video-proxy',NULL),
+(1,'mp4_ffprobe_out','video-proxy',NULL),
+(0,'mts','video',NULL),
+(0,'mxf','mxf',NULL),
+(0,'mxf','video',NULL),
+(0,'mxf','video-digi-2020-src',NULL),
+(0,'nef','image',NULL),
+(0,'nrw','image',NULL),
+(0,'ogg','audio',NULL),
+(0,'png','image',NULL),
+(0,'psd','image',NULL),
+(1,'qc','video-digi-2020-src',NULL),
+(0,'sr2','image',NULL),
+(0,'srf','image',NULL),
+(1,'thm','photo-proxy',NULL),
+(0,'tif','image',NULL),
+(0,'wav','audio',NULL),
+(1,'xmp','image',NULL),
+(1,'xmp','photo-proxy',NULL);
 /*!40000 ALTER TABLE `extension_filetype` ENABLE KEYS */;
 UNLOCK TABLES;
-
 --
 -- Table structure for table `file`
 --
@@ -736,7 +1089,9 @@ CREATE TABLE `file_sequence` (
 
 LOCK TABLES `file_sequence` WRITE;
 /*!40000 ALTER TABLE `file_sequence` DISABLE KEYS */;
-INSERT INTO `file_sequence` (`next_val`) VALUES (2061016),(2061016);
+INSERT INTO `file_sequence` (`next_val`) VALUES 
+(2061016),
+(2061016);
 /*!40000 ALTER TABLE `file_sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -771,7 +1126,13 @@ CREATE TABLE `file_volume` (
 
 LOCK TABLES `file_volume` WRITE;
 /*!40000 ALTER TABLE `file_volume` DISABLE KEYS */;
-INSERT INTO `file_volume` (`file_id`, `archive_block`, `deleted`, `encrypted`, `verified_at`, `volume_start_block`, `volume_id`, `header_blocks`, `hardlink_file_id`, `volume_end_block`, `diff`) VALUES (2060992,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),(2060993,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),(2060994,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),(2060995,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),(2060996,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),(2060997,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL);
+INSERT INTO `file_volume` (`file_id`, `archive_block`, `deleted`, `encrypted`, `verified_at`, `volume_start_block`, `volume_id`, `header_blocks`, `hardlink_file_id`, `volume_end_block`, `diff`) VALUES 
+(2060992,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),
+(2060993,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),
+(2060994,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),
+(2060995,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),
+(2060996,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),
+(2060997,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `file_volume` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -820,7 +1181,19 @@ CREATE TABLE `filetype` (
 
 LOCK TABLES `filetype` WRITE;
 /*!40000 ALTER TABLE `filetype` DISABLE KEYS */;
-INSERT INTO `filetype` (`id`, `description`) VALUES ('audio','Audio Files'),('audio-proxy','Audio proxy files'),('image','Image files'),('mkv','Matroska video file'),('mxf','MXF Video File'),('photo-proxy','Photo proxy files'),('video','Video Files'),('video-digi-2020-mkv-ffv1','Digitized miniDV files, Matroska compressed ffv1 for preservation'),('video-digi-2020-mkv-h264','Digitized miniDV files, Matroska compresssed h264 for QC'),('video-digi-2020-src','Digitized miniDV files, MXF uncompressed v210 original'),('video-proxy','Video Proxy Files');
+INSERT INTO `filetype` (`id`, `description`) VALUES 
+('audio','Audio Files'),
+('audio-proxy','Audio proxy files'),
+('image','Image files'),
+('mkv','Matroska video file'),
+('mxf','MXF Video File'),
+('photo-proxy','Photo proxy files'),
+('video','Video Files'),
+('video-digi-2020-mkv-ffv1','Digitized miniDV files, Matroska compressed ffv1 for preservation'),
+('video-digi-2020-mkv-h264','Digitized miniDV files, Matroska compresssed h264 for QC'),
+('video-digi-2020-src','Digitized miniDV files, MXF uncompressed v210 original'),
+('video-proxy','Video Proxy Files'),
+('audio-video', 'combination of both audio n video');
 /*!40000 ALTER TABLE `filetype` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -844,7 +1217,12 @@ CREATE TABLE `flow` (
 
 LOCK TABLES `flow` WRITE;
 /*!40000 ALTER TABLE `flow` DISABLE KEYS */;
-INSERT INTO `flow` (`id`, `description`) VALUES ('cp-archive-flow','cksum-gen, write, verify'),('video-proxy-flow','video transcoding, mam update, proxy archiving');
+INSERT INTO `flow` (`id`, `description`) VALUES 
+('cp-archive-flow','cksum-gen, write, verify'),
+('encryption-flow','encrypted-gen, encrypted-cksum-gen, decrypt, verify-decrypt, write, verify'),
+('audio-extraction-flow', 'extract audio from video, copy to gdrive'),
+('video-mezz-proxy-flow', 'copy, write, verify'),
+('audio-proxy-flow', 'gen-proxy, archive');
 /*!40000 ALTER TABLE `flow` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -876,7 +1254,25 @@ CREATE TABLE `flowelement` (
 
 LOCK TABLES `flowelement` WRITE;
 /*!40000 ALTER TABLE `flowelement` DISABLE KEYS */;
-INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `flow_ref_id`, `processingtask_id`, `storagetask_action_id`, `task_config`) VALUES ('U1','',NULL,'\0',4,'video-proxy-flow',NULL,'video-proxy-low-gen',NULL,NULL),('U15','',NULL,'\0',1,'video-edit-proxy-flow',NULL,'video-proxy-low-gen',NULL,'{\"pathname_regex\": \"Outputs?/[^/]+\\\\.mov\"}'),('U16','','[\"U15\"]','\0',2,'video-edit-proxy-flow',NULL,'video-mam-update',NULL,'{\"exclude_if\": {\"artifactclass_regex\": \".*-priv2.*\"}}'),('U17','','[\"U15\"]','\0',3,'video-edit-proxy-flow','archive-flow',NULL,NULL,NULL),('U2','','[\"U1\"]','\0',5,'video-proxy-flow',NULL,'video-mam-update',NULL,'{\"exclude_if\": {\"artifactclass_regex\": \".*-priv2.*\"}}'),('U21','',NULL,'\0',1,'cp-archive-flow',NULL,'checksum-gen',NULL,NULL),('U22','',NULL,'\0',2,'cp-archive-flow',NULL,NULL,'copy',NULL),('U23','','[\"U21\", \"U22\"]','\0',3,'cp-archive-flow',NULL,'verify',NULL,NULL),('U3','','[\"U1\"]','\0',6,'video-proxy-flow','archive-flow',NULL,NULL,NULL);
+INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `flow_ref_id`, `processingtask_id`, `storagetask_action_id`, `task_config`) VALUES 
+('U1',1,NULL,0,1,'cp-archive-flow',NULL,'checksum-gen',NULL,NULL),
+('U2',1,NULL,0,2,'cp-archive-flow',NULL,NULL,'copy',NULL),
+('U3',1,'[\"U1\",\"U2\"]',0,3,'cp-archive-flow',NULL,'checksum-verify',NULL,NULL),
+('U4',0,'[\"U1\"]',0,4,'cp-archive-flow','encryption-flow',NULL,NULL,NULL),
+('U5',1,NULL,0,5,'encryption-flow',NULL,'encrypted-gen',NULL,NULL),
+('U6',1,'[\"U5\"]',0,6,'encryption-flow',NULL,'checksum-gen',NULL,NULL),
+('U7',1,'[\"U5\"]',0,7,'encryption-flow',NULL,'decrypted-gen',NULL,NULL),
+('U8',1,'[\"U7\"]',0,8,'encryption-flow',NULL,'checksum-verify',NULL,NULL),
+('U9',1,'[\"U8\"]',0,9,'encryption-flow',NULL,NULL,'copy',NULL),
+('U10',1,'[\"U5\",\"U9\"]',0,10,'encryption-flow',NULL,'checksum-verify',NULL,NULL),
+('U11',1,NULL,0,11,'video-mezz-proxy-flow',NULL,'file-copy',NULL,'{"destination_id": "video-mezz-proxy", "pathname_regex": "^Proxy"}'),
+('U12',1,'[\"U11\"]',0,12,'video-mezz-proxy-flow',NULL,NULL,'copy',NULL),
+('U13',1,'[\"U12\"]',0,13,'video-mezz-proxy-flow',NULL,'checksum-verify',NULL,NULL),
+('U14',1,NULL,0,14,'audio-proxy-flow',NULL,'audio-proxy-low-gen',NULL,NULL),
+('U15',1,'[\"U14\"]',0,15,'audio-proxy-flow','cp-archive-flow',NULL,NULL,NULL),
+('U16',1,NULL,0,16,'audio-extraction-flow',NULL,'audio-proxy-low-gen',NULL,'{"exclude_if": {"artifactname_regex": ".*Cam(2|3).*"}}'),
+('U17',1,'[\"U16\"]',0,17,'audio-extraction-flow',NULL,'copy-gdrive',NULL,NULL);
+
 /*!40000 ALTER TABLE `flowelement` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -898,7 +1294,12 @@ CREATE TABLE `hibernate_sequence` (
 
 LOCK TABLES `hibernate_sequence` WRITE;
 /*!40000 ALTER TABLE `hibernate_sequence` DISABLE KEYS */;
-INSERT INTO `hibernate_sequence` (`next_val`) VALUES (1),(1),(1),(1),(1);
+INSERT INTO `hibernate_sequence` (`next_val`) VALUES 
+(1),
+(1),
+(1),
+(1),
+(1);
 /*!40000 ALTER TABLE `hibernate_sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1056,7 +1457,12 @@ CREATE TABLE `location` (
 
 LOCK TABLES `location` WRITE;
 /*!40000 ALTER TABLE `location` DISABLE KEYS */;
-INSERT INTO `location` (`id`, `default`, `description`) VALUES ('lto-room','','LTO Room'),('sk-office1','\0','SK Office - 1st'),('t-block2','\0','T Block - 2nd'),('t-block3','\0','T Block - 3rd');
+INSERT INTO `location` (`id`, `default`, `description`) VALUES 
+('rally','\1','CP team on Road'),
+('lto-room','\0','LTO Room'),
+('sk-office1','\0','SK Office - 1st'),
+('t-block2','\0','T Block - 2nd'),
+('t-block3','\0','T Block - 3rd');
 /*!40000 ALTER TABLE `location` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1107,7 +1513,8 @@ CREATE TABLE `priorityband` (
 
 LOCK TABLES `priorityband` WRITE;
 /*!40000 ALTER TABLE `priorityband` DISABLE KEYS */;
-INSERT INTO `priorityband` (`id`, `end`, `name`, `optimize_tape_access`, `start`) VALUES (1,10,'','',5);
+INSERT INTO `priorityband` (`id`, `end`, `name`, `optimize_tape_access`, `start`) VALUES 
+(1,10,'','\1',5);
 /*!40000 ALTER TABLE `priorityband` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1149,7 +1556,7 @@ CREATE TABLE `processingtask` (
   `description` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
   `filetype_id` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
   `max_errors` int(11) DEFAULT NULL,
-  `output_artifactclass_suffix` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+  `output_artifactclass` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
   `output_filetype_id` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
@@ -1161,10 +1568,13 @@ CREATE TABLE `processingtask` (
 
 LOCK TABLES `processingtask` WRITE;
 /*!40000 ALTER TABLE `processingtask` DISABLE KEYS */;
-INSERT INTO `processingtask` (`id`, `description`, `filetype_id`, `max_errors`, `output_artifactclass_suffix`, `output_filetype_id`) VALUES ('video-mam-update','move proxy files to mam server and add xml metadata to mam','video-proxy',1,NULL,NULL),('video-proxy-low-gen','generate low resolution video proxies (with thumbnail and metadata xml)','video',10,'-proxy-low','video-proxy');
+INSERT INTO `processingtask` (`id`, `description`, `filetype_id`, `max_errors`, `output_artifactclass`, `output_filetype_id`) VALUES 
+('audio-proxy-low-gen','generate audio proxies','audio-video',1,'audio-proxy',NULL),
+('copy-gdrive','copies the artifact to gdrive','_all_',1,NULL,NULL),
+('decrypted-gen','decrypt encrypted files','_all_',1,'video',NULL),
+('encrypted-gen','generate encrypted files','_all_',1,'video-encrypt',NULL);
 /*!40000 ALTER TABLE `processingtask` ENABLE KEYS */;
 UNLOCK TABLES;
-
 --
 -- Table structure for table `request`
 --
@@ -1286,7 +1696,11 @@ CREATE TABLE `role` (
 
 LOCK TABLES `role` WRITE;
 /*!40000 ALTER TABLE `role` DISABLE KEYS */;
-INSERT INTO `role` (`id`, `description`, `name`) VALUES (1,'Administrator - has all priviliges','admin'),(2,'Users with ingest previliges','ingester'),(3,'Users with restore previliges','restorer'),(4,'Read only privileges','readonly');
+INSERT INTO `role` (`id`, `description`, `name`) VALUES 
+(1,'Administrator - has all priviliges','admin'),
+(2,'Users with ingest previliges','ingester'),
+(3,'Users with restore previliges','restorer'),
+(4,'Read only privileges','readonly');
 /*!40000 ALTER TABLE `role` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1313,7 +1727,16 @@ CREATE TABLE `role_user` (
 
 LOCK TABLES `role_user` WRITE;
 /*!40000 ALTER TABLE `role_user` DISABLE KEYS */;
-INSERT INTO `role_user` (`role_id`, `user_id`) VALUES (1,2),(2,2),(3,2),(1,3),(2,3),(3,3),(1,4),(2,4),(3,4);
+INSERT INTO `role_user` (`role_id`, `user_id`) VALUES 
+(1,2),
+(2,2),
+(3,2),
+(1,3),
+(2,3),
+(3,3),
+(1,4),
+(2,4),
+(3,4);
 /*!40000 ALTER TABLE `role_user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1345,7 +1768,18 @@ CREATE TABLE `sequence` (
 
 LOCK TABLES `sequence` WRITE;
 /*!40000 ALTER TABLE `sequence` DISABLE KEYS */;
-INSERT INTO `sequence` (`id`, `current_number`, `ending_number`, `group`, `prefix`, `starting_number`, `type`, `sequence_ref_id`) VALUES ('audio-grp',6,-1,'',NULL,1,'artifact',NULL),('audio-priv2',NULL,NULL,'\0','AX',NULL,'artifact','audio-grp'),('audio-priv3',NULL,NULL,'\0','AXX',NULL,'artifact','audio-grp'),('audio-pub',NULL,NULL,'\0','A',NULL,'artifact','audio-grp'),('audio-pub-proxy',NULL,NULL,'\0','AL',NULL,'artifact',NULL),('dept-archives',0,-1,'\0','BA',1,'artifact',NULL),('dept-emedia',26,-1,'\0','BE',1,'artifact',NULL),('dept-impressions',10,-1,'\0','BM',1,'artifact',NULL),('dept-it-infra',1,-1,'\0','BN',1,'artifact',NULL),('dept-it-infra-1',10001,19999,'\0','N',10001,'volume',NULL),('dept-programs',2,-1,'\0','BP',1,'artifact',NULL),('dept-samskriti',0,-1,'\0','BS',1,'artifact',NULL),('edited-1',10021,19999,'\0','E',10001,'volume',NULL),('edited-2',20024,29999,'\0','E',20001,'volume',NULL),('edited-3',30021,39999,'\0','E',30001,'volume',NULL),('generated-1',10003,19999,'\0','G',10001,'volume',NULL),('generated-2',20003,29999,'\0','G',20001,'volume',NULL),('original-1',10027,19999,'\0','R',10001,'volume',NULL),('original-2',20031,29999,'\0','R',20001,'volume',NULL),('original-3',30027,39999,'\0','R',30001,'volume',NULL),('photo-edit-grp',0,-1,'',NULL,1,'artifact',NULL),('photo-edit-priv2',NULL,NULL,'\0','PZX',NULL,'artifact','photo-edit-grp'),('photo-edit-priv2-proxy',NULL,NULL,'\0','PZXL',NULL,'artifact',NULL),('photo-edit-pub',NULL,NULL,'\0','PZ',NULL,'artifact','photo-edit-grp'),('photo-edit-pub-proxy',NULL,NULL,'\0','PZL',NULL,'artifact',NULL),('photo-grp',1685,-1,'',NULL,1,'artifact',NULL),('photo-priv2',NULL,NULL,'\0','PX',NULL,'artifact','photo-grp'),('photo-priv2-proxy',NULL,NULL,'\0','PXL',NULL,'artifact',NULL),('photo-pub',NULL,NULL,'\0','P',NULL,'artifact','photo-grp'),('photo-pub-proxy',NULL,NULL,'\0','PL',NULL,'artifact',NULL),('priv2-1',10010,19999,'\0','X',10001,'volume',NULL),('priv2-2',20011,29999,'\0','X',20001,'volume',NULL),('priv2-3',30010,39999,'\0','X',30001,'volume',NULL),('priv3-1',1001,1999,'\0','XX',1001,'volume',NULL),('priv3-2',2001,2999,'\0','XX',2001,'volume',NULL),('transcript-grp',0,-1,'',NULL,1,'artifact',NULL),('transcript-priv1',NULL,NULL,'\0','S',NULL,'artifact','transcript-grp'),('transcript-priv2',NULL,NULL,'\0','SX',NULL,'artifact','transcript-grp'),('transcript-priv3',NULL,NULL,'\0','SXX',NULL,'artifact','transcript-grp'),('transcript-pub',NULL,NULL,'\0','S',NULL,'artifact','transcript-grp'),('video-digi-2010-edit-grp',1057,-1,'',NULL,1,'artifact',NULL),('video-digi-2010-edit-priv2',NULL,NULL,'\0','ZCX',NULL,'artifact','video-digi-2010-edit-grp'),('video-digi-2010-edit-pub',NULL,NULL,'\0','ZC',NULL,'artifact','video-digi-2010-edit-grp'),('video-digi-2010-grp',11157,-1,'',NULL,1,'artifact',NULL),('video-digi-2010-priv2',NULL,NULL,'\0','VCX',NULL,'artifact','video-digi-2010-grp'),('video-digi-2010-pub',NULL,NULL,'\0','VC',NULL,'artifact','video-digi-2010-grp'),('video-digi-2020-1',19864,19999,'\0','R',19801,'volume',NULL),('video-digi-2020-2',29874,29999,'\0','R',29801,'volume',NULL),('video-digi-2020-3',39865,39999,'\0','R',39801,'volume',NULL),('video-digi-2020-edit-grp',1877,-1,'',NULL,1,'artifact',NULL),('video-digi-2020-edit-priv2',NULL,NULL,'\0','ZDX',NULL,'artifact','video-digi-2020-edit-grp'),('video-digi-2020-edit-priv2-proxy-low',NULL,NULL,'\0','ZDXL',NULL,'artifact',NULL),('video-digi-2020-edit-pub',NULL,NULL,'\0','ZD',NULL,'artifact','video-digi-2020-edit-grp'),('video-digi-2020-edit-pub-proxy-low',NULL,NULL,'\0','ZDL',NULL,'artifact',NULL),('video-digi-2020-grp',12377,-1,'',NULL,1,'artifact',NULL),('video-digi-2020-priv2',NULL,NULL,'\0','VDX',NULL,'artifact','video-digi-2020-grp'),('video-digi-2020-priv2-proxy-low',NULL,NULL,'\0','VDXL',NULL,'artifact',NULL),('video-digi-2020-pub',NULL,NULL,'\0','VD',NULL,'artifact','video-digi-2020-grp'),('video-digi-2020-pub-proxy-low',NULL,NULL,'\0','VDL',NULL,'artifact',NULL),('video-edit-grp',10904,-1,'',NULL,1,'artifact',NULL),('video-edit-priv2',NULL,NULL,'\0','ZX',NULL,'artifact','video-edit-grp'),('video-edit-priv2-proxy-low',NULL,NULL,'\0','ZXL',NULL,'artifact',NULL),('video-edit-pub',NULL,NULL,'\0','Z',NULL,'artifact','video-edit-grp'),('video-edit-pub-proxy-low',NULL,NULL,'\0','ZL',NULL,'artifact',NULL),('video-edit-tr-grp',894,-1,'',NULL,1,'artifact',NULL),('video-edit-tr-priv2',NULL,NULL,'\0','ZTX',NULL,'artifact','video-edit-tr-grp'),('video-edit-tr-priv2-proxy-low',NULL,NULL,'\0','ZTXL',NULL,'artifact',NULL),('video-edit-tr-pub',NULL,NULL,'\0','ZT',NULL,'artifact','video-edit-tr-grp'),('video-edit-tr-pub-proxy-low',NULL,NULL,'\0','ZTL',NULL,'artifact',NULL),('video-grp',32647,-1,'',NULL,1,'artifact',NULL),('video-priv2',NULL,NULL,'\0','VX',NULL,'artifact','video-grp'),('video-priv2-proxy-low',NULL,NULL,'\0','VXL',NULL,'artifact',NULL),('video-priv3',NULL,NULL,'\0','VXX',NULL,'artifact','video-grp'),('video-pub',NULL,NULL,'\0','V',NULL,'artifact','video-grp'),('video-pub-proxy-low',NULL,NULL,'\0','VL',NULL,'artifact',NULL);
+INSERT INTO `sequence` (`id`, `current_number`, `ending_number`, `group`, `prefix`, `starting_number`, `type`, `sequence_ref_id`) VALUES 
+('video',0,-1,0,'V',1,'artifact',NULL),
+('video-encrypt',0,-1,0,'VE',1,'artifact',NULL),
+('video-mezz-proxy',0,-1,0,'VM',1,'artifact',NULL),
+('audio',0,-1,0,'A',1,'artifact',NULL),
+('audio-encrypt',0,-1,0,'AE',1,'artifact',NULL),
+('audio-proxy',0,-1,0,'AL',1,'artifact',NULL),
+('photo',0,-1,0,'P',1,'artifact',NULL),
+('photo-encrypt',0,-1,0,'PE',1,'artifact',NULL),
+('high-res',NULL,NULL,0,'A',1,'volume',NULL),
+('high-res-encrypted',NULL,NULL,0,'B',1,'volume',NULL),
+('proxy',NULL,NULL,0,'C',1,'volume',NULL);
 /*!40000 ALTER TABLE `sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1463,7 +1897,8 @@ CREATE TABLE `t_file_sequence` (
 
 LOCK TABLES `t_file_sequence` WRITE;
 /*!40000 ALTER TABLE `t_file_sequence` DISABLE KEYS */;
-INSERT INTO `t_file_sequence` (`next_val`) VALUES (1617539);
+INSERT INTO `t_file_sequence` (`next_val`) VALUES 
+(1617539);
 /*!40000 ALTER TABLE `t_file_sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1498,7 +1933,13 @@ CREATE TABLE `t_file_volume` (
 
 LOCK TABLES `t_file_volume` WRITE;
 /*!40000 ALTER TABLE `t_file_volume` DISABLE KEYS */;
-INSERT INTO `t_file_volume` (`file_id`, `archive_block`, `deleted`, `encrypted`, `header_blocks`, `verified_at`, `volume_id`, `hardlink_file_id`, `volume_end_block`, `volume_start_block`, `diff`) VALUES (1617515,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),(1617516,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),(1617517,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),(1617518,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),(1617519,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),(1617520,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL);
+INSERT INTO `t_file_volume` (`file_id`, `archive_block`, `deleted`, `encrypted`, `header_blocks`, `verified_at`, `volume_id`, `hardlink_file_id`, `volume_end_block`, `volume_start_block`, `diff`) VALUES 
+(1617515,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),
+(1617516,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),
+(1617517,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),
+(1617518,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),
+(1617519,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL),
+(1617520,NULL,'\0','\0',NULL,NULL,'R10001L7',NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `t_file_volume` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1613,7 +2054,13 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` (`id`, `email`, `hash`, `name`, `priorityband_id`) VALUES (1,NULL,NULL,'dwara',1),(2,'swami.kevala@ishafoundation.org','$2a$10$pAdeP0JmEbI01uQ75GQ09O0WxFIorj.eyOhy59sXAZpQ6IUHLRmCC','swamikevala',1),(3,'prakash.gurumurthy@ishafoundation.org','$2a$10$eUvlQmt7H5ZO84DzSxG2s.X95omY4Mk.YRyGsLsX/YU8T/gmllz9m','pgurumurthy',1),(4,'maa.jeevapushpa@ishafoundation.org','$2a$10$y.HcLi.CgQqMWL7rOfLeZe1i9IVrTJ.G6AK9eMR8ftZ8rRhn0l8vO','maajeevapushpa',1),(17,NULL,'$2a$10$HoaQ542oRYe2yy0fHMYxHOmbeFFnK4OQpTaLDaho9tuBEn2PPuSUm','dongtruong',1),(22,NULL,'$2a$10$nYOgsyz6ik7uw4U1JKQ4tOstzdzVihyInrFt2llg0lHVd45Mf9NKy','video',1);
+INSERT INTO `user` (`id`, `email`, `hash`, `name`, `priorityband_id`) VALUES 
+(1,NULL,NULL,'dwara',1),
+(2,'swami.kevala@ishafoundation.org','$2a$10$pAdeP0JmEbI01uQ75GQ09O0WxFIorj.eyOhy59sXAZpQ6IUHLRmCC','swamikevala',1),
+(3,'prakash.gurumurthy@ishafoundation.org','$2a$10$eUvlQmt7H5ZO84DzSxG2s.X95omY4Mk.YRyGsLsX/YU8T/gmllz9m','pgurumurthy',1),
+(4,'maa.jeevapushpa@ishafoundation.org','$2a$10$y.HcLi.CgQqMWL7rOfLeZe1i9IVrTJ.G6AK9eMR8ftZ8rRhn0l8vO','maajeevapushpa',1),
+(17,NULL,'$2a$10$HoaQ542oRYe2yy0fHMYxHOmbeFFnK4OQpTaLDaho9tuBEn2PPuSUm','dongtruong',1),
+(22,NULL,'$2a$10$nYOgsyz6ik7uw4U1JKQ4tOstzdzVihyInrFt2llg0lHVd45Mf9NKy','video',1);
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1636,7 +2083,8 @@ CREATE TABLE `version` (
 
 LOCK TABLES `version` WRITE;
 /*!40000 ALTER TABLE `version` DISABLE KEYS */;
-INSERT INTO `version` (`version`) VALUES ('2.1.1');
+INSERT INTO `version` (`version`) VALUES 
+('2.1.1');
 /*!40000 ALTER TABLE `version` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1689,7 +2137,14 @@ CREATE TABLE `volume` (
 
 LOCK TABLES `volume` WRITE;
 /*!40000 ALTER TABLE `volume` DISABLE KEYS */;
-INSERT INTO `volume` (`id`, `capacity`, `checksumtype`, `details`, `finalized`, `imported`, `first_written_at`, `storagelevel`, `storagesubtype`, `storagetype`, `type`, `uuid`, `archiveformat_id`, `copy_id`, `group_ref_id`, `location_id`, `sequence_id`, `last_written_at`, `used_capacity`, `healthstatus`, `lifecyclestage`) VALUES ('R1',NULL,'sha256','{\"minimum_free_space\": 2199023255552}','\0','\0',NULL,'file',NULL,'disk','group',NULL,NULL,1,NULL,NULL,'original-1',NULL,NULL,NULL,NULL),('R10001L7',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}','\0','\0','2020-10-01 22:09:08.987000','file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fea',NULL,NULL,'R1','sk-office1',NULL,NULL,0,'normal','active'),('R2',NULL,'sha256','{\"minimum_free_space\": 2199023255552}','\0','\0',NULL,'file',NULL,'disk','group',NULL,NULL,2,NULL,NULL,'original-1',NULL,NULL,NULL,NULL),('R20001L7',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}','\0','\0','2020-10-01 22:09:08.987000','file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fea',NULL,NULL,'R2','sk-office1',NULL,NULL,0,'normal','active');
+INSERT INTO `volume` (`id`, `capacity`, `checksumtype`, `details`, `finalized`, `imported`, `first_written_at`, `storagelevel`, `storagesubtype`, `storagetype`, `type`, `uuid`, `archiveformat_id`, `copy_id`, `group_ref_id`, `location_id`, `sequence_id`, `last_written_at`, `used_capacity`, `healthstatus`, `lifecyclestage`) VALUES 
+('A',NULL,'sha256','{\"minimum_free_space\": 2199023255552}',0,0,NULL,'file',NULL,'disk','group',NULL,NULL,1,NULL,NULL,'high-res',NULL,NULL,NULL,NULL),
+('B',NULL,'sha256','{\"minimum_free_space\": 2199023255552}',0,0,NULL,'file',NULL,'disk','group',NULL,NULL,2,NULL,NULL,'high-res-encrypted',NULL,NULL,NULL,NULL),
+('C',NULL,'sha256','{\"minimum_free_space\": 2199023255552}',0,0,NULL,'file',NULL,'disk','group',NULL,NULL,1,NULL,NULL,'proxy',NULL,NULL,NULL,NULL),
+
+('A01',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fea',NULL,NULL,'A','rally',NULL,NULL,0,'normal','active');
+('B01',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139feb',NULL,NULL,'B','rally',NULL,NULL,0,'normal','active');
+
 /*!40000 ALTER TABLE `volume` ENABLE KEYS */;
 UNLOCK TABLES;
 

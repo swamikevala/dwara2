@@ -354,14 +354,29 @@ public class ScheduledStatusUpdater {
 										logger.error("Unable to move files from " + srcPath + " to " + destPath);
 									}
 								}
-								else if(requestedAction == Action.ingest || requestedAction == Action.restore_process) {
-									// inputPath = something like - /data/tmp/job-1234
-									File restoreTmpFolder = new File(inputPath);
-									try {
-										FileUtils.deleteDirectory(restoreTmpFolder);
-									} catch (IOException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
+								else if(requestedAction == Action.ingest) {
+									boolean toBeDeleted = false;
+								
+									List<Integer> jobDependencyList = job.getDependencies(); // if current processing job has a dependency, and that too a restore job then inputpath = config tmp location + dependencyRestorejobid
+									if(jobDependencyList != null) {
+										for (Integer nthDependentJobId : jobDependencyList) {
+											Job nthDependentJob = jobDao.findById(nthDependentJobId).get();
+											
+											if(nthDependentJob.getStoragetaskActionId() != null && nthDependentJob.getStoragetaskActionId() == Action.restore) {
+												toBeDeleted = true;
+												break;
+											}
+										}
+									}
+									if(toBeDeleted) {
+										// inputPath = something like - /data/tmp/job-1234
+										File restoreTmpFolder = new File(inputPath);
+										try {
+											FileUtils.deleteDirectory(restoreTmpFolder);
+										} catch (IOException e) {
+											// TODO Auto-generated catch block
+											e.printStackTrace();
+										}
 									}
 								}
 							}

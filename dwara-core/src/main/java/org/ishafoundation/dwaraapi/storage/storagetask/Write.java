@@ -80,7 +80,7 @@ public class Write extends AbstractStoragetaskAction{
 			List<Integer> preReqJobIds = job.getDependencies();
 			
 			if(preReqJobIds != null) {
-				String outputArtifactclassSuffix = null;
+				String outputArtifactclassId = null;
 				// Now use one of the processing jobs that too generating an output
 				for (Integer preReqJobId : preReqJobIds) {
 					String processingtaskId = jobDao.findById(preReqJobId).get().getProcessingtaskId();
@@ -91,13 +91,13 @@ public class Write extends AbstractStoragetaskAction{
 					Optional<Processingtask> processingtaskOpt = processingtaskDao.findById(processingtaskId);
 					if(processingtaskOpt.isPresent()) {
 						processingtask = processingtaskOpt.get();
-						outputArtifactclassSuffix = processingtask.getOutputArtifactclassSuffix(); // Does the dependent processing job generate an output?
+						outputArtifactclassId = processingtask.getOutputArtifactclass(); // Does the dependent processing job generate an output?
 					}
-					if(outputArtifactclassSuffix != null)
+					if(outputArtifactclassId != null)
 						break;
 				}
-				if(outputArtifactclassSuffix != null)
-					artifactclassId =  artifactclassId + outputArtifactclassSuffix;
+				if(outputArtifactclassId != null)
+					artifactclassId =  outputArtifactclassId;
 			}	
 			logger.trace("artifactclassId for getting domain - " + artifactclassId);
 			

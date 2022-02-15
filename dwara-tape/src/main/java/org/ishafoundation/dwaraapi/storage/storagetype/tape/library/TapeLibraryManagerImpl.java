@@ -70,8 +70,8 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 				}
 				throw e;
 			}
-			
-			logger.trace(cler.getStdOutResponse());
+			if(logger.isTraceEnabled())
+				logger.trace(cler.getStdOutResponse());
 			return true;
 //		}
 	}

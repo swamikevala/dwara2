@@ -421,6 +421,7 @@ public class JobCreator {
 		
 		String tag = includeExcludeProperties.getTag();
 		String artifactclassRegex = includeExcludeProperties.getArtifactclassRegex();
+		String artifactnameRegex = includeExcludeProperties.getArtifactnameRegex();
 		if(tag != null) {
 			boolean isSource = artifact.getArtifactclass().isSource();
 			Set<Tag> tags = null;
@@ -456,6 +457,14 @@ public class JobCreator {
 			Pattern artifactclassRegexPattern = Pattern.compile(artifactclassRegex);
 			Matcher artifactclassRegexMatcher = artifactclassRegexPattern.matcher(artifactclassId); // only in relative to the artifact path 
 			if(artifactclassRegexMatcher.matches()) {
+				isMatch = true;
+			}
+		}
+		
+		if(artifactnameRegex != null) {
+			Pattern artifactnameRegexPattern = Pattern.compile(artifactnameRegex);
+			Matcher artifactnameRegexMatcher = artifactnameRegexPattern.matcher(artifact.getName());
+			if(artifactnameRegexMatcher.matches()) {
 				isMatch = true;
 			}
 		}

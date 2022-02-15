@@ -230,19 +230,16 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			String outputArtifactName = null;
 			String outputArtifactPathname = null; // holds where to generate the files in the physical system...
     		Artifactclass outputArtifactclass = null;
-			String outputArtifactclassSuffix = processingtask != null ? processingtask.getOutputArtifactclassSuffix() : null;
-			logger.trace("outputArtifactclassSuffix " + outputArtifactclassSuffix);
-			if(outputArtifactclassSuffix != null) { // For processing tasks like checksum-gen this will be null...
-				if(outputArtifactclassSuffix.equals("")) {
+			String outputArtifactclassId = processingtask != null ? processingtask.getOutputArtifactclass() : null;
+			logger.trace("outputArtifactclassId " + outputArtifactclassId);
+			if(outputArtifactclassId != null) { // For processing tasks like checksum-gen this will be null...
+				if(outputArtifactclassId.equals("")) {
 					outputArtifactclass = inputArtifactclass;
 					outputArtifactName = inputArtifactName;
 					outputArtifactPathname = inputArtifactPathname; // holds where to generate the files in the physical system...
 				}
 				else {
-					String outputArtifactclassId =  inputArtifactclassId + outputArtifactclassSuffix;
-					logger.trace("outputArtifactclassId " + outputArtifactclassId);
 					outputArtifactclass = configurationTablesUtil.getArtifactclass(outputArtifactclassId);
-					
 					if(outputArtifactclass == null) {
 						throw new DwaraException(outputArtifactclassId + " not configured in artifactclass table. Please double check");
 					}

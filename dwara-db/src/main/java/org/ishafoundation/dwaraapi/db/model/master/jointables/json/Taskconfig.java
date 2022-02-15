@@ -86,6 +86,10 @@ public class Taskconfig {
 		private String tag; // TODO : multiple tags needed? we can evolve as needed
 
 		//Artifact class matches this regex
+		@JsonProperty("artifactname_regex")
+		private String artifactnameRegex;
+
+		//Artifact class matches this regex
 		@JsonProperty("artifactclass_regex")
 		private String artifactclassRegex;
 
@@ -95,6 +99,14 @@ public class Taskconfig {
 
 		public void setTag(String tag) {
 			this.tag = tag;
+		}
+
+		public String getArtifactnameRegex() {
+			return artifactnameRegex;
+		}
+
+		public void setArtifactnameRegex(String artifactnameRegex) {
+			this.artifactnameRegex = artifactnameRegex;
 		}
 
 		public String getArtifactclassRegex() {
@@ -107,7 +119,7 @@ public class Taskconfig {
 		
 		@Override
 		public String toString() {
-			return "tag : " + tag + " artifactclass_regex : " + artifactclassRegex;
+			return "tag : " + tag + " artifactname_regex : " + artifactnameRegex + " artifactclass_regex : " + artifactclassRegex;
 		}
 	}
 	
