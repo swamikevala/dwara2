@@ -153,22 +153,10 @@ public abstract class AbstractStoragetypeJobProcessor {
 		jobDao.save(job);
 		logger.trace("Job " + job.getId() + " updated with the formatted Volume " + volume.getId() + " succesfully");
 	}
-
-    public StorageResponse copy(SelectedStorageJob selectedStorageJob) throws Throwable{
-    	logger.info("Copying job " + selectedStorageJob.getStorageJob().getJob().getId());
-    	StorageResponse storageResponse = null;
-//    	beforeWrite(selectedStorageJob);
-    	
-    	IStoragelevel iStoragelevel = getStoragelevelImpl(selectedStorageJob);
-    	storageResponse = iStoragelevel.copy(selectedStorageJob);
-
-    	afterWrite(selectedStorageJob, storageResponse);
-    	return storageResponse; 
-    }
     
     protected void beforeWrite(SelectedStorageJob selectedStorageJob) throws Exception {
-    	
-    	labelManager.writeArtifactLabelTemporarilyOnDisk(selectedStorageJob);
+    	if(selectedStorageJob.getStorageJob().getJob().getVolume().getStoragetype() == Storagetype.tape)
+    		labelManager.writeArtifactLabelTemporarilyOnDisk(selectedStorageJob);
     }
     
     public StorageResponse write(SelectedStorageJob selectedStorageJob) throws Throwable{

@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.storage.storagelevel;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -19,7 +20,6 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.exception.StorageException;
-import org.ishafoundation.dwaraapi.process.helpers.LogicalFileHelper;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.DiskJob;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
@@ -53,44 +53,6 @@ public class FileStoragelevel implements IStoragelevel {
 	
 	@Autowired
     private RemoteCommandLineExecuter remoteCommandLineExecuter;
-	
-	@Autowired
-	private	LogicalFileHelper logicalFileHelper;
-
-	@Override
-	public StorageResponse copy(SelectedStorageJob selectedStorageJob) throws Exception{
-    	DiskJob diskJob = (DiskJob) selectedStorageJob;
-		StorageJob storageJob = diskJob.getStorageJob();
-		
-    	int jobId = storageJob.getJob().getId();
-    	logger.info("Copying job " + jobId);
-
-    	StorageResponse storageResponse = null;
-//    	beforeWrite(selectedStorageJob);
-    
-    	Path srcFilepath = Paths.get(storageJob.getArtifactPrefixPath(), storageJob.getArtifactName());
-    	Path destDiskpath = Paths.get(diskJob.getMountPoint(), storageJob.getVolume().getId());
-    	if(!destDiskpath.toFile().exists())
-    		throw new DwaraException("Disk " + destDiskpath + " not found");
-    	
-    	
-//    	Files.copy(srcFilepath, destPath);
-    	
-    	FileUtils.copyDirectory(srcFilepath.toFile(), Paths.get(destDiskpath.toString(), storageJob.getArtifactName()).toFile());
-    	
-//    	String command = "cp -r \"" + srcFilepath.toString() + "\" " + "\"" +  destPath.toString() +"\"";
-//    	CommandLineExecutionResponse cler = null;
-//    	
-//
-//		cler = commandLineExecuter.executeCommand(command);
-//		if(cler.isComplete())
-//			logger.debug("Job " + jobId + " completed succesfully - " + cler.getStdOutResponse());
-
-
-//    	afterWrite(selectedStorageJob, storageResponse);
-		storageResponse = new StorageResponse();
-    	return storageResponse; 
-	}
 	
 	public StorageResponse remoteCopy(SelectedStorageJob selectedStorageJob) throws Exception{
 		StorageJob storageJob = selectedStorageJob.getStorageJob();
@@ -256,8 +218,27 @@ public class FileStoragelevel implements IStoragelevel {
 	
 	@Override
 	public StorageResponse write(SelectedStorageJob selectedStorageJob) throws StorageException{
-		// TODO Auto-generated method stub
-		return null;
+    	DiskJob diskJob = (DiskJob) selectedStorageJob;
+		StorageJob storageJob = diskJob.getStorageJob();
+		
+    	int jobId = storageJob.getJob().getId();
+    	logger.info("Writing job " + jobId);
+
+    	StorageResponse storageResponse = null;
+    
+    	Path srcFilepath = Paths.get(storageJob.getArtifactPrefixPath(), storageJob.getArtifactName());
+    	Path destDiskpath = Paths.get(diskJob.getMountPoint(), storageJob.getVolume().getId());
+    	if(!destDiskpath.toFile().exists())
+    		throw new DwaraException("Disk " + destDiskpath + " not found");
+    	
+    	try {
+			FileUtils.copyDirectory(srcFilepath.toFile(), Paths.get(destDiskpath.toString(), storageJob.getArtifactName()).toFile());
+		} catch (IOException e) {
+			throw new StorageException(e.getMessage());
+		}
+
+		storageResponse = new StorageResponse();
+    	return storageResponse; 
 	}
 
 	@Override

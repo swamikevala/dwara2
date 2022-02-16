@@ -38,11 +38,6 @@ public class BlockStoragelevel implements IStoragelevel {
 	
 	@Value("${filesystem.temporarylocation}")
 	private String filesystemTemporarylocation;
-
-	@Override
-	public StorageResponse copy(SelectedStorageJob selectedStorageJob) throws Exception{
-		throw new Exception("Copy not supported");
-	}
 		
 	@Override
 	public StorageResponse initialize(SelectedStorageJob selectedStorageJob) throws Exception{
