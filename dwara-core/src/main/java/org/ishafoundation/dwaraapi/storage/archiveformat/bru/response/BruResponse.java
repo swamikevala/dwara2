@@ -18,7 +18,7 @@ public class BruResponse {
 	private int warningCnt;
 	private int errorCnt;
 	private long archiveSize;
-	private int archiveBlocks;
+	private long archiveBlocks;
 	private FilesProcessed filesProcessed;
 	private int filesSkipped;
 	private int softErrorCnt;
@@ -86,10 +86,10 @@ public class BruResponse {
 	public void setArchiveSize(long archiveSize) {
 		this.archiveSize = archiveSize;
 	}
-	public int getArchiveBlocks() {
+	public long getArchiveBlocks() {
 		return archiveBlocks;
 	}
-	public void setArchiveBlocks(int archiveBlocks) {
+	public void setArchiveBlocks(long archiveBlocks) {
 		this.archiveBlocks = archiveBlocks;
 	}
 	public FilesProcessed getFilesProcessed() {
