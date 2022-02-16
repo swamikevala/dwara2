@@ -1,5 +1,7 @@
 SET foreign_key_checks = 0;
 
+UPDATE `location` SET `description`='3rd' WHERE `id`='t-block3';
+
 INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (0, 'mp4', 'audio');
 
 UPDATE `action_artifactclass_flow` SET `active`=1 WHERE `action_id`='ingest' and`artifactclass_id`='audio-priv2' and`flow_id`='audio-proxy-flow';
@@ -30,12 +32,15 @@ UPDATE `volume` SET `copy_id`='2' WHERE `id`='XX2';
 -- Sequence reset - Import and Ingest had sequence conflict - Fixed now but had to hard reset the sequence 
 UPDATE `sequence` SET `current_number`='32658' WHERE `id`='video-grp';
 
-<<<<<<< HEAD
 UPDATE `t_file` SET bad=1 and reason='[PG] Invalid filename. Write jobs(520903/4/5) failed quoting control char not supported. Deleted this file(which refers an external link with the same invalid name) in the filesystem and requeued write jobs.' where `id`=3463523;
 -- still write jobs were failing as we had another invalid filename \.mov which is hard renamed to karthigai.mov - pls refer email sub "Dwara Ingest - few things"
 UPDATE `t_file` SET `pathname`='Z10732_Talk_Sadhguru-About-Karthigai-Deepam_Tamil_06Min-16Secs_Stems/Project/karthigai deepam.fcpbundle/8-11-21/Transcoded Media/High Quality Media/karthigai.mov' WHERE `id`='3470984';
 
-=======
->>>>>>> branch 'dev' of git@bitbucket.org:ishafoundation/dwara2.git
+UPDATE `volume` SET `lifecyclestage`='retired' WHERE `id`='G10002L7';
+
+-- Job 533873 got picked up for init and got completed but then the scheduler picked it up even before the status got updated
+-- Marking it completed
+UPDATE `job` SET `message`=null, `status`='completed' WHERE `id`='533873';
+
 SET foreign_key_checks = 1;
 

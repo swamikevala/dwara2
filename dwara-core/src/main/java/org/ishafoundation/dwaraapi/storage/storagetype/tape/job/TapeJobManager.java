@@ -117,88 +117,95 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 		StorageJob firstStorageJob = storageJobsList.get(0); // if there is a format/mapdrive job only one job will be in the list coming from JobManager... 
 		Action storagetaskAction = firstStorageJob.getJob().getStoragetaskActionId();
 		
-		if(storagetaskAction == Action.map_tapedrives) {
-			logger.info("Will be mapping drives");
-			try {
-				boolean areJobsRunning = true;
-				while(areJobsRunning) {
-					List<TActivedevice> tActivedevices = (List<TActivedevice>) tActivedeviceDao.findAll();
-					if(tActivedevices.size() > 0) {
-						logger.info("Waiting on running jobs to complete");
-						try {
-							Thread.sleep(10000); // 10 secs
-						} catch (InterruptedException e) {
-							// swallow it
-						} 
-					}
-					else
-						areJobsRunning = false;
-				}
-	
-				logger.info("No running jobs as per dwara TActivedevice table. But double checking with physical library to see if any drive is still busy");
-				List<DriveDetails> driveDetailsList = null;
-
-				boolean areJobsStillRunning = true;
-				while(areJobsStillRunning) {
-					driveDetailsList = tapeDeviceUtil.getAllDrivesDetails();
-					if(driveDetailsList.size() == 0)
-						throw new Exception("No drives configured/online in dwara. Nothing to map. Please check devices table");
-					boolean anyDriveStillBusy = false;
-					for (DriveDetails driveDetails : driveDetailsList) {
-						if(driveDetails.getMtStatus().isBusy())
-							anyDriveStillBusy = true;
-					}
-
-					if(anyDriveStillBusy) {
-						logger.error("Something wrong. TActivedevice showed no job running. Drives should all be free. Needs attention. Nevertheless waiting on running jobs to complete");
-						try {
-							Thread.sleep(10000); // 10 secs
-						} catch (InterruptedException e) {
-							// swallow it
-						} 
-					}
-					else
-						areJobsStillRunning = false;
-				}
-			
-				logger.info("No running jobs. Proceeding mapping drives");
-				
-				checkAndUpdateStatusesToInProgress(firstStorageJob.getJob());
-				logger.trace("Composing Tape job");
-				TapeJob tapeJob = new TapeJob();
-				tapeJob.setStorageJob(firstStorageJob);
-				tapeJob.setDriveDetails(driveDetailsList);
-				manage(tapeJob);
-			} catch (Exception e1) {
-				logger.error(e1.getMessage());
-				updateJobFailed(firstStorageJob.getJob());
-			}
-		} 
-		else if(storagetaskAction == Action.initialize) {
+		if(storagetaskAction == Action.map_tapedrives || storagetaskAction == Action.initialize) {
 			Job job = firstStorageJob.getJob();
-			logger.info("Will be initializing " + job.getRequest().getDetails().getVolumeId());
-			checkAndUpdateStatusesToInProgress(job);
-			logger.info("Now preparing all tape drives for initialization");
-			List<DriveDetails> preparedDrives = null;
-			try {
+			job = jobDao.findById(job.getId()).get();
+			if(job.getStatus() != Status.queued) { // This check is to avoid race condition on jobs. This check is not needed for non-blocking jobs as Jobselector will take care of it...
+				logger.info(job.getId() + " - job probably already picked up for processing in the last run. Skipping it");
+			}
+			else {
+				if(storagetaskAction == Action.map_tapedrives) {
+					logger.info("Will be mapping drives");
+					try {
+						boolean areJobsRunning = true;
+						while(areJobsRunning) {
+							List<TActivedevice> tActivedevices = (List<TActivedevice>) tActivedeviceDao.findAll();
+							if(tActivedevices.size() > 0) {
+								logger.info("Waiting on running jobs to complete");
+								try {
+									Thread.sleep(10000); // 10 secs
+								} catch (InterruptedException e) {
+									// swallow it
+								} 
+							}
+							else
+								areJobsRunning = false;
+						}
+			
+						logger.info("No running jobs as per dwara TActivedevice table. But double checking with physical library to see if any drive is still busy");
+						List<DriveDetails> driveDetailsList = null;
 
-				preparedDrives = tapeDeviceUtil.prepareAllTapeDrivesForBlockingJobs();
-				
-				// When we initialize the first time - mapping wouldnt have happened as a regd tape is a criteria for mapping drive - so we dont the device getting used and so can update Tactivedevice table
-				logger.trace("Composing Tape job");
-				TapeJob tapeJob = new TapeJob();
-				tapeJob.setStorageJob(firstStorageJob);
-//				tapeJob.setTapeLibraryName(selectedDriveDetails.getTapelibraryName());
-//				tapeJob.setTapedriveNo(selectedDriveDetails.getDriveId());
-				tapeJob.setDriveDetails(preparedDrives);
-				manage(tapeJob);
-			} catch (Exception e1) {
-				logger.error(e1.getMessage(), e1);
-				updateJobFailed(firstStorageJob.getJob());
+						boolean areJobsStillRunning = true;
+						while(areJobsStillRunning) {
+							driveDetailsList = tapeDeviceUtil.getAllDrivesDetails();
+							if(driveDetailsList.size() == 0)
+								throw new Exception("No drives configured/online in dwara. Nothing to map. Please check devices table");
+							boolean anyDriveStillBusy = false;
+							for (DriveDetails driveDetails : driveDetailsList) {
+								if(driveDetails.getMtStatus().isBusy())
+									anyDriveStillBusy = true;
+							}
+
+							if(anyDriveStillBusy) {
+								logger.error("Something wrong. TActivedevice showed no job running. Drives should all be free. Needs attention. Nevertheless waiting on running jobs to complete");
+								try {
+									Thread.sleep(10000); // 10 secs
+								} catch (InterruptedException e) {
+									// swallow it
+								} 
+							}
+							else
+								areJobsStillRunning = false;
+						}
+					
+						logger.info("No running jobs. Proceeding mapping drives");
+						
+						checkAndUpdateStatusesToInProgress(firstStorageJob.getJob());
+						logger.trace("Composing Tape job");
+						TapeJob tapeJob = new TapeJob();
+						tapeJob.setStorageJob(firstStorageJob);
+						tapeJob.setDriveDetails(driveDetailsList);
+						manage(tapeJob);
+					} catch (Exception e1) {
+						logger.error(e1.getMessage());
+						updateJobFailed(firstStorageJob.getJob());
+					}
+				} 
+				else if(storagetaskAction == Action.initialize) {
+					logger.info("Will be initializing " + job.getRequest().getDetails().getVolumeId());
+					checkAndUpdateStatusesToInProgress(job);
+					logger.info("Now preparing all tape drives for initialization");
+					List<DriveDetails> preparedDrives = null;
+					try {
+
+						preparedDrives = tapeDeviceUtil.prepareAllTapeDrivesForBlockingJobs();
+						
+						// When we initialize the first time - mapping wouldnt have happened as a regd tape is a criteria for mapping drive - so we dont the device getting used and so can update Tactivedevice table
+						logger.trace("Composing Tape job");
+						TapeJob tapeJob = new TapeJob();
+						tapeJob.setStorageJob(firstStorageJob);
+//						tapeJob.setTapeLibraryName(selectedDriveDetails.getTapelibraryName());
+//						tapeJob.setTapedriveNo(selectedDriveDetails.getDriveId());
+						tapeJob.setDriveDetails(preparedDrives);
+						manage(tapeJob);
+					} catch (Exception e1) {
+						logger.error(e1.getMessage(), e1);
+						updateJobFailed(firstStorageJob.getJob());
+					}
+				}
 			}
 		}
 		else {
-
 			List<DriveDetails> availableDrivesDetails = null;
 			try {
 				logger.info("Getting all available drives");
