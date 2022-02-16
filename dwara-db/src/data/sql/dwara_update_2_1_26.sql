@@ -38,5 +38,9 @@ UPDATE `t_file` SET `pathname`='Z10732_Talk_Sadhguru-About-Karthigai-Deepam_Tami
 
 UPDATE `volume` SET `lifecyclestage`='retired' WHERE `id`='G10002L7';
 
+-- Job 533873 got picked up for init and got completed but then the scheduler picked it up even before the status got updated
+-- Marking it completed
+UPDATE `job` SET `message`=null, `status`='completed' WHERE `id`='533873';
+
 SET foreign_key_checks = 1;
 
