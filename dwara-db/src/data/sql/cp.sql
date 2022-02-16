@@ -1256,17 +1256,17 @@ LOCK TABLES `flowelement` WRITE;
 /*!40000 ALTER TABLE `flowelement` DISABLE KEYS */;
 INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `flow_ref_id`, `processingtask_id`, `storagetask_action_id`, `task_config`) VALUES 
 ('U1',1,NULL,0,1,'cp-archive-flow',NULL,'checksum-gen',NULL,NULL),
-('U2',1,NULL,0,2,'cp-archive-flow',NULL,NULL,'copy',NULL),
+('U2',1,NULL,0,2,'cp-archive-flow',NULL,NULL,'write',NULL),
 ('U3',1,'[\"U1\",\"U2\"]',0,3,'cp-archive-flow',NULL,'checksum-verify',NULL,NULL),
 ('U4',0,'[\"U1\"]',0,4,'cp-archive-flow','encryption-flow',NULL,NULL,NULL),
 ('U5',1,NULL,0,5,'encryption-flow',NULL,'encrypted-gen',NULL,NULL),
 ('U6',1,'[\"U5\"]',0,6,'encryption-flow',NULL,'checksum-gen',NULL,NULL),
 ('U7',1,'[\"U5\"]',0,7,'encryption-flow',NULL,'decrypted-gen',NULL,NULL),
 ('U8',1,'[\"U7\"]',0,8,'encryption-flow',NULL,'checksum-verify',NULL,NULL),
-('U9',1,'[\"U8\"]',0,9,'encryption-flow',NULL,NULL,'copy',NULL),
+('U9',1,'[\"U8\"]',0,9,'encryption-flow',NULL,NULL,'write',NULL),
 ('U10',1,'[\"U5\",\"U9\"]',0,10,'encryption-flow',NULL,'checksum-verify',NULL,NULL),
 ('U11',1,NULL,0,11,'video-mezz-proxy-flow',NULL,'file-copy',NULL,'{"destination_id": "video-mezz-proxy", "pathname_regex": "^Proxy"}'),
-('U12',1,'[\"U11\"]',0,12,'video-mezz-proxy-flow',NULL,NULL,'copy',NULL),
+('U12',1,'[\"U11\"]',0,12,'video-mezz-proxy-flow',NULL,NULL,'write',NULL),
 ('U13',1,'[\"U12\"]',0,13,'video-mezz-proxy-flow',NULL,'checksum-verify',NULL,NULL),
 ('U14',1,NULL,0,14,'audio-proxy-flow',NULL,'audio-proxy-low-gen',NULL,NULL),
 ('U15',1,'[\"U14\"]',0,15,'audio-proxy-flow','cp-archive-flow',NULL,NULL,NULL),
@@ -2142,7 +2142,7 @@ INSERT INTO `volume` (`id`, `capacity`, `checksumtype`, `details`, `finalized`, 
 ('B',NULL,'sha256','{\"minimum_free_space\": 2199023255552}',0,0,NULL,'file',NULL,'disk','group',NULL,NULL,2,NULL,NULL,'high-res-encrypted',NULL,NULL,NULL,NULL),
 ('C',NULL,'sha256','{\"minimum_free_space\": 2199023255552}',0,0,NULL,'file',NULL,'disk','group',NULL,NULL,1,NULL,NULL,'proxy',NULL,NULL,NULL,NULL),
 
-('A01',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fea',NULL,NULL,'A','rally',NULL,NULL,0,'normal','active');
+('A01',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fea',NULL,NULL,'A','rally',NULL,NULL,0,'normal','active'),
 ('B01',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139feb',NULL,NULL,'B','rally',NULL,NULL,0,'normal','active');
 
 /*!40000 ALTER TABLE `volume` ENABLE KEYS */;

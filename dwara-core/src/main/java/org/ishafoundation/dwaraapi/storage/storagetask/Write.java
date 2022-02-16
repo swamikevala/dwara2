@@ -1,6 +1,8 @@
 package org.ishafoundation.dwaraapi.storage.storagetask;
 
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +24,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
 import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
+import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
@@ -61,6 +64,18 @@ public class Write extends AbstractStoragetaskAction{
 	
 	@Autowired
 	private ArtifactclassUtil artifactclassUtil;
+	
+	@Override
+	public String getArtifactRootLocation(Job sourceJob) {
+		String copiedLocation = null;
+		
+		Volume volumeUsed = sourceJob.getVolume();
+		if(volumeUsed.getStoragetype() == Storagetype.disk) {
+			Path copiedDiskpath = Paths.get(volumeUsed.getDetails().getMountpoint(), volumeUsed.getId());
+			copiedLocation = copiedDiskpath.toString();
+		}
+		return copiedLocation;
+	}
 		
 	@Override
 	public StorageJob buildStorageJob(Job job) throws Exception{
