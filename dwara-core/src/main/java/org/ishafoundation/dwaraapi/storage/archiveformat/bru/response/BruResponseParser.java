@@ -251,7 +251,7 @@ public class BruResponseParser {
 				bruResponse.setErrorCnt(Integer.parseInt(messagesRegExMatcher.group(2)));
 			}
 			else if(StringUtils.equals(bruResponse.getOperationType(),"c") && blocksWrittenRegExMatcher.matches()) {
-				int archiveBlocks = Integer.parseInt(blocksWrittenRegExMatcher.group(1));
+				long archiveBlocks = Long.parseLong(blocksWrittenRegExMatcher.group(1));
 				if(archiveBlocks != 0) {
 					long archiveSize = Long.parseLong(blocksWrittenRegExMatcher.group(2));
 					
@@ -273,9 +273,9 @@ public class BruResponseParser {
 				}
 			}
 			else if(StringUtils.equals(bruResponse.getOperationType(),"x") && blocksReadRegExMatcher.matches()) {
-				int archiveBlocks = Integer.parseInt(blocksReadRegExMatcher.group(1));
+				long archiveBlocks = Long.parseLong(blocksReadRegExMatcher.group(1));
 				if(archiveBlocks != 0) {
-					int archiveSize = Integer.parseInt(blocksReadRegExMatcher.group(2));
+					long archiveSize = Long.parseLong(blocksReadRegExMatcher.group(2));
 					
 					bruResponse.setArchiveBlocks(archiveBlocks);
 					bruResponse.setArchiveSize(archiveSize);
