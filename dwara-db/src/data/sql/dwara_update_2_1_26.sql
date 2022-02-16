@@ -42,7 +42,7 @@ UPDATE `volume` SET `lifecyclestage`='retired' WHERE `id`='G10002L7';
 -- Marking it completed
 UPDATE `job` SET `message`=null, `status`='completed' WHERE `id`='533873';
 
-update request set status='completed' WHERE `id`=83922;
+update request set status='completed' WHERE `id`in (83922,83923);
 
 SET foreign_key_checks = 1;
 
