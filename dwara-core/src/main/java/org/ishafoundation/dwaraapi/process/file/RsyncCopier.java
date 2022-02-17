@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.commandline.remote.sch.RemoteCommandLineExecuter;
@@ -110,8 +109,12 @@ public class RsyncCopier implements IProcessingTask {
 			Files.createDirectories(Paths.get(destinationDirPath));
 			try {
 				Files.copy(sourcePath, destPath);
+				processingtaskResponse.setIsComplete(true);
 			}catch (Exception e) {
-				throw new DwaraException("Unable to copy " + sourcePath + " to " + destPath + " " + e.getMessage());
+				String msg = "Unable to copy " + sourcePath + " to " + destPath + " " + e.getMessage();
+				processingtaskResponse.setIsComplete(false);
+				processingtaskResponse.setFailureReason(msg);
+				throw new DwaraException(msg);
 			}
 		}
 		return processingtaskResponse;
