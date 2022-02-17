@@ -1,15 +1,20 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.disk.job;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.storage.model.DiskJob;
+import org.ishafoundation.dwaraapi.storage.model.GroupedJobsCollection;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.disk.thread.executor.DiskTaskThreadPoolExecutor;
+import org.ishafoundation.dwaraapi.storage.storagetype.job.JobSelector;
 import org.ishafoundation.dwaraapi.storage.storagetype.thread.AbstractStoragetypeJobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,28 +40,55 @@ public class DiskJobManager extends AbstractStoragetypeJobManager {
 		logger.info("Disk job manager kicked off");
 		List<StorageJob> storageJobsList = getStorageJobList();
 		
-		// available drives ???
-		for (StorageJob storageJob : storageJobsList) {
-			Job job = storageJob.getJob();
-			logger.debug("Processing disk job " + job.getId());	
-			job = jobDao.findById(job.getId()).get();
-			if(job.getStatus() != Status.queued) { // This check is to avoid race condition on jobs. This check is not needed for non-blocking jobs as Jobselector will take care of it...
-				logger.info(job.getId() + " - job probably already picked up for processing in the last run. Skipping it");
+		JobSelector js = new JobSelector();
+		GroupedJobsCollection gjc = js.groupJobsBasedOnVolumeTag(storageJobsList); // Grouping the storage Jobs on volume
+		Map<String, List<StorageJob>> volumeTag_volumeTagGroupedJobs = gjc.getVolumeTag_volumeTagGroupedJobs();
+		
+		// Removing all same pool jobs that are running currently. We want only one job to write on a volume at any point in time... 
+		List<Job> inprogressWriteJobs = jobDao.findAllByStatusAndStoragetaskActionIdOrderById(Status.in_progress, Action.write);
+		
+		Set<String> volumeTagSet = volumeTag_volumeTagGroupedJobs.keySet();
+		for (String nthVolumeTag : volumeTagSet) {
+			for (Job nthInprogressJob : inprogressWriteJobs) {
+				if(nthInprogressJob.getVolume().getId().equals(nthVolumeTag)) {
+					storageJobsList.removeAll(volumeTag_volumeTagGroupedJobs.get(nthVolumeTag));
+					volumeTag_volumeTagGroupedJobs.remove(nthVolumeTag);
+					break;
+				}
 			}
+		}
 
-			Volume volume = storageJob.getVolume();
-			job.setDevice(null);// TODO "???"
-			job.setVolume(volume);
-			
-			DiskJob dj = new DiskJob();
-			dj.setStorageJob(storageJob);
-			dj.setMountPoint(volume.getDetails().getMountpoint());
-			// dj.setDeviceWwnId();
-
-			logger.debug("Launching separate disk task thread -----------");
-			DiskTask diskTask = new DiskTask();//applicationContext.getBean(DiskTask.class); 
-			diskTask.setDiskJob(dj);
-			diskTaskThreadPoolExecutor.getExecutor().execute(diskTask);
+		// Now just select the job from the leftovers
+		volumeTagSet = volumeTag_volumeTagGroupedJobs.keySet();
+		for (String nthVolumeTag : volumeTagSet) {
+			for (StorageJob storageJob : storageJobsList) {
+				if(storageJob.getVolume().getId().equals(nthVolumeTag)) {
+					Job job = storageJob.getJob();
+					logger.debug("Processing disk job " + job.getId());	
+					job = jobDao.findById(job.getId()).get();
+					if(job.getStatus() != Status.queued) { // This check is to avoid race condition on jobs. This check is not needed for non-blocking jobs as Jobselector will take care of it...
+						logger.info(job.getId() + " - job probably already picked up for processing in the last run. Skipping it");
+						continue;
+					}
+	
+					Volume volume = storageJob.getVolume();
+					job.setDevice(null);// TODO "???"
+					job.setVolume(volume);
+					storageJob.setJob(job);
+					
+					DiskJob dj = new DiskJob();
+					dj.setStorageJob(storageJob);
+					dj.setMountPoint(volume.getDetails().getMountpoint());
+					// dj.setDeviceWwnId();
+	
+					logger.debug("Launching separate disk task thread -----------");
+					DiskTask diskTask = new DiskTask();//applicationContext.getBean(DiskTask.class); 
+					diskTask.setDiskJob(dj);
+					diskTaskThreadPoolExecutor.getExecutor().execute(diskTask);
+					
+					break;
+				}
+			}
 		}
 	}
 	

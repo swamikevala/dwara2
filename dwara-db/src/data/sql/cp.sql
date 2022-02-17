@@ -1266,11 +1266,12 @@ INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `displa
 ('U8',1,'[\"U7\"]',0,8,'encryption-flow',NULL,'checksum-verify',NULL,NULL),
 ('U9',1,'[\"U8\"]',0,9,'encryption-flow',NULL,NULL,'write',NULL),
 ('U10',1,'[\"U5\",\"U9\"]',0,10,'encryption-flow',NULL,'checksum-verify',NULL,NULL),
-('U11',1,NULL,0,11,'video-mezz-proxy-flow',NULL,'cp-file-copy',NULL,'{"pathname_regex": ".*/Sub/.*"}'),
-('U12',1,'[\"U11\"]',0,12,'video-mezz-proxy-flow',NULL,NULL,'write',NULL),
-('U13',1,'[\"U12\"]',0,13,'video-mezz-proxy-flow',NULL,'checksum-verify',NULL,NULL),
+('U11',1,NULL,0,11,'video-mezz-proxy-flow',NULL,'cp-file-copy',NULL,'{"pathname_regex": "SUB/.*"}'),
+('U12',1,'[\"U11\"]',0,12,'video-mezz-proxy-flow','cp-archive-flow',NULL,NULL,NULL),
+
 ('U14',1,NULL,0,14,'audio-proxy-flow',NULL,'audio-proxy-low-gen',NULL,NULL),
 ('U15',1,'[\"U14\"]',0,15,'audio-proxy-flow','cp-archive-flow',NULL,NULL,NULL),
+
 ('U16',1,NULL,0,16,'audio-extraction-flow',NULL,'audio-proxy-low-gen',NULL,'{"exclude_if": {"artifactname_regex": ".*Cam(2|3).*"}}'),
 ('U17',1,'[\"U16\"]',0,17,'audio-extraction-flow',NULL,'copy-gdrive',NULL,NULL);
 

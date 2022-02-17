@@ -23,6 +23,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.storage.model.GroupedJobsCollection;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagesubtype.AbstractStoragesubtype;
+import org.ishafoundation.dwaraapi.storage.storagetype.job.JobSelector;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDeviceUtil;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
@@ -32,7 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class TapeJobSelector {
+public class TapeJobSelector extends JobSelector{
 	
 	private static final Logger logger = LoggerFactory.getLogger(TapeJobSelector.class);
 	
@@ -388,39 +389,6 @@ public class TapeJobSelector {
 	}
 
 
-	private GroupedJobsCollection groupJobsBasedOnVolumeTag(List<StorageJob> tapeJobsList){
-		logger.debug("Grouping the jobs based on volume tag");
-		Set<Integer> priorityOrder = new TreeSet<Integer>();
-		/*
-		 * 
-		 * After executing the below snippet volumeTag_volumeTagGroupedJobs map will hold something like the below key value pairs
-			V5A001 - [Job1, Job3, Job4]
-			V5A005 - [Job2, Job6, Job7]
-			V5A003 - [Job5]
-		 */
-		Map<String, List<StorageJob>> volumeTag_volumeTagGroupedJobs = new HashMap<String, List<StorageJob>>();
-		for (Iterator<StorageJob> iterator = tapeJobsList.iterator(); iterator.hasNext();) {
-			StorageJob tapeJob = (StorageJob) iterator.next();
-			int priority = tapeJob.getPriority();
-			priorityOrder.add(priority); // TODO test with priority zero
-
-			// STEP 1a - Grouping Jobs based on volumeTags
-			String toBeUsedVolumeCode = tapeJob.getVolume().getId();
-			
-			List<StorageJob> groupedOnVolumeTagJobsList = volumeTag_volumeTagGroupedJobs.get(toBeUsedVolumeCode);
-			if(groupedOnVolumeTagJobsList == null) {
-				groupedOnVolumeTagJobsList = new ArrayList<StorageJob>();
-				volumeTag_volumeTagGroupedJobs.put(toBeUsedVolumeCode, groupedOnVolumeTagJobsList);	
-			}
-			groupedOnVolumeTagJobsList.add(tapeJob);
-		}	
-
-		GroupedJobsCollection gjc = new GroupedJobsCollection();
-		gjc.setPriorityOrder(priorityOrder);
-		gjc.setVolumeTag_volumeTagGroupedJobs(volumeTag_volumeTagGroupedJobs);
-
-		return gjc;
-	}
 	
 	/*
 	 	Orders/Sorts the list of jobs waiting to be executed on the candidate tape

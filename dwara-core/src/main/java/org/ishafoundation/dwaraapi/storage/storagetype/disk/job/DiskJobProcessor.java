@@ -1,15 +1,6 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.disk.job;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
-import org.ishafoundation.dwaraapi.exception.DwaraException;
-import org.ishafoundation.dwaraapi.storage.StorageResponse;
-import org.ishafoundation.dwaraapi.storage.model.DiskJob;
-import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
-import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
