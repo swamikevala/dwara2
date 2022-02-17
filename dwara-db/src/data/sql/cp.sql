@@ -1782,7 +1782,7 @@ INSERT INTO `sequence` (`id`, `current_number`, `ending_number`, `group`, `prefi
 ('photo-encrypt',0,-1,0,'PE',1,'artifact',NULL),
 ('high-res',100,200,0,'A',1,'volume',NULL),
 ('high-res-encrypted',100,200,0,'B',1,'volume',NULL),
-('proxy',100,200,0,'C',1,'volume',NULL);
+('proxy',100,200,0,'M',1,'volume',NULL);
 /*!40000 ALTER TABLE `sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2143,13 +2143,13 @@ LOCK TABLES `volume` WRITE;
 INSERT INTO `volume` (`id`, `capacity`, `checksumtype`, `details`, `finalized`, `imported`, `first_written_at`, `storagelevel`, `storagesubtype`, `storagetype`, `type`, `uuid`, `archiveformat_id`, `copy_id`, `group_ref_id`, `location_id`, `sequence_id`, `last_written_at`, `used_capacity`, `healthstatus`, `lifecyclestage`) VALUES 
 ('A',NULL,'sha256','{\"minimum_free_space\": 2199023255552}',0,0,NULL,'file',NULL,'disk','group',NULL,NULL,1,NULL,NULL,'high-res',NULL,NULL,NULL,NULL),
 ('B',NULL,'sha256','{\"minimum_free_space\": 2199023255552}',0,0,NULL,'file',NULL,'disk','group',NULL,NULL,2,NULL,NULL,'high-res-encrypted',NULL,NULL,NULL,NULL),
-('C',NULL,'sha256','{\"minimum_free_space\": 2199023255552}',0,0,NULL,'file',NULL,'disk','group',NULL,NULL,1,NULL,NULL,'proxy',NULL,NULL,NULL,NULL),
+('M',NULL,'sha256','{\"minimum_free_space\": 2199023255552}',0,0,NULL,'file',NULL,'disk','group',NULL,NULL,1,NULL,NULL,'proxy',NULL,NULL,NULL,NULL),
 
 ('A101',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139faa',NULL,NULL,'A','rally',NULL,NULL,0,'normal','active'),
 ('A102',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fab',NULL,NULL,'A','rally',NULL,NULL,0,'normal','active'),
 ('A111',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fac',NULL,NULL,'A','rally',NULL,NULL,0,'normal','active'),
 ('B101',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fba',NULL,NULL,'B','rally',NULL,NULL,0,'normal','active'),
-('C101',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fca',NULL,NULL,'C','rally',NULL,NULL,0,'normal','active');
+('M101',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fca',NULL,NULL,'M','rally',NULL,NULL,0,'normal','active');
 
 /*!40000 ALTER TABLE `volume` ENABLE KEYS */;
 UNLOCK TABLES;

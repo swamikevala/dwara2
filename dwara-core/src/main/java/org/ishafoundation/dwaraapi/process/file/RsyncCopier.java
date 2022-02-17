@@ -51,12 +51,11 @@ public class RsyncCopier implements IProcessingTask {
 		String destinationDirPath = processContext.getOutputDestinationDirPath(); // This includes the host ip
 		logger.trace("destinationDirPath " + destinationDirPath);
 
-		String sshUser = configuration.getSshSystemUser();
-		String host = StringUtils.substringBefore(destinationDirPath, ":");
-        
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
         
-		if(host != null) {
+		if(destinationDirPath.indexOf(":") != -1) {
+			String host = StringUtils.substringBefore(destinationDirPath, ":");
+			String sshUser = configuration.getSshSystemUser();
 	        int jobId = processContext.getJob().getId();
 	        
 			String destinationFilePathname = null;
