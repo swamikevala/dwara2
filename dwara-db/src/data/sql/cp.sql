@@ -604,7 +604,7 @@ INSERT INTO `destination` (`id`, `path`, `use_buffering`) VALUES
 ('san-video','/mnt/san/video/LTO_Restore/public','\1'),
 ('san-video1','/mnt/san/video1','\1'),
 ('test-ffv1','/mnt/test/ffv1','\0'),
-('video-mezz-proxy','/data/dwara/proxy','\1'),
+-- ('video-mezz-proxy','/data/dwara/proxy','\1'),
 ('test-qc','172.18.1.200:/data/modified-to-fail-qc','\0');
 /*!40000 ALTER TABLE `destination` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -1266,7 +1266,7 @@ INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `displa
 ('U8',1,'[\"U7\"]',0,8,'encryption-flow',NULL,'checksum-verify',NULL,NULL),
 ('U9',1,'[\"U8\"]',0,9,'encryption-flow',NULL,NULL,'write',NULL),
 ('U10',1,'[\"U5\",\"U9\"]',0,10,'encryption-flow',NULL,'checksum-verify',NULL,NULL),
-('U11',1,NULL,0,11,'video-mezz-proxy-flow',NULL,'file-copy',NULL,'{"destination_id": "video-mezz-proxy", "pathname_regex": ".*/Sub/.*"}'),
+('U11',1,NULL,0,11,'video-mezz-proxy-flow',NULL,'cp-file-copy',NULL,'{"pathname_regex": ".*/Sub/.*"}'),
 ('U12',1,'[\"U11\"]',0,12,'video-mezz-proxy-flow',NULL,NULL,'write',NULL),
 ('U13',1,'[\"U12\"]',0,13,'video-mezz-proxy-flow',NULL,'checksum-verify',NULL,NULL),
 ('U14',1,NULL,0,14,'audio-proxy-flow',NULL,'audio-proxy-low-gen',NULL,NULL),
@@ -1573,7 +1573,9 @@ INSERT INTO `processingtask` (`id`, `description`, `filetype_id`, `max_errors`, 
 ('audio-proxy-low-gen','generate audio proxies','audio-video',1,'audio-proxy',NULL),
 ('copy-gdrive','copies the artifact to gdrive','_all_',1,NULL,NULL),
 ('decrypted-gen','decrypt encrypted files','_all_',1,'video',NULL),
-('encrypted-gen','generate encrypted files','_all_',1,'video-encrypt',NULL);
+('encrypted-gen','generate encrypted files','_all_',1,'video-encrypt',NULL),
+('cp-file-copy','copies a subset of the artifact to a different folder in local','_all_',1,'video-mezz-proxy',NULL);
+
 /*!40000 ALTER TABLE `processingtask` ENABLE KEYS */;
 UNLOCK TABLES;
 --

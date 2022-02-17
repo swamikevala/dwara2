@@ -1,19 +1,14 @@
 package org.ishafoundation.dwaraapi.resource;
 
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.api.req._import.BulkImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.ImportRequest;
 import org.ishafoundation.dwaraapi.api.req._import.SetSequenceImportRequest;
 import org.ishafoundation.dwaraapi.api.resp._import.ImportResponse;
-import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.artifact.ArtifactAttributes;
 import org.ishafoundation.dwaraapi.artifact.ArtifactMeta;
-import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.ImportService;
 import org.slf4j.Logger;
