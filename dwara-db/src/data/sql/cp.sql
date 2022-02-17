@@ -316,14 +316,14 @@ CREATE TABLE `artifactclass` (
 LOCK TABLES `artifactclass` WRITE;
 /*!40000 ALTER TABLE `artifactclass` DISABLE KEYS */;
 INSERT INTO `artifactclass` (`id`, `concurrent_volume_copies`, `description`, `display_order`, `import_only`, `path_prefix`, `source`, `artifactclass_ref_id`, `sequence_id`, `config`, `auto_ingest`) VALUES 
-('video',0,'high resolution video',1,0,'staged',1,NULL,'video',NULL,NULL),
-('video-encrypt',0,'encrypted high resolution video',2,0,'encrypted',0,'video','video-encrypt',NULL,NULL),
-('video-mezz-proxy',0,'mezzanine proxy video',3,0,'proxy',0,'video','video-mezz-proxy',NULL,NULL),
-('audio',0,'audio',4,0,'staged',1,NULL,'audio',NULL,NULL),
-('audio-encrypt',0,'encrypted audio',5,0,'encrypted',0,'audio','audio-encrypt',NULL,NULL),
-('audio-proxy',0,'audio proxy',6,0,'transcoded',0,'audio','audio-proxy',NULL,NULL),
-('photo',0,'photo',7,0,'staged',1,NULL,'photo',NULL,NULL),
-('photo-encrypt',0,'photo',8,0,'encrypted',0,'photo','photo-encrypt',NULL,NULL);
+('video',1,'high resolution video',1,0,'staged',1,NULL,'video',NULL,NULL),
+('video-encrypt',1,'encrypted high resolution video',2,0,'encrypted',0,'video','video-encrypt',NULL,NULL),
+('video-mezz-proxy',1,'mezzanine proxy video',3,0,'proxy',0,'video','video-mezz-proxy',NULL,NULL),
+('audio',1,'audio',4,0,'staged',1,NULL,'audio',NULL,NULL),
+('audio-encrypt',1,'encrypted audio',5,0,'encrypted',0,'audio','audio-encrypt',NULL,NULL),
+('audio-proxy',1,'audio proxy',6,0,'transcoded',0,'audio','audio-proxy',NULL,NULL),
+('photo',1,'photo',7,0,'staged',1,NULL,'photo',NULL,NULL),
+('photo-encrypt',1,'photo',8,0,'encrypted',0,'photo','photo-encrypt',NULL,NULL);
 /*!40000 ALTER TABLE `artifactclass` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -604,6 +604,7 @@ INSERT INTO `destination` (`id`, `path`, `use_buffering`) VALUES
 ('san-video','/mnt/san/video/LTO_Restore/public','\1'),
 ('san-video1','/mnt/san/video1','\1'),
 ('test-ffv1','/mnt/test/ffv1','\0'),
+('video-mezz-proxy','/data/dwara/proxy','\1'),
 ('test-qc','172.18.1.200:/data/modified-to-fail-qc','\0');
 /*!40000 ALTER TABLE `destination` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -1265,7 +1266,7 @@ INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `displa
 ('U8',1,'[\"U7\"]',0,8,'encryption-flow',NULL,'checksum-verify',NULL,NULL),
 ('U9',1,'[\"U8\"]',0,9,'encryption-flow',NULL,NULL,'write',NULL),
 ('U10',1,'[\"U5\",\"U9\"]',0,10,'encryption-flow',NULL,'checksum-verify',NULL,NULL),
-('U11',1,NULL,0,11,'video-mezz-proxy-flow',NULL,'file-copy',NULL,'{"destination_id": "video-mezz-proxy", "pathname_regex": "^Proxy"}'),
+('U11',1,NULL,0,11,'video-mezz-proxy-flow',NULL,'file-copy',NULL,'{"destination_id": "video-mezz-proxy", "pathname_regex": ".*/Sub/.*"}'),
 ('U12',1,'[\"U11\"]',0,12,'video-mezz-proxy-flow',NULL,NULL,'write',NULL),
 ('U13',1,'[\"U12\"]',0,13,'video-mezz-proxy-flow',NULL,'checksum-verify',NULL,NULL),
 ('U14',1,NULL,0,14,'audio-proxy-flow',NULL,'audio-proxy-low-gen',NULL,NULL),
@@ -1777,9 +1778,9 @@ INSERT INTO `sequence` (`id`, `current_number`, `ending_number`, `group`, `prefi
 ('audio-proxy',0,-1,0,'AL',1,'artifact',NULL),
 ('photo',0,-1,0,'P',1,'artifact',NULL),
 ('photo-encrypt',0,-1,0,'PE',1,'artifact',NULL),
-('high-res',NULL,NULL,0,'A',1,'volume',NULL),
-('high-res-encrypted',NULL,NULL,0,'B',1,'volume',NULL),
-('proxy',NULL,NULL,0,'C',1,'volume',NULL);
+('high-res',100,200,0,'A',1,'volume',NULL),
+('high-res-encrypted',100,200,0,'B',1,'volume',NULL),
+('proxy',100,200,0,'C',1,'volume',NULL);
 /*!40000 ALTER TABLE `sequence` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2142,8 +2143,11 @@ INSERT INTO `volume` (`id`, `capacity`, `checksumtype`, `details`, `finalized`, 
 ('B',NULL,'sha256','{\"minimum_free_space\": 2199023255552}',0,0,NULL,'file',NULL,'disk','group',NULL,NULL,2,NULL,NULL,'high-res-encrypted',NULL,NULL,NULL,NULL),
 ('C',NULL,'sha256','{\"minimum_free_space\": 2199023255552}',0,0,NULL,'file',NULL,'disk','group',NULL,NULL,1,NULL,NULL,'proxy',NULL,NULL,NULL,NULL),
 
-('A01',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fea',NULL,NULL,'A','rally',NULL,NULL,0,'normal','active'),
-('B01',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139feb',NULL,NULL,'B','rally',NULL,NULL,0,'normal','active');
+('A101',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139faa',NULL,NULL,'A','rally',NULL,NULL,0,'normal','active'),
+('A102',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fab',NULL,NULL,'A','rally',NULL,NULL,0,'normal','active'),
+('A111',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fac',NULL,NULL,'A','rally',NULL,NULL,0,'normal','active'),
+('B101',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fba',NULL,NULL,'B','rally',NULL,NULL,0,'normal','active'),
+('C101',4000000000000,'sha256','{\"mountpoint\": \"/Volumes\"}',0,0,NULL,'file',NULL,'disk','physical','2c147bed-0f1a-4b7d-bfe6-efc984139fca',NULL,NULL,'C','rally',NULL,NULL,0,'normal','active');
 
 /*!40000 ALTER TABLE `volume` ENABLE KEYS */;
 UNLOCK TABLES;

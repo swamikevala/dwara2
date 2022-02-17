@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,9 +21,11 @@ import org.ishafoundation.dwaraapi.api.resp.volume.MarkVolumeStatusResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
@@ -34,11 +37,13 @@ import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
+import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
 import org.ishafoundation.dwaraapi.enumreferences.VolumeLifecyclestage;
 import org.ishafoundation.dwaraapi.enumreferences.Volumetype;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.VolumeindexManager;
+import org.ishafoundation.dwaraapi.storage.storagesubtype.AbstractStoragesubtype;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeFinalizer;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeInitializer;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
@@ -55,7 +60,10 @@ public class VolumeService extends DwaraService {
 	
 	@Autowired
 	private VolumeDao volumeDao;
-
+	
+	@Autowired
+	private JobDao jobDao;
+	
 	@Autowired
 	private RequestDao requestDao;
 	
@@ -83,6 +91,9 @@ public class VolumeService extends DwaraService {
 	@Autowired
 	private VolumeindexManager volumeindexManager;
 	
+	@Autowired
+	private Map<String, AbstractStoragesubtype> storagesubtypeMap;
+	
 	@Value("${filesystem.temporarylocation}")
 	private String filesystemTemporarylocation;
 
@@ -92,17 +103,44 @@ public class VolumeService extends DwaraService {
 		List<Volume> list = volumeDao.findAllByCopyId(copyId);
 		return list;
 	}
-	
+
 	public List<VolumeResponse> getVolumeByVolumetype(String volumetype){
 		List<VolumeResponse> volumeResponseList = null;
 			// validate
 			Volumetype neededVolumetype = Volumetype.valueOf(volumetype);
 			
 			volumeResponseList = new ArrayList<VolumeResponse>();
-			List<Volume> volumeGroupList = volumeDao.findAllByTypeAndImportedIsFalse(neededVolumetype);
-			for (Volume volume : volumeGroupList) {
+			List<Volume> volumeByTypeList = volumeDao.findAllByTypeAndImportedIsFalse(neededVolumetype);
+			for (Volume volume : volumeByTypeList) {
 				volumeResponseList.add(getVolume_Internal(volume));
 			}
+		return volumeResponseList;
+	}
+	
+
+	public List<VolumeResponse> getCurrentlyInUsePhysicalVolumeAcrossGroups() {
+		double GiB = 1073741824; // 1 GiB = 1073741824 bytes...
+		double TiB = 1099511627776.00;
+		double TB = 1000000000000.00;
+		String sizeUnit = "TB"; // "GiB"; 
+		double sizeUnitDivisor = TB;
+		
+		List<VolumeResponse> volumeResponseList = new ArrayList<VolumeResponse>();
+		List<Volume> volumeGroupList = volumeDao.findAllByTypeAndImportedIsFalse(Volumetype.group);
+		for (Volume nthVolumeGroup : volumeGroupList) {
+			// TODO : NOTE: A1,A2,A11 sorting will give A1,A11,A2 - can we sort it on Initialised date...
+			Volume volume = volumeDao.findTopByGroupRefIdAndImportedIsFalseAndFinalizedIsFalseAndHealthstatusAndLifecyclestageOrderByIdAsc(nthVolumeGroup.getId(), VolumeHealthStatus.normal, VolumeLifecyclestage.active); // get the current running in use physical volume in the group
+			VolumeResponse volumeResponse = getVolume_Internal(volume);
+			
+			long totalToBeWrittenArtifactSize = 0L;
+			List<Job> queuedJobList = jobDao.findAllByStatusAndStoragetaskActionIdAndGroupVolumeCopyId(Status.queued, Action.write, nthVolumeGroup.getCopy().getId());
+			for (Job nthQueuedJob : queuedJobList) {
+				Artifact artifact = artifactDao.findById(nthQueuedJob.getInputArtifactId()).get(); // get the artifact details from DB
+				totalToBeWrittenArtifactSize += artifact.getTotalSize();
+			}
+			volumeResponse.setRequiredCapacity(Float.valueOf(df.format(totalToBeWrittenArtifactSize/sizeUnitDivisor)));
+			volumeResponseList.add(volumeResponse);
+		}
 		return volumeResponseList;
 	}
 
@@ -171,6 +209,17 @@ public class VolumeService extends DwaraService {
 			volResp.setMaxPhysicalUnusedCapacity(Float.valueOf(df.format(maxPhysicalUnusedCapacity/sizeUnitDivisor)));
 			volResp.setSizeUnit(sizeUnit); 
 		}
+		else {
+			if(volume.getStoragetype() == Storagetype.disk) {
+				volResp.setTotalCapacity(Float.valueOf(df.format(volumeUtil.getVolumeUsableCapacity(volume)/sizeUnitDivisor)));
+				volResp.setUsedCapacity(Float.valueOf(df.format(volumeUtil.getVolumeUsedCapacity(volume)/sizeUnitDivisor)));
+				volResp.setUnusedCapacity(Float.valueOf(df.format(volumeUtil.getVolumeUnusedCapacity(volume)/sizeUnitDivisor)));
+				volResp.setMaxPhysicalUnusedCapacity(Float.valueOf(df.format(volumeUtil.getVolumeUnusedCapacity(volume)/sizeUnitDivisor)));
+				volResp.setSizeUnit(sizeUnit); 
+			}
+		} 
+		
+		
 		
 		if(volume.getLocation() != null)
 			volResp.setLocation(volume.getLocation().getId());
@@ -192,7 +241,14 @@ public class VolumeService extends DwaraService {
 				logger.info(volume.getId() + ":" +  volResp.getUnusedCapacity() + ":" + (volumeDetails.getMinimumFreeSpace()/sizeUnitDivisor));
 				if(volResp.getUnusedCapacity() < (volumeDetails.getMinimumFreeSpace()/sizeUnitDivisor))
 					details.setExpandCapacity(true);
-				details.setNextBarcode(volume.getSequence().getPrefix() + (volume.getSequence().getCurrrentNumber() + 1) + "L7"); // TODO - How to findout LTO Generation???
+				
+				String volumeSuffix = "";
+				if(volume.getStoragesubtype() != null) {	
+					AbstractStoragesubtype storagesubtype = storagesubtypeMap.get(volume.getStoragesubtype());
+					if(storagesubtype != null)
+						volumeSuffix = storagesubtype.getSuffixToEndWith();
+				}	
+				details.setNextBarcode(volume.getSequence().getPrefix() + (volume.getSequence().getCurrrentNumber() + 1) + volumeSuffix); // TODO - How to findout LTO Generation???
 			}
 			
 			volResp.setDetails(details);

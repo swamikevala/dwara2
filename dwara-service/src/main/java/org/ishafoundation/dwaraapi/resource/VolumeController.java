@@ -107,6 +107,25 @@ public class VolumeController {
 		return ResponseEntity.status(HttpStatus.OK).body(volumeResponseList);
 	}
 	
+	@GetMapping(value = "/volume/currentPhysical", produces = "application/json")
+	public ResponseEntity<List<VolumeResponse>> getCurrentlyUsedPhysicalVolumes(){
+		logger.info("/volume/currentlyUsed");
+		List<VolumeResponse> volumeResponseList = null;
+		try {
+			volumeResponseList = volumeService.getCurrentlyInUsePhysicalVolumeAcrossGroups();
+		}catch (Exception e) {
+			String errorMsg = "Unable to get Volume details - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(volumeResponseList);
+	}
+	
 	@GetMapping(value = "/volume/{id}", produces = "application/json")
 	public ResponseEntity<VolumeResponse> getVolume(@PathVariable("id") String id){
 		VolumeResponse volumeResponse = null;

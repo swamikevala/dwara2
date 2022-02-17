@@ -19,6 +19,7 @@ public class VolumeResponse {
 	private float usedCapacity;
 	private float unusedCapacity;
 	private float maxPhysicalUnusedCapacity;
+	private float requiredCapacity;
 	private String sizeUnit;
 	private String location;
 	private Details details;
@@ -113,6 +114,12 @@ public class VolumeResponse {
 	}
 	public void setMaxPhysicalUnusedCapacity(float maxPhysicalUnusedCapacity) {
 		this.maxPhysicalUnusedCapacity = maxPhysicalUnusedCapacity;
+	}
+	public float getRequiredCapacity() {
+		return requiredCapacity;
+	}
+	public void setRequiredCapacity(float requiredCapacity) {
+		this.requiredCapacity = requiredCapacity;
 	}
 	public String getSizeUnit() {
 		return sizeUnit;

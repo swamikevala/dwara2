@@ -71,6 +71,8 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	
 	List<Job> findAllByRequestIdAndInputArtifactId(int requestId, Integer inputArtifactId);
 	
+	List<Job> findAllByStatusAndStoragetaskActionIdAndGroupVolumeCopyId(Status status, Action action, Integer copyNumber);
+	
 	// Used for LtoWala
 	List<Job> findAllByCompletedAtBetweenAndStoragetaskActionIdAndGroupVolumeCopyId(LocalDateTime startDateTime, LocalDateTime endDateTime, Action action, Integer copyNumber);
 	
