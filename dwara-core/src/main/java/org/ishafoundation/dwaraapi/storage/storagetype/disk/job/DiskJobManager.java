@@ -43,16 +43,15 @@ public class DiskJobManager extends AbstractStoragetypeJobManager {
 			if(job.getStatus() != Status.queued) { // This check is to avoid race condition on jobs. This check is not needed for non-blocking jobs as Jobselector will take care of it...
 				logger.info(job.getId() + " - job probably already picked up for processing in the last run. Skipping it");
 			}
-			
+
 			Volume volume = storageJob.getVolume();
+			job.setDevice(null);// TODO "???"
+			job.setVolume(volume);
+			
 			DiskJob dj = new DiskJob();
 			dj.setStorageJob(storageJob);
 			dj.setMountPoint(volume.getDetails().getMountpoint());
 			// dj.setDeviceWwnId();
-			
-			
-			job.setDevice(null);// TODO "???"
-			job.setVolume(volume);
 
 			logger.debug("Launching separate disk task thread -----------");
 			DiskTask diskTask = new DiskTask();//applicationContext.getBean(DiskTask.class); 

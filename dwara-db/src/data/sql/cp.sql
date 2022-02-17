@@ -382,7 +382,7 @@ INSERT INTO `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `
 (1,0,'video','A'),
 (0,0,'video-encrypt','B'),
 (1, 0, 'video', 'B'),
-(1,0,'video-mezz-proxy','C'),
+(1,0,'video-mezz-proxy','M'),
 (1,0,'audio','A'),
 (1,0,'audio-encrypt','B'),
 (1,0,'audio-proxy','C'),
