@@ -1392,7 +1392,7 @@ public class ImportService extends DwaraService {
 		Import importTable = null;
 		try {		
 			importTable = importDao.findById(importId).get();
-			if(importTable.getStatus() != Status.failed)
+			if(importTable.getStatus() != Status.failed && importTable.getStatus() != Status.completed_failures)
 				throw new DwaraException("Import cannot be marked completed. Only failed Import records can be marked_completed"); //
 
 			HashMap<String, Object> data = new HashMap<String, Object>();
