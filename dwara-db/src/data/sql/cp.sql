@@ -1272,7 +1272,7 @@ INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `displa
 ('U14',1,NULL,0,14,'audio-proxy-flow',NULL,'audio-proxy-low-gen',NULL,NULL),
 ('U15',1,'[\"U14\"]',0,15,'audio-proxy-flow','cp-archive-flow',NULL,NULL,NULL),
 
-('U16',1,NULL,0,16,'audio-extraction-flow',NULL,'audio-proxy-low-gen',NULL,'{"exclude_if": {"artifactname_regex": ".*Cam(2|3).*"}}'),
+('U16',1,NULL,0,16,'audio-extraction-flow',NULL,'audio-proxy-low-gen',NULL,'{"exclude_if": {"artifactname_regex": ".*(Cam2|Cam3).*"}}'),
 ('U17',1,'[\"U16\"]',0,17,'audio-extraction-flow',NULL,'copy-gdrive',NULL,NULL);
 
 /*!40000 ALTER TABLE `flowelement` ENABLE KEYS */;
