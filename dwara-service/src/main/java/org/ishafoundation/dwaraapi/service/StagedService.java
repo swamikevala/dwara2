@@ -163,14 +163,14 @@ public class StagedService extends DwaraService{
 		}		
 	}
 
-    public List<ArtifactClassGroupedStagedFileDetails> getAllIngestableFiles(){
+    public List<ArtifactClassGroupedStagedFileDetails> getAllIngestableFiles(boolean lightWeight){
     	List<Artifactclass> artifactclassList = configurationTablesUtil.getAllArtifactclasses();
     	List<ArtifactClassGroupedStagedFileDetails> artifactClassGroupedStagedFileDetailsList = new ArrayList<ArtifactClassGroupedStagedFileDetails>();
     	for (Artifactclass nthArtifactclass : artifactclassList) {
     		if(nthArtifactclass.isSource()) {
 	    		String artifactclassId = nthArtifactclass.getId();
 	    		logger.debug("Now scanning " + artifactclassId);
-	    		List<StagedFileDetails> nthArtifactclassStagedFileDetails = getAllIngestableFiles(artifactclassId);
+	    		List<StagedFileDetails> nthArtifactclassStagedFileDetails = getAllIngestableFiles(artifactclassId, lightWeight);
 	    		int stagedFileCnt = nthArtifactclassStagedFileDetails.size();
 	    		logger.debug("Total candidate files " + stagedFileCnt);
 	    		if(stagedFileCnt > 0) {
@@ -188,8 +188,11 @@ public class StagedService extends DwaraService{
 		return artifactClassGroupedStagedFileDetailsList;
 	}
 
-    
     public List<StagedFileDetails> getAllIngestableFiles(String artifactclassId){
+    	return getAllIngestableFiles(artifactclassId, false);
+    }
+    
+    public List<StagedFileDetails> getAllIngestableFiles(String artifactclassId, boolean lightWeight){
 		Artifactclass artifactclass = configurationTablesUtil.getArtifactclass(artifactclassId);
 		List<String> scanFolderBasePathList = new ArrayList<String>();
 		
@@ -198,7 +201,7 @@ public class StagedService extends DwaraService{
 			scanFolderBasePathList.add(configuration.getReadyToIngestSrcDirRoot() + java.io.File.separator + artifactclassActionUser.getUser().getName());
 		}
 		
-		return sourceDirScanner.scanSourceDir(artifactclass, scanFolderBasePathList);
+		return sourceDirScanner.scanSourceDir(artifactclass, scanFolderBasePathList, lightWeight);
 	}
 	
     public StagedRenameResponse renameStagedFiles(List<StagedRenameFile> stagedRenameFileList) throws DwaraException{

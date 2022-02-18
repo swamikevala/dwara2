@@ -41,9 +41,9 @@ public class StagedController {
 		    @ApiResponse(code = 404, message = "Not Found")
 	})
 	@GetMapping(value="/staged/scan", produces = "application/json")
-    public ResponseEntity<List<ArtifactClassGroupedStagedFileDetails>> getAllIngestableFiles(){
+    public ResponseEntity<List<ArtifactClassGroupedStagedFileDetails>> getAllIngestableFiles(@RequestParam(value="lightWeight", required=false, defaultValue="false") boolean lightWeight){
 		logger.info("/staged/scan");
-		List<ArtifactClassGroupedStagedFileDetails> ingestFileList = stagedService.getAllIngestableFiles();
+		List<ArtifactClassGroupedStagedFileDetails> ingestFileList = stagedService.getAllIngestableFiles(lightWeight);
 		
 		if (ingestFileList.size() > 0) {
 			return ResponseEntity.ok(ingestFileList);

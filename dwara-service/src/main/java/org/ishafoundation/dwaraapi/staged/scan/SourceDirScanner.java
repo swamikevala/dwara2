@@ -37,6 +37,10 @@ public class SourceDirScanner {
     private String DELETED = "deleted";
 	
 	public List<StagedFileDetails> scanSourceDir(Artifactclass artifactclass, List<String> scanFolderBasePathList) {
+		return scanSourceDir(artifactclass, scanFolderBasePathList, false);
+	}
+	
+	public List<StagedFileDetails> scanSourceDir(Artifactclass artifactclass, List<String> scanFolderBasePathList, boolean lightWeight) {
 		//int artifactclassId = artifactclass.getId();
     	String artifactclassName = artifactclass.getId();
         String sequenceId = artifactclass.getSequenceId(); // getting the primary key of the Sequence table which holds the lastsequencenumber for this group...
@@ -56,36 +60,51 @@ public class SourceDirScanner {
 			FileFilter allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(notCancelledFolderFilter, notDeletedFolderFilter);//FileFilterUtils.and(dirFilter, notCancelledFolderFilter, notDeletedFolderFilter);
 	    	File[] ingestableFiles = new File(sourcePath).listFiles(allFilesExcludingCancelledAndDeletedDirectoryFilter);
 	    	if(ingestableFiles != null) {
-	    		List<StagedFileDetails> nthScanFolderBaseIngestDirectoryList = scanForIngestableFiles(sequence, sourcePath, ingestableFiles);
+	    		List<StagedFileDetails> nthScanFolderBaseIngestDirectoryList = scanForIngestableFiles(sequence, sourcePath, ingestableFiles, lightWeight);
 	    		ingestReadyFileList.addAll(nthScanFolderBaseIngestDirectoryList);
 	    	}
 	    	
-	    	// All cancelled artifact...
-	    	String cancelledOriginSourceDir = sourcePath + File.separator + Status.cancelled.toString();
-	    	File[] cancelledIngestableFiles = new File(cancelledOriginSourceDir).listFiles();
-	    	if(cancelledIngestableFiles != null) {
-	    		List<StagedFileDetails> nthScanFolderBaseCancelledDirectoryIngestFileList = scanForIngestableFiles(sequence, cancelledOriginSourceDir, cancelledIngestableFiles);
-	    		ingestReadyFileList.addAll(nthScanFolderBaseCancelledDirectoryIngestFileList);
-	    	}	
-	    	
-	    	// All deleted artifact...
-	    	String deletedOriginSourceDir = sourcePath + File.separator + DELETED;
-	    	File[] deletedIngestableFiles = new File(deletedOriginSourceDir).listFiles();
-	    	if(deletedIngestableFiles != null) {
-	    		List<StagedFileDetails> nthScanFolderBaseDeletedDirectoryIngestFileList = scanForIngestableFiles(sequence, deletedOriginSourceDir, deletedIngestableFiles);
-	    		ingestReadyFileList.addAll(nthScanFolderBaseDeletedDirectoryIngestFileList);
-	    	}		    	
+	    	if(!lightWeight) {
+		    	// All cancelled artifact...
+		    	String cancelledOriginSourceDir = sourcePath + File.separator + Status.cancelled.toString();
+		    	File[] cancelledIngestableFiles = new File(cancelledOriginSourceDir).listFiles();
+		    	if(cancelledIngestableFiles != null) {
+		    		List<StagedFileDetails> nthScanFolderBaseCancelledDirectoryIngestFileList = scanForIngestableFiles(sequence, cancelledOriginSourceDir, cancelledIngestableFiles, lightWeight);
+		    		ingestReadyFileList.addAll(nthScanFolderBaseCancelledDirectoryIngestFileList);
+		    	}	
+		    	
+		    	// All deleted artifact...
+		    	String deletedOriginSourceDir = sourcePath + File.separator + DELETED;
+		    	File[] deletedIngestableFiles = new File(deletedOriginSourceDir).listFiles();
+		    	if(deletedIngestableFiles != null) {
+		    		List<StagedFileDetails> nthScanFolderBaseDeletedDirectoryIngestFileList = scanForIngestableFiles(sequence, deletedOriginSourceDir, deletedIngestableFiles, lightWeight);
+		    		ingestReadyFileList.addAll(nthScanFolderBaseDeletedDirectoryIngestFileList);
+		    	}		    	
+	    	}
 		}
 		
 		return ingestReadyFileList;
 	}
 	
-	private List<StagedFileDetails> scanForIngestableFiles(Sequence sequence, String sourcePath, File[] ingestableFiles) {
+	private List<StagedFileDetails> scanForIngestableFiles(Sequence sequence, String sourcePath, File[] ingestableFiles, boolean lightWeight) {
 		
 		List<StagedFileDetails> ingestFileList = new ArrayList<StagedFileDetails>();
     	for (int i = 0; i < ingestableFiles.length; i++) {
 			File nthIngestableFile = ingestableFiles[i];
-			StagedFileDetails nthIngestFile = stagedFileEvaluator.evaluateAndGetDetails(sequence, sourcePath, nthIngestableFile);
+			StagedFileDetails nthIngestFile = null;
+			if(lightWeight) {
+				ArtifactFileDetails afd = stagedFileEvaluator.getDetails(nthIngestableFile);
+				
+				nthIngestFile = new StagedFileDetails();
+		
+				nthIngestFile.setName(nthIngestableFile.getName());		
+				nthIngestFile.setPath(sourcePath);
+				nthIngestFile.setFileCount(afd.getCount());
+				nthIngestFile.setTotalSize(afd.getTotalSize());
+			}
+			else {
+				nthIngestFile = stagedFileEvaluator.evaluateAndGetDetails(sequence, sourcePath, nthIngestableFile);
+			}
 			ingestFileList.add(nthIngestFile);
 		}
     	return ingestFileList;
