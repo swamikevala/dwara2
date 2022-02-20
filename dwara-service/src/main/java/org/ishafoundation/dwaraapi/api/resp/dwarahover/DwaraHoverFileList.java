@@ -23,6 +23,7 @@ public class DwaraHoverFileList {
 	private String size_in;
 	private String artifact_class_id;
 	private List<String> proxy_path_name;
+	private String volume_id;
 	private List<DwaraHoverTranscriptListDTO> transcripts;
 
 
@@ -43,6 +44,7 @@ public class DwaraHoverFileList {
 					.artifact_class_id(!StringUtils.isEmpty(hoverList.getArtifactClass_id()) ? hoverList.getArtifactClass_id() : null)
 					.proxy_path_name(hoverList.getProxyPathName())
 					.transcripts(hoverList.getTranscripts())
+					.volume_id(hoverList.getVolume_id())
 					.build();
 
 
