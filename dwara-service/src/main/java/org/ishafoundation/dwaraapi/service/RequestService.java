@@ -3,7 +3,13 @@ package org.ishafoundation.dwaraapi.service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
@@ -19,19 +25,14 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Tag;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.JobDetailsType;
 import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
@@ -39,6 +40,7 @@ import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.service.common.ArtifactDeleter;
 import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
+import org.ishafoundation.dwaraapi.utils.FileVolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,17 +76,12 @@ public class RequestService extends DwaraService{
 	
 	@Autowired
 	private ArtifactDeleter artifactDeleter;
-
-	@Autowired
-	private ArtifactVolumeDao artifactVolumeDao;
-	
-	@Autowired
-	private FileVolumeDao fileVolumeDao;
 	
 	@Autowired
 	private Restore restoreTaskAction;
-	
 
+	@Autowired
+	private FileVolumeUtil fileVolumeUtil;
 	
     public RequestResponse getRequest(int requestId) throws Exception{
     	Optional<Request> requestRecord = requestDao.findById(requestId);
@@ -642,7 +639,7 @@ public class RequestService extends DwaraService{
 				long restoreETA = 0;
 				long postProcessETA = 0;
 				try {
-					file.setTape(getFileVolume(fileFromDB.getId(), 1).getVolume().getId());
+					file.setTape(fileVolumeUtil.getFileVolume(fileFromDB.getId(), 1).getVolume().getId());
 
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -807,26 +804,6 @@ public class RequestService extends DwaraService{
 		return eta;
 	}
 
-	private FileVolume getFileVolume(int fileIdToBeRestored, int copyNumber) throws Exception {
-    	List<FileVolume> fileVolumeList = fileVolumeDao.findAllByIdFileIdAndVolumeGroupRefCopyId(fileIdToBeRestored, copyNumber);
-    	FileVolume fileVolume = null;
-    	if(fileVolumeList.size() > 1) {
-    		
-    		org.ishafoundation.dwaraapi.db.model.transactional.File file = fileDao.findById(fileIdToBeRestored).get();
-    		Artifact artifact = file.getArtifact();
-	    	for (FileVolume nthFileVolume : fileVolumeList) {
-				ArtifactVolume artifactVolume = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifact.getId(), nthFileVolume.getId().getVolumeId());
-				if(artifactVolume.getStatus() == ArtifactVolumeStatus.current || artifactVolume.getStatus() == null) {
-					fileVolume = nthFileVolume;
-					break;
-				}
-			}
-    	}
-    	else {
-    		fileVolume = fileVolumeList.get(0);
-    	}
-    	return fileVolume;
-	}
 
 	private long getTargetSize(String targetLocation, RestoreFile file) {
 		long targetSize = 0;

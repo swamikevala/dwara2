@@ -1,30 +1,12 @@
 package org.ishafoundation.dwaraapi.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
-import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.api.resp.dwarahover.*;
-import org.ishafoundation.dwaraapi.db.dao.master.jointables.ExtensionFiletypeDao;
-import org.ishafoundation.dwaraapi.db.keys.ExtensionFiletypeKey;
-import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
-import org.ishafoundation.dwaraapi.exception.DwaraException;
-import org.ishafoundation.dwaraapi.exception.ExceptionType;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,6 +15,36 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+
+import org.apache.commons.lang3.StringUtils;
+import org.ishafoundation.dwaraapi.api.resp.dwarahover.DwaraHoverFileList;
+import org.ishafoundation.dwaraapi.api.resp.dwarahover.DwaraHoverFileListCount;
+import org.ishafoundation.dwaraapi.api.resp.dwarahover.DwaraHoverFileListDTO;
+import org.ishafoundation.dwaraapi.api.resp.dwarahover.DwaraHoverTranscriptListDTO;
+import org.ishafoundation.dwaraapi.api.resp.dwarahover.StockWords;
+import org.ishafoundation.dwaraapi.db.dao.master.jointables.ExtensionFiletypeDao;
+import org.ishafoundation.dwaraapi.db.keys.ExtensionFiletypeKey;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.ExtensionFiletype;
+import org.ishafoundation.dwaraapi.exception.DwaraException;
+import org.ishafoundation.dwaraapi.exception.ExceptionType;
+import org.ishafoundation.dwaraapi.utils.FileVolumeUtil;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
 
 
 @Component
@@ -45,6 +57,9 @@ public class DwaraHoverService extends DwaraService {
 
 	@Autowired
 	ExtensionFiletypeDao extensionFiletypeDao;
+	
+	@Autowired
+	private FileVolumeUtil fileVolumeUtil;
 
 	ObjectMapper objectMapper = new ObjectMapper();
 
@@ -240,7 +255,7 @@ public class DwaraHoverService extends DwaraService {
 						dwaraHoverFileListDTO.setPathName(pathName);
 						dwaraHoverFileListDTO.setArtifactClass_id(artifactClassId);
 						dwaraHoverFileListDTO.setTranscripts(transcriptsByPathName);
-
+						dwaraHoverFileListDTO.setVolume_id(fileVolumeUtil.getFileVolume(id, 1).getVolume().getId());
 						return dwaraHoverFileListDTO;
 					})).collect(Collectors.toList());
 

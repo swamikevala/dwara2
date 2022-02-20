@@ -8,19 +8,17 @@ import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
-import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
-import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
+import org.ishafoundation.dwaraapi.utils.FileVolumeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +40,7 @@ public class Restore extends AbstractStoragetaskAction{
 	private FileDao fileDao;
 	
 	@Autowired
-	private ArtifactVolumeDao artifactVolumeDao;
+	private FileVolumeUtil fileVolumeUtil;
 	
 	@Autowired
 	private FileVolumeDao fileVolumeDao;
@@ -92,7 +90,7 @@ public class Restore extends AbstractStoragetaskAction{
 			FileVolume fileVolume = null;
 			Integer goodCopy = request.getDetails().getSourceCopy(); // artifact rewrite or defective_volume has this
 			if(goodCopy != null)
-				fileVolume = getFileVolume(fileIdToBeRestored, goodCopy);
+				fileVolume = fileVolumeUtil.getFileVolume(fileIdToBeRestored, goodCopy);
 			else //if(request.getDetails().getPurpose() == RewritePurpose.volume_migration || request.getDetails().getPurpose() == RewritePurpose.additonal_copy)
 				fileVolume = getFileVolume(fileIdToBeRestored, request.getDetails().getVolumeId());
 	
@@ -164,7 +162,7 @@ public class Restore extends AbstractStoragetaskAction{
 			if(copyNumber == null) {
 				copyNumber = 1;// TODO : we need to default it
 			}
-			FileVolume fileVolume  = getFileVolume(fileIdToBeRestored, copyNumber);
+			FileVolume fileVolume  = fileVolumeUtil.getFileVolume(fileIdToBeRestored, copyNumber);
 			if(fileVolume == null)
 				throw new Exception("Not able to retrieve filevolume record for filedId " + fileIdToBeRestored + " copyNumber " + copyNumber);
 	
@@ -211,34 +209,6 @@ public class Restore extends AbstractStoragetaskAction{
 		
 		
 		return storageJob;
-	}
-	
-
-//	private FileVolume getFileVolume(Domain domain, int fileIdToBeRestored, String locationId) {
-//    	@SuppressWarnings("unchecked")
-//		FileVolumeRepository<FileVolume> domainSpecificFileVolumeRepository = domainUtil.getDomainSpecificFileVolumeRepository(domain);
-//    	return domainSpecificFileVolumeRepository.findByIdFileIdAndVolumeLocationId(fileIdToBeRestored, locationId);
-//	}
-	
-	private FileVolume getFileVolume(int fileIdToBeRestored, int copyNumber) throws Exception {
-    	List<FileVolume> fileVolumeList = fileVolumeDao.findAllByIdFileIdAndVolumeGroupRefCopyId(fileIdToBeRestored, copyNumber);
-    	FileVolume fileVolume = null;
-    	if(fileVolumeList.size() > 1) {
-    		
-    		org.ishafoundation.dwaraapi.db.model.transactional.File file = fileDao.findById(fileIdToBeRestored).get();
-    		Artifact artifact = file.getArtifact();
-	    	for (FileVolume nthFileVolume : fileVolumeList) {
-				ArtifactVolume artifactVolume = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifact.getId(), nthFileVolume.getId().getVolumeId());
-				if(artifactVolume.getStatus() == ArtifactVolumeStatus.current || artifactVolume.getStatus() == null) {
-					fileVolume = nthFileVolume;
-					break;
-				}
-			}
-    	}
-    	else {
-    		fileVolume = fileVolumeList.get(0);
-    	}
-    	return fileVolume;
 	}
 	
 	private FileVolume getFileVolume(int fileIdToBeRestored, String volumeId) {
