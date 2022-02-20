@@ -1,5 +1,8 @@
 package org.ishafoundation.dwaraapi.storage.storagetype.disk.job;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +46,8 @@ public class DiskJobManager extends AbstractStoragetypeJobManager {
 		JobSelector js = new JobSelector();
 		GroupedJobsCollection gjc = js.groupJobsBasedOnVolumeTag(storageJobsList); // Grouping the storage Jobs on volume
 		Map<String, List<StorageJob>> volumeTag_volumeTagGroupedJobs = gjc.getVolumeTag_volumeTagGroupedJobs();
+		
+		storageJobsList = removeJobsThatDontHaveNeededDiskAttached(storageJobsList);
 		
 		// Removing all same pool jobs that are running currently. We want only one job to write on a volume at any point in time... 
 		List<Job> inprogressWriteJobs = jobDao.findAllByStatusAndStoragetaskActionIdOrderById(Status.in_progress, Action.write);
@@ -90,6 +95,37 @@ public class DiskJobManager extends AbstractStoragetypeJobManager {
 				}
 			}
 		}
+	}
+	
+	
+	private List<StorageJob>  removeJobsThatDontHaveNeededDiskAttached(List<StorageJob> storageJobsList) {
+		List<StorageJob> onlyDiskOnLibraryStorageJobsList = new ArrayList<StorageJob>(); 
+		for (int i = 0; i < storageJobsList.size(); i++) {
+			StorageJob nthStorageJob = storageJobsList.get(i);
+			Volume volume = nthStorageJob.getVolume();
+			String volumeTag = volume.getId();
+			
+			String messageToBeSaved = null;
+	    	Path destDiskpath = Paths.get(volume.getDetails().getMountpoint(), volume.getId());
+	    	if(destDiskpath.toFile().exists()) {
+	    		onlyDiskOnLibraryStorageJobsList.add(nthStorageJob);
+	    	}
+	    	else {
+				messageToBeSaved = volumeTag + " not attached ";
+				logger.debug(messageToBeSaved + " . Skipping job - " + nthStorageJob.getJob().getId()); 
+	    	}	
+			
+			Job nthJob = nthStorageJob.getJob();
+			String alreadyExistingJobMessage = nthJob.getMessage();
+			if((messageToBeSaved == null && alreadyExistingJobMessage != null) || (messageToBeSaved != null && !messageToBeSaved.equals(alreadyExistingJobMessage))) {
+				nthJob.setMessage(messageToBeSaved);
+				Job latestJobObjFromDb = jobDao.findById(nthJob.getId()).get();
+				if(latestJobObjFromDb.getStatus() != Status.cancelled) // if a job is cancelled in another thread - dont save the object as it overwrites the status
+					jobDao.save(nthJob);
+			}
+		}
+	
+		return onlyDiskOnLibraryStorageJobsList;
 	}
 	
 	public class DiskTask implements Runnable{
