@@ -187,6 +187,10 @@ public class TapeJobSelector {
 			}
 		}
 		tapeJobsList.removeAll(tapeJobsListNotSupportedForThisDrive);
+		if(tapeJobsList.size() == 0) {
+			tapeJobsList.addAll(tapeJobsListNotSupportedForThisDrive); // add back all not supported jobs we excluded not supported by this drive so next drive picks it up
+			return null;
+		}
 
 		// tapedrive and tape linked via device.details.type(LTO7) and volume.details.storagesubtype(LTO7)...
 //			driveDetails.getDriveId();
@@ -230,7 +234,8 @@ public class TapeJobSelector {
 			chosenTapeJob = chooseAJob(groupedAndOrderedJobsList, true, allDrivesList);
 			
 			logger.debug("Updating the original job list");
-			tapeJobsList = groupedAndOrderedJobsList; // removing all same tape specific jobs...
+			tapeJobsList.clear();
+			tapeJobsList.addAll(groupedAndOrderedJobsList); // removing all same tape specific jobs...
 
 		}
 		tapeJobsList.addAll(tapeJobsListNotSupportedForThisDrive); // add back all not supported jobs we excluded not supported by this drive so next drive picks it up
