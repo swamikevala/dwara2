@@ -172,7 +172,7 @@ public class FileService extends DwaraService{
     	
     	
     	if(!allowedChrsInOutputFolderPattern.matcher(outputFolder).matches())
-    		throw new Exception("Output folder has unsupported characters");
+    		throw new Exception("Output folder " + outputFolder + " has unsupported characters");
     	
     	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File>();
     	validate(fileIds, copyNumber != null ? copyNumber : 1, destinationPath, outputFolder, fileId_FileObj_Map);
