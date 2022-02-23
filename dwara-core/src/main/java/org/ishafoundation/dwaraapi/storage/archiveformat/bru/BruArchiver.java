@@ -29,11 +29,13 @@ public class BruArchiver extends AbstractBruArchiver {
 	private String executeCommand(List<String> bruCommandParamsList)
 			throws Exception {
 		String commandOutput = null;
-		CommandLineExecutionResponse bruCopyCommandLineExecutionResponse = retriableCommandLineExecutorImpl.executeCommandWithRetriesOnSpecificError(bruCommandParamsList, DwaraConstants.DRIVE_BUSY_ERROR);
-		if(bruCopyCommandLineExecutionResponse.isComplete()) {
-			commandOutput = bruCopyCommandLineExecutionResponse.getStdOutResponse();
-		}else {
-			String failureReason = bruCopyCommandLineExecutionResponse.getFailureReason();
+		CommandLineExecutionResponse bruCopyCommandLineExecutionResponse = null;
+		try {
+			bruCopyCommandLineExecutionResponse = retriableCommandLineExecutorImpl.executeCommandWithRetriesOnSpecificError(bruCommandParamsList, DwaraConstants.DRIVE_BUSY_ERROR);
+			if(bruCopyCommandLineExecutionResponse.isComplete())
+				commandOutput = bruCopyCommandLineExecutionResponse.getStdOutResponse();
+		}catch (Exception e) {
+			String failureReason = bruCopyCommandLineExecutionResponse.getFailureReason().trim();
 			if(bruCopyCommandLineExecutionResponse.getExitCode() == 1 && failureReason.startsWith("bru: [W042]")) // bru hack for restores on san
 				commandOutput = bruCopyCommandLineExecutionResponse.getStdOutResponse();
 			else {	
@@ -41,6 +43,7 @@ public class BruArchiver extends AbstractBruArchiver {
 				throw new Exception("Unable to execute bru command successfully");
 			}
 		}
+ 
 		return commandOutput;
 	}
 	
