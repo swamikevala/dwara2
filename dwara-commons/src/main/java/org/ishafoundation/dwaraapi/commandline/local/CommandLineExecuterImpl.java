@@ -129,10 +129,11 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 				}
 			}
 
+			commandLineExecutionResponse.setStdOutResponse(stdOutRespBuffer.toString());
+			commandLineExecutionResponse.setExitCode(proc.exitValue());
 			if(proc.exitValue() == 0) {
 				isComplete = true;
-				commandLineExecutionResponse.setStdOutResponse(stdOutRespBuffer.toString());	
-			} else {
+			} else { // warning or error - set it as a failure...
 				isComplete = false;
 				String stdErrResp = stdErrRespBuffer.toString();
 				String message = "Failed - no error message received";
@@ -143,6 +144,7 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 				}else {
 					message = stdErrResp;
 				}
+
 				throw new Exception(message);
 			}
 			commandLineExecutionResponse.setIsComplete(isComplete);			
