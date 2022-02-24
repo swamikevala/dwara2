@@ -1,3 +1,9 @@
+# Dwara App Version - 2.1.40 (24th Feb 2022)
+
+### Bug fixes
+
+1) Restore fix 
+
 # Dwara App Version - 2.1.39 (22nd Feb 2022)
 
 ### Bug fixes
