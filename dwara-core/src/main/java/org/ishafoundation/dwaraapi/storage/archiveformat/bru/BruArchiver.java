@@ -36,7 +36,7 @@ public class BruArchiver extends AbstractBruArchiver {
 				commandOutput = bruCopyCommandLineExecutionResponse.getStdOutResponse();
 		}catch (Exception e) {
 				logger.error("Bru command execution failed " + e.getMessage());
-				throw new Exception("Unable to execute bru command successfully");
+				throw e;
 		}
  
 		return commandOutput;
