@@ -35,13 +35,13 @@ public class BruArchiver extends AbstractBruArchiver {
 			if(bruCopyCommandLineExecutionResponse.isComplete())
 				commandOutput = bruCopyCommandLineExecutionResponse.getStdOutResponse();
 		}catch (Exception e) {
-			String failureReason = bruCopyCommandLineExecutionResponse.getFailureReason().trim();
-			if(bruCopyCommandLineExecutionResponse.getExitCode() == 1 && failureReason.startsWith("bru: [W042]")) // bru hack for restores on san
-				commandOutput = bruCopyCommandLineExecutionResponse.getStdOutResponse();
-			else {	
+			String failureReason = bruCopyCommandLineExecutionResponse.getFailureReason();
+//			if(bruCopyCommandLineExecutionResponse.getExitCode() == 1 && failureReason.trim().startsWith("bru: [W042]")) // bru hack for restores on san
+//				commandOutput = bruCopyCommandLineExecutionResponse.getStdOutResponse();
+//			else {	
 				logger.error("Bru command execution failed " + failureReason);
 				throw new Exception("Unable to execute bru command successfully");
-			}
+//			}
 		}
  
 		return commandOutput;

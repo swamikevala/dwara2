@@ -144,8 +144,11 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 				}else {
 					message = stdErrResp;
 				}
-
-				throw new Exception(message);
+				
+				if(proc.exitValue() == 1 && message.startsWith("bru: [W042]")) // bru hack
+					isComplete= true;
+				else
+					throw new Exception(message);
 			}
 			commandLineExecutionResponse.setIsComplete(isComplete);			
 
