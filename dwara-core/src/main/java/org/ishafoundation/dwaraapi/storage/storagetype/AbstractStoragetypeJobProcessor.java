@@ -563,6 +563,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		try {
 			Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
 		}catch (Exception e) { // would fail for san moves with folders having owner as 1000. Try using sudo mv
+			logger.warn("Moving using command line as Files.move had errors " + e.getMessage());
 			commandLineExecuter.executeCommand("sudo mv " + srcPath + " " + destPath);
 		}
 		logger.info("Moved restored files from " + srcPath + " to " + destPath);
