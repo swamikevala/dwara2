@@ -14,6 +14,7 @@ import java.util.Map;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.SequenceDao;
@@ -101,6 +102,9 @@ public abstract class AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private JobCreator jobCreator;
+	
+	@Autowired
+	private CommandLineExecuter commandLineExecuter;
 	
 	public AbstractStoragetypeJobProcessor() {
 		logger.debug(this.getClass().getName());
@@ -556,7 +560,11 @@ public abstract class AbstractStoragetypeJobProcessor {
 		else
 			Files.createDirectories(Paths.get(destPath));
 
-		Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+		try {
+			Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+		}catch (Exception e) { // would fail for san moves with folders having owner as 1000. Try using sudo mv
+			commandLineExecuter.executeCommand("sudo mv " + srcPath + " " + destPath);
+		}
 		logger.info("Moved restored files from " + srcPath + " to " + destPath);
 	}
 	
