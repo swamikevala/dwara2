@@ -145,7 +145,7 @@ public class CommandLineExecuterImpl implements CommandLineExecuter{
 					message = stdErrResp;
 				}
 				
-				if(proc.exitValue() == 1 && (message.startsWith("bru: [W042]") || message.startsWith("mbuffer: error: outputThread: error writing to <stdout> at offset "))) // bru hack
+				if(proc.exitValue() == 1 && (message.startsWith("bru: [W042]") || message.startsWith("mbuffer: warning: error during output to <stdout>: Broken pipe") || message.startsWith("mbuffer: error: outputThread: error writing to <stdout> at offset "))) // bru hack
 					isComplete= true;
 				else
 					throw new Exception(message);
