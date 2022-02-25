@@ -418,7 +418,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			int m = (int) Math.max(1, Math.round(fileSizeInGiB/16.0));
 			String mValue = m + "G";
 			
-			restoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -e -q | dd bs=" + volumeBlocksize	+ " count=" + noOfTapeBlocksToBeRead;
+			restoreCommand = "/usr/bin/mbuffer -i " + deviceName + " -s " + volumeBlocksize + " -m " + mValue + " -p 10 -q | dd bs=" + volumeBlocksize	+ " count=" + noOfTapeBlocksToBeRead;
 		}
 		logger.info("Tar restoring to " + destinationPath + " - " +  restoreCommand);
 		
