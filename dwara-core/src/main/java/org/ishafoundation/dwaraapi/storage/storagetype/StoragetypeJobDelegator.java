@@ -98,6 +98,9 @@ public class StoragetypeJobDelegator {
 				job.setMessage("[info] No volume available");
 				job = jobDao.save(job);
 				continue;
+			} else {
+				job.setVolume(volume);
+				job = jobDao.save(job);
 			}
 			
 			if(volume.getStoragetype() == Storagetype.tape) {
