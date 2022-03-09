@@ -212,8 +212,7 @@ public class FileStoragelevel implements IStoragelevel {
 
 	@Override
 	public StorageResponse initialize(SelectedStorageJob job) throws Exception{
-		// TODO Auto-generated method stub
-		return null;
+		throw new Exception("Initialize not supported for storage level FILE");
 	}
 	
 	@Override
@@ -243,14 +242,12 @@ public class FileStoragelevel implements IStoragelevel {
 
 	@Override
 	public StorageResponse finalize(SelectedStorageJob job) throws Exception{
-		// TODO Auto-generated method stub
-		return null;
+		return new StorageResponse();
 	}
 	
 	@Override
 	public StorageResponse restore(SelectedStorageJob job) throws StorageException{
-		// TODO Auto-generated method stub
-		return null;
+		throw new StorageException("Restore not supported for storage level FILE");
 	}
 
 }
