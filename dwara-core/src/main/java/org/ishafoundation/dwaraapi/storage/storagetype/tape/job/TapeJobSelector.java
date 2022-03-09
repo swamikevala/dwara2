@@ -125,7 +125,7 @@ public class TapeJobSelector extends JobSelector{
 		List<StorageJob> ignoreOptimisationTapeJobsList = new ArrayList<StorageJob>();
 		for (Iterator<StorageJob> iterator = tapeJobsList.iterator(); iterator.hasNext();) {
 			StorageJob nthTapeJob = (StorageJob) iterator.next();
-			if(nthTapeJob.getPriority() == Priority.critical.getPriorityValue())
+			if(nthTapeJob.getPriority() == Priority.critical.getPriorityValue() || (nthTapeJob.getJob().getRequest().getActionId() == Action.restore_process))
 				ignoreOptimisationTapeJobsList.add(nthTapeJob);
 //			TODO : Commented out
 //			if(!nthTapeJob.isOptimizeTapeAccess()) {
