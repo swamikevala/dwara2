@@ -78,8 +78,7 @@ public class VolumeUtil {
 		
 	public boolean isVolumeNeedToBeFinalized(Volume volume, long usedCapacity){
 		boolean isReadyToBeFinalized = false;
-//		long usedCapacity = 
-				getVolumeUsedCapacity(volume);
+//		long usedCapacity = getVolumeUsedCapacity(volume);
 		
 		long capacity = volume.getCapacity(); // something like 6TB
 		long volumeWatermarkLow = (long) (capacity * watermarkLow);

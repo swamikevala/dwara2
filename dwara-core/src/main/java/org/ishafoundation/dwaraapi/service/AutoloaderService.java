@@ -74,41 +74,9 @@ public class AutoloaderService{
 		try {
 			String autoloaderId = autoloaderDevice.getId();
 			autoloaderResponse.setId(autoloaderId);
-			List<Drive> drives = new ArrayList<Drive>();
-
-//			List<Device> allDrives = configurationTablesUtil.getAllConfiguredDriveDevices();
-			logger.trace("Following drives are mapped in dwara to " + autoloaderId);
-			List<Device> allDrives = deviceDao.findAllByType(Devicetype.tape_drive);
-			HashMap<String, Device> deviceId_DeviceObj_Map = new HashMap<String, Device>();
-			for (Device device : allDrives) {
-				logger.trace(device.getId());	
-				deviceId_DeviceObj_Map.put(device.getId(), device);
-			}
-			
-			logger.trace("Getting all drives details from the physcial Tape library " + autoloaderId);
-			List<DriveDetails> driveDetailsList = tapeDeviceUtil.getAllDrivesDetails();
-			for (DriveDetails driveDetails : driveDetailsList) {
-				String driveId = driveDetails.getDriveId();
-				logger.trace("Adding details for " + driveId);
-				Device configuredDriveDevice = deviceId_DeviceObj_Map.get(driveId);
-				
-				Drive drive = new Drive();
-				drive.setId(driveId);
-				// During mapping drives this value is set to null...
-				drive.setAddress(configuredDriveDevice.getDetails().getAutoloaderAddress());
-				drive.setBarcode(driveDetails.getDte().getVolumeTag());
-				drive.setEmpty(driveDetails.getDte().isEmpty());
-				DriveStatus status = DriveStatus.available;
-				if(driveDetails.getMtStatus().isBusy())
-					status = DriveStatus.busy;
-				drive.setStatus(status);
-				
-				drives.add(drive);
-			}
+			List<Drive> drives = getAllDrivesDetails(autoloaderId);
 			autoloaderResponse.setDrives(drives);
-			
 			List<Tape> tapes = getLoadedTapesInLibrary(autoloaderDevice, false);
-			
 			autoloaderResponse.setTapes(tapes);
 		}catch (Exception e) {
 			String errorMsg = "Unable to get autoloader details - " + e.getMessage();
@@ -120,6 +88,41 @@ public class AutoloaderService{
 				throw new DwaraException(errorMsg, null);
 		}
 		return autoloaderResponse;
+	}
+	
+	public List<Drive> getAllDrivesDetails(String autoloaderId) throws Exception{
+		List<Drive> drives = new ArrayList<Drive>();
+		
+		logger.trace("Following drives are mapped in dwara to " + autoloaderId);
+		List<Device> allDrives = deviceDao.findAllByType(Devicetype.tape_drive);
+		HashMap<String, Device> deviceId_DeviceObj_Map = new HashMap<String, Device>();
+		for (Device device : allDrives) {
+			logger.trace(device.getId());	
+			deviceId_DeviceObj_Map.put(device.getId(), device);
+		}
+		
+		logger.trace("Getting all drives details from the physcial Tape library " + autoloaderId);
+		List<DriveDetails> driveDetailsList = tapeDeviceUtil.getAllDrivesDetails();
+		for (DriveDetails driveDetails : driveDetailsList) {
+			String driveId = driveDetails.getDriveId();
+			logger.trace("Adding details for " + driveId);
+			Device configuredDriveDevice = deviceId_DeviceObj_Map.get(driveId);
+			
+			Drive drive = new Drive();
+			drive.setId(driveId);
+			// During mapping drives this value is set to null...
+			drive.setAddress(configuredDriveDevice.getDetails().getAutoloaderAddress());
+			drive.setBarcode(driveDetails.getDte().getVolumeTag());
+			drive.setEmpty(driveDetails.getDte().isEmpty());
+			DriveStatus status = DriveStatus.available;
+			if(driveDetails.getMtStatus().isBusy())
+				status = DriveStatus.busy;
+			drive.setStatus(status);
+			
+			drives.add(drive);
+		}
+		
+		return drives;
 	}
 	
 	public List<Tape> getLoadedTapesInLibrary(Device autoloaderDevice, boolean getBlankTapesOnly) throws Exception{
