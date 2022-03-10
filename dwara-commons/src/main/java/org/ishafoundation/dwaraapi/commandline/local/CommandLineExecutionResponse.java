@@ -4,6 +4,7 @@ public class CommandLineExecutionResponse {
 	
 	private boolean isComplete;
 	private boolean isCancelled;
+	private int exitCode;
 	private String failureReason;
 	private String stdOutResponse;
 	
@@ -18,6 +19,12 @@ public class CommandLineExecutionResponse {
 	}
 	public void setIsCancelled(boolean isCancelled) {
 		this.isCancelled = isCancelled;
+	}
+	public int getExitCode() {
+		return exitCode;
+	}
+	public void setExitCode(int exitCode) {
+		this.exitCode = exitCode;
 	}
 	public String getFailureReason() {
 		return failureReason;

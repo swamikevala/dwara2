@@ -1,3 +1,21 @@
+# Dwara App Version - 2.1.40 (24th Feb 2022)
+
+### Bug fixes
+
+1) Restore fix 
+
+# Dwara App Version - 2.1.39 (22nd Feb 2022)
+
+### Bug fixes
+
+1) Fix for non supported generation drive not letting jobs to check on other drives
+
+2) Import marked_completed for completed_failures too
+
+3) Fix for 5TB artifact breaking bru response parsing
+
+4) Fix for blocking jobs race condition. Pls refer Initialisatio job 533873 as casestudy
+
 # Dwara App Version - 2.1.38 (7th Feb 2022)
 
 ### Bug fixes

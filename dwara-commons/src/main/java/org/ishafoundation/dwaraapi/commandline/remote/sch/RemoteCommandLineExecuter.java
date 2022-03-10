@@ -72,11 +72,12 @@ public class RemoteCommandLineExecuter {
 				}
 			}
 
+			commandLineExecutionResponse.setStdOutResponse(stdOutRespBuffer.toString());
+			commandLineExecutionResponse.setExitCode(channel.getExitStatus());
 			File tmpErrorFile = new File(commandOutputFilePathName);
 			if(channel.getExitStatus() == 0) {
 				isComplete = true;
-				commandLineExecutionResponse.setStdOutResponse(stdOutRespBuffer.toString());	
-			} else {
+			} else { // warning or error - set it as a failure...
 				isComplete = false;
 				List<String> nLInes = FileUtils.readLines(tmpErrorFile);
 				logger.trace(FileUtils.readFileToString(tmpErrorFile));
