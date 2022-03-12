@@ -189,7 +189,7 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 	    String filePathname = fileAbsolutePathName.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "");
 	    nthTFileRowToBeInserted.setPathname(filePathname);
 	    
-	    byte[] filePathChecksum = ChecksumUtil.getChecksum(filePathname);
+	    byte[] filePathChecksum = ChecksumUtil.getFilePathnameMD5Checksum(filePathname);
 	    nthTFileRowToBeInserted.setPathnameChecksum(filePathChecksum);
 		
 	    File file = new File(fileAbsolutePathName);
@@ -220,7 +220,7 @@ public class Fix_2_1_06 extends ProcessingJobHelper {
 	    
 	    String filePathname = tFileDBObj.getPathname();
 	    nthFileRowToBeInserted.setPathname(filePathname);
-	    byte[] filePathChecksum = ChecksumUtil.getChecksum(filePathname);
+	    byte[] filePathChecksum = ChecksumUtil.getFilePathnameMD5Checksum(filePathname);
 	    nthFileRowToBeInserted.setPathnameChecksum(filePathChecksum);
 
 	    nthFileRowToBeInserted.setDirectory(tFileDBObj.isDirectory());

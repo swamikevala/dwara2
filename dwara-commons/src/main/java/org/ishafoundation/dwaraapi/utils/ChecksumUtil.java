@@ -18,19 +18,26 @@ import org.slf4j.LoggerFactory;
 public class ChecksumUtil {
 	
 	static Logger logger = LoggerFactory.getLogger(ChecksumUtil.class);
-
 	
-	public static byte[] getChecksum(String filepathname) throws Exception{
-		MessageDigest md = MessageDigest.getInstance("MD5");
+	public static byte[] getFilePathnameMD5Checksum(String filepathname) throws Exception{
+		return getFilePathnameChecksum(filepathname, Checksumtype.md5);
+	}
+
+	public static byte[] getFilePathnameChecksum(String filepathname, Checksumtype checksumtype) throws Exception{
+		MessageDigest md = MessageDigest.getInstance(checksumtype.getJavaStyleChecksumtype());
 	    md.update(filepathname.getBytes());
 	    return md.digest();
 	}
 	
 	public static byte[] getChecksum(java.io.File file, Checksumtype checksumtype) throws Exception{
 		//TODO : Hardcoded bufferSize - Configure it... What is the optimum buffersize???
+		int bufferSize = 524288; // 512k
+		return getChecksum(file, checksumtype, bufferSize);
+	}
+
+	public static byte[] getChecksum(java.io.File file, Checksumtype checksumtype, int bufferSize) throws Exception {
 		BufferedInputStream bis = null;
 		try {
-			int bufferSize = 524288; // 512k
 			bis = new BufferedInputStream(new FileInputStream(file), bufferSize);
 			return getChecksum(bis, checksumtype, bufferSize);
 		}

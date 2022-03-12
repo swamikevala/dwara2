@@ -617,7 +617,7 @@ public class StagedService extends DwaraService{
 			String filePath = tfile.getAbsolutePath();
 			filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); // just holding the file path from the artifact folder and not the absolute path.
 			logger.trace("filePath - " + filePath);
-			byte[] filePathChecksum = ChecksumUtil.getChecksum(filePath);
+			byte[] filePathChecksum = ChecksumUtil.getFilePathnameMD5Checksum(filePath);
 			TFile nthTFileRowToBeInserted = new TFile();
 			if(tfile.isDirectory())
 				nthTFileRowToBeInserted.setDirectory(true);
@@ -695,7 +695,7 @@ public class StagedService extends DwaraService{
 			String filePath = file.getAbsolutePath();
 			filePath = filePath.replace(pathPrefix + java.io.File.separator, ""); // just holding the file path from the artifact folder and not the absolute path.
 			logger.trace("filePath - " + filePath);
-			byte[] filePathChecksum = ChecksumUtil.getChecksum(filePath);
+			byte[] filePathChecksum = ChecksumUtil.getFilePathnameMD5Checksum(filePath);
 			File nthFileRowToBeInserted = new File();
 			if(file.isDirectory())
 				nthFileRowToBeInserted.setDirectory(true);

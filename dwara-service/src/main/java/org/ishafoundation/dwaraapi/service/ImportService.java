@@ -1017,7 +1017,7 @@ public class ImportService extends DwaraService {
 		
 		
 					file.setPathname(filePathname);
-					byte[] filePathnameChecksum = ChecksumUtil.getChecksum(filePathname);
+					byte[] filePathnameChecksum = ChecksumUtil.getFilePathnameMD5Checksum(filePathname);
 					file.setPathnameChecksum(filePathnameChecksum);
 					file.setSize(nthFile.getSize()); // TODO Note junk file size is not reduced.
 					//file.setSymlinkFileId();

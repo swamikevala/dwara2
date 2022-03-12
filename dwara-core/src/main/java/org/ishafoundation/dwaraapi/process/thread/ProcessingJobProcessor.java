@@ -492,7 +492,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	    String filePathname = fileAbsolutePathName.replace(outputArtifact.getArtifactclass().getPath() + File.separator, "");
 	    nthTFileRowToBeInserted.setPathname(filePathname);
 	    
-	    byte[] filePathChecksum = ChecksumUtil.getChecksum(filePathname);
+	    byte[] filePathChecksum = ChecksumUtil.getFilePathnameMD5Checksum(filePathname);
 	    nthTFileRowToBeInserted.setPathnameChecksum(filePathChecksum);
 		
 		// TODO need to be done and set after proxy file is generated
@@ -535,7 +535,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 	    
 	    String filePathname = tFileDBObj.getPathname();
 	    nthFileRowToBeInserted.setPathname(filePathname);
-	    byte[] filePathChecksum = ChecksumUtil.getChecksum(filePathname);
+	    byte[] filePathChecksum = ChecksumUtil.getFilePathnameMD5Checksum(filePathname);
 	    nthFileRowToBeInserted.setPathnameChecksum(filePathChecksum);
 
 	    nthFileRowToBeInserted.setDirectory(tFileDBObj.isDirectory());

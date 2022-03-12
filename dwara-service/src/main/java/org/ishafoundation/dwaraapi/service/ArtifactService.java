@@ -224,7 +224,7 @@ public class ArtifactService extends DwaraService{
 				// Change the parent folder name by replacing the older artifact name by newer name
 				String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, artifactNewName); 
 				eachfile.setPathname(correctedFilePathForArtifactFile);
-				byte[] filePathChecksum = ChecksumUtil.getChecksum(correctedFilePathForArtifactFile);
+				byte[] filePathChecksum = ChecksumUtil.getFilePathnameMD5Checksum(correctedFilePathForArtifactFile);
 				eachfile.setPathnameChecksum(filePathChecksum);
 	
 			} // File entry manipulation and renaming ends here 
@@ -236,7 +236,7 @@ public class ArtifactService extends DwaraService{
 				// Change the parent folder name by replacing the older artifact name by newer name
 				String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, artifactNewName); 
 				nthTFile.setPathname(correctedFilePathForArtifactFile);	
-				byte[] filePathChecksum = ChecksumUtil.getChecksum(correctedFilePathForArtifactFile);
+				byte[] filePathChecksum = ChecksumUtil.getFilePathnameMD5Checksum(correctedFilePathForArtifactFile);
 				nthTFile.setPathnameChecksum(filePathChecksum);
 			}
 
@@ -448,7 +448,7 @@ public class ArtifactService extends DwaraService{
 					// Change the parent folder name by replacing the older artifact name by newer name
 					String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, toBeArtifactName); 
 					eachfile.setPathname(correctedFilePathForArtifactFile);
-					byte[] filePathChecksum = ChecksumUtil.getChecksum(correctedFilePathForArtifactFile);
+					byte[] filePathChecksum = ChecksumUtil.getFilePathnameMD5Checksum(correctedFilePathForArtifactFile);
 					eachfile.setPathnameChecksum(filePathChecksum);
 				} // File entry manipulation and renaming ends here 
 					
@@ -459,7 +459,7 @@ public class ArtifactService extends DwaraService{
 					// Change the parent folder name by replacing the older artifact name by newer name
 					String correctedFilePathForArtifactFile = filepath.replaceAll(parentFolderReplaceRegex, toBeArtifactName); 
 					nthTFile.setPathname(correctedFilePathForArtifactFile);	
-					byte[] filePathChecksum = ChecksumUtil.getChecksum(correctedFilePathForArtifactFile);
+					byte[] filePathChecksum = ChecksumUtil.getFilePathnameMD5Checksum(correctedFilePathForArtifactFile);
 					nthTFile.setPathnameChecksum(filePathChecksum);
 				}
 					
