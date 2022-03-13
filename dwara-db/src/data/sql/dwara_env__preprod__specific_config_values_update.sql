@@ -36,22 +36,19 @@ drop table dwara_sequences;
 drop table artifact_sequence;
 drop table file_sequence;
 
-truncate artifact1;
+truncate artifact;
 truncate artifact_volume;
-truncate artifact2;
-truncate artifact2_volume;
-truncate artifact1_label;
-truncate file1;
+truncate artifact_label;
+truncate file;
 truncate file_volume;
-truncate file2;
-truncate file2_volume;
-truncate file_volume;
+truncate t_file;
+truncate t_file_volume;
 truncate job;
 truncate jobrun;
 truncate request;
 truncate badfile;
 truncate processingfailure;
-truncate t_file_job;
+truncate t_t_file_job;
 truncate t_activedevice;
 */
 /*

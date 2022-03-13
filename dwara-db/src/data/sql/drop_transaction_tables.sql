@@ -1,18 +1,27 @@
 -- use dwara2_test;
 SET FOREIGN_KEY_CHECKS=0;
+truncate artifact;
+truncate artifact_volume;
+truncate artifact_label;
+truncate file;
+truncate file_volume;
+truncate t_file;
+truncate t_file_volume;
+truncate job;
+truncate jobrun;
+truncate request;
+truncate badfile;
+truncate processingfailure;
+truncate t_t_file_job;
+truncate t_activedevice;
+
+/*
 DROP TABLE 
-`artifact1`, 
-`artifact1_volume`, 
-`artifact2`, 
-`artifact2_volume`, 
-`artifact_sequence`,
+`artifact`, 
+`artifact_volume`, 
 `badfile`, 
-`dwara_sequences`, 
-`file1`, 
-`file1_volume`, 
-`file2`, 
-`file2_volume`, 
-`file_sequence`,
+`file`, 
+`file_volume`, 
 `job`, 
 `jobrun`, 
 `processingfailure`, 
@@ -21,5 +30,5 @@ DROP TABLE
 `t_file_volume`, 
 `t_activedevice`,
 `t_t_file_job`;
-
+*/
 SET FOREIGN_KEY_CHECKS=1;
