@@ -1235,21 +1235,15 @@ LOCK TABLES `flowelement` WRITE;
 /*!40000 ALTER TABLE `flowelement` DISABLE KEYS */;
 INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `display_order`, `flow_id`, `flow_ref_id`, `processingtask_id`, `storagetask_action_id`, `task_config`) VALUES
 ('U1',1,NULL,0,1,'cp-archive-flow',NULL,'checksum-gen',NULL,NULL),
-('U10',1,'[\"U5\", \"U9\"]',0,10,'encryption-flow',NULL,'checksum-verify',NULL,NULL),
-('U11',1,NULL,0,11,'video-mezz-proxy-flow',NULL,'cp-file-copy',NULL,'{\"pathname_regex\": \"SUB/.*\"}'),
-('U12',1,'[\"U11\"]',0,12,'video-mezz-proxy-flow','cp-archive-flow',NULL,NULL,NULL),
-('U14',1,NULL,0,14,'audio-proxy-flow',NULL,'audio-proxy-low-gen',NULL,NULL),
-('U15',1,'[\"U14\"]',0,15,'audio-proxy-flow','cp-archive-flow',NULL,NULL,NULL),
-('U16',1,NULL,0,16,'audio-extraction-flow',NULL,'audio-proxy-low-gen',NULL,'{\"exclude_if\": {\"artifactname_regex\": \".*(Cam2|Cam3).*\"}}'),
-('U17',1,'[\"U16\"]',0,17,'audio-extraction-flow',NULL,'copy-gdrive',NULL,NULL),
 ('U2',1,NULL,0,2,'cp-archive-flow',NULL,NULL,'write',NULL),
 ('U3',1,'[\"U1\", \"U2\"]',0,3,'cp-archive-flow',NULL,'checksum-verify',NULL,NULL),
 ('U4',0,'[\"U1\"]',0,4,'cp-archive-flow','encryption-flow',NULL,NULL,NULL),
-('U5',1,NULL,0,5,'encryption-flow',NULL,'encrypted-gen',NULL,NULL),
-('U6',1,'[\"U5\"]',0,6,'encryption-flow',NULL,'checksum-gen',NULL,NULL),
-('U7',1,'[\"U5\"]',0,7,'encryption-flow',NULL,'decrypted-gen',NULL,NULL),
-('U8',1,'[\"U7\"]',0,8,'encryption-flow',NULL,'checksum-verify',NULL,NULL),
-('U9',1,'[\"U8\"]',0,9,'encryption-flow',NULL,NULL,'write',NULL);
+('U5',1,NULL,0,5,'video-mezz-proxy-flow',NULL,'mezz-proxy-handler',NULL,NULL),
+-- ('U5',1,NULL,0,5,'video-mezz-proxy-flow',NULL,'mezz-proxy-file-copy',NULL,'{\"pathname_regex\": \"M4ROOT/SUB/.*\", \"include_if\": {\"artifactname_regex\": \".*(_FX3|_A7S3).*\"}}'),
+-- ('U6',1,NULL,0,6,'video-mezz-proxy-flow',NULL,'mezz-proxy-gen',NULL,'{\"include_if\": {\"artifactname_regex\": \".*(_FS7|_Drone|_Insta360|_GoPro).*\"}}'),
+('U7',1,'[\"U5\"]',0,7,'video-mezz-proxy-flow','cp-archive-flow',NULL,NULL,NULL),
+('U11',1,NULL,0,11,'audio-proxy-flow',NULL,'audio-proxy-low-gen',NULL,NULL),
+('U12',1,'[\"U11\"]',0,12,'audio-proxy-flow','cp-archive-flow',NULL,NULL,NULL),
 /*!40000 ALTER TABLE `flowelement` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1550,7 +1544,10 @@ INSERT INTO `processingtask` (`id`, `description`, `filetype_id`, `max_errors`, 
 ('copy-gdrive','copies the artifact to gdrive','_all_',1,NULL,NULL),
 ('decrypted-gen','decrypt encrypted files','_all_',1,'video',NULL),
 ('encrypted-gen','generate encrypted files','_all_',1,'video-encrypt',NULL),
-('mezz-proxy-file-copy','copies a subset of the artifact to a different folder in local','_all_',1,'video-mezz-proxy',NULL);
+-- ('mezz-proxy-file-copy','copies a subset of the artifact to a different folder in local','video',1,'video-mezz-proxy',NULL),
+-- ('mezz-proxy-gen','generate mezz proxies','video',1,'video-mezz-proxy',NULL),
+('mezz-proxy-handler','for certain type of artifacts copies a subset of the artifact to a different folder and for certain other type generates mezz proxies','video',1,'video-mezz-proxy',NULL);
+
 /*!40000 ALTER TABLE `processingtask` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2029,7 +2026,8 @@ LOCK TABLES `user` WRITE;
 INSERT INTO `user` (`id`, `email`, `hash`, `name`, `priorityband_id`) VALUES
 (1,NULL,NULL,'dwara',1),
 (2,'swami.kevala@ishafoundation.org','$2a$10$pAdeP0JmEbI01uQ75GQ09O0WxFIorj.eyOhy59sXAZpQ6IUHLRmCC','swamikevala',1),
-(3,'prakash.gurumurthy@ishafoundation.org','$2a$10$eUvlQmt7H5ZO84DzSxG2s.X95omY4Mk.YRyGsLsX/YU8T/gmllz9m','pgurumurthy',1),
+-- Shambho!
+(3,'prakash.gurumurthy@ishafoundation.org','$2a$10$bEzYpk//yR1er/0PmJD8y.uYC8WqpJIx8cvrTzZyxOou2llIokEt2','pgurumurthy',1),
 (4,'maa.jeevapushpa@ishafoundation.org','$2a$10$y.HcLi.CgQqMWL7rOfLeZe1i9IVrTJ.G6AK9eMR8ftZ8rRhn0l8vO','maajeevapushpa',1),
 (17,NULL,'$2a$10$HoaQ542oRYe2yy0fHMYxHOmbeFFnK4OQpTaLDaho9tuBEn2PPuSUm','dongtruong',1),
 (22,NULL,'$2a$10$nYOgsyz6ik7uw4U1JKQ4tOstzdzVihyInrFt2llg0lHVd45Mf9NKy','video',1);

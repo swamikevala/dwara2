@@ -49,5 +49,10 @@
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.ishafoundation</groupId>
+			<artifactId>dwara-core</artifactId>
+			<version>2.0.05</version>
+		</dependency>
 	</dependencies>
 </project>

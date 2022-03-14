@@ -286,7 +286,8 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 					            }
 					         };
 							String[] processedFileNamesArray = new File(destinationDirPath).list(fileNameFilter);
-							processedFileNames.addAll(Arrays.asList(processedFileNamesArray));
+							if(processedFileNamesArray != null)
+								processedFileNames.addAll(Arrays.asList(processedFileNamesArray));
 						}
 
 						//Validating if all files needed are generated
