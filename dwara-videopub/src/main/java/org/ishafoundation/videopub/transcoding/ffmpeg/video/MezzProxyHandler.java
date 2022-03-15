@@ -98,7 +98,7 @@ public class MezzProxyHandler extends MediaTask implements IProcessingTask{
 	
 	private List<String> getMezzProxyGenerationCommand(String sourceFilePathname, String thumbnailTargetLocation) {
 		List<String> proxyGenerationCommandParamsList = new ArrayList<String>();
-		proxyGenerationCommandParamsList.add("ffmpeg");
+		proxyGenerationCommandParamsList.add("/usr/local/bin/ffmpeg");
 		proxyGenerationCommandParamsList.add("-y");
 		proxyGenerationCommandParamsList.add("-nostdin");
 		proxyGenerationCommandParamsList.add("-i");
