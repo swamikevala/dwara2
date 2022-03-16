@@ -2,7 +2,6 @@ package org.ishafoundation.dwaraapi.db.dao.transactional.jointables;
 
 import java.util.List;
 
-import org.ishafoundation.dwaraapi.db.keys.FileVolumeKey;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.springframework.data.repository.CrudRepository;
 

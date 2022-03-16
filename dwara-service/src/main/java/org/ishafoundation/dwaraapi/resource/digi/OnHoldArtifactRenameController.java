@@ -30,8 +30,8 @@ public class OnHoldArtifactRenameController {
 
 	// ---------------- HARD Renaming Stuff ----------------------------------------------
 	// Changing the filename, folder name 
-	@PostMapping(value = "/artifact/{artifactId}/rename", produces = "application/json")
-	public ResponseEntity<ArtifactResponse> renameHeldFile(@RequestBody ArtifactRenameFile  artifactRenameFile ,@PathVariable("artifactId") int artifactId ){
+	@PostMapping(value = "/artifact/{artifactId}/renameHeldFile", produces = "application/json")
+	public ResponseEntity<ArtifactResponse> renameHeldFile(@RequestBody ArtifactRenameFile  artifactRenameFile, @PathVariable("artifactId") int artifactId){
 		// Things to do - Exits; catches; Response entries ; validation 
 		ArtifactResponse renameArtifactResponse = null;
     	String artifactNewName = artifactRenameFile.getNewName();		 

@@ -98,6 +98,47 @@ public class ArtifactController {
 		return ResponseEntity.status(HttpStatus.OK).body(artifactSoftRenameResponse);
 	}
 	
+	
+	@ApiOperation(value = "Sort of preflight request responding to user to proceed or continue later depending on the written volume availability")
+	@GetMapping("/artifact/{artifactId}/precheckArtifactRename")
+	public ResponseEntity<ArtifactResponse> precheckArtifactRename(@PathVariable("artifactId") int artifactId){
+		logger.info("/artifact/" + artifactId + "/precheckArtifactRename");
+		ArtifactResponse artifactResponse = null;
+		try {
+			artifactResponse = artifactservice.precheckArtifactRename(artifactId);
+		}catch (Exception e) {
+			String errorMsg = "Unable to precheckArtifactRename for artifact - " + e.getMessage();
+			logger.error(errorMsg, e);
+
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(artifactResponse);
+	}
+	
+	@PostMapping(value = "/artifact/{artifactId}/rename", produces = "application/json")
+	public ResponseEntity<ArtifactResponse> rename(@RequestBody ArtifactSoftRenameRequest artifactSoftRenameRequest, @PathVariable("artifactId") int artifactId, @RequestParam(required=false) Boolean force){
+		ArtifactResponse artifactSoftRenameResponse = null;
+    	String artifactNewName = artifactSoftRenameRequest.getNewName();		 
+		// Set the domain for the artifact
+    	logger.info("/artifact/" + artifactId + "/rename");		
+		try {
+			artifactSoftRenameResponse = artifactservice.renameArtifact(artifactId, artifactNewName, force);
+		}catch (Exception e) {
+			String errorMsg = "Unable to rename artifact - " + e.getMessage();
+			logger.error(errorMsg, e);
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(artifactSoftRenameResponse);
+	}
+	
 	@PostMapping(value = "/artifact/{artifactId}/changeArtifactclass", produces = "application/json")
 	public ResponseEntity<ArtifactResponse> changeArtifactclass(@RequestBody ArtifactChangeArtifactclassRequest artifactChangeArtifactclassRequest, @PathVariable("artifactId") int artifactId, @RequestParam(required=false) Boolean force){
 		ArtifactResponse artifactResponse = null;

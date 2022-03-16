@@ -1,5 +1,7 @@
 package org.ishafoundation.dwaraapi.api.resp.artifact;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -15,6 +17,7 @@ public class Artifact {
 	private boolean deleted;
 	private String md5;
 	private Integer artifactIdRef;
+	private List<Volume> volume;
 	
 	public int getArtifactId() {
 		return artifactId;
@@ -76,4 +79,10 @@ public class Artifact {
 	public void setArtifactIdRef(Integer artifactIdRef) {
 		this.artifactIdRef = artifactIdRef;
 	}
+	public List<Volume> getVolume() {
+		return volume;
+	}
+	public void setVolume(List<Volume> volume) {
+		this.volume = volume;
+	}	
 }

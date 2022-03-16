@@ -1238,7 +1238,7 @@ INSERT INTO `flowelement` (`id`, `active`, `dependencies`, `deprecated`, `displa
 ('U2',1,NULL,0,2,'cp-archive-flow',NULL,NULL,'write',NULL),
 ('U3',1,'[\"U1\", \"U2\"]',0,3,'cp-archive-flow',NULL,'checksum-verify',NULL,NULL),
 ('U4',0,'[\"U1\"]',0,4,'cp-archive-flow','encryption-flow',NULL,NULL,NULL),
-('U5',1,NULL,0,5,'video-mezz-proxy-flow',NULL,'mezz-proxy-handler',NULL,NULL),
+('U5',1,NULL,0,5,'video-mezz-proxy-flow',NULL,'mezz-proxy-handler',NULL,'{\"exclude_if\": {\"artifactname_regex\": \".*(_Insta360).*\"}}'),
 -- ('U5',1,NULL,0,5,'video-mezz-proxy-flow',NULL,'mezz-proxy-file-copy',NULL,'{\"pathname_regex\": \"M4ROOT/SUB/.*\", \"include_if\": {\"artifactname_regex\": \".*(_FX3|_A7S3).*\"}}'),
 -- ('U6',1,NULL,0,6,'video-mezz-proxy-flow',NULL,'mezz-proxy-gen',NULL,'{\"include_if\": {\"artifactname_regex\": \".*(_FS7|_Drone|_Insta360|_GoPro).*\"}}'),
 ('U7',1,'[\"U5\"]',0,7,'video-mezz-proxy-flow','cp-archive-flow',NULL,NULL,NULL),
