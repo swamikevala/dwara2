@@ -23,7 +23,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+//@Component
 public class ScheduledEmailReader {
     private static final Logger logger = LoggerFactory.getLogger(ScheduledEmailReader.class);
     @Autowired

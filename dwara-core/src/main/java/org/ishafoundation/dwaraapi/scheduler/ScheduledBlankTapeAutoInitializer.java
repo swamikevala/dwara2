@@ -25,7 +25,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
+//@RestController
 public class ScheduledBlankTapeAutoInitializer {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledBlankTapeAutoInitializer.class);

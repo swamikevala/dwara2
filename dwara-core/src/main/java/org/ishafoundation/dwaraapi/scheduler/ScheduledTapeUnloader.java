@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 //@Component
-@RestController
+//@RestController
 public class ScheduledTapeUnloader {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledTapeUnloader.class);
