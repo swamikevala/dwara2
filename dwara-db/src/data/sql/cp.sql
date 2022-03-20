@@ -124,7 +124,10 @@ LOCK TABLES `action_artifactclass_user` WRITE;
 INSERT INTO `action_artifactclass_user` (`action_id`, `artifactclass_id`, `user_id`) VALUES
 ('ingest','audio',2),
 ('ingest','photo',2),
-('ingest','video',2);
+('ingest','video',2),
+('ingest','audio',23),
+('ingest','photo',23),
+('ingest','video',23);
 /*!40000 ALTER TABLE `action_artifactclass_user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2030,7 +2033,8 @@ INSERT INTO `user` (`id`, `email`, `hash`, `name`, `priorityband_id`) VALUES
 (3,'prakash.gurumurthy@ishafoundation.org','$2a$10$bEzYpk//yR1er/0PmJD8y.uYC8WqpJIx8cvrTzZyxOou2llIokEt2','pgurumurthy',1),
 (4,'maa.jeevapushpa@ishafoundation.org','$2a$10$y.HcLi.CgQqMWL7rOfLeZe1i9IVrTJ.G6AK9eMR8ftZ8rRhn0l8vO','maajeevapushpa',1),
 (17,NULL,'$2a$10$HoaQ542oRYe2yy0fHMYxHOmbeFFnK4OQpTaLDaho9tuBEn2PPuSUm','dongtruong',1),
-(22,NULL,'$2a$10$nYOgsyz6ik7uw4U1JKQ4tOstzdzVihyInrFt2llg0lHVd45Mf9NKy','video',1);
+(22,NULL,'$2a$10$nYOgsyz6ik7uw4U1JKQ4tOstzdzVihyInrFt2llg0lHVd45Mf9NKy','video',1),
+(23,NULL,'$2a$10$3jrL3ZP586LAd3SbAzL8WujXkodzc17XVDdV.A1X0D1Xj7cQJSp3W','videopub',1);
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 

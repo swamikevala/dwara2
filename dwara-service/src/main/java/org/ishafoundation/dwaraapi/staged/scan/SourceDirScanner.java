@@ -56,8 +56,9 @@ public class SourceDirScanner {
 			
 			IOFileFilter notCancelledFolderFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(Status.cancelled.toString()));
 			IOFileFilter notDeletedFolderFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(DELETED));
+			IOFileFilter dsStoreFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(".DS_Store"));
 			
-			FileFilter allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(notCancelledFolderFilter, notDeletedFolderFilter);//FileFilterUtils.and(dirFilter, notCancelledFolderFilter, notDeletedFolderFilter);
+			FileFilter allFilesExcludingCancelledAndDeletedDirectoryFilter = FileFilterUtils.and(notCancelledFolderFilter, notDeletedFolderFilter, dsStoreFilter);//FileFilterUtils.and(dirFilter, notCancelledFolderFilter, notDeletedFolderFilter);
 	    	File[] ingestableFiles = new File(sourcePath).listFiles(allFilesExcludingCancelledAndDeletedDirectoryFilter);
 	    	if(ingestableFiles != null) {
 	    		List<StagedFileDetails> nthScanFolderBaseIngestDirectoryList = scanForIngestableFiles(sequence, sourcePath, ingestableFiles, lightWeight);
