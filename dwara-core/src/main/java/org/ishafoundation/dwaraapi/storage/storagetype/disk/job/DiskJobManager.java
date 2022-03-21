@@ -53,14 +53,18 @@ public class DiskJobManager extends AbstractStoragetypeJobManager {
 		List<Job> inprogressWriteJobs = jobDao.findAllByStatusAndStoragetaskActionIdOrderById(Status.in_progress, Action.write);
 		
 		Set<String> volumeTagSet = volumeTag_volumeTagGroupedJobs.keySet();
+		List<String> alreadyRunningVolumeTagList = new ArrayList<String>();
 		for (String nthVolumeTag : volumeTagSet) {
 			for (Job nthInprogressJob : inprogressWriteJobs) {
 				if(nthInprogressJob.getVolume().getId().equals(nthVolumeTag)) {
 					storageJobsList.removeAll(volumeTag_volumeTagGroupedJobs.get(nthVolumeTag));
-					volumeTag_volumeTagGroupedJobs.remove(nthVolumeTag);
+					alreadyRunningVolumeTagList.add(nthVolumeTag);
 					break;
 				}
 			}
+		}
+		for (String nthVolumeTag : alreadyRunningVolumeTagList) {
+			volumeTag_volumeTagGroupedJobs.remove(nthVolumeTag);
 		}
 
 		// Now just select the job from the leftovers
