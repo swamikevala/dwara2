@@ -15,6 +15,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDaoQueryProps;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -59,6 +60,9 @@ public class JobManager {
 	
 	@Value("${wowo.useNewJobManagementLogic:true}")
 	private boolean useNewJobManagementLogic;
+
+	@Value("${wowo.concurrentWriteVerify:true}")
+	private boolean concurrentWriteVerify;
 	
 	public void manageJobs() {
 		logger.info("***** Managing jobs now *****");
@@ -160,6 +164,9 @@ public class JobManager {
 			}
 		}
 		else {
+			
+			List<Job> queuedWriteJobs = jobDao.findAllByStatusAndStoragetaskActionIdOrderById(Status.queued, Action.write);
+			
 			// storage specific jobs
 			// defective tape migration use case with lot of same tape jobs just give one or two..give.
 			for (String executorName : JobDao.executorName_queryProps_map.keySet()) {
@@ -191,6 +198,22 @@ public class JobManager {
 //							}
 //						}
 						if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
+							// CP - super duper hack - for getting sequential write gains from mounted external HDDs
+							if(!concurrentWriteVerify && processingtaskName.equals("checksum-verify")) {
+								boolean skipJobThisCycle = false;
+								String volumeToBeUsed = job.getVolume().getId();
+								for (Job nthQueuedWriteJob : queuedWriteJobs) {
+									Volume nthQueuedWriteJob_Volume = nthQueuedWriteJob.getVolume();
+									if(nthQueuedWriteJob_Volume != null && nthQueuedWriteJob_Volume.getId().equals(volumeToBeUsed)) {
+										skipJobThisCycle = true;
+										break;
+									}
+								}
+
+								if(skipJobThisCycle)
+									continue;
+							}
+
 							ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
 							processingJobManager.setJob(job);
 							logger.debug(job.getId() + " added to the ProcessingJobManager queue.");
