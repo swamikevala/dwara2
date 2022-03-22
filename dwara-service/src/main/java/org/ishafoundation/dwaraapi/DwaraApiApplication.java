@@ -15,6 +15,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.JobDaoQueryProps;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Version;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -40,6 +41,10 @@ public class DwaraApiApplication {
 	@Autowired
 	private VersionDao versionDao;	
 	
+	@Value("${wowo.splitChecksumVerifyThreadPoolPerVolumeGroup:false}")
+	private boolean splitChecksumVerifyThreadPoolPerVolumeGroup;
+
+	
 	public static void main(String[] args) {
 		SpringApplication.run(DwaraApiApplication.class, args);
 	}
@@ -63,28 +68,38 @@ public class DwaraApiApplication {
 		
 		Set<String> processingtaskSet = processingtaskActionMap.keySet();
 		for (String processingtaskName : processingtaskSet) {
-			String identifier = null;
-			Executor executor = createExecutor(processingtaskName, false);
-			if(executor != null) {
-				IProcessingTask.taskName_executor_map.put(processingtaskName, executor);
-				identifier = processingtaskName;
+			if(splitChecksumVerifyThreadPoolPerVolumeGroup && processingtaskName.equals("checksum-verify")) { // SUPER-DUPER HACK FOR CP
+				String[] volumeGroupList = {"A","B","M"};
+				for (int i = 0; i < volumeGroupList.length; i++) {
+					createThreadPoolsForTask(processingtaskName+ "_" + volumeGroupList[i],globalExecutorDefault);		
+				}
 			}
-			else {
-				identifier = IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER;
-				executor = globalExecutorDefault;
-			}
-			
-			
-			JobDaoQueryProps jobDaoQueryProps = JobDao.executorName_queryProps_map.get(identifier);
-			if(jobDaoQueryProps == null) {
-				jobDaoQueryProps = new JobDaoQueryProps();
-			}
-			jobDaoQueryProps.getTaskNameList().add(processingtaskName);
-			ThreadPoolExecutor tpe = (ThreadPoolExecutor) executor;
-			jobDaoQueryProps.setLimit(tpe.getCorePoolSize() + 2);
-
-			JobDao.executorName_queryProps_map.put(identifier, jobDaoQueryProps);
+			else
+				createThreadPoolsForTask(processingtaskName,globalExecutorDefault);
 		}
+	}
+
+	private void createThreadPoolsForTask(String executorName, Executor globalExecutorDefault) throws Exception {
+		String identifier = null;
+		Executor executor = createExecutor(executorName, false);
+		if(executor != null) {
+			IProcessingTask.taskName_executor_map.put(executorName, executor);
+			identifier = executorName;
+		}
+		else {
+			identifier = IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER;
+			executor = globalExecutorDefault;
+		}
+		
+		JobDaoQueryProps jobDaoQueryProps = JobDao.executorName_queryProps_map.get(identifier);
+		if(jobDaoQueryProps == null) {
+			jobDaoQueryProps = new JobDaoQueryProps();
+		}
+		jobDaoQueryProps.getTaskNameList().add(executorName);
+		ThreadPoolExecutor tpe = (ThreadPoolExecutor) executor;
+		jobDaoQueryProps.setLimit(tpe.getCorePoolSize() + 2);
+	
+		JobDao.executorName_queryProps_map.put(identifier, jobDaoQueryProps);
 	}
 	
 	private Executor createExecutor(String processingtaskName, boolean isGlobal) throws Exception {

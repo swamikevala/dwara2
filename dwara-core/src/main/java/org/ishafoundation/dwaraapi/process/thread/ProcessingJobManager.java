@@ -33,6 +33,7 @@ import org.ishafoundation.dwaraapi.db.model.master.jointables.json.Taskconfig;
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
+import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.utils.ArtifactclassUtil;
 import org.ishafoundation.dwaraapi.db.utils.ConfigurationTablesUtil;
@@ -45,7 +46,6 @@ import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
-import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +98,9 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 	
 	@Value("${wowo.useNewJobManagementLogic:true}")
 	private boolean useNewJobManagementLogic;
+	
+	@Value("${wowo.splitChecksumVerifyThreadPoolPerVolumeGroup:false}")
+	private boolean splitChecksumVerifyThreadPoolPerVolumeGroup;
 
 	private Job job;
 
@@ -190,6 +193,17 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 			
 			
 			String executorName = processingtaskId.toLowerCase();
+			
+			if(splitChecksumVerifyThreadPoolPerVolumeGroup && processingtaskId.toLowerCase().equals("checksum-verify")) {
+				Volume volumeToBeUsedByJob = job.getVolume();
+				if(volumeToBeUsedByJob == null)
+					return;
+				Volume volumeGrpToBeUsedByJob = volumeToBeUsedByJob.getGroupRef();
+				if(volumeGrpToBeUsedByJob == null)
+					return;
+				executorName = executorName + "_" + volumeGrpToBeUsedByJob.getId();
+			}
+			
 			Executor executor = IProcessingTask.taskName_executor_map.get(executorName);
 			if(executor == null) {
 				executorName = IProcessingTask.GLOBAL_THREADPOOL_IDENTIFIER;
