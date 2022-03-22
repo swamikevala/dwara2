@@ -48,7 +48,7 @@ public class ChecksumVerifier implements IProcessingTask {
 			throw new Exception(msg);
 		}
 			
-		if(logicalFile.isFile()) {
+		if(logicalFile.exists() && logicalFile.isFile()) {
 			logger.info("Verifying checksum for - " + tFile.getId() + ":" + logicalFile.getAbsolutePath());
 			byte[] originalChecksum = tFile.getChecksum();
 			logger.trace("originalChecksum " + Hex.encodeHexString(originalChecksum));
