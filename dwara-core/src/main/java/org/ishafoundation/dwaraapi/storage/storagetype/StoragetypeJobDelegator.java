@@ -182,13 +182,14 @@ public class StoragetypeJobDelegator {
 		}
 		else {
 			if(storagetaskAction == Action.write) {
-				Job lastWriteJob = jobDao.findTopByGroupVolumeIdAndStatusAndStoragetaskActionIdOrderByCompletedAtDesc(volume.getGroupRef().getId(), Status.completed, Action.write);
-				// if a write job failed and we are requeing it its possible that the lastArtifactOnVolume is the same job. if so skip this check 
-				if(lastWriteJob.getId() != job.getId() && !jobUtil.isWriteJobAndItsDependentJobsComplete(lastWriteJob)) {
+				Job lastWriteJob = jobDao.findTopByVolumeIdAndStatusAndStoragetaskActionIdOrderByCompletedAtDesc(volume.getId(), Status.completed, Action.write);
+				if(lastWriteJob != null && !jobUtil.isWriteJobAndItsDependentJobsComplete(lastWriteJob)) {
 					String msg = "Skipping "  + job.getId() + " as previous write job [" + lastWriteJob.getId() + "] and/or its dependent jobs are yet to complete";
 					logger.debug(msg);
-					job.setMessage(msg);
-					jobDao.save(job);
+					if(job.getMessage() != null && !job.getMessage().equals(msg)) {
+						job.setMessage(msg);
+						jobDao.save(job);
+					}
 					return;
 				}
 			}
