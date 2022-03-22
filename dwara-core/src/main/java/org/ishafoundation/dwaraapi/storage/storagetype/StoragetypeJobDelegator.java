@@ -10,7 +10,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
-import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
@@ -22,11 +21,9 @@ import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.thread.AbstractStoragetypeJobManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.thread.IStoragetypeThreadPoolExecutor;
 import org.ishafoundation.dwaraapi.storage.utils.StorageJobUtil;
-import org.ishafoundation.dwaraapi.thread.executor.ImportStoragetaskSingleThreadExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 
@@ -39,15 +36,6 @@ public class StoragetypeJobDelegator {
 	@Autowired
 	private JobDao jobDao;	
 	
-	@Autowired
-	private ApplicationContext applicationContext;
-		
-	@Autowired
-	private ImportStoragetaskSingleThreadExecutor importStoragetaskSingleThreadExecutor;
-	
-	@Autowired
-	private ArtifactVolumeRepositoryUtil artifactVolumeRepositoryUtil;
-
 	@Autowired
 	private JobUtil jobUtil;
 
@@ -194,26 +182,14 @@ public class StoragetypeJobDelegator {
 		}
 		else {
 			if(storagetaskAction == Action.write) {
-				ArtifactVolume lastArtifactOnVolume = volume_LastArtifactOnVolume_Map.get(volume);
-				if(lastArtifactOnVolume == null) {
-					lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(volume);
-					
-					if(lastArtifactOnVolume != null) {
-						volume_LastArtifactOnVolume_Map.put(volume, lastArtifactOnVolume);
-					}
-				}
-				
-				if(lastArtifactOnVolume != null) { // check if the job has dependencies and ensure all nested dependencies are completed...
-					//last write job on the volume needed by this job
-					Job lastWriteJob = lastArtifactOnVolume.getJob();
-					// if a write job failed and we are requeing it its possible that the lastArtifactOnVolume is the same job. if so skip this check 
-					if(lastWriteJob.getId() != job.getId() && !jobUtil.isWriteJobAndItsDependentJobsComplete(lastWriteJob)) {
-						String msg = "Skipping "  + job.getId() + " as previous write job [" + lastWriteJob.getId() + "] and/or its dependent jobs are yet to complete";
-						logger.debug(msg);
-						job.setMessage(msg);
-						jobDao.save(job);
-						return;
-					}
+				Job lastWriteJob = jobDao.findTopByGroupVolumeIdAndStatusAndStoragetaskActionIdOrderByCompletedAtDesc(volume.getGroupRef().getId(), Status.completed, Action.write);
+				// if a write job failed and we are requeing it its possible that the lastArtifactOnVolume is the same job. if so skip this check 
+				if(lastWriteJob.getId() != job.getId() && !jobUtil.isWriteJobAndItsDependentJobsComplete(lastWriteJob)) {
+					String msg = "Skipping "  + job.getId() + " as previous write job [" + lastWriteJob.getId() + "] and/or its dependent jobs are yet to complete";
+					logger.debug(msg);
+					job.setMessage(msg);
+					jobDao.save(job);
+					return;
 				}
 			}
 		}

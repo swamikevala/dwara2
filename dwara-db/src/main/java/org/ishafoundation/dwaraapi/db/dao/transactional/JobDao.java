@@ -86,4 +86,7 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	List<Job> findAllByStartedAtBetweenAndStatusAndProcessingtaskIdInOrderById(LocalDateTime startDateTime, LocalDateTime endDateTime, Status status, Collection<String> processingTaskList);
 	
 	List<Job> findAllByRequestIdAndInputArtifactIdAndStoragetaskActionIdAndStatus(int requestId, int artifactId, Action action, Status status);
+	
+	// SELECT * FROM cp2.job where group_volume_id='A' and status = "completed" and storagetask_action_id='write' and completed_at is not null order by completed_at desc limit 1;
+	Job findTopByGroupVolumeIdAndStatusAndStoragetaskActionIdOrderByCompletedAtDesc(String groupVolumeId, Status status, Action action);
 }
