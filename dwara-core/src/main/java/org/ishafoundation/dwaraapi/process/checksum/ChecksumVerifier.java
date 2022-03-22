@@ -48,7 +48,13 @@ public class ChecksumVerifier implements IProcessingTask {
 			throw new Exception(msg);
 		}
 			
-		if(logicalFile.exists() && logicalFile.isFile()) {
+		if(!logicalFile.exists()){
+			String msg = "File doesnt exist. Perhaps disk detatched - " + tFile.getId() + ":" + logicalFile.getAbsolutePath();
+			logger.error(msg);
+			throw new Exception(msg);
+		}
+		
+		if(logicalFile.isFile()) {
 			logger.info("Verifying checksum for - " + tFile.getId() + ":" + logicalFile.getAbsolutePath());
 			byte[] originalChecksum = tFile.getChecksum();
 			logger.trace("originalChecksum " + Hex.encodeHexString(originalChecksum));
