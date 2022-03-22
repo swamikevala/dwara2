@@ -71,15 +71,17 @@ public class DwaraApiApplication {
 			if(splitChecksumVerifyThreadPoolPerVolumeGroup && processingtaskName.equals("checksum-verify")) { // SUPER-DUPER HACK FOR CP
 				String[] volumeGroupList = {"A","B","M"};
 				for (int i = 0; i < volumeGroupList.length; i++) {
-					createThreadPoolsForTask(processingtaskName+ "_" + volumeGroupList[i],globalExecutorDefault);		
+					createThreadPoolsForTask(processingtaskName, volumeGroupList[i], globalExecutorDefault);		
 				}
 			}
 			else
-				createThreadPoolsForTask(processingtaskName,globalExecutorDefault);
+				createThreadPoolsForTask(processingtaskName, null, globalExecutorDefault);
 		}
 	}
 
-	private void createThreadPoolsForTask(String executorName, Executor globalExecutorDefault) throws Exception {
+	private void createThreadPoolsForTask(String processingtaskName, String suffix, Executor globalExecutorDefault) throws Exception {
+		
+		String executorName = suffix != null ? processingtaskName + "_" + suffix : processingtaskName;
 		String identifier = null;
 		Executor executor = createExecutor(executorName, false);
 		if(executor != null) {
@@ -95,7 +97,7 @@ public class DwaraApiApplication {
 		if(jobDaoQueryProps == null) {
 			jobDaoQueryProps = new JobDaoQueryProps();
 		}
-		jobDaoQueryProps.getTaskNameList().add(executorName);
+		jobDaoQueryProps.getTaskNameList().add(processingtaskName);
 		ThreadPoolExecutor tpe = (ThreadPoolExecutor) executor;
 		jobDaoQueryProps.setLimit(tpe.getCorePoolSize() + 2);
 	
