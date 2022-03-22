@@ -97,9 +97,9 @@ if [ $ACTION == "staged_rename" ] || [ $ACTION == "set_permissions" ]; then
    if [ -z $ARTIFACTCLASS ] && [ $SUB_DIR == "user" ]; then printf "option -c (artifactclass) must be specified\n" >&2; exit 1; fi
 
    if [ $SUB_DIR == "user" ]; then 
-      ARTIFACT_BASE_PATH="$(realpath $BASE_DIR)/user/$USER/ingest/$ARTIFACTCLASS"
+      ARTIFACT_BASE_PATH="$BASE_DIR/user/$USER/ingest/$ARTIFACTCLASS"
    elif [ $SUB_DIR == "staged" ]; then
-      ARTIFACT_BASE_PATH="$(realpath $BASE_DIR)/staged"
+      ARTIFACT_BASE_PATH="$BASE_DIR/staged"
    fi
    if ! [ -d $ARTIFACT_BASE_PATH ]; then 
       printf "$ARTIFACT_BASE_PATH is not a directory\n" >&2; exit 1
@@ -147,7 +147,7 @@ if [ $ACTION == "set_permissions" ]; then
 
    # GROUP validations and chgrp execution
    if ! [ -z $GROUP ]; then
-      GROUP_EXISTS=$(grep -q "$GROUP" /etc/group; echo $?)
+      GROUP_EXISTS=$(id -Gn "$GROUP" &> /dev/null; echo $?)
       if [ $GROUP_EXISTS -eq 0 ]; then 
          if [ $RECURSIVE -eq 0 ]; then
             chgrp $GROUP $ARTIFACT_PATH
