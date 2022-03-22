@@ -198,21 +198,21 @@ public class JobManager {
 //							}
 //						}
 						if(!alreadyQueued) { // only when the job is not already dispatched to the queue to be executed, send it now...
-							// CP - super duper hack - for getting sequential write gains from mounted external HDDs
-							if(!concurrentWriteVerify && processingtaskName.equals("checksum-verify")) {
-								boolean skipJobThisCycle = false;
-								String volumeToBeUsed = job.getVolume().getId();
-								for (Job nthQueuedWriteJob : queuedWriteJobs) {
-									Volume nthQueuedWriteJob_Volume = nthQueuedWriteJob.getVolume();
-									if(nthQueuedWriteJob_Volume != null && nthQueuedWriteJob_Volume.getId().equals(volumeToBeUsed)) {
-										skipJobThisCycle = true;
-										break;
-									}
-								}
-
-								if(skipJobThisCycle)
-									continue;
-							}
+//							// CP - super duper hack - for getting sequential write gains from mounted external HDDs
+//							if(!concurrentWriteVerify && processingtaskName.equals("checksum-verify")) {
+//								boolean skipJobThisCycle = false;
+//								String volumeToBeUsed = job.getVolume().getId();
+//								for (Job nthQueuedWriteJob : queuedWriteJobs) {
+//									Volume nthQueuedWriteJob_Volume = nthQueuedWriteJob.getVolume();
+//									if(nthQueuedWriteJob_Volume != null && nthQueuedWriteJob_Volume.getId().equals(volumeToBeUsed)) {
+//										skipJobThisCycle = true;
+//										break;
+//									}
+//								}
+//
+//								if(skipJobThisCycle)
+//									continue;
+//							}
 
 							ProcessingJobManager processingJobManager = applicationContext.getBean(ProcessingJobManager.class);
 							processingJobManager.setJob(job);

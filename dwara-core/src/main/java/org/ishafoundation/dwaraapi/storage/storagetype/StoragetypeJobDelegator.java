@@ -122,51 +122,50 @@ public class StoragetypeJobDelegator {
 					}
 				}
 				else { // only add when no tapedrivemapping or format activity
-					// all storage jobs need to be grouped for some optimisation...
-					Job inProgressJobOnVolume = volume_InProgressJob_Map.get(volume); // Filtering already inprogress same volume jobs
-					if(inProgressJobOnVolume == null) {
-						inProgressJobOnVolume = jobDao.findByStoragetaskActionIdIsNotNullAndVolumeIdAndStatus(volume.getId(), Status.in_progress);
-						
-						if(inProgressJobOnVolume != null) {
-							volume_InProgressJob_Map.put(volume, inProgressJobOnVolume);
-						}
-					}							
-
-					if(inProgressJobOnVolume != null) {
-						logger.debug("Skipping "  + job.getId() + " as same volume is already in use " + inProgressJobOnVolume.getId());
-						continue;
-					}
-					else {
-						if(storagetaskAction == Action.write) {
-							ArtifactVolume lastArtifactOnVolume = volume_LastArtifactOnVolume_Map.get(volume);
-							if(lastArtifactOnVolume == null) {
-								lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(volume);
-								
-								if(lastArtifactOnVolume != null) {
-									volume_LastArtifactOnVolume_Map.put(volume, lastArtifactOnVolume);
-								}
-							}
-							
-							if(lastArtifactOnVolume != null) { // check if the job has dependencies and ensure all nested dependencies are completed...
-								//last write job on the volume needed by this job
-								Job lastWriteJob = lastArtifactOnVolume.getJob();
-								// if a write job failed and we are requeing it its possible that the lastArtifactOnVolume is the same job. if so skip this check 
-								if(lastWriteJob.getId() != job.getId() && !jobUtil.isWriteJobAndItsDependentJobsComplete(lastWriteJob)) {
-									String msg = "Skipping "  + job.getId() + " as previous write job [" + lastWriteJob.getId() + "] and/or its dependent jobs are yet to complete";
-									logger.debug(msg);
-									job.setMessage(msg);
-									jobDao.save(job);
-									continue;
-								}
-							}
-						}
-					}
-					storageJobList.add(storageJob);
-					logger.trace("Added to storagejob collection");
+//					// all storage jobs need to be grouped for some optimisation...
+//					Job inProgressJobOnVolume = volume_InProgressJob_Map.get(volume); // Filtering already inprogress same volume jobs
+//					if(inProgressJobOnVolume == null) {
+//						inProgressJobOnVolume = jobDao.findByStoragetaskActionIdIsNotNullAndVolumeIdAndStatus(volume.getId(), Status.in_progress);
+//						
+//						if(inProgressJobOnVolume != null) {
+//							volume_InProgressJob_Map.put(volume, inProgressJobOnVolume);
+//						}
+//					}							
+//
+//					if(inProgressJobOnVolume != null) {
+//						logger.debug("Skipping "  + job.getId() + " as same volume is already in use " + inProgressJobOnVolume.getId());
+//						continue;
+//					}
+//					else {
+//						if(storagetaskAction == Action.write) {
+//							ArtifactVolume lastArtifactOnVolume = volume_LastArtifactOnVolume_Map.get(volume);
+//							if(lastArtifactOnVolume == null) {
+//								lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(volume);
+//								
+//								if(lastArtifactOnVolume != null) {
+//									volume_LastArtifactOnVolume_Map.put(volume, lastArtifactOnVolume);
+//								}
+//							}
+//							
+//							if(lastArtifactOnVolume != null) { // check if the job has dependencies and ensure all nested dependencies are completed...
+//								//last write job on the volume needed by this job
+//								Job lastWriteJob = lastArtifactOnVolume.getJob();
+//								// if a write job failed and we are requeing it its possible that the lastArtifactOnVolume is the same job. if so skip this check 
+//								if(lastWriteJob.getId() != job.getId() && !jobUtil.isWriteJobAndItsDependentJobsComplete(lastWriteJob)) {
+//									String msg = "Skipping "  + job.getId() + " as previous write job [" + lastWriteJob.getId() + "] and/or its dependent jobs are yet to complete";
+//									logger.debug(msg);
+//									job.setMessage(msg);
+//									jobDao.save(job);
+//									continue;
+//								}
+//							}
+//						}
+//					}
+//					storageJobList.add(storageJob);
+					determineAndAddJobToStorageJobsList(storageJob, job, storagetaskAction, volume, volume_LastArtifactOnVolume_Map, volume_InProgressJob_Map, storageJobList);
 				}
 			}else {
-				storageJobList.add(storageJob);
-				logger.trace("Added to storagejob collection");
+				determineAndAddJobToStorageJobsList(storageJob, job, storagetaskAction, volume, volume_LastArtifactOnVolume_Map, volume_InProgressJob_Map, storageJobList);
 			}
 		}
 		
@@ -176,6 +175,50 @@ public class StoragetypeJobDelegator {
 		}else {
 			logger.trace("No storage job to be processed");
 		}
+	}
+	
+	private void determineAndAddJobToStorageJobsList(StorageJob storageJob, Job job, Action storagetaskAction, Volume volume, Map<Volume, ArtifactVolume> volume_LastArtifactOnVolume_Map, Map<Volume, Job> volume_InProgressJob_Map, List<StorageJob> storageJobList) {
+		// all storage jobs need to be grouped for some optimisation...
+		Job inProgressJobOnVolume = volume_InProgressJob_Map.get(volume); // Filtering already inprogress same volume jobs
+		if(inProgressJobOnVolume == null) {
+			inProgressJobOnVolume = jobDao.findByStoragetaskActionIdIsNotNullAndVolumeIdAndStatus(volume.getId(), Status.in_progress);
+			
+			if(inProgressJobOnVolume != null) {
+				volume_InProgressJob_Map.put(volume, inProgressJobOnVolume);
+			}
+		}							
+
+		if(inProgressJobOnVolume != null) {
+			logger.debug("Skipping "  + job.getId() + " as same volume is already in use " + inProgressJobOnVolume.getId());
+			return;
+		}
+		else {
+			if(storagetaskAction == Action.write) {
+				ArtifactVolume lastArtifactOnVolume = volume_LastArtifactOnVolume_Map.get(volume);
+				if(lastArtifactOnVolume == null) {
+					lastArtifactOnVolume = artifactVolumeRepositoryUtil.getLastArtifactOnVolume(volume);
+					
+					if(lastArtifactOnVolume != null) {
+						volume_LastArtifactOnVolume_Map.put(volume, lastArtifactOnVolume);
+					}
+				}
+				
+				if(lastArtifactOnVolume != null) { // check if the job has dependencies and ensure all nested dependencies are completed...
+					//last write job on the volume needed by this job
+					Job lastWriteJob = lastArtifactOnVolume.getJob();
+					// if a write job failed and we are requeing it its possible that the lastArtifactOnVolume is the same job. if so skip this check 
+					if(lastWriteJob.getId() != job.getId() && !jobUtil.isWriteJobAndItsDependentJobsComplete(lastWriteJob)) {
+						String msg = "Skipping "  + job.getId() + " as previous write job [" + lastWriteJob.getId() + "] and/or its dependent jobs are yet to complete";
+						logger.debug(msg);
+						job.setMessage(msg);
+						jobDao.save(job);
+						return;
+					}
+				}
+			}
+		}
+		storageJobList.add(storageJob);
+		logger.trace(job.getId() + " added to storagejob collection");
 	}
 
 	/**
