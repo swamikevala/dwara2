@@ -37,6 +37,7 @@ public class ArtifactUtil {
 	}
 	
 	public ArtifactMeta getArtifactMeta(String artifactName, String artifactclass, Sequence sequence, boolean generateSequence) throws Exception {
+		artifactName = artifactName.trim().replace(" ", "-");
 		ArtifactAttributes artifactAttributes = getArtifactAttributes(artifactclass, artifactName, sequence.getPrefix());
 		return getArtifactMeta(artifactName, sequence, artifactAttributes, generateSequence);
 	}
