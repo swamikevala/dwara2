@@ -11,6 +11,7 @@ import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Location;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactCatalog;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TapeCatalog;
+import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
 import org.ishafoundation.dwaraapi.service.CatalogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,16 @@ public class CatalogController {
         // for(Artifactclass a: list) {
         //     result.add(a.getId());
         // }
+        return ResponseEntity.status(HttpStatus.OK).body(list);
+    }
+    
+
+    @GetMapping(value="/catalog/getVolumeHealthStatuses", produces = "application/json")
+    public ResponseEntity<List<String>> getVolumeHealthStatuses(){
+    	List<String> list = new ArrayList<String>();
+    	for (VolumeHealthStatus vhs : VolumeHealthStatus.values()) {
+    		list.add(vhs.name());
+    	}
         return ResponseEntity.status(HttpStatus.OK).body(list);
     }
 

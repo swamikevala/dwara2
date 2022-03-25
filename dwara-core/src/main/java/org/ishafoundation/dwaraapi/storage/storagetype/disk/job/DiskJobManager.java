@@ -107,11 +107,13 @@ public class DiskJobManager extends AbstractStoragetypeJobManager {
 		for (int i = 0; i < storageJobsList.size(); i++) {
 			StorageJob nthStorageJob = storageJobsList.get(i);
 			Volume volume = nthStorageJob.getVolume();
+			Job nthJob = nthStorageJob.getJob();
+			
 			String volumeTag = volume.getId();
 			
 			String messageToBeSaved = null;
 	    	Path destDiskpath = Paths.get(volume.getDetails().getMountpoint(), volume.getId());
-	    	if(destDiskpath.toFile().exists()) {
+	    	if(nthJob.getStoragetaskActionId() == Action.finalize || destDiskpath.toFile().exists()) {
 	    		onlyDiskOnLibraryStorageJobsList.add(nthStorageJob);
 	    	}
 	    	else {
@@ -119,7 +121,7 @@ public class DiskJobManager extends AbstractStoragetypeJobManager {
 				logger.debug(messageToBeSaved + " . Skipping job - " + nthStorageJob.getJob().getId()); 
 	    	}	
 			
-			Job nthJob = nthStorageJob.getJob();
+			
 			String alreadyExistingJobMessage = nthJob.getMessage();
 			if((messageToBeSaved == null && alreadyExistingJobMessage != null) || (messageToBeSaved != null && !messageToBeSaved.equals(alreadyExistingJobMessage))) {
 				nthJob.setMessage(messageToBeSaved);

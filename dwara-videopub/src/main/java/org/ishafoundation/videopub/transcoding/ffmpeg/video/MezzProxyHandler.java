@@ -55,7 +55,7 @@ public class MezzProxyHandler extends MediaTask implements IProcessingTask{
 		String destinationDirPath = processContext.getOutputDestinationDirPath(); // This includes the host ip
 		logger.trace("destinationDirPath " + destinationDirPath);
 		
-		if(inputArtifactName.contains("_FX3") || inputArtifactName.contains("_A7S3")) { // || inputArtifactName.contains("_FX9-Proxy"))
+		if(inputArtifactName.toUpperCase().contains("_FX3") || inputArtifactName.toUpperCase().contains("_A7S3")) { // || inputArtifactName.contains("_FX9-Proxy"))
 			if(logicalFile.getParent().contains("M4ROOT" + File.separator + "SUB"))
 				return rsyncCopier.execute(processContext);
 			else {

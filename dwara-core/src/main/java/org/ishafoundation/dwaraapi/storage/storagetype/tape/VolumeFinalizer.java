@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
@@ -35,49 +36,55 @@ public class VolumeFinalizer {
 	@Autowired
 	private JobCreator jobCreator;
 	
-	public String finalize(String volumeId, String userName) throws Exception{
-			Request request = new Request();
-			request.setType(RequestType.user);
-			request.setActionId(Action.finalize);
-			request.setStatus(Status.queued);
-			User user = userDao.findByName(userName);
-			request.setRequestedBy(user);
-			request.setRequestedAt(LocalDateTime.now());
-			RequestDetails details = new RequestDetails();
-			ObjectMapper mapper = new ObjectMapper();
-			
+	public InitializeResponse finalize(String volumeId, String userName) throws Exception{
+		InitializeResponse initializeResponse = new InitializeResponse();
+		
+		Request request = new Request();
+		request.setType(RequestType.user);
+		request.setActionId(Action.finalize);
+		request.setStatus(Status.queued);
+		User user = userDao.findByName(userName);
+		request.setRequestedBy(user);
+		request.setRequestedAt(LocalDateTime.now());
+		RequestDetails details = new RequestDetails();
+		ObjectMapper mapper = new ObjectMapper();
+		
 //			String jsonAsString = "{\"volume_id\":\""+volumeId+"\"}";
 
-			HashMap<String, Object> data = new HashMap<String, Object>();
-	    	data.put("volumeId", volumeId);
-	    	String jsonAsString = mapper.writeValueAsString(data);
-			
-			JsonNode postBodyJson = mapper.readValue(jsonAsString, JsonNode.class);
-			details.setBody(postBodyJson);
-			request.setDetails(details);
+		HashMap<String, Object> data = new HashMap<String, Object>();
+    	data.put("volumeId", volumeId);
+    	String jsonAsString = mapper.writeValueAsString(data);
+		
+		JsonNode postBodyJson = mapper.readValue(jsonAsString, JsonNode.class);
+		details.setBody(postBodyJson);
+		request.setDetails(details);
 
-			request = requestDao.save(request);
-			int requestId = request.getId();
-			logger.info(DwaraConstants.USER_REQUEST + requestId);
-
-
-			Request systemrequest = new Request();
-			systemrequest.setType(RequestType.system);
-			systemrequest.setRequestRef(request);
-			systemrequest.setActionId(request.getActionId());
-			systemrequest.setRequestedBy(request.getRequestedBy());
-			systemrequest.setRequestedAt(LocalDateTime.now());
-
-			RequestDetails systemrequestDetails = new RequestDetails();
-			systemrequestDetails.setVolumeId(volumeId);
-			systemrequest.setDetails(systemrequestDetails);
-			
-			systemrequest = requestDao.save(systemrequest);
-			logger.info(DwaraConstants.SYSTEM_REQUEST + systemrequest.getId());
+		request = requestDao.save(request);
+		int requestId = request.getId();
+		logger.info(DwaraConstants.USER_REQUEST + requestId);
 
 
-			jobCreator.createJobs(systemrequest, null);
+		Request systemrequest = new Request();
+		systemrequest.setType(RequestType.system);
+		systemrequest.setRequestRef(request);
+		systemrequest.setActionId(request.getActionId());
+		systemrequest.setRequestedBy(request.getRequestedBy());
+		systemrequest.setRequestedAt(LocalDateTime.now());
 
-		return "Done";
+		RequestDetails systemrequestDetails = new RequestDetails();
+		systemrequestDetails.setVolumeId(volumeId);
+		systemrequest.setDetails(systemrequestDetails);
+		
+		systemrequest = requestDao.save(systemrequest);
+		logger.info(DwaraConstants.SYSTEM_REQUEST + systemrequest.getId());
+
+
+		jobCreator.createJobs(systemrequest, null);
+
+		
+		initializeResponse.setUserRequestId(requestId);
+		initializeResponse.setAction(request.getActionId().name());
+
+		return initializeResponse;
 	}
 }

@@ -346,11 +346,13 @@ public class VolumeController {
 		    @ApiResponse(code = 400, message = "Error")
 	})
 	@PostMapping(value = "/volume/finalize", produces = "application/json")
-	public ResponseEntity<String> finalize(@RequestParam String volume){
+	public ResponseEntity<InitializeResponse> finalize(@RequestParam String volume){
 		
-		String finalizeResponse = null;
+		InitializeResponse finalizeResponse = null;
 		try {
 			finalizeResponse = volumeService.finalize(volume);
+			
+			
 		}catch (Exception e) {
 			String errorMsg = "Unable to finalize - " + e.getMessage();
 			logger.error(errorMsg, e);
@@ -415,7 +417,7 @@ public class VolumeController {
 	@ApiResponses(value = { 
 			@ApiResponse(code = 200, message = "Ok")
 	})
-	@PostMapping(value = "/volume/{volumeId}/healthstatus/{status}", produces = "application/json")
+	@PostMapping(value = "/volume/{volumeId}/healthstatus/{healthstatus}", produces = "application/json")
 	public ResponseEntity<MarkVolumeStatusResponse> markVolumeHealthstatus(@RequestBody MarkVolumeStatusRequest markVolumeStatusRequest, @PathVariable("volumeId") String volumeId, @PathVariable("healthstatus") String healthstatus) {
 		logger.info("/volume/" + volumeId + "/healthstatus/" + healthstatus);
 		

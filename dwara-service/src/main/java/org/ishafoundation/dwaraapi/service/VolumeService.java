@@ -265,7 +265,7 @@ public class VolumeService extends DwaraService {
 		return volumeInitializer.initialize(getUserFromContext(), initializeRequestList);
 	}
 	
-	public String finalize(String volumeId) throws Exception{
+	public InitializeResponse finalize(String volumeId) throws Exception{
 		return volumeFinalizer.finalize(volumeId, getUserFromContext());
 	}
 
