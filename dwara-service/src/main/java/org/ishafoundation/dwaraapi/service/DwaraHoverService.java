@@ -195,57 +195,57 @@ public class DwaraHoverService extends DwaraService {
 							artifactClassId = (String) finalResults.get(i)[3];
 							proxyPathName = (String) finalResults.get(i)[4];
 
-							if (!StringUtils.isEmpty(proxyPathName)) {
-								if (StringUtils.contains(artifactClassId, "priv")) {
-									proxyPathName = "http://172.18.1.24/mam/private/" + proxyPathName;
-								} else {
-									proxyPathName = "http://172.18.1.24/mam/public/" + proxyPathName;
-								}
-
-								if (StringUtils.contains(artifactClassId, "priv")){
-
-									for (String userRole: userRoles) {
-																				if(userRole.equals("priv1")) {
-											proxyFilesForFolderQuery.add(proxyPathName);
-
-										}
-									}
-								} else{
-									proxyFilesForFolderQuery.add(proxyPathName);
-								}
-
-									//proxyFilesForFolderQuery.add(proxyPathName);
-							}
+//							if (!StringUtils.isEmpty(proxyPathName)) {
+//								if (StringUtils.contains(artifactClassId, "priv")) {
+//									proxyPathName = "http://172.18.1.24/mam/private/" + proxyPathName;
+//								} else {
+//									proxyPathName = "http://172.18.1.24/mam/public/" + proxyPathName;
+//								}
+//
+//								if (StringUtils.contains(artifactClassId, "priv")){
+//
+//									for (String userRole: userRoles) {
+//																				if(userRole.equals("priv1")) {
+//											proxyFilesForFolderQuery.add(proxyPathName);
+//
+//										}
+//									}
+//								} else{
+//									proxyFilesForFolderQuery.add(proxyPathName);
+//								}
+//
+//									//proxyFilesForFolderQuery.add(proxyPathName);
+//							}
 
 						} else {
 							artifact_id = (Integer) finalResults.get(i)[3];
 							artifactClassId = (String) finalResults.get(i)[4];
-							String proxyForFolderQuery = "SELECT file.pathname,artifact.artifactclass_id FROM artifact JOIN file ON file.artifact_id=artifact.id WHERE artifact_ref_id=" + artifact_id + " AND file.pathname LIKE '%.mp4'";
-							Query q = entityManager.createNativeQuery(proxyForFolderQuery);
-							List<Object[]> folderQueryResults =  q.getResultList();
-
-							folderQueryResults.forEach(file-> {
-								String proxyName;
-								if (StringUtils.contains((String) file[1], "priv")) {
-									proxyName = "http://172.18.1.24/mam/private/" + file[0];
-								} else {
-									proxyName = "http://172.18.1.24/mam/public/" + file[0];
-								}
-
-								if (StringUtils.contains(artifactClassId, "priv")){
-
-									for (String userRole: userRoles) {
-																				if(userRole.equals("priv1")) {
-											proxyFilesForFolderQuery.add(proxyName);
-
-										}
-									}
-								} else{
-									proxyFilesForFolderQuery.add(proxyName);
-								}
-								//proxyFilesForFolderQuery.add(proxyName);
-
-							});
+//							String proxyForFolderQuery = "SELECT file.pathname,artifact.artifactclass_id FROM artifact JOIN file ON file.artifact_id=artifact.id WHERE artifact_ref_id=" + artifact_id + " AND file.pathname LIKE '%.mp4'";
+//							Query q = entityManager.createNativeQuery(proxyForFolderQuery);
+//							List<Object[]> folderQueryResults =  q.getResultList();
+//
+//							folderQueryResults.forEach(file-> {
+//								String proxyName;
+//								if (StringUtils.contains((String) file[1], "priv")) {
+//									proxyName = "http://172.18.1.24/mam/private/" + file[0];
+//								} else {
+//									proxyName = "http://172.18.1.24/mam/public/" + file[0];
+//								}
+//
+//								if (StringUtils.contains(artifactClassId, "priv")){
+//
+//									for (String userRole: userRoles) {
+//																				if(userRole.equals("priv1")) {
+//											proxyFilesForFolderQuery.add(proxyName);
+//
+//										}
+//									}
+//								} else{
+//									proxyFilesForFolderQuery.add(proxyName);
+//								}
+//								//proxyFilesForFolderQuery.add(proxyName);
+//
+//							});
 
 						}
 						List<DwaraHoverTranscriptListDTO> transcriptsByPathName = getTranscriptsByPathName(pathName);
