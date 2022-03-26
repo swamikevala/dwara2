@@ -208,7 +208,7 @@ public class Audio_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	private List<String> getProxyGenCommand(String sourceFilePathname, String proxyTargetLocation, boolean extractedFromVideo) {
 		List<String> proxyGenerationCommandParamsList = new ArrayList<String>();
 		
-		proxyGenerationCommandParamsList.add("ffmpeg");
+		proxyGenerationCommandParamsList.add("/usr/local/bin/ffmpeg");
 		proxyGenerationCommandParamsList.add("-y");
 		proxyGenerationCommandParamsList.add("-nostdin");
 		proxyGenerationCommandParamsList.add("-i");
