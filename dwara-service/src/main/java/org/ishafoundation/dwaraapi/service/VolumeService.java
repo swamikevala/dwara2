@@ -119,6 +119,7 @@ public class VolumeService extends DwaraService {
 	
 
 	public List<VolumeResponse> getCurrentlyInUsePhysicalVolumeAcrossGroups() {
+		double GB = 1000000000; // 1 GB = 1000000000 bytes...
 		double GiB = 1073741824; // 1 GiB = 1073741824 bytes...
 		double TiB = 1099511627776.00;
 		double TB = 1000000000000.00;

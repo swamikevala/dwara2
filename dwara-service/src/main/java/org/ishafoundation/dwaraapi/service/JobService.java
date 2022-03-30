@@ -1,6 +1,7 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +45,7 @@ import org.ishafoundation.dwaraapi.utils.StatusUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -96,6 +98,8 @@ public class JobService extends DwaraService{
 	@Autowired
 	private ArtifactVolumeDao artifactVolumeDao;
 	
+	@Value("${averageTransferSpeedInGBPerMinute:3}")
+	private int averageTransferSpeedInGBPerMinute;
 	
 	public List<JobResponse> getJobs(Integer systemRequestId, List<Status> statusList) {
 		return getJobs(systemRequestId, statusList, true);
@@ -501,6 +505,34 @@ public class JobService extends DwaraService{
 			jobResponse.setFileFailures(fileFailures);
 		
 		return jobResponse;
+	}
+
+	// only available for write jobs for disk based storagetype
+	public int calculateETC(int jobId) {
+		int etcInMts = 0;
+		double GB = 1000000000; // 1 GB = 1000000000 bytes...
+		Job job = null;
+		try {		
+			job = jobDao.findById(jobId).get();
+			Integer artifactId = job.getInputArtifactId();
+			if(artifactId != null) { 
+				Artifact artifact = artifactDao.findById(artifactId).get();
+				long artifactTotalSizeInBytes = artifact.getTotalSize();
+				long artifactTotalSizeInGB = artifactTotalSizeInBytes/1000000000;
+				int timeNeededForTheFullTransferInMts = (int) (artifactTotalSizeInGB/averageTransferSpeedInGBPerMinute);
+				
+				LocalDateTime startedAt = job.getStartedAt();
+				if(startedAt != null) {
+					long totalTimeTakenThusFarInMts = ChronoUnit.MINUTES.between(startedAt, LocalDateTime.now());
+					etcInMts =  (int) (timeNeededForTheFullTransferInMts - totalTimeTakenThusFarInMts);
+				}
+				else
+					etcInMts =  (int) timeNeededForTheFullTransferInMts;
+			}
+		}catch (Exception e) {
+			logger.error("Unable to calculate ETC for job " + jobId,e);
+		}
+		return etcInMts;
 	}
 }
 

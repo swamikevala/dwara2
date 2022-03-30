@@ -176,4 +176,22 @@ public class JobController {
 			
     	return ResponseEntity.status(HttpStatus.OK).body(jobResponseList);
     }
+    
+	@PostMapping("/job/{jobId}/etc")
+	public ResponseEntity<Integer> calculateETC(@PathVariable("jobId") int jobId) {
+    	logger.info("/job/" + jobId + "/etc");
+    	int etc = 0;
+    	try {
+    		etc = jobService.calculateETC(jobId);
+		}catch (Exception e) {
+			String errorMsg = "Unable to create dependent Jobs - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+    	return ResponseEntity.status(HttpStatus.OK).body(etc);
+    }
 }
