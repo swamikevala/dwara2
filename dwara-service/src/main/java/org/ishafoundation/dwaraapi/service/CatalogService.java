@@ -28,10 +28,10 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TapeCatalog
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
-import org.ishafoundation.dwaraapi.enumreferences.VolumeHealthStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -55,6 +55,9 @@ public class CatalogService extends DwaraService{
 
     @Autowired
     private VolumeService volumeService;
+    
+	@Value("${volumeCapacity.watermarkHigh}")
+	private float watermarkHigh;
 
     public List<Artifactclass> getAllArtifactclass() {
         List<Artifactclass> list = new ArrayList<Artifactclass>();
@@ -223,7 +226,7 @@ public class CatalogService extends DwaraService{
             i++;
             long _capacity = 0;
             if(record[i] != null)
-                _capacity = ((BigInteger)record[i]).longValue();
+                _capacity = (long) (((BigInteger)record[i]).longValue() * watermarkHigh);
             i++;
             boolean _isImported = (boolean)record[i++];
             boolean _isFinalized = (boolean)record[i++];
