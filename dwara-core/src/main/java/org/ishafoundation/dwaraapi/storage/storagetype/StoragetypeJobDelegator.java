@@ -99,8 +99,10 @@ public class StoragetypeJobDelegator {
 				job = jobDao.save(job);
 				continue;
 			} else {
-				job.setVolume(volume);
-				job = jobDao.save(job);
+				if(storagetaskAction != Action.initialize) {
+					job.setVolume(volume);
+					job = jobDao.save(job);
+				}
 			}
 			
 			if(volume.getStoragetype() == Storagetype.tape) {
