@@ -396,7 +396,7 @@ public class VolumeController {
 	@ApiResponses(value = { 
 			@ApiResponse(code = 200, message = "Ok")
 	})
-	@PostMapping(value = "/volume/{volumeId}/healthstatus/{status}", produces = "application/json")
+	@PostMapping(value = "/volume/{volumeId}/healthstatus/{healthstatus}", produces = "application/json")
 	public ResponseEntity<MarkVolumeStatusResponse> markVolumeHealthstatus(@RequestBody MarkVolumeStatusRequest markVolumeStatusRequest, @PathVariable("volumeId") String volumeId, @PathVariable("healthstatus") String healthstatus) {
 		logger.info("/volume/" + volumeId + "/healthstatus/" + healthstatus);
 		
@@ -421,7 +421,7 @@ public class VolumeController {
 	@ApiResponses(value = { 
 			@ApiResponse(code = 200, message = "Ok")
 	})
-	@PostMapping(value = "/volume/{volumeId}/lifecyclestage/{status}", produces = "application/json")
+	@PostMapping(value = "/volume/{volumeId}/lifecyclestage/{lifecyclestage}", produces = "application/json")
 	public ResponseEntity<MarkVolumeStatusResponse> markVolumeLifecyclestage(@RequestBody MarkVolumeStatusRequest markVolumeStatusRequest, @PathVariable("volumeId") String volumeId, @PathVariable("lifecyclestage") String lifecyclestage) {
 		logger.info("/volume/" + volumeId + "/lifecyclestage/" + lifecyclestage);
 		

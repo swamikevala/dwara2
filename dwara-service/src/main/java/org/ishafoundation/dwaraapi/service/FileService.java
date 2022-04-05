@@ -164,7 +164,7 @@ public class FileService extends DwaraService{
 
     	List<Integer> fileIds = restoreUserRequest.getFileIds();
     	Integer copyNumber = restoreUserRequest.getCopy();
-    	String outputFolder = restoreUserRequest.getOutputFolder();
+    	String outputFolder = restoreUserRequest.getOutputFolder().trim().replace(" ", "_");
     	String destinationPath = restoreUserRequest.getDestinationPath();
     	
     	if(fileIds.size() == 0)
