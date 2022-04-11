@@ -28,3 +28,18 @@ DELETE FROM `copy` WHERE `id`='3';
 
 DELETE FROM `location` WHERE `id`in ('lto-room','sk-office1','t-block2','t-block3');
 INSERT INTO `location` (`id`, `default`, `description`) VALUES ('vol', 0, 'With Volunteer');
+
+
+-- Some bad file causing the job to fail stagnating the artifact in staged. Had to do the bad file process 31st Mar 2022
+
+UPDATE `file` SET `bad`=1, `reason`='0 sized file. Karthik anna confirmed this file can be deleted' WHERE `pathname` in (select pathname from t_file where id = '42147');
+UPDATE `t_file` SET `bad`=1, `reason`='0 sized file. Karthik anna confirmed this file can be deleted' WHERE `id`='42147';
+
+DELETE FROM `t_t_file_job` WHERE `file_id`='42147';
+
+UPDATE `job` SET `status`='marked_completed' WHERE `id`='775';
+
+-- create dependent job using api - but actually missed out creating the dependent jobs...
+
+UPDATE `request` SET `status`='queued' WHERE `id` in ('212','210'); -- update both system and user request to queued
+
