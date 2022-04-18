@@ -14,6 +14,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.restore.FileDetails;
 import org.ishafoundation.dwaraapi.api.req.restore.PFRestoreUserRequest;
@@ -34,11 +35,13 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
+import org.ishafoundation.dwaraapi.enumreferences.JiraTransition;
 import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.job.JobCreator;
+import org.ishafoundation.dwaraapi.utils.JiraUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -178,6 +181,14 @@ public class FileService extends DwaraService{
     	validate(fileIds, copyNumber != null ? copyNumber : 1, destinationPath, outputFolder, fileId_FileObj_Map);
     	
     	Request userRequest = createUserRequest(action, restoreUserRequest, user);
+    	
+    	String vpTicketNo = restoreUserRequest.getVpJiraTicket();
+    	String outputPrefix = StringUtils.substringBefore(outputFolder, "_");
+    	if(outputPrefix.startsWith("VP"))
+    		vpTicketNo = outputPrefix;
+    	
+    	JiraUtil.updateJiraWorkflow(vpTicketNo, JiraTransition.waiting_for_footage, outputFolder);
+    	
     	Priority priority = Priority.normal;
     	if(restoreUserRequest.getPriority() != null)
     		priority = restoreUserRequest.getPriority();

@@ -37,6 +37,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.CoreFlowelement;
+import org.ishafoundation.dwaraapi.enumreferences.JiraTransition;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -47,6 +48,7 @@ import org.ishafoundation.dwaraapi.service.TFileVolumeDeleter;
 import org.ishafoundation.dwaraapi.service.UserRequestHelper;
 import org.ishafoundation.dwaraapi.staged.StagedFileOperations;
 import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
+import org.ishafoundation.dwaraapi.utils.JiraUtil;
 import org.ishafoundation.dwaraapi.utils.StatusUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -537,6 +539,13 @@ public class ScheduledStatusUpdater {
 				} catch (IOException e) {
 					logger.error("Unable to delete " + restoreTmpFolder.getPath());
 				}
+				
+				String vpTicketNo = null; // jsonNode.get("vpJiraTicket").asText();
+		    	String outputPrefix = StringUtils.substringBefore(outputFolder, "_");
+		    	if(outputPrefix.startsWith("VP"))
+		    		vpTicketNo = outputPrefix;
+		    	
+				JiraUtil.updateJiraWorkflow(vpTicketNo,JiraTransition.footage_request_closed, null);
 			}
 			nthUserRequest.setStatus(status); 
 			

@@ -11,6 +11,7 @@ public class RestoreUserRequest {
 	private String flow;
 	private List<Integer> fileIds;
 	private Priority priority;
+	private String vpJiraTicket;
 
 	public Priority getPriority() {
 		return priority;
@@ -58,5 +59,13 @@ public class RestoreUserRequest {
 
 	public void setFileIds(List<Integer> fileIds) {
 		this.fileIds = fileIds;
+	}
+
+	public String getVpJiraTicket() {
+		return vpJiraTicket;
+	}
+
+	public void setVpJiraTicket(String vpJiraTicket) {
+		this.vpJiraTicket = vpJiraTicket;
 	}
 }
