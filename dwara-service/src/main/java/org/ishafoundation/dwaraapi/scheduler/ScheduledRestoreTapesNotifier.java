@@ -13,8 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RestController;
 
-@Component
+//@Component
+@RestController
 public class ScheduledRestoreTapesNotifier {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledRestoreTapesNotifier.class);
@@ -40,6 +42,7 @@ public class ScheduledRestoreTapesNotifier {
 				}
 			}
 
+			logger.trace("Tapes to be loaded for restore - " + tapeBarcodeList);
 			int cnt = 0;
 			StringBuilder sb = new StringBuilder();
 			for (String nthTapeBarcode : tapeBarcodeList) {
@@ -49,6 +52,7 @@ public class ScheduledRestoreTapesNotifier {
 				
 				cnt += 1;
 				if(cnt == 3) {
+					logger.trace("3 Tapes to be loaded smsed - " + String.format(smsTemplate, sb.toString()));
 					// cant take more than 3 in a msg...
 					SMSUtil.sendSMS(commaSeparatedMobileNos, templateId, String.format(smsTemplate, sb.toString()));
 					// reset 
@@ -57,8 +61,10 @@ public class ScheduledRestoreTapesNotifier {
 				}
 			}
 			
-			if(cnt > 0 && cnt < 3)
+			if(cnt > 0 && cnt < 3) {
+				logger.trace(cnt + " tapes to be loaded smsed - " + String.format(smsTemplate, sb.toString()));
 				SMSUtil.sendSMS(commaSeparatedMobileNos, templateId, String.format(smsTemplate, sb.toString()));
+			}
 			
 		} catch (Exception e) {
 			logger.error("Unable to notify", e);

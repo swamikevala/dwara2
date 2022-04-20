@@ -22,6 +22,7 @@ public class SMSUtil {
 	public static void sendSMS(String commaSeparatedMobileNos, String templateId, String message) {
 		try {
 			
+			logger.trace(commaSeparatedMobileNos + ":" + templateId + ":" + message);
 			String apiKey = "hPCbVjHmC0KpYNH1ReE3xw";
 			String senderId = "ISHAAR";
 			String url = "http://sms.vstcbe.com/api/mt/SendSMS"
