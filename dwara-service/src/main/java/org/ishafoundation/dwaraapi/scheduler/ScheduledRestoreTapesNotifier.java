@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 //@Component
@@ -28,6 +29,7 @@ public class ScheduledRestoreTapesNotifier {
 	private String commaSeparatedMobileNos;
 	
 	@Scheduled(cron = "${scheduler.restoreTapesNotifier.cronExpression}")
+	@PostMapping("/notifyOps")
 	public void notifyOps(){
 		logger.info("***** Notifying Ops team on tapes to be loaded for restores *****");
 		
