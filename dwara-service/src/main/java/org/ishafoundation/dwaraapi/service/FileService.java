@@ -42,9 +42,11 @@ import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.utils.JiraUtil;
+import org.ishafoundation.dwaraapi.utils.SMSUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -78,6 +80,9 @@ public class FileService extends DwaraService{
 	private TFileDao tfileDao; 
 
 	private Pattern allowedChrsInOutputFolderPattern = Pattern.compile("[\\w-]*");
+	
+	@Value("${restoreTapesNotifier.mobileNos}")
+	private String commaSeparatedMobileNos;
 	
 	@Deprecated
 //	public List<File> list(List<Integer> fileIds){
@@ -188,6 +193,8 @@ public class FileService extends DwaraService{
     		vpTicketNo = outputPrefix;
     	
     	JiraUtil.updateJiraWorkflow(vpTicketNo, JiraTransition.waiting_for_footage, outputFolder);
+    	
+    	SMSUtil.sendSMS(commaSeparatedMobileNos, "*Critical request*");
     	
     	Priority priority = Priority.normal;
     	if(restoreUserRequest.getPriority() != null)
