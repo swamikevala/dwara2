@@ -172,7 +172,7 @@ public class FileService extends DwaraService{
 
     	List<Integer> fileIds = restoreUserRequest.getFileIds();
     	Integer copyNumber = restoreUserRequest.getCopy();
-    	String outputFolder = restoreUserRequest.getOutputFolder().trim().replace(" ", "_");
+    	String outputFolder = restoreUserRequest.getOutputFolder().trim().replace(" ", "_").replace(",","-");
     	String destinationPath = restoreUserRequest.getDestinationPath();
     	
     	if(fileIds.size() == 0)
@@ -186,16 +186,6 @@ public class FileService extends DwaraService{
     	validate(fileIds, copyNumber != null ? copyNumber : 1, destinationPath, outputFolder, fileId_FileObj_Map);
     	
     	Request userRequest = createUserRequest(action, restoreUserRequest, user);
-    	
-    	String vpTicketNo = restoreUserRequest.getVpJiraTicket();
-    	String outputPrefix = StringUtils.substringBefore(outputFolder, "_");
-    	if(outputPrefix.startsWith("VP"))
-    		vpTicketNo = outputPrefix;
-    	
-    	JiraUtil.updateJiraWorkflow(vpTicketNo, JiraTransition.waiting_for_footage, outputFolder);
-    	
-    	SMSUtil.sendSMS(commaSeparatedMobileNos, "*Critical request*");
-    	
     	Priority priority = Priority.normal;
     	if(restoreUserRequest.getPriority() != null)
     		priority = restoreUserRequest.getPriority();
@@ -205,8 +195,6 @@ public class FileService extends DwaraService{
     	int userRequestId = userRequest.getId();
 
     	List<File> files = new ArrayList<File>();
-    	
-
     	int counter = 1;
     	for (Integer nthFileId : fileIds) {
     		
@@ -249,6 +237,11 @@ public class FileService extends DwaraService{
 			counter = counter + 1;
 		}
 
+    	if(priority == Priority.critical)
+    		SMSUtil.sendSMS(commaSeparatedMobileNos, "*Critical request*");
+
+    	String vpTicketNo = restoreUserRequest.getVpJiraTicket();
+    	JiraUtil.updateJiraWorkflow(vpTicketNo, JiraTransition.waiting_for_footage, outputFolder);
     	
     	restoreResponse.setUserRequestId(userRequestId);
     	restoreResponse.setAction(userRequest.getActionId().name());
