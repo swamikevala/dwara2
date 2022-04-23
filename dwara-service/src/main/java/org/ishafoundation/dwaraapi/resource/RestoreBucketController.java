@@ -147,6 +147,7 @@ public class RestoreBucketController {
         tRestoreBucketFromDb.setDestinationPath(tRestoreBucket.getDestinationPath());
         tRestoreBucketFromDb.setApprover(tRestoreBucket.getApprover());
         tRestoreBucketFromDb.setPriority(tRestoreBucket.getPriority());
+        tRestoreBucketFromDb.setExternalRefID(tRestoreBucket.getExternalRefID());
         tRestoreBucketFromDb.setRequestedBy(restoreBucketService.getUserObjFromContext().getId());
         boolean isSuccess = restoreBucketService.sendMail(tRestoreBucketFromDb);
         if(isSuccess) {

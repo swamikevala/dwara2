@@ -36,8 +36,8 @@ public class ScheduledApprovedBucketRestorer {
     private FileService fileService;
     @Autowired
     private RequestApprovalDao requestApprovalDao;
-@Autowired
-private UserDao userDao;
+	@Autowired
+	private UserDao userDao;
     @Scheduled(cron ="0 0/5 * * * ?")
     public void restoreApproved() {
         List<TRestoreBucket> tRestoreBucketList = tRestoreBucketDao.findByApprovalStatus("approved");
@@ -51,6 +51,7 @@ private UserDao userDao;
             restoreUserRequest.setPriority(priority);
             restoreUserRequest.setDestinationPath(tRestoreBucket.getDestinationPath());
             restoreUserRequest.setOutputFolder(tRestoreBucket.getId());
+            restoreUserRequest.setVpJiraTicket(tRestoreBucket.getExternalRefID());
             List<Integer> fileIds = new ArrayList<>();
             for (RestoreBucketFile file : tRestoreBucket.getDetails()) {
                 fileIds.add(file.getFileID());
