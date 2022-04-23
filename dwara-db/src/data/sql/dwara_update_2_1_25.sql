@@ -77,14 +77,13 @@ VALUES ('audio-proxy-low-gen', 'generate low resolution audio proxies', 'audio',
 INSERT INTO `sequence` (`id`, `type`, `prefix`, `group`, `starting_number`, `ending_number`, `current_number`, `sequence_ref_id`) VALUES 
 ('transcript-grp', 'artifact', null, 1, 1, -1, 0, null),
 ('transcript-pub', 'artifact', 'S', 0, null, null, null, 'transcript-grp'),
-('transcript-priv1', 'artifact', 'S', 0, null, null, null, 'transcript-grp'),
 ('transcript-priv2', 'artifact', 'SX', 0, null, null, null, 'transcript-grp'),
 ('transcript-priv3', 'artifact', 'SXX', 0, null, null, null, 'transcript-grp');
 
 -- ARTIFACTCLASS --
 INSERT INTO `artifactclass` (`id`, `description`, `sequence_id`, `source`, `concurrent_volume_copies`, `display_order`, `path_prefix`, `artifactclass_ref_id`, `import_only`, `config`) VALUES 
 ('transcript-pub', '', 'transcript-pub', 1, 1, 1, '/data/dwara/staged', null, 0, null),
-('transcript-priv1', '', 'transcript-priv1', 1, 1, 2, '/data/dwara/staged', null, 0, null),
+('transcript-priv1', '', 'transcript-pub', 1, 1, 2, '/data/dwara/staged', null, 0, null),
 ('transcript-priv2', '', 'transcript-priv2', 1, 1, 3, '/data/dwara/staged', null, 0, null),
 ('transcript-priv3', '', 'transcript-priv3', 1, 1, 4, '/data/dwara/staged', null, 0, null);
  
