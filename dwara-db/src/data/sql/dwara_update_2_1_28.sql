@@ -51,5 +51,22 @@ INSERT INTO `action_artifactclass_flow` (`action_id`, `artifactclass_id`, `flow_
 ('ingest', 'audio-edit-tr-priv2', 'archive-flow', 1);
 
 
+-- update artifactclass not through api
+UPDATE `artifact` SET `artifactclass_id`='video-pub' WHERE `id`='48373';
+UPDATE `artifact` SET `artifactclass_id`='video-pub' WHERE `id`='48375';
+UPDATE `artifact` SET `artifactclass_id`='video-pub' WHERE `id`='48374';
+UPDATE `artifact` SET `artifactclass_id`='video-pub' WHERE `id`='48380';
+UPDATE `artifact` SET `artifactclass_id`='video-pub' WHERE `id`='48381';
+UPDATE `artifact` SET `artifactclass_id`='video-pub' WHERE `id`='48382';
+
+UPDATE `artifact` SET `artifactclass_id`='video-pub-proxy-low' WHERE `id`='48376';
+UPDATE `artifact` SET `artifactclass_id`='video-pub-proxy-low' WHERE `id`='48377';
+UPDATE `artifact` SET `artifactclass_id`='video-pub-proxy-low' WHERE `id`='48378';
+UPDATE `artifact` SET `artifactclass_id`='video-pub-proxy-low' WHERE `id`='48384';
+UPDATE `artifact` SET `artifactclass_id`='video-pub-proxy-low' WHERE `id`='48396';
+UPDATE `artifact` SET `artifactclass_id`='video-pub-proxy-low' WHERE `id`='48397';
+
+
+
 SET foreign_key_checks = 1;
 
