@@ -345,11 +345,11 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 					
 					//logger.info("Now processing - " + path);
 					TFile tFile = null;
+
+					if(filePathToTFileObj.containsKey(artifactNamePrefixedFilePathname))
+						tFile = filePathToTFileObj.get(artifactNamePrefixedFilePathname);
 			
 					if(job.getRequest().getActionId() == Action.ingest) {
-						if(filePathToTFileObj.containsKey(artifactNamePrefixedFilePathname))
-							tFile = filePathToTFileObj.get(artifactNamePrefixedFilePathname);
-						
 						if(tFile == null) {
 							logger.warn(artifactNamePrefixedFilePathname + " not in t_file table. Skipping it");
 							continue;
