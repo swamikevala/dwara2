@@ -1,5 +1,6 @@
 package org.ishafoundation.dwaraapi;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -12,7 +13,11 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.ishafoundation.dwaraapi.db.dao.master.VersionDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDaoQueryProps;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
 import org.ishafoundation.dwaraapi.db.model.master.reference.Version;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TTFileJob;
+import org.ishafoundation.dwaraapi.enumreferences.Status;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +45,12 @@ public class DwaraApiApplication {
 	
 	@Autowired
 	private VersionDao versionDao;	
+	
+	@Autowired
+	private JobDao jobDao;	
+	
+	@Autowired
+	private TTFileJobDao tFileJobDao;
 	
 	@Value("${wowo.splitChecksumVerifyThreadPoolPerVolumeGroup:false}")
 	private boolean splitChecksumVerifyThreadPoolPerVolumeGroup;
@@ -77,6 +88,28 @@ public class DwaraApiApplication {
 			else
 				createThreadPoolsForTask(processingtaskName, null, globalExecutorDefault);
 		}
+		
+		// if there are jobs in_progress at the time of start reset their status
+		List<Job> jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.in_progress);
+		for (Job nthStorageJob : jobList) {
+			nthStorageJob.setStatus(Status.queued); // just requeue it
+			jobDao.save(nthStorageJob);
+		}
+		
+		jobList = jobDao.findAllByStatusAndProcessingtaskIdIsNotNullOrderById(Status.in_progress);
+		for (Job nthProcessingJob : jobList) {
+			List<TTFileJob> jobFileList = tFileJobDao.findAllByJobIdAndStatus(nthProcessingJob.getId(), Status.in_progress); 
+			
+			if(jobFileList.size() > 0) {
+				for (TTFileJob nthTTFileJob : jobFileList) {
+					nthTTFileJob.setStatus(Status.queued);
+					tFileJobDao.save(nthTTFileJob);	
+				}
+			}
+			nthProcessingJob.setStatus(Status.queued); // just requeue it
+			jobDao.save(nthProcessingJob);
+		}
+		
 	}
 
 	private void createThreadPoolsForTask(String processingtaskName, String suffix, Executor globalExecutorDefault) throws Exception {
