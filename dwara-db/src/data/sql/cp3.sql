@@ -1,17 +1,29 @@
 -- Some bad file(s) causing the job to fail stagnating the artifact in staged. Had to do the bad file process
 -- Swami experimented something with camera setting and these are audience shots
-UPDATE `file` SET `bad`=1, `reason`='Some camera experimentated file. Karthik anna confirmed these files can be deleted' WHERE `pathname` in (select pathname from t_file where id in (select file_id from t_t_file_job  where `job_id`='1132' and status='failed'));
-UPDATE `t_file` SET `bad`=1, `reason`='Some camera experimentated file. Karthik anna confirmed these files can be deleted' WHERE `id` in (select file_id from t_t_file_job  where `job_id`='1132' and status='failed');
-
+UPDATE `file` SET `bad`=1, deleted=1, `reason`='Some camera experimentated file. Karthik anna confirmed these files can be deleted' WHERE `pathname` in (select pathname from t_file where id in (select file_id from t_t_file_job  where `job_id`='1132' and status='failed'));
+UPDATE `t_file` SET `bad`=1, deleted=1, `reason`='Some camera experimentated file. Karthik anna confirmed these files can be deleted' WHERE `id` in (select file_id from t_t_file_job  where `job_id`='1132' and status='failed');
 DELETE FROM `t_t_file_job` WHERE `job_id`='1132' and status='failed';
-
 UPDATE `job` SET `status`='marked_completed' WHERE `id`='1132';
-
 -- create dependent job using api
-
 UPDATE `request` SET `status`='queued' WHERE `id` in ('323','322'); -- update both system and user request to queued
 
+-- *************************************--*************************************
 
+-- Another bad file in drone...
+set @job_id=2188;
+set @reason='Karthik anna confirmed V364_Public-Event_Romania_21-Apr-2022_Drone/DCIM/100MEDIA/DJI_0421.MOV file is bad';
+UPDATE `file` SET `bad`=1, deleted=1, `reason`=@reason WHERE `pathname` in (select pathname from t_file where id in (select file_id from t_t_file_job  where `job_id`=@job_id and status='failed'));
+UPDATE `t_file` SET `bad`=1, deleted=1, `reason`=@reason WHERE `id` in (select file_id from t_t_file_job  where `job_id`=@job_id and status='failed');
+DELETE FROM `t_t_file_job` WHERE `job_id`=@job_id and status='failed';
+UPDATE `job` SET `status`='marked_completed' WHERE `id`=@job_id;
+-- create dependent job using api
+-- update both system and user request to queued
+-- breaking it here so we do this after the dependent job is created 
+UPDATE `request` SET `status`='queued' WHERE `id` in (select request_id from job where id = @job_id);
+select request_ref_id from request where id in (select request_id from job where id = @job_id);
+UPDATE `request` SET `status`='queued' WHERE `id` in (673);
+
+-- *************************************--************************************* 
 
 -- FX9_Proxy as an ingestable/source artifactclass
 INSERT INTO `sequence` (`id`, `type`, `prefix`, `group`, `starting_number`, `ending_number`, `current_number`, `sequence_ref_id`) VALUES 
