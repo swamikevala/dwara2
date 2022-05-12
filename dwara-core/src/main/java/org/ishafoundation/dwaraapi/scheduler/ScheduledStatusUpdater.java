@@ -540,10 +540,7 @@ public class ScheduledStatusUpdater {
 					logger.error("Unable to delete " + restoreTmpFolder.getPath());
 				}
 				
-				String vpTicketNo = null; // jsonNode.get("vpJiraTicket").asText();
-		    	String outputPrefix = StringUtils.substringBefore(outputFolder, "_");
-		    	if(outputPrefix.startsWith("VP"))
-		    		vpTicketNo = outputPrefix;
+				String vpTicketNo = jsonNode.get("vpJiraTicket").asText();
 		    	
 				JiraUtil.updateJiraWorkflow(vpTicketNo,JiraTransition.footage_request_closed, null);
 			}
