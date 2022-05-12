@@ -49,6 +49,7 @@ import org.ishafoundation.dwaraapi.service.UserRequestHelper;
 import org.ishafoundation.dwaraapi.staged.StagedFileOperations;
 import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
 import org.ishafoundation.dwaraapi.utils.JiraUtil;
+import org.ishafoundation.dwaraapi.utils.SMSUtil;
 import org.ishafoundation.dwaraapi.utils.StatusUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,6 +98,9 @@ public class ScheduledStatusUpdater {
 
 	@Autowired
 	private Configuration configuration;
+	
+	@Value("${restoreTapesNotifier.mobileNos}")
+	private String commaSeparatedMobileNos;
 	
 	@Autowired
 	private ApplicationContext applicationContext;
@@ -502,6 +506,11 @@ public class ScheduledStatusUpdater {
 						}
 					}
 				}
+			}
+			
+			if(nthRequest.getActionId() == Action.restore_process && (status == Status.failed || status == Status.completed_failures)) {
+				String messagePart = nthRequest.getId() + " restore failed" ;
+				SMSUtil.sendSMS(commaSeparatedMobileNos, messagePart);
 			}
 		}
 	}
