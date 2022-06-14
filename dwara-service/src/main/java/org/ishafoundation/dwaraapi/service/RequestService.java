@@ -176,14 +176,19 @@ public class RequestService extends DwaraService{
 		try {
 			
 			Status requestToBeCancelledStatus = requestToBeCancelled.getStatus();
+			Action requestToBeCancelledAction = requestToBeCancelled.getActionId();
 			
 			switch (requestToBeCancelledStatus) {
 				case completed:
 				case completed_failures:
 				case marked_completed:
+					throw new DwaraException(requestId + " request cannot be cancelled. Its already " + requestToBeCancelledStatus.name());
 				case failed:	
 				case marked_failed:		
-					throw new DwaraException(requestId + " request cannot be cancelled. Its already " + requestToBeCancelledStatus.name());
+					if(requestToBeCancelledAction != Action.restore_process)
+						throw new DwaraException(requestId + " request cannot be cancelled. Its already " + requestToBeCancelledStatus.name());
+					else
+						break;
 				default:
 					break;
 			}
@@ -191,7 +196,7 @@ public class RequestService extends DwaraService{
 //			if(requestToBeCancelledStatus == Status.completed)
 //				throw new DwaraException(requestId + " request cannot be cancelled. Its already " + requestToBeCancelledStatus.name());
 			
-			if(!force)
+			if(!force && requestToBeCancelledAction != Action.restore_process)
 				validateRequestToBeCancelled(requestToBeCancelled);
 			
 			HashMap<String, Object> data = new HashMap<String, Object>();
@@ -203,23 +208,23 @@ public class RequestService extends DwaraService{
 			if(requestToBeCancelled.getType() == RequestType.user) {
 				List<Request> systemRequestsToBeCancelledList = requestDao.findAllByRequestRefId(requestId);
 				for (Request nthSystemRequestToBeCancelled : systemRequestsToBeCancelledList) {
-					updateJobs(nthSystemRequestToBeCancelled.getId());
+					updateJobs(nthSystemRequestToBeCancelled.getId(), requestToBeCancelledAction);
 					
-					if(nthSystemRequestToBeCancelled.getStatus() == Status.queued || nthSystemRequestToBeCancelled.getStatus() == Status.on_hold)
+					if(nthSystemRequestToBeCancelled.getStatus() == Status.queued || nthSystemRequestToBeCancelled.getStatus() == Status.on_hold || (requestToBeCancelledAction == Action.restore_process && nthSystemRequestToBeCancelled.getStatus() == Status.failed))
 						nthSystemRequestToBeCancelled.setStatus(Status.cancelled);
 					
 				}
 				requestDao.saveAll(systemRequestsToBeCancelledList);
 				
-				if(requestToBeCancelled.getStatus() == Status.queued || requestToBeCancelled.getStatus() == Status.on_hold) {
+				if(requestToBeCancelled.getStatus() == Status.queued || requestToBeCancelled.getStatus() == Status.on_hold || (requestToBeCancelledAction == Action.restore_process && requestToBeCancelled.getStatus() == Status.failed)) {
 					requestToBeCancelled.setStatus(Status.cancelled);
 					requestDao.save(requestToBeCancelled);
 				} // else scheduler will update the status accordingly
 			}
 			else if(requestToBeCancelled.getType() == RequestType.system) {
-				updateJobs(requestId);
+				updateJobs(requestId, requestToBeCancelledAction);
 				
-				if(requestToBeCancelled.getStatus() == Status.queued || requestToBeCancelled.getStatus() == Status.on_hold) {
+				if(requestToBeCancelled.getStatus() == Status.queued || requestToBeCancelled.getStatus() == Status.on_hold || (requestToBeCancelledAction == Action.restore_process  && requestToBeCancelled.getStatus() == Status.failed)) {
 					requestToBeCancelled.setStatus(Status.cancelled);
 					requestDao.save(requestToBeCancelled);
 				}
@@ -248,27 +253,28 @@ public class RequestService extends DwaraService{
 		if(requestToBeCancelled.getType() == RequestType.user) {
 			List<Request> systemRequestsToBeCancelledList = requestDao.findAllByRequestRefId(requestId);
 			for (Request nthSystemRequestToBeCancelled : systemRequestsToBeCancelledList) {
-				validateJobs(nthSystemRequestToBeCancelled.getId());
+				validateJobs(nthSystemRequestToBeCancelled);
 			}
 		}
 		if(requestToBeCancelled.getType() == RequestType.system) {
-			validateJobs(requestId);
+			validateJobs(requestToBeCancelled);
 		}
 	}
 	
-	private void validateJobs(int requestId) {
+	private void validateJobs(Request requestToBeCancelled) {
+		int requestId = requestToBeCancelled.getId();
 		List<Job> jobList = jobDao.findAllByRequestId(requestId);
 		for (Job job : jobList) {
-			if(job.getStatus() != Status.queued)
+			if(job.getStatus() != Status.queued && !(requestToBeCancelled.getActionId() == Action.restore_process && job.getStatus() == Status.failed))
 				throw new DwaraException(requestId + " request cannot be cancelled. All jobs should be in queued status");
 		}
 	}
 	
-	private void updateJobs(int requestId) {
+	private void updateJobs(int requestId, Action requestToBeCancelledAction) {
 		List<Job> jobList = jobDao.findAllByRequestId(requestId);
 		
 		for (Job job : jobList) {
-			if(job.getStatus() == Status.queued || job.getStatus() == Status.on_hold)
+			if(job.getStatus() == Status.queued || job.getStatus() == Status.on_hold || (requestToBeCancelledAction == Action.restore_process && job.getStatus() == Status.failed))
 				job.setStatus(Status.cancelled);
 		}
 		jobDao.saveAll(jobList);
