@@ -70,6 +70,9 @@ public class RestoreBucketController {
     @PostMapping("/buckets")
     public ResponseEntity<TRestoreBucket> createBucket(@RequestBody Map<String,String> map){
         String id = (String)map.get("id");
+        if(id == null)
+        	throw new DwaraException(id + " is not a valid Bucket name", null);
+        
         boolean isExisted = tRestoreBucketDao.existsById(id) || requestApprovalDao.existsById(id);
         if(!isExisted) {
             TRestoreBucket tRestoreBucket =restoreBucketService.createBucket(id);

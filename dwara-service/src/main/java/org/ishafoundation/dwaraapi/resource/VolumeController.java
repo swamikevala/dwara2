@@ -12,6 +12,7 @@ import org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.MarkVolumeStatusResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
+import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.Storagetype;
 import org.ishafoundation.dwaraapi.enumreferences.TapeStoragesubtype;
 import org.ishafoundation.dwaraapi.exception.DwaraException;
@@ -152,11 +153,12 @@ public class VolumeController {
 		    @ApiResponse(code = 400, message = "Error")
 	})
 	@PostMapping(value = "/volume/finalize", produces = "application/json")
-	public ResponseEntity<String> finalize(@RequestParam String volume){
+	public ResponseEntity<InitializeResponse> finalize(@RequestParam String volume){
 		
-		String finalizeResponse = null;
+		InitializeResponse finalizeResponse = new InitializeResponse();
 		try {
-			finalizeResponse = volumeService.finalize(volume);
+			volumeService.finalize(volume);
+			finalizeResponse.setAction(Action.finalize.name());
 		}catch (Exception e) {
 			String errorMsg = "Unable to finalize - " + e.getMessage();
 			logger.error(errorMsg, e);
@@ -199,11 +201,12 @@ public class VolumeController {
 			@ApiResponse(code = 200, message = "Ok")
 	})
 	@PostMapping(value = "/volume/{volumeId}/rewrite", produces = "application/json")
-	public ResponseEntity<String> rewriteArtifact(@RequestBody RewriteRequest rewriteRequest, @PathVariable("volumeId") String volumeId) {
+	public ResponseEntity<InitializeResponse> rewriteArtifact(@RequestBody RewriteRequest rewriteRequest, @PathVariable("volumeId") String volumeId) {
 		logger.info("/volume/" + volumeId + "/rewrite");
-		
+		InitializeResponse rewriteResponse = new InitializeResponse();
 		try {
 			volumeService.rewriteVolume(volumeId, rewriteRequest);
+			rewriteResponse.setAction(Action.rewrite.name());
 		}catch (Exception e) {
 			String errorMsg = "Unable to rewrite volume - " + e.getMessage();
 			logger.error(errorMsg, e);
@@ -214,7 +217,7 @@ public class VolumeController {
 				throw new DwaraException(errorMsg, null);
 		}
 
-		return ResponseEntity.status(HttpStatus.OK).body("Done");
+		return ResponseEntity.status(HttpStatus.OK).body(rewriteResponse);
 	}
 	
 	@ApiOperation(value = "Marks a volume's healthstatus suspect|defective|normal")
