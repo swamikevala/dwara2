@@ -1,3 +1,8 @@
+# Dwara App Version - 2.1.32 (2nd Jul 2022)
+### Bugs
+
+1) Rewrite response standardised to json so UI shows appropriate message sent from server... 
+
 # Dwara App Version - 2.1.31 (28th Sep 2021)
 ### Bugs
 
