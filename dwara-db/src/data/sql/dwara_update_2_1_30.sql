@@ -37,3 +37,6 @@ INSERT INTO `artifactclass_volume` (`active`, `encrypted`, `artifactclass_id`, `
 
 SET foreign_key_checks = 1;
 
+-- DU-998
+update job set status='marked_failed',message='Both G1/2 copies has the proxy for this artifact corrupted' where id in (79164, 79319, 79230);
+update request set status='marked_failed',message='Both G1/2 copies has the proxy for this artifact corrupted' where id in (13523,13541, 13527);
