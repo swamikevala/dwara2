@@ -344,7 +344,7 @@ public class CatalogService extends DwaraService{
 
         String query2 = "select a.id, d.id as requestId, a.artifactclass_id, a.name, a.total_size, group_concat(b.volume_id order by b.volume_id separator ','), d.status, c.imported, group_concat(c.last_written_at order by c.id separator ',') as last_written_at, d.requested_at, e.name as ingestedBy, group_concat(distinct b.name order by b.volume_id separator ',') as oldName, a.file_count" 
         + " from artifact a join artifact_volume b join volume c join request d join user e"
-        + " where a.id=b.artifact_id and b.volume_id=c.id and (a.write_request_id=d.id or a.q_latest_request_id=d.id) and d.requested_by_id=e.id"
+        + " where a.id=b.artifact_id and b.volume_id=c.id and (a.write_request_id=d.id or a.q_latest_request_id=d.id) and d.requested_by_id=e.id and c.lifecyclestage='active'"
         + " and a.id in (" + query + ")"
         + " group by a.id, d.id, c.imported order by requested_at desc";
         Query q = entityManager.createNativeQuery(query2);
@@ -359,8 +359,8 @@ public class CatalogService extends DwaraService{
 
         //Query proxy
         String query3 = "select a.artifact_ref_id, group_concat(b.volume_id order by b.volume_id separator ',') as volumeId, group_concat(f.status order by b.volume_id separator ',') as proxyStatus" 
-        + " from artifact a join artifact_volume b on a.id=b.artifact_id join job f on f.input_artifact_id=a.artifact_ref_id"
-        + " where f.processingtask_id like '%proxy%'"
+        + " from artifact a join artifact_volume b on a.id=b.artifact_id join job f on f.input_artifact_id=a.artifact_ref_id join volume c on b.volume_id=c.id"
+        + " where f.processingtask_id like '%proxy%' and c.lifecyclestage='active'"
         + " and a.artifact_ref_id in (" + query + ")"
         + " group by a.artifact_ref_id";
         Query qProxy = entityManager.createNativeQuery(query3);
