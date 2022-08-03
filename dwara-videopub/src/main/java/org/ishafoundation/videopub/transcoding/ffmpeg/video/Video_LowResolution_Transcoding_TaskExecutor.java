@@ -146,6 +146,8 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		return processingtaskResponse;
 	}
 	
+	
+	// ffmpeg -y -nostdin -i /data/dwara/staged/V34373_Conscious-Planet_Sadhguru-Press-Meet_Marriot-Hotel-Rome-Italy_01-Apr-2022_FX3_4K/M4ROOT/CLIP/9FX33386.MP4 -ss 0 -vframes 1 -s 192*108 /data/dwara/transcoded/VL34373_Conscious-Planet_Sadhguru-Press-Meet_Marriot-Hotel-Rome-Italy_01-Apr-2022_FX3_4K/M4ROOT/CLIP
 	private List<String> getThumbnailGenerationCommand(String sourceFilePathname, String thumbnailTargetLocation) {
 		List<String> thumbnailGenerationCommandParamsList = new ArrayList<String>();
 		thumbnailGenerationCommandParamsList.add("ffmpeg");
@@ -220,8 +222,6 @@ public class Video_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 		proxyGenerationCommandParamsList.add("libx264");
 		proxyGenerationCommandParamsList.add("-b:v");
 		proxyGenerationCommandParamsList.add("520000");
-		proxyGenerationCommandParamsList.add("-r");
-		proxyGenerationCommandParamsList.add("25.0");
 		proxyGenerationCommandParamsList.add("-pix_fmt");
 		proxyGenerationCommandParamsList.add("yuv420p");
 		proxyGenerationCommandParamsList.add("-crf");
