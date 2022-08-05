@@ -63,12 +63,12 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
 	            	int archiveformatBlocksize = nthVolume.getArchiveformat().getBlocksize();
 	            	int volumeBlockSize = nthVolume.getDetails().getBlocksize();
 	            	double blockingFactor = TarBlockCalculatorUtil.getBlockingFactor(archiveformatBlocksize, volumeBlockSize);
-	            	int volumeEndBlock = getFlooredFileVolumeEndBlock(fileArchiveBlock, fileHeaderBlocks, fileSize, archiveformatBlocksize, blockingFactor);
+	            	int volumeEndBlock = TarBlockCalculatorUtil.getFlooredFileVolumeEndBlock(fileArchiveBlock, fileHeaderBlocks, fileSize, archiveformatBlocksize, blockingFactor);
 	            	nthFileVolume.setVolumeEndBlock(volumeEndBlock);
 	            	fileVolumeDao.save(nthFileVolume);
             	}
             	catch (Exception e) {
-					logger.error("EBC - Unable to captured end block for fileId - " + fileId);
+					logger.error("EBC - Unable to captured end block for fileId - " + fileId, e);
 				}
 
 //                if (i == fileVolumeBlockList.size() - 1) {
@@ -109,22 +109,7 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
 //                    fileVolumeDao.save(fileVolume);
 //                }
             }
-
         }
-
     }
-    
-	// calculates a file's Volume END  block - using the running archiveblock of each file... where archiveBlock is the starting block of the file archive...
-	private static int getFlooredFileVolumeEndBlock(long fileArchiveBlock, int fileHeaderBlocks, Long fileSize, double archiveformatBlocksize, double blockingFactor){
-		//int fileHeaderBlocks = getFileHeaderBlocks(fileName);
-		
-		// Total no. of archive blocks used by the file...
-		int fileArchiveBlocksCount = (int) Math.ceil(fileSize/archiveformatBlocksize);
-		long file_Archive_EndBlock = fileArchiveBlock + fileHeaderBlocks + fileArchiveBlocksCount;
-		
-		int fileVolumeBlocksCount = (int) Math.floor(file_Archive_EndBlock/blockingFactor);
-		return fileVolumeBlocksCount;
-	}
-
 }
 

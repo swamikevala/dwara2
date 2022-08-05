@@ -45,6 +45,18 @@ public class TarBlockCalculatorUtil {
 		int fileVolumeBlocksCount = (int) Math.ceil(file_Archive_EndBlock/blockingFactor);
 		return fileVolumeBlocksCount;
 	}
+	
+	// calculates a file's Volume END  block - using the running archiveblock of each file... where archiveBlock is the starting block of the file archive...
+	public static int getFlooredFileVolumeEndBlock(long fileArchiveBlock, int fileHeaderBlocks, Long fileSize, double archiveformatBlocksize, double blockingFactor){
+		//int fileHeaderBlocks = getFileHeaderBlocks(fileName);
+		
+		// Total no. of archive blocks used by the file...
+		int fileArchiveBlocksCount = (int) Math.ceil(fileSize/archiveformatBlocksize);
+		long file_Archive_EndBlock = fileArchiveBlock + fileHeaderBlocks + fileArchiveBlocksCount;
+		
+		int fileVolumeBlocksCount = (int) Math.floor(file_Archive_EndBlock/blockingFactor);
+		return fileVolumeBlocksCount;
+	}
 
 	// useful when executing the restore
 	//block 136638: -rwxrwxrwx aravindhpr/aravindhpr 1638625295 2020-04-16 12:08 Cauvery-Calling_Day1-Sadhguru-Talking-With-People_Palace-Grounds-Bengaluru_02-Sep-2019_GoProApr6/DCIM/104GOPRO/GOPR6925.MP4
@@ -52,6 +64,30 @@ public class TarBlockCalculatorUtil {
 	public static int getSkipByteCount(long fileArchiveBlock, int archiveformatBlockize, int blockingFactor) {
 		//return (fileArchiveBlock + TarBlockCalculatorUtil.getFileHeaderBlocks(fileName)  - ((fileArchiveBlock/blockingFactor)  * blockingFactor)) * archiveformatBlockize;
 		return (int) ((fileArchiveBlock - ((fileArchiveBlock/blockingFactor)  * blockingFactor)) * archiveformatBlockize);
+	}
+	
+	public static void main(String[] args) {
+		
+//		34650036681	67675852.8926	0	1753404
+//		45238	88.3555	3	1753404
+//		16978193801	33160534.7676	98	1753404
+//		16978193801	33160534.7676	101	1753404
+//		17669687918	34511109.2148	33160639	1818170
+//		2109724	4120.5547	67671766	1885575
+		
+		
+		long fileArchiveBlock = 3; // 73308;
+		Long fileSize = 45238L; //75258928L;
+		
+		int fvsb = getFileVolumeBlock(0, fileArchiveBlock, 512);
+		int fveb = getFileVolumeEndBlock(fileArchiveBlock,3,fileSize,512,512);
+		int total = 1753404 + fveb;
+		System.out.println("fvsb - " + fvsb);
+		System.out.println("fveb - " + fveb);
+		System.out.println("fvsb +  fveb " + total);
+		
+		
+		
 	}
 
 }
