@@ -55,8 +55,9 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
             	int fileId = nthFileVolume.getId().getFileId(); 
             	try {
 	            	long fileArchiveBlock = nthFileVolume.getArchiveBlock();
-	            	int fileHeaderBlocks = nthFileVolume.getHeaderBlocks();
-	            	
+	            	Integer fileHeaderBlocks = nthFileVolume.getHeaderBlocks();
+	            	if(fileHeaderBlocks == null)
+	            		fileHeaderBlocks = 3;
 	            	
 	            	long fileSize = fileDao.findById(fileId).get().getSize();
 	            	            	
