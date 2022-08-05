@@ -56,6 +56,7 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
             	try {
 	            	long fileArchiveBlock = nthFileVolume.getArchiveBlock();
 	            	Integer fileHeaderBlocks = nthFileVolume.getHeaderBlocks();
+	            	Integer vsb = nthFileVolume.getVolumeStartBlock();
 	            	if(fileHeaderBlocks == null)
 	            		fileHeaderBlocks = 3;
 	            	
@@ -65,7 +66,7 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
 	            	int volumeBlockSize = nthVolume.getDetails().getBlocksize();
 	            	double blockingFactor = TarBlockCalculatorUtil.getBlockingFactor(archiveformatBlocksize, volumeBlockSize);
 	            	int volumeEndBlock = TarBlockCalculatorUtil.getFlooredFileVolumeEndBlock(fileArchiveBlock, fileHeaderBlocks, fileSize, archiveformatBlocksize, blockingFactor);
-	            	nthFileVolume.setVolumeEndBlock(volumeEndBlock);
+	            	nthFileVolume.setVolumeEndBlock(vsb + volumeEndBlock);
 	            	fileVolumeDao.save(nthFileVolume);
             	}
             	catch (Exception e) {
