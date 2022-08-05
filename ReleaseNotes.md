@@ -1,3 +1,18 @@
+# Dwara App Version - 2.1.42 (5th Aug 2022)
+
+### Bugs
+
+1) Folder catalog: only showing tapes that are active
+2) Frame rate in proxy jobs not defaulted to 25 frames
+3) Rewrite and Defective tapes API response corrected
+
+
+# Dwara App Version - 2.1.41 (2nd Jul 2022)
+
+### Bugs
+
+1) Rewrite response standardised to json so UI shows appropriate message sent from server...
+
 # Dwara App Version - 2.1.40 (24th Feb 2022)
 
 ### Bug fixes
