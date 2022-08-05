@@ -48,7 +48,7 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
         	String nthVolumeId = nthVolume.getId();
         	logger.info("EBC - Capturing end block for volume - " + nthVolumeId);
 
-            fileVolumeBlockList = fileVolumeDao.findAllByIdVolumeId(nthVolumeId).stream().collect(Collectors.toList());
+            fileVolumeBlockList = fileVolumeDao.findAllByIdVolumeId(nthVolumeId); // .stream().collect(Collectors.toList());
             for (int i = 0; i < fileVolumeBlockList.size(); i++) {
             	
             	FileVolume nthFileVolume = fileVolumeBlockList.get(i);
