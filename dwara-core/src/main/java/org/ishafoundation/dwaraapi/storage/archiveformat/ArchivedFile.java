@@ -5,6 +5,7 @@ public class ArchivedFile {
 	private String linkName;
 	private Long archiveBlock; // running total start Archive block of a file
 	private Integer volumeBlock; // running total start Volume block of a file (entire volume level)
+	private Integer volumeEndBlock; // computed value from startvolumeBlock and filesize
 	
 	public String getFilePathName() {
 		return filePathName;
@@ -30,8 +31,14 @@ public class ArchivedFile {
 	public void setVolumeBlock(Integer volumeBlock) {
 		this.volumeBlock = volumeBlock;
 	}
+	public Integer getVolumeEndBlock() {
+		return volumeEndBlock;
+	}
+	public void setVolumeEndBlock(Integer volumeEndBlock) {
+		this.volumeEndBlock = volumeEndBlock;
+	}
 	@Override
 	public String toString() {
-		return "filePathName : " + filePathName + " linkName : " + linkName + " archiveBlock : " + archiveBlock + " volumeBlock : " + volumeBlock;
+		return "filePathName : " + filePathName + " linkName : " + linkName + " archiveBlock : " + archiveBlock + " volumeBlock : " + volumeBlock + " volumeEndBlock : " + volumeEndBlock;
 	}
 }

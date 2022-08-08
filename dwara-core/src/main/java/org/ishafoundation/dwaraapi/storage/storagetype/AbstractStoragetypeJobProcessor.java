@@ -302,6 +302,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 					artifactStartVolumeBlock = volumeBlock;
 				}
 				fileVolume.setVolumeStartBlock(volumeBlock);
+				fileVolume.setVolumeEndBlock(archivedFile.getVolumeEndBlock());
 				fileVolume.setArchiveBlock(archivedFile.getArchiveBlock());
 				if(archivedFile.getLinkName() != null && (nthFile.getSymlinkPath() == null && nthFile.getSymlinkFileId() == null)) { // only hard links and no soft links
 					File file = filePathNameToFileObj.get(archivedFile.getLinkName());

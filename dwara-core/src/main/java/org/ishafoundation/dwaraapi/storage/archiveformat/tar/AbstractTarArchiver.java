@@ -169,6 +169,10 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			// running total of volume block start
 			int volumeBlock =  TarBlockCalculatorUtil.getFileVolumeBlock(artifactStartVolumeBlock, archiveBlock, blockingFactor); 
 			archivedFile.setVolumeBlock(volumeBlock); 
+
+			long fileSize = taredFile.getFileSize();
+			int volumeEndBlock =  TarBlockCalculatorUtil.getFlooredFileVolumeEndBlock(archiveBlock, 3, fileSize, archiveformatBlocksize, blockingFactor);
+			archivedFile.setVolumeBlock(volumeEndBlock); 
 			
 			archivedFileList.add(archivedFile);
 			if(!iterator.hasNext())
