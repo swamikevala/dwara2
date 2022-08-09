@@ -72,7 +72,7 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
                 		fileIdToFileObj.clear();
                 		fileDBObj = fileDao.findById(fileId).get();
                 		int artifactId = fileDBObj.getArtifact().getId();
-                		// av = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifactId, nthVolumeId);
+                		av = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifactId, nthVolumeId);
 	            		List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = fileDao.findAllByArtifactId(artifactId);
 	            		
 	            		for (Iterator<org.ishafoundation.dwaraapi.db.model.transactional.File> iterator = artifactFileList.iterator(); iterator.hasNext();) {
@@ -93,8 +93,9 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
 	            	int volumeBlockSize = nthVolume.getDetails().getBlocksize();
 	            	double blockingFactor = TarBlockCalculatorUtil.getBlockingFactor(archiveformatBlocksize, volumeBlockSize);
 	            	int volumeEndBlock = TarBlockCalculatorUtil.getFlooredFileVolumeEndBlock(fileArchiveBlock, fileHeaderBlocks, fileSize, archiveformatBlocksize, blockingFactor);
-	            	nthFileVolume.setVolumeEndBlock(vsb + volumeEndBlock);
-	            	logger.debug("EBC - filePathName - " + fileDBObj.getPathname() + " fvsb - " + vsb + " fveb - " + volumeEndBlock + " cfveb - " + (vsb + volumeEndBlock));
+	            	Integer avVsb = av.getDetails().getStartVolumeBlock();
+	            	nthFileVolume.setVolumeEndBlock(avVsb + volumeEndBlock);	            	
+	            	logger.debug("EBC - filePathName - " + fileDBObj.getPathname() + " avVsb - " + avVsb + " fvsb - " + vsb + " fveb - " + volumeEndBlock + " cfveb - " + (avVsb + volumeEndBlock));
 	            	fileVolumeDao.save(nthFileVolume);
             	}
             	catch (Exception e) {

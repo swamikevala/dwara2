@@ -143,6 +143,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			
 			ar = convertTarResponseToArchiveResponse(deviceName, tarResponse, archiveformatJob.getSelectedStorageJob(), artifactId, artifactNameToBeWritten, volumeBlocksize, archiveformatBlocksize); 
 		}catch (Exception e) {
+			logger.error(e.getMessage(), e);
 			throw new StorageException(e.getMessage());
 		}
 		return ar;
@@ -197,17 +198,17 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			}
 			
 			org.ishafoundation.dwaraapi.db.model.transactional.File dbFileObj = filePathNameHexToFileObj.get(filePathNameHex);
-			long fileSize = taredFile.getFileSize();
-			if(dbFileObj.isDirectory())
-				fileSize = dbFileObj.getSize();
-			int volumeEndBlock =  TarBlockCalculatorUtil.getFlooredFileVolumeEndBlock(archiveBlock, 3, fileSize, archiveformatBlocksize, blockingFactor);
-			archivedFile.setVolumeEndBlock(artifactStartVolumeBlock + volumeEndBlock); 
-			
+			if(dbFileObj != null) {
+				long fileSize = taredFile.getFileSize();
+				if(dbFileObj.isDirectory())
+					fileSize = dbFileObj.getSize();
+				int volumeEndBlock =  TarBlockCalculatorUtil.getFlooredFileVolumeEndBlock(archiveBlock, 3, fileSize, archiveformatBlocksize, blockingFactor);
+				archivedFile.setVolumeEndBlock(artifactStartVolumeBlock + volumeEndBlock); 
+				logger.debug("EBC - filePathName - " + filePathName + " avVsb - " + artifactStartVolumeBlock + " fvsb - " + volumeBlock + " fveb - " + volumeEndBlock + " cfveb - " + (artifactStartVolumeBlock + volumeEndBlock));
+			}
 			archivedFileList.add(archivedFile);
 			if(!iterator.hasNext())
-				lastTaredFile = taredFile;
-			
-			logger.debug("EBC - filePathName - " + filePathName + " fvsb - " + volumeBlock + " fveb - " + volumeEndBlock + " cfveb - " + (artifactStartVolumeBlock + volumeEndBlock));
+				lastTaredFile = taredFile;			
 		}
 		
 		archiveResponse.setArtifactStartVolumeBlock(artifactStartVolumeBlock);
@@ -533,7 +534,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 							if(nthArtifactFilePathname.equals(filePathname)) { // first file
 								skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filearchiveBlock, archiveformatBlocksize, blockingFactor);
 							}
-							lastFileEndVolumeBlock = filevolumeEndBlock;
+							lastFileEndVolumeBlock = filevolumeEndBlock + 1;
 						}
 						else {
 							Integer filevolumeBlock = fileVolume.getVolumeStartBlock();
