@@ -186,7 +186,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			
 			// running total of volume block start
 			int volumeBlock =  TarBlockCalculatorUtil.getFileVolumeBlock(artifactStartVolumeBlock, archiveBlock, blockingFactor); 
-			archivedFile.setVolumeBlock(volumeBlock); 
+			archivedFile.setVolumeBlock(volumeBlock); 			
 
 			String filePathNameHex = null;
 			try {
@@ -206,6 +206,8 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			archivedFileList.add(archivedFile);
 			if(!iterator.hasNext())
 				lastTaredFile = taredFile;
+			
+			logger.debug("EBC - filePathName - " + filePathName + " fvsb - " + volumeBlock + " fveb - " + volumeEndBlock + " cfveb - " + (artifactStartVolumeBlock + volumeEndBlock));
 		}
 		
 		archiveResponse.setArtifactStartVolumeBlock(artifactStartVolumeBlock);
@@ -525,16 +527,25 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 					String nthArtifactFilePathname = nthFile.getPathname();//FilenameUtils.separatorsToUnix(nthArtifactFile.getPathname());
 					if(nthArtifactFilePathname.startsWith(filePathname)) {
 						FileVolume fileVolume = fileVolumeDao.findByIdFileIdAndIdVolumeId(nthFile.getId(), volume.getId());// lets just let users use the util consistently
-						Integer filevolumeBlock = fileVolume.getVolumeStartBlock();
 						Long filearchiveBlock = fileVolume.getArchiveBlock();
-						Integer headerBlocks = fileVolume.getHeaderBlocks();
-						if(nthArtifactFilePathname.equals(filePathname)) { // first file
-							firstFileVolumeBlock = filevolumeBlock;
-							skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filearchiveBlock, archiveformatBlocksize, blockingFactor);
+						Integer filevolumeEndBlock = fileVolume.getVolumeEndBlock();
+						if(filevolumeEndBlock != null) {
+							if(nthArtifactFilePathname.equals(filePathname)) { // first file
+								skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filearchiveBlock, archiveformatBlocksize, blockingFactor);
+							}
+							lastFileEndVolumeBlock = filevolumeEndBlock;
 						}
-						else if(filearchiveBlock > lastFileArchiveBlock) {
-							lastFileArchiveBlock = filearchiveBlock;
-							lastFileEndVolumeBlock = TarBlockCalculatorUtil.getFileVolumeEndBlock(filearchiveBlock, headerBlocks, nthFile.getSize(), archiveformatBlocksize, blockingFactor); 
+						else {
+							Integer filevolumeBlock = fileVolume.getVolumeStartBlock();
+							Integer headerBlocks = fileVolume.getHeaderBlocks();
+							if(nthArtifactFilePathname.equals(filePathname)) { // first file
+								firstFileVolumeBlock = filevolumeBlock;
+								skipByteCount = TarBlockCalculatorUtil.getSkipByteCount(filearchiveBlock, archiveformatBlocksize, blockingFactor);
+							}
+							else if(filearchiveBlock > lastFileArchiveBlock) {
+								lastFileArchiveBlock = filearchiveBlock;
+								lastFileEndVolumeBlock = TarBlockCalculatorUtil.getFileVolumeEndBlock(filearchiveBlock, headerBlocks, nthFile.getSize(), archiveformatBlocksize, blockingFactor); 
+							}
 						}
 					}
 				}

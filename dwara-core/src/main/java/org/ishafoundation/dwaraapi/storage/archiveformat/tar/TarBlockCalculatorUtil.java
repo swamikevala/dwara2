@@ -75,16 +75,16 @@ public class TarBlockCalculatorUtil {
 //		17669687918	34511109.2148	33160639	1818170
 //		2109724	4120.5547	67671766	1885575
 		
+		int fvsbOffset = 107;
+		long fileArchiveBlock = 2075; // 73308;
+		Long fileSize = 25635931L; //75258928L;
 		
-		long fileArchiveBlock = 3; // 73308;
-		Long fileSize = 45238L; //75258928L;
-		
-		int fvsb = getFileVolumeBlock(0, fileArchiveBlock, 512);
-		int fveb = getFileVolumeEndBlock(fileArchiveBlock,3,fileSize,512,512);
-		int total = 1753404 + fveb;
+		int fvsb = fvsbOffset + getFileVolumeBlock(0, fileArchiveBlock, 512);
+		int fveb = getFlooredFileVolumeEndBlock(fileArchiveBlock,3,fileSize,512,512);
+		int total = fvsb + fveb;
 		System.out.println("fvsb - " + fvsb);
 		System.out.println("fveb - " + fveb);
-		System.out.println("fvsb +  fveb " + total);
+		System.out.println("fvsb +  fveb - " + total);
 		
 		
 		
