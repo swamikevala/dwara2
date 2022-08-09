@@ -3,14 +3,17 @@ package org.ishafoundation.dwaraapi.storage.archiveformat.tar;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.PfrConstants;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
@@ -28,6 +31,7 @@ import org.ishafoundation.dwaraapi.storage.archiveformat.tar.response.components
 import org.ishafoundation.dwaraapi.storage.model.ArchiveformatJob;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
+import org.ishafoundation.dwaraapi.storage.storagetype.AbstractStoragetypeJobProcessor;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.TapeDriveManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,6 +105,10 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 	@Autowired
 	private TapeDriveManager tapeDriveManager;
 	
+	@Autowired
+	private FileDao fileDao;
+
+	
 	@Override
 	public ArchiveResponse write(ArchiveformatJob archiveformatJob) throws StorageException {
 		ArchiveResponse ar = null;
@@ -112,6 +120,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			int archiveformatBlocksize = archiveformatJob.getArchiveformatBlocksize();
 			String deviceName = archiveformatJob.getDeviceName();
 			String junkFilesStagedDirName = archiveformatJob.getSelectedStorageJob().getJunkFilesStagedDirName();
+			int artifactId = archiveformatJob.getSelectedStorageJob().getStorageJob().getJob().getInputArtifactId();
 			
 			int tarBlockingFactor = volumeBlocksize/archiveformatBlocksize;
 			String tarCopyCommand = "tar cvvv -R -b " + tarBlockingFactor + " -f " + deviceName + " " + artifactNameToBeWritten + " --exclude=" + junkFilesStagedDirName + " --format=posix";
@@ -132,7 +141,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			TarResponse tarResponse = tarResponseParser.parseTarResponse(commandOutput);
 			logger.trace("Parsed tar response object - " + tarResponse);	
 			
-			ar = convertTarResponseToArchiveResponse(deviceName, tarResponse, archiveformatJob.getSelectedStorageJob(), artifactNameToBeWritten, volumeBlocksize, archiveformatBlocksize); 
+			ar = convertTarResponseToArchiveResponse(deviceName, tarResponse, archiveformatJob.getSelectedStorageJob(), artifactId, artifactNameToBeWritten, volumeBlocksize, archiveformatBlocksize); 
 		}catch (Exception e) {
 			throw new StorageException(e.getMessage());
 		}
@@ -142,7 +151,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 	protected abstract String executeCommand(List<String> tarCommandParamsList, String artifactName, int volumeBlocksize)
 			throws Exception;
 	
-	private ArchiveResponse convertTarResponseToArchiveResponse(String deviceName, TarResponse tarResponse, SelectedStorageJob storagetypeJob, String artifactName, int volumeBlocksize, int archiveformatBlocksize) throws Exception{
+	private ArchiveResponse convertTarResponseToArchiveResponse(String deviceName, TarResponse tarResponse, SelectedStorageJob storagetypeJob, int artifactId, String artifactName, int volumeBlocksize, int archiveformatBlocksize) throws Exception{
 		ArchiveResponse archiveResponse = new ArchiveResponse();
 
 		int artifactStartVolumeBlock = getArtifactStartVolumeBlock(storagetypeJob);
@@ -150,6 +159,15 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 		int artifactTotalVolumeBlocks = 0;
 		
 		int blockingFactor = TarBlockCalculatorUtil.getBlockingFactor(archiveformatBlocksize, volumeBlocksize); 
+		
+		HashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File> filePathNameHexToFileObj = new LinkedHashMap<String, org.ishafoundation.dwaraapi.db.model.transactional.File>();
+		List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = fileDao.findAllByArtifactId(artifactId);
+		for (Iterator<org.ishafoundation.dwaraapi.db.model.transactional.File> iterator = artifactFileList.iterator(); iterator.hasNext();) {
+			org.ishafoundation.dwaraapi.db.model.transactional.File nthFile = iterator.next();
+			String filePathname = FilenameUtils.separatorsToUnix(nthFile.getPathname());
+			String filePathNameHex = Hex.encodeHexString(filePathname.getBytes());
+			filePathNameHexToFileObj.put(filePathNameHex, nthFile);
+		}
 		
 		List<ArchivedFile> archivedFileList = new ArrayList<ArchivedFile>();
 		List<File> taredFileList = tarResponse.getFileList();
@@ -170,7 +188,18 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			int volumeBlock =  TarBlockCalculatorUtil.getFileVolumeBlock(artifactStartVolumeBlock, archiveBlock, blockingFactor); 
 			archivedFile.setVolumeBlock(volumeBlock); 
 
+			String filePathNameHex = null;
+			try {
+				filePathNameHex = AbstractStoragetypeJobProcessor.getHexString(filePathName);
+			}catch (Exception e) {
+				logger.error("Not able to hex " + filePathName, e);
+				throw e;
+			}
+			
+			org.ishafoundation.dwaraapi.db.model.transactional.File dbFileObj = filePathNameHexToFileObj.get(filePathNameHex);
 			long fileSize = taredFile.getFileSize();
+			if(dbFileObj.isDirectory())
+				fileSize = dbFileObj.getSize();
 			int volumeEndBlock =  TarBlockCalculatorUtil.getFlooredFileVolumeEndBlock(archiveBlock, 3, fileSize, archiveformatBlocksize, blockingFactor);
 			archivedFile.setVolumeEndBlock(volumeBlock + volumeEndBlock); 
 			

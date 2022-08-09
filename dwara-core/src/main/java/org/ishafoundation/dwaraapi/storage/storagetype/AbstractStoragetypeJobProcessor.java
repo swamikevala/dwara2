@@ -173,7 +173,7 @@ public abstract class AbstractStoragetypeJobProcessor {
      * @param filepathName
      * @return
      */
-	private static String getHexString(String filepathName) throws Exception {
+	public static String getHexString(String filepathName) throws Exception {
 		StringBuffer filepathNameHexSB = new StringBuffer();
 		for(int i = 0; i < filepathName.length(); i++){
 			char nthChar = filepathName.charAt(i);
