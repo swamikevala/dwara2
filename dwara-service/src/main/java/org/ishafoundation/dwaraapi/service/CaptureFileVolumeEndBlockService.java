@@ -1,14 +1,22 @@
 package org.ishafoundation.dwaraapi.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
+import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.storage.archiveformat.tar.TarBlockCalculatorUtil;
 import org.slf4j.Logger;
@@ -31,6 +39,9 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
     @Autowired
     private FileVolumeDao fileVolumeDao;
     
+    @Autowired
+    private ArtifactVolumeDao artifactVolumeDao;
+    
     public void fileVolumeEndBlock(List<String> volumeId) {
         List<FileVolume> fileVolumeBlockList;
         List<Volume> volumeGroupList = new ArrayList<>();
@@ -49,24 +60,41 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
         	logger.info("EBC - Capturing end block for volume - " + nthVolumeId);
 
             fileVolumeBlockList = fileVolumeDao.findAllByIdVolumeId(nthVolumeId); // .stream().collect(Collectors.toList());
+            HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File> fileIdToFileObj = new LinkedHashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File>();
+            ArtifactVolume av = null;
             for (int i = 0; i < fileVolumeBlockList.size(); i++) {
             	
             	FileVolume nthFileVolume = fileVolumeBlockList.get(i);
             	int fileId = nthFileVolume.getId().getFileId(); 
             	try {
+                	File fileDBObj = fileIdToFileObj.get(fileId);
+                	if(fileDBObj == null) {
+                		fileIdToFileObj.clear();
+                		fileDBObj = fileDao.findById(fileId).get();
+                		int artifactId = fileDBObj.getArtifact().getId();
+                		av = artifactVolumeDao.findByIdArtifactIdAndIdVolumeId(artifactId, nthVolumeId);
+	            		List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = fileDao.findAllByArtifactId(artifactId);
+	            		
+	            		for (Iterator<org.ishafoundation.dwaraapi.db.model.transactional.File> iterator = artifactFileList.iterator(); iterator.hasNext();) {
+	            			org.ishafoundation.dwaraapi.db.model.transactional.File nthFile = iterator.next();
+	            			fileIdToFileObj.put(nthFile.getId(), nthFile);
+	            		}
+                	}
+            		
+            		
 	            	long fileArchiveBlock = nthFileVolume.getArchiveBlock();
 	            	Integer fileHeaderBlocks = nthFileVolume.getHeaderBlocks();
 	            	Integer vsb = nthFileVolume.getVolumeStartBlock();
 	            	if(fileHeaderBlocks == null)
 	            		fileHeaderBlocks = 3;
 	            	
-	            	long fileSize = fileDao.findById(fileId).get().getSize();
+	            	long fileSize = fileDBObj.getSize();
 	            	            	
 	            	int archiveformatBlocksize = nthVolume.getArchiveformat().getBlocksize();
 	            	int volumeBlockSize = nthVolume.getDetails().getBlocksize();
 	            	double blockingFactor = TarBlockCalculatorUtil.getBlockingFactor(archiveformatBlocksize, volumeBlockSize);
 	            	int volumeEndBlock = TarBlockCalculatorUtil.getFlooredFileVolumeEndBlock(fileArchiveBlock, fileHeaderBlocks, fileSize, archiveformatBlocksize, blockingFactor);
-	            	nthFileVolume.setVolumeEndBlock(vsb + volumeEndBlock);
+	            	nthFileVolume.setVolumeEndBlock(av.getDetails().getStartVolumeBlock() + volumeEndBlock);
 	            	fileVolumeDao.save(nthFileVolume);
             	}
             	catch (Exception e) {
