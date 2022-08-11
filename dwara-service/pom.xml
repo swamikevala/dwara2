@@ -359,6 +359,16 @@
 			            <configuration>
 			                <attachClasses>true</attachClasses>
 			                <classesClassifier>classes</classesClassifier>
+			                <!--<warName>api</warName>-->
+			                <webResources>
+			                    <resource>
+			                        <directory>../external-addons-libs/maj/maj/1.0.0/</directory>
+			                        <targetPath>WEB-INF/lib</targetPath>
+			                        <includes>
+			                            <include>maj-1.0.0.jar</include>
+			                        </includes>
+			                    </resource>
+			                </webResources>
 			            </configuration>
 			        </plugin>
 				</plugins>

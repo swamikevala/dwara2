@@ -92,7 +92,7 @@ public class CaptureFileVolumeEndBlockService extends DwaraService {
 	            	int archiveformatBlocksize = nthVolume.getArchiveformat().getBlocksize();
 	            	int volumeBlockSize = nthVolume.getDetails().getBlocksize();
 	            	double blockingFactor = TarBlockCalculatorUtil.getBlockingFactor(archiveformatBlocksize, volumeBlockSize);
-	            	int volumeEndBlock = TarBlockCalculatorUtil.getFlooredFileVolumeEndBlock(fileArchiveBlock, fileHeaderBlocks, fileSize, archiveformatBlocksize, blockingFactor);
+	            	int volumeEndBlock = TarBlockCalculatorUtil.getFileVolumeEndBlock(fileArchiveBlock, fileHeaderBlocks, fileSize, archiveformatBlocksize, blockingFactor) - 1; // - 1 because it includes the starting volume block too
 	            	Integer avVsb = av.getDetails().getStartVolumeBlock();
 	            	nthFileVolume.setVolumeEndBlock(avVsb + volumeEndBlock);	            	
 	            	logger.debug("EBC - filePathName - " + fileDBObj.getPathname() + " avVsb - " + avVsb + " fvsb - " + vsb + " fveb - " + volumeEndBlock + " cfveb - " + (avVsb + volumeEndBlock));

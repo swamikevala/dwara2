@@ -202,7 +202,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 				long fileSize = taredFile.getFileSize();
 				if(dbFileObj.isDirectory())
 					fileSize = dbFileObj.getSize();
-				int volumeEndBlock =  TarBlockCalculatorUtil.getFlooredFileVolumeEndBlock(archiveBlock, 3, fileSize, archiveformatBlocksize, blockingFactor);
+				int volumeEndBlock =  TarBlockCalculatorUtil.getFileVolumeEndBlock(archiveBlock, 3, fileSize, archiveformatBlocksize, blockingFactor) - 1; // - 1 because it includes the starting volume block too
 				archivedFile.setVolumeEndBlock(artifactStartVolumeBlock + volumeEndBlock); 
 				logger.debug("EBC - filePathName - " + filePathName + " avVsb - " + artifactStartVolumeBlock + " fvsb - " + volumeBlock + " fveb - " + volumeEndBlock + " cfveb - " + (artifactStartVolumeBlock + volumeEndBlock));
 			}
