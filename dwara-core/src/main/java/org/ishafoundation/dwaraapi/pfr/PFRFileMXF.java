@@ -1,11 +1,12 @@
-package org.ishafoundation.videopub.pfr;
+package org.ishafoundation.dwaraapi.pfr;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+
+import org.apache.commons.io.FilenameUtils;
 
 import tv.amwa.maj.io.mxf.FooterPartitionPack;
 import tv.amwa.maj.io.mxf.HeaderPartitionPack;
@@ -147,7 +148,7 @@ public class PFRFileMXF extends PFRFile {
 		
 		FileInputStream in = new FileInputStream(source);
 		
-		File file = new File(destination, source.getName() + "." + type.getExtension());
+		File file = new File(destination,  FilenameUtils.getBaseName(source.getName()) + "." + type.getExtension());
 		file.createNewFile();
 		FileOutputStream out = new FileOutputStream(file);
 		

@@ -8,12 +8,25 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.PfrConstants;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
+import org.ishafoundation.dwaraapi.db.model.master.jointables.Flowelement;
+import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.Frame;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.VolumeDetails;
+import org.ishafoundation.dwaraapi.db.utils.FlowelementUtil;
+import org.ishafoundation.dwaraapi.pfr.PFRBuilder;
+import org.ishafoundation.dwaraapi.pfr.PFRBuilderMXF;
+import org.ishafoundation.dwaraapi.pfr.PFRComponentFile;
+import org.ishafoundation.dwaraapi.pfr.PFRComponentType;
 import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.SelectedStorageJob;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
@@ -32,6 +45,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.github.fracpete.processoutput4j.output.CollectingProcessOutput;
+import com.github.fracpete.rsync4j.RSync;
 
 //@Component("tapeJobProcessor")
 @Component("tape" + DwaraConstants.STORAGETYPE_JOBPROCESSOR_SUFFIX)
@@ -57,6 +73,21 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private FileVolumeDao fileVolumeDao;
+	
+	@Autowired
+	private FileDao fileDao;	
+
+	@Autowired
+	private DestinationDao destinationDao;
+	
+	@Autowired
+	private ArtifactDao artifactDao;
+	
+	@Autowired
+	private Configuration configuration;
+	
+	@Autowired
+	private FlowelementUtil flowelementUtil;
 
 	
 	public StorageResponse map_tapedrives(SelectedStorageJob selectedStorageJob) throws Exception {
@@ -229,6 +260,7 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		
 		StorageJob storageJob = tapeJob.getStorageJob();
 		int blockNumberToSeek = storageJob.getVolumeBlock();
+		List<Frame> frameList = storageJob.getFrame();
 		String timeCodeStart = storageJob.getTimecodeStart();
 		if(timeCodeStart != null) { // pfr = true;
 			// skip = ((archive_block + header_block) * archiveformatblocksize) + starttimecode's clusterpos - 1 byte[excluding the start byte]
@@ -247,13 +279,59 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 			logger.trace("archive_block " + storageJob.getArchiveBlock());
 			logger.trace("archiveformatblocksize " + storageJob.getVolume().getArchiveformat().getBlocksize());
 			logger.trace("starttimecode's clusterpos " + getClusterPosition(cuesFileEntries, timeCodeStart));
-			long noOfBytesToBeSkipped = ((storageJob.getArchiveBlock() + headerBlocks) * storageJob.getVolume().getArchiveformat().getBlocksize()) + Integer.parseInt(getClusterPosition(cuesFileEntries, timeCodeStart)) - 1;
+			long noOfBytesToBeSkipped = ((storageJob.getArchiveBlock() + headerBlocks) * storageJob.getVolume().getArchiveformat().getBlocksize()) + 
+					Integer.parseInt(getClusterPosition(cuesFileEntries, timeCodeStart)) - 1;
 			logger.trace("noOfBytesToBeSkipped " + noOfBytesToBeSkipped);
 			logger.trace("noOfVolBlocksToBeSkipped " + noOfBytesToBeSkipped/storageJob.getVolume().getDetails().getBlocksize());
 			blockNumberToSeek =  blockNumberToSeek + (int) (noOfBytesToBeSkipped/storageJob.getVolume().getDetails().getBlocksize());
 			logger.trace("blockNumberToSeek " + blockNumberToSeek);
 		}
-			
+		else if(frameList != null) {	
+//			for (Iterator iterator = frameList.iterator(); iterator.hasNext();) {
+//				Frame frame = (Frame) iterator.next();
+				Frame frame = frameList.get(0); // we dont support list just yet...
+				
+				/* START - This could be a file-copy processing job copying files from remote to local - but processing layer right now doesnt support input to be from remote */
+				org.ishafoundation.dwaraapi.db.model.transactional.File file = selectedStorageJob.getFile();
+				
+				Artifact outputArtifact = artifactDao.findByArtifactRef(file.getArtifact());
+				String sshUser = configuration.getSshSystemUser();
+
+				Flowelement fileCopyFlowElement = flowelementUtil.findById("U114");
+				String fileCopyDestinationIdAsString = fileCopyFlowElement.getTaskconfig().getDestinationId();
+				Destination fileCopyDestination = destinationDao.findById(fileCopyDestinationIdAsString).get();
+				String sourceFilePathname = fileCopyDestination.getPath() + File.separator + outputArtifact.getName();
+				
+				String tmpIndexFilePathname = configuration.getRestoreTmpLocationForVerification() + File.separator;
+				
+		        RSync rsync = new RSync()
+		        .source(sshUser + "@" + sourceFilePathname)
+		        .destination(tmpIndexFilePathname)
+		        .recursive(true)
+		        .checksum(configuration.isChecksumRsync())
+		        .bwlimit(configuration.getBwLimitRsync());
+		        
+		        CollectingProcessOutput output = rsync.execute();
+		        
+		        logger.info(output.getStdOut());
+		        logger.info("Exit code: " + output.getExitCode());
+		        /* END - This could be a file-copy processing job ... */
+				
+				String indexFileLoc = tmpIndexFilePathname + File.separator + fileDao.findAllByFileRefIdAndPathnameEndsWith(file.getId(), "." + PFRComponentType.INDEX.name()).get(0).getPathname();
+				String hdrFileLoc = tmpIndexFilePathname + File.separator + fileDao.findAllByFileRefIdAndPathnameEndsWith(file.getId(), "." + PFRComponentType.HEADER.name()).get(0).getPathname();
+		        				
+				PFRComponentFile hdr = new PFRComponentFile(new File(hdrFileLoc), PFRComponentType.HEADER);
+				PFRComponentFile idx = new PFRComponentFile(new File(indexFileLoc), PFRComponentType.INDEX);
+				
+				PFRBuilder pfrBuilder = new PFRBuilderMXF(idx);
+				
+				// lookup byte offsets
+				long startByte = pfrBuilder.getByteOffset(frame.getStart());
+				
+				// NOTE - while extracting the essence file - swami is summing up the headerLength and indexLength to the startByte... Just mimicking it here...
+				blockNumberToSeek = blockNumberToSeek + (int) (hdr.getFile().length() + idx.getFile().length() + startByte)/storageJob.getVolume().getDetails().getBlocksize();
+//			}
+		}
 		
 		loadTape(selectedStorageJob);
 		

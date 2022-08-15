@@ -1,8 +1,11 @@
 package org.ishafoundation.dwaraapi.storage.model;
 
+import java.util.List;
+
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.Frame;
 import org.ishafoundation.dwaraapi.enumreferences.Priority;
 
 /**
@@ -30,6 +33,7 @@ public class StorageJob {
 	private int fileId;
 	private String timecodeStart;
 	private String timecodeEnd;
+	private List<Frame> frame;
 	private String destinationPath;
 	private String outputFolder;
 	private String targetLocationPath;
@@ -131,6 +135,14 @@ public class StorageJob {
 
 	public void setTimecodeEnd(String timecodeEnd) {
 		this.timecodeEnd = timecodeEnd;
+	}
+
+	public List<Frame> getFrame() {
+		return frame;
+	}
+
+	public void setFrame(List<Frame> frame) {
+		this.frame = frame;
 	}
 
 	public String getDestinationPath() {

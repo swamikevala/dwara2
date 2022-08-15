@@ -1,4 +1,4 @@
-package org.ishafoundation.videopub.pfr;
+package org.ishafoundation.dwaraapi.pfr;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

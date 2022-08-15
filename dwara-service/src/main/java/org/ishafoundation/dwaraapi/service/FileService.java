@@ -14,10 +14,11 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.lang.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.api.req.restore.FileDetails;
+import org.ishafoundation.dwaraapi.api.req.restore.FileDetailsV1;
 import org.ishafoundation.dwaraapi.api.req.restore.PFRestoreUserRequest;
+import org.ishafoundation.dwaraapi.api.req.restore.PFRestoreUserRequestV1;
 import org.ishafoundation.dwaraapi.api.req.restore.RestoreUserRequest;
 import org.ishafoundation.dwaraapi.api.resp.restore.File;
 import org.ishafoundation.dwaraapi.api.resp.restore.RestoreResponse;
@@ -349,6 +350,80 @@ public class FileService extends DwaraService{
     	return restoreResponse;
     }
 
+    public RestoreResponse partialFileRestoreV1(PFRestoreUserRequestV1 pfRestoreUserRequest) throws Exception{	
+    	RestoreResponse restoreResponse = new RestoreResponse();
+
+    	List<Integer> fileIds = new ArrayList<Integer>();
+    	List<FileDetailsV1> fileDetailsList = pfRestoreUserRequest.getFile();
+		for (FileDetailsV1 nthFileDetails : fileDetailsList) {
+			fileIds.add(nthFileDetails.getId());
+		}
+    	Map<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File> fileId_FileObj_Map = new HashMap<Integer, org.ishafoundation.dwaraapi.db.model.transactional.File>();
+    	validate(fileIds, pfRestoreUserRequest.getCopy(), pfRestoreUserRequest.getDestinationPath(), pfRestoreUserRequest.getOutputFolder(), fileId_FileObj_Map);
+    	
+    	Request userRequest = createUserRequest(Action.restore, pfRestoreUserRequest);
+    	int userRequestId = userRequest.getId();
+	
+    	Integer copyNumber = pfRestoreUserRequest.getCopy();
+    	String outputFolder = pfRestoreUserRequest.getOutputFolder();
+    	String destinationPath = pfRestoreUserRequest.getDestinationPath();
+    	List<File> files = new ArrayList<File>();    	
+
+    	int counter = 1;
+    	for (FileDetailsV1 nthFileDetails : fileDetailsList) {
+    		Integer nthFileId = nthFileDetails.getId();
+    		org.ishafoundation.dwaraapi.db.model.transactional.File fileFromDB = fileId_FileObj_Map.get(nthFileId);
+    			
+			Request systemRequest = new Request();
+			systemRequest.setType(RequestType.system);
+			systemRequest.setStatus(Status.queued);
+			systemRequest.setRequestRef(userRequest);
+			systemRequest.setActionId(userRequest.getActionId());
+			systemRequest.setRequestedBy(userRequest.getRequestedBy());
+			systemRequest.setRequestedAt(LocalDateTime.now());
+			
+    		RequestDetails systemrequestDetails = new RequestDetails();
+    		systemrequestDetails.setFileId(nthFileId);
+    		systemrequestDetails.setCopyId(copyNumber);
+			systemrequestDetails.setOutputFolder(outputFolder);
+			systemrequestDetails.setDestinationPath(destinationPath);
+			
+			systemrequestDetails.setFrame(nthFileDetails.getFrame());
+			
+			systemRequest.setDetails(systemrequestDetails);
+			systemRequest = requestDao.save(systemRequest);
+			logger.info(DwaraConstants.SYSTEM_REQUEST + systemRequest.getId());
+			
+			
+			jobCreator.createJobs(systemRequest, null);
+			
+			File file = new File();
+			//file.setArtifactclass(artifactclass);
+			
+			byte[] checksum = fileFromDB.getChecksum();
+			if(checksum != null)
+				file.setChecksum(Hex.encodeHexString(checksum));
+			file.setId(fileFromDB.getId());
+			file.setPathname(fileFromDB.getPathname());
+			file.setPriority(counter);
+			file.setSize(fileFromDB.getSize());
+			file.setSystemRequestId(systemRequest.getId());
+			files.add(file);
+			counter = counter + 1;
+		}
+
+    	
+    	restoreResponse.setUserRequestId(userRequestId);
+    	restoreResponse.setAction(userRequest.getActionId().name());
+    	restoreResponse.setRequestedAt(getDateForUI(userRequest.getRequestedAt()));
+    	restoreResponse.setRequestedBy(userRequest.getRequestedBy().getName());
+
+    	restoreResponse.setDestinationPath(destinationPath);
+    	restoreResponse.setOutputFolder(outputFolder);
+    	
+    	restoreResponse.setFiles(files);    	
+    	return restoreResponse;
+    }
 	
 	// To avoid consequent duplicate requests from client we need to check in dB something like below, but only one bucket with same name at a time is allowd so does check still required...
 	// select * from request where requested_at>'2021-12-06' and action_id='restore_process' and type='system' and json_extract(details, '$.file_id') = 175038 and json_extract(details, '$.output_folder') = 'Aum---Mani-Padme-Hum_Set3'

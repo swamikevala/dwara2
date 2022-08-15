@@ -10,13 +10,6 @@
 		<version>2.2.6.RELEASE</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
-	<repositories>
-		<repository>
-	    	<id>in-project</id>
-	        <name>In Project Repo</name>
-	        <url>file://${project.basedir}/../external-addons-libs</url>
-		</repository>
-	</repositories>
 	<groupId>org.ishafoundation</groupId>
 	<artifactId>dwara-videopub</artifactId>
 	<version>2.0.05</version>
@@ -40,7 +33,12 @@
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-commons</artifactId>
 			<version>2.0.05</version>
-		</dependency>		
+		</dependency>
+		<dependency>
+			<groupId>org.ishafoundation</groupId>
+			<artifactId>dwara-core</artifactId>
+			<version>2.0.05</version>
+		</dependency>				
 		<dependency>
 			<groupId>org.ishafoundation</groupId>
 			<artifactId>dwara-api</artifactId>
@@ -55,11 +53,6 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>maj</groupId>
-			<artifactId>maj</artifactId>
-			<version>1.0.0</version>
 		</dependency>
 	</dependencies>
 </project>

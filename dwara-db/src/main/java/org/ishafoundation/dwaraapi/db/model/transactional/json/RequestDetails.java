@@ -53,6 +53,7 @@ public class RequestDetails {
 	@JsonProperty("skip_actionelements")
 	private List<Integer> skipActionelements;
 
+	
 	// restore stuff
 	@JsonProperty("file_id")
 	private Integer fileId;
@@ -62,6 +63,9 @@ public class RequestDetails {
 
 	@JsonProperty("timecode_end")
 	private String timecodeEnd;
+	
+	@JsonProperty("frame")
+	private List<Frame> frame;	
 
 	@JsonProperty("copy_id")
 	private Integer copyId;
@@ -253,6 +257,14 @@ public class RequestDetails {
 
 	public void setTimecodeEnd(String timecodeEnd) {
 		this.timecodeEnd = timecodeEnd;
+	}
+	
+	public List<Frame> getFrame() {
+		return frame;
+	}
+
+	public void setFrame(List<Frame> frame) {
+		this.frame = frame;
 	}
 
 	public Integer getCopyId() {

@@ -1,6 +1,10 @@
 package org.ishafoundation.dwaraapi.process.file;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -8,6 +12,7 @@ import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionRespons
 import org.ishafoundation.dwaraapi.commandline.remote.sch.RemoteCommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.remote.sch.SshSessionHelper;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.exception.DwaraException;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
@@ -40,6 +45,7 @@ public class RsyncCopier implements IProcessingTask {
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
 		LogicalFile logicalFile = processContext.getLogicalFile();
+		String sourceFilePathname = logicalFile.getAbsolutePath();
 		
 		Artifact inputArtifact = processContext.getJob().getInputArtifact();
 		String inputArtifactName = inputArtifact.getName();
@@ -47,57 +53,95 @@ public class RsyncCopier implements IProcessingTask {
 		String destinationDirPath = processContext.getOutputDestinationDirPath(); // This includes the host ip
 		logger.trace("destinationDirPath " + destinationDirPath);
 
-		String sshUser = configuration.getSshSystemUser();
-		String host = StringUtils.substringBefore(destinationDirPath, ":");
-        
         ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
         
         int jobId = processContext.getJob().getId();
-        
-		String destinationFilePathname = null;
-		// TODO --- REMOVE THIS AFTER DIGI IS OVER... 
-		if(inputArtifact.getArtifactclass().getId().startsWith("video-digi-2020")) {
-			String destination = StringUtils.substringBefore(destinationDirPath, inputArtifactName);
-			logger.trace("destination " + destination);
-			destinationFilePathname = destination + ".copying" + File.separator + logicalFile.getName(); // Reqmt - No need for the filepathname structur as when job fails, leaves the empty folder structure causing confusion
-		}
-		else {
-			destinationFilePathname = destinationDirPath;
-			String command1 = "mkdir -p \"" + StringUtils.substringAfter(destinationDirPath, ":") + "\"";
-			
-			processingtaskResponse = executeCommandRemotely(host, sshUser, command1, jobId, processingtaskResponse);
-			if(!processingtaskResponse.isComplete())
-				throw new Exception("Unable to create dir remotely " + processingtaskResponse.getFailureReason());
-		}
-		logger.info("processing rsync copy: " +  logicalFile.getAbsolutePath() + ", destination: " + destinationFilePathname);
-        
-        RSync rsync = new RSync()
-        .source(logicalFile.getAbsolutePath())
-        .destination(sshUser + "@" + destinationFilePathname)
-        .recursive(true)
-        .checksum(configuration.isChecksumRsync())
-        .bwlimit(configuration.getBwLimitRsync());
-        
-        //.removeSourceFiles(true); // Reqmt - File gets deleted in downstream job
-        
-        CollectingProcessOutput output = rsync.execute();
-        
-        logger.info(output.getStdOut());
-        logger.info("Exit code: " + output.getExitCode());
- 
-		// TODO --- REMOVE THIS AFTER DIGI IS OVER...
-		if(output.getExitCode() == 0 && inputArtifact.getArtifactclass().getId().startsWith("video-digi-2020")){
-	        // now moving back the file from the .copying to the original destination...
-	        String tmpDestination = StringUtils.substringAfter(destinationFilePathname, ":");
-	        String command1 = "mv " + tmpDestination + " " + StringUtils.substringBefore(tmpDestination, ".copying");
-	        
-	        processingtaskResponse = executeCommandRemotely(host, sshUser, command1, jobId, processingtaskResponse);
-		}else {
-	        processingtaskResponse.setIsComplete(output.getExitCode() == 0);
-	        processingtaskResponse.setFailureReason(output.getExitCode() + ":" + output.getStdErr());
-	        processingtaskResponse.setStdOutResponse(output.getStdOut());
-		}
 
+		String sshUser = configuration.getSshSystemUser();
+		String host = null;
+		if(destinationDirPath.contains(":")) {
+			// remote copy
+			host = StringUtils.substringBefore(destinationDirPath, ":");
+        
+			String destinationFilePathname = null;
+			// TODO --- REMOVE THIS AFTER DIGI IS OVER... 
+			if(inputArtifact.getArtifactclass().getId().startsWith("video-digi-2020")) {
+				String destination = StringUtils.substringBefore(destinationDirPath, inputArtifactName);
+				logger.trace("destination " + destination);
+				destinationFilePathname = destination + ".copying" + File.separator + logicalFile.getName(); // Reqmt - No need for the filepathname structur as when job fails, leaves the empty folder structure causing confusion
+			}
+			else {
+				destinationFilePathname = destinationDirPath;
+				String command1 = "mkdir -p \"" + StringUtils.substringAfter(destinationDirPath, ":") + "\"";
+				
+				processingtaskResponse = executeCommandRemotely(host, sshUser, command1, jobId, processingtaskResponse);
+				if(!processingtaskResponse.isComplete())
+					throw new Exception("Unable to create dir remotely " + processingtaskResponse.getFailureReason());
+			}
+			logger.info("processing rsync copy: " + sourceFilePathname + ", destination: " + destinationFilePathname);
+	        
+	        RSync rsync = new RSync()
+	        .source(sourceFilePathname)
+	        .destination(sshUser + "@" + destinationFilePathname)
+	        .recursive(true)
+	        .checksum(configuration.isChecksumRsync())
+	        .bwlimit(configuration.getBwLimitRsync());
+	        
+	        //.removeSourceFiles(true); // Reqmt - File gets deleted in downstream job
+	        
+	        CollectingProcessOutput output = rsync.execute();
+	        
+	        logger.info(output.getStdOut());
+	        logger.info("Exit code: " + output.getExitCode());
+	 
+			// TODO --- REMOVE THIS AFTER DIGI IS OVER...
+			if(output.getExitCode() == 0 && inputArtifact.getArtifactclass().getId().startsWith("video-digi-2020")){
+		        // now moving back the file from the .copying to the original destination...
+		        String tmpDestination = StringUtils.substringAfter(destinationFilePathname, ":");
+		        String command1 = "mv " + tmpDestination + " " + StringUtils.substringBefore(tmpDestination, ".copying");
+		        
+		        processingtaskResponse = executeCommandRemotely(host, sshUser, command1, jobId, processingtaskResponse);
+			}else {
+		        processingtaskResponse.setIsComplete(output.getExitCode() == 0);
+		        processingtaskResponse.setFailureReason(output.getExitCode() + ":" + output.getStdErr());
+		        processingtaskResponse.setStdOutResponse(output.getStdOut());
+			}
+		}
+		else { 
+			// local copy
+			Path source = Paths.get(sourceFilePathname);
+			Path newDir = Paths.get(destinationDirPath);
+			Path target = newDir.resolve(source.getFileName());
+			
+			String tmpDestPath = destinationDirPath + File.separator + ".copying";
+			Path tmpNewDir = Paths.get(tmpDestPath);
+			Path tmpTarget = tmpNewDir.resolve(source.getFileName());
+
+			File tmpTargetFile = tmpTarget.toFile();
+			if(tmpTargetFile.exists()) {
+				logger.trace(tmpTarget + " file already exists. Deleting it.");
+				tmpTargetFile.delete();
+			}
+			
+			logger.trace("Now copying " + source + " to " + tmpTarget);
+			Files.createDirectories(tmpNewDir);
+			try {
+				Files.copy(source, tmpTarget);
+			}catch (Exception e) {
+				throw new DwaraException("Unable to copy " + source + " to " + tmpTarget + " " + e.getMessage());
+			}
+
+			File targetFile = target.toFile();
+			if(targetFile.exists()) {
+				logger.trace(target + " file already exists. Deleting it.");
+				targetFile.delete();
+			}
+			Files.move(tmpTarget, target, StandardCopyOption.ATOMIC_MOVE);
+			
+			Files.delete(tmpNewDir);
+			
+			processingtaskResponse.setIsComplete(true);
+		}
 		return processingtaskResponse;
 	}
 
@@ -116,9 +160,9 @@ public class RsyncCopier implements IProcessingTask {
 				throw new Exception("Remotecommand executer failed");
 			}
         }catch (Exception e) {
-        	processingtaskResponse.setIsComplete(false);
-        	processingtaskResponse.setFailureReason(response.getFailureReason());
         	logger.error("Unable to execute " + command1 + " remotely" + e.getMessage(), e);
+        	processingtaskResponse.setIsComplete(false);
+        	processingtaskResponse.setFailureReason(response.getFailureReason());        	
 		}finally {
 			if (jSchSession != null) 
 				sshSessionHelper.disconnectSession(jSchSession);

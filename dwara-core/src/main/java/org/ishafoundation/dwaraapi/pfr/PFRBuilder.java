@@ -1,4 +1,4 @@
-package org.ishafoundation.videopub.pfr;
+package org.ishafoundation.dwaraapi.pfr;
 
 import java.io.File;
 import java.io.IOException;

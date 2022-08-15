@@ -155,6 +155,9 @@ public class Restore extends AbstractStoragetaskAction{
 			// what need to be restored
 			int fileIdToBeRestored = requestDetails.getFileId();
 			storageJob.setFileId(fileIdToBeRestored);
+			
+			storageJob.setFrame(requestDetails.getFrame());
+			
 			storageJob.setTimecodeStart(requestDetails.getTimecodeStart());
 			storageJob.setTimecodeEnd(requestDetails.getTimecodeEnd());
 	

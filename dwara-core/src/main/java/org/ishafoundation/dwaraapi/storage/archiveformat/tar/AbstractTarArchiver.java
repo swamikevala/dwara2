@@ -13,6 +13,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.PfrConstants;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeRepositoryUtil;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
@@ -20,8 +21,13 @@ import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.Frame;
 import org.ishafoundation.dwaraapi.enumreferences.Checksumtype;
 import org.ishafoundation.dwaraapi.exception.StorageException;
+import org.ishafoundation.dwaraapi.pfr.PFRBuilder;
+import org.ishafoundation.dwaraapi.pfr.PFRBuilderMXF;
+import org.ishafoundation.dwaraapi.pfr.PFRComponentFile;
+import org.ishafoundation.dwaraapi.pfr.PFRComponentType;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchiveResponse;
 import org.ishafoundation.dwaraapi.storage.archiveformat.ArchivedFile;
 import org.ishafoundation.dwaraapi.storage.archiveformat.IArchiveformatter;
@@ -107,6 +113,9 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 	
 	@Autowired
 	private FileDao fileDao;
+	
+	@Autowired
+	private Configuration configuration;
 
 	
 	@Override
@@ -251,11 +260,14 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			SelectedStorageJob selectedStorageJob = archiveformatJob.getSelectedStorageJob();
 			StorageJob storageJob = selectedStorageJob.getStorageJob();
 			String timeCodeStart = storageJob.getTimecodeStart();
+			List<Frame> frameList = storageJob.getFrame();
 			boolean pfr = false;
+			boolean pfrV1 = false;
 			if(timeCodeStart != null)
 				pfr = true;
-			
-			if(!pfr)
+			if(frameList != null)
+				pfrV1 = true;
+			if(!pfr && !pfrV1)
 				archiveformatJob = getDecoratedArchiveformatJobForRestore(archiveformatJob);
 	
 			int volumeBlocksize = archiveformatJob.getVolumeBlocksize();
@@ -271,7 +283,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 			
 			org.ishafoundation.dwaraapi.db.model.transactional.File file = selectedStorageJob.getFile();
 			long fileSize = file.getSize();
-			if(!pfr) {
+			if(!pfr && !pfrV1) {
 				List<String> commandList = frameRestoreCommand(volumeBlocksize, deviceName, selectedStorageJob.isUseBuffering(), fileSize, targetLocationPath, noOfTapeBlocksToBeRead);
 				
 				String filePathNameToBeRestored = selectedStorageJob.getFilePathNameToBeRestored();
@@ -293,7 +305,7 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 				
 				logger.info("Restoration complete");
 				return archiveResponse;
-			}else {
+			}else if(pfr){
 				String timeCodeEnd = storageJob.getTimecodeEnd();
 				String filePathNameToBeRestored = file.getPathname();
 				logger.trace("filePathNameToBeRestored " + filePathNameToBeRestored);
@@ -397,6 +409,55 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 				mxfConversionCommandList.add("cd " + targetLocationPath + " ; " + mxfConversionCommand);
 	
 				logger.trace("mxfConversionCommand response - "+ executeCommand(mxfConversionCommandList, null, volumeBlocksize));
+			}
+			else if(pfrV1){
+				Integer frameStart = storageJob.getFrame().get(0).getStart();
+				Integer frameEnd = storageJob.getFrame().get(0).getEnd();
+				
+				String filePathNameToBeRestored = file.getPathname();
+				logger.trace("filePathNameToBeRestored " + filePathNameToBeRestored);
+				String parentDir = FilenameUtils.getFullPathNoEndSeparator(filePathNameToBeRestored);
+				
+				String destinationLocationPath = targetLocationPath + java.io.File.separator + parentDir;
+				FileUtils.forceMkdir(new java.io.File(destinationLocationPath));
+				
+				String tmpIndexFilePathname = configuration.getRestoreTmpLocationForVerification() + java.io.File.separator;
+				
+				String indexFileLoc = tmpIndexFilePathname + java.io.File.separator + fileDao.findAllByFileRefIdAndPathnameEndsWith(file.getId(), "." + PFRComponentType.INDEX.name()).get(0).getPathname();
+				String essenceFileLoc = indexFileLoc.replace("." + PFRComponentType.INDEX.name(), "." + PFRComponentType.ESSENCE.name());
+				String hdrFileLoc = indexFileLoc.replace("." + PFRComponentType.INDEX.name(), "." + PFRComponentType.HEADER.name());
+				String ftrFileLoc = indexFileLoc.replace("." + PFRComponentType.INDEX.name(), "." + PFRComponentType.FOOTER.name());
+				// String partialFileFromTapeOutputFilePathName = filePathNameToBeRestored.replace(PfrConstants.MXF_EXTN, "_" + frameStart + "_" + frameEnd + PfrConstants.RESTORED_FROM_TAPE_BIN);
+								
+				PFRComponentFile idx = new PFRComponentFile(new java.io.File(indexFileLoc), PFRComponentType.INDEX);				
+				
+				PFRBuilder pfrBuilder = new PFRBuilderMXF(idx);
+				
+				// lookup byte offsets
+				long startByte = pfrBuilder.getByteOffset(frameStart);
+				long endByte = pfrBuilder.getByteOffset(frameEnd);
+				
+				long bytesToRetrieve = endByte - startByte;
+				logger.trace("bytesToRetrieve " + bytesToRetrieve);
+				float volumeBlocksizeAsFloat = volumeBlocksize;
+				noOfTapeBlocksToBeRead = (int) Math.ceil(bytesToRetrieve/volumeBlocksizeAsFloat);
+				logger.trace("noOfTapeBlocksToBeRead " + noOfTapeBlocksToBeRead);
+				
+				String ddRestoreCommand = "dd if=" + deviceName + " bs=" + volumeBlocksize + " count=" + noOfTapeBlocksToBeRead + " of=" + essenceFileLoc;
+				logger.trace("ddRestoreFromTapeCommand " + ddRestoreCommand);
+				List<String> commandList = new ArrayList<String>();
+				commandList.add("sh");
+				commandList.add("-c");
+				commandList.add("cd " + targetLocationPath + " ; " + ddRestoreCommand);
+	
+				logger.trace(executeCommand(commandList, null, volumeBlocksize));
+				
+				PFRComponentFile essence = new PFRComponentFile(new java.io.File(essenceFileLoc), PFRComponentType.ESSENCE);
+				PFRComponentFile header = new PFRComponentFile(new java.io.File(hdrFileLoc), PFRComponentType.HEADER);
+				PFRComponentFile footer = new PFRComponentFile(new java.io.File(ftrFileLoc), PFRComponentType.FOOTER);
+				
+				// build clip
+				pfrBuilder.buildClip(destinationLocationPath, header, footer, essence, frameStart, frameEnd - frameStart);
 			}
 			logger.info("Restoration complete");
 		}catch (Exception e) {
