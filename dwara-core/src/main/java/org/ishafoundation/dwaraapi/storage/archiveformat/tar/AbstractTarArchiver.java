@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -43,6 +45,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import tv.amwa.maj.io.mxf.MXFBuilder;
 
 
 /*
@@ -116,7 +120,11 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 	
 	@Autowired
 	private Configuration configuration;
-
+	
+	@PostConstruct
+	public void setUpMaj() throws Exception {
+		MXFBuilder.registerMXF();
+	}
 	
 	@Override
 	public ArchiveResponse write(ArchiveformatJob archiveformatJob) throws StorageException {
@@ -423,10 +431,10 @@ public abstract class AbstractTarArchiver implements IArchiveformatter {
 				
 				String tmpIndexFilePathname = configuration.getRestoreTmpLocationForVerification() + java.io.File.separator;
 				
-				String indexFileLoc = tmpIndexFilePathname + java.io.File.separator + fileDao.findAllByFileRefIdAndPathnameEndsWith(file.getId(), "." + PFRComponentType.INDEX.name()).get(0).getPathname();
-				String essenceFileLoc = indexFileLoc.replace("." + PFRComponentType.INDEX.name(), "." + PFRComponentType.ESSENCE.name());
-				String hdrFileLoc = indexFileLoc.replace("." + PFRComponentType.INDEX.name(), "." + PFRComponentType.HEADER.name());
-				String ftrFileLoc = indexFileLoc.replace("." + PFRComponentType.INDEX.name(), "." + PFRComponentType.FOOTER.name());
+				String indexFileLoc = tmpIndexFilePathname + java.io.File.separator + fileDao.findAllByFileRefIdAndPathnameEndsWith(file.getId(), "." + PFRComponentType.INDEX.getExtension()).get(0).getPathname();
+				String essenceFileLoc = indexFileLoc.replace("." + PFRComponentType.INDEX.getExtension(), "." + PFRComponentType.ESSENCE.getExtension());
+				String hdrFileLoc = indexFileLoc.replace("." + PFRComponentType.INDEX.getExtension(), "." + PFRComponentType.HEADER.getExtension());
+				String ftrFileLoc = indexFileLoc.replace("." + PFRComponentType.INDEX.getExtension(), "." + PFRComponentType.FOOTER.getExtension());
 				// String partialFileFromTapeOutputFilePathName = filePathNameToBeRestored.replace(PfrConstants.MXF_EXTN, "_" + frameStart + "_" + frameEnd + PfrConstants.RESTORED_FROM_TAPE_BIN);
 								
 				PFRComponentFile idx = new PFRComponentFile(new java.io.File(indexFileLoc), PFRComponentType.INDEX);				

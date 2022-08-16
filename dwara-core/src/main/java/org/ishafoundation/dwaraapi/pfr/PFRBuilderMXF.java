@@ -10,22 +10,12 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Vector;
 
 import tv.amwa.maj.exception.BadParameterException;
 import tv.amwa.maj.exception.IllegalPropertyValueException;
 import tv.amwa.maj.exception.InsufficientSpaceException;
 import tv.amwa.maj.industry.Forge;
-import tv.amwa.maj.industry.MetadataObject;
-import tv.amwa.maj.industry.PropertyValue;
-import tv.amwa.maj.industry.TypeDefinitions;
-import tv.amwa.maj.industry.Warehouse;
-import tv.amwa.maj.io.mxf.HeaderMetadata;
 import tv.amwa.maj.io.mxf.IndexEntry;
 import tv.amwa.maj.io.mxf.IndexTable;
 import tv.amwa.maj.io.mxf.IndexTableSegment;
@@ -33,34 +23,11 @@ import tv.amwa.maj.io.mxf.MXFBuilder;
 import tv.amwa.maj.io.mxf.MXFStream;
 import tv.amwa.maj.io.mxf.MXFStream.LengthAndConsumed;
 import tv.amwa.maj.io.mxf.PartitionPack;
-import tv.amwa.maj.io.mxf.PrimerPack;
 import tv.amwa.maj.io.mxf.RandomIndexItem;
 import tv.amwa.maj.io.mxf.RandomIndexPack;
 import tv.amwa.maj.io.mxf.UL;
 import tv.amwa.maj.io.mxf.impl.IndexTableImpl;
 import tv.amwa.maj.io.mxf.impl.IndexTableSegmentImpl;
-import tv.amwa.maj.io.mxf.impl.PrimerPackImpl;
-import tv.amwa.maj.io.mxf.impl.ResolutionEntry;
-import tv.amwa.maj.meta.ClassDefinition;
-import tv.amwa.maj.meta.PropertyDefinition;
-import tv.amwa.maj.meta.TypeDefinitionRecord;
-import tv.amwa.maj.meta.impl.ClassDefinitionImpl;
-import tv.amwa.maj.meta.impl.TypeDefinitionRecordImpl;
-import tv.amwa.maj.model.Component;
-import tv.amwa.maj.model.ContentStorage;
-import tv.amwa.maj.model.Identification;
-import tv.amwa.maj.model.Preface;
-import tv.amwa.maj.model.Segment;
-import tv.amwa.maj.model.Sequence;
-import tv.amwa.maj.model.TimecodeSegment;
-import tv.amwa.maj.model.Track;
-import tv.amwa.maj.model.impl.IdentificationImpl;
-import tv.amwa.maj.record.DateStruct;
-import tv.amwa.maj.record.TimeStamp;
-import tv.amwa.maj.record.TimeStruct;
-import tv.amwa.maj.record.TimecodeValue;
-import tv.amwa.maj.record.impl.AUIDImpl;
-import tv.amwa.maj.record.impl.TimecodeValueImpl;
 
 
 
@@ -108,8 +75,8 @@ public class PFRBuilderMXF extends PFRBuilder {
 	
 	
 	public File buildClip(String destination, PFRComponentFile header, PFRComponentFile footer, PFRComponentFile essence, int startFrame, int frames) throws Exception {
-		
-		String clipName = renameFile(essence.getFile().getName(), startFrame, frames, true);
+		int endFrame = startFrame + frames;
+		String clipName = essence.getFile().getName().replace("." + PFRComponentType.ESSENCE.getExtension(), "_" + startFrame + "_" + endFrame + ".MXF");
 		File clipFile = new File(destination, clipName); 
 		FileOutputStream out = new FileOutputStream(clipFile);
 		long totalLength = 0l;
@@ -351,7 +318,7 @@ private File updateFooterFile(File file, long fileLength, int startFrame, int fr
 		
 		int n = parts.length;
 		int endFrame = startFrame + frames;
-		parts[n - 3] = parts[n - 3] + "_" + startFrame + "_" + endFrame;
+		parts[n - 2] = parts[n - 2] + "_" + startFrame + "_" + endFrame;
 		
 		String clipName = String.join(".", parts);
 		

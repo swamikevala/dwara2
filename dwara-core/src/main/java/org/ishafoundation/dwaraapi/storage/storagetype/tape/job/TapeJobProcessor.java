@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.io.FileUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.PfrConstants;
@@ -49,6 +51,8 @@ import org.springframework.stereotype.Component;
 import com.github.fracpete.processoutput4j.output.CollectingProcessOutput;
 import com.github.fracpete.rsync4j.RSync;
 
+import tv.amwa.maj.io.mxf.MXFBuilder;
+
 //@Component("tapeJobProcessor")
 @Component("tape" + DwaraConstants.STORAGETYPE_JOBPROCESSOR_SUFFIX)
 //@Profile({ "!dev & !stage" })
@@ -88,7 +92,11 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 	
 	@Autowired
 	private FlowelementUtil flowelementUtil;
-
+	
+	@PostConstruct
+	public void setUpMaj() throws Exception {
+		MXFBuilder.registerMXF();
+	}
 	
 	public StorageResponse map_tapedrives(SelectedStorageJob selectedStorageJob) throws Exception {
 		String tapelibraryId = selectedStorageJob.getStorageJob().getJob().getRequest().getDetails().getAutoloaderId();
@@ -317,14 +325,16 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 		        logger.info("Exit code: " + output.getExitCode());
 		        /* END - This could be a file-copy processing job ... */
 				
-				String indexFileLoc = tmpIndexFilePathname + File.separator + fileDao.findAllByFileRefIdAndPathnameEndsWith(file.getId(), "." + PFRComponentType.INDEX.name()).get(0).getPathname();
-				String hdrFileLoc = tmpIndexFilePathname + File.separator + fileDao.findAllByFileRefIdAndPathnameEndsWith(file.getId(), "." + PFRComponentType.HEADER.name()).get(0).getPathname();
-		        				
+				String indexFileLoc = tmpIndexFilePathname + fileDao.findAllByFileRefIdAndPathnameEndsWith(file.getId(), "." + PFRComponentType.INDEX.getExtension()).get(0).getPathname();
+				String hdrFileLoc = tmpIndexFilePathname + fileDao.findAllByFileRefIdAndPathnameEndsWith(file.getId(), "." + PFRComponentType.HEADER.getExtension()).get(0).getPathname();
+		        
+				logger.info("indexFileLoc - " + indexFileLoc);
+				
 				PFRComponentFile hdr = new PFRComponentFile(new File(hdrFileLoc), PFRComponentType.HEADER);
 				PFRComponentFile idx = new PFRComponentFile(new File(indexFileLoc), PFRComponentType.INDEX);
 				
 				PFRBuilder pfrBuilder = new PFRBuilderMXF(idx);
-				
+				logger.info("start - " + frame.getStart());
 				// lookup byte offsets
 				long startByte = pfrBuilder.getByteOffset(frame.getStart());
 				

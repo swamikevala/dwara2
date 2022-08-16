@@ -37,6 +37,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVol
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.FileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.TFileVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.ArtifactVolumeDetails;
+import org.ishafoundation.dwaraapi.db.model.transactional.json.Frame;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Storagelevel;
@@ -529,11 +530,17 @@ public abstract class AbstractStoragetypeJobProcessor {
 			boolean pfr = false;
 			if(timeCodeStart != null)
 				pfr = true;
-			
+			List<Frame> frameList = storageJob.getFrame();
+			boolean pfrV1 = false;
+			if(frameList != null)
+				pfrV1 = true;
 			if(pfr)
 				//srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
 				srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".mxf");
-
+			else if(pfrV1)
+				//srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace(".mkv", "_" + timeCodeStart.replace(":", "-") + "_" + timeCodeEnd.replace(":", "-") + ".pfr");
+				srcPath = storageJob.getTargetLocationPath() + java.io.File.separator + restoredFilePathName.replace("." + FilenameUtils.getExtension(restoredFilePathName), "_" + frameList.get(0).getStart() + "_" + frameList.get(0).getEnd() + "." + FilenameUtils.getExtension(restoredFilePathName));
+			
 			String destPath = srcPath.replace(restoredFilePathName,filePathNameToBeRestored);
 			
 			if(requestedAction != Action.restore_process) // we still dont know for restore_process if there is a dependent job to be created or not. Even to determine if a job need to be created or not the restored artifact with its correct name is needed 
