@@ -29,10 +29,15 @@ public enum CoreFlowelement {
 	core_rewrite_flow_write("C23", "rewrite-flow", "write", null, new String[] {"C22"}, null, 23, true, false, null),
 	core_rewrite_flow_restore("C24", "rewrite-flow", "restore", null, new String[] {"C23"}, null, 24, true, false, null),
 	core_rewrite_flow_checksum_verify("C25", "rewrite-flow", null, "checksum-verify", new String[] {"C24"}, null, 25, true, false, null),
-
+	
 	core_restore_flow_restore("C31", "restore-flow", "restore", null, null, null, 31, true, false, null),
-	core_restore_flow_mkv_mov("C32", "restore-flow", null, "video-digi-2020-mkv-mov-gen", new String[] {"C31"}, null, 32, true, false, "{\"include_if\": {\"artifactclass_regex\": \"video-digi-2020.*\"}}");
+	core_restore_flow_mkv_mov("C32", "restore-flow", null, "video-digi-2020-mkv-mov-gen", new String[] {"C31"}, null, 32, true, false, "{\"include_if\": {\"artifactclass_regex\": \"video-digi-2020.*\"}}"),
 
+	core_bulk_transcode_flow_restore("C41", "bulk-transcode-flow", "restore", null, null, null, 41, true, false, null),
+	core_bulk_transcode_flow_mezzanine_proxy_gen("C42", "bulk-transcode-flow", null, "video-proxy-mezz-gen", new String[] {"C41"}, null, 42, true, false, null);
+	// core_bulk_transcode_flow_move("C43", "bulk-transcode-flow", "restore", null, null, null, 43, true, false, null);
+	
+	
 	
 	private String id;
 	private String flowId;

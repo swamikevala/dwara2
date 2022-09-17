@@ -34,5 +34,6 @@ public enum Action {
 	copy,
 	mark_volume,
 	change_artifactclass,
-	mark_corrupted;
+	mark_corrupted,
+	generate_mezzanine_proxies;
 }

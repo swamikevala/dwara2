@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 public class FfmpegThreadConfiguration {
 	
 	private FfmpegThreadProps videoProxyLowGen;
+	private FfmpegThreadProps videoProxyMezzanine;
 
 	private FfmpegThreadProps videoDigi2020PreservationGen;
 	
@@ -35,6 +36,14 @@ public class FfmpegThreadConfiguration {
 
 	public void setVideoDigi2020QcGen(FfmpegThreadProps videoDigi2020QcGen) {
 		this.videoDigi2020QcGen = videoDigi2020QcGen;
+	}
+
+	public FfmpegThreadProps getVideoProxyMezzanine() {
+		return videoProxyMezzanine;
+	}
+
+	public void setVideoProxyMezzanine(FfmpegThreadProps videoProxyMezzanine) {
+		this.videoProxyMezzanine = videoProxyMezzanine;
 	}
 
 }

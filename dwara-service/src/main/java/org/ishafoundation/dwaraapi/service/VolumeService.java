@@ -15,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.api.req.GenerateMezzanineProxiesRequest;
 import org.ishafoundation.dwaraapi.api.req.RewriteRequest;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
 import org.ishafoundation.dwaraapi.api.req.volume.MarkVolumeStatusRequest;
@@ -409,7 +410,81 @@ public class VolumeService extends DwaraService {
 		return handleTapeList;
 	}
 	
-	
+	public void generateMezzanineProxies(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest) throws Exception {
+		Volume volume = volumeDao.findById(volumeId).get();
+		// create user request
+		HashMap<String, Object> data = new HashMap<String, Object>();
+		data.put("volumeId", volumeId);
+		
+		Request userRequest = createUserRequest(Action.generate_mezzanine_proxies, data);
+		List<ArtifactVolume> artifactVolumeList = artifactVolumeDao.findAllByIdVolumeIdAndStatus(volumeId, ArtifactVolumeStatus.current); // only not deleted artifacts need to be rewritten
+		
+		Pattern artifactclassRegexPattern = null;
+		String artifactclassRegex = generateMezzanineProxiesRequest.getArtifactclassRegex();
+		if(artifactclassRegex != null) {
+			artifactclassRegexPattern = Pattern.compile(artifactclassRegex);
+			data.put("artifactclassRegex", artifactclassRegex);
+		}
+		
+		Pattern artifactRegexPattern = null;
+		String artifactRegex = generateMezzanineProxiesRequest.getArtifactRegex();
+		if(artifactRegex != null) {
+			artifactRegexPattern = Pattern.compile(artifactRegex);
+			data.put("artifactRegex", artifactRegex);
+		}
+		
+		// loop artifacts on volume
+		for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
+			int artifactId = nthArtifactVolume.getId().getArtifactId();
+			
+			Artifact artifact = artifactDao.findById(artifactId).get(); // get the artifact details from DB
+ 
+			// filtering out artifacts that dont match specified artifactclass(es)
+			if(artifactclassRegexPattern != null) {
+				String artifactclassId = artifact.getArtifactclass().getId();
+				Matcher m = artifactclassRegexPattern.matcher(artifactclassId);
+				if(!m.matches()) { 
+					logger.info("Skipping " + artifact.getName() + "(" + artifactId + ") as " + artifactclassId + " doesnt match " + artifactclassRegex);
+					continue;
+				}
+			}
+			
+			// filtering out artifacts that dont match specified artifact regex
+			if(artifactRegexPattern != null) {
+				String artifactName = artifact.getName();
+				Matcher m = artifactRegexPattern.matcher(artifactName);
+				if(!m.matches()) { 
+					logger.info("Skipping " + artifact.getName() + "(" + artifactId + ") as " + artifactName + " doesnt match " + artifactRegex);
+					continue;
+				}
+			}
+			
+			//create system requests			
+			Request systemRequest = new Request();
+			systemRequest.setType(RequestType.system);
+			systemRequest.setRequestRef(userRequest);
+			systemRequest.setActionId(userRequest.getActionId());
+			systemRequest.setStatus(Status.queued);
+			systemRequest.setRequestedBy(userRequest.getRequestedBy());
+			systemRequest.setRequestedAt(LocalDateTime.now());
+		
+			RequestDetails systemrequestDetails = new RequestDetails();
+			systemrequestDetails.setArtifactId(artifactId);
+			systemrequestDetails.setVolumeId(volumeId);
+			if(generateMezzanineProxiesRequest.getArtifactclassRegex() != null)
+				systemrequestDetails.setArtifactclassRegex(generateMezzanineProxiesRequest.getArtifactclassRegex());
+			if(generateMezzanineProxiesRequest.getArtifactRegex() != null)
+				systemrequestDetails.setArtifactRegex(generateMezzanineProxiesRequest.getArtifactRegex());
+			systemRequest.setDetails(systemrequestDetails);
+			systemRequest = requestDao.save(systemRequest);
+			
+			logger.info(DwaraConstants.SYSTEM_REQUEST + systemRequest.getId());
+			
+
+			//create jobs
+			jobCreator.createJobs(systemRequest, artifact);
+		}
+	}
 
 	public void rewriteVolume(String volumeId, RewriteRequest rewriteRequest) throws Exception {
 		//Optional<Volume> volumeEntity = volumeDao.findById(volumeId);

@@ -101,6 +101,9 @@ public class RequestDetails {
 	@JsonProperty("artifactclass_regex")
 	private String artifactclassRegex;
 	
+	@JsonProperty("artifact_regex")
+	private String artifactRegex;
+	
 	@JsonProperty("destination_copy")
 	private Integer destinationCopy;
 
@@ -359,6 +362,14 @@ public class RequestDetails {
 		this.artifactclassRegex = artifactclassRegex;
 	}
 
+	public String getArtifactRegex() {
+		return artifactRegex;
+	}
+
+	public void setArtifactRegex(String artifactRegex) {
+		this.artifactRegex = artifactRegex;
+	}
+	
 	public Integer getDestinationCopy() {
 		return destinationCopy;
 	}

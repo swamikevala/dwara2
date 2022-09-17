@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.ishafoundation.dwaraapi.api.req.GenerateMezzanineProxiesRequest;
 import org.ishafoundation.dwaraapi.api.req.RewriteRequest;
 import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
 import org.ishafoundation.dwaraapi.api.req.volume.MarkVolumeStatusRequest;
@@ -218,6 +219,30 @@ public class VolumeController {
 		}
 
 		return ResponseEntity.status(HttpStatus.OK).body(rewriteResponse);
+	}
+	
+	@ApiOperation(value = "Create mezzanine proxies for all artifacts on the volume")
+	@ApiResponses(value = { 
+			@ApiResponse(code = 200, message = "Ok")
+	})
+	@PostMapping(value = "/volume/{volumeId}/generateMezzanineProxies", produces = "application/json")
+	public ResponseEntity<InitializeResponse> generateMezzanineProxies(@RequestBody GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest, @PathVariable("volumeId") String volumeId) {
+		logger.info("/volume/" + volumeId + "/generateMezzanineProxies");
+		InitializeResponse generateMezzanineProxiesResponse = new InitializeResponse();
+		try {
+			volumeService.generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest);
+			generateMezzanineProxiesResponse.setAction(Action.generate_mezzanine_proxies.name());
+		}catch (Exception e) {
+			String errorMsg = "Unable to generate mezzanine proxies - " + e.getMessage();
+			logger.error(errorMsg, e);
+
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(generateMezzanineProxiesResponse);
 	}
 	
 	@ApiOperation(value = "Marks a volume's healthstatus suspect|defective|normal")
