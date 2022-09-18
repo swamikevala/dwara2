@@ -515,7 +515,7 @@ public abstract class AbstractStoragetypeJobProcessor {
 		
 		
 		
-		if(requestedAction == Action.restore || requestedAction == Action.restore_process || requestedAction == Action.rewrite) { // for ingest and restore_process with dependent jobs this happens in the scheduler... 
+		if(requestedAction == Action.restore || requestedAction == Action.restore_process || requestedAction == Action.rewrite || requestedAction == Action.generate_mezzanine_proxies) { // for ingest and restore_process with dependent jobs this happens in the scheduler... 
 			// upon completion moving the file to the original requested dest path		
 			org.ishafoundation.dwaraapi.db.model.transactional.File file = selectedStorageJob.getFile();
 			
