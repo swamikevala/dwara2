@@ -2,7 +2,7 @@ INSERT INTO `dwara3_test`.`action` (`id`, `type`) VALUES ('generate_mezzanine_pr
 
 
 INSERT INTO `dwara3_test`.`processingtask` (`id`, `description`, `filetype_id`, `max_errors`, `output_artifactclass_suffix`, `output_filetype_id`) VALUES ('video-proxy-mezz-gen', 'generate HD mezzanine video proxies', 'video', '10', '-proxy-mezz', 'prores-proxy-mov');
-INSERT INTO `dwara3_test`.`processingtask` (`id`, `description`, `filetype_id`, `max_errors`, `output_artifactclass_suffix`, `output_filetype_id`) VALUES ('restructure-mezz-folder', 'restructure the HD mezzanine video proxy folder', 'video', '10', null, null);
+INSERT INTO dwara3_test.processingtask (id, description, filetype_id, max_errors) VALUES ('restructure-mezz-folder', 'restructure mezzanine files to a flat folder structure', 'prores-proxy', '1');
 
 INSERT INTO `dwara3_test`.`extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (0, 'mov', 'prores-proxy-mov');
 
