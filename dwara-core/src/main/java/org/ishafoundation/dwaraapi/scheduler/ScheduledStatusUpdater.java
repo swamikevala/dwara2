@@ -535,7 +535,7 @@ public class ScheduledStatusUpdater {
 						logger.error(msg,e);
 					}
 						//(ii) Delete the original file
-					Job restoreJob = jobDao.findByRequestIdAndStoragetaskId(systemRequestID,Action.restore.name());
+					Job restoreJob = jobDao.findByRequestIdAndStoragetaskActionId(systemRequestID,Action.restore.name());
 					String originalFileRestorePath = restoreStorageTask.getRestoreLocation(restoreJob);
 							File restoreTmpFolder = new File(originalFileRestorePath);
 					try {
