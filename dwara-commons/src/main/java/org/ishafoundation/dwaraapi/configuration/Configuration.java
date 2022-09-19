@@ -47,6 +47,10 @@ public class Configuration {
 	
 	private String bwLimitRsync;
 	
+	private String restructuredMezzanineForWritingFolderPath; // example /data/dwara/forWriting
+	
+	private String restructuredMezzanineFolderName; // example restructured
+	
 	
 	public String getAppMode() {
 		return appMode;
@@ -206,5 +210,21 @@ public class Configuration {
 
 	public void setBwLimitRsync(String bwLimitRsync) {
 		this.bwLimitRsync = bwLimitRsync;
+	}
+
+	public String getRestructuredMezzanineFolderName() {
+		return restructuredMezzanineFolderName;
+	}
+
+	public void setRestructuredMezzanineFolderName(String restructuredMezzanineFolderName) {
+		this.restructuredMezzanineFolderName = restructuredMezzanineFolderName;
+	}
+
+	public String getRestructuredMezzanineForWritingFolderPath() {
+		return restructuredMezzanineForWritingFolderPath;
+	}
+
+	public void setRestructuredMezzanineForWritingFolderPath(String restructuredMezzanineForWritingFolderPath) {
+		this.restructuredMezzanineForWritingFolderPath = restructuredMezzanineForWritingFolderPath;
 	}
 }

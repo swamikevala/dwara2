@@ -1,3 +1,14 @@
+# Dwara App Version - 2.1.43 (20 Sep 2022)
+
+### Upgrade steps
+
+1) Create folder /data/dwara/mezz_dump. This will be the restructuredMezzanineForWritingFolderPath.
+2) Ensure application.properties has the below entries
+
+> restructuredMezzanineForWritingFolderPath=/data/dwara/mezz_dump
+> restructuredMezzanineFolderName=restructured
+
+
 # Dwara App Version - 2.1.42 (5th Aug 2022)
 
 ### Bugs

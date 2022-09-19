@@ -59,6 +59,8 @@ public interface JobDao extends CrudRepository<Job,Integer>,JobCustom {
 	
 	//Job findById(int jobId);
 	
+	Job findByRequestIdAndStoragetaskId(int requestId, String storagetaskId);
+	
 	Job findByRequestIdAndProcessingtaskId(int requestId, String processingtaskId); // TODO : Note this could be a list too if there are failed jobs...
 	
 	Job findByRequestIdAndInputArtifactIdAndStoragetaskActionIdAndGroupVolumeCopyId(int requestId, int artifactId, Action action, Integer copyNumber);

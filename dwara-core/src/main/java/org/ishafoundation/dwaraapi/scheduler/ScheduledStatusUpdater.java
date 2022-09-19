@@ -17,6 +17,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
+import org.ishafoundation.dwaraapi.db.dao.master.ArtifactclassDao;
+import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
 import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
@@ -48,6 +50,7 @@ import org.ishafoundation.dwaraapi.service.TFileVolumeDeleter;
 import org.ishafoundation.dwaraapi.service.UserRequestHelper;
 import org.ishafoundation.dwaraapi.staged.StagedFileOperations;
 import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
+import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
 import org.ishafoundation.dwaraapi.utils.JiraUtil;
 import org.ishafoundation.dwaraapi.utils.SMSUtil;
 import org.ishafoundation.dwaraapi.utils.StatusUtil;
@@ -66,93 +69,102 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 @Component
 public class ScheduledStatusUpdater {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledStatusUpdater.class);
 
 	@Autowired
 	private JobCreator jobCreator;
-	
+
 	@Autowired
 	private JobDao jobDao;
-	
+
 	@Autowired
 	private VolumeDao volumeDao;
-	
+
 	@Autowired
 	private RequestDao requestDao;
 
 	@Autowired
 	private TTFileJobDao tFileJobDao;
-	
+
 	@Autowired
 	private TFileDao tFileDao;
-	
+
 	@Autowired
 	private FileDao fileDao;
-	
+
 	@Autowired
 	private ArtifactDao artifactDao;
-	
+
 	@Autowired
 	private ArtifactVolumeDao artifactVolumeDao;
 
 	@Autowired
 	private Configuration configuration;
-	
+
 	@Value("${restoreTapesNotifier.mobileNos}")
 	private String commaSeparatedMobileNos;
-	
+
 	@Autowired
 	private ApplicationContext applicationContext;
-	
+
 	@Autowired
-    private StagedFileOperations stagedFileOperations;
-	
+	private StagedFileOperations stagedFileOperations;
+
 	@Autowired
-    private StagedFileEvaluator stagedFileEvaluator;
-	
+	private StagedFileEvaluator stagedFileEvaluator;
+
 	@Autowired
 	private TFileVolumeDeleter tFileVolumeDeleter;
-	
+
 	@Autowired
 	private UserRequestHelper userRequestHelper;
-		
+
+	@Autowired
+	private Restore restoreStorageTask;
+
+	@Autowired
+	private ArtifactclassDao artifactClassDao;
+
+	@Autowired
+	private DestinationDao destinationDao;
+
 	@Value("${scheduler.statusUpdater.enabled:true}")
 	private boolean isEnabled;
-	
+
 	@Scheduled(fixedDelayString = "${scheduler.statusUpdater.fixedDelay}")
-    @PostMapping("/updateStatus")
-    public ResponseEntity<String> updateStatus(){
-    	if(isEnabled) {
-    		logger.info("***** Updating Status now *****");
-    		try {
-    			updateTransactionalTablesStatus();
-    		}
-    		catch (Exception e) {
-    			logger.error("Unable to update status " + e.getMessage(), e);
+	@PostMapping("/updateStatus")
+	public ResponseEntity<String> updateStatus(){
+		if(isEnabled) {
+			logger.info("***** Updating Status now *****");
+			try {
+				updateTransactionalTablesStatus();
 			}
-	    	return ResponseEntity.status(HttpStatus.OK).body("Done");
-    	}
-    	else
-    		return null; 
-    }
-	
+			catch (Exception e) {
+				logger.error("Unable to update status " + e.getMessage(), e);
+			}
+			return ResponseEntity.status(HttpStatus.OK).body("Done");
+		}
+		else
+			return null; 
+	}
+
 	public void updateTransactionalTablesStatus() {
 		updateProcessingJobsStatus();
-		
+
 		List<Status> statusList = new ArrayList<Status>();
 		statusList.add(Status.in_progress);
 		statusList.add(Status.queued);
 		statusList.add(Status.on_hold);
-		
+
 		List<Request> systemRequestList = requestDao.findAllByTypeAndStatusIn(RequestType.system, statusList);
 		//updateDependentJobsStatus(systemRequestList);
 		updateSystemRequestStatus(systemRequestList);
-		
+
 		List<Request> userRequestList = requestDao.findAllByTypeAndStatusIn(RequestType.user, statusList);
 		updateUserRequestStatus(userRequestList);
 	}
-	
+
 	// On a job level only processing jobs need consolidated status update based on the files processing status
 	// The storage jobs are supposed to be marked completed then and there.
 	private void updateProcessingJobsStatus() {
@@ -187,12 +199,12 @@ public class ScheduledStatusUpdater {
 						hasAnyCompleted = true;
 					}
 				}
-				
+
 				if(!queued && !inProgress) {
 					//Status.cancelled; Status.skipped
 					Status status = null;
 					if(isAllComplete) {
-//						job.setCompletedAt(LocalDateTime.now()); // Just can only give some rough completed times... 
+						//						job.setCompletedAt(LocalDateTime.now()); // Just can only give some rough completed times... 
 						status = Status.completed;
 					}
 					if(hasFailures) {
@@ -206,14 +218,14 @@ public class ScheduledStatusUpdater {
 					job.setStatus(status);
 					job = jobDao.save(job);
 					logger.info("Job " + job.getId() + " - " + status);
-					
+
 					if(status == Status.failed) { // When a processing task involving a volume failed mark the tape suspsect. For e.g checksum-veriy processing task fails then we do below...
 						Volume volume = job.getVolume();
 						if(volume != null) {
 							volume.setHealthstatus(VolumeHealthStatus.suspect);
 							volumeDao.save(volume);
 							logger.info("Marked the volume " + volume.getId() + " as suspect");
-							
+
 							// create user request for tracking
 							HashMap<String, Object> data = new HashMap<String, Object>();
 							data.put("volumeId", volume.getId());
@@ -223,7 +235,7 @@ public class ScheduledStatusUpdater {
 							userRequestHelper.createUserRequest(Action.mark_volume, DwaraConstants.SYSTEM_USER_NAME, Status.completed, data, reason);
 
 						}
-							
+
 					}
 					else if(status == Status.completed) {
 						tFileJobDao.deleteAll(jobFileList);
@@ -240,14 +252,14 @@ public class ScheduledStatusUpdater {
 
 						if(requestedAction == Action.ingest) {
 							Integer inputArtifactId = job.getInputArtifactId(); // For processing tasks like file-deleter and file-mover we need to update the count and size
-							
+
 							Integer outputArtifactId = job.getOutputArtifactId();
 							if(outputArtifactId != null && !outputArtifactId.equals(inputArtifactId)) {
 								updateArtifactSizeAndCount(job, outputArtifactId);
 							}
-	
+
 							updateArtifactSizeAndCount(job, inputArtifactId);
-						
+
 							// TODO : Digi hack - the permissions script assumes the input artifact folder is "staged" and hence only supports Digitization A/Cs
 							if(outputArtifactId != null) {
 								org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = artifactDao.findById(outputArtifactId).get();
@@ -272,9 +284,9 @@ public class ScheduledStatusUpdater {
 									} catch (IOException e) {
 										logger.error("Unable to delete directory " + restoreTmpFolder + " : " + e.getMessage(), e);
 									}
-									
+
 									Integer artifactId = job.getInputArtifactId();
-									
+
 									// update the status of the defective/migrated artifact/volume
 									Integer rewriteCopy = job.getRequest().getDetails().getRewriteCopy();
 									RewriteMode rewritePurpose = job.getRequest().getDetails().getMode();
@@ -284,7 +296,7 @@ public class ScheduledStatusUpdater {
 											if(nthArtifactVolume.getVolume().getGroupRef().getCopy().getId() == rewriteCopy && nthArtifactVolume.getVolume().getId() != job.getVolume().getId()) {
 												nthArtifactVolume.setStatus(ArtifactVolumeStatus.deleted);
 												artifactVolumeDao.save(nthArtifactVolume);
-												
+
 												softDeleteTFileVolumeEntries(artifactId, nthArtifactVolume.getId().getVolumeId());		
 												break;
 											}
@@ -296,12 +308,12 @@ public class ScheduledStatusUpdater {
 										if(rewritePurpose == RewriteMode.migrate)
 											artifactVolumeStatus = ArtifactVolumeStatus.migrated;
 										artifactVolume.setStatus(artifactVolumeStatus);
-										
+
 										artifactVolumeDao.save(artifactVolume);
 										if(artifactVolumeStatus == ArtifactVolumeStatus.deleted) // TODO : Figure out what should happen to migrate... NOTE : migrate and artifact rewrite piece not tested.
 											softDeleteTFileVolumeEntries(artifactId, volumeId);
 									}
-									
+
 									// also delete the goodcopy/source restored content too
 									Job goodCopyVerifyJob = jobDao.findByRequestIdAndFlowelementId(job.getRequest().getId(), CoreFlowelement.core_rewrite_flow_good_copy_checksum_verify.getId());
 									inputPath = processingJobManager.getInputPath(goodCopyVerifyJob);
@@ -321,37 +333,37 @@ public class ScheduledStatusUpdater {
 								if(requestedAction == Action.restore_process){
 									// what need to be restored
 									int fileIdRestored = requestDetails.getFileId();
-									
+
 									String restoredFilePathName = null;
-									
-					    			org.ishafoundation.dwaraapi.db.model.transactional.File file = fileDao.findById(fileIdRestored).get();
-					    			if(file != null)
-					    				restoredFilePathName = file.getPathname();
-					    			
-					    			// TODO - SuPeR HaCk - Need to bring this into f/w scheme of things properly
-					    			String lastJobProcessingTask = job.getProcessingtaskId();
-					    			if(lastJobProcessingTask != null && lastJobProcessingTask.equals("video-digi-2020-mkv-mov-gen") && restoredFilePathName.endsWith(".mkv")) {
-					    				restoredFilePathName = restoredFilePathName.replace(".mkv", ".mov");
-					    			}
-					    			
+
+									org.ishafoundation.dwaraapi.db.model.transactional.File file = fileDao.findById(fileIdRestored).get();
+									if(file != null)
+										restoredFilePathName = file.getPathname();
+
+									// TODO - SuPeR HaCk - Need to bring this into f/w scheme of things properly
+									String lastJobProcessingTask = job.getProcessingtaskId();
+									if(lastJobProcessingTask != null && lastJobProcessingTask.equals("video-digi-2020-mkv-mov-gen") && restoredFilePathName.endsWith(".mkv")) {
+										restoredFilePathName = restoredFilePathName.replace(".mkv", ".mov");
+									}
+
 									// inputPath = something like - /data/restored/someoutputfolder/.restoring
 									String srcPath = inputPath + java.io.File.separator + restoredFilePathName;
 									String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");	
 									logger.trace("src " + srcPath);
 									logger.trace("dest " + destPath);
-	
-						    		try {
+
+									try {
 										java.io.File srcFile = new java.io.File(srcPath);
 										java.io.File destFile = new java.io.File(destPath);
-								
+
 										if(srcFile.isFile())
 											Files.createDirectories(Paths.get(FilenameUtils.getFullPathNoEndSeparator(destPath)));		
 										else
 											Files.createDirectories(Paths.get(destPath));
-									
-											Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
-											logger.info("Moved restored files from " + srcPath + " to " + destPath);
-										}
+
+										Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+										logger.info("Moved restored files from " + srcPath + " to " + destPath);
+									}
 									catch (Exception e) {
 										logger.error("Unable to move files from " + srcPath + " to " + destPath);
 									}
@@ -373,7 +385,7 @@ public class ScheduledStatusUpdater {
 			}
 		}
 	}
-	
+
 	private void softDeleteTFileVolumeEntries(int artifactId, String volumeId) {
 		Artifact nthArtifact = artifactDao.findById(artifactId).get();
 		List<org.ishafoundation.dwaraapi.db.model.transactional.File> artifactFileList = null;
@@ -385,39 +397,39 @@ public class ScheduledStatusUpdater {
 		List<TFile> artifactTFileList  = tFileDao.findAllByArtifactId(nthArtifact.getId()); 
 		tFileVolumeDeleter.softDeleteTFileVolumeEntries(artifactFileList, artifactTFileList, nthArtifact, volumeId);
 	}
-	
+
 	private void updateArtifactSizeAndCount(Job job, int artifactId) {
 		org.ishafoundation.dwaraapi.db.model.transactional.Artifact artifact = artifactDao.findById(artifactId).get();
-		
+
 		Path artifactPath = Paths.get(artifact.getArtifactclass().getPath(), artifact.getName());
 		File artifactFileObj = artifactPath.toFile();
 		long artifactSize = 0;
 		int artifactFileCount = 0;
-		
-	    if(artifactFileObj.isDirectory()) {
-	        org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails afd = stagedFileEvaluator.getDetails(artifactFileObj);
-	        artifactFileCount = afd.getCount();
-	        artifactSize = afd.getTotalSize();
-	    }
-	    else { // for single file artifacts...
-	        artifactFileCount = 1;
-	        artifactSize = artifact.getTotalSize();
-	    }
-	    logger.debug("artifactSize old " + artifact.getTotalSize() + " artifactSize new " + artifactSize);
-	    artifact.setTotalSize(artifactSize);
+
+		if(artifactFileObj.isDirectory()) {
+			org.ishafoundation.dwaraapi.staged.scan.ArtifactFileDetails afd = stagedFileEvaluator.getDetails(artifactFileObj);
+			artifactFileCount = afd.getCount();
+			artifactSize = afd.getTotalSize();
+		}
+		else { // for single file artifacts...
+			artifactFileCount = 1;
+			artifactSize = artifact.getTotalSize();
+		}
+		logger.debug("artifactSize old " + artifact.getTotalSize() + " artifactSize new " + artifactSize);
+		artifact.setTotalSize(artifactSize);
 		artifact.setFileCount(artifactFileCount);
 		artifact = (Artifact) artifactDao.save(artifact);
 
 		org.ishafoundation.dwaraapi.db.model.transactional.File artifactFileFromDB = fileDao.findByPathname(artifact.getName());
 		artifactFileFromDB.setSize(artifactSize);
 		fileDao.save(artifactFileFromDB);
-		
+
 		TFile artifactTFileFromDB = tFileDao.findByPathname(artifact.getName());
 		if(artifactTFileFromDB != null) {
 			artifactTFileFromDB.setSize(artifactSize);
 			tFileDao.save(artifactTFileFromDB);
 		}
-		
+
 		// TODO : Digi hack - clean this up -Long term - iterate through files that are directories and calc their size and update them...
 		if("file-delete".equals(job.getProcessingtaskId()) && artifact.getArtifactclass().getId().startsWith("video-digi-2020-")) {
 			String subfolder = "mxf";
@@ -429,44 +441,121 @@ public class ScheduledStatusUpdater {
 				artifactSubfolderObj = artifactSubfolderPath.toFile();
 			}
 			if(artifactSubfolderObj.isDirectory()) {
-		    	long artifactSubfolderSize = FileUtils.sizeOfDirectory(artifactSubfolderObj);
-		    	Path artifactSubfolderFilePath = Paths.get(artifact.getName(), subfolder);
+				long artifactSubfolderSize = FileUtils.sizeOfDirectory(artifactSubfolderObj);
+				Path artifactSubfolderFilePath = Paths.get(artifact.getName(), subfolder);
 				org.ishafoundation.dwaraapi.db.model.transactional.File artifactSubfolderFileFromDB = fileDao.findByPathname(artifactSubfolderFilePath.toString());
 				artifactSubfolderFileFromDB.setSize(artifactSubfolderSize);
 				fileDao.save(artifactSubfolderFileFromDB);
-				
-		    	TFile tfileFromDB = tFileDao.findByPathname(artifactSubfolderFilePath.toString());
-		    	tfileFromDB.setSize(artifactSubfolderSize);
-		    	tFileDao.save(tfileFromDB);
-		    }
+
+				TFile tfileFromDB = tFileDao.findByPathname(artifactSubfolderFilePath.toString());
+				tfileFromDB.setSize(artifactSubfolderSize);
+				tFileDao.save(tfileFromDB);
+			}
 		}
 	}
-	
+
 	private void updateSystemRequestStatus(List<Request> requestList) {
 		for (Request nthRequest : requestList) {
 			List<Job> nthRequestJobs = jobDao.findAllByRequestId(nthRequest.getId());
 			// Fix for no job created usecase
 			if(nthRequestJobs.size() == 0)
 				continue;
-				
+
 			List<Status> jobStatusList = new ArrayList<Status>();
 			for (Job nthJob : nthRequestJobs) {
 				Status nthJobStatus = nthJob.getStatus();
 				jobStatusList.add(nthJobStatus);
 			}	
-			
+
 			Status status = StatusUtil.getStatus(jobStatusList);
 			logger.trace("System request status - " + nthRequest.getId() + " ::: " + status);
 			nthRequest.setStatus(status);
-			
+
 			if(status != Status.queued && status != Status.in_progress && status != Status.on_hold)
 				nthRequest.setCompletedAt(LocalDateTime.now());
- 
+
+			if(nthRequest.getActionId() == Action.generate_mezzanine_proxies && status == Status.completed) {
+				// 1. Copy the files to SAN / Overseas
+				// Get the path where the mezzanine proxy folder has been restrucured 
+				String restructureMezFoldername = configuration.getRestructuredMezzanineFolderName();
+				String resturcturedMezFolderPathToWrite = configuration.getRestructuredMezzanineForWritingFolderPath();
+				int originalArtifactID = nthRequest.getDetails().getArtifactId();
+				int systemRequestID = nthRequest.getId();
+				Artifact originalArtifact = artifactDao.findById(originalArtifactID).get();
+				List<Artifact> proxyArtifacts = artifactDao.findAllByArtifactRef(originalArtifact) ;
+				String artifactClassForMezzProxy = "";
+				String mezzArtifactName = "";
+				for (Artifact artifact: proxyArtifacts) {
+					String artifactClass = artifact.getArtifactclass().toString();
+					if (artifactClass.contains("mezz")) {
+						artifactClassForMezzProxy = artifactClass;		
+						mezzArtifactName = artifact.getName();
+
+					}
+				}
+				// Check if the artifact Class was gotten. In case its not then it means the mez proxy was not added to artifact table.
+				if (artifactClassForMezzProxy.equals("")) {
+					String msg = " Mez proxy not found in artifact table. Original artifact ID -> "+originalArtifactID+ " . System request ID -> "+systemRequestID;
+					logger.error(msg);
+					// Fail the system request here 
+					nthRequest.setStatus(Status.failed);
+					nthRequest.setMessage(msg);
+				}
+				else {				
+					// Get the source path for the mezanine proxy folder
+					String sourcePathForMezzanineFolder =  artifactClassDao.findById(artifactClassForMezzProxy).get().getPath() + File.separator + restructureMezFoldername + File.separator + mezzArtifactName;
+					String mezzFolderToDelete = artifactClassDao.findById(artifactClassForMezzProxy).get().getPath() + File.separator + mezzArtifactName;
+					String destinationPath = destinationDao.findById("san-mezz").toString(); 
+					// Now copy the file 
+					try {
+						java.nio.file.Files.copy(Paths.get(sourcePathForMezzanineFolder), Paths.get(destinationPath));
+						// 1.5 Copy the file to somewhere it can be written later to a LTFS tape .
+						try {
+							java.nio.file.Files.move(Paths.get(sourcePathForMezzanineFolder), Paths.get(resturcturedMezFolderPathToWrite + File.separator + mezzArtifactName));
+						}
+						catch (IOException e) {
+							String msg = " Mezzanine proxy Copy to write dump folder failed -> "+sourcePathForMezzanineFolder+ " . Destination -> " + resturcturedMezFolderPathToWrite + File.separator + mezzArtifactName + " System request ID -> "+systemRequestID;
+							logger.error(msg,e);			 
+						}
+					} catch (IOException e) {
+						String msg = " Mezzanine proxy Copy Failed to SAN -> "+sourcePathForMezzanineFolder+ " . Destination -> " + destinationPath + " System request ID -> "+systemRequestID;
+						logger.error(msg);
+						// Fail the system request here  Mezzanine proxy Copy Failed to SAN
+						nthRequest.setStatus(Status.failed);
+						nthRequest.setMessage(msg);						 
+					}
+					
+					
+					// 2. Delete the empty directory of mezanine proxy and then the original restored file,
+					//(i) Delete the empty directory of mezanine proxy
+					try {
+						java.nio.file.Files.delete(Paths.get(mezzFolderToDelete));
+					} catch (IOException e) {
+						String msg = " Failed to delete the empty mezz folder. Bcoz "+e.getMessage()+"  . Mezz folderpath -> "+mezzFolderToDelete;
+						logger.error(msg,e);
+					}
+						//(ii) Delete the original file
+					Job restoreJob = jobDao.findByRequestIdAndStoragetaskId(systemRequestID,Action.restore.name());
+					String originalFileRestorePath = restoreStorageTask.getRestoreLocation(restoreJob);
+							File restoreTmpFolder = new File(originalFileRestorePath);
+					try {
+						FileUtils.deleteDirectory(restoreTmpFolder);
+					} catch (IOException e) {
+						String msg = " Failed to delete the original Restored folder. Bcoz "+e.getMessage()+"  . Original folderpath -> "+originalFileRestorePath;
+						logger.error(msg,e);
+					}
+					
+
+					//Later	Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+
+				}
+
+			}
 			requestDao.save(nthRequest);
-			
+
 			if(nthRequest.getActionId() == Action.ingest && (status == Status.marked_completed || status == Status.completed)) {
-		    	List<Artifact> artifactList = artifactDao.findAllByWriteRequestId(nthRequest.getId());
-		    	for (Artifact artifact : artifactList) {
+				List<Artifact> artifactList = artifactDao.findAllByWriteRequestId(nthRequest.getId());
+				for (Artifact artifact : artifactList) {
 					Artifactclass artifactclass = artifact.getArtifactclass();
 					String srcRootLocation = artifactclass.getPath();
 
@@ -481,14 +570,14 @@ public class ScheduledStatusUpdater {
 									Files.createDirectories(Paths.get(configuration.getIngestCompleteDirRoot()));
 								else
 									Files.createDirectories(destFile.toPath());
-				
+
 								Files.move(srcFile.toPath(), destFile.toPath(), StandardCopyOption.ATOMIC_MOVE); // what will be the timestamp of this moved file?
 							}
 							catch (Exception e) {
 								logger.error("Unable to move file "  + e.getMessage());
 							}
 						}
-						
+
 					}
 					else { // derived artifacts can be deleted
 						if(srcRootLocation != null) {
@@ -507,7 +596,7 @@ public class ScheduledStatusUpdater {
 					}
 				}
 			}
-			
+
 			if(nthRequest.getActionId() == Action.restore_process && (status == Status.failed || status == Status.completed_failures)) {
 				String messagePart = nthRequest.getId() + " restore failed" ;
 				SMSUtil.sendSMS(commaSeparatedMobileNos, messagePart);
@@ -515,12 +604,12 @@ public class ScheduledStatusUpdater {
 		}
 	}
 
-	
+
 	private void updateUserRequestStatus(List<Request> userRequestList) {
 		for (Request nthUserRequest : userRequestList) {
 			int userRequestId = nthUserRequest.getId();
 			List<Request> systemRequestList = requestDao.findAllByRequestRefId(userRequestId);
-			
+
 			Status status = null;
 			if(systemRequestList == null || systemRequestList.size() == 0) {
 				continue;
@@ -531,9 +620,9 @@ public class ScheduledStatusUpdater {
 					Status nthSystemRequestStatus = nthSystemRequest.getStatus();
 					systemRequestStatusList.add(nthSystemRequestStatus);
 				}	
-			
+
 				status = StatusUtil.getStatus(systemRequestStatusList);
-				
+
 				logger.trace("User request status - " + nthUserRequest.getId() + " ::: " + status);
 			}
 			// For completed restore jobs the .restoring folder is cleaned up...
@@ -548,18 +637,20 @@ public class ScheduledStatusUpdater {
 				} catch (IOException e) {
 					logger.error("Unable to delete " + restoreTmpFolder.getPath());
 				}
-				
+
 				String vpTicketNo = jsonNode.get("vpJiraTicket").asText();
-		    	
+
 				JiraUtil.updateJiraWorkflow(vpTicketNo,JiraTransition.footage_request_closed, null);
 			}
 			nthUserRequest.setStatus(status); 
-			
+
 			if(status != Status.queued && status != Status.in_progress && status != Status.on_hold)
 				nthUserRequest.setCompletedAt(LocalDateTime.now());
 
 			requestDao.save(nthUserRequest);
 		}
 	}
-	
+
+
+
 }

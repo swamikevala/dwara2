@@ -234,7 +234,7 @@ public class ProcessingJobProcessor extends ProcessingJobHelper implements Runna
 
 				// UPDATE ARTIFACT and FILE tables
 				//synchronized (processingtaskResponse) { // A Synchronized block to ensure only one thread at a time updates... Handling it differently with extra checks..
-					if(outputArtifactName != null && systemGeneratedRequest.getActionId() == Action.ingest) {
+					if(outputArtifactName != null && (systemGeneratedRequest.getActionId() == Action.ingest || systemGeneratedRequest.getActionId() == Action.generate_mezzanine_proxies)) {
 						
 						
 						String destinationDirPath = processContext.getOutputDestinationDirPath();

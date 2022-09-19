@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
@@ -12,6 +13,7 @@ import org.ishafoundation.dwaraapi.process.request.File;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component("restructure-mezz-folder")
@@ -19,12 +21,16 @@ public class MezzanineFolderRestructurer implements IProcessingTask {
 
 	private static final Logger logger = LoggerFactory.getLogger(MezzanineFolderRestructurer.class);
 
+	@Autowired
+	private Configuration configuration;
+	
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
 
 		ProcessingtaskResponse processingtaskResponse = new ProcessingtaskResponse();
 
 		LogicalFile logicalFile = processContext.getLogicalFile();
+		String restructureMezFoldername = configuration.getRestructuredMezzanineFolderName();
 		String logicalFileAbsolutePath = logicalFile.getAbsolutePath();
 		String logicalFileName = logicalFile.getName();
 		String newFolderPathForMezzanineArtifact = "";
@@ -55,7 +61,7 @@ public class MezzanineFolderRestructurer implements IProcessingTask {
 		// 3. Create the path where the file must be moved by finding out the artifactName 
 		// (i) Get the artifact name and see if the Input artifact folder actually
 		// exists
-		String splitter = java.io.File.separator; 
+		String splitter = java.io.File.separator.replace("\\", "\\\\"); 
 		String artifactName = processContext.getJob().getInputArtifact().getName();
 		Pattern pattern = Pattern.compile(artifactName.replaceAll("-", "\\-"), Pattern.CASE_INSENSITIVE);
 		Matcher matcher = pattern.matcher(logicalFileAbsolutePath);
@@ -72,14 +78,14 @@ public class MezzanineFolderRestructurer implements IProcessingTask {
 			// (ii) Create the parent folder (Mezzanine artifact folder ) if it doesn't
 			// exist in Restructured folder
 			newFolderPathForMezzanineArtifact = logicalFileAbsolutePath.replaceAll(artifactName + ".*",
-					"Restructured" + splitter + artifactName);
+					restructureMezFoldername + splitter + artifactName);
 			java.io.File newFolderForMezzanineArtifact = new java.io.File(newFolderPathForMezzanineArtifact);
 
 			if (!newFolderForMezzanineArtifact.isDirectory()) {
 				// Mezzanine folder does not exist . create it so that the file can happily rest
 				// in the shade of the artifact folder.
 				try {
-					newFolderForMezzanineArtifact.mkdirs();
+					newFolderForMezzanineArtifact.mkdir();
 				} catch (Exception e) {
 					String msg = "Could not create mezzanine proxy directory -> " + newFolderPathForMezzanineArtifact
 							+ " jobID-> " + jobID;
