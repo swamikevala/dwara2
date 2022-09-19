@@ -505,7 +505,7 @@ public class ScheduledStatusUpdater {
 					// Get the source path for the mezanine proxy folder
 					String sourcePathForMezzanineFolder =  artifactClassDao.findById(artifactClassForMezzProxy).get().getPath() + File.separator + restructureMezFoldername + File.separator + mezzArtifactName;
 					String mezzFolderToDelete = artifactClassDao.findById(artifactClassForMezzProxy).get().getPath() + File.separator + mezzArtifactName;
-					String destinationPath = destinationDao.findById("san-mezz").toString(); 
+					String destinationPath = destinationDao.findById("san-mezz").get().getPath(); 
 					// Now copy the file 
 					try {
 						java.nio.file.Files.copy(Paths.get(sourcePathForMezzanineFolder), Paths.get(destinationPath));
