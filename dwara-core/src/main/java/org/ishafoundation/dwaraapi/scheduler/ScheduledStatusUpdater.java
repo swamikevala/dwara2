@@ -486,15 +486,15 @@ public class ScheduledStatusUpdater {
 				String artifactClassForMezzProxy = "";
 				String mezzArtifactName = "";
 				for (Artifact artifact: proxyArtifacts) {
-					String artifactClass = artifact.getArtifactclass().toString();
+					String artifactClass = artifact.getArtifactclass().getId();
 					if (artifactClass.contains("mezz")) {
 						artifactClassForMezzProxy = artifactClass;		
 						mezzArtifactName = artifact.getName();
-
 					}
 				}
+				
 				// Check if the artifact Class was gotten. In case its not then it means the mez proxy was not added to artifact table.
-				if (artifactClassForMezzProxy.equals("")) {
+				if (mezzArtifactName.equals("")) {
 					String msg = " Mez proxy not found in artifact table. Original artifact ID -> "+originalArtifactID+ " . System request ID -> "+systemRequestID;
 					logger.error(msg);
 					// Fail the system request here 
@@ -535,7 +535,7 @@ public class ScheduledStatusUpdater {
 						logger.error(msg,e);
 					}
 						//(ii) Delete the original file
-					Job restoreJob = jobDao.findByRequestIdAndStoragetaskActionId(systemRequestID,Action.restore.name());
+					Job restoreJob = jobDao.findByRequestIdAndStoragetaskActionId(systemRequestID,Action.restore);
 					String originalFileRestorePath = restoreStorageTask.getRestoreLocation(restoreJob);
 							File restoreTmpFolder = new File(originalFileRestorePath);
 					try {
