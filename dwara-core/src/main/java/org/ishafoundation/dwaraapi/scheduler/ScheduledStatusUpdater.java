@@ -529,7 +529,7 @@ public class ScheduledStatusUpdater {
 					// 2. Delete the empty directory of mezanine proxy and then the original restored file,
 					//(i) Delete the empty directory of mezanine proxy
 					try {
-						java.nio.file.Files.delete(Paths.get(mezzFolderToDelete));
+						FileUtils.deleteDirectory(new File(mezzFolderToDelete));
 					} catch (IOException e) {
 						String msg = " Failed to delete the empty mezz folder. Bcoz "+e.getMessage()+"  . Mezz folderpath -> "+mezzFolderToDelete;
 						logger.error(msg,e);
