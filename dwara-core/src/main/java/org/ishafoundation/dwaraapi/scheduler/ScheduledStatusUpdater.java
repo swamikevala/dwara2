@@ -508,18 +508,18 @@ public class ScheduledStatusUpdater {
 					String destinationPath = destinationDao.findById("san-mezz").get().getPath(); 
 					// Now copy the file 
 					try {
-						java.nio.file.Files.copy(Paths.get(sourcePathForMezzanineFolder), Paths.get(destinationPath));
+						FileUtils.copyDirectoryToDirectory(new File(sourcePathForMezzanineFolder), new File(destinationPath));
 						// 1.5 Copy the file to somewhere it can be written later to a LTFS tape .
 						try {
 							java.nio.file.Files.move(Paths.get(sourcePathForMezzanineFolder), Paths.get(resturcturedMezFolderPathToWrite + File.separator + mezzArtifactName));
 						}
 						catch (IOException e) {
 							String msg = " Mezzanine proxy Copy to write dump folder failed -> "+sourcePathForMezzanineFolder+ " . Destination -> " + resturcturedMezFolderPathToWrite + File.separator + mezzArtifactName + " System request ID -> "+systemRequestID;
-							logger.error(msg,e);			 
+							logger.error(msg, e);			 
 						}
 					} catch (IOException e) {
 						String msg = " Mezzanine proxy Copy Failed to SAN -> "+sourcePathForMezzanineFolder+ " . Destination -> " + destinationPath + " System request ID -> "+systemRequestID;
-						logger.error(msg);
+						logger.error(msg, e);
 						// Fail the system request here  Mezzanine proxy Copy Failed to SAN
 						nthRequest.setStatus(Status.failed);
 						nthRequest.setMessage(msg);						 
