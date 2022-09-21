@@ -1,16 +1,25 @@
-INSERT INTO `action` (`id`, `type`) VALUES ('generate_mezzanine_proxies', 'complex');
+-- ********* Adding config for Edited Audio *********
+-- ARTIFACTCLASS --
+INSERT INTO `artifactclass` (`id`, `description`, `sequence_id`, `source`, `concurrent_volume_copies`, `display_order`, `path_prefix`, `artifactclass_ref_id`, `import_only`, `config`) VALUES 
+('photo-priv1', 'photo priv 1', 'photo-pub', 1, 1, 1, '/data/dwara/staged', null, 0, null),
+('photo-priv1-proxy', 'photo priv 1 proxy', 'photo-pub-proxy', 0, 1, 0, '/data/dwara/transcoded', 'photo-priv1', 0, '{"pathname_regex": "(?!)"}');
+ 
+-- ARTIFACTCLASS_VOLUME --
+INSERT INTO `artifactclass_volume` (`artifactclass_id`, `volume_id`, `encrypted`, `active`) VALUES 
+('photo-priv1', 'R1', 0, 1),
+('photo-priv1', 'R2', 0, 1),
+('photo-priv1', 'R3', 0, 1),
+('photo-priv1-proxy', 'G1', 0, 1),
+('photo-priv1-proxy', 'G2', 0, 1);
 
+-- ACTION_ARTIFACTCLASS_USER --
+INSERT INTO `action_artifactclass_user` (`action_id`, `artifactclass_id`, `user_id`) VALUES 
+('ingest', 'photo-priv1', 1),
+('ingest', 'photo-priv1', 2),
+('ingest', 'photo-priv1', 3),
+('ingest', 'photo-priv1', 6);
 
-INSERT INTO `processingtask` (`id`, `description`, `filetype_id`, `max_errors`, `output_artifactclass_suffix`, `output_filetype_id`) VALUES ('video-proxy-mezz-gen', 'generate HD mezzanine video proxies', 'video', '10', '-proxy-mezz', 'prores-proxy-mov');
-INSERT INTO .processingtask (id, description, filetype_id, max_errors) VALUES ('restructure-mezz-folder', 'restructure mezzanine files to a flat folder structure', 'prores-proxy-mov', '1');
-
-INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (0, 'mov', 'prores-proxy-mov');
-
-INSERT INTO `sequence` (`id`, `group`, `prefix`, `type`) VALUES ('video-pub-proxy-mezz', 0, 'VM', 'artifact');
-INSERT INTO `sequence` (`id`, `group`, `prefix`, `type`) VALUES ('video-priv2-proxy-mezz', 0, 'VXM', 'artifact');
-
-INSERT INTO `artifactclass` (`id`, `concurrent_volume_copies`, `description`, `display_order`, `import_only`, `path_prefix`, `source`, `artifactclass_ref_id`, `sequence_id`) VALUES ('video-pub-proxy-mezz', 1, 'video edit proxy', 2, 0, '/data/dwara/transcoded/mezzanine', 0, 'video-pub', 'video-pub-proxy-mezz');
-INSERT INTO `artifactclass` (`id`, `concurrent_volume_copies`, `description`, `display_order`, `import_only`, `path_prefix`, `source`, `artifactclass_ref_id`, `sequence_id`) VALUES ('video-priv1-proxy-mezz', 1, 'video edit proxy', 2, 0, '/data/dwara/transcoded/mezzanine', 0, 'video-priv1', 'video-pub-proxy-mezz');
-INSERT INTO `artifactclass` (`id`, `concurrent_volume_copies`, `description`, `display_order`, `import_only`, `path_prefix`, `source`, `artifactclass_ref_id`, `sequence_id`) VALUES ('video-priv2-proxy-mezz', 1, 'video edit proxy', 2, 0, '/data/dwara/transcoded/mezzanine', 0, 'video-priv2', 'video-priv2-proxy-mezz');
-
-INSERT INTO destination (id, path, use_buffering) VALUES ('san-mezz', '/mnt/san/video/CP-proxies', 0);
+-- ACTION_ARTIFACTCLASS_FLOW --
+INSERT INTO `action_artifactclass_flow` (`action_id`, `artifactclass_id`, `flow_id`, `active`) VALUES 
+('ingest', 'photo-priv1', 'archive-flow', 1),
+('ingest', 'photo-priv1', 'photo-proxy-flow', 1);
