@@ -31,9 +31,10 @@ public class MkvObjectBuilder {
 	
 	private static String TEMPLATE_CONTENT = null;
 	private static Timecode BASE_TIMECODE = null;
+	private static Timecode RUNNING_TIMECODE = null;
+	private static Map<Integer, String> FRAME_TIMECODE_MAP = null;
 	private static String BINARY_REVERSED_MXF_FILEPATHNAME = null;
-	private static int COUNTER = 0;
-	private static boolean INCREMENT_TIMECODE = false;
+	private static int FRAME_COUNTER = 0;
 	private static String AUDIOTRACK_TMPL_PAL = "060E2B34010201010D0103011604010<<AUDIO_TRACK_INDEX>>83001680<<AUDIO_DATA>>";
 	private static String AUDIOTRACK_TMPL_NTSC = "060E2B34010201010D0103011604010<<AUDIO_TRACK_INDEX>>830012<<AUDIO_SIZE>><<AUDIO_DATA>>060E2B34010101020301021001000000830000<<AUDIO_SIZE_SUFFIXER>>"; // based on size either 00 or 030000 gets replaced
 	
@@ -134,16 +135,28 @@ public class MkvObjectBuilder {
 			}			
 		}
 		
-		COUNTER++;
 		String frameContent = TEMPLATE_CONTENT;
-		if(INCREMENT_TIMECODE) {
-			System.out.println(COUNTER + ":::" + frame.getTimecode());
-			if(COUNTER > 1)
-				BASE_TIMECODE.addFrame();
-			System.out.println(BASE_TIMECODE);
-			System.out.println(BASE_TIMECODE.getCode());
+		
+		String currentFrameTimecodeString = FRAME_TIMECODE_MAP.get(FRAME_COUNTER);
+ 
+		if(currentFrameTimecodeString == null) { // if its not an impacted frame per logs then add frame to the previous frame's timecode
+			if(RUNNING_TIMECODE == null)
+				RUNNING_TIMECODE = BASE_TIMECODE;
+			else
+				RUNNING_TIMECODE.addFrame();
+			
+			currentFrameTimecodeString = RUNNING_TIMECODE.getCode();
 		}
-		frameContent = frameContent.replace("<<REVERSED_TIMECODE>>", new String(Hex.encodeHex(Hex.decodeHex(getReversedTimeCode(BASE_TIMECODE.getCode())+"00000000"))));
+		else {
+			try{
+				RUNNING_TIMECODE = new Timecode(currentFrameTimecodeString, VIDEO_TYPE);
+			}catch (Exception e) {
+				// swallow it - if error that means it contains the frame part problematic
+			}
+		}
+		System.out.println(FRAME_COUNTER + " - TC - " + currentFrameTimecodeString);
+		
+		frameContent = frameContent.replace("<<REVERSED_TIMECODE>>", new String(Hex.encodeHex(Hex.decodeHex(getReversedTimeCode(currentFrameTimecodeString)+"00000000"))));
 		frameContent = frameContent.replace("<<V_DATA>>", frame.getVideoTrack().getData());
 		List<AudioTrack> audioTracks = frame.getAudioTracks();
 		for (AudioTrack nthAudioTrack : audioTracks) {
@@ -162,10 +175,10 @@ public class MkvObjectBuilder {
 		}
 		flushData(frameContent);
 
-		
+		FRAME_COUNTER++;
 		//mkvObj.getFrames().add(frame);
 	}
-
+	
 //	static void handleTimecode(EbmlFileEntry ebmlFileEntry) throws Exception{
 //		System.out.println("tc : " + getData(ebmlFileEntry));
 //	}
@@ -278,8 +291,8 @@ public class MkvObjectBuilder {
 
 	
 	static void usage() {
-		// java /data/staged/ABC.v210_mkv /home/pgurumurthy/MxfFrameTemplate.tmpl true /data/staged/mxf/ABC.hdr /data/staged/mxf/ABC.ftr  /data/staged/ABC_gen.v210_mkv /data/transcoded-testing/ABC.MXF_md5  
-		System.err.println("usage: java MkvObjectBuilder <v210-mkv-filepathname> <video-type> <mxf-frame-template-filepathname> <increment-timecode> <extracted-header-from-mxf> <extracted-footer-from-mxf> <binary-reversed-mxf-filepathname> <orig-mxf-md5-filepathname>");
+		// java /data/staged/ABC.v210_mkv /home/pgurumurthy/MxfFrameTemplate.tmpl /data/staged/mxf/ABC.hdr /data/staged/mxf/ABC.log /data/staged/mxf/ABC.ftr  /data/staged/ABC_gen.v210_mkv /data/transcoded-testing/ABC.MXF_md5  
+		System.err.println("usage: java MkvObjectBuilder <v210-mkv-filepathname> <video-type> <mxf-frame-template-filepathname> <extracted-header-from-mxf> <log-from-prasad-filepathname> <extracted-footer-from-mxf> <binary-reversed-mxf-filepathname> <orig-mxf-md5-filepathname>");
 		System.exit(-1);
 	}
 
@@ -290,8 +303,8 @@ public class MkvObjectBuilder {
 		String v210MkvFilepathname = args[0];
 		VIDEO_TYPE = args[1].equals("PAL") ? Type.TYPE_VIDEO_PAL : Type.TYPE_VIDEO_NTSC;
 		String mxfFrameTemplateFilepathname = args[2];
-		INCREMENT_TIMECODE = Boolean.parseBoolean(args[3]);
-		String extractedMxfHeader = args[4];
+		String extractedMxfHeader = args[3];
+		String mxfLog = args[4];
 		String extractedMxfFooter = args[5];
 		BINARY_REVERSED_MXF_FILEPATHNAME = args[6];
 		String originalMxfMd5Filepathname = args[7];
@@ -316,6 +329,10 @@ public class MkvObjectBuilder {
 		
 		flushData(headerContent, false);
 
+		LogParser lp = new LogParser();
+		FRAME_TIMECODE_MAP = lp.parseLog(mxfLog, VIDEO_TYPE);
+		
+		
 		EbmlFile ef = new EbmlFile(v210MkvFilepathname);
 		//InputStream is = new CountingInputStream(new BufferedInputStream(new FileInputStream(v210MkvFilepathname), bufferSize));
 		List<EbmlFileEntry> efel = ef.getEntries();
