@@ -64,7 +64,10 @@ public class FiletypePathnameReqexVisitor extends SimpleFileVisitor<Path> {
 		if(pathnameRegexMatcher.matches()) {
 			logger.trace("matches regex - " + pathnameRegexPattern);
 			matchedFiles.add(file.toFile());
-			extns.add(FilenameUtils.getExtension(file.getFileName().toString()));
+			String extn = FilenameUtils.getExtension(file.getFileName().toString());
+			extns.add(extn);
+			extns.add(extn.toLowerCase());
+			extns.add(extn.toUpperCase());
 		}
 		return CONTINUE;
 	}

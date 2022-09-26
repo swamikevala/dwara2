@@ -62,6 +62,10 @@ public class LogicalFileHelper {
 	public Collection<LogicalFile> getFiles(Collection<File> sourceFilesList, String[] extensions, boolean needSidecarFiles, String[] sidecarExtensions){
 		List<String> sourceExtensionsList = new ArrayList<String>();
 		Collection<File> filteredSourceFilesList = new ArrayList<File>();
+		
+		logger.trace("extensions " + Arrays.toString(extensions));
+		logger.trace("needSidecarFiles " + needSidecarFiles);
+		logger.trace("sidecarExtensions " + Arrays.toString(sidecarExtensions));
 		if(extensions != null) {
 			for (int i = 0; i < extensions.length; i++) {
 				sourceExtensionsList.add(extensions[i]);
@@ -79,6 +83,7 @@ public class LogicalFileHelper {
 					filteredSourceFilesList.add(file);
 				}
 			}
+			
 			sourceFilesList = filteredSourceFilesList;
 		}
 		
@@ -134,6 +139,18 @@ public class LogicalFileHelper {
 		
 		String[] sourceFileExtensions = {"mp4"};
 		String[] sidecarExtensions = {"jpg","out"};
+		
+		
+		Collection<File> sourceFilesList = new ArrayList<File>();
+		sourceFilesList.add(new File("C:\\data\\transcoded\\64450_Sadhguru-Shambho_IYC_18-Nov-1980_Cam1_Sony\\ABC.MP4"));
+		sourceFilesList.add(new File("C:\\data\\transcoded\\64450_Sadhguru-Shambho_IYC_18-Nov-1980_Cam1_Sony\\xyz.xml"));
+		
+		Collection<LogicalFile> logicalFileList2 = fh.getFiles(sourceFilesList, sourceFileExtensions, false, null);
+		for (Iterator<LogicalFile> iterator = logicalFileList2.iterator(); iterator.hasNext();) {
+			LogicalFile logicalFile = (LogicalFile) iterator.next();
+			System.out.println("sourceFile : " + logicalFile.getAbsolutePath());
+		}
+			
 		
 		Collection<LogicalFile> //logicalFileList = fh.getFiles("C:\\data\\transcoded\\64450_Sadhguru-Shambho_IYC_18-Nov-1980_Cam1_Sony", null, false, sidecarExtensions); 
 		//logicalFileList = fh.getFiles("C:\\data\\transcoded\\64450_Sadhguru-Shambho_IYC_18-Nov-1980_Cam1_Sony", sourceFileExtensions, false, sidecarExtensions);
