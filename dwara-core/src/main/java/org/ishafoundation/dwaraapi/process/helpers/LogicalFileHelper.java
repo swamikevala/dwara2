@@ -56,12 +56,37 @@ public class LogicalFileHelper {
 		else
 			sourceFilesList = FileUtils.listFiles(new File(artifactPath), sourceExtensions, true);
 		
-		return getFiles(sourceFilesList, sourceExtensions, needSidecarFiles, sidecarExtensions);
+		return getFiles(sourceFilesList, needSidecarFiles, sidecarExtensions);
 	}
 
 	public Collection<LogicalFile> getFiles(Collection<File> sourceFilesList, String[] extensions, boolean needSidecarFiles, String[] sidecarExtensions){
-		List<LogicalFile> outputList = new ArrayList<LogicalFile>();
+		List<String> sourceExtensionsList = new ArrayList<String>();
+		Collection<File> filteredSourceFilesList = new ArrayList<File>();
+		if(extensions != null) {
+			for (int i = 0; i < extensions.length; i++) {
+				sourceExtensionsList.add(extensions[i]);
+				sourceExtensionsList.add(extensions[i].toUpperCase());
+				sourceExtensionsList.add(extensions[i].toLowerCase());
+			}
+			
+			
+			for (Iterator<File> iterator = sourceFilesList.iterator(); iterator.hasNext();) {
+				File file = (File) iterator.next();
+				String filepathname = file.getAbsolutePath();
+				String fileExtn = FilenameUtils.getExtension(filepathname);
+				
+				if(sourceExtensionsList.contains(fileExtn)) {
+					filteredSourceFilesList.add(file);
+				}
+			}
+			sourceFilesList = filteredSourceFilesList;
+		}
 		
+		return getFiles(sourceFilesList, needSidecarFiles, sidecarExtensions);
+	}
+		
+	public Collection<LogicalFile> getFiles(Collection<File> sourceFilesList, boolean needSidecarFiles, String[] sidecarExtensions){
+		List<LogicalFile> outputList = new ArrayList<LogicalFile>();
 		if(needSidecarFiles) {		
 			List<String> sidecarExtensionsList = new ArrayList<String>();
 			for (int i = 0; i < sidecarExtensions.length; i++) {
@@ -102,7 +127,6 @@ public class LogicalFileHelper {
 			}
 		}
 		return outputList;
-
 	}
 	
 	public static void main(String[] args) {
