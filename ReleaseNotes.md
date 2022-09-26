@@ -3,7 +3,12 @@
 ### Upgrade steps
 
 1) Create folder /data/dwara/mezz_dump. This will be the restructuredMezzanineForWritingFolderPath.
-2) Ensure application.properties has the below entries
+2) Create folder /data/dwara/transcoded/mezzanine/private . This will be the ffmpeg output folder for private files.
+3) Create folder /data/dwara/transcoded/mezzanine/public . This will be the ffmpeg output folder for public files.
+4) Create folder /data/dwara/transcoded/mezzanine/private/restructured . This will be the output folder for restructured (flat structured) private files.
+5) Create folder /data/dwara/transcoded/mezzanine/public/restructured . This will be the output folder for restructured (flat structured) public files
+
+6) Ensure application.properties has the below entries
 
 > restructuredMezzanineForWritingFolderPath=/data/dwara/mezz_dump
 > restructuredMezzanineFolderName=restructured
