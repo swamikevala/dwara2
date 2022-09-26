@@ -4,6 +4,7 @@ INSERT INTO `action` (`id`, `type`) VALUES ('generate_mezzanine_proxies', 'compl
 INSERT INTO `processingtask` (`id`, `description`, `filetype_id`, `max_errors`, `output_artifactclass_suffix`, `output_filetype_id`) VALUES ('video-proxy-mezz-gen', 'generate HD mezzanine video proxies', 'video', '10', '-proxy-mezz', 'prores-proxy-mov');
 INSERT INTO processingtask (id, description, filetype_id, max_errors) VALUES ('restructure-mezz-folder', 'restructure mezzanine files to a flat folder structure', 'prores-proxy-mov', '1');
 
+INSERT INTO `filetype` (`id`, `description`) VALUES ('prores-proxy-mov', 'Apple ProRes Proxy');
 INSERT INTO `extension_filetype` (`sidecar`, `extension_id`, `filetype_id`) VALUES (0, 'mov', 'prores-proxy-mov');
 
 INSERT INTO `sequence` (`id`, `group`, `prefix`, `type`) VALUES ('video-pub-proxy-mezz', 0, 'VM', 'artifact');
