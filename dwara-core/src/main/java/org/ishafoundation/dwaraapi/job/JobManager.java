@@ -206,6 +206,7 @@ public class JobManager {
 			statusList.add(Status.queued);
 			statusList.add(Status.in_progress);
 			
+			List<Request> generateMezzProxiesUserRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.generate_mezzanine_proxies, statusList, RequestType.user);
 			List<Request> generateMezzProxiesSystemRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.generate_mezzanine_proxies, statusList, RequestType.system);
 			List<Request> rewriteSystemRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.rewrite, statusList, RequestType.system);
 			if(rewriteSystemRequestList.size() > 0) { // if there are any rewrite request pending, dont add all its jobs to the queue
@@ -217,10 +218,13 @@ public class JobManager {
 					jobList.addAll(jobDao.findTop3ByStoragetaskActionIdAndRequestActionIdAndStatusOrderByRequestId(Action.write, Action.rewrite, Status.queued));
 				}
 			}
-//			else if(generateMezzProxiesSystemRequestList.size() > 0) { // if there are any mezaanine proxy request pending, dont add all its jobs to the queue
-//				jobList = new ArrayList<Job>();
-//				jobList.addAll(jobDao.findTop3ByStoragetaskActionIdAndRequestActionIdAndStatusOrderByRequestId(Action.restore, Action.generate_mezzanine_proxies, Status.queued)); 
-//			}
+			else if(generateMezzProxiesSystemRequestList.size() > 0) { // if there are any mezaanine proxy request pending, dont add all its jobs to the queue
+				jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndRequestActionIdIsNotAndStatusOrderById(Action.generate_mezzanine_proxies, Status.queued);
+				
+				for (Request request : generateMezzProxiesUserRequestList) {
+					jobList.addAll(jobDao.findTop3ByStoragetaskActionIdAndRequestRequestRefIdAndStatusOrderByRequestId(Action.restore, request.getId(), Status.queued));
+				}
+			}
 			else
 				jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndStatusOrderById(Status.queued); // Irrespective of the tapedrivemapping or format request non storage jobs can still be dequeued, hence we are querying it all...
 			
