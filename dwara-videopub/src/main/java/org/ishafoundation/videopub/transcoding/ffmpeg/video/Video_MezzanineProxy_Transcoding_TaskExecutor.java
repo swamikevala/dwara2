@@ -100,6 +100,8 @@ public class Video_MezzanineProxy_Transcoding_TaskExecutor extends MediaTask imp
 	}
 	
 	//"ffmpeg -y -i \"" + sourceFilePathname + "\" -c:v prores -profile:v 0 -c:a copy -map 0:v:0 -map 0:a? -map_metadata 0 -vf \"[in]scale=1920x1080[scaled]\" + proxyTargetLocation + "\"";
+	
+	// ffmpeg -i 2FX90013.MXF -c:v prores -profile:v 0 -c:a copy -map 0:v:0 -map 0:a? -map_metadata 0 -s 1920:1080 M_2FX90013.MOV
 	private List<String> getProxyGenCommand(String sourceFilePathname, String proxyTargetLocation) {
 		List<String> proxyGenerationCommandParamsList = new ArrayList<String>();
 		
@@ -110,6 +112,7 @@ public class Video_MezzanineProxy_Transcoding_TaskExecutor extends MediaTask imp
 //		proxyGenerationCommandParamsList.add("nice");
 //		proxyGenerationCommandParamsList.add("-n");
 //		proxyGenerationCommandParamsList.add(factory.getPriority()+"");
+		
 		proxyGenerationCommandParamsList.add("ffmpeg");
 		proxyGenerationCommandParamsList.add("-y");
 		proxyGenerationCommandParamsList.add("-nostdin");
@@ -117,6 +120,8 @@ public class Video_MezzanineProxy_Transcoding_TaskExecutor extends MediaTask imp
 		proxyGenerationCommandParamsList.add(sourceFilePathname);
 		proxyGenerationCommandParamsList.add("-c:v");
 		proxyGenerationCommandParamsList.add("prores");
+		proxyGenerationCommandParamsList.add("-profile:v");
+		proxyGenerationCommandParamsList.add("0");
 		proxyGenerationCommandParamsList.add("-c:a");
 		proxyGenerationCommandParamsList.add("copy");
 		proxyGenerationCommandParamsList.add("-map");
@@ -130,8 +135,8 @@ public class Video_MezzanineProxy_Transcoding_TaskExecutor extends MediaTask imp
 			String ffmpegThreads = ffmpegThreadConfiguration.getVideoProxyMezzanine().getThreads() + "";
 			proxyGenerationCommandParamsList.add(ffmpegThreads);
 		}
-		proxyGenerationCommandParamsList.add("-f");
-		proxyGenerationCommandParamsList.add("mov");
+		proxyGenerationCommandParamsList.add("-s");
+		proxyGenerationCommandParamsList.add("1920:1080");
 		proxyGenerationCommandParamsList.add(proxyTargetLocation);
 	
 		return proxyGenerationCommandParamsList;
