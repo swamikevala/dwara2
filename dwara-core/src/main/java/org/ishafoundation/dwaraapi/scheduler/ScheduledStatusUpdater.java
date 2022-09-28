@@ -16,6 +16,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.artifact.ArtifactUtil;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ArtifactclassDao;
 import org.ishafoundation.dwaraapi.db.dao.master.DestinationDao;
@@ -489,7 +490,7 @@ public class ScheduledStatusUpdater {
 					String artifactClass = artifact.getArtifactclass().getId();
 					if (artifactClass.contains("mezz")) {
 						artifactClassForMezzProxy = artifactClass;		
-						mezzArtifactName = artifact.getName();
+						mezzArtifactName = ArtifactUtil.renameWithDate(artifact.getName());
 					}
 				}
 				

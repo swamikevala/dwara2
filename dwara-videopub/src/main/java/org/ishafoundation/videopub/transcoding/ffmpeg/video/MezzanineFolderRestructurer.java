@@ -5,6 +5,8 @@ import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FilenameUtils;
+import org.ishafoundation.dwaraapi.artifact.ArtifactUtil;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
@@ -33,6 +35,8 @@ public class MezzanineFolderRestructurer implements IProcessingTask {
 		String restructureMezFoldername = configuration.getRestructuredMezzanineFolderName();
 		String logicalFileAbsolutePath = logicalFile.getAbsolutePath();
 		String logicalFileName = logicalFile.getName();
+		String logicalFileBaseName = FilenameUtils.getBaseName(logicalFileAbsolutePath);
+		String logicalFileExtn = FilenameUtils.getExtension(logicalFileAbsolutePath);
 		String newFolderPathForMezzanineArtifact = "";
 		int jobID = processContext.getJob().getId();
 
@@ -56,13 +60,14 @@ public class MezzanineFolderRestructurer implements IProcessingTask {
 		//			originalFileID = processContext.getFile().getFileRef().getId();
 		//		}
 		originalFileID = processContext.getFile().getFileRef().getId();
-		String newFilename = "DwaraID_" + originalFileID + "_" + logicalFileName;
+		String newFilename = logicalFileBaseName + "_" + originalFileID + "." + logicalFileExtn;
 
 		// 3. Create the path where the file must be moved by finding out the artifactName 
 		// (i) Get the artifact name and see if the Input artifact folder actually
 		// exists
 		String splitter = java.io.File.separator.replace("\\", "\\\\"); 
 		String artifactName = processContext.getJob().getInputArtifact().getName();
+		String formattedArtifactName =  ArtifactUtil.renameWithDate(artifactName);
 		Pattern pattern = Pattern.compile(artifactName.replaceAll("-", "\\-"), Pattern.CASE_INSENSITIVE);
 		Matcher matcher = pattern.matcher(logicalFileAbsolutePath);
 		boolean gotArtifactNameInFilePath = matcher.find();
@@ -78,7 +83,7 @@ public class MezzanineFolderRestructurer implements IProcessingTask {
 			// (ii) Create the parent folder (Mezzanine artifact folder ) if it doesn't
 			// exist in Restructured folder
 			newFolderPathForMezzanineArtifact = logicalFileAbsolutePath.replaceAll(artifactName + ".*",
-					restructureMezFoldername + splitter + artifactName);
+					restructureMezFoldername + splitter + formattedArtifactName);
 			java.io.File newFolderForMezzanineArtifact = new java.io.File(newFolderPathForMezzanineArtifact);
 
 			if (!newFolderForMezzanineArtifact.isDirectory()) {

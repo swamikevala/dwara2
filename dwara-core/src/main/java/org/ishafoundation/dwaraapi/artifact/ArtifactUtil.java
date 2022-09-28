@@ -3,6 +3,8 @@ package org.ishafoundation.dwaraapi.artifact;
 
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.artifact.artifactclass.Artifactclass;
@@ -114,5 +116,52 @@ public class ArtifactUtil {
 		am.setSequenceCode(sequenceCode);
 		return am;
 	}
+	
+	public static String renameWithDate(String name) {
+		
+		//VM34910_Conscious-Planet_Sadhguru-Shots_Hilton-Batumi_26-Apr-2022_FX3_4K
+			
+		String newDate = "";
+		Pattern p = Pattern.compile("\\d{2}-\\w{3}-\\d{4}");
+		Matcher m = p.matcher(name);
+			
+		if(m.find()) {
+			String res = m.group();
+			String[] tokens = res.split("-");
+			newDate = tokens[2]+monthNum(tokens[1])+tokens[0]+"_";
+		}
+		return newDate + name;
+	}
+	
+	private static String monthNum(String threeLetterMonth) {
+		String twoLetterMonth = "";
+		if (threeLetterMonth.equals("Jan")) {
+		 twoLetterMonth = "01";
+		} else if (threeLetterMonth.equals("Feb")) {
+		 twoLetterMonth = "02";
+		} else if (threeLetterMonth.equals("Mar")) {
+		 twoLetterMonth = "03";
+		} else if (threeLetterMonth.equals("Apr")) {
+		 twoLetterMonth = "04";
+		} else if (threeLetterMonth.equals("May")) {
+		 twoLetterMonth = "05";
+		} else if (threeLetterMonth.equals("Jun")) {
+		 twoLetterMonth = "06";
+		} else if (threeLetterMonth.equals("Jul")) {
+		 twoLetterMonth = "07";
+		} else if (threeLetterMonth.equals("Aug")) {
+		 twoLetterMonth = "08";
+		} else if (threeLetterMonth.equals("Sep")) {
+		 twoLetterMonth = "09";
+		} else if (threeLetterMonth.equals("Oct")) {
+		 twoLetterMonth = "10";
+		} else if (threeLetterMonth.equals("Nov")) {
+		 twoLetterMonth = "11";
+		} else if (threeLetterMonth.equals("Dec")) {
+		 twoLetterMonth = "12";
+		}
+		return twoLetterMonth;
+	}
+
 }
 
