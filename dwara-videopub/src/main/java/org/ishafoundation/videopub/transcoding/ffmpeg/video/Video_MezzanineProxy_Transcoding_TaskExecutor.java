@@ -115,6 +115,7 @@ public class Video_MezzanineProxy_Transcoding_TaskExecutor extends MediaTask imp
 		
 		proxyGenerationCommandParamsList.add("ffmpeg");
 		proxyGenerationCommandParamsList.add("-y");
+		proxyGenerationCommandParamsList.add("-noautorotate");
 		proxyGenerationCommandParamsList.add("-nostdin");
 		proxyGenerationCommandParamsList.add("-i");
 		proxyGenerationCommandParamsList.add(sourceFilePathname);
