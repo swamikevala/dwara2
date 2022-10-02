@@ -14,7 +14,7 @@ overwrite the existing
 > restoreTmpLocationForVerification=/data/cpserver
 
 and create
-> restoreTmpLocationForBulkRestore=/mnt/cpserver
+> restoreTmpLocationForBulkRestore=dummyValue
 > cpServerIp=dummyIp
 
 # Dwara App Version - 2.1.43 (20 Sep 2022)
