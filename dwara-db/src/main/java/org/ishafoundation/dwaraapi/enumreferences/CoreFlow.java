@@ -6,7 +6,7 @@ public enum CoreFlow {
 	core_restore_checksumverify_flow("restore-verify-flow"),
 	core_rewrite_flow("rewrite-flow"),
 	core_bulk_transcode_flow("bulk-transcode-flow"),
-	core_bulk_restore_on_ingest_flow("bulk-restore-on-ingest-flow");
+	core_bulk_restore_on_ingest_flow("bulk-restore-on-ingest-server-flow");
 	
 	private String flowName;
 	

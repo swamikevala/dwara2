@@ -37,7 +37,7 @@ public enum CoreFlowelement {
 	core_bulk_transcode_flow_mezzanine_proxy_gen("C42", "bulk-transcode-flow", null, "video-proxy-mezz-gen", new String[] {"C41"}, null, 42, true, false, "{\"pathname_regex\": \"^((?!SUB/).)*$\"}"),
 	core_bulk_transcode_flow_move("C43", "bulk-transcode-flow",null, "restructure-mezz-folder", new String[] {"C42"}, null, 43, true, false, null),
 	
-	core_bulk_restore_on_ingest_flow_restore("C51", "core_bulk_restore_on_ingest_flow", "restore", null, null, null, 41, true, false, null);
+	core_bulk_restore_on_ingest_flow_restore("C51", "bulk-restore-on-ingest-server-flow", "restore", null, null, null, 51, true, false, null);
 	
 	private String id;
 	private String flowId;
