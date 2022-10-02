@@ -71,7 +71,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class ScheduledStatusUpdater {
@@ -679,13 +678,12 @@ public class ScheduledStatusUpdater {
 	}
 
 	private boolean callMarkJobCompletedAndCreateDependentJobsApiOnCpProxyServer(Integer jobId) throws Exception {
-		String endpointUrlSuffix = "/job/" + jobId + "/markJobCompleteAndCreateDependentJobs";
+		String endpointUrlSuffix = "/job/" + jobId + "/markJobCompletedAndCreateDependentJobs";
 	
-		String postBody = null;
+		String postBody = "";
 		boolean isSuccess = false;
 		try {
-			ObjectMapper mapper = new ObjectMapper();
-			String responseFromCPServerAsString = cpProxyServerInteracter.callCpProxyServer(endpointUrlSuffix, postBody);
+			cpProxyServerInteracter.callCpProxyServer(endpointUrlSuffix, postBody);
 			isSuccess = true;
 		} catch (Exception e) {
 			logger.error("Unable to call markJobCompleteAndCreateDependentJobs on CP Proxy server for " + jobId + "::" + e.getMessage(), e);

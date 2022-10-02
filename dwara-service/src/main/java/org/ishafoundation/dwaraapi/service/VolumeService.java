@@ -430,12 +430,16 @@ public class VolumeService extends DwaraService {
 	}
 	
 	public RequestResponse generateMezzanineProxies(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest) throws Exception {
+		return generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest, Action.generate_mezzanine_proxies);
+	}
+	
+	public RequestResponse generateMezzanineProxies(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest, Action action) throws Exception {
 		Volume volume = volumeDao.findById(volumeId).get();
 		// create user request
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		data.put("volumeId", volumeId);
 		
-		Request userRequest = createUserRequest(Action.generate_mezzanine_proxies, data);
+		Request userRequest = createUserRequest(action, data);
 		List<ArtifactVolume> artifactVolumeList = artifactVolumeDao.findAllByIdVolumeIdAndStatus(volumeId, ArtifactVolumeStatus.current); // only not deleted artifacts need to be rewritten
 		
 		Pattern artifactclassRegexPattern = null;
@@ -527,7 +531,7 @@ public class VolumeService extends DwaraService {
 		responseFromCPProxy.setResponse(responseFromCPProxyServer);
 		
 		
-		RequestResponse responseFromIngestServer = generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest);
+		RequestResponse responseFromIngestServer = generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest, Action.restore_tape_and_move_it_to_cp_proxy_server);
 		systemRequests = responseFromIngestServer.getRequest();
 		//	save in DB for referencing to create job folder on cp - 
 		for (RequestResponse nthSystemRequest : systemRequests) {
@@ -551,7 +555,7 @@ public class VolumeService extends DwaraService {
 	}
 
 	public RequestResponse callGenerateMezzanineProxiesApiOnCpProxyServer(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest) throws Exception {
-		String endpointUrlSuffix = "/generateMezzanineProxies";
+		String endpointUrlSuffix = "/volume/" + volumeId + "/generateMezzanineProxies";
 		
 		ObjectMapper mapper = new ObjectMapper();
 		String postBody = mapper.writeValueAsString(generateMezzanineProxiesRequest);

@@ -238,9 +238,10 @@ public class JobService extends DwaraService{
 		return jobResponseList;
 	}	
 	
-	public List<JobResponse> markJobCompleteAndCreateDependentJobs(int jobId) throws Exception{
+	public List<JobResponse> markJobCompletedAndCreateDependentJobs(int jobId) throws Exception{
 		Job job = jobDao.findById(jobId).get();
 		job.setStatus(Status.completed);
+		jobDao.save(job);
 		
 		return createDependentJobs(jobId);
 	}

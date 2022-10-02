@@ -98,12 +98,12 @@ public class JobController {
     	return ResponseEntity.status(HttpStatus.OK).body(jobResponseList);
     }
 
-	@PostMapping("/job/{jobId}/markJobCompleteAndCreateDependentJobs")
-	public ResponseEntity<List<JobResponse>> markJobCompleteAndCreateDependentJobs(@PathVariable("jobId") int jobId) {
-    	logger.info("/job/" + jobId + "/markJobCompleteAndCreateDependentJobs");
+	@PostMapping("/job/{jobId}/markJobCompletedAndCreateDependentJobs")
+	public ResponseEntity<List<JobResponse>> markJobCompletedAndCreateDependentJobs(@PathVariable("jobId") int jobId) {
+    	logger.info("/job/" + jobId + "/markJobCompletedAndCreateDependentJobs");
     	List<JobResponse> jobResponseList = null;
     	try {
-    		jobResponseList = jobService.markJobCompleteAndCreateDependentJobs(jobId);
+    		jobResponseList = jobService.markJobCompletedAndCreateDependentJobs(jobId);
 		}catch (Exception e) {
 			String errorMsg = "Unable to create dependent Jobs - " + e.getMessage();
 			logger.error(errorMsg, e);

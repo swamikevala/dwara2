@@ -18,7 +18,7 @@ public class CpProxyServerInteracter {
 	
 	public String callCpProxyServer(String endpointUrlSuffix, String postBody) {
 		
-		String endpointUrl = "http://" + configuration.getCpServerIp() + ":8080" + endpointUrlSuffix;
+		String endpointUrl = "http://" + configuration.getCpServerIp() + ":8080/api" + endpointUrlSuffix;
 		String userName = "pgurumurthy";
 		String pwd = "Shiva0!";
 		
@@ -28,6 +28,7 @@ public class CpProxyServerInteracter {
 		String authHeader = "Basic " + encodedCreds;
 		try {
 			responseFromCPServerAsString = HttpClientUtil.postIt(endpointUrl, authHeader, postBody);
+			logger.info("responseFromCPServerAsString  " + responseFromCPServerAsString);
 		} catch (Exception e) {
 			logger.error("Unable to call " + endpointUrl + "::" + e.getMessage(), e);
 		}
