@@ -24,6 +24,9 @@ import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeListSorterUsingBarcod
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeListSorterUsingSlot;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.TapeStatus;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
+import org.ishafoundation.dwaraapi.api.resp.job.JobResponse;
+import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
+import org.ishafoundation.dwaraapi.api.resp.request.RestoreTapeAndMoveItToCPServerResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.Details;
 import org.ishafoundation.dwaraapi.api.resp.volume.MarkVolumeStatusResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
@@ -32,11 +35,14 @@ import org.ishafoundation.dwaraapi.db.dao.master.VolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TArtifactnameJobMapDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
+import org.ishafoundation.dwaraapi.db.keys.VolumeArtifactServerNameKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.TArtifactnameJobMap;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
 import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
@@ -46,6 +52,7 @@ import org.ishafoundation.dwaraapi.db.utils.JobUtil;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Devicetype;
+import org.ishafoundation.dwaraapi.enumreferences.Priority;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
 import org.ishafoundation.dwaraapi.enumreferences.RewriteMode;
 import org.ishafoundation.dwaraapi.enumreferences.Status;
@@ -59,6 +66,7 @@ import org.ishafoundation.dwaraapi.storage.storagelevel.block.index.VolumeindexM
 import org.ishafoundation.dwaraapi.storage.storagetask.AbstractStoragetaskAction;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeFinalizer;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.VolumeInitializer;
+import org.ishafoundation.dwaraapi.utils.CpProxyServerInteracter;
 import org.ishafoundation.dwaraapi.utils.TapeUsageStatus;
 import org.ishafoundation.dwaraapi.utils.VolumeUtil;
 import org.slf4j.Logger;
@@ -66,6 +74,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class VolumeService extends DwaraService {
@@ -109,14 +120,22 @@ public class VolumeService extends DwaraService {
 	private JobDao jobDao;
 	
 	@Autowired
+	private TArtifactnameJobMapDao tArtifactnameJobMapDao;
+	
+	@Autowired
 	private AutoloaderService autoloaderService;
-
+	
+	@Autowired
+	private JobService jobService;
+	
 	@Autowired
 	private Map<String, AbstractStoragetaskAction> storagetaskActionMap;
 	
 	@Autowired
 	private JobUtil jobUtil;
-
+	
+	@Autowired
+	private CpProxyServerInteracter cpProxyServerInteracter;
 	
 	@Value("${filesystem.temporarylocation}")
 	private String filesystemTemporarylocation;
@@ -410,7 +429,7 @@ public class VolumeService extends DwaraService {
 		return handleTapeList;
 	}
 	
-	public void generateMezzanineProxies(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest) throws Exception {
+	public RequestResponse generateMezzanineProxies(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest) throws Exception {
 		Volume volume = volumeDao.findById(volumeId).get();
 		// create user request
 		HashMap<String, Object> data = new HashMap<String, Object>();
@@ -479,12 +498,113 @@ public class VolumeService extends DwaraService {
 			systemRequest = requestDao.save(systemRequest);
 			
 			logger.info(DwaraConstants.SYSTEM_REQUEST + systemRequest.getId());
-			
 
 			//create jobs
 			jobCreator.createJobs(systemRequest, artifact);
 		}
+		return frameRequestResponse(userRequest, RequestType.user, userRequest.getId());
 	}
+	
+	
+	public List<RestoreTapeAndMoveItToCPServerResponse> restoreTapeAndMoveItToCPServer(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest) throws Exception {
+		RequestResponse responseFromCPProxyServer = callGenerateMezzanineProxiesApiOnCpProxyServer(volumeId, generateMezzanineProxiesRequest);
+		
+		String cpServerName = "CP-Proxy";
+		String ingestServerName = "Ingest";
+		List<RequestResponse> systemRequests = responseFromCPProxyServer.getRequest();
+		//	save in DB for referencing to create job folder on cp - 
+		for (RequestResponse nthSystemRequest : systemRequests) {
+			VolumeArtifactServerNameKey volumeArtifactServerNameKey = new VolumeArtifactServerNameKey(volumeId, nthSystemRequest.getArtifact().getName(), cpServerName);
+			
+			TArtifactnameJobMap tArtifactnameJobMap = new TArtifactnameJobMap();
+			tArtifactnameJobMap.setId(volumeArtifactServerNameKey);
+			tArtifactnameJobMap.setJobId(Integer.parseInt(nthSystemRequest.getJob().get(0).getId()));
+			tArtifactnameJobMapDao.save(tArtifactnameJobMap);
+		}
+		
+		RestoreTapeAndMoveItToCPServerResponse responseFromCPProxy = new RestoreTapeAndMoveItToCPServerResponse();
+		responseFromCPProxy.setServerName(cpServerName);
+		responseFromCPProxy.setResponse(responseFromCPProxyServer);
+		
+		
+		RequestResponse responseFromIngestServer = generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest);
+		systemRequests = responseFromIngestServer.getRequest();
+		//	save in DB for referencing to create job folder on cp - 
+		for (RequestResponse nthSystemRequest : systemRequests) {
+			VolumeArtifactServerNameKey volumeArtifactServerNameKey = new VolumeArtifactServerNameKey(volumeId, nthSystemRequest.getArtifact().getName(), ingestServerName);
+			
+			TArtifactnameJobMap tArtifactnameJobMap = new TArtifactnameJobMap();
+			tArtifactnameJobMap.setId(volumeArtifactServerNameKey);
+			tArtifactnameJobMap.setJobId(Integer.parseInt(nthSystemRequest.getJob().get(0).getId()));
+			tArtifactnameJobMapDao.save(tArtifactnameJobMap);
+		}
+		
+		RestoreTapeAndMoveItToCPServerResponse responseFromIngest = new RestoreTapeAndMoveItToCPServerResponse();
+		responseFromIngest.setServerName(ingestServerName);
+		responseFromIngest.setResponse(responseFromIngestServer);
+		
+		List<RestoreTapeAndMoveItToCPServerResponse> requestResponseList = new ArrayList<RestoreTapeAndMoveItToCPServerResponse>();
+		requestResponseList.add(responseFromCPProxy);
+		requestResponseList.add(responseFromIngest);
+		
+		return requestResponseList;
+	}
+
+	public RequestResponse callGenerateMezzanineProxiesApiOnCpProxyServer(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest) throws Exception {
+		String endpointUrlSuffix = "/generateMezzanineProxies";
+		
+		ObjectMapper mapper = new ObjectMapper();
+		String postBody = mapper.writeValueAsString(generateMezzanineProxiesRequest);
+		RequestResponse responseFromCPServer = null;
+		
+		try {
+			String responseFromCPServerAsString = cpProxyServerInteracter.callCpProxyServer(endpointUrlSuffix, postBody);
+			responseFromCPServer = mapper.readValue(responseFromCPServerAsString, RequestResponse.class);
+		} catch (JsonProcessingException e) {
+			logger.error("Unable to call generateMezzanineProxies on CP Proxy server for " + volumeId + "::" + e.getMessage(), e);
+		}
+		return responseFromCPServer;
+	}
+	
+	public RequestResponse frameRequestResponse(Request request, RequestType requestType, Integer userReqId){
+		RequestResponse requestResponse = new RequestResponse();
+		int requestId = request.getId();
+		
+		requestResponse.setId(requestId);
+		requestResponse.setType(request.getType().name()); 
+		requestResponse.setUserRequestId(userReqId);
+		requestResponse.setRequestedAt(getDateForUI(request.getRequestedAt()));
+		requestResponse.setCompletedAt(getDateForUI(request.getCompletedAt()));
+		requestResponse.setRequestedBy(request.getRequestedBy().getName());
+		requestResponse.setPriority(request.getPriority() != null ? request.getPriority().name() : Priority.normal.name());
+		requestResponse.setStatus(request.getStatus().name());
+		Action requestAction = request.getActionId();
+		requestResponse.setAction(requestAction.name());
+		if(requestType == RequestType.user) {
+			List<RequestResponse> systemRequestResponseList = new ArrayList<RequestResponse>();
+			List<Request> systemRequestList = requestDao.findAllByRequestRefId(requestId);
+
+			for (Request nthSystemRequest : systemRequestList) {
+				systemRequestResponseList.add(frameRequestResponse(nthSystemRequest, RequestType.system, userReqId));
+			}
+			requestResponse.setRequest(systemRequestResponseList);
+		}
+		if(requestType == RequestType.system) {		
+
+			List<JobResponse> jobRespList = jobService.getJobs(request.getId(), null, false);
+			requestResponse.setJob(jobRespList);
+			
+			
+			int inputArtifactId = jobRespList.get(0).getInputArtifactId();
+			Artifact systemArtifact = artifactDao.findById(inputArtifactId).get(); // TODO use Artifactclass().isSource() instead of orderBy
+			org.ishafoundation.dwaraapi.api.resp.request.Artifact artifactForResponse = new org.ishafoundation.dwaraapi.api.resp.request.Artifact();
+			artifactForResponse.setId(inputArtifactId);
+			artifactForResponse.setName(systemArtifact.getName());
+			requestResponse.setArtifact(artifactForResponse);
+		}
+		return requestResponse;
+	}
+
 
 	public void rewriteVolume(String volumeId, RewriteRequest rewriteRequest) throws Exception {
 		//Optional<Volume> volumeEntity = volumeDao.findById(volumeId);

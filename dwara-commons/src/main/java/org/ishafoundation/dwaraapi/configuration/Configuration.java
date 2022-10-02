@@ -51,6 +51,9 @@ public class Configuration {
 	
 	private String restructuredMezzanineFolderName; // example restructured
 	
+	private String restoreTmpLocationForBulkRestore;
+	
+	private String cpServerIp;
 	
 	public String getAppMode() {
 		return appMode;
@@ -226,5 +229,21 @@ public class Configuration {
 
 	public void setRestructuredMezzanineForWritingFolderPath(String restructuredMezzanineForWritingFolderPath) {
 		this.restructuredMezzanineForWritingFolderPath = restructuredMezzanineForWritingFolderPath;
+	}
+
+	public String getRestoreTmpLocationForBulkRestore() {
+		return restoreTmpLocationForBulkRestore;
+	}
+
+	public void setRestoreTmpLocationForBulkRestore(String restoreTmpLocationForBulkRestore) {
+		this.restoreTmpLocationForBulkRestore = restoreTmpLocationForBulkRestore;
+	}
+
+	public String getCpServerIp() {
+		return cpServerIp;
+	}
+
+	public void setCpServerIp(String cpServerIp) {
+		this.cpServerIp = cpServerIp;
 	}
 }

@@ -1,3 +1,19 @@
+# Dwara App Version - 2.1.44 (Gandhi Jayanthi 2022)
+### Upgrade steps for Ingest server
+1) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_34_Ingest.sql) 
+2) Ensure application.properties has the below entries
+ 
+> restoreTmpLocationForBulkRestore=/mnt/cpserver
+> cpServerIp=172.18.1.15
+
+### Upgrade steps for CP Proxy server
+1) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_34_CP.sql)
+2) Ensure application.properties has the below entries
+ 
+> restoreTmpLocationForVerification=/data/cpserver
+> restoreTmpLocationForBulkRestore=/mnt/cpserver
+> cpServerIp=172.18.1.15
+
 # Dwara App Version - 2.1.43 (20 Sep 2022)
 
 ### Upgrade steps

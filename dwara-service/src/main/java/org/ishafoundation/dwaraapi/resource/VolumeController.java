@@ -11,6 +11,8 @@ import org.ishafoundation.dwaraapi.api.req.initialize.InitializeUserRequest;
 import org.ishafoundation.dwaraapi.api.req.volume.MarkVolumeStatusRequest;
 import org.ishafoundation.dwaraapi.api.resp.autoloader.Tape;
 import org.ishafoundation.dwaraapi.api.resp.initialize.InitializeResponse;
+import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
+import org.ishafoundation.dwaraapi.api.resp.request.RestoreTapeAndMoveItToCPServerResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.MarkVolumeStatusResponse;
 import org.ishafoundation.dwaraapi.api.resp.volume.VolumeResponse;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
@@ -226,11 +228,11 @@ public class VolumeController {
 			@ApiResponse(code = 200, message = "Ok")
 	})
 	@PostMapping(value = "/volume/{volumeId}/generateMezzanineProxies", produces = "application/json")
-	public ResponseEntity<InitializeResponse> generateMezzanineProxies(@RequestBody GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest, @PathVariable("volumeId") String volumeId) {
+	public ResponseEntity<RequestResponse> generateMezzanineProxies(@RequestBody GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest, @PathVariable("volumeId") String volumeId) {
 		logger.info("/volume/" + volumeId + "/generateMezzanineProxies");
-		InitializeResponse generateMezzanineProxiesResponse = new InitializeResponse();
+		RequestResponse generateMezzanineProxiesResponse = new RequestResponse();
 		try {
-			volumeService.generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest);
+			generateMezzanineProxiesResponse = volumeService.generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest);
 			generateMezzanineProxiesResponse.setAction(Action.generate_mezzanine_proxies.name());
 		}catch (Exception e) {
 			String errorMsg = "Unable to generate mezzanine proxies - " + e.getMessage();
@@ -243,6 +245,29 @@ public class VolumeController {
 		}
 
 		return ResponseEntity.status(HttpStatus.OK).body(generateMezzanineProxiesResponse);
+	}
+
+	@ApiOperation(value = "Restore on Ingest and Create mezzanine proxies for all artifacts on the volume on CP server")
+	@ApiResponses(value = { 
+			@ApiResponse(code = 200, message = "Ok")
+	})
+	@PostMapping(value = "/volume/{volumeId}/restoreTapeAndMoveItToCPServer", produces = "application/json")
+	public ResponseEntity<List<RestoreTapeAndMoveItToCPServerResponse>> restoreTapeAndMoveItToCPServer(@RequestBody GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest, @PathVariable("volumeId") String volumeId) {
+		logger.info("/volume/" + volumeId + "/restoreTapeAndMoveItToCPServer");
+		List<RestoreTapeAndMoveItToCPServerResponse> response = null;
+		try {			
+			response = volumeService.restoreTapeAndMoveItToCPServer(volumeId, generateMezzanineProxiesRequest);			
+		}catch (Exception e) {
+			String errorMsg = "Unable to retoreTapeAndMoveItToCPServer - " + e.getMessage();
+			logger.error(errorMsg, e);
+
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(response);
 	}
 	
 	@ApiOperation(value = "Marks a volume's healthstatus suspect|defective|normal")

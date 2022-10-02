@@ -35,5 +35,6 @@ public enum Action {
 	mark_volume,
 	change_artifactclass,
 	mark_corrupted,
-	generate_mezzanine_proxies;
+	generate_mezzanine_proxies,
+	restore_tape_and_move_it_to_cp_proxy_server;
 }

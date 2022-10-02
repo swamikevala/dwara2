@@ -205,7 +205,9 @@ public class JobManager {
 			List<Status> statusList = new ArrayList<Status>();
 			statusList.add(Status.queued);
 			statusList.add(Status.in_progress);
-			
+
+			List<Request> restoreTapeAndMoveItToCpProxyServerUserRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.restore_tape_and_move_it_to_cp_proxy_server, statusList, RequestType.user);
+			List<Request> restoreTapeAndMoveItToCpProxyServerSystemRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.restore_tape_and_move_it_to_cp_proxy_server, statusList, RequestType.system);
 			List<Request> generateMezzProxiesUserRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.generate_mezzanine_proxies, statusList, RequestType.user);
 			List<Request> generateMezzProxiesSystemRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.generate_mezzanine_proxies, statusList, RequestType.system);
 			List<Request> rewriteSystemRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.rewrite, statusList, RequestType.system);
@@ -222,6 +224,13 @@ public class JobManager {
 				jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndRequestActionIdIsNotAndStatusOrderById(Action.generate_mezzanine_proxies, Status.queued);
 				
 				for (Request request : generateMezzProxiesUserRequestList) {
+					jobList.addAll(jobDao.findTop3ByStoragetaskActionIdAndRequestRequestRefIdAndStatusOrderByRequestId(Action.restore, request.getId(), Status.queued));
+				}
+			}
+			else if(restoreTapeAndMoveItToCpProxyServerSystemRequestList.size() > 0) { // if there are any mezaanine proxy request pending, dont add all its jobs to the queue
+				jobList = jobDao.findAllByStoragetaskActionIdIsNotNullAndRequestActionIdIsNotAndStatusOrderById(Action.restore_tape_and_move_it_to_cp_proxy_server, Status.queued);
+				
+				for (Request request : restoreTapeAndMoveItToCpProxyServerUserRequestList) {
 					jobList.addAll(jobDao.findTop3ByStoragetaskActionIdAndRequestRequestRefIdAndStatusOrderByRequestId(Action.restore, request.getId(), Status.queued));
 				}
 			}

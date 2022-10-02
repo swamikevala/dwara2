@@ -64,7 +64,8 @@ public class Restore extends AbstractStoragetaskAction{
 		}
 		else if(requestedAction == Action.ingest || requestedAction == Action.rewrite || requestedAction == Action.generate_mezzanine_proxies)
 			restoreLocation = configuration.getRestoreTmpLocationForVerification() + File.separator + "job-" + job.getId();
-		
+		else if (requestedAction == Action.restore_tape_and_move_it_to_cp_proxy_server)
+			restoreLocation = configuration.getRestoreTmpLocationForBulkRestore() + File.separator + "job-" + job.getId();
 		return restoreLocation;
 	}
 
@@ -76,7 +77,7 @@ public class Restore extends AbstractStoragetaskAction{
 		StorageJob storageJob = new StorageJob();
 		storageJob.setJob(job);
 		
-		if((requestedAction == Action.rewrite || requestedAction == Action.generate_mezzanine_proxies) && job.getDependencies() == null) {
+		if((requestedAction == Action.rewrite || requestedAction == Action.generate_mezzanine_proxies || requestedAction == Action.restore_tape_and_move_it_to_cp_proxy_server) && job.getDependencies() == null) {
 			Integer inputArtifactId = job.getInputArtifactId();
 			// Domain
 			Artifact artifact = artifactDao.findById(inputArtifactId).get();
@@ -108,7 +109,7 @@ public class Restore extends AbstractStoragetaskAction{
 			storageJob.setTargetLocationPath(targetLocationPath);					
 			
 		}
-		else if(requestedAction == Action.ingest || ((requestedAction == Action.rewrite || requestedAction == Action.generate_mezzanine_proxies)  && job.getDependencies() != null)) {
+		else if(requestedAction == Action.ingest || ((requestedAction == Action.rewrite || requestedAction == Action.generate_mezzanine_proxies || requestedAction == Action.restore_tape_and_move_it_to_cp_proxy_server)  && job.getDependencies() != null)) {
 			// From where - get the volume
 			// get restore job's dependency - can't be anything but write, but looping for making the code generic giving some flexibility
 			List<Integer> dependencies = job.getDependencies();

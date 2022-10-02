@@ -118,6 +118,9 @@ public class JobCreator {
 			else if(requestedBusinessAction == Action.generate_mezzanine_proxies) {
 				jobList.addAll(iterateFlow(request, sourceArtifact, CoreFlow.core_bulk_transcode_flow.getFlowName()));
 			}
+			else if(requestedBusinessAction == Action.restore_tape_and_move_it_to_cp_proxy_server) {
+				jobList.addAll(iterateFlow(request, sourceArtifact, CoreFlow.core_bulk_restore_on_ingest_flow.getFlowName()));
+			}
 			
 			
 			if(actionArtifactclassFlowList != null) {
@@ -355,7 +358,7 @@ public class JobCreator {
 					jobsCreated.add(job);
 			}
 		}
-		else if(request.getActionId() == Action.rewrite || request.getActionId() == Action.generate_mezzanine_proxies) {
+		else if(request.getActionId() == Action.rewrite || request.getActionId() == Action.generate_mezzanine_proxies || request.getActionId() == Action.restore_tape_and_move_it_to_cp_proxy_server) {
 			if(storagetaskAction != null) {
 				Job job = createJob(flowelement, sourceJob, request, artifactclassId, artifact);
 				job.setStoragetaskActionId(storagetaskAction);

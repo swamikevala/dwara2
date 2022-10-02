@@ -25,13 +25,16 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.TArtifactnameJobMapDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TFileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.TTFileJobDao;
+import org.ishafoundation.dwaraapi.db.keys.VolumeArtifactServerNameKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Artifactclass;
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
+import org.ishafoundation.dwaraapi.db.model.transactional.TArtifactnameJobMap;
 import org.ishafoundation.dwaraapi.db.model.transactional.TFile;
 import org.ishafoundation.dwaraapi.db.model.transactional.Volume;
 import org.ishafoundation.dwaraapi.db.model.transactional.jointables.ArtifactVolume;
@@ -52,6 +55,7 @@ import org.ishafoundation.dwaraapi.service.UserRequestHelper;
 import org.ishafoundation.dwaraapi.staged.StagedFileOperations;
 import org.ishafoundation.dwaraapi.staged.scan.StagedFileEvaluator;
 import org.ishafoundation.dwaraapi.storage.storagetask.Restore;
+import org.ishafoundation.dwaraapi.utils.CpProxyServerInteracter;
 import org.ishafoundation.dwaraapi.utils.JiraUtil;
 import org.ishafoundation.dwaraapi.utils.SMSUtil;
 import org.ishafoundation.dwaraapi.utils.StatusUtil;
@@ -67,6 +71,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class ScheduledStatusUpdater {
@@ -96,6 +101,9 @@ public class ScheduledStatusUpdater {
 
 	@Autowired
 	private ArtifactDao artifactDao;
+		
+	@Autowired
+	private TArtifactnameJobMapDao tArtifactnameJobMapDao;
 
 	@Autowired
 	private ArtifactVolumeDao artifactVolumeDao;
@@ -123,6 +131,9 @@ public class ScheduledStatusUpdater {
 
 	@Autowired
 	private Restore restoreStorageTask;
+	
+	@Autowired
+	private CpProxyServerInteracter cpProxyServerInteracter;
 
 	@Autowired
 	private ArtifactclassDao artifactClassDao;
@@ -475,6 +486,68 @@ public class ScheduledStatusUpdater {
 			if(status != Status.queued && status != Status.in_progress && status != Status.on_hold)
 				nthRequest.setCompletedAt(LocalDateTime.now());
 
+			if(nthRequest.getActionId() == Action.restore_tape_and_move_it_to_cp_proxy_server && status == Status.completed) {
+				
+				// Step 1 - rename the folder from old to new 
+				String cpServerName = "CP-Proxy";
+				String ingestServerName = "Ingest";
+
+				
+				RequestDetails rd = nthRequest.getDetails();
+				String volumeId = rd.getVolumeId();
+				int artifactId = rd.getArtifactId();
+				Artifact artifact = artifactDao.findById(artifactId).get();
+				
+				VolumeArtifactServerNameKey volumeArtifactServerNameKeyForIngest = new VolumeArtifactServerNameKey(volumeId, artifact.getName(), ingestServerName);
+				
+				TArtifactnameJobMap tArtifactnameJobMapForIngest = tArtifactnameJobMapDao.findById(volumeArtifactServerNameKeyForIngest).get();
+				int jobIdFromIngestServer = tArtifactnameJobMapForIngest.getJobId();
+
+				VolumeArtifactServerNameKey volumeArtifactServerNameKeyForCpProxy = new VolumeArtifactServerNameKey(volumeId, artifact.getName(), cpServerName);
+				
+				TArtifactnameJobMap tArtifactnameJobMapForCpProxy = tArtifactnameJobMapDao.findById(volumeArtifactServerNameKeyForCpProxy).get();
+				int jobIdFromCPServer = tArtifactnameJobMapForCpProxy.getJobId();
+				
+				Job ingestRestoreJob = jobDao.findById(jobIdFromIngestServer).get();
+				
+				String srcPath = restoreStorageTask.getRestoreLocation(ingestRestoreJob);
+				String destPath = srcPath.replace(jobIdFromIngestServer+"", jobIdFromCPServer+"");
+				
+				try {
+					boolean isSuccess = new File(srcPath).renameTo(new File(destPath));
+					if(isSuccess) {
+						logger.info(srcPath + " renamed successfully to " + destPath);
+						// Step 2 - put the restore jobs as completed and trigger createJobDependents (ingest needs to call new createJobDependents variant on CP server, that will put the restore job on completed and call createJobDependents)
+						isSuccess = callMarkJobCompletedAndCreateDependentJobsApiOnCpProxyServer(jobIdFromCPServer);
+						if(isSuccess) {
+							logger.info(jobIdFromCPServer + " job on CP proxy server successfully marked completed and dependent job created");
+						}
+						else {
+							String msg = "Unable to mark " + jobIdFromCPServer + " completed and create its dependent job";
+							logger.error(msg);
+							// Fail the system request here 
+							nthRequest.setStatus(Status.failed);
+							nthRequest.setMessage(msg);							
+						}
+					}
+					else {
+						String msg = "Unable to rename " + srcPath + " to " + destPath;
+						logger.error(msg);
+						// Fail the system request here 
+						nthRequest.setStatus(Status.failed);
+						nthRequest.setMessage(msg);
+					}
+				}
+				catch (Exception e) {
+					String msg = "Unable to rename " + srcPath + " to " + destPath + " or mark "+ jobIdFromCPServer + " completed and create its dependent job";
+					logger.error(msg, e);
+					// Fail the system request here 
+					nthRequest.setStatus(Status.failed);
+					nthRequest.setMessage(msg);
+				}
+				
+			}
+			
 			if(nthRequest.getActionId() == Action.generate_mezzanine_proxies && status == Status.completed) {
 				// 1. Copy the files to SAN / Overseas
 				// Get the path where the mezzanine proxy folder has been restrucured 
@@ -605,6 +678,20 @@ public class ScheduledStatusUpdater {
 		}
 	}
 
+	private boolean callMarkJobCompletedAndCreateDependentJobsApiOnCpProxyServer(Integer jobId) throws Exception {
+		String endpointUrlSuffix = "/job/" + jobId + "/markJobCompleteAndCreateDependentJobs";
+	
+		String postBody = null;
+		boolean isSuccess = false;
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			String responseFromCPServerAsString = cpProxyServerInteracter.callCpProxyServer(endpointUrlSuffix, postBody);
+			isSuccess = true;
+		} catch (Exception e) {
+			logger.error("Unable to call markJobCompleteAndCreateDependentJobs on CP Proxy server for " + jobId + "::" + e.getMessage(), e);
+		}
+		return isSuccess;
+	}
 
 	private void updateUserRequestStatus(List<Request> userRequestList) {
 		for (Request nthUserRequest : userRequestList) {

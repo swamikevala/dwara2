@@ -238,6 +238,14 @@ public class JobService extends DwaraService{
 		return jobResponseList;
 	}	
 	
+	public List<JobResponse> markJobCompleteAndCreateDependentJobs(int jobId) throws Exception{
+		Job job = jobDao.findById(jobId).get();
+		job.setStatus(Status.completed);
+		
+		return createDependentJobs(jobId);
+	}
+	
+	
 	public JobResponse requeueJob(int jobId) throws Exception{
 		return frameJobResponse(jobServiceRequeueHelper.requeueJob(jobId, getUserFromContext()));
 	}

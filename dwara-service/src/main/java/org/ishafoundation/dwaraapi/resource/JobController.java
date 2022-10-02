@@ -98,6 +98,24 @@ public class JobController {
     	return ResponseEntity.status(HttpStatus.OK).body(jobResponseList);
     }
 
+	@PostMapping("/job/{jobId}/markJobCompleteAndCreateDependentJobs")
+	public ResponseEntity<List<JobResponse>> markJobCompleteAndCreateDependentJobs(@PathVariable("jobId") int jobId) {
+    	logger.info("/job/" + jobId + "/markJobCompleteAndCreateDependentJobs");
+    	List<JobResponse> jobResponseList = null;
+    	try {
+    		jobResponseList = jobService.markJobCompleteAndCreateDependentJobs(jobId);
+		}catch (Exception e) {
+			String errorMsg = "Unable to create dependent Jobs - " + e.getMessage();
+			logger.error(errorMsg, e);
+			
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+    	return ResponseEntity.status(HttpStatus.OK).body(jobResponseList);
+    }
+	
 	@PostMapping("/job/{jobId}/marked_completed")
     public ResponseEntity<JobResponse> markedCompletedJob(@PathVariable("jobId") int jobId, @RequestBody (required=false) String reason) {
     	logger.info("/job/" + jobId + "/marked_completed");
