@@ -29,6 +29,7 @@ import org.ishafoundation.dwaraapi.storage.StorageResponse;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.ishafoundation.dwaraapi.storage.model.TapeJob;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeDeviceUtil;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeException;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeLibraryManager;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.TapeOnLibrary;
@@ -483,7 +484,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			logger.error(e.getMessage());
 			updateJobFailed(job);
 			
-			if(e instanceof StorageException) { // we need to requeue and flag suspicion only for storage exception and not because of post processing like moving a file from location a to b etc.,
+			if(e instanceof StorageException || e instanceof TapeException) { // we need to requeue and flag suspicion only for storage exception and not because of post processing like moving a file from location a to b etc.,
 				if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.restore) { // Any write or restore failure should have the tape marked as suspect...
 					long jobAlreadyRequeuedCount = jobRunDao.countByJobId(job.getId());
 					if(jobAlreadyRequeuedCount < configuration.getAllowedAutoRequeueAttemptsOnFailedStorageJobs()) {

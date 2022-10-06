@@ -9,6 +9,7 @@ import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.DeviceLockFactory;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeException;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.DriveDetails;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.MtStatus;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.drive.status.MtStatusResponseParser;
@@ -87,7 +88,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 				if(errorMsg.contains("Device or resource busy"))
 					mtStatusResponse = errorMsg;
 				else
-					throw e;
+					throw new TapeException(e.getMessage());
 			}
 			return mtStatusResponse;
 //		}
@@ -128,8 +129,9 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			dsd.setDriveName(dataTransferElementName);
 			dsd.setMtStatus(getMtStatus(dataTransferElementName));
 		}catch (Exception e) {
-			logger.error("Unable to setTapeHeadPositionForInitializing " + e.getMessage());
-			throw e;
+			String msg = "Unable to setTapeHeadPositionForInitializing " + e.getMessage();
+			logger.error(msg);
+			throw new TapeException(msg);
 		}
 		return dsd;	
 	}
@@ -178,14 +180,14 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			
 			// validating the blockNumber - There were few times in test env where we seeked and tried verifying but the block was wrong for some reason. So we are trying to validate this just to doubly ensure...
 			if(blockNumberAfterSeek != blockNumberToSeek) {
-				throw new Exception("Expected blockNumberToSeek " + blockNumberToSeek + ", blockNumberAfterSeek " + blockNumberAfterSeek);
+				throw new TapeException("Expected blockNumberToSeek " + blockNumberToSeek + ", blockNumberAfterSeek " + blockNumberAfterSeek);
 			}
 			
 			MtStatus mtStatus = getMtStatus(dataTransferElementName);
 			dsd.setMtStatus(mtStatus);
 		}catch (Exception e) {
 			logger.error("Unable to setTapeHeadPositionForReadingInterArtifactXml " + e.getMessage(), e);
-			throw e;
+			throw new TapeException(e.getMessage());
 		}
 		return dsd;
 	}
@@ -218,8 +220,9 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 			return dsd;		
 		}
 		catch (Exception e) {
-			logger.error("Unable to setTapeHeadPositionForReading " + e.getMessage());
-			throw e;
+			String msg = "Unable to setTapeHeadPositionForReading " + e.getMessage();
+			logger.error(msg);
+			throw new TapeException(msg);
 		}
 	}
 	
@@ -313,7 +316,7 @@ public class TapeDriveManagerImpl implements TapeDriveManager{
 				commandLineExecutionResponse = executeCommandWithRetries(command, nthRetryAttempt + 1, errorList);
 			}
 			else
-				throw e;
+				throw new TapeException(e.getMessage());
 		}
 		
 		return commandLineExecutionResponse;

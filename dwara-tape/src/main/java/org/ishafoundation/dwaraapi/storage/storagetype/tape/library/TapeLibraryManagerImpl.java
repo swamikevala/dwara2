@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.storage.storagetype.tape.TapeException;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.components.StorageElement;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.status.MtxStatus;
 import org.ishafoundation.dwaraapi.storage.storagetype.tape.library.status.MtxStatusResponseParser;
@@ -66,7 +67,7 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 			} catch (Exception e) {
 				// TODO : Regex this or even better look for mtx: Request Sense: Sense Key=Illegal Request
 				if(e.getMessage().contains("MOVE MEDIUM from Element Address")) {			//MOVE MEDIUM from Element Address 1021 to 5 Failed
-					throw new Exception("Tape LOAD operation failed", e);
+					throw new TapeException("Tape LOAD operation failed : " + e.getMessage());
 				}
 				throw e;
 			}
@@ -95,7 +96,7 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 		if(seSNo == -9) {
 			String errorMsg = "Can this happen really???. No empty storagelements huh??? unbelievable";
 			logger.error(errorMsg);
-			throw new Exception(errorMsg);
+			throw new TapeException(errorMsg);
 		}
 		
 		unload(tapeLibraryName, seSNo, driveSNo);
@@ -130,7 +131,7 @@ public class TapeLibraryManagerImpl extends AbstractTapeLibraryManagerImpl{
 				}
 			}
 			else
-				throw e;
+				throw new TapeException(e.getMessage());
 		}
 		
 		return commandLineExecutionResponse;
