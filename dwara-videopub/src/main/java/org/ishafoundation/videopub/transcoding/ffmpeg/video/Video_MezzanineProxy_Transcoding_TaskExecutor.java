@@ -3,11 +3,9 @@ package org.ishafoundation.videopub.transcoding.ffmpeg.video;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.configuration.FfmpegThreadConfiguration;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
@@ -102,6 +100,9 @@ public class Video_MezzanineProxy_Transcoding_TaskExecutor extends MediaTask imp
 	//"ffmpeg -y -i \"" + sourceFilePathname + "\" -c:v prores -profile:v 0 -c:a copy -map 0:v:0 -map 0:a? -map_metadata 0 -vf \"[in]scale=1920x1080[scaled]\" + proxyTargetLocation + "\"";
 	
 	// ffmpeg -i 2FX90013.MXF -c:v prores -profile:v 0 -c:a copy -map 0:v:0 -map 0:a? -map_metadata 0 -s 1920:1080 M_2FX90013.MOV
+	// Latest command from Maa Jeevapushpa on 6th Oct
+	// ffmpeg -y -i ./Original/2FX9UNCCD0256.MXF -c:v libx265 -x265-params profile=main10:pmode=1:pools=16 -b:v 12M -pix_fmt yuv420p10le -c:a aac -b:a 256k -map 0:v:0 -map 0:a? -map_metadata 0 -s 1920x1080 -vtag hvc1 ./HEVC_HD_MP4_ACC/2FX9UNCCD0256.MOV
+	
 	private List<String> getProxyGenCommand(String sourceFilePathname, String proxyTargetLocation) {
 		List<String> proxyGenerationCommandParamsList = new ArrayList<String>();
 		
@@ -115,29 +116,37 @@ public class Video_MezzanineProxy_Transcoding_TaskExecutor extends MediaTask imp
 		
 		proxyGenerationCommandParamsList.add("ffmpeg");
 		proxyGenerationCommandParamsList.add("-y");
-		proxyGenerationCommandParamsList.add("-noautorotate");
-		proxyGenerationCommandParamsList.add("-nostdin");
+//		proxyGenerationCommandParamsList.add("-noautorotate");
+//		proxyGenerationCommandParamsList.add("-nostdin");
 		proxyGenerationCommandParamsList.add("-i");
 		proxyGenerationCommandParamsList.add(sourceFilePathname);
 		proxyGenerationCommandParamsList.add("-c:v");
-		proxyGenerationCommandParamsList.add("prores");
-		proxyGenerationCommandParamsList.add("-profile:v");
-		proxyGenerationCommandParamsList.add("0");
+		proxyGenerationCommandParamsList.add("libx265");
+		proxyGenerationCommandParamsList.add("-x265-params");
+		proxyGenerationCommandParamsList.add("profile=main10:pmode=1:pools=16");
+		proxyGenerationCommandParamsList.add("-b:v");
+		proxyGenerationCommandParamsList.add("12M");
+		proxyGenerationCommandParamsList.add("-pix_fmt");
+		proxyGenerationCommandParamsList.add("yuv420p10le");
 		proxyGenerationCommandParamsList.add("-c:a");
-		proxyGenerationCommandParamsList.add("copy");
+		proxyGenerationCommandParamsList.add("aac");
+		proxyGenerationCommandParamsList.add("-b:a");
+		proxyGenerationCommandParamsList.add("256k");
 		proxyGenerationCommandParamsList.add("-map");
 		proxyGenerationCommandParamsList.add("0:v:0");
 		proxyGenerationCommandParamsList.add("-map");
 		proxyGenerationCommandParamsList.add("0:a?");
 		proxyGenerationCommandParamsList.add("-map_metadata");
 		proxyGenerationCommandParamsList.add("0");
+		proxyGenerationCommandParamsList.add("-s");
+		proxyGenerationCommandParamsList.add("1920:1080");
+		proxyGenerationCommandParamsList.add("-vtag");
+		proxyGenerationCommandParamsList.add("hvc1");		
 		if(ffmpegThreadConfiguration.getVideoProxyMezzanine().getThreads() > 0) {
 			proxyGenerationCommandParamsList.add("-threads");
 			String ffmpegThreads = ffmpegThreadConfiguration.getVideoProxyMezzanine().getThreads() + "";
 			proxyGenerationCommandParamsList.add(ffmpegThreads);
 		}
-		proxyGenerationCommandParamsList.add("-s");
-		proxyGenerationCommandParamsList.add("1920:1080");
 		proxyGenerationCommandParamsList.add(proxyTargetLocation);
 	
 		return proxyGenerationCommandParamsList;
