@@ -1,5 +1,8 @@
 package org.ishafoundation.dwaraapi.scheduler;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.ishafoundation.dwaraapi.api.resp.RespondBucketRequest;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.TRestoreBucketDao;
@@ -16,14 +19,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-
-
+@Component
 public class ScheduledEmailReader {
     private static final Logger logger = LoggerFactory.getLogger(ScheduledEmailReader.class);
     @Autowired
