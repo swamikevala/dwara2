@@ -429,6 +429,17 @@ public class VolumeService extends DwaraService {
 		return handleTapeList;
 	}
 	
+	public RequestResponse restoreAndGenerateMezzanineProxies(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest) throws Exception {
+		RequestResponse generateMezzanineProxiesResponse = generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest, Action.generate_mezzanine_proxies); // this will create jobs on hold
+		List<RequestResponse> systemRequests = generateMezzanineProxiesResponse.getRequest();
+		for (RequestResponse nthSystemRequest : systemRequests) {
+			Job onHoldRestoreJob = jobDao.findByRequestIdAndStoragetaskActionId(nthSystemRequest.getId(), Action.restore);
+			onHoldRestoreJob.setStatus(Status.completed);
+			jobDao.save(onHoldRestoreJob);
+		}
+		return generateMezzanineProxiesResponse;
+	}
+	
 	public RequestResponse generateMezzanineProxies(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest) throws Exception {
 		return generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest, Action.generate_mezzanine_proxies);
 	}

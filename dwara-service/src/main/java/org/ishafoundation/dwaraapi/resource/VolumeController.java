@@ -222,8 +222,32 @@ public class VolumeController {
 
 		return ResponseEntity.status(HttpStatus.OK).body(rewriteResponse);
 	}
+
+	@ApiOperation(value = "Restores from a tape and create mezzanine proxies for all artifacts on the volume")
+	@ApiResponses(value = { 
+			@ApiResponse(code = 200, message = "Ok")
+	})
+	@PostMapping(value = "/volume/{volumeId}/restoreAndGenerateMezzanineProxies", produces = "application/json")
+	public ResponseEntity<RequestResponse> restoreAndGenerateMezzanineProxies(@RequestBody GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest, @PathVariable("volumeId") String volumeId) {
+		logger.info("/volume/" + volumeId + "/generateMezzanineProxies");
+		RequestResponse generateMezzanineProxiesResponse = new RequestResponse();
+		try {
+			generateMezzanineProxiesResponse = volumeService.restoreAndGenerateMezzanineProxies(volumeId, generateMezzanineProxiesRequest);
+			generateMezzanineProxiesResponse.setAction(Action.generate_mezzanine_proxies.name());			
+		}catch (Exception e) {
+			String errorMsg = "Unable to generate mezzanine proxies - " + e.getMessage();
+			logger.error(errorMsg, e);
+
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(errorMsg, null);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(generateMezzanineProxiesResponse);
+	}
 	
-	@ApiOperation(value = "Create mezzanine proxies for all artifacts on the volume")
+	@ApiOperation(value = "Create mezzanine proxies for all artifacts on the volume for already restored artifacts")
 	@ApiResponses(value = { 
 			@ApiResponse(code = 200, message = "Ok")
 	})

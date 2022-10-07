@@ -1,3 +1,10 @@
+# Dwara App Version - 2.1.45 (7th Oct 2022 - Meant for CP Proxy server)
+### Upgrade steps
+1) Ensure application.properties has the below entries
+ 
+> scheduler.genProxyMezzInvoker.enabled=true // set to false in ingest server
+> scheduler.genProxyMezzInvoker.fixedDelay=30000
+
 # Dwara App Version - 2.1.44 (Gandhi Jayanthi 2022)
 ### Upgrade steps for Ingest server
 1) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_34_Ingest.sql) 
