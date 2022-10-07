@@ -39,6 +39,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.TArtifactnameJobMapDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.keys.VolumeArtifactServerNameKey;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.Device;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -429,8 +430,8 @@ public class VolumeService extends DwaraService {
 		return handleTapeList;
 	}
 	
-	public RequestResponse restoreAndGenerateMezzanineProxies(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest) throws Exception {
-		RequestResponse generateMezzanineProxiesResponse = generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest, Action.generate_mezzanine_proxies); // this will create jobs on hold
+	public RequestResponse restoreAndGenerateMezzanineProxies(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest, User user) throws Exception {
+		RequestResponse generateMezzanineProxiesResponse = generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest, Action.generate_mezzanine_proxies, user); // this will create jobs on hold
 		List<RequestResponse> systemRequests = generateMezzanineProxiesResponse.getRequest();
 		for (RequestResponse nthSystemRequest : systemRequests) {
 			Job onHoldRestoreJob = jobDao.findByRequestIdAndStoragetaskActionId(nthSystemRequest.getId(), Action.restore);
@@ -441,17 +442,14 @@ public class VolumeService extends DwaraService {
 	}
 	
 	public RequestResponse generateMezzanineProxies(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest) throws Exception {
-		return generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest, Action.generate_mezzanine_proxies);
+		return generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest, Action.generate_mezzanine_proxies, null);
 	}
 	
-	public RequestResponse generateMezzanineProxies(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest, Action action) throws Exception {
+	public RequestResponse generateMezzanineProxies(String volumeId, GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest, Action action, User user) throws Exception {
 		Volume volume = volumeDao.findById(volumeId).get();
 		// create user request
 		HashMap<String, Object> data = new HashMap<String, Object>();
 		data.put("volumeId", volumeId);
-		
-		Request userRequest = createUserRequest(action, data);
-		List<ArtifactVolume> artifactVolumeList = artifactVolumeDao.findAllByIdVolumeIdAndStatus(volumeId, ArtifactVolumeStatus.current); // only not deleted artifacts need to be rewritten
 		
 		Pattern artifactclassRegexPattern = null;
 		String artifactclassRegex = generateMezzanineProxiesRequest.getArtifactclassRegex();
@@ -466,6 +464,9 @@ public class VolumeService extends DwaraService {
 			artifactRegexPattern = Pattern.compile(artifactRegex);
 			data.put("artifactRegex", artifactRegex);
 		}
+		
+		Request userRequest = createUserRequest(action, data, user);
+		List<ArtifactVolume> artifactVolumeList = artifactVolumeDao.findAllByIdVolumeIdAndStatus(volumeId, ArtifactVolumeStatus.current); // only not deleted artifacts need to be rewritten
 		
 		// loop artifacts on volume
 		for (ArtifactVolume nthArtifactVolume : artifactVolumeList) {
@@ -542,7 +543,7 @@ public class VolumeService extends DwaraService {
 		responseFromCPProxy.setResponse(responseFromCPProxyServer);
 		
 		
-		RequestResponse responseFromIngestServer = generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest, Action.restore_tape_and_move_it_to_cp_proxy_server);
+		RequestResponse responseFromIngestServer = generateMezzanineProxies(volumeId, generateMezzanineProxiesRequest, Action.restore_tape_and_move_it_to_cp_proxy_server, null);
 		systemRequests = responseFromIngestServer.getRequest();
 		//	save in DB for referencing to create job folder on cp - 
 		for (RequestResponse nthSystemRequest : systemRequests) {

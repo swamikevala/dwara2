@@ -5,7 +5,9 @@ import java.util.List;
 
 import org.ishafoundation.dwaraapi.api.req.GenerateMezzanineProxiesRequest;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
+import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
@@ -26,6 +28,9 @@ public class ScheduledGenProxyMezzInvoker {
 
 	private static final Logger logger = LoggerFactory.getLogger(ScheduledGenProxyMezzInvoker.class);
 
+	@Autowired
+	private UserDao userDao;
+	
 	@Autowired
 	private RequestDao requestDao;
 	
@@ -117,12 +122,13 @@ public class ScheduledGenProxyMezzInvoker {
 		
 		List<Request> inProgressGeneratedMezzProxiesUserRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.generate_mezzanine_proxies, statusList2, RequestType.user);
 		if(inProgressGeneratedMezzProxiesUserRequestList.size() < 2) {
+			User user = userDao.findById(1).get();
 			for (String nthTape : tapeList) {
 				GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest = new GenerateMezzanineProxiesRequest();
 				generateMezzanineProxiesRequest.setArtifactclassRegex("video-p.*");
 				generateMezzanineProxiesRequest.setArtifactRegex("(.*Conscious.*|.*City.*)");
 				try {
-					RequestResponse generateMezzanineProxiesResponse = volumeService.restoreAndGenerateMezzanineProxies(nthTape, generateMezzanineProxiesRequest);
+					RequestResponse generateMezzanineProxiesResponse = volumeService.restoreAndGenerateMezzanineProxies(nthTape, generateMezzanineProxiesRequest, user);
 					logger.info("restoreAndGenerateMezzanineProxies - userReqId : " + generateMezzanineProxiesResponse.getId());					
 				}catch (Exception e) {
 					String errorMsg = "Unable to invoke restoreAndGenerateMezzanineProxies successfully - " + e.getMessage();

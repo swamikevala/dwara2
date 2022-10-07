@@ -232,7 +232,7 @@ public class VolumeController {
 		logger.info("/volume/" + volumeId + "/generateMezzanineProxies");
 		RequestResponse generateMezzanineProxiesResponse = new RequestResponse();
 		try {
-			generateMezzanineProxiesResponse = volumeService.restoreAndGenerateMezzanineProxies(volumeId, generateMezzanineProxiesRequest);
+			generateMezzanineProxiesResponse = volumeService.restoreAndGenerateMezzanineProxies(volumeId, generateMezzanineProxiesRequest, null);
 			generateMezzanineProxiesResponse.setAction(Action.generate_mezzanine_proxies.name());			
 		}catch (Exception e) {
 			String errorMsg = "Unable to generate mezzanine proxies - " + e.getMessage();
