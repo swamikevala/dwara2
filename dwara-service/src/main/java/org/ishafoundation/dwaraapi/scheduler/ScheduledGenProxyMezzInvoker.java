@@ -23,6 +23,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 @Component
 public class ScheduledGenProxyMezzInvoker {
 
@@ -111,8 +113,10 @@ public class ScheduledGenProxyMezzInvoker {
 		statusList.add(Status.marked_failed);
 		
 		List<Request> alreadyGeneratedMezzProxiesUserRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.generate_mezzanine_proxies, statusList, RequestType.user);
-		for (Request nthUserRequest : alreadyGeneratedMezzProxiesUserRequestList) {
-			String nthVolumeId = nthUserRequest.getDetails().getVolumeId();
+		for (Request nthUserRequest : alreadyGeneratedMezzProxiesUserRequestList) {			
+			JsonNode jsonNode = nthUserRequest.getDetails().getBody();
+			String nthVolumeId = jsonNode.get("volumeId").asText();
+			logger.trace("Skipping " + nthVolumeId + " as its already done ");
 			tapeList.remove(nthVolumeId);
 		}
 		
