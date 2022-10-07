@@ -435,7 +435,7 @@ public class VolumeService extends DwaraService {
 		List<RequestResponse> systemRequests = generateMezzanineProxiesResponse.getRequest();
 		for (RequestResponse nthSystemRequest : systemRequests) {
 			Job onHoldRestoreJob = jobDao.findByRequestIdAndStoragetaskActionId(nthSystemRequest.getId(), Action.restore);
-			onHoldRestoreJob.setStatus(Status.completed);
+			onHoldRestoreJob.setStatus(Status.queued);
 			jobDao.save(onHoldRestoreJob);
 		}
 		return generateMezzanineProxiesResponse;

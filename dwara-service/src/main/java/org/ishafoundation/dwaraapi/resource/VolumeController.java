@@ -223,7 +223,7 @@ public class VolumeController {
 		return ResponseEntity.status(HttpStatus.OK).body(rewriteResponse);
 	}
 
-	@ApiOperation(value = "Restores from a tape and create mezzanine proxies for all artifacts on the volume")
+	@ApiOperation(value = "Restores from a tape and create mezzanine proxies for all artifacts on the volume - Hack as for plan B we are putting the restore jobs on hold so we had to unhold them and this api does that")
 	@ApiResponses(value = { 
 			@ApiResponse(code = 200, message = "Ok")
 	})
