@@ -123,7 +123,13 @@ public class ScheduledGenProxyMezzInvoker {
 		List<Request> inProgressGeneratedMezzProxiesUserRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.generate_mezzanine_proxies, statusList2, RequestType.user);
 		if(inProgressGeneratedMezzProxiesUserRequestList.size() < 2) {
 			User user = userDao.findById(1).get();
+			int cnt = 1;
+			int currentCount = inProgressGeneratedMezzProxiesUserRequestList.size();
+			int toBeDoneCount = 2 - currentCount;
 			for (String nthTape : tapeList) {
+				if(cnt > toBeDoneCount)
+					continue;
+				
 				GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest = new GenerateMezzanineProxiesRequest();
 				generateMezzanineProxiesRequest.setArtifactclassRegex("video-p.*");
 				generateMezzanineProxiesRequest.setArtifactRegex("(.*Conscious.*|.*City.*)");
@@ -134,7 +140,7 @@ public class ScheduledGenProxyMezzInvoker {
 					String errorMsg = "Unable to invoke restoreAndGenerateMezzanineProxies successfully - " + e.getMessage();
 					logger.error(errorMsg, e);
 				}
-				
+				cnt = cnt + 1;
 			}
 			
 		}
