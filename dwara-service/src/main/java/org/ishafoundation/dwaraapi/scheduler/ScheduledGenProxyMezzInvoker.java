@@ -111,6 +111,9 @@ public class ScheduledGenProxyMezzInvoker {
 		statusList.add(Status.marked_completed);
 		statusList.add(Status.failed);
 		statusList.add(Status.marked_failed);
+		statusList.add(Status.queued);
+		statusList.add(Status.in_progress);
+		statusList.add(Status.on_hold);
 		
 		List<Request> alreadyGeneratedMezzProxiesUserRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.generate_mezzanine_proxies, statusList, RequestType.user);
 		for (Request nthUserRequest : alreadyGeneratedMezzProxiesUserRequestList) {			
@@ -120,6 +123,7 @@ public class ScheduledGenProxyMezzInvoker {
 			tapeList.remove(nthVolumeId);
 		}
 		
+		logger.trace(tapeList.toString());
 		List<Status> statusList2 = new ArrayList<Status>();
 		statusList2.add(Status.queued);
 		statusList2.add(Status.in_progress);
@@ -134,9 +138,10 @@ public class ScheduledGenProxyMezzInvoker {
 				if(cnt > toBeDoneCount)
 					continue;
 				
+				logger.trace("Taking up tape " + nthTape);
 				GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest = new GenerateMezzanineProxiesRequest();
 				generateMezzanineProxiesRequest.setArtifactclassRegex("video-p.*");
-				generateMezzanineProxiesRequest.setArtifactRegex("(.*Conscious.*|.*City.*)");
+				generateMezzanineProxiesRequest.setArtifactRegex(".*Conscious.*");
 				try {
 					RequestResponse generateMezzanineProxiesResponse = volumeService.restoreAndGenerateMezzanineProxies(nthTape, generateMezzanineProxiesRequest, user);
 					logger.info("restoreAndGenerateMezzanineProxies - userReqId : " + generateMezzanineProxiesResponse.getId());					
