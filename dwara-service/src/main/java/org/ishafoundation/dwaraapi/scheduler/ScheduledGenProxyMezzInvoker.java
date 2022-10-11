@@ -6,8 +6,10 @@ import java.util.List;
 import org.ishafoundation.dwaraapi.api.req.GenerateMezzanineProxiesRequest;
 import org.ishafoundation.dwaraapi.api.resp.request.RequestResponse;
 import org.ishafoundation.dwaraapi.db.dao.master.UserDao;
+import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.RequestDao;
 import org.ishafoundation.dwaraapi.db.model.master.configuration.User;
+import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.RequestType;
@@ -32,6 +34,9 @@ public class ScheduledGenProxyMezzInvoker {
 
 	@Autowired
 	private UserDao userDao;
+
+	@Autowired
+	private JobDao jobDao;
 	
 	@Autowired
 	private RequestDao requestDao;
@@ -130,7 +135,6 @@ public class ScheduledGenProxyMezzInvoker {
 		
 		List<Request> inProgressGeneratedMezzProxiesUserRequestList = requestDao.findAllByActionIdAndStatusInAndType(Action.generate_mezzanine_proxies, statusList2, RequestType.user);
 		if(inProgressGeneratedMezzProxiesUserRequestList.size() < 2) {
-			User user = userDao.findById(1).get();
 			int cnt = 1;
 			int currentCount = inProgressGeneratedMezzProxiesUserRequestList.size();
 			int toBeDoneCount = 2 - currentCount;
@@ -138,20 +142,32 @@ public class ScheduledGenProxyMezzInvoker {
 				if(cnt > toBeDoneCount)
 					continue;
 				
-				logger.trace("Taking up tape " + nthTape);
-				GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest = new GenerateMezzanineProxiesRequest();
-				generateMezzanineProxiesRequest.setArtifactclassRegex("video-p.*");
-				generateMezzanineProxiesRequest.setArtifactRegex(".*Conscious.*");
-				try {
-					RequestResponse generateMezzanineProxiesResponse = volumeService.restoreAndGenerateMezzanineProxies(nthTape, generateMezzanineProxiesRequest, user);
-					logger.info("restoreAndGenerateMezzanineProxies - userReqId : " + generateMezzanineProxiesResponse.getId());					
-				}catch (Exception e) {
-					String errorMsg = "Unable to invoke restoreAndGenerateMezzanineProxies successfully - " + e.getMessage();
-					logger.error(errorMsg, e);
-				}
+				invokeRestoreAndGenerateMezzanineProxiesApi(nthTape);
 				cnt = cnt + 1;
+			}			
+		} else {
+			for (Request nthInProgressGenerateMezzProxyUserRequest : inProgressGeneratedMezzProxiesUserRequestList) {
+				List<Job> queuedRestoreJobList = jobDao.findTop3ByStoragetaskActionIdAndRequestRequestRefIdAndStatusOrderByRequestId(Action.restore, nthInProgressGenerateMezzProxyUserRequest.getId(), Status.queued);
+				if(queuedRestoreJobList.size() == 0) {
+					invokeRestoreAndGenerateMezzanineProxiesApi(tapeList.get(0));
+					tapeList.remove(0);
+				}
 			}
-			
+		}
+	}
+
+	private void invokeRestoreAndGenerateMezzanineProxiesApi(String nthTape) {
+		User user = userDao.findById(1).get();
+		logger.trace("Taking up tape " + nthTape);
+		GenerateMezzanineProxiesRequest generateMezzanineProxiesRequest = new GenerateMezzanineProxiesRequest();
+		generateMezzanineProxiesRequest.setArtifactclassRegex("video-p.*");
+		generateMezzanineProxiesRequest.setArtifactRegex(".*Conscious.*");
+		try {
+			RequestResponse generateMezzanineProxiesResponse = volumeService.restoreAndGenerateMezzanineProxies(nthTape, generateMezzanineProxiesRequest, user);
+			logger.info("restoreAndGenerateMezzanineProxies - userReqId : " + generateMezzanineProxiesResponse.getId());					
+		}catch (Exception e) {
+			String errorMsg = "Unable to invoke restoreAndGenerateMezzanineProxies successfully - " + e.getMessage();
+			logger.error(errorMsg, e);
 		}
 	}
 
