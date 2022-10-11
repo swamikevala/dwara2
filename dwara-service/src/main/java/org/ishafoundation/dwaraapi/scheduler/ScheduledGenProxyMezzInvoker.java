@@ -142,13 +142,16 @@ public class ScheduledGenProxyMezzInvoker {
 				if(cnt > toBeDoneCount)
 					continue;
 				
+				logger.info("Invoking GenerateMezzanineProxiesApi as there are not enough requests");
 				invokeRestoreAndGenerateMezzanineProxiesApi(nthTape);
 				cnt = cnt + 1;
 			}			
-		} else {
+		} else if(inProgressGeneratedMezzProxiesUserRequestList.size() == 2) {
 			for (Request nthInProgressGenerateMezzProxyUserRequest : inProgressGeneratedMezzProxiesUserRequestList) {
 				List<Job> queuedRestoreJobList = jobDao.findTop3ByStoragetaskActionIdAndRequestRequestRefIdAndStatusOrderByRequestId(Action.restore, nthInProgressGenerateMezzProxyUserRequest.getId(), Status.queued);
+				
 				if(queuedRestoreJobList.size() == 0) {
+					logger.info("Invoking GenerateMezzanineProxiesApi as no queued restore job for " + nthInProgressGenerateMezzProxyUserRequest.getId());
 					invokeRestoreAndGenerateMezzanineProxiesApi(tapeList.get(0));
 					tapeList.remove(0);
 				}
