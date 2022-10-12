@@ -193,12 +193,12 @@ public class ProcessingJobManager extends ProcessingJobHelper implements Runnabl
 				ProcessingJobProcessor pjp = (ProcessingJobProcessor) runnable;
 				jobsOnQueueSet.add(pjp.getJob().getId());
 			}
-//			logger.trace("---" + executorName + ":" + tpe.getCorePoolSize() + ":" + jobsOnQueueSet.size() + ":" + jobsOnQueueSet);
-//			if(useNewJobManagementLogic && jobsOnQueueSet.size() >= (tpe.getCorePoolSize() + 2)) {
-//				logger.debug("Already enough jobs(" + jobsOnQueueSet.size() + ")'s files are in " + executorName + " processing queue");
-//				return;
-//			} else
-//				logger.info("Taking up processing job " + job.getId() + " for preprocessing and delegating it to PJP thread executor");
+			logger.trace("---" + executorName + ":" + tpe.getCorePoolSize() + ":" + jobsOnQueueSet.size() + ":" + jobsOnQueueSet);
+			if(useNewJobManagementLogic && jobsOnQueueSet.size() >= (tpe.getCorePoolSize() + 2)) {
+				logger.info("Already enough jobs(" + jobsOnQueueSet.size() + ")'s files are in " + executorName + " processing queue");
+				return;
+			} else
+				logger.info("Taking up processing job " + job.getId() + " for preprocessing and delegating it to PJP thread executor");
 			
 			Processingtask processingtask = getProcessingtask(processingtaskId);
 //			if(processingtask == null)

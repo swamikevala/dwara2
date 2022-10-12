@@ -166,9 +166,8 @@ public class JobManager {
 				JobDaoQueryProps jobDaoQueryProps = JobDao.executorName_queryProps_map.get(executorName);
 				
 				Pageable limitBy = PageRequest.of(0, jobDaoQueryProps.getLimit());
-				//List<Job> jobList = jobDao.findAllByStatusAndProcessingtaskIdInOrderById(Status.queued, jobDaoQueryProps.getTaskNameList(), limitBy);
+				List<Job> jobList = jobDao.findAllByStatusAndProcessingtaskIdInOrderById(Status.queued, jobDaoQueryProps.getTaskNameList(), limitBy);
 				
-				List<Job> jobList = jobDao.findAllByStatusAndProcessingtaskIdIsNotNullOrderById(Status.queued); 
 				logger.trace("===" + executorName + ":" + jobDaoQueryProps.getTaskNameList() + ":" + jobDaoQueryProps.getLimit() + ":" + jobList.size());
 				
 				if(jobList.size() > 0) {
