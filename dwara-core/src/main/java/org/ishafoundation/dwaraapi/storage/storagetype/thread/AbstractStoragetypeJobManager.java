@@ -108,7 +108,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 			job.setMessage("[error] " + errorMsg);
 			updateJobFailed(job);
 			
-			if(e instanceof StorageException || e instanceof TapeException) {
+//			if(e instanceof StorageException || e instanceof TapeException) {
 				if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.restore) { // Any write or restore failure should have the tape marked as suspect...
 					long jobAlreadyRequeuedCount = jobRunDao.countByJobId(job.getId());
 					if(jobAlreadyRequeuedCount < configuration.getAllowedAutoRequeueAttemptsOnFailedStorageJobs()) {
@@ -137,7 +137,7 @@ public abstract class AbstractStoragetypeJobManager implements Runnable{
 						}
 					}	
 				}
-			}
+//			}
 		}finally {
 			threadNameHelper.resetThreadName();
 		}

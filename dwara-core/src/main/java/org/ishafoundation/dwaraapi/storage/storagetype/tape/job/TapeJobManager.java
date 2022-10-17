@@ -484,7 +484,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 			logger.error(e.getMessage());
 			updateJobFailed(job);
 			
-			if(e instanceof StorageException || e instanceof TapeException) { // we need to requeue and flag suspicion only for storage exception and not because of post processing like moving a file from location a to b etc.,
+//			if(e instanceof StorageException || e instanceof TapeException) { // we need to requeue and flag suspicion only for storage exception and not because of post processing like moving a file from location a to b etc.,
 				if(job.getStoragetaskActionId() == Action.write || job.getStoragetaskActionId() == Action.restore) { // Any write or restore failure should have the tape marked as suspect...
 					long jobAlreadyRequeuedCount = jobRunDao.countByJobId(job.getId());
 					if(jobAlreadyRequeuedCount < configuration.getAllowedAutoRequeueAttemptsOnFailedStorageJobs()) {
@@ -519,7 +519,7 @@ public class TapeJobManager extends AbstractStoragetypeJobManager {
 						}
 					}
 				}
-			}
+//			}
 			
 			logger.debug("Deleting the t_activedevice record for " + tapeJob.getDeviceWwnId());
 			tActivedeviceDao.delete(tActivedevice);
