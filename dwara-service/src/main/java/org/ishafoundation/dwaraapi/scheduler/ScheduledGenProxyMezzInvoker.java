@@ -67,47 +67,14 @@ public class ScheduledGenProxyMezzInvoker {
 	public void invokeRestoreAndGenerateMezzanineProxiesApi() {
 		
 		List<String> tapeList = new ArrayList<String>();
-		tapeList.add("R20036L7");
-		tapeList.add("R20038L7");
-		tapeList.add("R20039L7");
-		tapeList.add("R20040L7");
-		tapeList.add("R20041L7");
-		tapeList.add("R20042L7");
-		tapeList.add("R20043L7");
-		tapeList.add("R20044L7");
-		tapeList.add("R20045L7");
-		tapeList.add("R20046L7");
-		tapeList.add("R20047L7");
-		tapeList.add("R20048L7");
-		tapeList.add("R20049L7");
-		tapeList.add("R20050L7");
-		tapeList.add("R20051L7");
-		tapeList.add("R20052L7");
-		tapeList.add("R20053L7");
-		tapeList.add("R20054L7");
-		tapeList.add("R20055L7");
-		tapeList.add("R20056L7");
-		tapeList.add("R20057L7");
-		tapeList.add("R20058L7");
-		tapeList.add("R20059L7");
-		tapeList.add("R20060L7");
-		tapeList.add("R20061L7");
-		tapeList.add("R20062L7");
-		tapeList.add("R20063L7");
-		tapeList.add("R20064L7");
-		tapeList.add("R20065L7");
-		tapeList.add("R20066L7");
-		tapeList.add("R20067L7");
-		tapeList.add("R20068L7");
-		tapeList.add("R20069L7");
-		tapeList.add("R20070L7");
-		tapeList.add("R20071L7");
-		tapeList.add("R20072L7");
 		tapeList.add("R20073L7");
+		tapeList.add("R20074L7");
 		tapeList.add("R20075L7");
-		tapeList.add("X20009L7");
-		tapeList.add("X20010L7");
-		tapeList.add("X20011L7");
+		tapeList.add("R20076L7");
+		tapeList.add("R20077L7");
+		tapeList.add("R20078L7");
+		tapeList.add("R20079L7");
+		tapeList.add("R20080L7");
 		
 		// exclude cancelled list
 		List<Status> statusList = new ArrayList<Status>();
