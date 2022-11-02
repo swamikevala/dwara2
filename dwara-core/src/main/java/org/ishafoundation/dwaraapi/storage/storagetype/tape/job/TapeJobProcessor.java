@@ -147,6 +147,8 @@ public class TapeJobProcessor extends AbstractStoragetypeJobProcessor {
 				continue;
 			}
 			
+			Thread.sleep(5000);
+			
 			DriveDetails usedDriveDetails = null;
 			for (DriveDetails nthDriveDetails : preparedDriveDetailsList) {
 				//String driveId = nthDriveDetails.getDriveId();
