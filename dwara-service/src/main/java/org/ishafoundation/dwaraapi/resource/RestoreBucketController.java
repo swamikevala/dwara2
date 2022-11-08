@@ -102,6 +102,18 @@ public class RestoreBucketController {
         TRestoreBucket tRestoreBucket= restoreBucketService.updateBucket(fileIds,id,create);
         return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucket);
     }
+
+    @PostMapping("/buckets/edit")
+    public ResponseEntity<TRestoreBucket> editBucket(@RequestBody TRestoreBucket tRestoreBucket) {
+        TRestoreBucket tRestoreBucketFromDb = tRestoreBucketDao.findById(tRestoreBucket.getId()).get();
+        tRestoreBucketFromDb.setApproverEmail(tRestoreBucket.getApproverEmail());
+        tRestoreBucketFromDb.setDestinationPath(tRestoreBucket.getDestinationPath());
+        tRestoreBucketFromDb.setApprover(tRestoreBucket.getApprover());
+        tRestoreBucketFromDb.setPriority(tRestoreBucket.getPriority());
+        tRestoreBucketDao.save(tRestoreBucketFromDb);
+
+        return ResponseEntity.status(HttpStatus.OK).body(tRestoreBucketFromDb);
+    }
     
     @PutMapping("/buckets/proxyPaths/{id}")
     public ResponseEntity<TRestoreBucket> updateFiles(@PathVariable String id ,@RequestBody List<String> proxyPaths) throws Exception {
