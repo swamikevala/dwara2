@@ -7,6 +7,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.configuration.FfmpegThreadConfiguration;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
@@ -14,6 +15,7 @@ import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.videopub.transcoding.ffmpeg.MediaTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -23,6 +25,9 @@ import org.springframework.stereotype.Component;
 @Profile({ "!dev & !stage" })
 public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask implements IProcessingTask{
     private static final Logger logger = LoggerFactory.getLogger(Photo_LowResolution_Transcoding_TaskExecutor.class);
+
+	@Autowired
+	private FfmpegThreadConfiguration ffmpegThreadConfiguration;
     
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -103,28 +108,33 @@ public class Photo_LowResolution_Transcoding_TaskExecutor extends MediaTask impl
 	pls can you put this explanation in the code comments
 	*/
 	private List<String> getProxyCommandAsList(String sourceFilePathname, String destinationDirPath, String thumbnailTargetLocation, String proxyTargetLocation) {
-		List<String> thumbnailGenerationCommandParamsList = new ArrayList<String>();
-		thumbnailGenerationCommandParamsList.add("convert");
-		thumbnailGenerationCommandParamsList.add(sourceFilePathname);
-		thumbnailGenerationCommandParamsList.add("(");
-		thumbnailGenerationCommandParamsList.add("+clone");
-		thumbnailGenerationCommandParamsList.add("-thumbnail");
-		thumbnailGenerationCommandParamsList.add("24576@");
-		thumbnailGenerationCommandParamsList.add("-quality");
-		thumbnailGenerationCommandParamsList.add("82");
-		thumbnailGenerationCommandParamsList.add("-strip");
-		thumbnailGenerationCommandParamsList.add("-write");
-		thumbnailGenerationCommandParamsList.add("JPEG:" + thumbnailTargetLocation);
-		thumbnailGenerationCommandParamsList.add("+delete");
-		thumbnailGenerationCommandParamsList.add(")");
-		thumbnailGenerationCommandParamsList.add("-thumbnail");
-		thumbnailGenerationCommandParamsList.add("1572864@");
-		thumbnailGenerationCommandParamsList.add("-quality");
-		thumbnailGenerationCommandParamsList.add("82");
-		thumbnailGenerationCommandParamsList.add("-strip");
-		thumbnailGenerationCommandParamsList.add(proxyTargetLocation);
+		List<String> proxyGenerationCommandParamsList = new ArrayList<String>();
+		proxyGenerationCommandParamsList.add("convert");
+		proxyGenerationCommandParamsList.add(sourceFilePathname);
+		proxyGenerationCommandParamsList.add("(");
+		proxyGenerationCommandParamsList.add("+clone");
+		proxyGenerationCommandParamsList.add("-thumbnail");
+		proxyGenerationCommandParamsList.add("24576@");
+		proxyGenerationCommandParamsList.add("-quality");
+		proxyGenerationCommandParamsList.add("82");
+		proxyGenerationCommandParamsList.add("-strip");
+		proxyGenerationCommandParamsList.add("-write");
+		proxyGenerationCommandParamsList.add("JPEG:" + thumbnailTargetLocation);
+		proxyGenerationCommandParamsList.add("+delete");
+		proxyGenerationCommandParamsList.add(")");
+		if(ffmpegThreadConfiguration.getPhotoProxyLowGen().getThreads() > 0) {
+			proxyGenerationCommandParamsList.add("-threads");
+			String ffmpegThreads = ffmpegThreadConfiguration.getPhotoProxyLowGen().getThreads() + "";
+			proxyGenerationCommandParamsList.add(ffmpegThreads);
+		}
+		proxyGenerationCommandParamsList.add("-thumbnail");
+		proxyGenerationCommandParamsList.add("1572864@");
+		proxyGenerationCommandParamsList.add("-quality");
+		proxyGenerationCommandParamsList.add("82");
+		proxyGenerationCommandParamsList.add("-strip");
+		proxyGenerationCommandParamsList.add(proxyTargetLocation);
 		
-		return thumbnailGenerationCommandParamsList;
+		return proxyGenerationCommandParamsList;
 	}
 	
 	// exiv2 -eX ex 20190207_VVD_0101to0107-mp-e-ot1.tif

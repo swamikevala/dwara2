@@ -8,11 +8,16 @@ import org.springframework.stereotype.Component;
 public class FfmpegThreadConfiguration {
 	
 	private FfmpegThreadProps videoProxyLowGen;
-	private FfmpegThreadProps videoProxyMezzanine;
+
+	private FfmpegThreadProps videoProxyMezzanine;	
+	
+	private FfmpegThreadProps videoDigi2020MkvMovConv;
 
 	private FfmpegThreadProps videoDigi2020PreservationGen;
 	
 	private FfmpegThreadProps videoDigi2020QcGen;
+
+	private FfmpegThreadProps photoProxyLowGen;
 
 	public FfmpegThreadProps getVideoProxyLowGen() {
 		return videoProxyLowGen;
@@ -20,6 +25,14 @@ public class FfmpegThreadConfiguration {
 
 	public void setVideoProxyLowGen(FfmpegThreadProps videoProxyLowGen) {
 		this.videoProxyLowGen = videoProxyLowGen;
+	}
+
+	public FfmpegThreadProps getVideoDigi2020MkvMovConv() {
+		return videoDigi2020MkvMovConv;
+	}
+
+	public void setVideoDigi2020MkvMovConv(FfmpegThreadProps videoDigi2020MkvMovConv) {
+		this.videoDigi2020MkvMovConv = videoDigi2020MkvMovConv;
 	}
 
 	public FfmpegThreadProps getVideoDigi2020PreservationGen() {
@@ -37,7 +50,7 @@ public class FfmpegThreadConfiguration {
 	public void setVideoDigi2020QcGen(FfmpegThreadProps videoDigi2020QcGen) {
 		this.videoDigi2020QcGen = videoDigi2020QcGen;
 	}
-
+	
 	public FfmpegThreadProps getVideoProxyMezzanine() {
 		return videoProxyMezzanine;
 	}
@@ -46,4 +59,11 @@ public class FfmpegThreadConfiguration {
 		this.videoProxyMezzanine = videoProxyMezzanine;
 	}
 
+	public FfmpegThreadProps getPhotoProxyLowGen() {
+		return photoProxyLowGen;
+	}
+
+	public void setPhotoProxyLowGen(FfmpegThreadProps photoProxyLowGen) {
+		this.photoProxyLowGen = photoProxyLowGen;
+	}
 }

@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.ishafoundation.dwaraapi.PfrConstants;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
+import org.ishafoundation.dwaraapi.configuration.FfmpegThreadConfiguration;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
@@ -15,6 +16,7 @@ import org.ishafoundation.dwaraapi.process.request.ProcessContext;
 import org.ishafoundation.videopub.transcoding.ffmpeg.MediaTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
@@ -28,6 +30,9 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 	
 	@Value("${scheduler.statusUpdater.enabled:true}")
 	private boolean isEnabled;
+	
+	@Autowired
+	private FfmpegThreadConfiguration ffmpegThreadConfiguration;
 
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -197,6 +202,11 @@ public class Video_Digitization_MkvToMov_Convertor_TaskExecutor extends MediaTas
 		compressionCommandParamsList.add("0:a:0?");
 		compressionCommandParamsList.add("-map");
 		compressionCommandParamsList.add("0:a:1?");
+		if(ffmpegThreadConfiguration.getVideoDigi2020MkvMovConv().getThreads() > 0) {
+			compressionCommandParamsList.add("-threads");
+			String ffmpegThreads = ffmpegThreadConfiguration.getVideoDigi2020MkvMovConv().getThreads() + "";
+			compressionCommandParamsList.add(ffmpegThreads);
+		}		
 		compressionCommandParamsList.add("-acodec");
 		compressionCommandParamsList.add("copy");
 		compressionCommandParamsList.add("-pix_fmt");
