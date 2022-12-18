@@ -653,7 +653,7 @@ public class ScheduledStatusUpdater {
 
 					}
 					else { // derived artifacts can be deleted
-						// dont delete priv2 folders
+						// dont delete priv2 proxies from ingest server - "Refer email from Maa Jeevapushpa with subject P2 Proxies"
 						if(!artifactclass.getId().contains("priv2")){
 							if(srcRootLocation != null) {
 								try {
