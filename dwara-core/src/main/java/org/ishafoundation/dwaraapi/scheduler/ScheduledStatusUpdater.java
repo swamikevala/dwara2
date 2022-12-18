@@ -653,17 +653,20 @@ public class ScheduledStatusUpdater {
 
 					}
 					else { // derived artifacts can be deleted
-						if(srcRootLocation != null) {
-							try {
-								java.io.File srcFile = FileUtils.getFile(srcRootLocation, artifact.getName());
-
-								if(srcFile.isFile())
-									srcFile.delete();
-								else
-									FileUtils.deleteDirectory(srcFile);
-							}
-							catch (Exception e) {
-								logger.error("Unable to delete file "  + e.getMessage());
+						// dont delete priv2 folders
+						if(!artifactclass.getId().contains("priv2")){
+							if(srcRootLocation != null) {
+								try {
+									java.io.File srcFile = FileUtils.getFile(srcRootLocation, artifact.getName());
+	
+									if(srcFile.isFile())
+										srcFile.delete();
+									else
+										FileUtils.deleteDirectory(srcFile);
+								}
+								catch (Exception e) {
+									logger.error("Unable to delete file "  + e.getMessage());
+								}
 							}
 						}
 					}
