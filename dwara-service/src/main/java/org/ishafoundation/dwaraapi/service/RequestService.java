@@ -757,6 +757,7 @@ public class RequestService extends DwaraService{
 	private long fileETARestoreCalculator(String targetLocation, RestoreFile file, long startTime,
 			String taskType) {
 		long eta = 0;
+		/* commenting out as its resource heavy
 		String path = targetLocation + java.io.File.separator + file.getName();
 		java.io.File targetFile = new java.io.File(path);
 		try {
@@ -810,6 +811,7 @@ public class RequestService extends DwaraService{
 		}catch (Exception e) {
 			logger.warn("Unable to calc eta for " + path);
 		}
+		*/
 		return eta;
 	}
 
