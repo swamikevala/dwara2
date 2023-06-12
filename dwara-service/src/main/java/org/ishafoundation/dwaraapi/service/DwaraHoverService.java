@@ -419,7 +419,7 @@ public class DwaraHoverService extends DwaraService {
 				}
 			}
 
-			query += " AND file.deleted=0 LIMIT " + offset + ", " + limit;
+			query += " AND file.deleted=0 order by artifact.id desc LIMIT " + offset + ", " + limit;
 
 		Query q = entityManager.createNativeQuery(query);
 		return q.getResultList();

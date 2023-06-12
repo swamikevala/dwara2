@@ -1,10 +1,13 @@
 package org.ishafoundation.dwaraapi.api.resp.dwarahover;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Collections;
+import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -17,7 +20,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @Builder
-public class DwaraHoverFileList {
+public class DwaraHoverFileList  implements Comparable<DwaraHoverFileList> {
 
 	private int id;
 	private String path_name;
@@ -61,8 +64,26 @@ public class DwaraHoverFileList {
 			dwaraHoverFileLists.add(response);
 		});
 
+		// Collections.sort(dwaraHoverFileLists);
+		
 		return Optional.of(dwaraHoverFileLists);
 	}
 
+	@Override
+	public int compareTo(DwaraHoverFileList o) {
+		int i = 0;
+		try {
+			String dateFormat = "dd-MMM-yyyy";
+			Date date1 = new SimpleDateFormat(dateFormat).parse(date);
+			Date date2 = new SimpleDateFormat(dateFormat).parse(o.date);
+			i = date2.compareTo(date1);
+		}
+		catch (Exception e) {
+			// Do nothing
+			e.printStackTrace();
+		}
+		return i;
+		
+	}
 
 }
