@@ -36,7 +36,9 @@ public class SMSUtil {
 						+ "&number=" + commaSeparatedMobileNos
 						+ "&text=" + URLEncoder.encode(message,"UTF-8");
 			
-			HttpClientUtil.getIt(url);
+			logger.trace("url - " + url);
+			String respBody = HttpClientUtil.getIt(url);
+			logger.trace("respBody - " + respBody);
 		} catch (Exception e) {
 			logger.error("Unable to send sms - " + e.getMessage(), e);
 		}
