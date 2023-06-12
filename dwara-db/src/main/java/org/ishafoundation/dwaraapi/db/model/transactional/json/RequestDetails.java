@@ -79,6 +79,9 @@ public class RequestDetails {
 	@Deprecated // retaining so as already created DB records wont fail
 	private Boolean verify; // overwrites whatever is configured in archiveformat.restore_verify = true
 	
+	@JsonProperty("convert")
+	private Boolean convert;
+	
 	@JsonProperty("flow_id")
 	private String flowId;
 	
@@ -302,6 +305,14 @@ public class RequestDetails {
 	@Deprecated
 	public void setVerify(Boolean verify) {
 		this.verify = verify;
+	}
+	
+	public Boolean getConvert() {
+		return convert;
+	}
+
+	public void setConvert(Boolean convert) {
+		this.convert = convert;
 	}
 
 	public String getFlowId() {

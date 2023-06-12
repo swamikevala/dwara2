@@ -1,3 +1,14 @@
+# Dwara App Version - 2.1.50 (7th Jun 2023 - SAN related changes)
+### Upgrade steps
+1) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_35.sql) 
+2) Ensure application.properties has the below entries
+
+> remoteRestoreLocation = 
+> remote-transcoding.host=172.18.1.24
+> remote-transcoding.sshSystemUser=dwara
+> remote-transcoding.sshRootLocation=/data/dwara/staged
+
+
 # Dwara App Version - 2.1.45 (7th Oct 2022 - Meant for CP Proxy server)
 ### Upgrade steps
 1) Ensure application.properties has the below entries

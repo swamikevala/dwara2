@@ -12,6 +12,7 @@ public class RestoreUserRequest {
 	private List<Integer> fileIds;
 	private Priority priority;
 	private String vpJiraTicket;
+	private Boolean convert;
 
 	public Priority getPriority() {
 		return priority;
@@ -67,5 +68,13 @@ public class RestoreUserRequest {
 
 	public void setVpJiraTicket(String vpJiraTicket) {
 		this.vpJiraTicket = vpJiraTicket;
+	}
+
+	public Boolean getConvert() {
+		return convert;
+	}
+
+	public void setConvert(Boolean convert) {
+		this.convert = convert;
 	}
 }

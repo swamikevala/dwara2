@@ -216,6 +216,7 @@ public class FileService extends DwaraService{
 			systemrequestDetails.setOutputFolder(outputFolder);
 			systemrequestDetails.setDestinationPath(destinationPath);
 			systemrequestDetails.setFlowId(flow);
+			systemrequestDetails.setConvert(restoreUserRequest.getConvert());
 			systemRequest.setDetails(systemrequestDetails);
 			systemRequest = requestDao.save(systemRequest);
 			logger.info(DwaraConstants.SYSTEM_REQUEST + systemRequest.getId());

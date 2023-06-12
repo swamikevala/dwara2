@@ -16,6 +16,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.ProcessingTaskNames;
 import org.ishafoundation.dwaraapi.artifact.ArtifactUtil;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.ArtifactclassDao;
@@ -353,13 +354,19 @@ public class ScheduledStatusUpdater {
 
 									// TODO - SuPeR HaCk - Need to bring this into f/w scheme of things properly
 									String lastJobProcessingTask = job.getProcessingtaskId();
-									if(lastJobProcessingTask != null && lastJobProcessingTask.equals("video-digi-2020-mkv-mov-gen") && restoredFilePathName.endsWith(".mkv")) {
-										restoredFilePathName = restoredFilePathName.replace(".mkv", ".mov");
+									if(lastJobProcessingTask != null) {
+										if(lastJobProcessingTask.equals("video-digi-2020-mkv-mov-gen") && restoredFilePathName.endsWith(".mkv")) {
+											restoredFilePathName = restoredFilePathName.replace(".mkv", ".mov");
+										}
+//										else if(lastJobProcessingTask.equals(ProcessingTaskNames.PROCESSING_TASK_4K_TO_HD) && restoredFilePathName.endsWith(".mp4")) {
+//											restoredFilePathName = restoredFilePathName.replace(".mp4", ".mov");
+//										}
 									}
 
 									// inputPath = something like - /data/restored/someoutputfolder/.restoring
 									String srcPath = inputPath + java.io.File.separator + restoredFilePathName;
-									String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");	
+									String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");
+									destPath = destPath.replace(configuration.getRemoteRestoreLocation() + java.io.File.separator, requestDetails.getDestinationPath() + java.io.File.separator);	
 									logger.trace("src " + srcPath);
 									logger.trace("dest " + destPath);
 

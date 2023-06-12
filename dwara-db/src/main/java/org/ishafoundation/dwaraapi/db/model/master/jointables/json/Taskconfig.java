@@ -88,6 +88,11 @@ public class Taskconfig {
 		//Artifact class matches this regex
 		@JsonProperty("artifactclass_regex")
 		private String artifactclassRegex;
+		
+		//Artifact name contains this value
+		@JsonProperty("artifact_name_regex")
+		private String artifactNameRegex;
+		
 
 		public String getTag() {
 			return tag;
@@ -105,9 +110,17 @@ public class Taskconfig {
 			this.artifactclassRegex = artifactclassRegex;
 		}
 		
+		public String getArtifactNameRegex() {
+			return artifactNameRegex;
+		}
+
+		public void setArtifactNameRegex(String artifactNameRegex) {
+			this.artifactNameRegex = artifactNameRegex;
+		}
+
 		@Override
 		public String toString() {
-			return "tag : " + tag + " artifactclass_regex : " + artifactclassRegex;
+			return "tag : " + tag + " artifactclass_regex : " + artifactclassRegex + " artifact_name_regex : " + artifactNameRegex;
 		}
 	}
 	

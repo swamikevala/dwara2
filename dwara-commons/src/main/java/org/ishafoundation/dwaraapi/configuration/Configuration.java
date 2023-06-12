@@ -32,6 +32,8 @@ public class Configuration {
 	private String encryptionAlgorithm;
 
 //	private int rightVolumeCheckInterval; // in seconds
+	
+	private String remoteRestoreLocation;
 
 	private String restoreTmpLocationForVerification;
 	
@@ -159,6 +161,14 @@ public class Configuration {
 //		this.rightVolumeCheckInterval = rightVolumeCheckInterval;
 //	}
 
+	public String getRemoteRestoreLocation() {
+		return remoteRestoreLocation;
+	}
+
+	public void setRemoteRestoreLocation(String remoteRestoreLocation) {
+		this.remoteRestoreLocation = remoteRestoreLocation;
+	}
+	
 	public String getRestoreTmpLocationForVerification() {
 		return restoreTmpLocationForVerification;
 	}

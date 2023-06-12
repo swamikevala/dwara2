@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
+import org.ishafoundation.dwaraapi.ProcessingTaskNames;
 import org.ishafoundation.dwaraapi.db.dao.master.TagDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
@@ -353,9 +354,11 @@ public class JobCreator {
 				job = saveJob(job, dryRun);
 				jobsCreated.add(job);
 			} else {
-				Job job = createProcessingJob(processingtaskId, flowelement, sourceJob, request, artifactclassId, artifact, dryRun);
-				if(job != null)
-					jobsCreated.add(job);
+				if (processingtaskId.equals(ProcessingTaskNames.PROCESSING_TASK_4K_TO_HD) && request.getDetails().getConvert()) {
+					Job job = createProcessingJob(processingtaskId, flowelement, sourceJob, request, artifactclassId, artifact, dryRun);
+					if(job != null)
+						jobsCreated.add(job);
+				}
 			}
 		}
 		else if(request.getActionId() == Action.rewrite || request.getActionId() == Action.generate_mezzanine_proxies || request.getActionId() == Action.restore_tape_and_move_it_to_cp_proxy_server) {
@@ -427,6 +430,7 @@ public class JobCreator {
 		
 		String tag = includeExcludeProperties.getTag();
 		String artifactclassRegex = includeExcludeProperties.getArtifactclassRegex();
+		String artifactNameRegex = includeExcludeProperties.getArtifactNameRegex();
 		if(tag != null) {
 			boolean isSource = artifact.getArtifactclass().isSource();
 			Set<Tag> tags = null;
@@ -466,6 +470,13 @@ public class JobCreator {
 			}
 		}
 		
+		if(artifactNameRegex != null) {
+			Pattern artifactNameRegexPattern = Pattern.compile(artifactNameRegex);
+			Matcher artifactNameRegexMatcher = artifactNameRegexPattern.matcher(artifact.getName());
+			if(artifactNameRegexMatcher.matches()) {
+				isMatch = true;
+			}
+		}
 		return isMatch;
 	}
 

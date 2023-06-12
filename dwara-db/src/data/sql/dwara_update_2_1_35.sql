@@ -1,0 +1,1 @@
+ INSERT INTO `processingtask` (`id`, `filetype_id`, `max_errors`, `output_artifactclass_suffix`) VALUES ('video-4k-hd-gen', 'video', '1', '');

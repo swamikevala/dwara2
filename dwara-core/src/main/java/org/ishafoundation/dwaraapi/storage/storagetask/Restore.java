@@ -4,6 +4,7 @@ package org.ishafoundation.dwaraapi.storage.storagetask;
 import java.io.File;
 import java.util.List;
 
+import org.ishafoundation.dwaraapi.ProcessingTaskNames;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.transactional.ArtifactDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
@@ -20,6 +21,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.json.RequestDetails;
 import org.ishafoundation.dwaraapi.enumreferences.Action;
 import org.ishafoundation.dwaraapi.enumreferences.ArtifactVolumeStatus;
 import org.ishafoundation.dwaraapi.enumreferences.Priority;
+import org.ishafoundation.dwaraapi.job.JobCreator;
 import org.ishafoundation.dwaraapi.storage.model.StorageJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +52,9 @@ public class Restore extends AbstractStoragetaskAction{
 	@Autowired
 	private Configuration configuration;
 	
+	@Autowired
+	private JobCreator jobCreator;
+	
 	public String getRestoreLocation(Job job) {
 		String restoreLocation = null;
 	
@@ -57,7 +62,7 @@ public class Restore extends AbstractStoragetaskAction{
 		RequestDetails requestDetails = request.getDetails();
 		org.ishafoundation.dwaraapi.enumreferences.Action requestedAction = request.getActionId();
 		if(requestedAction == Action.restore || requestedAction == Action.restore_process){
-			String destinationPath = requestDetails.getDestinationPath();//requested destination path
+			String destinationPath = getDestinationPath(job);
 			String outputFolder = requestDetails.getOutputFolder();
 			//restoreLocation = destinationPath + java.io.File.separator + outputFolder + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier();
 			restoreLocation = destinationPath + java.io.File.separator + configuration.getRestoreInProgressFileIdentifier() + java.io.File.separator + outputFolder;
@@ -67,6 +72,16 @@ public class Restore extends AbstractStoragetaskAction{
 		else if (requestedAction == Action.restore_tape_and_move_it_to_cp_proxy_server)
 			restoreLocation = configuration.getRestoreTmpLocationForBulkRestore() + File.separator + "job-" + job.getId();
 		return restoreLocation;
+	}
+	
+	
+	private String getDestinationPath(Job job) {
+		Request request = job.getRequest();
+		RequestDetails requestDetails = request.getDetails();
+		String destinationPath = requestDetails.getDestinationPath(); // requested destination path
+		if(jobCreator.hasDependentJobsToBeCreated(job).size() > 0 && request.getDetails().getConvert())
+			destinationPath = configuration.getRemoteRestoreLocation(); 
+		return destinationPath;
 	}
 
 	@Override
