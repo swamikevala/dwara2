@@ -3,7 +3,8 @@
 1) Apply the upgrade sql script(/dwara-db/src/data/sql/dwara_update_2_1_35.sql) 
 2) Ensure application.properties has the below entries
 
-> remoteRestoreLocation = 
+> remoteRestore = true
+> remoteRestoreLocation = /mnt/s2
 > remote-transcoding.host=172.18.1.24
 > remote-transcoding.sshSystemUser=dwara
 > remote-transcoding.sshRootLocation=/data/dwara/staged

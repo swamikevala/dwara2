@@ -7,6 +7,7 @@ import org.ishafoundation.dwaraapi.api.resp.clip.ClipResponse;
 import org.ishafoundation.dwaraapi.db.dao.transactional.*;
 import org.ishafoundation.dwaraapi.db.model.transactional.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,8 @@ public class ClipListService  extends  DwaraService{
     ClipTagDao clipTagDao;
     @Autowired
     MamTagDao mamTagDao;
+    @Value("${catdv.host}")
+    private String catdvHost;
 
     public List<ClipListResponse> getAllClipList(){
         List<ClipList> clipLists = (List<ClipList>) clipListDao.findAll();
@@ -54,10 +57,10 @@ public class ClipListService  extends  DwaraService{
                     File file1 = file1Dao.findById(clip.getFile_id()).get();
                     String appendUrlTOProxy = "";
                     if(file1.getArtifact().getArtifactclass().getId().contains("-priv")){
-                        appendUrlTOProxy="http://172.18.1.24/mam/private/";
+                        appendUrlTOProxy="http://" + catdvHost + "/mam/private/";
                     }
                     else
-                        appendUrlTOProxy="http://172.18.1.24/mam/public/";
+                        appendUrlTOProxy="http://" + catdvHost + "/mam/public/";
                     clipResponse.setProxyPath(appendUrlTOProxy+file1.getPathname());
                     // clipResponse.setArtifactName(file1.getArtifact().getName())
                     // ;

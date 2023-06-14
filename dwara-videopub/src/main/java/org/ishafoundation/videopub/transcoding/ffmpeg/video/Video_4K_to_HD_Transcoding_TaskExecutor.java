@@ -103,13 +103,13 @@ public class Video_4K_to_HD_Transcoding_TaskExecutor extends MediaTask implement
 		String sshUser = remoteTranscodingConfiguration.getSshSystemUser();
 		int jobId = processContext.getJob().getId();
 		
-		String dirCreationCommand = "mkdir -p \"" + s2DestinationDirPath + "\"";
-		processingtaskResponse = executeCommandRemotely(host, sshUser, dirCreationCommand, jobId+"a", processingtaskResponse);
-		if(!processingtaskResponse.isComplete())
-			throw new Exception("Unable to create dir remotely " + processingtaskResponse.getFailureReason());
+//		String dirCreationCommand = "mkdir -p \"" + s2DestinationDirPath + "\"";
+//		processingtaskResponse = executeCommandRemotely(host, sshUser, dirCreationCommand, jobId+"a", processingtaskResponse);
+//		if(!processingtaskResponse.isComplete())
+//			throw new Exception("Unable to create dir remotely " + processingtaskResponse.getFailureReason());
 
 		//ffmpeg -y -i 6FX36208.MP4 -c:v libx264 -profile:v high10 -b:v 50M -pix_fmt yuv420p10le -c:a aac -b:a 256k -map 0:v:0 -map 0:a? -map_metadata 0 -s 1920x1080 6FX36208.MOV
-		String convCommand = "ffmpeg -y -i " + s2SourceFilePathname + " -c:v libx264 -profile:v high10 -b:v 50M -pix_fmt yuv420p10le -c:a aac -b:a 256k -map 0:v:0 -map 0:a? -map_metadata 0 -s 1920x1080" + s2ProxyTargetLocation;
+		String convCommand = "ffmpeg -y -i " + s2SourceFilePathname + " -c:v libx264 -profile:v high10 -b:v 50M -pix_fmt yuv420p10le -c:a aac -b:a 256k -map 0:v:0 -map 0:a? -map_metadata 0 -s 1920x1080 " + s2ProxyTargetLocation;
 		processingtaskResponse = executeCommandRemotely(host, sshUser, convCommand, jobId+"b", processingtaskResponse);
 		if(!processingtaskResponse.isComplete())
 			throw new Exception("Unable to conversion " + processingtaskResponse.getFailureReason());
@@ -121,6 +121,7 @@ public class Video_4K_to_HD_Transcoding_TaskExecutor extends MediaTask implement
 		Session jSchSession = null;
         CommandLineExecutionResponse response = null;
         try {
+        	
         	jSchSession = sshSessionHelper.getSession(host, sshUser);
 			logger.trace("executing remotely " + command);
 			response = remoteCommandLineExecuter.executeCommandRemotelyOnServer(jSchSession, command, jobId + ".out_err");

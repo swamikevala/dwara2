@@ -33,6 +33,8 @@ public class Configuration {
 
 //	private int rightVolumeCheckInterval; // in seconds
 	
+	private boolean remoteRestore;
+	
 	private String remoteRestoreLocation;
 
 	private String restoreTmpLocationForVerification;
@@ -160,6 +162,14 @@ public class Configuration {
 //	public void setRightVolumeCheckInterval(int rightVolumeCheckInterval) {
 //		this.rightVolumeCheckInterval = rightVolumeCheckInterval;
 //	}
+	
+	public boolean isRemoteRestore() {
+		return remoteRestore;
+	}
+
+	public void setRemoteRestore(boolean remoteRestore) {
+		this.remoteRestore = remoteRestore;
+	}
 
 	public String getRemoteRestoreLocation() {
 		return remoteRestoreLocation;

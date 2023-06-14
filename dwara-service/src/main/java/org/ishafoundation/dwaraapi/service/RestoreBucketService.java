@@ -43,6 +43,8 @@ public class RestoreBucketService extends DwaraService {
 	EmailerService emailerService;
     @Autowired
     UserDao userDao;
+    @Value("${catdv.host}")
+    private String catdvHost;
 	RestTemplate restTemplate;
 
 	@Value("${emailHelperServer}")
@@ -129,9 +131,9 @@ public class RestoreBucketService extends DwaraService {
 			}
 			String appendUrlTOProxy = "";
 			if (ogFile.getArtifact().getArtifactclass().getId().contains("-priv")) {
-				appendUrlTOProxy = "http://172.18.1.24/mam/private/";
+				appendUrlTOProxy = "http://" + catdvHost + "/mam/private/";
 			} else
-				appendUrlTOProxy = "http://172.18.1.24/mam/public/";
+				appendUrlTOProxy = "http://" + catdvHost + "/mam/public/";
 
 			RestoreBucketFile restoreBucketFile = new RestoreBucketFile();
 			restoreBucketFile.setFileID(ogFile.getId());
@@ -168,9 +170,9 @@ public class RestoreBucketService extends DwaraService {
 		List<String> previewProxyPaths = new ArrayList<>();
 		String appendUrlTOProxy = "";
 		if (ogFile.getArtifact().getArtifactclass().getId().contains("-priv")) {
-			appendUrlTOProxy = "http://172.18.1.24/mam/private/";
+			appendUrlTOProxy = "http://" + catdvHost + "/mam/private/";
 		} else
-			appendUrlTOProxy = "http://172.18.1.24/mam/public/";
+			appendUrlTOProxy = "http://" + catdvHost + "/mam/public/";
 		// Artifact artifact = (Artifact) artifact1Dao.findByName(ogFile.getPathname());
 		if (artifact1Dao.existsByName(ogFile.getPathname())) {
 			Artifact artifact = (Artifact) artifact1Dao.findByName(ogFile.getPathname());

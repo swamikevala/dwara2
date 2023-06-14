@@ -19,13 +19,16 @@ public class SshSessionHelper {
 
 	public Session getSession(String host, String user) throws Exception {
 		Session session = null;
-
+		
+		logger.trace("host " + host);
+		logger.trace("user " + user);
+				
 		try {
 			JSch.setConfig("StrictHostKeyChecking", "no");
 	
 			JSch jsch = new JSch();
 			jsch.addIdentity(configuration.getSshPrvKeyFileLocation());
-			session = jsch.getSession(user, host, 22);
+			session = jsch.getSession(user, host, 22);			
 			session.connect();	
 		}
 		catch (Exception e) {
@@ -39,7 +42,9 @@ public class SshSessionHelper {
 	// Create session ....
 	public Session getSession(String host, String user, String prvKeyFileLocation) {
 		Session session = null;
-
+		logger.trace("host " + host);
+		logger.trace("user " + user);
+		logger.trace("prvKeyFileLocation " + prvKeyFileLocation);
 		try {
 			JSch.setConfig("StrictHostKeyChecking", "no");
 	

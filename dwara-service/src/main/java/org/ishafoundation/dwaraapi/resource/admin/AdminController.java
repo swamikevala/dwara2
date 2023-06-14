@@ -183,4 +183,24 @@ public class AdminController {
 		}		
 		return ResponseEntity.status(HttpStatus.OK).body("Done. Check out getFfmpegThreads");
 	}
+	
+	@RequestMapping(value = "/admin/application/remoteRestore/{booleanValue}", method = RequestMethod.POST)
+	public ResponseEntity<String> setRemoteRestoreConfig(@PathVariable("booleanValue") String value) {
+		try {
+			configuration.setRemoteRestore(Boolean.valueOf(value));
+		}catch (Exception e) {
+		
+			if(e instanceof DwaraException)
+				throw (DwaraException) e;
+			else
+				throw new DwaraException(e.getMessage(), null);
+		}
+		
+		return ResponseEntity.status(HttpStatus.OK).body("remoteRestore config value set to " + value);
+	}
+	
+	@RequestMapping(value = "/admin/application/isRemoteRestore", method = RequestMethod.GET)
+	public ResponseEntity<String> isRemoteRestore() {
+		return ResponseEntity.status(HttpStatus.OK).body(configuration.isRemoteRestore()+"");
+	}
 }

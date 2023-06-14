@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 
 import org.ishafoundation.dwaraapi.DwaraConstants;
 import org.ishafoundation.dwaraapi.ProcessingTaskNames;
+import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.db.dao.master.TagDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ActionArtifactclassFlowDao;
 import org.ishafoundation.dwaraapi.db.dao.master.jointables.ArtifactclassVolumeDao;
@@ -90,6 +91,9 @@ public class JobCreator {
 	
 	@Autowired
 	private JobServiceRequeueHelper jobServiceRequeueHelper;
+	
+	@Autowired
+	private Configuration configuration;
 
 	// only if action is async create job should be called...
 	public List<Job> createJobs(Request request, Artifact sourceArtifact){
@@ -354,7 +358,7 @@ public class JobCreator {
 				job = saveJob(job, dryRun);
 				jobsCreated.add(job);
 			} else {
-				if (processingtaskId.equals(ProcessingTaskNames.PROCESSING_TASK_4K_TO_HD) && request.getDetails().getConvert()) {
+				if (processingtaskId.equals(ProcessingTaskNames.PROCESSING_TASK_4K_TO_HD) && request.getDetails().getConvert() && configuration.isRemoteRestore()) {
 					Job job = createProcessingJob(processingtaskId, flowelement, sourceJob, request, artifactclassId, artifact, dryRun);
 					if(job != null)
 						jobsCreated.add(job);

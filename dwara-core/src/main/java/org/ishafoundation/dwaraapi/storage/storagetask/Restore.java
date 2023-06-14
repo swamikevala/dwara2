@@ -11,6 +11,7 @@ import org.ishafoundation.dwaraapi.db.dao.transactional.FileDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.JobDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.ArtifactVolumeDao;
 import org.ishafoundation.dwaraapi.db.dao.transactional.jointables.FileVolumeDao;
+import org.ishafoundation.dwaraapi.db.model.master.configuration.Destination;
 import org.ishafoundation.dwaraapi.db.model.transactional.Artifact;
 import org.ishafoundation.dwaraapi.db.model.transactional.Job;
 import org.ishafoundation.dwaraapi.db.model.transactional.Request;
@@ -79,7 +80,12 @@ public class Restore extends AbstractStoragetaskAction{
 		Request request = job.getRequest();
 		RequestDetails requestDetails = request.getDetails();
 		String destinationPath = requestDetails.getDestinationPath(); // requested destination path
-		if(jobCreator.hasDependentJobsToBeCreated(job).size() > 0 && request.getDetails().getConvert())
+
+		int fileIdToBeRestored = requestDetails.getFileId();
+		org.ishafoundation.dwaraapi.db.model.transactional.File file = fileDao.findById(fileIdToBeRestored).get();
+		Artifact artifact = file.getArtifact(); 
+		
+		if(artifact.getName().contains("_4K") && request.getDetails().getConvert() && configuration.isRemoteRestore())
 			destinationPath = configuration.getRemoteRestoreLocation(); 
 		return destinationPath;
 	}

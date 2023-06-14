@@ -15,6 +15,7 @@ import org.ishafoundation.dwaraapi.db.model.transactional.ClipTag;
 import org.ishafoundation.dwaraapi.db.model.transactional.File;
 import org.ishafoundation.dwaraapi.db.model.transactional.MamTag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -29,6 +30,8 @@ public class ClipService extends DwaraService{
     FileDao file1Dao;
     @Autowired
     ArtifactDao artifact1Dao;
+    @Value("${catdv.host}")
+    private String catdvHost;
 
     public List<ClipArtifactResponse> getEvents(ClipRequest clipRequest){
         System.out.println("Events");
@@ -92,9 +95,9 @@ public class ClipService extends DwaraService{
                 File file1 = file1Dao.findById(clip.getFile_id()).get();
                 String appendUrlTOProxy = "";
                 if (file1.getArtifact().getArtifactclass().getId().contains("-priv")) {
-                    appendUrlTOProxy = "http://172.18.1.24/mam/private/";
+                    appendUrlTOProxy = "http://" + catdvHost + "/mam/private/";
                 } else
-                    appendUrlTOProxy = "http://172.18.1.24/mam/public/";
+                    appendUrlTOProxy = "http://" + catdvHost + "/mam/public/";
                 clipResponse.setProxyPath(appendUrlTOProxy + file1.getPathname());
                 //clipResponse.setArtifactName(file1.getArtifact().getName());
                 List<ClipTag> clipTagList = clipTagDao.findAllByClipId(clip.getId());
@@ -167,10 +170,10 @@ public class ClipService extends DwaraService{
             File file1 = file1Dao.findById(clip.getFile_id()).get();
             String appendUrlTOProxy = "";
             if(file1.getArtifact().getArtifactclass().getId().contains("-priv")){
-                appendUrlTOProxy="http://172.18.1.24/mam/private/";
+                appendUrlTOProxy="http://" + catdvHost + "/mam/private/";
             }
             else
-                appendUrlTOProxy="http://172.18.1.24/mam/public/";
+                appendUrlTOProxy="http://" + catdvHost + "/mam/public/";
             clipResponse.setProxyPath(appendUrlTOProxy+file1.getPathname());
             // clipResponse.setArtifactName(file1.getArtifact().getName())
             // ;
