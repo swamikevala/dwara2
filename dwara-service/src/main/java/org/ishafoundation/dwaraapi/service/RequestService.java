@@ -838,6 +838,7 @@ public class RequestService extends DwaraService{
 
 	private long getTargetSize(String targetLocation, RestoreFile file) {
 		long targetSize = 0;
+		/* commenting out as its resource heavy
 		String path = targetLocation + java.io.File.separator + file.getName();
 		try {
 			java.io.File targetFile = new java.io.File(path);
@@ -847,6 +848,7 @@ public class RequestService extends DwaraService{
 		}catch (Exception e) {
 			logger.warn("Unable to calc targetSize for " + path);
 		}
+		*/
 		return targetSize;
 	}
 	private String getElapsedTime(LocalDateTime createdTime){
