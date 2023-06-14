@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.EntityManager;
@@ -45,6 +46,9 @@ public class DwaraHoverService extends DwaraService {
 
 	@Autowired
 	ExtensionFiletypeDao extensionFiletypeDao;
+	
+    @Value("${catdv.host}")
+    private String catdvHost;
 
 	ObjectMapper objectMapper = new ObjectMapper();
 
@@ -182,9 +186,9 @@ public class DwaraHoverService extends DwaraService {
 
 							if (!StringUtils.isEmpty(proxyPathName)) {
 								if (StringUtils.contains(artifactClassId, "priv")) {
-									proxyPathName = "http://172.18.1.24/mam/private/" + proxyPathName;
+									proxyPathName = "http://" + catdvHost + "/mam/private/" + proxyPathName;
 								} else {
-									proxyPathName = "http://172.18.1.24/mam/public/" + proxyPathName;
+									proxyPathName = "http://" + catdvHost + "/mam/public/" + proxyPathName;
 								}
 
 								if (StringUtils.contains(artifactClassId, "priv")){
@@ -212,9 +216,9 @@ public class DwaraHoverService extends DwaraService {
 							folderQueryResults.forEach(file-> {
 								String proxyName;
 								if (StringUtils.contains((String) file[1], "priv")) {
-									proxyName = "http://172.18.1.24/mam/private/" + file[0];
+									proxyName = "http://" + catdvHost + "/mam/private/" + file[0];
 								} else {
-									proxyName = "http://172.18.1.24/mam/public/" + file[0];
+									proxyName = "http://" + catdvHost + "/mam/public/" + file[0];
 								}
 
 								if (StringUtils.contains(artifactClassId, "priv")){
@@ -274,9 +278,9 @@ public class DwaraHoverService extends DwaraService {
 						folderQueryResults.forEach(file-> {
 							String proxyName;
 							if (StringUtils.contains((String) file[1], "priv")) {
-								proxyName = "http://172.18.1.24/mam/private/" + file[0];
+								proxyName = "http://" + catdvHost + "/mam/private/" + file[0];
 							} else {
-								proxyName = "http://172.18.1.24/mam/public/" + file[0];
+								proxyName = "http://" + catdvHost + "/mam/public/" + file[0];
 							}
 
 							if (StringUtils.contains((String) file[1], "priv")){
@@ -421,6 +425,7 @@ public class DwaraHoverService extends DwaraService {
 
 			query += " AND file.deleted=0 order by artifact.id desc LIMIT " + offset + ", " + limit;
 
+		logger.trace("DwaraHoverService - " + query);
 		Query q = entityManager.createNativeQuery(query);
 		return q.getResultList();
 	}
