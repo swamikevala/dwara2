@@ -33,7 +33,7 @@ public enum CoreFlowelement {
 	
 	core_restore_flow_restore("C31", "restore-flow", "restore", null, null, null, 31, true, false, null),
 	core_restore_flow_mkv_mov("C32", "restore-flow", null, "video-digi-2020-mkv-mov-gen", new String[] {"C31"}, null, 32, true, false, "{\"include_if\": {\"artifactclass_regex\": \"video-digi-2020.*\"}}"),
-	core_restore_flow_4k_hd("C33", "restore-flow", null, ProcessingTaskNames.PROCESSING_TASK_4K_TO_HD, new String[] {"C31"}, null, 33, true, false, "{\"include_if\": {\"artifact_name_regex\": \".*_4K\"}}"),
+	core_restore_flow_4k_hd("C33", "restore-flow", null, ProcessingTaskNames.PROCESSING_TASK_4K_TO_HD, new String[] {"C31"}, null, 33, true, false, "{\"include_if\": {\"artifactclass_regex\": \"video-p.*\", \"artifact_name_regex\": \".*_4K\"}}"),
 	core_bulk_transcode_flow_restore("C41", "bulk-transcode-flow", "restore", null, null, null, 41, true, false, "{\"create_held_jobs\": true}"),
 	core_bulk_transcode_flow_mezzanine_proxy_gen("C42", "bulk-transcode-flow", null, "video-proxy-mezz-gen", new String[] {"C41"}, null, 42, true, false, "{\"pathname_regex\": \"^((?!SUB/).)*$\"}"),
 	core_bulk_transcode_flow_move("C43", "bulk-transcode-flow",null, "restructure-mezz-folder", new String[] {"C42"}, null, 43, true, false, null),

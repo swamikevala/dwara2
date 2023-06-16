@@ -308,7 +308,10 @@ public class RequestDetails {
 	}
 	
 	public Boolean getConvert() {
-		return convert;
+		if (convert != null)
+			return convert;
+		else
+			return true;
 	}
 
 	public void setConvert(Boolean convert) {

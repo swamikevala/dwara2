@@ -431,6 +431,9 @@ public class JobCreator {
 	
 	private boolean doIncludeExcludePropertiesMatch(IncludeExcludeProperties includeExcludeProperties, String artifactclassId, Artifact artifact){	
 		boolean isMatch = false;
+		boolean tagMatch = false;
+		boolean artifactclassRegexMatch = false;
+		boolean artifactNameRegexMatch = false;
 		
 		String tag = includeExcludeProperties.getTag();
 		String artifactclassRegex = includeExcludeProperties.getArtifactclassRegex();
@@ -459,29 +462,35 @@ public class JobCreator {
 			if(tags != null) {
 				for (Tag nthTag : tags) {
 					if(nthTag.getTag().equals(tag)) {
-						isMatch = true;
+						tagMatch = true;
 						break;
 					}
 				}
 			}
+		}else {
+			tagMatch = true;
 		}
 		
 		if(artifactclassRegex != null) {
 			Pattern artifactclassRegexPattern = Pattern.compile(artifactclassRegex);
 			Matcher artifactclassRegexMatcher = artifactclassRegexPattern.matcher(artifactclassId); // only in relative to the artifact path 
 			if(artifactclassRegexMatcher.matches()) {
-				isMatch = true;
+				artifactclassRegexMatch = true;
 			}
+		}else {
+			artifactclassRegexMatch = true;
 		}
 		
 		if(artifactNameRegex != null) {
 			Pattern artifactNameRegexPattern = Pattern.compile(artifactNameRegex);
 			Matcher artifactNameRegexMatcher = artifactNameRegexPattern.matcher(artifact.getName());
 			if(artifactNameRegexMatcher.matches()) {
-				isMatch = true;
+				artifactNameRegexMatch = true;
 			}
+		}else {
+			artifactNameRegexMatch = true;
 		}
-		return isMatch;
+		return tagMatch && artifactclassRegexMatch && artifactNameRegexMatch;
 	}
 
 	private Job createProcessingJob(String processingtaskId, Flowelement flowelement, Job sourceJob, Request request, String artifactclassId, Artifact artifact, boolean dryRun){

@@ -1,24 +1,17 @@
 package org.ishafoundation.videopub.transcoding.ffmpeg.video;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.local.CommandLineExecutionResponse;
 import org.ishafoundation.dwaraapi.commandline.remote.sch.RemoteCommandLineExecuter;
 import org.ishafoundation.dwaraapi.commandline.remote.sch.SshSessionHelper;
-import org.ishafoundation.dwaraapi.commandline.remote.scp.SecuredCopier;
 import org.ishafoundation.dwaraapi.configuration.Configuration;
 import org.ishafoundation.dwaraapi.process.IProcessingTask;
 import org.ishafoundation.dwaraapi.process.LogicalFile;
 import org.ishafoundation.dwaraapi.process.ProcessingtaskResponse;
 import org.ishafoundation.dwaraapi.process.request.Artifact;
 import org.ishafoundation.dwaraapi.process.request.ProcessContext;
-import org.ishafoundation.videopub.audio.AudioConfiguration;
 import org.ishafoundation.videopub.audio.RemoteTranscodingConfiguration;
 import org.ishafoundation.videopub.transcoding.ffmpeg.MediaTask;
 import org.slf4j.Logger;
@@ -44,16 +37,10 @@ public class Video_4K_to_HD_Transcoding_TaskExecutor extends MediaTask implement
 	private Configuration configuration;
 	
 	@Autowired
-	private CommandLineExecuter commandLineExecuter;
-	
-	@Autowired
 	private SshSessionHelper sshSessionHelper;
 	
 	@Autowired
 	private RemoteCommandLineExecuter remoteCommandLineExecuter;
-	
-	@Autowired
-	private SecuredCopier securedCopier;
 	
 	@Override
 	public ProcessingtaskResponse execute(ProcessContext processContext) throws Exception {
@@ -96,23 +83,32 @@ public class Video_4K_to_HD_Transcoding_TaskExecutor extends MediaTask implement
 		
 		String s2RootLocation = remoteTranscodingConfiguration.getSshRootLocation();
 		String s2SourceFilePathname = sourceFilePathname.replace(configuration.getRemoteRestoreLocation(), s2RootLocation);
-		String s2DestinationDirPath = destinationDirPath.replace(configuration.getRemoteRestoreLocation(), s2RootLocation);
 		String s2ProxyTargetLocation = proxyTargetLocation.replace(configuration.getRemoteRestoreLocation(), s2RootLocation);
 		
 		String host = remoteTranscodingConfiguration.getHost();
 		String sshUser = remoteTranscodingConfiguration.getSshSystemUser();
 		int jobId = processContext.getJob().getId();
-		
-//		String dirCreationCommand = "mkdir -p \"" + s2DestinationDirPath + "\"";
-//		processingtaskResponse = executeCommandRemotely(host, sshUser, dirCreationCommand, jobId+"a", processingtaskResponse);
-//		if(!processingtaskResponse.isComplete())
-//			throw new Exception("Unable to create dir remotely " + processingtaskResponse.getFailureReason());
 
 		//ffmpeg -y -i 6FX36208.MP4 -c:v libx264 -profile:v high10 -b:v 50M -pix_fmt yuv420p10le -c:a aac -b:a 256k -map 0:v:0 -map 0:a? -map_metadata 0 -s 1920x1080 6FX36208.MOV
-		String convCommand = "ffmpeg -y -i " + s2SourceFilePathname + " -c:v libx264 -profile:v high10 -b:v 50M -pix_fmt yuv420p10le -c:a aac -b:a 256k -map 0:v:0 -map 0:a? -map_metadata 0 -s 1920x1080 " + s2ProxyTargetLocation;
-		processingtaskResponse = executeCommandRemotely(host, sshUser, convCommand, jobId+"b", processingtaskResponse);
+		String convCommand = "ffmpeg -y -i \"" + s2SourceFilePathname + "\" -c:v libx264 -profile:v high10 -b:v 50M -pix_fmt yuv420p -c:a aac -b:a 256k -map 0:v:0 -map 0:a? -map_metadata 0 -s 1920x1080 \"" + s2ProxyTargetLocation + "\"";
+		processingtaskResponse = executeCommandRemotely(host, sshUser, convCommand, jobId+"a", processingtaskResponse);
 		if(!processingtaskResponse.isComplete())
 			throw new Exception("Unable to conversion " + processingtaskResponse.getFailureReason());
+		
+		// create the parent folders in SAN using ingest server and not remote...
+		File destinationDir = new File(destinationDirPath);
+		if (!destinationDir.exists())
+			destinationDir.mkdirs();
+		
+		String mvCommand = "mv \"" + s2ProxyTargetLocation + "\" \"" + proxyTargetLocation + "\""; //Move the file from S2 to SAN 
+		processingtaskResponse = executeCommandRemotely(host, sshUser, mvCommand, jobId+"b", processingtaskResponse);
+		if(!processingtaskResponse.isComplete())
+			throw new Exception("Unable to execute " + mvCommand + " remotely - " + processingtaskResponse.getFailureReason());
+
+		String srcFileDeletionCommand = "rm \"" + s2SourceFilePathname + "\"";
+		processingtaskResponse = executeCommandRemotely(host, sshUser, srcFileDeletionCommand, jobId+"c", processingtaskResponse);
+		if(!processingtaskResponse.isComplete())
+			throw new Exception("Unable to delete " + s2SourceFilePathname + " remotely - " + processingtaskResponse.getFailureReason());
 		
 		return processingtaskResponse;
 	}

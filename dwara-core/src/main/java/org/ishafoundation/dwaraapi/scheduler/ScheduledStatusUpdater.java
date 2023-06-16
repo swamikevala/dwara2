@@ -364,9 +364,12 @@ public class ScheduledStatusUpdater {
 									}
 
 									// inputPath = something like - /data/restored/someoutputfolder/.restoring
+									inputPath = inputPath.replace(configuration.getRemoteRestoreLocation() + java.io.File.separator, requestDetails.getDestinationPath() + java.io.File.separator); // change made for 4K to HD feature - Move to SAN from S2 happens now on the video-4k-hd-gen job
 									String srcPath = inputPath + java.io.File.separator + restoredFilePathName;
 									String destPath = srcPath.replace(java.io.File.separator + configuration.getRestoreInProgressFileIdentifier(), "");
-									destPath = destPath.replace(configuration.getRemoteRestoreLocation() + java.io.File.separator, requestDetails.getDestinationPath() + java.io.File.separator);	
+									/* move to SAN from S2 happens now on the video-4k-hd-gen job as its very resource and time intensive and we dont want to bog scheduler because of that
+									destPath = destPath.replace(configuration.getRemoteRestoreLocation() + java.io.File.separator, requestDetails.getDestinationPath() + java.io.File.separator); // change made for 4K to HD feature
+									*/
 									logger.trace("src " + srcPath);
 									logger.trace("dest " + destPath);
 
@@ -383,7 +386,7 @@ public class ScheduledStatusUpdater {
 										logger.info("Moved restored files from " + srcPath + " to " + destPath);
 									}
 									catch (Exception e) {
-										logger.error("Unable to move files from " + srcPath + " to " + destPath);
+										logger.error("Unable to move files from " + srcPath + " to " + destPath, e);
 									}
 								}
 								else if(requestedAction == Action.ingest || requestedAction == Action.restore_process) {
