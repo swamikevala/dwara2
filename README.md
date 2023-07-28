@@ -16,5 +16,3 @@ Unzip the *dwara-service/src/test/resources/Guru-Pooja-Offerings-Close-up-Shot_A
 Refer the confluence page on how to build and start the app https://art.iyc.ishafoundation.org/x/eVAbAQ 
 
 You can now point the Dwara UI to this server or try using *http://localhost:9000/swagger-ui.html*
-
-Login using pgurumurthy/ShivaShambho
